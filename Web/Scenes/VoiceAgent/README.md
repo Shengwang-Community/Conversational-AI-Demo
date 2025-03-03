@@ -1,73 +1,94 @@
-# 🌟 Agora Conversational AI Engine Demo Application
+# 🌟 声网对话式 AI 引擎体验应用
 
-*Other languages: [中文](README.cn.md)*
+*其他语言版本：[English](README.md)*
 
-The Agora Conversational AI Engine redefines human-computer interaction interfaces, breaking through traditional text interactions to achieve highly realistic, natural, and smooth real-time voice conversations, allowing AI to truly "speak". It is suitable for innovative scenarios such as:
+声网对话式 AI 引擎重新定义了人机交互界面，突破了传统文字交互，实现了高拟真、自然流畅的实时语音对话，让 AI 真正"开口说话"。适用于创新场景如：
 
-- 🤖 Intelligent Assistants
-- 💞 Emotional Companionship
-- 🗣️ Oral Practice
-- 🎧 Intelligent Customer Service
-- 📱 Smart Hardware
-- 🎮 Immersive Game NPCs
+- 🤖 智能助手
+- 💞 情感陪伴
+- 🗣️ 口语陪练
+- 🎧 智能客服
+- 📱 智能硬件
+- 🎮 沉浸式游戏 NPC
 
-## 🚀 Quick Start
+## 🚀 一、快速开始
 
-This section mainly introduces how to quickly run the Agora Conversational AI Engine demo application project.
+这个部分主要介绍如何快速跑通声网对话式 AI 引擎体验应用项目。
 
-### 💻 Environment Setup
+### 💻 1.1 环境准备
 
- install node 22+ and git
+- 安装 nodejs 22+和 git
+
 ```bash
-For Linux/MacOS, you can execute directly in the terminal
-# For Windows, it is recommended to use Windows WSL
+# Linux/MacOS 可以直接在终端执行
+# Windows 建议使用 Windows WSL
 # https://github.com/nvm-sh/nvm?tab=readme-ov-file#install--update-script
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
 export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
 
-# Install Node.js 22+
+# 安装nodejs 22+
 nvm install 22
 nvm use 22
 
-# Install Git (MacOS comes with Git, no need to install)
+# 安装git (MacOS 自带git,无需安装)
 # Debian/Ubuntu
 sudo apt install git-all
 
 # Fedora/RHEL/CentOS
-
 sudo dnf install git-all
-
 ```
 
-### ⚙️ Running the Project
+### ⚙️ 1.2 运行项目
 
+#### 1.2.1 获取 APP ID 和 APP 证书
 
-1. Follow [Get started with Agora](https://docs-preview.agora.io/en/conversational-ai/get-started/manage-agora-account) to get the **App ID** and **App Certificate** and enable the **Conversational AI** service.
-2. Follow [Generate Customer ID and Customer Secret](https://docs.agora.io/en/conversational-ai/rest-api/restful-authentication#generate-customer-id-and-customer-secret) to get the **Basic Auth Key** and **Basic Auth Secret**.
-3. Get LLM configuration information from LLM vendor.
-4. Get TTS configuration information from TTS vendor.
-  
-#### 1.6 Configure the Project
+- 进入[声网控制台](https://console.shengwang.cn/overview)
+- 点击创建项目
+  ![图片](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/sdhy_1.jpg)
+- 选择项目基础配置，鉴权机制需要选择**安全模式**
+  ![图片](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/sdhy_2.jpg)
+- 获取项目 APP ID 与 APP 证书
 
-- Install dependencies
+#### 1.2.2 开启对话式 AI 引擎功能权限
+
+- 在[声网控制台](https://console.shengwang.cn/product/ConversationAI?tab=config)开启权限
+  ![图片](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/ConvoAI.png)
+
+#### 1.2.3 获取 RESTful API 密钥
+
+- 在[声网控制台](https://console.shengwang.cn/settings/restfulApi)点击添加密钥
+  ![图片](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/restful.png)
+- 下载密钥文件，复制 BASIC_AUTH_KEY 和 BASIC_AUTH_SECRET
+
+#### 1.2.4 获取 LLM 配置信息
+
+- 自行在 LLM 厂商官网获取相关配置信息
+
+#### 1.2.5 获取 TTS 配置信息
+
+- 自行在 TTS 厂商官网获取相关配置信息
+
+#### 1.2.6 配置项目
+
+- 安装依赖
 
 ```bash
-# Use your preferred package manager to install dependencies: npm/yarn/pnpm/bun
-# Using npm to install
+# 使用你喜爱的包管理器安装依赖 npm/yarn/pnpm/bun
+# 使用npm 安装
 npm i
-# Using yarn to install
+# 使用yarn 安装
 # npm install -g yarn
 yarn
-# Using pnpm to install
+# 使用pnpm 安装
 # npm install -g pnpm
 pnpm i
-# Using bun to install
+# 使用bun 安装
 # npm install -g bun
 bun i
 ```
 
-- Set environment variables
+- 设置环境变量
 
 ```bash
 cp .env.example .env.local
@@ -75,12 +96,12 @@ cp .env.example .env.local
 
 ```
 #----------- AppId --------------
-AGORA_APP_ID=<Agora App ID>
-AGORA_APP_CERT=<Agora App Certificate>
+AGORA_APP_ID=<声网 App ID>
+AGORA_APP_CERT=<声网 App Certificate>
 
 #----------- Basic Auth ---------------
-AGENT_BASIC_AUTH_KEY=<Agora RESTful API KEY>
-AGENT_BASIC_AUTH_SECRET=<Agora RESTful API SECRET>
+AGENT_BASIC_AUTH_KEY=<声网 RESTful API KEY>
+AGENT_BASIC_AUTH_SECRET=<声网 RESTful API SECRET>
 
 #----------- LLM -----------
 NEXT_PUBLIC_CUSTOM_LLM_URL="<your-LLM-url>"
@@ -93,39 +114,37 @@ NEXT_PUBLIC_CUSTOM_TTS_VENDOR="<your-TTS-vendor>"
 NEXT_PUBLIC_CUSTOM_TTS_PARAMS="<your-TTS-params>"
 ```
 
-- Run the development server
+- 本地运行
 
 ```bash
 bun dev
 ```
 
+## 🗂️ 项目结构导览
 
-## 🗂️ Project Structure Overview
-
-| Path                                          | Description                               |
+| 路径                                          | 描述                               |
 | -------------------------------------------- | -------------------------------- |
-| [api/](./src/app/api/)                       | Implementation of Conversational AI Engine API interfaces and data models |
-| [app/page](./src/app/page.tsx)               | Main content of the page                       |
-| [components/](./src/components/)             | Page components                          |
-| [logger/](./src/lib/logger)                  | Logging                           |
-| [services/rtc](./src/services/rtc.ts)        | Implementation related to RTC audio and video communication              |
-| [type/rtc](./src/type/rtc.ts)                | Types and enumerations of Rtc     |
+| [api/](./src/app/api/)                       | 对话式 AI 引擎 API 接口实现和数据模型 |
+| [app/page](./src/app/page.tsx)               | 页面主要内容                       |
+| [components/](./src/components/)             | 页面组件                          |
+| [logger/](./src/lib/logger)                  |日志处理                           |
+| [services/rtc](./src/services/rtc.ts)        | RTC 音视频通信相关实现              |
+| [type/rtc](./src/type/rtc.ts)                |  RTC的类型和枚举  |
 
+## 📚 三、相关资源
 
-## 📚 Resources
+- 📖 查看我们的 [对话式 AI 引擎文档](https://doc.shengwang.cn/doc/convoai/restful/landing-page) 了解更多详情
+- 🧩 访问 [Agora SDK 示例](https://github.com/AgoraIO) 获取更多教程和示例代码
+- 👥 在 [Agora 开发者社区](https://github.com/AgoraIO-Community) 探索开发者社区管理的优质代码仓库
+- 💬 如有疑问，欢迎在 [Stack Overflow](https://stackoverflow.com/questions/tagged/agora.io) 提问
 
-- 📖 Check out our [Conversational AI Engine Documentation](https://doc.agora.io/doc/convoai/restful/landing-page) for more details
-- 🧩 Visit [Agora SDK Examples](https://github.com/AgoraIO) for more tutorials and example code
-- 👥 Explore high-quality repositories managed by the developer community in the [Agora Developer Community](https://github.com/AgoraIO-Community)
-- 💬 If you have any questions, feel free to ask on [Stack Overflow](https://stackoverflow.com/questions/tagged/agora.io)
+## 💡 四、问题反馈
 
-## 💡 Feedback
+如果您在集成过程中遇到任何问题或有改进建议：
 
-If you encounter any issues during integration or have suggestions for improvement:
+- 🤖 可通过[声网支持](https://ticket.shengwang.cn/form?type_id=&sdk_product=&sdk_platform=&sdk_version=&current=0&project_id=&call_id=&channel_name=)获取智能客服帮助或联系技术支持人员
+- ✉️ 发送邮件至 [support@agora.io](mailto:support@agora.io) 获取专业支持
 
-- 🤖 Get help from intelligent customer service or contact technical support through [Agora Support](https://ticket.agora.io/form?type_id=&sdk_product=&sdk_platform=&sdk_version=&current=0&project_id=&call_id=&channel_name=)
-- ✉️ Send an email to [support@agora.io](mailto:support@agora.io) for professional support
+## 📜 五、许可证
 
-## 📜 License
-
-This project is licensed under the MIT License.
+本项目采用 MIT 许可证 (The MIT License)。
