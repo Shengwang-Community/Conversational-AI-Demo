@@ -37,7 +37,7 @@ sudo apt install git-all
 
 # Fedora/RHEL/CentOS
 sudo dnf install git-all
-
+```
 
 ### ⚙️ 1.2 运行项目
 

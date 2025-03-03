@@ -46,7 +46,6 @@ export async function POST(request: NextRequest) {
           ...(basicAuthSecret && { basic_auth_password: basicAuthSecret }),
         })
 
-        console.log('body', body)
     // feat: support tts v2
     const ttsDevBody = {
       ...body,
@@ -60,7 +59,6 @@ export async function POST(request: NextRequest) {
       },
     }
     logger.info({ body: ttsDevBody }, 'REMOTE request body')
-    console.log('start agent', reqBody)
     const res = await fetch(url, {
       method: 'POST',
       headers: {
