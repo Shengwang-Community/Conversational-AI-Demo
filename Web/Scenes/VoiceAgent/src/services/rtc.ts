@@ -13,7 +13,7 @@ import {
   AIDenoiserExtension,
   AIDenoiserProcessorLevel,
   type IAIDenoiserProcessor,
-} from 'agora-extension-ai-denoiser'
+} from 'agora-conversational-ai-denoiser'
 
 import { EventService } from '@/services/events'
 import { EMessageEngineMode, MessageEngine } from '@/services/message'
