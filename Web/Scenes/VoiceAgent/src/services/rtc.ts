@@ -121,7 +121,7 @@ export class RtcService extends EventService<IRtcEvents> {
     }
     logger.log(CONSOLE_PREFIX, '[DenoiserProcessor]', 'Initializing')
     const denoiser = new AIDenoiserExtension({
-      assetsPath: '/denoiser/v2/external',
+      assetsPath: '/denoiser/external',
     })
     // Check compatibility
     if (!denoiser.checkCompatibility()) {
@@ -235,9 +235,6 @@ export class RtcService extends EventService<IRtcEvents> {
           !!this.processor
         )
         audioTrack.pipe(this.processor).pipe(audioTrack.processorDestination)
-        // close ains.agc
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(this.processor as any).setParameter({ agcConfig: { enabled: false } })
       }
       this.localTracks.audioTrack = audioTrack
       // must be called after pipe processor
