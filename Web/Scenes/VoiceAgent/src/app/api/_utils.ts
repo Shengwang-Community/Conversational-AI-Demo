@@ -6,9 +6,9 @@ import { DEV_MODE_QUERY_KEY } from '@/constants'
 
 const appId = process.env.AGORA_APP_ID || ''
 
-const remoteServerUrl = process.env.AGENT_SERVER_URL || ''
+const remoteServerUrl = process.env.AGORA_DEMO_SERVER_URL || ''
 
-const remoteTokenServerUrl = process.env.AGENT_TOKEN_SERVER_URL || ''
+const remoteTokenServerUrl = process.env.AGORA_DEMO_TOKEN_SERVER_URL || ''
 
 export const basicAuthKey = process.env.AGENT_BASIC_AUTH_KEY || undefined
 export const basicAuthSecret = process.env.AGENT_BASIC_AUTH_SECRET || undefined
