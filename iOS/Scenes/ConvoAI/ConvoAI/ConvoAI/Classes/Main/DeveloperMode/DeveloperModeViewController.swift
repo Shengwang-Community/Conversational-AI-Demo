@@ -6,6 +6,10 @@ import SVProgressHUD
 
 public class DeveloperModeViewController: UIViewController {
     
+    private let kHost = "toolbox_server_host"
+    private let kAppId = "rtc_app_id"
+    private let kEnvName = "env_name"
+    
     public static func setDeveloperMode(_ enable: Bool) {
         UserDefaults.standard.set(enable, forKey: "DeveloperMode")
     }
@@ -48,7 +52,7 @@ public class DeveloperModeViewController: UIViewController {
     
     private lazy var menuButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle(AppContext.shared.environments.first?["name"] ?? "", for: .normal)
+        button.setTitle(AppContext.shared.environments.first?[kEnvName] ?? "", for: .normal)
         button.setTitleColor(UIColor.themColor(named: "ai_icontext1"), for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 14)
         button.showsMenuAsPrimaryAction = true
@@ -60,7 +64,7 @@ public class DeveloperModeViewController: UIViewController {
         didSet {
             let environments = AppContext.shared.environments
             if selectedEnvironmentIndex < environments.count {
-                menuButton.setTitle(environments[selectedEnvironmentIndex]["name"], for: .normal)
+                menuButton.setTitle(environments[selectedEnvironmentIndex][kEnvName], for: .normal)
             }
         }
     }
@@ -68,7 +72,7 @@ public class DeveloperModeViewController: UIViewController {
     private func createEnvironmentMenu() -> UIMenu {
         let environments = AppContext.shared.environments
         let actions = environments.enumerated().map { index, env in
-            UIAction(title: env["name"] ?? "") { [weak self] _ in
+            UIAction(title: env[kEnvName] ?? "") { [weak self] _ in
                 self?.selectedEnvironmentIndex = index
             }
         }
@@ -88,8 +92,8 @@ public class DeveloperModeViewController: UIViewController {
         serverHostValueLabel.text = serverHost
         // update environment segment        
         for (index, envi) in AppContext.shared.environments.enumerated() {
-            let host = envi["host"]
-            let appId = envi["appId"]
+            let host = envi[kHost]
+            let appId = envi[kAppId]
             if host == AppContext.shared.baseServerUrl && appId == AppContext.shared.appId {
                 selectedEnvironmentIndex = index
                 break
@@ -110,11 +114,11 @@ public class DeveloperModeViewController: UIViewController {
         }
         
         for env in environments {
-            if let host = env["host"] {
+            if let host = env[kHost] {
                 AppContext.shared.baseServerUrl = host
             }
             
-            if let appid = env["appId"] {
+            if let appid = env[kAppId] {
                 AppContext.shared.appId = appid
             }
             
@@ -148,12 +152,12 @@ extension DeveloperModeViewController {
         let environments = AppContext.shared.environments
         if selectedEnvironmentIndex >= 0 && selectedEnvironmentIndex < environments.count {
             let envi = environments[selectedEnvironmentIndex]
-            let host = envi["host"]
+            let host = envi[kHost]
             if AppContext.shared.baseServerUrl == host {
                 return
             }
             AppContext.shared.baseServerUrl = host ?? ""
-            AppContext.shared.appId = envi["appId"] ?? ""
+            AppContext.shared.appId = envi[kAppId] ?? ""
             SVProgressHUD.showInfo(withStatus: host)
             onSwitchServer?()
         }

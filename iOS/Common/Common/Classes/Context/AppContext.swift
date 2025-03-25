@@ -54,14 +54,14 @@ import Foundation
     public func loadInnerEnvironment() {
         if let bundlePath = Bundle.main.path(forResource: "Common", ofType: "bundle"),
            let bundle = Bundle(path: bundlePath),
-           let environmentsPath = bundle.path(forResource: "environments", ofType: "json"),
+           let environmentsPath = bundle.path(forResource: "dev_env_config", ofType: "json"),
            let data = try? Data(contentsOf: URL(fileURLWithPath: environmentsPath)),
            let environments = try? JSONDecoder().decode([String: [[String: String]]].self, from: data) {
-            _environments = environments["cn"] ?? []
+            _environments = environments["china"] ?? []
             if (appId.isEmpty) {
-                _appId = _environments.first?["appId"] ?? ""
-                _certificate = _environments.first?["certificate"] ?? ""
-                _baseServerUrl = _environments.first?["host"] ?? ""
+                _appId = _environments.first?["rtc_app_id"] ?? ""
+                _certificate = _environments.first?["rtc_app_certificate"] ?? ""
+                _baseServerUrl = _environments.first?["toolbox_server_host"] ?? ""
             }
         }
     }
