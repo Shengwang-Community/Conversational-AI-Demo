@@ -16,14 +16,8 @@ echo PROJECT_PATH: $PROJECT_PATH
 echo TARGET_NAME: $TARGET_NAME
 echo pwd: $CURRENT_PATH
 
-sudo gem install cocoapods
-
 cd ${PROJECT_PATH}
-if [[ $pod_cache_url == *https://* ]]; then
-    echo pod cache found, pod install ignore!
-else
-    pod update --no-repo-update
-fi
+pod install --repo-update
 
 if [ $? -eq 0 ]; then
     echo "success"
