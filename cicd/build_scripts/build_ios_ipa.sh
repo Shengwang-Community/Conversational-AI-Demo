@@ -17,7 +17,8 @@ echo TARGET_NAME: $TARGET_NAME
 echo pwd: $CURRENT_PATH
 
 cd ${PROJECT_PATH}
-pod install --repo-update
+# pod install --repo-update
+gem install cocoapods
 
 if [ $? -eq 0 ]; then
     echo "success"
