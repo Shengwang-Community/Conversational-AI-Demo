@@ -125,7 +125,6 @@ fi
 if [ -z "$bundleId" ]; then
     export bundleId="cn.shengwang.convoai"
 fi
-export LANG=en_US.UTF-8
 
 echo Package_Publish: $Package_Publish
 echo is_tag_fetch: $is_tag_fetch
