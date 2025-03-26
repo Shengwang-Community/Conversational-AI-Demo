@@ -140,7 +140,7 @@ rm -rf ${TARGET_NAME}_${BUILD_NUMBER}.xcarchive
 rm -rf ${PACKAGE_DIR}
 rm -rf ${EXPORT_PATH}
 
-# 复原Keycenter文件
-python3 ./cicd/build_scripts/modify_ios_keycenter.py $KEYCENTER_PATH 1
+# 恢复工程修改
+git reset --hard HEAD
 
 echo '打包完成'
