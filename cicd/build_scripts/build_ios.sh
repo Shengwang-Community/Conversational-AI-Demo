@@ -125,6 +125,7 @@ fi
 if [ -z "$bundleId" ]; then
     export bundleId="cn.shengwang.convoai"
 fi
+export LANG=en_US.UTF-8
 
 echo Package_Publish: $Package_Publish
 echo is_tag_fetch: $is_tag_fetch
@@ -137,19 +138,8 @@ echo release_version: $release_version
 echo short_version: $short_version
 echo pwd: `pwd`
 echo sdk_url: $sdk_url
-echo pod_cache_url: $pod_cache_url
 
 PODFILE_PATH=${PWD}"/iOS/Podfile"
-
-# add pod cache if need
-if [[ $pod_cache_url == *https://* ]]; then 
-    zip_name=${pod_cache_url##*/}
-    zip_file=${WORKSPACE}/$zip_name
-    echo download file: $pod_cache_url
-    curl -o $zip_file $pod_cache_url --progress-bar
-    unzip -o $zip_file -d ${PWD}/iOS/
-    rm  $zip_file
-fi
 
 if [[ ! -z ${sdk_url} && "${sdk_url}" != 'none' ]]; then
     zip_name=${sdk_url##*/}
