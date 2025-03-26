@@ -15,7 +15,8 @@ TARGET_NAME=Agent-cn
 echo PROJECT_PATH: $PROJECT_PATH
 echo TARGET_NAME: $TARGET_NAME
 echo pwd: $CURRENT_PATH
-echo pod_cache_url: $pod_cache_url
+
+sudo gem install cocoapods
 
 cd ${PROJECT_PATH}
 if [[ $pod_cache_url == *https://* ]]; then
