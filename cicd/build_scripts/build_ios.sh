@@ -1,3 +1,5 @@
+export LANG=en_US.UTF-8
+
 # 设置全局变量
 if [ -z "$WORKSPACE" ]; then
     export WORKSPACE=$(pwd)/cicd/iosExport
