@@ -44,7 +44,7 @@ def doPublish(buildVariables) {
           "type": "ARTIFACTORY",
           "archivePattern": "*.zip",
           "serverPath": "ShengWangAIScenarios/${shortVersion}/${buildVariables.buildDate}/${env.platform}",
-          "serverRepo": "ACCS_repo" // ATTENTIONS: Update the artifactoryRepo if needed.
+          "serverRepo": "ACCS_repo"
         ]
     ]
     archiveUrls = archive.archiveFiles(archiveInfos) ?: []

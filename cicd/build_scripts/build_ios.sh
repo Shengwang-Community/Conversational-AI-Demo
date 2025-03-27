@@ -1,3 +1,4 @@
+# convo ai cn cicd
 export LANG=en_US.UTF-8
 
 # 设置全局变量
@@ -31,11 +32,8 @@ if [ -z "$toolbox_url" ]; then
     export toolbox_url="https://service.apprtc.cn/toolbox"
 fi
 
-# 确保 toolbox_url 包含 https:// 前缀
 if [[ "${toolbox_url}" != *"https://"* ]]; then
-    # 如果 URL 不包含 https:// 前缀，添加它
     toolbox_url="https://${toolbox_url}"
-    echo "已添加 https 前缀: ${toolbox_url}"
 fi
 
 # 根据 toolbox_url 关键词选择对应的 APP_ID
@@ -67,9 +65,12 @@ if [ -z "$APP_ID" ]; then
     APP_ID=""
 fi
 
-if [ -z "$method" ]; then
-    # export method="app-store"
+if [ "$upload_app_store" = "true" ]; then
+    export method="app-store"
+    echo "设置导出方式为: app-store (app-store 包)"
+else
     export method="development"
+    echo "设置导出方式为: development (测试包)"
 fi
 
 if [ -z "$bundleId" ]; then
@@ -101,14 +102,10 @@ CURRENT_PATH=$PWD
 
 # 获取项目目录
 PROJECT_PATH="${CURRENT_PATH}/iOS"
-# 检查项目路径是否存在
 if [ ! -d "${PROJECT_PATH}" ]; then
-    echo "警告: 找不到 iOS 目录: ${PROJECT_PATH}"
-    # 如果当前目录已经是 iOS 目录，则使用当前目录
-    if [[ "$CURRENT_PATH" == */iOS ]]; then
-        PROJECT_PATH="${CURRENT_PATH}"
-        echo "使用当前目录作为项目路径: ${PROJECT_PATH}"
-    fi
+    echo "错误: 找不到 iOS 目录: ${PROJECT_PATH}"
+    echo "构建失败: iOS 项目目录不存在"
+    exit 1
 fi
 
 # 项目target名
@@ -139,14 +136,11 @@ else
     echo "未指定 dev_env_config_url，跳过环境配置文件下载"
 fi
 
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-
 PODFILE_PATH=${PWD}"/iOS/Podfile"
 
 if [[ ! -z ${sdk_url} && "${sdk_url}" != 'none' ]]; then
     zip_name=${sdk_url##*/}
-    python3 $WORKSPACE/artifactory_utils.py --action=download_file --file=$sdk_url
+    curl -L -v -H "X-JFrog-Art-Api:${JFROG_API_KEY}" -O $sdk_url || exit 1
     unzip -o ./$zip_name -y
 
     unzip_name=`ls -S -d */ | grep Agora`
@@ -159,7 +153,8 @@ if [[ ! -z ${sdk_url} && "${sdk_url}" != 'none' ]]; then
 fi
 
 cd ${PROJECT_PATH}
-pod install --repo-update
+#pod install --repo-update
+pod update --no-repo-update
 
 if [ $? -eq 0 ]; then
     echo "success"
@@ -189,7 +184,7 @@ echo "验证文件和目录存在性:"
 if [ ! -e "${APP_PATH}" ]; then
     echo "错误: 找不到工程文件: ${APP_PATH}"
     # 寻找工作区文件
-    find ${PROJECT_PATH} -name "*.xcworkspace" 
+    find ${PROJECT_PATH} -name "*.xcworkspace"
     exit 1
 fi
 
