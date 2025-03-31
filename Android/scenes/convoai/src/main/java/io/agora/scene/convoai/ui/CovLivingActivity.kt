@@ -264,6 +264,78 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         mBinding?.tvDisconnect?.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
+    private fun getConvoaiBodyMap(channel:String): Map<String, Any?> {
+        return mapOf(
+            "graph_id" to DebugConfigSettings.graphId.takeIf { it.isNotEmpty() },
+            "name" to null,
+            "properties" to mapOf(
+                "channel" to channel,
+                "token" to null,
+                "agent_rtc_uid" to CovAgentManager.agentUID.toString(),
+                "remote_rtc_uids" to listOf(CovAgentManager.uid.toString()),
+                "enable_string_uid" to null,
+                "idle_timeout" to null,
+                "agent_rtm_uid" to null,
+                "advanced_features" to mapOf(
+                    "enable_aivad" to CovAgentManager.enableAiVad,
+                    "enable_bhvs" to CovAgentManager.enableBHVS,
+                    "enable_rtm" to null,
+
+                    ),
+                "asr" to mapOf(
+                    "language" to CovAgentManager.language?.language_code,
+                    "vendor" to null,
+                    "vendor_model" to null,
+                ),
+                "llm" to mapOf(
+                    "url" to BuildConfig.LLM_URL.takeIf { it.isNotEmpty() },
+                    "api_key" to BuildConfig.LLM_API_KEY.takeIf { it.isNotEmpty() },
+                    "system_messages" to BuildConfig.LLM_SYSTEM_MESSAGES.takeIf { it.isNotEmpty() },
+                    "greeting_message" to null,
+                    "params" to mapOf(
+                        "model" to BuildConfig.LLM_MODEL.takeIf { it.isNotEmpty() },
+                    ),
+                    "style" to null,
+                    "max_history" to null,
+                    "ignore_empty" to null,
+                    "input_modalities" to null,
+                    "output_modalities" to null,
+                    "failure_message" to null,
+                ),
+                "tts" to mapOf(
+                    "vendor" to  BuildConfig.TTS_VENDOR.takeIf { it.isNotEmpty() },
+                    "params" to BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() },
+
+                    ),
+                "vad" to mapOf(
+                    "interrupt_duration_ms" to null,
+                    "prefix_padding_ms" to null,
+                    "silence_duration_ms" to null,
+                    "threshold" to null,
+                ),
+                "parameters" to mapOf(
+                    "enable_flexible" to null,
+                    "enable_metrics" to null,
+                    "aivad_force_threshold" to null,
+                    "output_audio_codec" to null,
+                    "audio_scenario" to null,
+                    "transcript" to mapOf(
+                        "enable" to true,
+                        "enable_words" to true,
+                        "protocol_version" to "v2",
+                        "redundant" to null,
+                    ),
+                    "sc" to mapOf(
+                        "sessCtrlStartSniffWordGapInMs" to null,
+                        "sessCtrlTimeOutInMs" to null,
+                        "sessCtrlWordGapLenVolumeThr" to null,
+                        "sessCtrlWordGapLenInMs" to null,
+                    )
+                )
+            )
+        )
+    }
+
     private fun getAgentParams(): AgentRequestParams {
         return AgentRequestParams(
             appId = ServerConfig.rtcAppId,
@@ -372,6 +444,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         CovAgentApiManager.startAgent(getAgentParams()) { err, channelName ->
             cont.resume(Pair(channelName, err?.errorCode ?: 0))
         }
+
+        /*val channel = CovAgentManager.channelName
+        CovAgentApiManager.startAgentWithMap(
+            channel,
+            getConvoaiBodyMap(channel)
+        ) { err, channelName ->
+            cont.resume(Pair(channelName, err?.errorCode ?: 0))
+        }*/
     }
 
     private suspend fun updateTokenAsync(): Boolean = suspendCoroutine { cont ->
