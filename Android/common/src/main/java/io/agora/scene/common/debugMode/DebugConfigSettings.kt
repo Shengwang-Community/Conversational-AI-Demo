@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.gson.Gson
 import io.agora.scene.common.AgentApp
 import io.agora.scene.common.constant.EnvConfig
+import io.agora.scene.common.util.LocalStorageUtil
 import java.io.BufferedReader
 
 data class DevEnvConfig(
@@ -14,7 +15,10 @@ data class DevEnvConfig(
 object DebugConfigSettings {
 
     private const val DEV_CONFIG_FILE = "dev_env_config.json"
+    private const val DEV_SESSION_LIMIT_MODE = "dev_session_limit_mode.json"
+
     private var instance: DevEnvConfig? = null
+
 
     var graphId: String = ""
         private set
@@ -37,18 +41,23 @@ object DebugConfigSettings {
         this.isAudioDumpEnabled = isAudioDumpEnabled
     }
 
-    var isSeamlessPlayMode: Boolean = false
-        private set
+    var isSessionLimitMode: Boolean = LocalStorageUtil.getBoolean(DEV_SESSION_LIMIT_MODE, false)
+        private set(value) {
+            if (field == value) return
+            field = value
+            LocalStorageUtil.putBoolean(DEV_SESSION_LIMIT_MODE, value)
+        }
 
-    fun enableSeamlessPlayMode(isSeamlessPlayMode: Boolean) {
-        this.isSeamlessPlayMode = isSeamlessPlayMode
+    fun enableSessionLimitMode(isSessionLimitMode: Boolean) {
+        this.isSessionLimitMode = isSessionLimitMode
     }
 
     @JvmStatic
     fun init(context: Context) {
         if (instance != null) return
         try {
-            val jsonString = context.assets.open(DEV_CONFIG_FILE).bufferedReader().use(BufferedReader::readText)
+            val jsonString =
+                context.assets.open(DEV_CONFIG_FILE).bufferedReader().use(BufferedReader::readText)
             instance = Gson().fromJson(jsonString, DevEnvConfig::class.java)
         } catch (e: Exception) {
             e.printStackTrace()

@@ -13,7 +13,6 @@ import io.agora.rtc2.RtcEngine
 import io.agora.scene.common.AgentApp
 import io.agora.scene.common.R
 import io.agora.scene.common.constant.AgentScenes
-import io.agora.scene.common.constant.EnvConfig
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.databinding.CommonDebugDialogBinding
 import io.agora.scene.common.databinding.CommonDebugOptionItemBinding
@@ -106,10 +105,10 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
                     onDebugDialogCallback?.onAudioDumpEnable(isChecked)
                 }
             }
-            cbSeamlessPlayMode.setChecked(DebugConfigSettings.isSeamlessPlayMode)
+            cbSeamlessPlayMode.setChecked(DebugConfigSettings.isSessionLimitMode)
             cbSeamlessPlayMode.setOnCheckedChangeListener { buttonView, isChecked ->
                 if (buttonView.isPressed) {
-                    DebugConfigSettings.enableSeamlessPlayMode(isChecked)
+                    DebugConfigSettings.enableSessionLimitMode(isChecked)
                     onDebugDialogCallback?.onSeamlessPlayMode(isChecked)
                 }
             }
@@ -197,6 +196,7 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
                 ) {
                     return@updateOptions
                 }
+                DebugConfigSettings.enableSessionLimitMode(false)
                 ServerConfig.updateDebugConfig(selectConfig)
                 onDebugDialogCallback?.onEnvConfigChange()
                 updateEnvConfig()

@@ -11,7 +11,8 @@
     <string name="common_debug_switch_tips">进入场景前可以切换服务器</string>
     <string name="common_debug_convoai_host">ConvoAI host</string>
     <string name="common_debug_audio_dump">音频 Dump</string>
-    <string name="common_debug_seamless_play_mode">畅玩模式</string>
+    <string name="common_debug_session_limit_mode">Session Limit</string>
+    <string name="common_debug_session_limit_mode_enable">Session Limit: %1d minute -> Session Limit: None</string>
     <string name="common_debug_close">关闭开发者模式</string>
     <string name="common_debug_copy_user_question">复制用户当前通话提问</string>
     <string name="common_call_time_is_up">本次对话时间到！</string>
@@ -32,6 +33,7 @@
     <string name="common_logout_confirm_known">退出登录</string>
     <string name="common_logout_confirm_cancel">取消</string>
     <string name="common_limit_time">本次体验对话限制%d分钟</string>
+    <string name="common_limit_time_none">本次体验对话无限制时长</string>
     <string name="common_upload_time_success">提交成功，感谢反馈</string>
     <string name="common_upload_time_failed">提交失败，请稍后重试</string>
     <string name="common_login_expired">登录过期，请重新登录</string>

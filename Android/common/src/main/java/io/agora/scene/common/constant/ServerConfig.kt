@@ -28,6 +28,9 @@ object ServerConfig {
             return "https://conversational-ai.shengwang.cn/terms/privacy/"
         }
 
+    @JvmStatic
+    var appVersionName: String = ""
+        private set
 
     @JvmStatic
     var appBuildNo: String = ""
@@ -54,9 +57,10 @@ object ServerConfig {
     val isBuildEnv: Boolean get() = buildEnvConfig.toolboxServerHost == toolBoxUrl
 
     fun initBuildConfig(
-        appBuildNo: String, envName: String, toolboxHost: String, rtcAppId: String, rtcAppCert: String
+        appBuildNo: String, envName: String, toolboxHost: String, rtcAppId: String, rtcAppCert: String,appVersionName:String
     ) {
         this.appBuildNo = appBuildNo
+        this.appVersionName = appVersionName
         buildEnvConfig.apply {
             this.envName = envName
             this.toolboxServerHost = toolboxHost

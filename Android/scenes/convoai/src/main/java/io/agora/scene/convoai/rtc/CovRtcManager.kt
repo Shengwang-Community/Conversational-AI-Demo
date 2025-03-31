@@ -124,7 +124,13 @@ object CovRtcManager {
     }
 
     fun muteLocalAudio(mute: Boolean) {
-        rtcEngine?.adjustRecordingSignalVolume(if (mute) 0 else 100)
+//        rtcEngine?.adjustRecordingSignalVolume(if (mute) 0 else 100)
+
+        if (mute){
+            rtcEngine?.setParameters("{\"che.audio.uplink_gain\": 0}")
+        }else{
+            rtcEngine?.setParameters("{\"che.audio.uplink_gain\": 100}")
+        }
     }
 
     fun onAudioDump(enable: Boolean) {

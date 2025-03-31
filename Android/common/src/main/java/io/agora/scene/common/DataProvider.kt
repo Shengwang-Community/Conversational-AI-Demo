@@ -5,5 +5,7 @@ interface DataProvider {
     fun rtcAppCert(): String
     fun toolboxHost(): String
     fun appBuildNo(): String
+    fun appVersionCode(): Int
+    fun appVersionName(): String
     fun envName(): String
 }

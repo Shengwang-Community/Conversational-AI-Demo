@@ -371,7 +371,13 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         // Immediately show the connecting status
         isUserEndCall = false
         connectionState = AgentConnectionState.CONNECTING
-        CovAgentManager.channelName = "agent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+        CovAgentManager.channelName =
+            if (DebugConfigSettings.isDebug) {
+                "agent_debug_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+            } else {
+                "agent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+            }
+
 
         isSelfSubRender = CovAgentManager.getPreset()?.isIndependent() == true
         mBinding?.apply {
@@ -705,16 +711,25 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         countDownJob?.cancel()
         countDownJob = coroutineScope.launch {
             try {
-                var remainingTime = CovAgentManager.roomExpireTime * 1000L
-                while (remainingTime > 0 && isActive) {
-                    delay(1000)
-                    remainingTime -= 1000
-                    onTimerTick(remainingTime)
-                }
-
-                if (remainingTime <= 0) {
-                    onClickEndCall()
-                    showRoomEndDialog()
+                if (DebugConfigSettings.isSessionLimitMode) {
+                    var elapsedTime = 0L
+                    onTimerTick(elapsedTime, true)
+                    while (isActive) {
+                        delay(1000)
+                        elapsedTime += 1000
+                        onTimerTick(elapsedTime, true)
+                    }
+                } else {
+                    var remainingTime = CovAgentManager.roomExpireTime * 1000L
+                    while (remainingTime > 0 && isActive) {
+                        delay(1000)
+                        remainingTime -= 1000
+                        onTimerTick(remainingTime, false)
+                    }
+                    if (remainingTime <= 0) {
+                        onClickEndCall()
+                        showRoomEndDialog()
+                    }
                 }
             } catch (e: Exception) {
                 CovLogger.e(TAG, "Timer error: ${e.message}")
@@ -729,15 +744,22 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         countDownJob = null
     }
 
-    private fun onTimerTick(remainingTimeMs: Long) {
-        val minutes = (remainingTimeMs / 1000 / 60).toInt()
-        val seconds = (remainingTimeMs / 1000 % 60).toInt()
-        if (remainingTimeMs <= 20000) {
-            mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_red6))
-        } else if (remainingTimeMs <= 60000) {
-            mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_green6))
+    private fun onTimerTick(timeMs: Long, isCountUp: Boolean) {
+        val minutes = (timeMs / 1000 / 60).toInt()
+        val seconds = (timeMs / 1000 % 60).toInt()
+        if (isCountUp) {
+            mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_brand_white10))
+            mBinding?.clTop?.tvTimer?.text = String.format("%02d:%02d", minutes, seconds)
+        } else {
+            if (timeMs <= 20000) {
+                mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_red6))
+            } else if (timeMs <= 60000) {
+                mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_green6))
+            } else {
+                mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_brand_white10))
+            }
+            mBinding?.clTop?.tvTimer?.text = String.format("%02d:%02d", minutes, seconds)
         }
-        mBinding?.clTop?.tvTimer?.text = String.format("%02d:%02d", minutes, seconds)
     }
 
     private fun updateUserVolumeAnim(volume: Int) {
@@ -984,10 +1006,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     private fun showTitleAnim() {
         titleAnimJob?.cancel()
         mBinding?.apply {
-            clTop.tvTips.text = getString(
-                io.agora.scene.common.R.string.common_limit_time,
-                (CovAgentManager.roomExpireTime / 60).toInt()
-            )
+            if (DebugConfigSettings.isSessionLimitMode){
+                clTop.tvTips.text = getString(io.agora.scene.common.R.string.common_limit_time_none,)
+            }else{
+                clTop.tvTips.text = getString(
+                    io.agora.scene.common.R.string.common_limit_time,
+                    (CovAgentManager.roomExpireTime / 60).toInt()
+                )
+            }
             titleAnimJob = coroutineScope.launch {
                 delay(2000)
                 if (connectionState != AgentConnectionState.IDLE) {
