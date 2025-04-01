@@ -712,14 +712,6 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         countDownJob = coroutineScope.launch {
             try {
                 if (DebugConfigSettings.isSessionLimitMode) {
-                    var elapsedTime = 0L
-                    onTimerTick(elapsedTime, true)
-                    while (isActive) {
-                        delay(1000)
-                        elapsedTime += 1000
-                        onTimerTick(elapsedTime, true)
-                    }
-                } else {
                     var remainingTime = CovAgentManager.roomExpireTime * 1000L
                     while (remainingTime > 0 && isActive) {
                         delay(1000)
@@ -729,6 +721,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     if (remainingTime <= 0) {
                         onClickEndCall()
                         showRoomEndDialog()
+                    }
+                } else {
+                    var elapsedTime = 0L
+                    onTimerTick(elapsedTime, true)
+                    while (isActive) {
+                        delay(1000)
+                        elapsedTime += 1000
+                        onTimerTick(elapsedTime, true)
                     }
                 }
             } catch (e: Exception) {
@@ -1007,12 +1007,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         titleAnimJob?.cancel()
         mBinding?.apply {
             if (DebugConfigSettings.isSessionLimitMode){
-                clTop.tvTips.text = getString(io.agora.scene.common.R.string.common_limit_time_none,)
-            }else{
                 clTop.tvTips.text = getString(
                     io.agora.scene.common.R.string.common_limit_time,
                     (CovAgentManager.roomExpireTime / 60).toInt()
                 )
+            }else{
+                clTop.tvTips.text = getString(io.agora.scene.common.R.string.common_limit_time_none,)
             }
             titleAnimJob = coroutineScope.launch {
                 delay(2000)

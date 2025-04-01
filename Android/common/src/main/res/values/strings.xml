@@ -4,15 +4,13 @@
     <string name="common_debug_mode_enable">开发者模式已开</string>
     <string name="common_debug_mode_disable">开发者模式已关闭</string>
     <string name="common_debug_setting">开发者模式</string>
-    <string name="common_debug_app_build">App Build No</string>
     <string name="common_debug_rtc_version">Rtc 版本</string>
     <string name="common_debug_switch_server">切换服务器</string>
     <string name="common_debug_current_server">已切换到 %1s \n %2s</string>
     <string name="common_debug_switch_tips">进入场景前可以切换服务器</string>
-    <string name="common_debug_convoai_host">ConvoAI host</string>
+    <string name="common_debug_convoai_host">ConvoAI Host</string>
     <string name="common_debug_audio_dump">音频 Dump</string>
-    <string name="common_debug_session_limit_mode">Session Limit</string>
-    <string name="common_debug_session_limit_mode_enable">Session Limit: %1d minute -> Session Limit: None</string>
+    <string name="common_debug_session_limit">会话限制</string>
     <string name="common_debug_close">关闭开发者模式</string>
     <string name="common_debug_copy_user_question">复制用户当前通话提问</string>
     <string name="common_call_time_is_up">本次对话时间到！</string>
@@ -40,4 +38,6 @@
     <string name="common_login_typing_text1">你好，人类</string>
     <string name="common_login_typing_text2">你好，我是对话式AI引擎</string>
     <string name="common_login_typing_text3">秒应智答，零滞畅聊</string>
+    <string name="common_app_version">v%1s</string>
+    <string name="common_app_build_no">Build %1s</string>
 </resources>

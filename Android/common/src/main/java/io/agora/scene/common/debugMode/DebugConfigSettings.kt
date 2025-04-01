@@ -15,7 +15,7 @@ data class DevEnvConfig(
 object DebugConfigSettings {
 
     private const val DEV_CONFIG_FILE = "dev_env_config.json"
-    private const val DEV_SESSION_LIMIT_MODE = "dev_session_limit_mode.json"
+    private const val DEV_SESSION_LIMIT_MODE = "dev_session_limit_mode"
 
     private var instance: DevEnvConfig? = null
 
@@ -41,7 +41,7 @@ object DebugConfigSettings {
         this.isAudioDumpEnabled = isAudioDumpEnabled
     }
 
-    var isSessionLimitMode: Boolean = LocalStorageUtil.getBoolean(DEV_SESSION_LIMIT_MODE, false)
+    var isSessionLimitMode: Boolean = LocalStorageUtil.getBoolean(DEV_SESSION_LIMIT_MODE, true)
         private set(value) {
             if (field == value) return
             field = value

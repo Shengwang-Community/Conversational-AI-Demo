@@ -85,7 +85,6 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
             divider.setDrawable(resources.getDrawable(R.drawable.shape_divider_line, null))
             rcOptions.addItemDecoration(divider)
 
-            mtvBuildNo.text = ServerConfig.appBuildNo
             mtvRtcVersion.text = RtcEngine.getSdkVersion()
 
             btnClose.setOnClickListener {
@@ -192,11 +191,11 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
             ) { index ->
                 val selectConfig = serverConfigList[index]
                 if (selectConfig.toolboxServerHost == selectedEnvConfig?.toolboxServerHost &&
-                    selectConfig.rtcAppId == selectedEnvConfig?.rtcAppId
+                    selectConfig.rtcAppId == selectedEnvConfig.rtcAppId
                 ) {
                     return@updateOptions
                 }
-                DebugConfigSettings.enableSessionLimitMode(false)
+                DebugConfigSettings.enableSessionLimitMode(true)
                 ServerConfig.updateDebugConfig(selectConfig)
                 onDebugDialogCallback?.onEnvConfigChange()
                 updateEnvConfig()

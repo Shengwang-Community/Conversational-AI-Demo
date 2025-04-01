@@ -100,7 +100,6 @@ class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
         }
         
         mBinding?.apply {
-            tvVersionName.setText("V")
             mtvAgentId.setOnLongClickListener {
                 copyToClipboard(mtvAgentId.text.toString())
                 return@setOnLongClickListener true
@@ -144,8 +143,9 @@ class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
             updateDeviceCount()
             updateUploadingStatus(disable = connectionState != AgentConnectionState.CONNECTED)
 
-            tvVersionName.text = "V${ServerConfig.appVersionName}"
-            tvBuild.text = ServerConfig.appBuildNo
+            tvVersionName.text =
+                getString(io.agora.scene.common.R.string.common_app_version, ServerConfig.appVersionName)
+            tvBuild.text = getString(io.agora.scene.common.R.string.common_app_build_no, ServerConfig.appBuildNo)
         }
     }
 
