@@ -745,11 +745,21 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     private fun onTimerTick(timeMs: Long, isCountUp: Boolean) {
-        val minutes = (timeMs / 1000 / 60).toInt()
+        val hours = (timeMs / 1000 / 60 / 60).toInt()
+        val minutes = (timeMs / 1000 / 60 % 60).toInt()
         val seconds = (timeMs / 1000 % 60).toInt()
+        
+        val timeText = if (hours > 0) {
+            // Display in HH:MM:SS format when exceeding one hour
+            String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            // Display in MM:SS format when less than one hour
+            String.format("%02d:%02d", minutes, seconds)
+        }
+
+        mBinding?.clTop?.tvTimer?.text = timeText
         if (isCountUp) {
             mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_brand_white10))
-            mBinding?.clTop?.tvTimer?.text = String.format("%02d:%02d", minutes, seconds)
         } else {
             if (timeMs <= 20000) {
                 mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_red6))
@@ -758,7 +768,6 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             } else {
                 mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_brand_white10))
             }
-            mBinding?.clTop?.tvTimer?.text = String.format("%02d:%02d", minutes, seconds)
         }
     }
 
