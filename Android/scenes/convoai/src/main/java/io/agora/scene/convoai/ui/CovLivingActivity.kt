@@ -280,8 +280,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     "enable_aivad" to CovAgentManager.enableAiVad,
                     "enable_bhvs" to CovAgentManager.enableBHVS,
                     "enable_rtm" to null,
-
-                    ),
+                ),
                 "asr" to mapOf(
                     "language" to CovAgentManager.language?.language_code,
                     "vendor" to null,
@@ -290,11 +289,25 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 "llm" to mapOf(
                     "url" to BuildConfig.LLM_URL.takeIf { it.isNotEmpty() },
                     "api_key" to BuildConfig.LLM_API_KEY.takeIf { it.isNotEmpty() },
-                    "system_messages" to BuildConfig.LLM_SYSTEM_MESSAGES.takeIf { it.isNotEmpty() },
+                    "system_messages" to try {
+                        // Parse system_messages as JSON if not empty
+                        BuildConfig.LLM_SYSTEM_MESSAGES.takeIf { it.isNotEmpty() }?.let {
+                            org.json.JSONArray(it)
+                        }
+                    } catch (e: Exception) {
+                        CovLogger.e(TAG, "Failed to parse system_messages as JSON: ${e.message}")
+                        BuildConfig.LLM_SYSTEM_MESSAGES.takeIf { it.isNotEmpty() }
+                    },
                     "greeting_message" to null,
-                    "params" to mapOf(
-                        "model" to BuildConfig.LLM_MODEL.takeIf { it.isNotEmpty() },
-                    ),
+                    "params" to try {
+                        // Parse params as JSON if not empty
+                        BuildConfig.LLM_PARRAMS.takeIf { it.isNotEmpty() }?.let {
+                            JSONObject(it)
+                        }
+                    } catch (e: Exception) {
+                        CovLogger.e(TAG, "Failed to parse LLM params as JSON: ${e.message}")
+                        BuildConfig.LLM_PARRAMS.takeIf { it.isNotEmpty() }
+                    },
                     "style" to null,
                     "max_history" to null,
                     "ignore_empty" to null,
@@ -303,10 +316,17 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     "failure_message" to null,
                 ),
                 "tts" to mapOf(
-                    "vendor" to  BuildConfig.TTS_VENDOR.takeIf { it.isNotEmpty() },
-                    "params" to BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() },
-
-                    ),
+                    "vendor" to BuildConfig.TTS_VENDOR.takeIf { it.isNotEmpty() },
+                    "params" to try {
+                        // Parse TTS params as JSON if not empty
+                        BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() }?.let {
+                            JSONObject(it)
+                        }
+                    } catch (e: Exception) {
+                        CovLogger.e(TAG, "Failed to parse TTS params as JSON: ${e.message}")
+                        BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() }
+                    },
+                ),
                 "vad" to mapOf(
                     "interrupt_duration_ms" to null,
                     "prefix_padding_ms" to null,
@@ -349,7 +369,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             llmUrl = BuildConfig.LLM_URL.takeIf { it.isNotEmpty() },
             llmApiKey = BuildConfig.LLM_API_KEY.takeIf { it.isNotEmpty() },
             llmPrompt = BuildConfig.LLM_SYSTEM_MESSAGES.takeIf { it.isNotEmpty() },
-            llmModel = BuildConfig.LLM_MODEL.takeIf { it.isNotEmpty() },
+           // llmModel = BuildConfig.LLM_MODEL.takeIf { it.isNotEmpty() },
             ttsVendor = BuildConfig.TTS_VENDOR.takeIf { it.isNotEmpty() },
             ttsParams = BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() }?.let { JSONObject(it) },
             asrLanguage = CovAgentManager.language?.language_code,
@@ -447,17 +467,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     private suspend fun startAgentAsync(): Pair<String, Int> = suspendCoroutine { cont ->
-        CovAgentApiManager.startAgent(getAgentParams()) { err, channelName ->
+//        CovAgentApiManager.startAgent(getAgentParams()) { err, channelName ->
+//            cont.resume(Pair(channelName, err?.errorCode ?: 0))
+//        }
+
+        val channel = CovAgentManager.channelName
+        CovAgentApiManager.startAgentWithMap(channel, getConvoaiBodyMap(channel)) { err, channelName ->
             cont.resume(Pair(channelName, err?.errorCode ?: 0))
         }
-
-        /*val channel = CovAgentManager.channelName
-        CovAgentApiManager.startAgentWithMap(
-            channel,
-            getConvoaiBodyMap(channel)
-        ) { err, channelName ->
-            cont.resume(Pair(channelName, err?.errorCode ?: 0))
-        }*/
     }
 
     private suspend fun updateTokenAsync(): Boolean = suspendCoroutine { cont ->

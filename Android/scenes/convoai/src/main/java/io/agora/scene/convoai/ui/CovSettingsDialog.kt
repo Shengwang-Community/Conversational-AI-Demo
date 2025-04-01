@@ -161,6 +161,7 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
 
     private fun onClickPreset() {
         val presets = CovAgentManager.getPresetList() ?: return
+        if (presets.isEmpty()) return
         binding?.apply {
             vOptionsMask.visibility = View.VISIBLE
 
@@ -206,6 +207,7 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
 
     private fun onClickLanguage() {
         val languages = CovAgentManager.getLanguages() ?: return
+        if (languages.isEmpty()) return
         binding?.apply {
             vOptionsMask.visibility = View.VISIBLE
 

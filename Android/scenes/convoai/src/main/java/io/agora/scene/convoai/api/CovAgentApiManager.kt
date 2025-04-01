@@ -17,6 +17,7 @@ import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONException
 import org.json.JSONObject
@@ -42,10 +43,10 @@ object CovAgentApiManager {
         private set
 
 
-    private const val SERVICE_VERSION = "v3"
+    private const val SERVICE_VERSION = "v4"
 
     fun startAgentWithMap(channelName:String,convoaiBody: Map<String,Any?>, completion: (error: ApiException?, channelName: String) -> Unit) {
-        val requestURL = "${ServerConfig.toolBoxUrl}/$SERVICE_VERSION/convoai/start"
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/start"
         val postBody = JSONObject()
         try {
             postBody.put("app_id", ServerConfig.rtcAppId)
@@ -69,9 +70,8 @@ object CovAgentApiManager {
         } catch (e: JSONException) {
             CovLogger.e(TAG, "postBody error ${e.message}")
         }
-        CovLogger.json(TAG, postBody.toString())
 
-        val requestBody = RequestBody.create(null, postBody.toString())
+        val requestBody = postBody.toString().toRequestBody(null)
         val request = buildRequest(requestURL, "POST", requestBody)
 
         okHttpClient.newCall(request).enqueue(object : Callback {
@@ -234,9 +234,8 @@ object CovAgentApiManager {
         } catch (e: JSONException) {
             CovLogger.e(TAG, "postBody error ${e.message}")
         }
-        Log.d(TAG, postBody.toString())
 
-        val requestBody = RequestBody.create(null, postBody.toString())
+        val requestBody = postBody.toString().toRequestBody(null)
         val request = buildRequest(requestURL, "POST", requestBody)
 
         okHttpClient.newCall(request).enqueue(object : Callback {
@@ -298,9 +297,16 @@ object CovAgentApiManager {
     }
 
     fun fetchPresets(completion: (error: Exception?, List<CovAgentPreset>) -> Unit) {
-        val requestURL =
-            "${ServerConfig.toolBoxUrl}/$SERVICE_VERSION/convoai/presetAgents?app_id=${ServerConfig.rtcAppId}"
-        val request = buildRequest(requestURL)
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/presets/list"
+
+        val postBody = JSONObject()
+        try {
+            postBody.put("app_id", ServerConfig.rtcAppId)
+        } catch (e: JSONException) {
+            CovLogger.e(TAG, "postBody error ${e.message}")
+        }
+        val requestBody = postBody.toString().toRequestBody(null)
+        val request = buildRequest(requestURL, "POST", requestBody)
 
         okHttpClient.newCall(request).enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
@@ -338,7 +344,7 @@ object CovAgentApiManager {
     }
 
     fun ping(channelName: String, preset: String) {
-        val requestURL = "${ServerConfig.toolBoxUrl}/$SERVICE_VERSION/convoai/ping"
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/ping"
         val postBody = JSONObject()
         try {
             postBody.put("app_id", ServerConfig.rtcAppId)
@@ -347,7 +353,7 @@ object CovAgentApiManager {
         } catch (e: JSONException) {
             CovLogger.e(TAG, "postBody error ${e.message}")
         }
-        val requestBody = RequestBody.create(null, postBody.toString())
+        val requestBody = postBody.toString().toRequestBody(null)
         val request = buildRequest(requestURL, "POST", requestBody)
 
         okHttpClient.newCall(request).enqueue(object : Callback {
@@ -379,7 +385,7 @@ object CovAgentApiManager {
             }
             return
         }
-        val requestURL = "${ServerConfig.toolBoxUrl}/$SERVICE_VERSION/convoai/stop"
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/stop"
         val postBody = JSONObject()
         try {
             postBody.put("app_id", ServerConfig.rtcAppId)
@@ -391,7 +397,7 @@ object CovAgentApiManager {
         } catch (e: JSONException) {
             CovLogger.e(TAG, "postBody error ${e.message}")
         }
-        val requestBody = RequestBody.create(null, postBody.toString())
+        val requestBody = postBody.toString().toRequestBody(null)
         val request = buildRequest(requestURL, "POST", requestBody)
 
         okHttpClient.newCall(request).enqueue(object : Callback {
