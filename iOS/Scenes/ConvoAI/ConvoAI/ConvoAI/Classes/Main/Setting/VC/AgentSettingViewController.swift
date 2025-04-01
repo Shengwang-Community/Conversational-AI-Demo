@@ -93,16 +93,6 @@ class AgentSettingViewController: UIViewController {
         return view
     }()
     
-//    private lazy var bhvsResponseItem: AgentSettingSwitchItemView = {
-//        let view = AgentSettingSwitchItemView(frame: .zero)
-//        view.titleLabel.text = ResourceManager.L10n.Settings.bhvs
-//        view.switcher.addTarget(self, action: #selector(onClickForceResponse(_:)), for: .touchUpInside)
-//        if let manager = AppContext.preferenceManager() {
-//            view.switcher.isOn = manager.preference.bhvs
-//        }
-//        return view
-//    }()
-    
     private lazy var aiVadItem: AgentSettingSwitchItemView = {
         let view = AgentSettingSwitchItemView(frame: .zero)
         let string1 = ResourceManager.L10n.Settings.aiVadNormal
@@ -454,7 +444,7 @@ extension AgentSettingViewController {
         }
         
         selectTableMask.snp.makeConstraints { make in
-            make.top.left.right.bottom.equalToSuperview()
+            make.edges.equalToSuperview()
         }
     }
     

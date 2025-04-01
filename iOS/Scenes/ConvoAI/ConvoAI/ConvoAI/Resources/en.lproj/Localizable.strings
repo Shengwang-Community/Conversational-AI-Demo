@@ -105,8 +105,12 @@
 "devmode.rtc" = "RTC Version";
 "devmode.host" = "Server Host";
 "devmode.dump" = "Audio Dump";
+"devmode.sessionLimit" = "Session Limit";
 "devmode.copy" = "Copy Mine Messages";
 "devmode.close" = "Close Developer Mode";
 "devmode.graph" = "graph id";
 "devmode.server" = "Server";
 
+
+"iot.info.title" = "Conversational AI Device";
+"iot.info.device" = "%@ Devices";

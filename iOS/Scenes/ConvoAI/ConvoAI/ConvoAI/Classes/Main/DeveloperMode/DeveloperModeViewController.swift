@@ -23,16 +23,19 @@ public class DeveloperModeViewController: UIViewController {
                             onCloseDevMode: (() -> Void)? = nil,
                             onAudioDump: ((Bool) -> Void)? = nil,
                             onSwitchServer: (() -> Void)? = nil,
-                            onCopy: (() -> Void)? = nil) {
+                            onCopy: (() -> Void)? = nil,
+                            onSessionLimit: ((Bool) -> Void)? = nil) {
         let devViewController = DeveloperModeViewController()
         devViewController.modalTransitionStyle = .crossDissolve
         devViewController.modalPresentationStyle = .overCurrentContext
         devViewController.isAudioDumpEnabled = audioDump
+        devViewController.isSessionLimitEnabled = true
         devViewController.serverHost = serverHost
         devViewController.onCloseDevModeCallback = onCloseDevMode
         devViewController.audioDumpCallback = onAudioDump
         devViewController.copyCallback = onCopy
         devViewController.onSwitchServer = onSwitchServer
+        devViewController.sessionLimitCallback = onSessionLimit
         vc.present(devViewController, animated: true)
     }
     
@@ -40,13 +43,16 @@ public class DeveloperModeViewController: UIViewController {
     private var audioDumpCallback: ((Bool) -> Void)?
     private var copyCallback: (() -> Void)?
     private var onSwitchServer: (() -> Void)?
+    private var sessionLimitCallback: ((Bool) -> Void)?
     
     private var serverHost: String = ""
     private var isAudioDumpEnabled: Bool = false
+    private var isSessionLimitEnabled: Bool = true
     private let rtcVersionValueLabel = UILabel()
     private let serverHostValueLabel = UILabel()
     private let graphTextField = UITextField()
     private let audioDumpSwitch = UISwitch()
+    private let sessionLimitSwitch = UISwitch()
     
     private let feedbackPresenter = FeedBackPresenter()
     
@@ -163,6 +169,10 @@ extension DeveloperModeViewController {
         }
         self.dismiss(animated: true)
     }
+    
+    @objc private func onClickSessionLimit(_ sender: UISwitch) {
+        sessionLimitCallback?(sender.isOn)
+    }
 }
 
 // MARK: - Setup
@@ -171,10 +181,12 @@ extension DeveloperModeViewController {
         // Content View
         let cotentView = UIView()
         cotentView.backgroundColor = UIColor.themColor(named: "ai_fill2")
+        cotentView.layer.cornerRadius = 16
+        cotentView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         view.addSubview(cotentView)
         cotentView.snp.makeConstraints { make in
             make.left.right.bottom.equalToSuperview()
-            make.height.equalTo(424)
+            make.height.equalTo(480)
         }
         
         // Title Grabber
@@ -337,6 +349,28 @@ extension DeveloperModeViewController {
             make.height.equalTo(44)
         }
         
+        // Session Limit
+        let sessionLimitLabel = UILabel()
+        sessionLimitLabel.text = ResourceManager.L10n.DevMode.sessionLimit
+        sessionLimitLabel.textColor = UIColor.themColor(named: "ai_icontext1")
+        sessionLimitLabel.font = UIFont.systemFont(ofSize: 14)
+        
+        sessionLimitSwitch.isOn = isSessionLimitEnabled
+        sessionLimitSwitch.addTarget(self, action: #selector(onClickSessionLimit(_ :)), for: .touchUpInside)
+        
+        let sessionLimitStackView = UIStackView()
+        sessionLimitStackView.axis = .horizontal
+        sessionLimitStackView.alignment = .center
+        sessionLimitStackView.spacing = 12
+        sessionLimitStackView.addArrangedSubview(sessionLimitLabel)
+        sessionLimitStackView.addArrangedSubview(sessionLimitSwitch)
+        cotentView.addSubview(sessionLimitStackView)
+        sessionLimitStackView.snp.makeConstraints { make in
+            make.top.equalTo(audioDumpStackView.snp.bottom)
+            make.leading.trailing.equalToSuperview().inset(16)
+            make.height.equalTo(44)
+        }
+        
         // Copy User Question
         let copyUserQuestionLabel = UILabel()
         copyUserQuestionLabel.text = ResourceManager.L10n.DevMode.copy
@@ -356,7 +390,7 @@ extension DeveloperModeViewController {
         copyStackView.addArrangedSubview(copyButton)
         cotentView.addSubview(copyStackView)
         copyStackView.snp.makeConstraints { make in
-            make.top.equalTo(audioDumpStackView.snp.bottom)
+            make.top.equalTo(sessionLimitStackView.snp.bottom)
             make.leading.trailing.equalToSuperview().inset(16)
             make.height.equalTo(44)
         }

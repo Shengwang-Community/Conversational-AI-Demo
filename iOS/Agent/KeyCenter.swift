@@ -38,8 +38,8 @@ struct KeyCenter {
      */
     static let LLM_URL: String = ""
     static let LLM_API_KEY: String = ""
-    static let LLM_SYSTEM_MESSAGES: String = ""
-    static let LLM_MODEL: String = ""
+    static let LLM_SYSTEM_MESSAGES: [String: Any] = [:]
+    static let LLM_PARAMS: [String: Any] = [:]
 
     /**
      TTS

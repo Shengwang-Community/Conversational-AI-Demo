@@ -22,7 +22,7 @@ public class ChatViewController: UIViewController {
     private var agentUid = 0
     private var remoteAgentId = ""
     private let uid = "\(RtcEnum.getUid())"
-        
+    
     private lazy var timerCoordinator: AgentTimerCoordinator = {
         let coordinator = AgentTimerCoordinator()
         coordinator.delegate = self
@@ -341,7 +341,7 @@ public class ChatViewController: UIViewController {
                     joinChannel()
                 }
             } catch {
-                
+                addLog("Failed to prepare agent: \(error)")
                 handleStartError()
             }
         }
@@ -513,21 +513,12 @@ extension ChatViewController {
             return
         }
         manager.updateAgentState(.disconnected)
-        let aiVad = manager.preference.aiVad
-        let bhvs = manager.preference.bhvs
-        let presetName = manager.preference.preset?.name ?? ""
-        let language = manager.preference.language?.languageCode ?? ""
         channelName = RtcEnum.getChannel()
         agentUid = AppContext.agentUid
         remoteIsJoined = false
-        agentManager.startAgent(appId: AppContext.shared.appId,
-                                uid: uid,
-                                agentUid: "\(agentUid)",
-                                channelName: channelName,
-                                aiVad: aiVad,
-                                bhvs: bhvs,
-                                presetName: presetName,
-                                language: language) { [weak self] error, channelName, remoteAgentId, targetServer in
+        
+        let parameters = getStartAgentParameters()
+        agentManager.startAgent(parameters: parameters, channelName: channelName) { [weak self] error, channelName, remoteAgentId, targetServer in
             guard let self = self else { return }
             if self.channelName != channelName {
                 self.addLog("channelName is different, current : \(self.channelName), before: \(channelName)")
@@ -583,6 +574,115 @@ extension ChatViewController {
             return
         }
         agentManager.stopAgent(appId: AppContext.shared.appId, agentId: remoteAgentId, channelName: channelName, presetName: presetName) { _, _ in }
+    }
+}
+// MARK: - Agent Parameters
+extension ChatViewController {
+    
+    private func getStartAgentParameters() -> [String: Any] {
+        let parameters: [String: Any?] = [
+            // Basic parameters
+            "app_id": AppContext.shared.appId,
+            "preset_name": AppContext.preferenceManager()?.preference.preset?.name,
+            "app_cert": AppContext.shared.certificate.isEmpty ? nil : AppContext.shared.certificate,
+            "basic_auth_username": AppContext.shared.basicAuthKey.isEmpty ? nil : AppContext.shared.basicAuthKey,
+            "basic_auth_password": AppContext.shared.basicAuthSecret.isEmpty ? nil : AppContext.shared.basicAuthSecret,
+            
+            // ConvoAI request body
+            "convoai_body": getConvoaiBodyMap()
+        ]
+        return (removeNilValues(from: parameters) as? [String: Any]) ?? [:]
+    }
+    
+    private func getConvoaiBodyMap() -> [String: Any?] {
+        return [
+            "graph_id": AppContext.shared.graphId.isEmpty ? nil : AppContext.shared.graphId,
+            "name": nil,
+            "properties": [
+                "channel": channelName,
+                "token": nil,
+                "agent_rtc_uid": "\(agentUid)",
+                "remote_rtc_uids": [uid],
+                "enable_string_uid": nil,
+                "idle_timeout": nil,
+                "agent_rtm_uid": nil,
+                "advanced_features": [
+                    "enable_aivad": AppContext.preferenceManager()?.preference.aiVad,
+                    "enable_bhvs": AppContext.preferenceManager()?.preference.bhvs,
+                    "enable_rtm": nil
+                ],
+                "asr": [
+                    "language": AppContext.preferenceManager()?.preference.language?.languageCode ?? "",
+                    "vendor": nil,
+                    "vendor_model": nil
+                ],
+                "llm": [
+                    "url": AppContext.shared.llmUrl.isEmpty ? nil : AppContext.shared.llmUrl,
+                    "api_key": AppContext.shared.llmApiKey.isEmpty ? nil : AppContext.shared.llmApiKey,
+                    "system_messages": AppContext.shared.llmSystemMessages.isEmpty ? nil : AppContext.shared.llmApiKey,
+                    "greeting_message": nil,
+                    "params": AppContext.shared.llmParams.isEmpty ? nil : AppContext.shared.llmParams,
+                    "style": nil,
+                    "max_history": nil,
+                    "ignore_empty": nil,
+                    "input_modalities": nil,
+                    "output_modalities": nil,
+                    "failure_message": nil
+                ],
+                "tts": [
+                    "vendor": AppContext.shared.ttsVendor.isEmpty ? nil : AppContext.shared.ttsVendor as Any,
+                    "params": AppContext.shared.ttsParams.isEmpty ? nil : AppContext.shared.ttsParams,
+                    "adjust_volume": nil,
+                ],
+                "vad": [
+                    "interrupt_duration_ms": nil,
+                    "prefix_padding_ms": nil,
+                    "silence_duration_ms": nil,
+                    "threshold": nil
+                ],
+                "parameters": [
+                    "enable_flexible": nil,
+                    "enable_metrics": nil,
+                    "aivad_force_threshold": nil,
+                    "output_audio_codec": nil,
+                    "audio_scenario": nil,
+                    "transcript": [
+                        "enable": true,
+                        "enable_words": true,
+                        "protocol_version": "v2",
+                        "redundant": nil,
+                    ],
+                    "sc": [
+                        "sessCtrlStartSniffWordGapInMs": nil,
+                        "sessCtrlTimeOutInMs": nil,
+                        "sessCtrlWordGapLenVolumeThr": nil,
+                        "sessCtrlWordGapLenInMs": nil
+                    ]
+                ]
+            ]
+        ]
+    }
+    
+    private func removeNilValues(from value: Any?) -> Any? {
+        guard let value = value else { return nil }
+        if let dict = value as? [String: Any?] {
+            var result: [String: Any] = [:]
+            for (key, val) in dict {
+                if let processedVal = removeNilValues(from: val) {
+                    result[key] = processedVal
+                }
+            }
+            return result.isEmpty ? nil : result
+        }
+        if let array = value as? [[String: Any?]] {
+            let processedArray = array.compactMap { removeNilValues(from: $0) as? [String: Any] }
+            return processedArray.isEmpty ? nil : processedArray
+        }
+        if let array = value as? [Any?] {
+            let processedArray = array.compactMap { removeNilValues(from: $0) }
+            return processedArray.isEmpty ? nil : processedArray
+        }
+        return value
     }
 }
 
@@ -985,6 +1085,8 @@ extension ChatViewController {
             let pasteboard = UIPasteboard.general
             pasteboard.string = messageContents
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.DevMode.copy)
+        } onSessionLimit: { isOn in
+            self.timerCoordinator.setDurationLimit(limited: isOn)
         }
     }
     
@@ -999,4 +1101,5 @@ extension ChatViewController {
         NotificationCenter.default.post(name: .EnvironmentChanged, object: nil, userInfo: nil)
     }
 }
+
 

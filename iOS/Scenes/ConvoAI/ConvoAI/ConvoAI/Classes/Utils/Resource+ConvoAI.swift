@@ -150,6 +150,7 @@ extension ResourceManager {
             public static let rtc = ResourceManager.localizedString("devmode.rtc")
             public static let host = ResourceManager.localizedString("devmode.host")
             public static let dump = ResourceManager.localizedString("devmode.dump")
+            public static let sessionLimit = ResourceManager.localizedString("devmode.sessionLimit")
             public static let copy = ResourceManager.localizedString("devmode.copy")
             public static let close = ResourceManager.localizedString("devmode.close")
             public static let server = ResourceManager.localizedString("devmode.server")
