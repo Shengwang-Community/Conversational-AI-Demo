@@ -213,20 +213,20 @@ fi
 
 # 主项目工程配置
 # Debug
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:CURRENT_PROJECT_VERSION ${BUILD_NUMBER}" $PBXPROJ_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:PRODUCT_BUNDLE_IDENTIFIER ${bundleId}" $PBXPROJ_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:CODE_SIGN_STYLE 'Manual'" $PBXPROJ_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:DEVELOPMENT_TEAM '${DEVELOPMENT_TEAM}'" $PBXPROJ_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:PROVISIONING_PROFILE_SPECIFIER '${PROVISIONING_PROFILE}'" $PBXPROJ_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:CODE_SIGN_IDENTITY '${CODE_SIGN_IDENTITY}'" $PBXPROJ_PATH
+sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_NUMBER};|g" $PBXPROJ_PATH
+sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = .*;|PRODUCT_BUNDLE_IDENTIFIER = \"${bundleId}\";|g" $PBXPROJ_PATH
+sed -i '' "s|CODE_SIGN_STYLE = .*;|CODE_SIGN_STYLE = \"Manual\";|g" $PBXPROJ_PATH
+sed -i '' "s|DEVELOPMENT_TEAM = .*;|DEVELOPMENT_TEAM = \"${DEVELOPMENT_TEAM}\";|g" $PBXPROJ_PATH
+sed -i '' "s|PROVISIONING_PROFILE_SPECIFIER = .*;|PROVISIONING_PROFILE_SPECIFIER = \"${PROVISIONING_PROFILE}\";|g" $PBXPROJ_PATH
+sed -i '' "s|CODE_SIGN_IDENTITY = .*;|CODE_SIGN_IDENTITY = \"${CODE_SIGN_IDENTITY}\";|g" $PBXPROJ_PATH
 
 # Release
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:CURRENT_PROJECT_VERSION ${BUILD_NUMBER}" $PBXPROJ_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:PRODUCT_BUNDLE_IDENTIFIER ${bundleId}" $PBXPROJ_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:CODE_SIGN_STYLE 'Manual'" $PBXPROJ_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:DEVELOPMENT_TEAM '${DEVELOPMENT_TEAM}'" $PBXPROJ_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:PROVISIONING_PROFILE_SPECIFIER '${PROVISIONING_PROFILE}'" $PBXPROJ_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:CODE_SIGN_IDENTITY '${CODE_SIGN_IDENTITY}'" $PBXPROJ_PATH
+sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_NUMBER};|g" $PBXPROJ_PATH
+sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = .*;|PRODUCT_BUNDLE_IDENTIFIER = \"${bundleId}\";|g" $PBXPROJ_PATH
+sed -i '' "s|CODE_SIGN_STYLE = .*;|CODE_SIGN_STYLE = \"Manual\";|g" $PBXPROJ_PATH
+sed -i '' "s|DEVELOPMENT_TEAM = .*;|DEVELOPMENT_TEAM = \"${DEVELOPMENT_TEAM}\";|g" $PBXPROJ_PATH
+sed -i '' "s|PROVISIONING_PROFILE_SPECIFIER = .*;|PROVISIONING_PROFILE_SPECIFIER = \"${PROVISIONING_PROFILE}\";|g" $PBXPROJ_PATH
+sed -i '' "s|CODE_SIGN_IDENTITY = .*;|CODE_SIGN_IDENTITY = \"${CODE_SIGN_IDENTITY}\";|g" $PBXPROJ_PATH
 
 # 读取APPID环境变量
 echo AGORA_APP_ID:$APP_ID
@@ -251,22 +251,17 @@ sed -i '' "s|static let Certificate: String? = .*|static let Certificate: String
 # 替换 manifestUrl
 sed -i '' "s|let manifestUrl = .*|let manifestUrl = \"$manifest_url\"|g" $KEYCENTER_PATH
 
-# Xcode clean
-xcodebuild clean -workspace "${APP_PATH}" -configuration "${CONFIGURATION}" -scheme "${TARGET_NAME}" -quiet
-
-# 时间戳
-CURRENT_TIME=$(date "+%Y-%m-%d_%H-%M-%S")
-
 # 归档路径
 ARCHIVE_PATH="${WORKSPACE}/${TARGET_NAME}_${BUILD_NUMBER}.xcarchive"
-# 编译环境
 
 # plist路径
 PLIST_PATH="${CURRENT_PATH}/cicd/build_scripts/ExportOptions_${method}.plist"
 
 echo PLIST_PATH: $PLIST_PATH
 
-# 设置签名配置
+# 构建和归档
+echo "开始构建和归档..."
+xcodebuild clean -workspace "${APP_PATH}" -scheme "${TARGET_NAME}" -configuration "${CONFIGURATION}" -quiet
 xcodebuild CODE_SIGN_STYLE="Manual" \
     -workspace "${APP_PATH}" \
     -scheme "${TARGET_NAME}" \
@@ -285,15 +280,12 @@ EXPORT_PATH="${WORKSPACE}/export"
 mkdir -p "${EXPORT_PATH}"
 
 # 导出IPA
+echo "开始导出IPA..."
 xcodebuild -exportArchive \
     -archivePath "${ARCHIVE_PATH}" \
     -exportPath "${EXPORT_PATH}" \
     -exportOptionsPlist "${PLIST_PATH}" \
-    -allowProvisioningUpdates \
-    CODE_SIGN_IDENTITY="${CODE_SIGN_IDENTITY}" \
-    PROVISIONING_PROFILE_SPECIFIER="${PROVISIONING_PROFILE}" \
-    DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}" \
-    CODE_SIGN_STYLE="Manual"
+    -allowProvisioningUpdates
 
 cd ${WORKSPACE}
 
