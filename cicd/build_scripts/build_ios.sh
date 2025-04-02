@@ -155,15 +155,6 @@ else
     exit 1
 fi
 
-# 设置Pods项目的签名配置
-PODS_PROJECT_PATH="${PROJECT_PATH}/Pods/Pods.xcodeproj/project.pbxproj"
-echo "设置Pods项目的签名配置..."
-# 为所有target设置自动签名
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:CODE_SIGN_STYLE 'Automatic'" $PODS_PROJECT_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:CODE_SIGN_STYLE 'Automatic'" $PODS_PROJECT_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:CODE_SIGNING_ALLOWED 'NO'" $PODS_PROJECT_PATH
-/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:CODE_SIGNING_ALLOWED 'NO'" $PODS_PROJECT_PATH
-
 # 从项目配置读取版本号
 export release_version=$(xcodebuild -workspace "${PROJECT_PATH}/${PROJECT_NAME}.xcworkspace" -scheme "${TARGET_NAME}" -showBuildSettings | grep "MARKETING_VERSION" | cut -d "=" -f 2 | tr -d " ")
 if [ -z "$release_version" ]; then
@@ -298,7 +289,11 @@ xcodebuild -exportArchive \
     -archivePath "${ARCHIVE_PATH}" \
     -exportPath "${EXPORT_PATH}" \
     -exportOptionsPlist "${PLIST_PATH}" \
-    -allowProvisioningUpdates
+    -allowProvisioningUpdates \
+    CODE_SIGN_IDENTITY="${CODE_SIGN_IDENTITY}" \
+    PROVISIONING_PROFILE_SPECIFIER="${PROVISIONING_PROFILE}" \
+    DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}" \
+    CODE_SIGN_STYLE="Manual"
 
 cd ${WORKSPACE}
 
