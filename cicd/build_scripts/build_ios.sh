@@ -8,7 +8,10 @@ if [ -z "$WORKSPACE" ]; then
     export WORKSPACE=$(pwd)/cicd/iosExport
     export LOCALPACKAGE="true"
     mkdir -p $WORKSPACE
+else
+    source /Users/admin/jenkins/bin/activate
 fi
+
 
 if [ -z "$BUILD_NUMBER" ]; then
     export BUILD_NUMBER=$(date +%Y%m%d%H%M%S)
