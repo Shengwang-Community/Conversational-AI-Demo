@@ -36,24 +36,6 @@ if [ ! -d "${PROJECT_PATH}" ]; then
     exit 1
 fi
 
-# 从项目Info.plist读取版本号
-INFO_PLIST_PATH="${PROJECT_PATH}/${PROJECT_NAME}/Info.plist"
-if [ -f "${INFO_PLIST_PATH}" ]; then
-    # 使用xcodebuild命令读取版本号
-    export release_version=$(xcodebuild -workspace "${PROJECT_PATH}/${PROJECT_NAME}.xcworkspace" -scheme "${TARGET_NAME}" -showBuildSettings | grep "MARKETING_VERSION" | cut -d "=" -f 2 | tr -d " ")
-    if [ -z "$release_version" ]; then
-        echo "错误: 无法从项目配置读取版本号"
-        exit 1
-    fi
-    echo "从项目配置读取到版本号: ${release_version}"
-else
-    echo "错误: 找不到Info.plist文件: ${INFO_PLIST_PATH}"
-    exit 1
-fi
-
-# 添加标准化的产物名称
-export ARTIFACT_NAME="ShengWang_Conversational_Al_Engine_Demo_for_iOS_v${release_version}_${BUILD_NUMBER}"
-
 if [ -z "$toolbox_url" ]; then
     export toolbox_url="https://service.apprtc.cn/toolbox"
 fi
@@ -172,6 +154,17 @@ else
     echo "failed"
     exit 1
 fi
+
+# 从项目配置读取版本号
+export release_version=$(xcodebuild -workspace "${PROJECT_PATH}/${PROJECT_NAME}.xcworkspace" -scheme "${TARGET_NAME}" -showBuildSettings | grep "MARKETING_VERSION" | cut -d "=" -f 2 | tr -d " ")
+if [ -z "$release_version" ]; then
+    echo "错误: 无法从项目配置读取版本号"
+    exit 1
+fi
+echo "从项目配置读取到版本号: ${release_version}"
+
+# 产物名称
+export ARTIFACT_NAME="ShengWang_Conversational_Al_Engine_Demo_for_iOS_v${release_version}_${BUILD_NUMBER}"
 
 KEYCENTER_PATH=${PROJECT_PATH}"/"${PROJECT_NAME}"/KeyCenter.swift"
 
