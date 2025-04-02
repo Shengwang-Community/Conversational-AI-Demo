@@ -155,6 +155,15 @@ else
     exit 1
 fi
 
+# 设置Pods项目的签名配置
+PODS_PROJECT_PATH="${PROJECT_PATH}/Pods/Pods.xcodeproj/project.pbxproj"
+echo "设置Pods项目的签名配置..."
+# 为所有target设置自动签名
+/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:CODE_SIGN_STYLE 'Automatic'" $PODS_PROJECT_PATH
+/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:CODE_SIGN_STYLE 'Automatic'" $PODS_PROJECT_PATH
+/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:CODE_SIGNING_ALLOWED 'NO'" $PODS_PROJECT_PATH
+/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:CODE_SIGNING_ALLOWED 'NO'" $PODS_PROJECT_PATH
+
 # 从项目配置读取版本号
 export release_version=$(xcodebuild -workspace "${PROJECT_PATH}/${PROJECT_NAME}.xcworkspace" -scheme "${TARGET_NAME}" -showBuildSettings | grep "MARKETING_VERSION" | cut -d "=" -f 2 | tr -d " ")
 if [ -z "$release_version" ]; then
@@ -183,7 +192,7 @@ if [ "$method" = "app-store" ]; then
     DEVELOPMENT_TEAM="48TB6ZZL5S"
 else
     # 开发环境配置
-    PROVISIONING_PROFILE="cn.shengwang.convoai.development"
+    PROVISIONING_PROFILE="cn.shengwang.convoai.appstore"
     CODE_SIGN_IDENTITY="iPhone Distribution"
     DEVELOPMENT_TEAM="48TB6ZZL5S"
 fi
@@ -215,9 +224,18 @@ fi
 # Debug
 /usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:CURRENT_PROJECT_VERSION ${BUILD_NUMBER}" $PBXPROJ_PATH
 /usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:PRODUCT_BUNDLE_IDENTIFIER ${bundleId}" $PBXPROJ_PATH
+/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:CODE_SIGN_STYLE 'Manual'" $PBXPROJ_PATH
+/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:DEVELOPMENT_TEAM '${DEVELOPMENT_TEAM}'" $PBXPROJ_PATH
+/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:PROVISIONING_PROFILE_SPECIFIER '${PROVISIONING_PROFILE}'" $PBXPROJ_PATH
+/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F228FFCEE7004CEDCF:buildSettings:CODE_SIGN_IDENTITY '${CODE_SIGN_IDENTITY}'" $PBXPROJ_PATH
+
 # Release
 /usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:CURRENT_PROJECT_VERSION ${BUILD_NUMBER}" $PBXPROJ_PATH
 /usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:PRODUCT_BUNDLE_IDENTIFIER ${bundleId}" $PBXPROJ_PATH
+/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:CODE_SIGN_STYLE 'Manual'" $PBXPROJ_PATH
+/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:DEVELOPMENT_TEAM '${DEVELOPMENT_TEAM}'" $PBXPROJ_PATH
+/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:PROVISIONING_PROFILE_SPECIFIER '${PROVISIONING_PROFILE}'" $PBXPROJ_PATH
+/usr/libexec/PlistBuddy -c "Set :objects:DD2A43F328FFCEE7004CEDCF:buildSettings:CODE_SIGN_IDENTITY '${CODE_SIGN_IDENTITY}'" $PBXPROJ_PATH
 
 # 读取APPID环境变量
 echo AGORA_APP_ID:$APP_ID
@@ -262,11 +280,8 @@ xcodebuild CODE_SIGN_STYLE="Manual" \
     -workspace "${APP_PATH}" \
     -scheme "${TARGET_NAME}" \
     clean \
-    CODE_SIGNING_REQUIRED=YES \
-    CODE_SIGNING_ALLOWED=YES \
-    PROVISIONING_PROFILE_SPECIFIER="${PROVISIONING_PROFILE}" \
-    CODE_SIGN_IDENTITY="${CODE_SIGN_IDENTITY}" \
-    DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}" \
+    CODE_SIGNING_REQUIRED=NO \
+    CODE_SIGNING_ALLOWED=NO \
     -configuration "${CONFIGURATION}" \
     archive \
     -archivePath "${ARCHIVE_PATH}" \
