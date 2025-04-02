@@ -1,6 +1,8 @@
 # convo ai cn cicd
 export LANG=en_US.UTF-8
 
+export PATH=$PATH:/opt/homebrew/bin
+
 # 设置全局变量
 if [ -z "$WORKSPACE" ]; then
     export WORKSPACE=$(pwd)/cicd/iosExport
