@@ -57,4 +57,4 @@ def doPublish(buildVariables) {
     sh "rm -rf *.zip || true"
 }
 
-pipelineLoad(this, "ConvoAIDemo", "build", "ios", "apiexample_mac")
+pipelineLoad(this, "ConvoAIDemo", "build", "ios", "Convo-AI")
