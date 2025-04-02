@@ -175,6 +175,19 @@ if [[ ! -z "$result" ]]; then
     CONFIGURATION='Debug'
 fi
 
+# 签名配置
+if [ "$method" = "app-store" ]; then
+    # App Store发布配置
+    PROVISIONING_PROFILE="cn.shengwang.convoai.appstore"
+    CODE_SIGN_IDENTITY="iPhone Distribution"
+    DEVELOPMENT_TEAM="48TB6ZZL5S"
+else
+    # 开发环境配置
+    PROVISIONING_PROFILE="cn.shengwang.convoai.development"
+    CODE_SIGN_IDENTITY="iPhone Distribution"
+    DEVELOPMENT_TEAM="48TB6ZZL5S"
+fi
+
 #工程文件路径
 APP_PATH="${PROJECT_PATH}/${PROJECT_NAME}.xcworkspace"
 
@@ -244,7 +257,22 @@ PLIST_PATH="${CURRENT_PATH}/cicd/build_scripts/ExportOptions_${method}.plist"
 
 echo PLIST_PATH: $PLIST_PATH
 
-xcodebuild CODE_SIGN_STYLE="Manual" -workspace "${APP_PATH}" -scheme "${TARGET_NAME}" clean CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO -configuration "${CONFIGURATION}" archive -archivePath "${ARCHIVE_PATH}" -destination 'generic/platform=iOS' DEBUG_INFORMATION_FORMAT=dwarf-with-dsym -quiet || exit
+# 设置签名配置
+xcodebuild CODE_SIGN_STYLE="Manual" \
+    -workspace "${APP_PATH}" \
+    -scheme "${TARGET_NAME}" \
+    clean \
+    CODE_SIGNING_REQUIRED=YES \
+    CODE_SIGNING_ALLOWED=YES \
+    PROVISIONING_PROFILE_SPECIFIER="${PROVISIONING_PROFILE}" \
+    CODE_SIGN_IDENTITY="${CODE_SIGN_IDENTITY}" \
+    DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}" \
+    -configuration "${CONFIGURATION}" \
+    archive \
+    -archivePath "${ARCHIVE_PATH}" \
+    -destination 'generic/platform=iOS' \
+    DEBUG_INFORMATION_FORMAT=dwarf-with-dsym \
+    -quiet || exit
 
 # 创建导出目录
 EXPORT_PATH="${WORKSPACE}/export"
