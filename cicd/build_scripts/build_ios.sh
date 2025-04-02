@@ -291,6 +291,11 @@ xcodebuild CODE_SIGN_STYLE="Manual" \
 
 # 创建导出目录
 EXPORT_PATH="${WORKSPACE}/export"
+# 清理已存在的导出目录
+if [ -d "${EXPORT_PATH}" ]; then
+    echo "清理已存在的导出目录: ${EXPORT_PATH}"
+    rm -rf "${EXPORT_PATH}"
+fi
 mkdir -p "${EXPORT_PATH}"
 
 # 导出IPA
