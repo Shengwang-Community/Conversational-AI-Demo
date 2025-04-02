@@ -12,7 +12,6 @@ else
     source /Users/admin/jenkins/bin/activate
 fi
 
-
 if [ -z "$BUILD_NUMBER" ]; then
     export BUILD_NUMBER=$(date +%Y%m%d%H%M%S)
 fi
@@ -342,16 +341,16 @@ if [ "$LOCALPACKAGE" != "true" ]; then
     # 上传文件到制品库并保存输出结果
     UPLOAD_RESULT=$(python3 artifactory_utils.py --action=upload_file --file="${ARTIFACT_NAME}.zip" --project)
     
-    # 提取URL并保存到package_urls文件
-    echo "$UPLOAD_RESULT" | grep -i "url" > ${WORKSPACE}/package_urls
-    
-    if [ -s ${WORKSPACE}/package_urls ]; then
+    # 检查上传结果中是否包含URL
+    if echo "$UPLOAD_RESULT" | grep -i "url" > /dev/null; then
         echo "===================================================="
         echo "产物上传成功! 下载地址:"
-        cat ${WORKSPACE}/package_urls
+        echo "$UPLOAD_RESULT" | grep -i "url"
         echo "===================================================="
     else
         echo "警告: 未找到上传后的下载地址"
+        echo "完整的上传结果:"
+        echo "$UPLOAD_RESULT"
     fi
     
     # 清理本地产物
