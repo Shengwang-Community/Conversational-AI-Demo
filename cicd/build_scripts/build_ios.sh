@@ -12,10 +12,6 @@ else
     source /Users/admin/jenkins/bin/activate
 fi
 
-if [ -z "$BUILD_NUMBER" ]; then
-    export BUILD_NUMBER=$(date +%Y%m%d%H%M%S)
-fi
-
 if [ -z "$build_date" ]; then
     export build_date=$(date +%Y%m%d)
 fi
@@ -24,6 +20,7 @@ if [ -z "$build_time" ]; then
     export build_time=$(date +%H%M%S)
 fi
 
+BUILD_VERSION=$(date +%Y%m%d%H%M%S)
 CURRENT_PATH=$PWD
 
 # 项目target名
@@ -166,7 +163,7 @@ fi
 echo "从项目配置读取到版本号: ${release_version}"
 
 # 产物名称
-export ARTIFACT_NAME="ShengWang_Conversational_Al_Engine_Demo_for_iOS_v${release_version}_${BUILD_NUMBER}"
+export ARTIFACT_NAME="ShengWang_Conversational_Al_Engine_Demo_for_iOS_v${release_version}_${BUILD_VERSION}"
 
 KEYCENTER_PATH=${PROJECT_PATH}"/"${PROJECT_NAME}"/KeyCenter.swift"
 
@@ -229,7 +226,7 @@ fi
 
 # 主项目工程配置
 # Debug
-sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_NUMBER};|g" $PBXPROJ_PATH
+sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_VERSION};|g" $PBXPROJ_PATH
 sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = .*;|PRODUCT_BUNDLE_IDENTIFIER = \"${bundleId}\";|g" $PBXPROJ_PATH
 sed -i '' "s|CODE_SIGN_STYLE = .*;|CODE_SIGN_STYLE = \"Manual\";|g" $PBXPROJ_PATH
 sed -i '' "s|DEVELOPMENT_TEAM = .*;|DEVELOPMENT_TEAM = \"${DEVELOPMENT_TEAM}\";|g" $PBXPROJ_PATH
@@ -237,7 +234,7 @@ sed -i '' "s|PROVISIONING_PROFILE_SPECIFIER = .*;|PROVISIONING_PROFILE_SPECIFIER
 sed -i '' "s|CODE_SIGN_IDENTITY = .*;|CODE_SIGN_IDENTITY = \"${CODE_SIGN_IDENTITY}\";|g" $PBXPROJ_PATH
 
 # Release
-sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_NUMBER};|g" $PBXPROJ_PATH
+sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_VERSION};|g" $PBXPROJ_PATH
 sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = .*;|PRODUCT_BUNDLE_IDENTIFIER = \"${bundleId}\";|g" $PBXPROJ_PATH
 sed -i '' "s|CODE_SIGN_STYLE = .*;|CODE_SIGN_STYLE = \"Manual\";|g" $PBXPROJ_PATH
 sed -i '' "s|DEVELOPMENT_TEAM = .*;|DEVELOPMENT_TEAM = \"${DEVELOPMENT_TEAM}\";|g" $PBXPROJ_PATH
@@ -268,7 +265,7 @@ sed -i '' "s|static let Certificate: String? = .*|static let Certificate: String
 sed -i '' "s|let manifestUrl = .*|let manifestUrl = \"$manifest_url\"|g" $KEYCENTER_PATH
 
 # 归档路径
-ARCHIVE_PATH="${WORKSPACE}/${TARGET_NAME}_${BUILD_NUMBER}.xcarchive"
+ARCHIVE_PATH="${WORKSPACE}/${TARGET_NAME}_${BUILD_VERSION}.xcarchive"
 
 # plist路径
 PLIST_PATH="${CURRENT_PATH}/cicd/build_scripts/ExportOptions_${method}.plist"
@@ -341,14 +338,14 @@ if [ "$LOCALPACKAGE" != "true" ]; then
     # 上传文件到制品库并保存输出结果
     UPLOAD_RESULT=$(python3 artifactory_utils.py --action=upload_file --file="${ARTIFACT_NAME}.zip" --project)
     
-    # 检查上传结果中是否包含URL
-    if echo "$UPLOAD_RESULT" | grep -i "url" > /dev/null; then
-        echo "===================================================="
+    # 检查上传结果是否为URL
+    if [[ "$UPLOAD_RESULT" =~ ^https?:// ]]; then
+        echo "====🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉========="
         echo "产物上传成功! 下载地址:"
-        echo "$UPLOAD_RESULT" | grep -i "url"
+        echo "$UPLOAD_RESULT"
         echo "===================================================="
     else
-        echo "警告: 未找到上传后的下载地址"
+        echo "警告: 上传结果格式异常"
         echo "完整的上传结果:"
         echo "$UPLOAD_RESULT"
     fi
@@ -358,7 +355,7 @@ if [ "$LOCALPACKAGE" != "true" ]; then
 fi
 
 # 清理文件
-rm -rf ${TARGET_NAME}_${BUILD_NUMBER}.xcarchive
+rm -rf ${TARGET_NAME}_${BUILD_VERSION}.xcarchive
 rm -rf ${PACKAGE_DIR}
 rm -rf ${EXPORT_PATH}
 
