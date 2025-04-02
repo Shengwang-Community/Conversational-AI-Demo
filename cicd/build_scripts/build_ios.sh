@@ -211,6 +211,20 @@ if [ ! -f "${PBXPROJ_PATH}" ]; then
     exit 1
 fi
 
+# 非本地打包时解锁钥匙串
+if [ "$LOCALPACKAGE" != "true" ]; then
+    echo "非本地打包，开始解锁钥匙串..."
+    cd ~/Library/Keychains
+    cp login.keychain-db login.keychain
+    security unlock-keychain -p "123456" ~/Library/Keychains/login.keychain
+    if [ $? -eq 0 ]; then
+        echo "钥匙串解锁成功"
+    else
+        echo "错误: 钥匙串解锁失败"
+        exit 1
+    fi
+fi
+
 # 主项目工程配置
 # Debug
 sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_NUMBER};|g" $PBXPROJ_PATH
