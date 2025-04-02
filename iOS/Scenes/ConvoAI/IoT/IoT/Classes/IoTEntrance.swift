@@ -18,6 +18,10 @@ public class IoTEntrance: NSObject {
         viewController.navigationController?.pushViewController(vc, animated: true)
     }
     
+    public static func environmentDidChange() {
+        AppContext.iotPresetsManager()?.deleteAllPresets()
+    }
+    
     public static func fetchPresetIfNeed(completion: ((Error?) -> Void)?) {
         guard AppContext.iotPresetsManager()?.allPresets() == nil else {
             completion?(nil)
