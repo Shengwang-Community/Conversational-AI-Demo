@@ -290,7 +290,7 @@ xcodebuild CODE_SIGN_STYLE="Manual" \
     -quiet || exit
 
 # 创建导出目录
-EXPORT_PATH="${WORKSPACE}/export"
+EXPORT_PATH="${WORKSPACE}/output"
 # 清理已存在的导出目录
 if [ -d "${EXPORT_PATH}" ]; then
     echo "清理已存在的导出目录: ${EXPORT_PATH}"
