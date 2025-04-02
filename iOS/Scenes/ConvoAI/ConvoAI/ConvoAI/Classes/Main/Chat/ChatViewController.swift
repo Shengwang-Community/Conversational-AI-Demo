@@ -612,14 +612,14 @@ extension ChatViewController {
                     "enable_rtm": nil
                 ],
                 "asr": [
-                    "language": AppContext.preferenceManager()?.preference.language?.languageCode ?? "",
+                    "language": AppContext.preferenceManager()?.preference.language?.languageCode,
                     "vendor": nil,
                     "vendor_model": nil
                 ],
                 "llm": [
                     "url": AppContext.shared.llmUrl.isEmpty ? nil : AppContext.shared.llmUrl,
                     "api_key": AppContext.shared.llmApiKey.isEmpty ? nil : AppContext.shared.llmApiKey,
-                    "system_messages": AppContext.shared.llmSystemMessages.isEmpty ? nil : AppContext.shared.llmApiKey,
+                    "system_messages": AppContext.shared.llmSystemMessages.isEmpty ? nil : AppContext.shared.llmSystemMessages,
                     "greeting_message": nil,
                     "params": AppContext.shared.llmParams.isEmpty ? nil : AppContext.shared.llmParams,
                     "style": nil,

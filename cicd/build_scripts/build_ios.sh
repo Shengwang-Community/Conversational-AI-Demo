@@ -22,13 +22,37 @@ if [ -z "$build_time" ]; then
     export build_time=$(date +%H%M%S)
 fi
 
-if [ -z "$release_version" ]; then
-    export release_version="1.0.0"
+CURRENT_PATH=$PWD
+
+# 项目target名
+PROJECT_NAME=Agent
+TARGET_NAME=Agent-cn
+
+# 获取项目目录
+PROJECT_PATH="${CURRENT_PATH}/iOS"
+if [ ! -d "${PROJECT_PATH}" ]; then
+    echo "错误: 找不到 iOS 目录: ${PROJECT_PATH}"
+    echo "构建失败: iOS 项目目录不存在"
+    exit 1
 fi
 
-if [ -z "$short_version" ]; then
-    export short_version="1.0"
+# 从项目Info.plist读取版本号
+INFO_PLIST_PATH="${PROJECT_PATH}/${PROJECT_NAME}/Info.plist"
+if [ -f "${INFO_PLIST_PATH}" ]; then
+    # 使用xcodebuild命令读取版本号
+    export release_version=$(xcodebuild -workspace "${PROJECT_PATH}/${PROJECT_NAME}.xcworkspace" -scheme "${TARGET_NAME}" -showBuildSettings | grep "MARKETING_VERSION" | cut -d "=" -f 2 | tr -d " ")
+    if [ -z "$release_version" ]; then
+        echo "错误: 无法从项目配置读取版本号"
+        exit 1
+    fi
+    echo "从项目配置读取到版本号: ${release_version}"
+else
+    echo "错误: 找不到Info.plist文件: ${INFO_PLIST_PATH}"
+    exit 1
 fi
+
+# 添加标准化的产物名称
+export ARTIFACT_NAME="ShengWang_Conversational_Al_Engine_Demo_for_iOS_v${release_version}_${BUILD_NUMBER}"
 
 if [ -z "$toolbox_url" ]; then
     export toolbox_url="https://service.apprtc.cn/toolbox"
@@ -86,8 +110,6 @@ echo source_root: %source_root%
 echo output: /tmp/jenkins/${project}_out
 echo build_date: $build_date
 echo build_time: $build_time
-echo release_version: $release_version
-echo short_version: $short_version
 echo pwd: `pwd`
 echo sdk_url: $sdk_url
 echo toolbox_url: $toolbox_url
@@ -99,20 +121,6 @@ echo "Xcode 版本: $(xcodebuild -version | head -n 1)"
 echo "Swift 版本: $(swift --version | head -n 1)"
 echo "Ruby 版本: $(ruby --version)"
 echo "CocoaPods 版本: $(pod --version)"
-
-CURRENT_PATH=$PWD
-
-# 获取项目目录
-PROJECT_PATH="${CURRENT_PATH}/iOS"
-if [ ! -d "${PROJECT_PATH}" ]; then
-    echo "错误: 找不到 iOS 目录: ${PROJECT_PATH}"
-    echo "构建失败: iOS 项目目录不存在"
-    exit 1
-fi
-
-# 项目target名
-PROJECT_NAME=Agent
-TARGET_NAME=Agent-cn
 
 echo PROJECT_PATH: $PROJECT_PATH
 echo TARGET_NAME: $TARGET_NAME
@@ -264,7 +272,7 @@ mkdir -p "${PACKAGE_DIR}"
 
 # 复制IPA和dSYM到临时目录
 if [ -f "${EXPORT_PATH}/${TARGET_NAME}.ipa" ]; then
-    cp "${EXPORT_PATH}/${TARGET_NAME}.ipa" "${PACKAGE_DIR}/"
+    cp "${EXPORT_PATH}/${TARGET_NAME}.ipa" "${PACKAGE_DIR}/${ARTIFACT_NAME}.ipa"
 else
     echo "错误: IPA 文件未找到!"
     exit 1
@@ -279,7 +287,7 @@ fi
 
 # 打包IPA和dSYM
 cd "${PACKAGE_DIR}"
-zip -r "${WORKSPACE}/${TARGET_NAME}_${BUILD_NUMBER}.zip" ./
+zip -r "${WORKSPACE}/${ARTIFACT_NAME}.zip" ./
 cd "${WORKSPACE}"
 
 # 非本地打包时上传文件并删除本地zip
@@ -287,7 +295,7 @@ if [ "$LOCALPACKAGE" != "true" ]; then
     echo "上传产物到制品库..."
     
     # 上传文件到制品库并保存输出结果
-    UPLOAD_RESULT=$(python3 artifactory_utils.py --action=upload_file --file="${TARGET_NAME}_${BUILD_NUMBER}.zip" --project)
+    UPLOAD_RESULT=$(python3 artifactory_utils.py --action=upload_file --file="${ARTIFACT_NAME}.zip" --project)
     
     # 提取URL并保存到package_urls文件
     echo "$UPLOAD_RESULT" | grep -i "url" > ${WORKSPACE}/package_urls
@@ -302,7 +310,7 @@ if [ "$LOCALPACKAGE" != "true" ]; then
     fi
     
     # 清理本地产物
-    rm -f "${TARGET_NAME}_${BUILD_NUMBER}.zip"
+    rm -f "${ARTIFACT_NAME}.zip"
 fi
 
 # 清理文件
