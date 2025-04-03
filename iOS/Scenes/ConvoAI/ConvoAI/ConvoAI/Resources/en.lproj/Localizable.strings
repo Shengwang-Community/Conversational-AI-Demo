@@ -1,6 +1,7 @@
 "login.title" = "Unlock ♾️ Free Chat";
 "login.description" = "Power your business future at once";
 "login.start.button.title" = "Log in with Agora account";
+"login.start.button.signup" = "Sign up for free";
 "login.terms.service.prefix" = " I accept the ";
 "login.terms.service.name" = "Terms of Services";
 "login.terms.service.and" = " and ";
@@ -57,8 +58,8 @@
 "settings.microphone" = "Microphone";
 "settings.speaker" = "Speaker";
 "settings.noise.cancellation" = "Noise Cancellation";
-"settings.noise.aiVad.nomal" = "Enable";
-"settings.noise.aiVad.highlight" = "Intelligent Interruption Handling";
+"settings.noise.aiVad.nomal" = "Intelligent Interruption Handling";
+"settings.noise.aiVad.highlight" = "";
 "settings.noise.forceResponse" = "Force Response";
 "settings.noise.bhvs" = "Background Human Voice Suppression";
 
@@ -103,12 +104,12 @@
 
 "devmode.title" = "Developer Mode";
 "devmode.rtc" = "RTC Version";
-"devmode.host" = "Server Host";
+"devmode.host" = "ConvoAI Host";
 "devmode.dump" = "Audio Dump";
 "devmode.sessionLimit" = "Session Limit";
 "devmode.copy" = "Copy Mine Messages";
 "devmode.close" = "Close Developer Mode";
-"devmode.graph" = "graph id";
+"devmode.graph" = "Graph id";
 "devmode.server" = "Server";
 
 

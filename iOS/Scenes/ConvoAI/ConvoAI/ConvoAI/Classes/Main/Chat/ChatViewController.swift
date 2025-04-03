@@ -513,7 +513,11 @@ extension ChatViewController {
             return
         }
         manager.updateAgentState(.disconnected)
-        channelName = RtcEnum.getChannel()
+        if DeveloperModeViewController.getDeveloperMode() {
+            channelName = "agent_debug_\(UUID().uuidString.prefix(8))"
+        } else {
+            channelName = "agent_\(UUID().uuidString.prefix(8))"
+        }
         agentUid = AppContext.agentUid
         remoteIsJoined = false
         

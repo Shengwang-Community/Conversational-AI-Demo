@@ -233,33 +233,6 @@ extension DeveloperModeViewController {
             make.height.equalTo(1)
         }
         
-        let graphLabel = UILabel()
-        graphLabel.text = ResourceManager.L10n.DevMode.graph
-        graphLabel.textColor = UIColor.themColor(named: "ai_icontext1")
-        graphLabel.font = UIFont.systemFont(ofSize: 14)
-        
-        graphTextField.borderStyle = .roundedRect
-        graphTextField.backgroundColor = UIColor.themColor(named: "ai_block2")
-        graphTextField.textColor = UIColor.themColor(named: "ai_icontext4")
-        graphTextField.text = AppContext.shared.graphId
-        
-        let graphStackView = UIStackView()
-        graphStackView.axis = .horizontal
-        graphStackView.alignment = .center
-        graphStackView.spacing = 12
-        graphStackView.addArrangedSubview(graphLabel)
-        graphStackView.addArrangedSubview(graphTextField)
-        cotentView.addSubview(graphStackView)
-        graphStackView.snp.makeConstraints { make in
-            make.top.equalTo(dividerLine.snp.bottom).offset(10)
-            make.leading.trailing.equalToSuperview().inset(16)
-            make.height.equalTo(44)
-        }
-        
-        graphTextField.snp.makeConstraints { make in
-            make.width.equalTo(200)
-        }
-        
         // RTC Version
         let rtcVersionLabel = UILabel()
         rtcVersionLabel.text = ResourceManager.L10n.DevMode.rtc
@@ -278,9 +251,37 @@ extension DeveloperModeViewController {
         rtcStackView.addArrangedSubview(rtcVersionValueLabel)
         cotentView.addSubview(rtcStackView)
         rtcStackView.snp.makeConstraints { make in
-            make.top.equalTo(graphStackView.snp.bottom)
+            make.top.equalTo(dividerLine.snp.bottom).offset(10)
             make.leading.trailing.equalToSuperview().inset(16)
             make.height.equalTo(44)
+        }
+        
+        // Graph ID
+        let graphLabel = UILabel()
+        graphLabel.text = ResourceManager.L10n.DevMode.graph
+        graphLabel.textColor = UIColor.themColor(named: "ai_icontext1")
+        graphLabel.font = UIFont.systemFont(ofSize: 14)
+        
+        graphTextField.borderStyle = .roundedRect
+        graphTextField.backgroundColor = UIColor.themColor(named: "ai_block2")
+        graphTextField.textColor = UIColor.themColor(named: "ai_icontext4")
+        graphTextField.text = AppContext.shared.graphId
+        
+        let graphStackView = UIStackView()
+        graphStackView.axis = .horizontal
+        graphStackView.alignment = .center
+        graphStackView.spacing = 12
+        graphStackView.addArrangedSubview(graphLabel)
+        graphStackView.addArrangedSubview(graphTextField)
+        cotentView.addSubview(graphStackView)
+        graphStackView.snp.makeConstraints { make in
+            make.top.equalTo(rtcStackView.snp.bottom)
+            make.leading.trailing.equalToSuperview().inset(16)
+            make.height.equalTo(44)
+        }
+        
+        graphTextField.snp.makeConstraints { make in
+            make.width.equalTo(200)
         }
         
         // Environment
@@ -299,7 +300,7 @@ extension DeveloperModeViewController {
         enviroimentStack.alignment = .center
         cotentView.addSubview(enviroimentStack)
         enviroimentStack.snp.makeConstraints { make in
-            make.top.equalTo(rtcStackView.snp.bottom)
+            make.top.equalTo(graphStackView.snp.bottom)
             make.leading.trailing.equalToSuperview().inset(16)
             make.height.equalTo(44)
         }
