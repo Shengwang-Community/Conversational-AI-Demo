@@ -10,12 +10,22 @@ import Common
 import SVProgressHUD
 import ConvoAI
 import SSZipArchive
+import Bugly
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+#if DEBUG
+#else
+        let config = BuglyConfig()
+        config.reportLogLevel = BuglyLogLevel.warn
+        config.unexpectedTerminatingDetectionEnable = true
+        config.debugMode = true
+        Bugly.start(withAppId: "80b44c8617", config: config)
+#endif
+        
         AppContext.shared.appId = KeyCenter.AG_APP_ID
         AppContext.shared.certificate = KeyCenter.AG_APP_CERTIFICATE
         AppContext.shared.basicAuthKey = KeyCenter.BASIC_AUTH_KEY
