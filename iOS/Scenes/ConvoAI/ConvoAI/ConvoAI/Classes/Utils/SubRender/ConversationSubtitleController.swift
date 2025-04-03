@@ -317,7 +317,7 @@ private typealias TurnState = SubtitleStatus
                 }()
                 // if this message time is later than current buffer time, update buffer
                 if let msgMS = message.start_ms,
-                   msgMS > curBuffer.start_ms
+                   msgMS >= curBuffer.start_ms
                 {
                     curBuffer.start_ms = message.start_ms ?? 0
                     curBuffer.text = message.text ?? ""

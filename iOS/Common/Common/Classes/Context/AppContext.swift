@@ -23,7 +23,7 @@ import Foundation
     private var _basicAuthSecret: String = ""
     private var _llmUrl: String = ""
     private var _llmApiKey: String = ""
-    private var _llmSystemMessages: [String: Any] = [:]
+    private var _llmSystemMessages: [[String: Any]] = []
     private var _llmParams: [String: Any] = [:]
     private var _ttsVendor: String = ""
     private var _ttsParams: [String: Any] = [:]
@@ -91,7 +91,7 @@ import Foundation
         set { _llmApiKey = newValue }
     }
     
-    @objc public var llmSystemMessages: [String: Any] {
+    @objc public var llmSystemMessages: [[String: Any]] {
         get { return _llmSystemMessages }
         set { _llmSystemMessages = newValue }
     }

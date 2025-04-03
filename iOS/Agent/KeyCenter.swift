@@ -33,12 +33,19 @@ struct KeyCenter {
      For example:
      static let LLM_URL: String="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
      static let LLM_API_KEY: String="1234567890"
-     static let LLM_SYSTEM_MESSAGES: String=""
-     static let LLM_MODEL: String="qwen-max"
+     static let LLM_SYSTEM_MESSAGES: [[String: Any]] = [
+        [
+         "role": "system",
+         "content":  "You are a helpful chatbot."
+        ]
+     ]
+     static let LLM_PARAMS: [String: Any] = [
+         "model": "qwen-max"
+     ]
      */
     static let LLM_URL: String = ""
     static let LLM_API_KEY: String = ""
-    static let LLM_SYSTEM_MESSAGES: [String: Any] = [:]
+    static let LLM_SYSTEM_MESSAGES: [[String: Any]] = []
     static let LLM_PARAMS: [String: Any] = [:]
 
     /**
