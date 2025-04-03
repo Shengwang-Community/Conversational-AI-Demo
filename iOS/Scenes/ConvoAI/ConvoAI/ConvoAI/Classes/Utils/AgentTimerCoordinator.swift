@@ -55,7 +55,7 @@ class AgentTimerCoordinator: NSObject {
             return
         }
         
-        useDuration = isDurationLimited ? preset.callTimeLimitSecond : 60 * 10
+        useDuration = isDurationLimited ? preset.callTimeLimitSecond : 0
         deinitDurationLimitTimer()
         
         usageDurationLimitTimer = Timer.scheduledTimer(

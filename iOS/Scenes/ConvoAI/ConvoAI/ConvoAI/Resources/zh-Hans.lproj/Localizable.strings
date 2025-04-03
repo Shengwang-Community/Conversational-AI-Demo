@@ -19,6 +19,7 @@
 "join.start.button.title" = "连接 AI 引擎";
 "join.start.agent.name" = "智能体";
 "join.start.tips" = "本次体验对话限制%d分钟";
+"join.start.tips.no.limit" = "本次体验对话无限制时长";
 "join.timeout.tips" = "智能体加入超时，请稍后重试。";
 
 "conversation.ai.hello" = "你好，人类";

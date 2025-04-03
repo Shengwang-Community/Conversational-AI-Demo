@@ -19,6 +19,7 @@
 "join.start.button.title" = "Call AI Engine";
 "join.start.agent.name" = "Agent";
 "join.start.tips" = "Session Limit: %d minutes.";
+"join.start.tips.no.limit" = "Session Limit: None";
 "join.timeout.tips" = "Timeout. Please try again.";
 
 "conversation.ai.hello" = "Greetings, Human";

@@ -10,6 +10,8 @@ import Common
 
 class AgentSettingBar: UIView {
     
+    private var isLimited = true
+    
     let infoListButton: UIButton = {
         let button = UIButton()
         button.setImage(UIImage.ag_named("ic_agent_info_list")?.withRenderingMode(.alwaysTemplate), for: .normal)
@@ -112,8 +114,14 @@ class AgentSettingBar: UIView {
     }
     
     public func showTips(seconds: Int = 10 * 60) {
-        let minutes = seconds / 60
-        centerTipsLabel.text = String(format: ResourceManager.L10n.Join.tips, minutes)
+        if seconds == 0 {
+            isLimited = false
+            centerTipsLabel.text = ResourceManager.L10n.Join.tipsNoLimit
+        } else {
+            isLimited = true
+            let minutes = seconds / 60
+            centerTipsLabel.text = String(format: ResourceManager.L10n.Join.tips, minutes)
+        }
         showTips()
         showTipsTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(10), repeats: false) { [weak self] _ in
             if self?.isShowTips == true {
@@ -126,10 +134,14 @@ class AgentSettingBar: UIView {
     }
     
     public func updateRestTime(_ seconds: Int) {
-        if seconds < 20 {
-            countDownLabel.textColor = UIColor.themColor(named: "ai_red6")
-        } else if seconds < 59 {
-            countDownLabel.textColor = UIColor.themColor(named: "ai_green6")
+        if isLimited {
+            if seconds < 20 {
+                countDownLabel.textColor = UIColor.themColor(named: "ai_red6")
+            } else if seconds < 59 {
+                countDownLabel.textColor = UIColor.themColor(named: "ai_green6")
+            } else {
+                countDownLabel.textColor = UIColor.themColor(named: "ai_brand_white10")
+            }
         } else {
             countDownLabel.textColor = UIColor.themColor(named: "ai_brand_white10")
         }
