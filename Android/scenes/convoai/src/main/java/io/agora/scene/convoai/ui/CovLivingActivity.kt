@@ -527,10 +527,9 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     private fun updateToken(complete: (Boolean) -> Unit) {
-        TokenGenerator.generateToken("",
-            CovAgentManager.uid.toString(),
-            TokenGeneratorType.Token007,
-            AgoraTokenType.Rtc,
+        TokenGenerator.generateToken(
+            channelName = "",
+            uid = CovAgentManager.uid.toString(),
             success = { token ->
                 CovLogger.d(TAG, "getToken success")
                 rtcToken = token
@@ -704,8 +703,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
             override fun onTokenPrivilegeWillExpire(token: String?) {
                 CovLogger.d(TAG, "onTokenPrivilegeWillExpire")
-                updateToken { isOK ->
-                    if (isOK) {
+                updateToken { isTokenOK ->
+                    if (isTokenOK) {
                         CovRtcManager.renewRtcToken(rtcToken ?: "")
                     } else {
                         stopAgentAndLeaveChannel()
