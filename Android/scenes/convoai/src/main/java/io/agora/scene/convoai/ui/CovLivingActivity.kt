@@ -13,10 +13,12 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import com.tencent.bugly.crashreport.CrashReport
 import io.agora.rtc2.Constants
 import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngineEx
 import io.agora.scene.common.BuildConfig
+import io.agora.scene.common.constant.AgentConstant
 import io.agora.scene.common.constant.AgentScenes
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
@@ -36,6 +38,7 @@ import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.ui.SSOWebViewActivity
 import io.agora.scene.common.ui.TermsActivity
 import io.agora.scene.common.ui.vm.LoginViewModel
+import io.agora.scene.common.util.CommonLogger
 import io.agora.scene.common.util.PermissionHelp
 import io.agora.scene.common.util.copyToClipboard
 import io.agora.scene.common.util.dp
@@ -1189,6 +1192,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 clBottomNotLogged.root.visibility = View.INVISIBLE
 
                 clBottomNotLogged.tvTyping.stopAnimation()
+
+                initBugly()
             } else {
                 clTop.btnSettings.visibility = View.INVISIBLE
                 clTop.btnInfo.visibility = View.INVISIBLE
@@ -1199,6 +1204,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 clBottomNotLogged.tvTyping.startAnimation()
             }
         }
+    }
+
+    private var isBuglyInit = false
+    private fun initBugly() {
+        if (isBuglyInit) return
+        CrashReport.initCrashReport(this, AgentConstant.BUGLT_KEY, BuildConfig.DEBUG)
+        CommonLogger.d("Bugly", "bugly init")
+        isBuglyInit = true
     }
 
     private fun showLoginLoading(show: Boolean) {
@@ -1232,6 +1245,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
                     override fun onPrivacyPolicy() {
                         TermsActivity.startActivity(this@CovLivingActivity, ServerConfig.privacyPolicyUrl)
+                    }
+
+                    override fun onPrivacyChecked(isChecked: Boolean) {
+                        if (isChecked) {
+                            initBugly()
+                        }
                     }
                 }
             }

@@ -8,7 +8,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.multidex.MultiDex
-import com.tencent.bugly.crashreport.CrashReport
 import com.tencent.mmkv.MMKV
 import io.agora.scene.common.constant.AgentConstant
 import io.agora.scene.common.constant.ServerConfig
@@ -60,7 +59,6 @@ class AgentApp : Application() {
     override fun onCreate() {
         super.onCreate()
         app = this
-        CrashReport.initCrashReport(this, "80b44c8617", BuildConfig.DEBUG)
         AgoraLogger.initXLog(this)
         initMMKV()
         DebugConfigSettings.init(this)
