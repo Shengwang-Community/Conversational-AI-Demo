@@ -44,6 +44,7 @@ TODO: Add long description of the pod here.
     
   s.dependency 'SwiftyBeaver'
   s.dependency 'SSZipArchive'
+  s.dependency 'Bugly'
   # s.public_header_files = 'Pod/Classes/**/*.h'
   
 end

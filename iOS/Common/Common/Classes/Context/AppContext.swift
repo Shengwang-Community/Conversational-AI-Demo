@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Bugly
 
 @objc public class AppContext: NSObject {
     @objc public static let shared: AppContext = .init()
@@ -27,10 +28,42 @@ import Foundation
     private var _llmParams: [String: Any] = [:]
     private var _ttsVendor: String = ""
     private var _ttsParams: [String: Any] = [:]
+    private var buglyIsStarted: Bool = false
+    
+    public var isAgreeLicense: Bool = false {
+        willSet {
+            if !newValue {
+                return
+            }
+            
+            if buglyIsStarted {
+                return
+            }
+            
+            setupBugly()
+        }
+    }
     
     override init() {
         super.init()
+        if UserCenter.shared.isLogin() {
+            setupBugly()
+        }
     }
+    
+    private func setupBugly() {
+#if DEBUG
+        print("debug mode")
+#else
+        let config = BuglyConfig()
+        config.reportLogLevel = BuglyLogLevel.warn
+        config.unexpectedTerminatingDetectionEnable = true
+        config.debugMode = true
+        Bugly.start(withAppId: "d3f8a1f528", config: config)
+        buglyIsStarted = true
+#endif
+    }
+
     
     @objc public var appId: String {
         get { return _appId }
