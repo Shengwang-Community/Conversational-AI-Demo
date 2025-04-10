@@ -64,6 +64,14 @@ class WifiSettingView: UIView {
         return label
     }()
     
+    lazy var cardContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.themColor(named: "ai_fill5")
+        view.layer.cornerRadius = 16
+        view.layer.masksToBounds = true
+        return view
+    }()
+    
     lazy var wifiNameField: UITextField = {
         let field = UITextField()
         field.backgroundColor = UIColor.themColor(named: "ai_block1")
@@ -138,8 +146,9 @@ class WifiSettingView: UIView {
     private func setupViews() {
         backgroundColor = UIColor.themColor(named: "ai_fill1")
         
-        [titleLabel, subtitleLabel, tipLabel, wifiImageView, wifiNameField, switchNetworkButton,
+        [cardContainerView, wifiNameField, switchNetworkButton,
          passwordField, passwordVisibilityButton, nextButton, wifiErrorLabel].forEach { addSubview($0) }
+        [titleLabel, subtitleLabel, tipLabel, wifiImageView].forEach { cardContainerView.addSubview($0) }
         
         // Add right view to password field
         let rightViewContainer = UIView(frame: CGRect(x: 0, y: 0, width: 50, height: 48))
@@ -150,6 +159,13 @@ class WifiSettingView: UIView {
     }
     
     private func setupConstraints() {
+        cardContainerView.snp.makeConstraints { make in
+            make.left.equalTo(30)
+            make.right.equalTo(-30)
+            make.top.equalTo(20)
+            make.height.equalTo(cardContainerView.snp.width).multipliedBy(341.0/315)
+        }
+        
         titleLabel.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(20)
             make.left.equalTo(30)
@@ -170,9 +186,7 @@ class WifiSettingView: UIView {
         }
         
         wifiImageView.snp.makeConstraints { make in
-            make.top.equalTo(tipLabel.snp.bottom).offset(20)
-            make.left.equalTo(30)
-            make.right.equalTo(-30)
+            make.left.right.bottom.equalTo(0)
             make.height.equalTo(wifiImageView.snp.width).multipliedBy(199.0 / 315.0)
         }
         
