@@ -46,6 +46,8 @@
     <color name="ai_icontext_inverse2">#b2000000</color>
     <color name="ai_fill5">#ff3e3e4d</color>
     <color name="ai_click_app">#30343E</color>
+    <color name="ai_btn2">#555B69</color>
+    <color name="ai_green8">#50E3C2</color>
 
     <array name="gradient_border_default_colors">
         <item>#FF00C2FF</item>

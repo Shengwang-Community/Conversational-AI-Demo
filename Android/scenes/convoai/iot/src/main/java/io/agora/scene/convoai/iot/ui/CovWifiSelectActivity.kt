@@ -2,12 +2,17 @@ package io.agora.scene.convoai.iot.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import androidx.fragment.app.Fragment
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.tabs.TabLayoutMediator
 import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.util.dp
@@ -17,6 +22,7 @@ import io.agora.scene.convoai.iot.CovLogger
 import io.agora.scene.convoai.iot.R
 import io.agora.scene.convoai.iot.databinding.CovActivityWifiSelectBinding
 import io.agora.scene.convoai.iot.manager.CovScanBleDeviceManager
+import io.agora.scene.convoai.iot.ui.dialog.CovHotspotDialog
 import io.iot.dn.ble.model.BleDevice
 import io.iot.dn.wifi.manager.WifiManager
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +32,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 class CovWifiSelectActivity : BaseActivity<CovActivityWifiSelectBinding>() {
-
 
     companion object {
         private const val TAG = "CovWifiSelectActivity"
@@ -42,34 +47,42 @@ class CovWifiSelectActivity : BaseActivity<CovActivityWifiSelectBinding>() {
             CovLogger.d("CovWifiSelectActivity", "Starting Wi-Fi selection page, passing device: $deviceId")
         }
     }
-    
+
     // Create coroutine scope for asynchronous operations
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    
+
     // Current connected Wi-Fi network
     private var currentWifi: String? = null
     
-    // Whether password is visible
-    private var isPasswordVisible = false
+    // Flag to track if hotspot dialog has been shown
+    private var hotspotDialogShown = false
 
     private lateinit var bleDevice: BleDevice
-    
+
     // Add WiFi manager
     private lateinit var wifiManager: WifiManager
+
+    // Fragments
+    private lateinit var wifiFragment: CovWifiFragment
+    private lateinit var hotspotFragment: CovHotspotFragment
+
+    // Tab titles
+    private val tabTitles = arrayOf(
+        R.string.cov_iot_wifi_tab,
+        R.string.cov_iot_hotspot_tab
+    )
 
     override fun getViewBinding(): CovActivityWifiSelectBinding {
         return CovActivityWifiSelectBinding.inflate(layoutInflater)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
+    private fun initData(){
         // Initialize WiFi manager
         wifiManager = WifiManager(this)
-        
+
         // Get device ID
         val deviceId = intent.getStringExtra(EXTRA_DEVICE_ID) ?: ""
-        
+
         // Get device from device manager
         val device = CovScanBleDeviceManager.getDevice(deviceId)
         if (device == null) {
@@ -77,33 +90,13 @@ class CovWifiSelectActivity : BaseActivity<CovActivityWifiSelectBinding>() {
             finish()
             return
         }
-        
+
         // Save device information
         bleDevice = device
-        
-        // Continue initialization
-        initData()
     }
 
     override fun initView() {
-        setupView()
-        setupPasswordToggle()
-        setupWifiSelection()
-        setupNextButton()
-    }
-
-    override fun onDestroy() {
-        coroutineScope.cancel()
-        super.onDestroy()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Get current Wi-Fi information every time the page resumes
-        getCurrentWifi()
-    }
-
-    private fun setupView() {
+        initData()
         mBinding?.apply {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             val statusBarHeight = getStatusBarHeight() ?: 25.dp.toInt()
@@ -118,165 +111,155 @@ class CovWifiSelectActivity : BaseActivity<CovActivityWifiSelectBinding>() {
                     finish()
                 }
             })
-        }
-    }
-    
-    private fun setupPasswordToggle() {
-        mBinding?.apply {
-            // Set password visibility toggle
-            ivTogglePassword.setOnClickListener {
-                isPasswordVisible = !isPasswordVisible
-                
-                // Update password input field type
-                if (isPasswordVisible) {
-                    etWifiPassword.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-                    ivTogglePassword.setImageResource(R.drawable.cov_iot_show_pw)
-                } else {
-                    etWifiPassword.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-                    ivTogglePassword.setImageResource(R.drawable.cov_iot_hide_pw)
-                }
-                
-                // Move cursor to the end of text
-                etWifiPassword.setSelection(etWifiPassword.text.length)
-            }
-            
-            // Monitor password input changes
-            etWifiPassword.addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-                
-                override fun afterTextChanged(s: Editable?) {
-                    // Enable or disable next button based on password length
-                    val isEnabled = !s.isNullOrEmpty() && s.length >= 8
-                    btnNext.isEnabled = isEnabled
-                    // Set alpha value based on button state
-                    btnNext.alpha = if (isEnabled) 1.0f else 0.5f
-                }
-            })
-        }
-    }
-    
-    private fun setupWifiSelection() {
-        mBinding?.apply {
-            // Set current Wi-Fi name
-            currentWifi?.let {
-                tvWifiName.text = it
-            }
-            
-            // Set change Wi-Fi button click event - open system Wi-Fi settings
-            btnChangeWifi.setOnClickListener {
-                openWifiSettings()
-            }
-        }
-    }
-    
-    private fun setupNextButton() {
-        mBinding?.apply {
-            // Disable next button in initial state
-            btnNext.isEnabled = false
-            // Set initial alpha value
-            btnNext.alpha = 0.5f
-            
-            // Set next button click event
-            btnNext.setOnClickListener(object : OnFastClickListener() {
-                override fun onClickJacking(view: View) {
-                    val password = etWifiPassword.text.toString()
-                    
-                    if (password.length < 8) {
-                        ToastUtil.show("Wi-Fi password must be at least 8 characters")
-                        return
+
+            // Create fragments
+            wifiFragment = CovWifiFragment.newInstance(bleDevice.address)
+            hotspotFragment = CovHotspotFragment.newInstance(bleDevice.address)
+
+            // Set up ViewPager with adapter
+            viewPager.adapter = object : FragmentStateAdapter(this@CovWifiSelectActivity) {
+                override fun getItemCount(): Int = 2
+
+                override fun createFragment(position: Int): Fragment {
+                    return when (position) {
+                        0 -> wifiFragment
+                        1 -> hotspotFragment
+                        else -> wifiFragment
                     }
-                    
-                    // Save Wi-Fi information and proceed to next step
-                    currentWifi?.let {
-                        startDeviceConnectActivity(password)
-                    } ?: run {
-                        ToastUtil.show("Please select a Wi-Fi network first")
+                }
+            }
+
+            // Add page change callback to detect when user switches to hotspot tab
+            viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                override fun onPageSelected(position: Int) {
+                    super.onPageSelected(position)
+                    // When user selects hotspot tab (position 1) and dialog hasn't been shown
+                    if (position == 1 && !hotspotDialogShown) {
+                        showHotspotDialog()
+                        hotspotDialogShown = true
                     }
                 }
             })
+
+            // Connect TabLayout with ViewPager2
+            TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+                tab.setText(tabTitles[position])
+            }.attach()
+
+            // Set initial tab (optional)
+            viewPager.setCurrentItem(0, false)
         }
     }
 
-    private fun initData() {
-        // Add log output to check if device is null
-        CovLogger.d(TAG, "Configuring device Wi-Fi: ${bleDevice.name}")
+    override fun onDestroy() {
+        coroutineScope.cancel()
+        super.onDestroy()
+    }
 
-        // Get currently connected Wi-Fi
+    override fun onResume() {
+        super.onResume()
+        // Get current Wi-Fi information every time the page resumes
         getCurrentWifi()
     }
-    
+
     // Get current Wi-Fi information
     private fun getCurrentWifi() {
         coroutineScope.launch(Dispatchers.IO) {
             try {
                 // Use WifiManager to get current Wi-Fi information
                 val wifiInfo = wifiManager.getCurrentWifiInfo()
-                
+
                 if (wifiInfo != null) {
                     currentWifi = wifiInfo.ssid
-                    
+
                     // Check WiFi frequency band
                     val is5GHz = !wifiManager.is24GHzWifi(wifiInfo.frequency)
-                    
+
                     launch(Dispatchers.Main) {
-                        mBinding?.tvWifiName?.text = currentWifi ?: ""
-                        
-                        if (is5GHz) {
-                            // 5G WiFi - show in red and disable password input
-                            mBinding?.tvWifiName?.setTextColor(resources.getColor(io.agora.scene.common.R.color.ai_red6, null))
-                            mBinding?.etWifiPassword?.isEnabled = false
-                            mBinding?.btnNext?.isEnabled = false
-                            mBinding?.btnNext?.alpha = 0.5f
-                            mBinding?.tvWifiWarning?.visibility = View.VISIBLE
-                        } else {
-                            // 2.4G WiFi - normal display
-                            mBinding?.tvWifiName?.setTextColor(resources.getColor(io.agora.scene.common.R.color.ai_icontext1, null))
-                            mBinding?.etWifiPassword?.isEnabled = true
-                            mBinding?.tvWifiWarning?.visibility = View.GONE
-                            
-                            // Update UI state, ensure next button is enabled when Wi-Fi is connected (if password is entered)
-                            val isEnabled = !mBinding?.etWifiPassword?.text.isNullOrEmpty() && 
-                                           (mBinding?.etWifiPassword?.text?.length ?: 0) >= 8
-                            mBinding?.btnNext?.isEnabled = isEnabled
-                            // Set alpha value based on button state
-                            mBinding?.btnNext?.alpha = if (isEnabled) 1.0f else 0.5f
-                        }
+                        // Update Wi-Fi fragment with current Wi-Fi info
+                        wifiFragment.updateWifiInfo(currentWifi ?: "", is5GHz)
                     }
                 } else {
                     launch(Dispatchers.Main) {
-                        mBinding?.tvWifiName?.text = ""
-                        mBinding?.btnNext?.isEnabled = false
-                        mBinding?.btnNext?.alpha = 0.5f
-                        mBinding?.tvWifiWarning?.visibility = View.GONE
+                        // Update Wi-Fi fragment with empty Wi-Fi info
+                        wifiFragment.updateWifiInfo("", false)
                         ToastUtil.show("No Wi-Fi connection detected, please connect to Wi-Fi first")
                     }
                 }
             } catch (e: Exception) {
                 CovLogger.e(TAG, "Failed to get Wi-Fi information: ${e.message}")
-                
+
                 launch(Dispatchers.Main) {
                     ToastUtil.show("Failed to get Wi-Fi information")
                 }
             }
         }
     }
-    
+
     // Open system Wi-Fi settings page
-    private fun openWifiSettings() {
+    fun openWifiSettings() {
         try {
-            val intent = Intent(android.provider.Settings.ACTION_WIFI_SETTINGS)
+            val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
             startActivity(intent)
         } catch (e: Exception) {
             CovLogger.e(TAG, "Failed to open Wi-Fi settings: ${e.message}")
             ToastUtil.show("Unable to open Wi-Fi settings")
         }
     }
-    
+
+    // Open personal hotspot settings page
+    fun openWirelessSettings() {
+        try {
+            // Method 1: Try to use the specific tethering settings intent (works on some devices)
+            val tetheringIntent = Intent()
+            tetheringIntent.setClassName("com.android.settings", "com.android.settings.TetherSettings")
+            
+            // Check if we can resolve this intent
+            if (tetheringIntent.resolveActivity(packageManager) != null) {
+                startActivity(tetheringIntent)
+                return
+            }
+            
+            // Method 2: Try to use Hotspot settings directly (works on some Samsung devices)
+            val hotspotIntent = Intent("android.intent.action.HOTSPOT_SETTINGS")
+            if (hotspotIntent.resolveActivity(packageManager) != null) {
+                startActivity(hotspotIntent)
+                return
+            }
+            
+            // Method 3: Try using the ACTION_WIRELESS_SETTINGS with specific extras (works on some devices)
+            val wirelessIntent = Intent(Settings.ACTION_WIRELESS_SETTINGS)
+            wirelessIntent.putExtra("expandable_volume_tether", true) // For some devices
+            startActivity(wirelessIntent)
+            
+        } catch (e: Exception) {
+            CovLogger.e(TAG, "Failed to open hotspot settings: ${e.message}")
+            
+            // Fallback to wireless settings if all methods fail
+            try {
+                val fallbackIntent = Intent(Settings.ACTION_WIRELESS_SETTINGS)
+                startActivity(fallbackIntent)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                CovLogger.e(TAG, "Failed to open wireless settings: ${e.message}")
+            }
+        }
+    }
+
     // Start device connection page
-    private fun startDeviceConnectActivity(wifiPassword: String) {
+    fun startDeviceConnectActivity(ssid: String, password: String) {
         // Pass Wi-Fi information to device connection page
-        CovDeviceConnectActivity.startActivity(this, bleDevice.address, currentWifi ?: "", wifiPassword)
+        CovDeviceConnectActivity.startActivity(this, bleDevice.address, ssid, password)
+    }
+
+    private fun showHotspotDialog() {
+        val dialog = CovHotspotDialog.newInstance()
+        dialog.setOnHotspotDialogListener(object : CovHotspotDialog.OnHotspotDialogListener {
+
+            override fun onGoToSettingsClicked() {
+                openWirelessSettings()
+            }
+        })
+        dialog.show(supportFragmentManager, "hotspot_dialog")
     }
 }

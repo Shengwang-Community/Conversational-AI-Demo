@@ -18,237 +18,55 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_marginStart="10dp"
-            android:padding="12dp"
+            android:paddingHorizontal="12dp"
             android:src="@drawable/cov_back"
+            android:padding="12dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- main content -->
-    <LinearLayout
-        android:id="@+id/ll_title_wifi"
+    <!-- Tab Layout for switching between WiFi and Hotspot -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="20dp"
-        android:orientation="horizontal"
-        android:gravity="center"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_height="42dp"
+        android:background="@drawable/cov_iot_bg_wifi_tabs"
+        android:padding="2dp"
+        app:tabBackground="@drawable/cov_iot_bg_wifi_tab_selector"
+        app:tabGravity="fill"
+        app:tabIndicator="@null"
+        app:tabIndicatorHeight="0dp"
+        app:tabMode="fixed"
+        app:tabRippleColor="@android:color/transparent"
+        app:tabSelectedTextColor="@color/tab_text_color_selector"
+        app:tabTextAppearance="@style/TabTextAppearance"
+        app:tabTextColor="@color/tab_text_color_selector"
+        app:layout_constraintTop_toTopOf="@+id/cl_title_bar"
+        app:layout_constraintBottom_toBottomOf="@+id/cl_title_bar"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cl_title_bar">
-        
-        <TextView
-            android:id="@+id/tv_title_wifi_part1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.7">
+
+        <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/cov_iot_wifi_title_part1"
-            android:textColor="@color/ai_icontext1"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-            
-        <TextView
-            android:id="@+id/tv_title_wifi_part2"
+            android:layout_height="38dp"
+            android:text="@string/cov_iot_wifi_tab" />
+
+        <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/cov_iot_wifi_title_part2"
-            android:textColor="@color/ai_green6"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-            
-        <TextView
-            android:id="@+id/tv_title_wifi_part3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/cov_iot_wifi_title_part3"
-            android:textColor="@color/ai_icontext1"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+            android:layout_height="38dp"
+            android:text="@string/cov_iot_hotspot_tab" />
 
-    <TextView
-        android:id="@+id/tv_subtitle_wifi"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="10dp"
-        android:text="@string/cov_iot_wifi_title_2"
-        android:textColor="@color/ai_icontext1"
-        android:textSize="20sp"
-        android:gravity="center"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ll_title_wifi" />
+    </com.google.android.material.tabs.TabLayout>
 
-    <TextView
-        android:id="@+id/tv_wifi_tip"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="24dp"
-        android:text="@string/cov_iot_wifi_title_tips"
-        android:textColor="@color/ai_green6"
-        android:textSize="14sp"
-        android:gravity="center"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_subtitle_wifi" />
-
-    <!-- Wi-Fi icon area -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cv_wifi_icon"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginHorizontal="30dp"
-        android:layout_marginTop="20dp"
-        app:cardBackgroundColor="@android:color/transparent"
-        app:cardElevation="0dp"
-        app:cardCornerRadius="16dp"
-        app:layout_constraintDimensionRatio="3:2"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_wifi_tip">
-
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/cov_iot_wifi_bg_2"
-            android:scaleType="fitCenter"/>
-
-    </androidx.cardview.widget.CardView>
-
-    <!-- Wi-Fi name selection -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cv_wifi_name"
-        android:layout_width="0dp"
-        android:layout_height="56dp"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="20dp"
-        app:cardBackgroundColor="#262C3780"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="0dp"
-        app:strokeWidth="0.5dp"
-        app:strokeColor="#50505199"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cv_wifi_icon">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:background="@color/ai_input"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <TextView
-                android:id="@+id/tv_wifi_name"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="8dp"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="@color/ai_icontext1"
-                android:textSize="16sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/btn_change_wifi"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_change_wifi"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/cov_wift_change_btn_bg"
-                android:text="@string/cov_iot_wifi_change"
-                android:textColor="@color/ai_icontext1"
-                android:textSize="14sp"
-                app:backgroundTint="@null"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-    </androidx.cardview.widget.CardView>
-
-    <TextView
-        android:id="@+id/tv_wifi_warning"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="7dp"
-        android:text="@string/cov_iot_wifi_warning"
-        android:textColor="@color/ai_icontext1"
-        android:textSize="11sp"
-        app:layout_constraintTop_toBottomOf="@+id/cv_wifi_name"
-        app:layout_constraintStart_toStartOf="@+id/cv_wifi_name" />
-
-    <!-- Wi-Fi password input -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cv_wifi_password"
-        android:layout_width="0dp"
-        android:layout_height="56dp"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="32dp"
-        app:cardBackgroundColor="#262C3780"
-        app:cardCornerRadius="12dp"
-        app:strokeWidth="0.5dp"
-        app:strokeColor="#50505199"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cv_wifi_name">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:background="@color/ai_input"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <EditText
-                android:id="@+id/et_wifi_password"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:background="@null"
-                android:hint="@string/cov_iot_wifi_password"
-                android:inputType="textPassword"
-                android:paddingHorizontal="16dp"
-                android:textColor="@color/ai_icontext1"
-                android:textColorHint="#999999"
-                android:textSize="16sp"
-                app:layout_constraintEnd_toStartOf="@id/iv_toggle_password"
-                app:layout_constraintStart_toStartOf="parent" />
-
-            <ImageView
-                android:id="@+id/iv_toggle_password"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_marginEnd="12dp"
-                android:src="@drawable/cov_iot_hide_pw"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/ai_icontext1" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-    </androidx.cardview.widget.CardView>
-
-    <!-- next button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_next"
+    <!-- ViewPager2 for tab content -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="40dp"
-        android:background="@drawable/selector_gradient_button"
-        android:text="@string/cov_iot_devices_prepare_next"
-        android:textStyle="bold"
-        android:textColor="@color/ai_brand_white10"
-        android:textSize="16sp"
-        android:enabled="false"
-        app:backgroundTint="@null"
-        app:cornerRadius="28dp"
-        app:layout_constraintTop_toBottomOf="@+id/cv_wifi_password"/>
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/tab_layout"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-</androidx.constraintlayout.widget.ConstraintLayout> 
+</androidx.constraintlayout.widget.ConstraintLayout>
