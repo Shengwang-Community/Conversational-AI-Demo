@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.ui
 
+import android.annotation.SuppressLint
 import android.app.Dialog
 import android.view.Gravity
 import android.view.WindowManager
@@ -18,6 +19,7 @@ import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.util.LogUploader
 import io.agora.scene.common.util.copyToClipboard
 import io.agora.scene.common.util.toast.ToastUtil
+import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovInfoDialogBinding
 import io.agora.scene.convoai.constant.CovAgentManager
@@ -73,6 +75,7 @@ class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
     
     private var uploadAnimation: Animation? = null
     
+    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         context?.let { cxt->
@@ -139,6 +142,10 @@ class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
             updateView()
             updateDeviceCount()
             updateUploadingStatus(disable = connectionState != AgentConnectionState.CONNECTED)
+
+            tvVersionName.text =
+                getString(io.agora.scene.common.R.string.common_app_version, ServerConfig.appVersionName)
+            tvBuild.text = getString(io.agora.scene.common.R.string.common_app_build_no, ServerConfig.appBuildNo)
         }
     }
 

@@ -87,32 +87,42 @@ echo pwd: `pwd`
 # enter android project direction
 cd Android
 
-# config android environment
-source ~/.bashrc
-export ANDROID_HOME=/usr/lib/android_sdk
-ls ~/.gradle || mkdir -p /tmp/.gradle && ln -s /tmp/.gradle ~/.gradle && touch ~/.gradle/ln_$(date "+%y%m%d%H") && ls ~/.gradle
-
-## use open jdk 17
+# Set up JDK environment
 SYSTEM=$(uname -s)
 if [ "$SYSTEM" = "Linux" ];then
-if [ ! -d "/tmp/jdk-17.0.2" ];then
-  curl -O https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_linux-x64_bin.tar.gz
-  tar zxf openjdk-17.0.2_linux-x64_bin.tar.gz
-  mv jdk-17.0.2 /tmp/
+  if [ ! -d "/tmp/jdk-17.0.2" ];then
+    curl -O https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_linux-x64_bin.tar.gz
+    tar zxf openjdk-17.0.2_linux-x64_bin.tar.gz
+    mv jdk-17.0.2 /tmp/
+  fi
+  export JAVA_HOME=/tmp/jdk-17.0.2
+  export ANDROID_HOME=/usr/lib/android_sdk
+elif [ "$SYSTEM" = "Darwin" ];then
+  export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+  export ANDROID_HOME=${ANDROID_HOME:-$HOME/Library/Android/sdk}
 fi
-export JAVA_HOME=/tmp/jdk-17.0.2
+
 export PATH=$JAVA_HOME/bin:$PATH
-java --version
+java --version || { echo "Error: Failed to get Java version"; exit 1; }
+
+# Configure environment
+if [ "$SYSTEM" = "Linux" ];then
+  [ -f ~/.bashrc ] && source ~/.bashrc
+else
+  # Try to load zsh config first, if not found then try bash_profile
+  if [ -f ~/.zshrc ]; then
+    source ~/.zshrc
+  elif [ -f ~/.bash_profile ]; then
+    source ~/.bash_profile
+  fi
 fi
+
+# Set up Gradle directory
+[ ! -d ~/.gradle ] && mkdir -p /tmp/.gradle && ln -s /tmp/.gradle ~/.gradle && touch ~/.gradle/ln_$(date "+%y%m%d%H")
+echo "ANDROID_HOME: $ANDROID_HOME"
 
 sed -ie "s#google()#maven { url \"https\://maven.aliyun.com/repository/public\" }\n        google()#g" settings.gradle
 sed -ie "s#https://services.gradle.org/distributions#https://mirrors.cloud.tencent.com/gradle#g" gradle/wrapper/gradle-wrapper.properties
-
-# 确认环境变量是否已正确加载
-echo "检查关键环境变量:"
-echo "ANDROID_HOME: $ANDROID_HOME"
-echo "JAVA_HOME: $JAVA_HOME"
-java --version
 
 # download environment configuration file
 echo "Start downloading environment config file..."
@@ -156,10 +166,7 @@ if [[ "${toolbox_url}" != *"https://"* ]]; then
   echo "Added https prefix: ${toolbox_url}"
 fi
 
-if [[ "${toolbox_url}" == *"dev"* ]]; then
-  echo "Using development environment APP_ID (dev)"
-  APP_ID_VAR=${APP_ID_DEV}
-elif [[ "${toolbox_url}" == *"staging"* ]]; then
+if [[ "${toolbox_url}" == *"staging"* ]]; then
   echo "Using staging environment APP_ID (staging)"
   APP_ID_VAR=${APP_ID_STAGING}
 else

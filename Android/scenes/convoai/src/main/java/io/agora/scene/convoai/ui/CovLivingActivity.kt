@@ -13,10 +13,12 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import com.tencent.bugly.crashreport.CrashReport
 import io.agora.rtc2.Constants
 import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngineEx
 import io.agora.scene.common.BuildConfig
+import io.agora.scene.common.constant.AgentConstant
 import io.agora.scene.common.constant.AgentScenes
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
@@ -36,6 +38,7 @@ import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.ui.SSOWebViewActivity
 import io.agora.scene.common.ui.TermsActivity
 import io.agora.scene.common.ui.vm.LoginViewModel
+import io.agora.scene.common.util.CommonLogger
 import io.agora.scene.common.util.PermissionHelp
 import io.agora.scene.common.util.copyToClipboard
 import io.agora.scene.common.util.dp
@@ -264,6 +267,98 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         mBinding?.tvDisconnect?.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
+    private fun getConvoaiBodyMap(channel:String): Map<String, Any?> {
+        return mapOf(
+            "graph_id" to DebugConfigSettings.graphId.takeIf { it.isNotEmpty() },
+            "name" to null,
+            "properties" to mapOf(
+                "channel" to channel,
+                "token" to null,
+                "agent_rtc_uid" to CovAgentManager.agentUID.toString(),
+                "remote_rtc_uids" to listOf(CovAgentManager.uid.toString()),
+                "enable_string_uid" to null,
+                "idle_timeout" to null,
+                "agent_rtm_uid" to null,
+                "advanced_features" to mapOf(
+                    "enable_aivad" to CovAgentManager.enableAiVad,
+                    "enable_bhvs" to CovAgentManager.enableBHVS,
+                    "enable_rtm" to null,
+                ),
+                "asr" to mapOf(
+                    "language" to CovAgentManager.language?.language_code,
+                    "vendor" to null,
+                    "vendor_model" to null,
+                ),
+                "llm" to mapOf(
+                    "url" to BuildConfig.LLM_URL.takeIf { it.isNotEmpty() },
+                    "api_key" to BuildConfig.LLM_API_KEY.takeIf { it.isNotEmpty() },
+                    "system_messages" to try {
+                        // Parse system_messages as JSON if not empty
+                        BuildConfig.LLM_SYSTEM_MESSAGES.takeIf { it.isNotEmpty() }?.let {
+                            org.json.JSONArray(it)
+                        }
+                    } catch (e: Exception) {
+                        CovLogger.e(TAG, "Failed to parse system_messages as JSON: ${e.message}")
+                        BuildConfig.LLM_SYSTEM_MESSAGES.takeIf { it.isNotEmpty() }
+                    },
+                    "greeting_message" to null,
+                    "params" to try {
+                        // Parse params as JSON if not empty
+                        BuildConfig.LLM_PARRAMS.takeIf { it.isNotEmpty() }?.let {
+                            JSONObject(it)
+                        }
+                    } catch (e: Exception) {
+                        CovLogger.e(TAG, "Failed to parse LLM params as JSON: ${e.message}")
+                        BuildConfig.LLM_PARRAMS.takeIf { it.isNotEmpty() }
+                    },
+                    "style" to null,
+                    "max_history" to null,
+                    "ignore_empty" to null,
+                    "input_modalities" to null,
+                    "output_modalities" to null,
+                    "failure_message" to null,
+                ),
+                "tts" to mapOf(
+                    "vendor" to BuildConfig.TTS_VENDOR.takeIf { it.isNotEmpty() },
+                    "params" to try {
+                        // Parse TTS params as JSON if not empty
+                        BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() }?.let {
+                            JSONObject(it)
+                        }
+                    } catch (e: Exception) {
+                        CovLogger.e(TAG, "Failed to parse TTS params as JSON: ${e.message}")
+                        BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() }
+                    },
+                ),
+                "vad" to mapOf(
+                    "interrupt_duration_ms" to null,
+                    "prefix_padding_ms" to null,
+                    "silence_duration_ms" to null,
+                    "threshold" to null,
+                ),
+                "parameters" to mapOf(
+                    "enable_flexible" to null,
+                    "enable_metrics" to null,
+                    "aivad_force_threshold" to null,
+                    "output_audio_codec" to null,
+                    "audio_scenario" to null,
+                    "transcript" to mapOf(
+                        "enable" to true,
+                        "enable_words" to true,
+                        "protocol_version" to "v2",
+                        "redundant" to null,
+                    ),
+                    "sc" to mapOf(
+                        "sessCtrlStartSniffWordGapInMs" to null,
+                        "sessCtrlTimeOutInMs" to null,
+                        "sessCtrlWordGapLenVolumeThr" to null,
+                        "sessCtrlWordGapLenInMs" to null,
+                    )
+                )
+            )
+        )
+    }
+
     private fun getAgentParams(): AgentRequestParams {
         return AgentRequestParams(
             appId = ServerConfig.rtcAppId,
@@ -277,7 +372,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             llmUrl = BuildConfig.LLM_URL.takeIf { it.isNotEmpty() },
             llmApiKey = BuildConfig.LLM_API_KEY.takeIf { it.isNotEmpty() },
             llmPrompt = BuildConfig.LLM_SYSTEM_MESSAGES.takeIf { it.isNotEmpty() },
-            llmModel = BuildConfig.LLM_MODEL.takeIf { it.isNotEmpty() },
+           // llmModel = BuildConfig.LLM_MODEL.takeIf { it.isNotEmpty() },
             ttsVendor = BuildConfig.TTS_VENDOR.takeIf { it.isNotEmpty() },
             ttsParams = BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() }?.let { JSONObject(it) },
             asrLanguage = CovAgentManager.language?.language_code,
@@ -299,7 +394,13 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         // Immediately show the connecting status
         isUserEndCall = false
         connectionState = AgentConnectionState.CONNECTING
-        CovAgentManager.channelName = "agent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+        CovAgentManager.channelName =
+            if (DebugConfigSettings.isDebug) {
+                "agent_debug_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+            } else {
+                "agent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+            }
+
 
         isSelfSubRender = CovAgentManager.getPreset()?.isIndependent() == true
         mBinding?.apply {
@@ -369,7 +470,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     private suspend fun startAgentAsync(): Pair<String, Int> = suspendCoroutine { cont ->
-        CovAgentApiManager.startAgent(getAgentParams()) { err, channelName ->
+//        CovAgentApiManager.startAgent(getAgentParams()) { err, channelName ->
+//            cont.resume(Pair(channelName, err?.errorCode ?: 0))
+//        }
+
+        val channel = CovAgentManager.channelName
+        CovAgentApiManager.startAgentWithMap(channel, getConvoaiBodyMap(channel)) { err, channelName ->
             cont.resume(Pair(channelName, err?.errorCode ?: 0))
         }
     }
@@ -424,10 +530,9 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     private fun updateToken(complete: (Boolean) -> Unit) {
-        TokenGenerator.generateToken("",
-            CovAgentManager.uid.toString(),
-            TokenGeneratorType.Token007,
-            AgoraTokenType.Rtc,
+        TokenGenerator.generateToken(
+            channelName = "",
+            uid = CovAgentManager.uid.toString(),
             success = { token ->
                 CovLogger.d(TAG, "getToken success")
                 rtcToken = token
@@ -601,8 +706,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
             override fun onTokenPrivilegeWillExpire(token: String?) {
                 CovLogger.d(TAG, "onTokenPrivilegeWillExpire")
-                updateToken { isOK ->
-                    if (isOK) {
+                updateToken { isTokenOK ->
+                    if (isTokenOK) {
                         CovRtcManager.renewRtcToken(rtcToken ?: "")
                     } else {
                         stopAgentAndLeaveChannel()
@@ -625,16 +730,25 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         countDownJob?.cancel()
         countDownJob = coroutineScope.launch {
             try {
-                var remainingTime = CovAgentManager.roomExpireTime * 1000L
-                while (remainingTime > 0 && isActive) {
-                    delay(1000)
-                    remainingTime -= 1000
-                    onTimerTick(remainingTime)
-                }
-
-                if (remainingTime <= 0) {
-                    onClickEndCall()
-                    showRoomEndDialog()
+                if (DebugConfigSettings.isSessionLimitMode) {
+                    var remainingTime = CovAgentManager.roomExpireTime * 1000L
+                    while (remainingTime > 0 && isActive) {
+                        delay(1000)
+                        remainingTime -= 1000
+                        onTimerTick(remainingTime, false)
+                    }
+                    if (remainingTime <= 0) {
+                        onClickEndCall()
+                        showRoomEndDialog()
+                    }
+                } else {
+                    var elapsedTime = 0L
+                    onTimerTick(elapsedTime, true)
+                    while (isActive) {
+                        delay(1000)
+                        elapsedTime += 1000
+                        onTimerTick(elapsedTime, true)
+                    }
                 }
             } catch (e: Exception) {
                 CovLogger.e(TAG, "Timer error: ${e.message}")
@@ -649,15 +763,31 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         countDownJob = null
     }
 
-    private fun onTimerTick(remainingTimeMs: Long) {
-        val minutes = (remainingTimeMs / 1000 / 60).toInt()
-        val seconds = (remainingTimeMs / 1000 % 60).toInt()
-        if (remainingTimeMs <= 20000) {
-            mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_red6))
-        } else if (remainingTimeMs <= 60000) {
-            mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_green6))
+    private fun onTimerTick(timeMs: Long, isCountUp: Boolean) {
+        val hours = (timeMs / 1000 / 60 / 60).toInt()
+        val minutes = (timeMs / 1000 / 60 % 60).toInt()
+        val seconds = (timeMs / 1000 % 60).toInt()
+        
+        val timeText = if (hours > 0) {
+            // Display in HH:MM:SS format when exceeding one hour
+            String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            // Display in MM:SS format when less than one hour
+            String.format("%02d:%02d", minutes, seconds)
         }
-        mBinding?.clTop?.tvTimer?.text = String.format("%02d:%02d", minutes, seconds)
+
+        mBinding?.clTop?.tvTimer?.text = timeText
+        if (isCountUp) {
+            mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_brand_white10))
+        } else {
+            if (timeMs <= 20000) {
+                mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_red6))
+            } else if (timeMs <= 60000) {
+                mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_green6))
+            } else {
+                mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_brand_white10))
+            }
+        }
     }
 
     private fun updateUserVolumeAnim(volume: Int) {
@@ -904,10 +1034,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     private fun showTitleAnim() {
         titleAnimJob?.cancel()
         mBinding?.apply {
-            clTop.tvTips.text = getString(
-                io.agora.scene.common.R.string.common_limit_time,
-                (CovAgentManager.roomExpireTime / 60).toInt()
-            )
+            if (DebugConfigSettings.isSessionLimitMode){
+                clTop.tvTips.text = getString(
+                    io.agora.scene.common.R.string.common_limit_time,
+                    (CovAgentManager.roomExpireTime / 60).toInt()
+                )
+            }else{
+                clTop.tvTips.text = getString(io.agora.scene.common.R.string.common_limit_time_none,)
+            }
             titleAnimJob = coroutineScope.launch {
                 delay(2000)
                 if (connectionState != AgentConnectionState.IDLE) {
@@ -1058,6 +1192,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 clBottomNotLogged.root.visibility = View.INVISIBLE
 
                 clBottomNotLogged.tvTyping.stopAnimation()
+
+                initBugly()
             } else {
                 clTop.btnSettings.visibility = View.INVISIBLE
                 clTop.btnInfo.visibility = View.INVISIBLE
@@ -1068,6 +1204,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 clBottomNotLogged.tvTyping.startAnimation()
             }
         }
+    }
+
+    private var isBuglyInit = false
+    private fun initBugly() {
+        if (isBuglyInit) return
+        CrashReport.initCrashReport(this, AgentConstant.BUGLT_KEY, BuildConfig.DEBUG)
+        CommonLogger.d("Bugly", "bugly init")
+        isBuglyInit = true
     }
 
     private fun showLoginLoading(show: Boolean) {
@@ -1101,6 +1245,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
                     override fun onPrivacyPolicy() {
                         TermsActivity.startActivity(this@CovLivingActivity, ServerConfig.privacyPolicyUrl)
+                    }
+
+                    override fun onPrivacyChecked(isChecked: Boolean) {
+                        if (isChecked) {
+                            initBugly()
+                        }
                     }
                 }
             }
