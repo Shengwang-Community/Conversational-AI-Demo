@@ -6,6 +6,10 @@ import SVProgressHUD
 
 public class DeveloperModeViewController: UIViewController {
     
+    private let kHost = "toolbox_server_host"
+    private let kAppId = "rtc_app_id"
+    private let kEnvName = "env_name"
+    
     public static func setDeveloperMode(_ enable: Bool) {
         UserDefaults.standard.set(enable, forKey: "DeveloperMode")
     }
@@ -19,16 +23,19 @@ public class DeveloperModeViewController: UIViewController {
                             onCloseDevMode: (() -> Void)? = nil,
                             onAudioDump: ((Bool) -> Void)? = nil,
                             onSwitchServer: (() -> Void)? = nil,
-                            onCopy: (() -> Void)? = nil) {
+                            onCopy: (() -> Void)? = nil,
+                            onSessionLimit: ((Bool) -> Void)? = nil) {
         let devViewController = DeveloperModeViewController()
         devViewController.modalTransitionStyle = .crossDissolve
         devViewController.modalPresentationStyle = .overCurrentContext
         devViewController.isAudioDumpEnabled = audioDump
+        devViewController.isSessionLimitEnabled = true
         devViewController.serverHost = serverHost
         devViewController.onCloseDevModeCallback = onCloseDevMode
         devViewController.audioDumpCallback = onAudioDump
         devViewController.copyCallback = onCopy
         devViewController.onSwitchServer = onSwitchServer
+        devViewController.sessionLimitCallback = onSessionLimit
         vc.present(devViewController, animated: true)
     }
     
@@ -36,19 +43,22 @@ public class DeveloperModeViewController: UIViewController {
     private var audioDumpCallback: ((Bool) -> Void)?
     private var copyCallback: (() -> Void)?
     private var onSwitchServer: (() -> Void)?
+    private var sessionLimitCallback: ((Bool) -> Void)?
     
     private var serverHost: String = ""
     private var isAudioDumpEnabled: Bool = false
+    private var isSessionLimitEnabled: Bool = true
     private let rtcVersionValueLabel = UILabel()
     private let serverHostValueLabel = UILabel()
     private let graphTextField = UITextField()
     private let audioDumpSwitch = UISwitch()
+    private let sessionLimitSwitch = UISwitch()
     
     private let feedbackPresenter = FeedBackPresenter()
     
     private lazy var menuButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle(AppContext.shared.environments.first?["name"] ?? "", for: .normal)
+        button.setTitle(AppContext.shared.environments.first?[kEnvName] ?? "", for: .normal)
         button.setTitleColor(UIColor.themColor(named: "ai_icontext1"), for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 14)
         button.showsMenuAsPrimaryAction = true
@@ -60,7 +70,7 @@ public class DeveloperModeViewController: UIViewController {
         didSet {
             let environments = AppContext.shared.environments
             if selectedEnvironmentIndex < environments.count {
-                menuButton.setTitle(environments[selectedEnvironmentIndex]["name"], for: .normal)
+                menuButton.setTitle(environments[selectedEnvironmentIndex][kEnvName], for: .normal)
             }
         }
     }
@@ -68,7 +78,7 @@ public class DeveloperModeViewController: UIViewController {
     private func createEnvironmentMenu() -> UIMenu {
         let environments = AppContext.shared.environments
         let actions = environments.enumerated().map { index, env in
-            UIAction(title: env["name"] ?? "") { [weak self] _ in
+            UIAction(title: env[kEnvName] ?? "") { [weak self] _ in
                 self?.selectedEnvironmentIndex = index
             }
         }
@@ -88,8 +98,8 @@ public class DeveloperModeViewController: UIViewController {
         serverHostValueLabel.text = serverHost
         // update environment segment        
         for (index, envi) in AppContext.shared.environments.enumerated() {
-            let host = envi["host"]
-            let appId = envi["appId"]
+            let host = envi[kHost]
+            let appId = envi[kAppId]
             if host == AppContext.shared.baseServerUrl && appId == AppContext.shared.appId {
                 selectedEnvironmentIndex = index
                 break
@@ -110,11 +120,11 @@ public class DeveloperModeViewController: UIViewController {
         }
         
         for env in environments {
-            if let host = env["host"] {
+            if let host = env[kHost] {
                 AppContext.shared.baseServerUrl = host
             }
             
-            if let appid = env["appId"] {
+            if let appid = env[kAppId] {
                 AppContext.shared.appId = appid
             }
             
@@ -148,16 +158,20 @@ extension DeveloperModeViewController {
         let environments = AppContext.shared.environments
         if selectedEnvironmentIndex >= 0 && selectedEnvironmentIndex < environments.count {
             let envi = environments[selectedEnvironmentIndex]
-            let host = envi["host"]
+            let host = envi[kHost]
             if AppContext.shared.baseServerUrl == host {
                 return
             }
             AppContext.shared.baseServerUrl = host ?? ""
-            AppContext.shared.appId = envi["appId"] ?? ""
+            AppContext.shared.appId = envi[kAppId] ?? ""
             SVProgressHUD.showInfo(withStatus: host)
             onSwitchServer?()
         }
         self.dismiss(animated: true)
+    }
+    
+    @objc private func onClickSessionLimit(_ sender: UISwitch) {
+        sessionLimitCallback?(sender.isOn)
     }
 }
 
@@ -167,10 +181,12 @@ extension DeveloperModeViewController {
         // Content View
         let cotentView = UIView()
         cotentView.backgroundColor = UIColor.themColor(named: "ai_fill2")
+        cotentView.layer.cornerRadius = 16
+        cotentView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         view.addSubview(cotentView)
         cotentView.snp.makeConstraints { make in
             make.left.right.bottom.equalToSuperview()
-            make.height.equalTo(424)
+            make.height.equalTo(480)
         }
         
         // Title Grabber
@@ -217,33 +233,6 @@ extension DeveloperModeViewController {
             make.height.equalTo(1)
         }
         
-        let graphLabel = UILabel()
-        graphLabel.text = ResourceManager.L10n.DevMode.graph
-        graphLabel.textColor = UIColor.themColor(named: "ai_icontext1")
-        graphLabel.font = UIFont.systemFont(ofSize: 14)
-        
-        graphTextField.borderStyle = .roundedRect
-        graphTextField.backgroundColor = UIColor.themColor(named: "ai_block2")
-        graphTextField.textColor = UIColor.themColor(named: "ai_icontext4")
-        graphTextField.text = AppContext.shared.graphId
-        
-        let graphStackView = UIStackView()
-        graphStackView.axis = .horizontal
-        graphStackView.alignment = .center
-        graphStackView.spacing = 12
-        graphStackView.addArrangedSubview(graphLabel)
-        graphStackView.addArrangedSubview(graphTextField)
-        cotentView.addSubview(graphStackView)
-        graphStackView.snp.makeConstraints { make in
-            make.top.equalTo(dividerLine.snp.bottom).offset(10)
-            make.leading.trailing.equalToSuperview().inset(16)
-            make.height.equalTo(44)
-        }
-        
-        graphTextField.snp.makeConstraints { make in
-            make.width.equalTo(200)
-        }
-        
         // RTC Version
         let rtcVersionLabel = UILabel()
         rtcVersionLabel.text = ResourceManager.L10n.DevMode.rtc
@@ -262,9 +251,37 @@ extension DeveloperModeViewController {
         rtcStackView.addArrangedSubview(rtcVersionValueLabel)
         cotentView.addSubview(rtcStackView)
         rtcStackView.snp.makeConstraints { make in
-            make.top.equalTo(graphStackView.snp.bottom)
+            make.top.equalTo(dividerLine.snp.bottom).offset(10)
             make.leading.trailing.equalToSuperview().inset(16)
             make.height.equalTo(44)
+        }
+        
+        // Graph ID
+        let graphLabel = UILabel()
+        graphLabel.text = ResourceManager.L10n.DevMode.graph
+        graphLabel.textColor = UIColor.themColor(named: "ai_icontext1")
+        graphLabel.font = UIFont.systemFont(ofSize: 14)
+        
+        graphTextField.borderStyle = .roundedRect
+        graphTextField.backgroundColor = UIColor.themColor(named: "ai_block2")
+        graphTextField.textColor = UIColor.themColor(named: "ai_icontext4")
+        graphTextField.text = AppContext.shared.graphId
+        
+        let graphStackView = UIStackView()
+        graphStackView.axis = .horizontal
+        graphStackView.alignment = .center
+        graphStackView.spacing = 12
+        graphStackView.addArrangedSubview(graphLabel)
+        graphStackView.addArrangedSubview(graphTextField)
+        cotentView.addSubview(graphStackView)
+        graphStackView.snp.makeConstraints { make in
+            make.top.equalTo(rtcStackView.snp.bottom)
+            make.leading.trailing.equalToSuperview().inset(16)
+            make.height.equalTo(44)
+        }
+        
+        graphTextField.snp.makeConstraints { make in
+            make.width.equalTo(200)
         }
         
         // Environment
@@ -283,7 +300,7 @@ extension DeveloperModeViewController {
         enviroimentStack.alignment = .center
         cotentView.addSubview(enviroimentStack)
         enviroimentStack.snp.makeConstraints { make in
-            make.top.equalTo(rtcStackView.snp.bottom)
+            make.top.equalTo(graphStackView.snp.bottom)
             make.leading.trailing.equalToSuperview().inset(16)
             make.height.equalTo(44)
         }
@@ -333,6 +350,28 @@ extension DeveloperModeViewController {
             make.height.equalTo(44)
         }
         
+        // Session Limit
+        let sessionLimitLabel = UILabel()
+        sessionLimitLabel.text = ResourceManager.L10n.DevMode.sessionLimit
+        sessionLimitLabel.textColor = UIColor.themColor(named: "ai_icontext1")
+        sessionLimitLabel.font = UIFont.systemFont(ofSize: 14)
+        
+        sessionLimitSwitch.isOn = isSessionLimitEnabled
+        sessionLimitSwitch.addTarget(self, action: #selector(onClickSessionLimit(_ :)), for: .touchUpInside)
+        
+        let sessionLimitStackView = UIStackView()
+        sessionLimitStackView.axis = .horizontal
+        sessionLimitStackView.alignment = .center
+        sessionLimitStackView.spacing = 12
+        sessionLimitStackView.addArrangedSubview(sessionLimitLabel)
+        sessionLimitStackView.addArrangedSubview(sessionLimitSwitch)
+        cotentView.addSubview(sessionLimitStackView)
+        sessionLimitStackView.snp.makeConstraints { make in
+            make.top.equalTo(audioDumpStackView.snp.bottom)
+            make.leading.trailing.equalToSuperview().inset(16)
+            make.height.equalTo(44)
+        }
+        
         // Copy User Question
         let copyUserQuestionLabel = UILabel()
         copyUserQuestionLabel.text = ResourceManager.L10n.DevMode.copy
@@ -352,7 +391,7 @@ extension DeveloperModeViewController {
         copyStackView.addArrangedSubview(copyButton)
         cotentView.addSubview(copyStackView)
         copyStackView.snp.makeConstraints { make in
-            make.top.equalTo(audioDumpStackView.snp.bottom)
+            make.top.equalTo(sessionLimitStackView.snp.bottom)
             make.leading.trailing.equalToSuperview().inset(16)
             make.height.equalTo(44)
         }
