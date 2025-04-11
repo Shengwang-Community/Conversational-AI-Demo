@@ -34,15 +34,15 @@
     <string name="cov_iot_wifi_warning">请输入2.4G 无线网络</string>
 
     <string name="cov_iot_wifi_tab">Wi-Fi</string>
-    <string name="cov_iot_hotspot_tab">个人热点</string>
-    <string name="cov_iot_hotspot_title">打开个人热点</string>
-    <string name="cov_iot_hotspot_subtitle">如果你的手机支持5G网络，请在高级选项里选择“2.4GHz”</string>
+    <string name="cov_iot_hotspot_tab">移动热点</string>
+    <string name="cov_iot_hotspot_title">打开移动热点</string>
+    <string name="cov_iot_hotspot_subtitle">请在高级选项里选择“2.4GHz”</string>
     <string name="cov_iot_hotspot_go_setting">去启用热点，选择2.4GHz</string>
     <string name="cov_iot_hotspot_tips">输入热点名称和密码</string>
     <string name="cov_iot_hotspot_name">设备名称</string>
     <string name="cov_iot_hotspot_password">密码</string>
     <string name="cov_iot_hotspot_setting_tips">请启用个人热点</string>
-    <string name="cov_iot_hotspot_warning_tips">注意：请务必在移动共享热点配置中，选择2.4GHz频段</string>
+    <string name="cov_iot_hotspot_warning_tips">意：请务必在移动共享热点配置中，选择2.4GHz频段</string>
     <string name="cov_iot_hotspot_go_setting2">去启用热点，更改频段</string>
     <string name="cov_iot_step_1">1</string>
     <string name="cov_iot_step_2">2</string>

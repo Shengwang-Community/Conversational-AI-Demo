@@ -108,6 +108,7 @@
                     android:layout_height="0dp"
                     android:layout_marginHorizontal="22.5dp"
                     android:scaleType="fitCenter"
+                    android:layout_marginTop="5dp"
                     android:src="@drawable/cov_iot_hotspot_bg"
                     app:layout_constraintDimensionRatio="270:204"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -123,13 +124,14 @@
                     android:textAllCaps="false"
                     android:textColor="@color/ai_brand_white10"
                     android:textSize="14sp"
+                    android:insetBottom="0dp"
+                    android:insetTop="0dp"
                     app:backgroundTint="@color/ai_brand_main6"
                     app:cornerRadius="12dp"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="15dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/iv_hotspot_icon"
                     app:rippleColor="#1AFFFFFF" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
