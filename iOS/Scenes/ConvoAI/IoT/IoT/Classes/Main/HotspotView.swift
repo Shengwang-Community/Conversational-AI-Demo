@@ -12,8 +12,9 @@ class HotspotTagView: UIView {
     lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 20, weight: .semibold)
-        label.textColor = .white
+        label.textColor = UIColor.themColor(named: "ai_icontext1")
         label.textAlignment = .center
+        label.numberOfLines = 0
         return label
     }()
     
@@ -77,31 +78,9 @@ class HotspotView: UIView {
         let label = UILabel()
         label.text = ResourceManager.L10n.Iot.hotspotOpenTitle
         label.font = .systemFont(ofSize: 20, weight: .bold)
-        label.textColor = .white
-        return label
-    }()
-    
-    private lazy var goToSettingsButton: UIButton = {
-        let button = UIButton(type: .custom)
-        button.setTitle(ResourceManager.L10n.Iot.hotspotSettingsButton, for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 14)
-        button.backgroundColor = UIColor.themColor(named: "ai_brand_main6")
-        button.layer.cornerRadius = 10
-        button.addTarget(self, action: #selector(goToSettingsButtonTapped), for: .touchUpInside)
-        return button
-    }()
-    
-    private lazy var maxCompatibilityLabel: UILabel = {
-        let label = UILabel()
-        label.text = ResourceManager.L10n.Iot.hotspotCompatibilityMode
-        label.font = .systemFont(ofSize: 14, weight: .semibold)
-        label.textColor = .white
-        label.backgroundColor = UIColor.themColor(named: "ai_green6")
-        label.layer.cornerRadius = 6
-        label.clipsToBounds = true
+        label.textColor = UIColor.themColor(named: "ai_icontext1")
+        label.numberOfLines = 0
         label.textAlignment = .center
-        label.layoutMargins = UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 8)
         return label
     }()
     
@@ -110,7 +89,54 @@ class HotspotView: UIView {
         label.text = ResourceManager.L10n.Iot.hotspotCheckPrefix
         label.font = .systemFont(ofSize: 14)
         label.textColor = UIColor.themColor(named: "ai_icontext2")
+        label.numberOfLines = 0
+        label.textAlignment = .center
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        label.setContentHuggingPriority(.defaultLow, for: .horizontal)
         return label
+    }()
+    
+    private lazy var maxCompatibilityLabel: UIView = {
+        let container = UIView()
+        container.backgroundColor = UIColor.themColor(named: "ai_green6")
+        container.layer.cornerRadius = 6
+        container.clipsToBounds = true
+        
+        let label = UILabel()
+        label.text = ResourceManager.L10n.Iot.hotspotCompatibilityMode
+        label.font = .systemFont(ofSize: 14, weight: .semibold)
+        label.textColor = UIColor.themColor(named: "ai_icontext1")
+        label.textAlignment = .center
+        
+        container.addSubview(label)
+        label.snp.makeConstraints { make in
+            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 8))
+        }
+        
+        // 设置较高的内容压缩阻力和紧凑优先级
+        container.setContentCompressionResistancePriority(.required, for: .horizontal)
+        container.setContentHuggingPriority(.required, for: .horizontal)
+        
+        return container
+    }()
+    
+    private lazy var tipStackView: UIStackView = {
+        let stackView = UIStackView(arrangedSubviews: [checkTipLabel, maxCompatibilityLabel])
+        stackView.axis = .horizontal
+        stackView.spacing = 4
+        stackView.alignment = .center
+        return stackView
+    }()
+    
+    private lazy var goToSettingsButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.setTitle(ResourceManager.L10n.Iot.hotspotSettingsButton, for: .normal)
+        button.setTitleColor(UIColor.themColor(named: "ai_icontext1"), for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 14)
+        button.backgroundColor = UIColor.themColor(named: "ai_brand_main6")
+        button.layer.cornerRadius = 10
+        button.addTarget(self, action: #selector(goToSettingsButtonTapped), for: .touchUpInside)
+        return button
     }()
     
     private lazy var stepTwoContainer: UIView = {
@@ -173,14 +199,16 @@ class HotspotView: UIView {
         let label = UILabel()
         label.text = ResourceManager.L10n.Iot.hotspotInputTitle
         label.font = .systemFont(ofSize: 20, weight: .bold)
-        label.textColor = .white
+        label.textColor = UIColor.themColor(named: "ai_icontext1")
+        label.numberOfLines = 0
+        label.textAlignment = .center
         return label
     }()
     
     private lazy var nextButton: UIButton = {
         let button = UIButton(type: .custom)
         button.setTitle(ResourceManager.L10n.Iot.hotspotNext, for: .normal)
-        button.setTitleColor(.white, for: .normal)
+        button.setTitleColor(UIColor.themColor(named: "ai_icontext1"), for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 15, weight: .bold)
         button.backgroundColor = UIColor.themColor(named: "ai_brand_main6")
         button.layer.cornerRadius = 12
@@ -210,8 +238,7 @@ class HotspotView: UIView {
         stepOneContainer.addSubview(setpOneContainerGreenbg)
         stepOneContainer.addSubview(stepOneContainerImagebg)
         stepOneContainer.addSubview(openHotspotLabel)
-        stepOneContainer.addSubview(checkTipLabel)
-        stepOneContainer.addSubview(maxCompatibilityLabel)
+        stepOneContainer.addSubview(tipStackView)
         stepOneContainer.addSubview(hotspotImageView)
         stepOneContainer.addSubview(goToSettingsButton)
         
@@ -253,22 +280,19 @@ class HotspotView: UIView {
                 
         openHotspotLabel.snp.makeConstraints { make in
             make.top.equalTo(20)
-            make.centerX.equalToSuperview()
+            make.left.equalTo(53)
+            make.right.equalTo(-53)
         }
             
-        checkTipLabel.snp.makeConstraints { make in
+        tipStackView.snp.makeConstraints { make in
             make.top.equalTo(openHotspotLabel.snp.bottom).offset(16)
-            make.centerX.equalToSuperview().offset(-40)
-        }
-        
-        maxCompatibilityLabel.snp.makeConstraints { make in
-            make.centerY.equalTo(checkTipLabel)
-            make.left.equalTo(checkTipLabel.snp.right).offset(4)
-            make.height.equalTo(24)
+            make.centerX.equalToSuperview()
+            make.left.greaterThanOrEqualTo(10)
+            make.right.lessThanOrEqualTo(-10)
         }
         
         hotspotImageView.snp.makeConstraints { make in
-            make.top.equalTo(checkTipLabel.snp.bottom).offset(16)
+            make.top.equalTo(tipStackView.snp.bottom).offset(16)
             make.width.equalTo(270)
             make.height.equalTo(192)
             make.centerX.equalToSuperview()
@@ -299,7 +323,8 @@ class HotspotView: UIView {
         
         inputTipLabel.snp.makeConstraints { make in
             make.top.equalTo(13)
-            make.centerX.equalToSuperview()
+            make.left.equalTo(53)
+            make.right.equalTo(-53)
         }
         
         deviceNameField.snp.makeConstraints { make in
@@ -353,3 +378,6 @@ class HotspotView: UIView {
         onNext?()
     }
 }
+
+
+
