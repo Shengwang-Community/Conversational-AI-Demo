@@ -205,7 +205,7 @@ class WifiSettingView: UIView {
         }
         
         passwordField.snp.makeConstraints { make in
-            make.top.equalTo(wifiNameField.snp.bottom).offset(32)
+            make.top.equalTo(wifiNameField.snp.bottom).offset(24)
             make.left.right.height.equalTo(wifiNameField)
         }
         

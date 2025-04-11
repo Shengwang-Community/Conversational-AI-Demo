@@ -278,7 +278,7 @@ class HotspotView: UIView {
             make.left.equalToSuperview().offset(20)
             make.right.equalToSuperview().offset(-20)
             make.height.equalTo(36)
-            make.bottom.equalToSuperview().offset(-20)
+            make.bottom.equalToSuperview().offset(-12)
         }
         
         stepTwoContainer.snp.makeConstraints { make in
@@ -303,7 +303,7 @@ class HotspotView: UIView {
         }
         
         deviceNameField.snp.makeConstraints { make in
-            make.top.equalTo(inputTipLabel.snp.bottom).offset(16)
+            make.top.equalTo(inputTipLabel.snp.bottom).offset(23)
             make.left.equalToSuperview().offset(20)
             make.right.equalToSuperview().offset(-20)
             make.height.equalTo(48)
@@ -312,7 +312,7 @@ class HotspotView: UIView {
         passwordField.snp.makeConstraints { make in
             make.top.equalTo(deviceNameField.snp.bottom).offset(16)
             make.left.right.height.equalTo(deviceNameField)
-            make.bottom.equalToSuperview().offset(-20)
+            make.bottom.equalToSuperview().offset(-12)
         }
         
         nextButton.snp.makeConstraints { make in
@@ -320,7 +320,7 @@ class HotspotView: UIView {
             make.left.equalToSuperview().offset(30)
             make.right.equalToSuperview().offset(-30)
             make.height.equalTo(50)
-            make.bottom.equalTo(0)
+            make.bottom.equalTo(-50)
         }
     }
     
