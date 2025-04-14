@@ -20,15 +20,16 @@
 
     <TextView
         android:id="@+id/tv_hotspot_title"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:gravity="center"
+        android:layout_marginHorizontal="24dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:text="@string/cov_iot_hotspot_setting_tips"
         android:textColor="@color/ai_icontext1"
-        android:textSize="20sp"
+        android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@+id/iv_hotspot_icon" />
 

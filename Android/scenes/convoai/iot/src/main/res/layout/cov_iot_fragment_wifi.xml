@@ -10,13 +10,12 @@
     <androidx.cardview.widget.CardView
         android:id="@+id/cv_main_content"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginHorizontal="30dp"
         android:layout_marginTop="20dp"
         app:cardBackgroundColor="@color/ai_fill5"
         app:cardCornerRadius="16dp"
         app:cardElevation="0dp"
-        app:layout_constraintDimensionRatio="315:341"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -43,7 +42,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/cov_iot_wifi_title_part1"
                     android:textColor="@color/ai_icontext1"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -52,7 +51,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/cov_iot_wifi_title_part2"
                     android:textColor="@color/ai_green6"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -61,7 +60,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/cov_iot_wifi_title_part3"
                     android:textColor="@color/ai_icontext1"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -74,7 +73,7 @@
                 android:gravity="center"
                 android:text="@string/cov_iot_wifi_title_2"
                 android:textColor="@color/ai_icontext1"
-                android:textSize="20sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -106,7 +105,8 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintDimensionRatio="315:199"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent">
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_wifi_tip">
 
                 <ImageView
                     android:layout_width="match_parent"
@@ -128,11 +128,11 @@
         app:cardBackgroundColor="@color/ai_input"
         app:cardCornerRadius="12dp"
         app:cardElevation="0dp"
-        app:strokeWidth="0.5dp"
-        app:strokeColor="@color/ai_line1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cv_main_content">
+        app:layout_constraintTop_toBottomOf="@id/cv_main_content"
+        app:strokeColor="@color/ai_line1"
+        app:strokeWidth="0.5dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -160,6 +160,7 @@
                 android:layout_marginEnd="8dp"
                 android:background="@drawable/cov_wift_change_btn_bg"
                 android:text="@string/cov_iot_wifi_change"
+                android:textAllCaps="false"
                 android:textColor="@color/ai_icontext1"
                 android:textSize="13sp"
                 app:backgroundTint="@null"
@@ -176,12 +177,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="12sp"
-        android:layout_marginTop="7dp"
         android:text="@string/cov_iot_wifi_warning"
         android:textColor="@color/ai_icontext1"
         android:textSize="11sp"
-        app:layout_constraintTop_toBottomOf="@+id/cv_wifi_name"
-        app:layout_constraintStart_toStartOf="@+id/cv_wifi_name" />
+        app:layout_constraintBottom_toTopOf="@+id/cv_wifi_password"
+        app:layout_constraintStart_toStartOf="@+id/cv_wifi_name"
+        app:layout_constraintTop_toBottomOf="@+id/cv_wifi_name" />
 
     <!-- Wi-Fi password input -->
     <androidx.cardview.widget.CardView
@@ -189,15 +190,15 @@
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:layout_marginHorizontal="30dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="24dp"
         app:cardBackgroundColor="@color/ai_input"
         app:cardCornerRadius="12dp"
-        app:strokeWidth="0.5dp"
         app:cardElevation="0dp"
-        app:strokeColor="@color/ai_line1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cv_wifi_name">
+        app:layout_constraintTop_toBottomOf="@id/cv_wifi_name"
+        app:strokeColor="@color/ai_line1"
+        app:strokeWidth="0.5dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -210,12 +211,12 @@
                 android:background="@null"
                 android:hint="@string/cov_iot_wifi_password"
                 android:inputType="textPassword"
+                android:maxLines="1"
                 android:paddingHorizontal="12dp"
+                android:singleLine="true"
                 android:textColor="@color/ai_icontext1"
                 android:textColorHint="#999999"
                 android:textSize="13sp"
-                android:singleLine="true"
-                android:maxLines="1"
                 app:layout_constraintEnd_toStartOf="@id/iv_toggle_password"
                 app:layout_constraintStart_toStartOf="parent" />
 
@@ -240,15 +241,19 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginHorizontal="30dp"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="40dp"
+        android:enabled="false"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
         android:text="@string/cov_iot_devices_prepare_next"
-        android:textStyle="bold"
+        android:textAllCaps="false"
         android:textColor="@color/ai_brand_white10"
         android:textSize="16sp"
-        android:enabled="false"
-        app:cornerRadius="12dp"
+        android:textStyle="bold"
         app:backgroundTint="@color/ai_brand_main6"
+        app:cornerRadius="12dp"
+        app:layout_constraintTop_toBottomOf="@+id/cv_wifi_password"
         app:rippleColor="#1AFFFFFF"
-        app:layout_constraintTop_toBottomOf="@+id/cv_wifi_password"/>
+        tools:layout_editor_absoluteX="30dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout> 

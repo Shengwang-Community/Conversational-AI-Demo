@@ -70,7 +70,7 @@ object CovRtcManager {
             super.onAudioRouteChanged(routing)
             runOnMainThread {
                 CovLogger.d(TAG, "onAudioRouteChanged, routing:$routing")
-                setAudioConfig(routing)
+                setAudioConfigParameters(routing)
             }
         }
     }
@@ -83,10 +83,10 @@ object CovRtcManager {
         } else {
             rtcEngine?.setAudioScenario(Constants.AUDIO_SCENARIO_AI_CLIENT)
         }
-        // audio predump default enable
-        rtcEngine?.setParameters("{\"che.audio.enable.predump\":{\"enable\":\"true\",\"duration\":\"60\"}}")
-        setAudioConfig(mAudioRouting)
+        setPreDumpParameters()
+        setAudioConfigParameters(mAudioRouting)
         rtcEngine?.addHandler(covRtcHandler)
+        rtcEngine?.enableAudioVolumeIndication(100, 3, true)
         val options = ChannelMediaOptions()
         options.clientRoleType = CLIENT_ROLE_BROADCASTER
         options.publishMicrophoneTrack = true
@@ -94,7 +94,6 @@ object CovRtcManager {
         options.autoSubscribeAudio = true
         options.autoSubscribeVideo = false
         val ret = rtcEngine?.joinChannel(rtcToken, channelName, uid, options)
-        rtcEngine?.enableAudioVolumeIndication(100, 3, true)
         CovLogger.d(TAG, "Joining RTC channel: $channelName, uid: $uid")
         if (ret == ERR_OK) {
             CovLogger.d(TAG, "Join RTC room success")
@@ -103,7 +102,12 @@ object CovRtcManager {
         }
     }
 
-    private fun setAudioConfig(routing: Int) {
+    private fun setPreDumpParameters(){
+        // audio predump default enable
+        rtcEngine?.setParameters("{\"che.audio.enable.predump\":{\"enable\":\"true\",\"duration\":\"60\"}}")
+    }
+
+    private fun setAudioConfigParameters(routing: Int) {
         mAudioRouting = routing
         rtcEngine?.apply {
             setParameters("{\"che.audio.aec.split_srate_for_48k\":16000}")
@@ -159,7 +163,7 @@ object CovRtcManager {
         }
     }
 
-    fun generatePredumpFile() {
+    fun generatePreDumpFile() {
         rtcEngine?.setParameters("{\"che.audio.start.predump\": true}")
     }
 

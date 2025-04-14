@@ -120,7 +120,7 @@ class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
             layoutUploader.setOnClickListener(object : OnFastClickListener() {
                 override fun onClickJacking(view: View) {
                     updateUploadingStatus(disable = true, isUploading = true)
-                    CovRtcManager.generatePredumpFile()
+                    CovRtcManager.generatePreDumpFile()
                     tvUploader.postDelayed({
                         LogUploader.uploadLog(CovAgentApiManager.agentId ?: "",CovAgentManager.channelName) { err ->
                             if (err == null) {

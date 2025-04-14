@@ -70,7 +70,7 @@ class CovHotspotFragment : BaseFragment<CovIotFragmentHotspotBinding>() {
     
     private fun setupListener() {
         mBinding?.apply {
-            btnOpenHotspot.setOnClickListener {
+            cvOpenHotspot.setOnClickListener {
                 (activity as? CovWifiSelectActivity)?.openWirelessSettings()
             }
             // Monitor hotspot name input changes

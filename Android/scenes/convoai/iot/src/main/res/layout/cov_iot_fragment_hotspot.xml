@@ -10,18 +10,17 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="20dp">
+        android:paddingBottom="30dp">
 
         <androidx.cardview.widget.CardView
             android:id="@+id/cv_main_content"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginHorizontal="30dp"
             android:layout_marginTop="20dp"
-            app:cardBackgroundColor="@android:color/transparent"
+            app:cardBackgroundColor="@color/ai_fill5"
             app:cardCornerRadius="16dp"
             app:cardElevation="5dp"
-            app:layout_constraintDimensionRatio="315:367"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -35,62 +34,42 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
-                <View
-                    android:id="@+id/view_top"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_margin="6dp"
-                    android:background="@drawable/cov_iot_bg_step"
-                    app:layout_constraintDimensionRatio="307:63"
-                    app:layout_constraintEnd_toEndOf="parent"
+
+                <TextView
+                    android:layout_width="40dp"
+                    android:layout_height="36sp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/cov_iot_step_bg"
+                    android:gravity="center"
+                    android:text="@string/cov_iot_step_1"
+                    android:textColor="@color/ai_brand_white10"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/cov_iot_hotspot_main" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintTop_toTopOf="@+id/view_top"
-                    app:layout_constraintStart_toStartOf="@+id/view_top"
-                    android:text="@string/cov_iot_step_1"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="5dp"
-                    android:textColor="@color/ai_brand_white10"/>
-
                 <!-- main content -->
-                <LinearLayout
-                    android:id="@+id/ll_title_hotspot"
+                <TextView
+                    android:id="@+id/tv_title_hotspot"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="24dp"
-                    android:layout_marginTop="30dp"
+                    android:layout_marginHorizontal="56dp"
+                    android:layout_marginTop="20dp"
                     android:gravity="center"
-                    android:orientation="horizontal"
+                    android:text="@string/cov_iot_hotspot_title"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <TextView
-                        android:id="@+id/tv_title_hotspot_part1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/cov_iot_hotspot_title"
-                        android:textColor="@color/ai_icontext1"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
                     android:id="@+id/tv_subtitle_hotspot"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="22dp"
+                    android:layout_marginHorizontal="12dp"
                     android:layout_marginTop="6dp"
                     android:gravity="center"
                     android:lineSpacingExtra="4dp"
@@ -99,7 +78,7 @@
                     android:textSize="14sp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/ll_title_hotspot" />
+                    app:layout_constraintTop_toBottomOf="@id/tv_title_hotspot" />
 
                 <!-- Hotspot icon area -->
                 <ImageView
@@ -107,33 +86,58 @@
                     android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:layout_marginHorizontal="22.5dp"
+                    android:layout_marginTop="4dp"
                     android:scaleType="fitCenter"
-                    android:layout_marginTop="5dp"
                     android:src="@drawable/cov_iot_hotspot_bg"
                     app:layout_constraintDimensionRatio="270:204"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_hotspot" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_open_hotspot"
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cv_open_hotspot"
                     android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_marginHorizontal="24dp"
-                    android:text="@string/cov_iot_hotspot_go_setting"
-                    android:textAllCaps="false"
-                    android:textColor="@color/ai_brand_white10"
-                    android:textSize="14sp"
-                    android:insetBottom="0dp"
-                    android:insetTop="0dp"
-                    app:backgroundTint="@color/ai_brand_main6"
-                    app:cornerRadius="12dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="30dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="@color/ai_brand_main6"
+                    app:cardCornerRadius="10dp"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    android:layout_marginBottom="15dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:rippleColor="#1AFFFFFF" />
+                    app:layout_constraintTop_toBottomOf="@+id/iv_hotspot_icon"
+                    app:rippleColor="#1AFFFFFF">
 
+                    <LinearLayout
+                        android:id="@+id/cov_open_hotspot"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="6dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/cov_iot_hotspot_go_setting"
+                            android:textColor="@color/ai_brand_white10"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/cov_iot_hotspot_go_setting_subtitle"
+                            android:textColor="@color/ai_brand_white10"
+                            android:textSize="11sp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </androidx.cardview.widget.CardView>
@@ -142,13 +146,12 @@
         <androidx.cardview.widget.CardView
             android:id="@+id/cv_input"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginHorizontal="30dp"
             android:layout_marginTop="20dp"
-            app:cardBackgroundColor="@android:color/transparent"
+            app:cardBackgroundColor="@color/ai_fill5"
             app:cardCornerRadius="16dp"
             app:cardElevation="5dp"
-            app:layout_constraintDimensionRatio="315:186"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/cv_main_content">
@@ -161,68 +164,49 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent">
 
-                <View
-                    android:id="@+id/view_top_2"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_margin="6dp"
-                    android:background="@drawable/cov_iot_bg_step"
-                    app:layout_constraintDimensionRatio="307:63"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@drawable/cov_iot_hotspot_main_2" />
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    app:layout_constraintTop_toTopOf="@+id/view_top_2"
-                    app:layout_constraintStart_toStartOf="@+id/view_top_2"
-                    android:text="@string/cov_iot_step_2"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/cov_iot_step_bg"
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="5dp"
-                    android:textColor="@color/ai_brand_white10"/>
+                    android:text="@string/cov_iot_step_2"
+                    android:textColor="@color/ai_brand_white10"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
 
-                <LinearLayout
-                    android:id="@+id/ll_title_input"
-                    android:layout_width="0dp"
+                <TextView
+                    android:id="@+id/tv_title_input"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="24dp"
                     android:layout_marginTop="20dp"
                     android:gravity="center"
                     android:orientation="horizontal"
+                    android:text="@string/cov_iot_hotspot_tips"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/cov_iot_hotspot_tips"
-                        android:textColor="@color/ai_icontext1"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cv_hotspot_name"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_marginHorizontal="30dp"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="26dp"
                     app:cardBackgroundColor="@color/ai_input"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="0dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/ll_title_input"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_title_input"
                     app:strokeColor="@color/ai_line1"
                     app:strokeWidth="0.5dp">
 
@@ -237,12 +221,12 @@
                             android:layout_height="match_parent"
                             android:background="@null"
                             android:hint="@string/cov_iot_hotspot_name"
+                            android:maxLines="1"
                             android:paddingHorizontal="12dp"
+                            android:singleLine="true"
                             android:textColor="@color/ai_icontext1"
                             android:textColorHint="#999999"
                             android:textSize="13sp"
-                            android:singleLine="true"
-                            android:maxLines="1"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
@@ -258,14 +242,16 @@
                     android:layout_height="48dp"
                     android:layout_marginHorizontal="30dp"
                     android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp"
                     app:cardBackgroundColor="@color/ai_input"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="0dp"
-                    app:strokeWidth="0.5dp"
-                    app:strokeColor="@color/ai_line1"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/cv_hotspot_name">
+                    app:layout_constraintTop_toBottomOf="@id/cv_hotspot_name"
+                    app:strokeColor="@color/ai_line1"
+                    app:strokeWidth="0.5dp">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
@@ -278,12 +264,12 @@
                             android:background="@null"
                             android:hint="@string/cov_iot_wifi_password"
                             android:inputType="textPassword"
+                            android:maxLines="1"
                             android:paddingHorizontal="12dp"
+                            android:singleLine="true"
                             android:textColor="@color/ai_icontext1"
                             android:textColorHint="#999999"
                             android:textSize="13sp"
-                            android:singleLine="true"
-                            android:maxLines="1"
                             app:layout_constraintEnd_toStartOf="@id/iv_toggle_password"
                             app:layout_constraintStart_toStartOf="parent" />
 
@@ -312,16 +298,18 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginHorizontal="30dp"
-            android:layout_marginTop="36dp"
+            android:layout_marginTop="40dp"
             android:enabled="false"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:text="@string/cov_iot_devices_prepare_next"
             android:textColor="@color/ai_brand_white10"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:cornerRadius="12dp"
             app:backgroundTint="@color/ai_brand_main6"
-            app:rippleColor="#1AFFFFFF"
-            app:layout_constraintTop_toBottomOf="@+id/cv_input" />
+            app:cornerRadius="12dp"
+            app:layout_constraintTop_toBottomOf="@+id/cv_input"
+            app:rippleColor="#1AFFFFFF" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView> 
