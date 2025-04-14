@@ -6,12 +6,36 @@ import io.agora.rtc2.Constants
 import io.agora.rtc2.Constants.CLIENT_ROLE_BROADCASTER
 import io.agora.rtc2.Constants.ERR_OK
 import io.agora.rtc2.IRtcEngineEventHandler
+import io.agora.rtc2.IRtcEngineEventHandler.AudioVolumeInfo
 import io.agora.rtc2.RtcEngine
 import io.agora.rtc2.RtcEngineConfig
 import io.agora.rtc2.RtcEngineEx
 import io.agora.scene.common.AgentApp
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.convoai.CovLogger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+
+abstract class ICovApiEventHandler{
+
+    open fun onUserJoined(uid: Int, elapsed: Int){}
+
+    open fun onUserOffline(uid: Int, reason: Int){}
+
+    open fun onConnectionStateChanged(state: Int, reason: Int) {}
+
+    open fun onRemoteAudioStateChanged(uid: Int, state: Int, reason: Int, elapsed: Int){}
+
+    open fun onAudioVolumeIndication(speakers: Array<out AudioVolumeInfo>?, totalVolume: Int) {}
+
+    open fun onNetworkStatus(rxQuality: Int){}
+
+    open fun onTokenPrivilegeWillExpire(token: String?) {}
+
+    open fun onAudioRouteChanged(routing: Int) {}
+}
 
 object CovRtcManager {
 
@@ -21,13 +45,127 @@ object CovRtcManager {
 
     private var mAudioRouting = Constants.AUDIO_ROUTE_DEFAULT
 
-    fun createRtcEngine(rtcCallback: IRtcEngineEventHandler): RtcEngineEx {
+    private var covEventHandlerList = mutableListOf<ICovApiEventHandler>()
+
+    private val logScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    fun addHandler(eventHandler: ICovApiEventHandler){
+        covEventHandlerList.add(eventHandler)
+        CovLogger.d(TAG, "addHandler: $eventHandler")
+    }
+
+    fun removeHandler(eventHandler: ICovApiEventHandler){
+        covEventHandlerList.remove(eventHandler)
+        CovLogger.d(TAG, "removeHandler: $eventHandler")
+    }
+
+    private val rtcEngineEventHandler = object : IRtcEngineEventHandler() {
+        override fun onError(err: Int) {
+            super.onError(err)
+            logScope.launch {
+                CovLogger.e(TAG, "Rtc Error code:$err")
+            }
+        }
+
+        override fun onJoinChannelSuccess(channel: String?, uid: Int, elapsed: Int) {
+            logScope.launch {
+                CovLogger.d(TAG, "local user didJoinChannel uid: $uid")
+            }
+            covEventHandlerList.forEach {
+                it.onNetworkStatus(1)
+            }
+        }
+
+        override fun onLeaveChannel(stats: RtcStats?) {
+            logScope.launch {
+                CovLogger.d(TAG, "local user didLeaveChannel")
+            }
+            covEventHandlerList.forEach {
+                it.onNetworkStatus(-1)
+            }
+        }
+
+        override fun onUserJoined(uid: Int, elapsed: Int) {
+            logScope.launch {
+                CovLogger.d(TAG, "remote user didJoinedOfUid uid: $uid")
+            }
+            covEventHandlerList.forEach {
+                it.onUserJoined(uid,elapsed)
+            }
+        }
+
+        override fun onUserOffline(uid: Int, reason: Int) {
+            logScope.launch {
+                CovLogger.d(TAG, "remote user onUserOffline uid: $uid")
+            }
+            covEventHandlerList.forEach {
+                it.onUserOffline(uid,reason)
+            }
+        }
+
+        override fun onConnectionLost() {
+            super.onConnectionLost()
+            logScope.launch {
+                CovLogger.d(TAG, "onConnectionLost")
+            }
+        }
+
+        override fun onConnectionStateChanged(state: Int, reason: Int) {
+            logScope.launch {
+                CovLogger.d(TAG, "onConnectionStateChanged: $state $reason")
+            }
+            covEventHandlerList.forEach {
+                it.onConnectionStateChanged(state, reason)
+            }
+        }
+
+        override fun onRemoteAudioStateChanged(uid: Int, state: Int, reason: Int, elapsed: Int) {
+            super.onRemoteAudioStateChanged(uid, state, reason, elapsed)
+            covEventHandlerList.forEach {
+                it.onRemoteAudioStateChanged(uid, state,reason,elapsed)
+            }
+        }
+
+        override fun onAudioVolumeIndication(speakers: Array<out AudioVolumeInfo>?, totalVolume: Int) {
+            covEventHandlerList.forEach {
+                it.onAudioVolumeIndication(speakers,totalVolume)
+            }
+        }
+
+        override fun onNetworkQuality(uid: Int, txQuality: Int, rxQuality: Int) {
+            if (uid == 0) {
+                covEventHandlerList.forEach {
+                    it.onNetworkStatus(rxQuality)
+                }
+            }
+        }
+
+        override fun onTokenPrivilegeWillExpire(token: String?) {
+            logScope.launch {
+                CovLogger.d(TAG, "onTokenPrivilegeWillExpire")
+            }
+            covEventHandlerList.forEach {
+                it.onTokenPrivilegeWillExpire(token)
+            }
+        }
+
+        override fun onAudioRouteChanged(routing: Int) {
+            logScope.launch {
+                CovLogger.d(TAG, "onAudioRouteChanged, routing:$routing")
+            }
+            covEventHandlerList.forEach {
+                it.onAudioRouteChanged(routing)
+            }
+        }
+    }
+
+    fun createRtcEngine(): RtcEngineEx {
         val config = RtcEngineConfig()
         config.mContext = AgentApp.instance()
         config.mAppId = ServerConfig.rtcAppId
         config.mChannelProfile = Constants.CHANNEL_PROFILE_LIVE_BROADCASTING
         config.mAudioScenario = Constants.AUDIO_SCENARIO_AI_CLIENT
-        config.mEventHandler = rtcCallback
+        config.mEventHandler = rtcEngineEventHandler
         try {
             rtcEngine = (RtcEngine.create(config) as RtcEngineEx).apply {
                 loadExtensionProvider("ai_echo_cancellation_extension")
@@ -140,6 +278,7 @@ object CovRtcManager {
     }
 
     fun resetData() {
+        covEventHandlerList.clear()
         rtcEngine = null
         mediaPlayer = null
         RtcEngine.destroy()
