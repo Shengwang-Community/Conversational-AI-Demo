@@ -26,10 +26,8 @@ import io.agora.scene.common.debugMode.DebugButton
 import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.common.debugMode.DebugDialog
 import io.agora.scene.common.debugMode.DebugDialogCallback
-import io.agora.scene.common.net.AgoraTokenType
 import io.agora.scene.common.net.ApiManager
 import io.agora.scene.common.net.TokenGenerator
-import io.agora.scene.common.net.TokenGeneratorType
 import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.ui.LoginDialog
@@ -713,13 +711,6 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                         stopAgentAndLeaveChannel()
                         ToastUtil.show("renew token error")
                     }
-                }
-            }
-
-            override fun onAudioRouteChanged(routing: Int) {
-                runOnUiThread {
-                    CovLogger.d(TAG, "onAudioRouteChanged, routing:$routing")
-                    CovRtcManager.setAudioConfig(routing)
                 }
             }
         })

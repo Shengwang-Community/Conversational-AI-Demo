@@ -12,6 +12,10 @@ import io.agora.rtc2.RtcEngineEx
 import io.agora.scene.common.AgentApp
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.convoai.CovLogger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 object CovRtcManager {
 
@@ -20,6 +24,14 @@ object CovRtcManager {
     private var rtcEngine: RtcEngineEx? = null
 
     private var mAudioRouting = Constants.AUDIO_ROUTE_DEFAULT
+
+    private val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    private fun runOnMainThread(r: Runnable) {
+        mainScope.launch {
+            r.run()
+        }
+    }
 
     fun createRtcEngine(rtcCallback: IRtcEngineEventHandler): RtcEngineEx {
         val config = RtcEngineConfig()
@@ -53,6 +65,16 @@ object CovRtcManager {
         return mediaPlayer!!
     }
 
+    private val covRtcHandler  = object : IRtcEngineEventHandler() {
+        override fun onAudioRouteChanged(routing: Int) {
+            super.onAudioRouteChanged(routing)
+            runOnMainThread {
+                CovLogger.d(TAG, "onAudioRouteChanged, routing:$routing")
+                setAudioConfig(routing)
+            }
+        }
+    }
+
     fun joinChannel(rtcToken: String, channelName: String, uid: Int, isIndependent: Boolean = false) {
         CovLogger.d(TAG, "onClickStartAgent channelName: $channelName, localUid: $uid, isIndependent: $isIndependent")
         //set audio scenario 10，open AI-QoS
@@ -64,6 +86,7 @@ object CovRtcManager {
         // audio predump default enable
         rtcEngine?.setParameters("{\"che.audio.enable.predump\":{\"enable\":\"true\",\"duration\":\"60\"}}")
         setAudioConfig(mAudioRouting)
+        rtcEngine?.addHandler(covRtcHandler)
         val options = ChannelMediaOptions()
         options.clientRoleType = CLIENT_ROLE_BROADCASTER
         options.publishMicrophoneTrack = true
@@ -80,7 +103,7 @@ object CovRtcManager {
         }
     }
 
-    fun setAudioConfig(routing: Int) {
+    private fun setAudioConfig(routing: Int) {
         mAudioRouting = routing
         rtcEngine?.apply {
             setParameters("{\"che.audio.aec.split_srate_for_48k\":16000}")
@@ -115,6 +138,7 @@ object CovRtcManager {
     }
 
     fun leaveChannel() {
+        rtcEngine?.removeHandler(covRtcHandler)
         rtcEngine?.leaveChannel()
     }
 
