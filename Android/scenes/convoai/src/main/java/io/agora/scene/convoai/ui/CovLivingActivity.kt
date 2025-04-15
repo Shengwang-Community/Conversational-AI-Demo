@@ -235,7 +235,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             it.release()
             mCovBallAnim = null
         }
-        CovRtcManager.resetData()
+        CovRtcManager.destroy()
         CovAgentManager.resetData()
         subRenderController?.release()
         super.finish()
