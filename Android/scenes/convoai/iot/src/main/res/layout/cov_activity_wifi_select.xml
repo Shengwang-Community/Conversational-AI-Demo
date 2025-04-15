@@ -18,9 +18,9 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_marginStart="10dp"
+            android:padding="12dp"
             android:paddingHorizontal="12dp"
             android:src="@drawable/cov_back"
-            android:padding="12dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -33,30 +33,31 @@
         android:layout_width="0dp"
         android:layout_height="42dp"
         android:background="@drawable/cov_iot_bg_wifi_tabs"
-        android:padding="2dp"
+        app:layout_constraintBottom_toBottomOf="@+id/cl_title_bar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/cl_title_bar"
+        app:layout_constraintWidth_percent="0.7"
         app:tabBackground="@drawable/cov_iot_bg_wifi_tab_selector"
         app:tabGravity="fill"
         app:tabIndicator="@null"
         app:tabIndicatorHeight="0dp"
+        app:tabInlineLabel="true"
         app:tabMode="fixed"
         app:tabRippleColor="@android:color/transparent"
         app:tabSelectedTextColor="@color/tab_text_color_selector"
         app:tabTextAppearance="@style/TabTextAppearance"
-        app:tabTextColor="@color/tab_text_color_selector"
-        app:layout_constraintTop_toTopOf="@+id/cl_title_bar"
-        app:layout_constraintBottom_toBottomOf="@+id/cl_title_bar"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintWidth_percent="0.7">
+        app:tabTextColor="@color/tab_text_color_selector">
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
-            android:layout_height="38dp"
+            android:layout_gravity="center_vertical"
+            android:layout_height="wrap_content"
             android:text="@string/cov_iot_wifi_tab" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
-            android:layout_height="38dp"
+            android:layout_height="wrap_content"
             android:text="@string/cov_iot_hotspot_tab" />
 
     </com.google.android.material.tabs.TabLayout>
@@ -66,7 +67,9 @@
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/tab_layout"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cl_title_bar"
+        app:layout_constraintVertical_bias="0.0"
+        tools:layout_editor_absoluteX="0dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
