@@ -127,33 +127,25 @@ class HotspotView: UIView {
         return label
     }()
     
-    private lazy var checkTipLabel: UILabel = {
+    private lazy var tipLabel: UILabel = {
         let label = UILabel()
-        label.text = ResourceManager.L10n.Iot.hotspotCheckPrefix
         label.font = .systemFont(ofSize: 14)
-        label.textColor = UIColor.themColor(named: "ai_icontext2")
         label.numberOfLines = 0
         label.textAlignment = .center
-        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        label.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        
+        let prefixText = ResourceManager.L10n.Iot.hotspotCheckPrefix
+        let suffixText = ResourceManager.L10n.Iot.hotspotCompatibilityMode
+        
+        let attributedString = NSMutableAttributedString(string: prefixText + suffixText)
+        attributedString.addAttribute(.foregroundColor,
+                                    value: UIColor.themColor(named: "ai_icontext2") as Any,
+                                    range: NSRange(location: 0, length: prefixText.count))
+        attributedString.addAttribute(.foregroundColor,
+                                    value: UIColor.themColor(named: "ai_green6") as Any,
+                                    range: NSRange(location: prefixText.count, length: suffixText.count))
+        
+        label.attributedText = attributedString
         return label
-    }()
-    
-    private lazy var maxCompatibilityLabel: UILabel = {
-        let label = UILabel()
-        label.text = ResourceManager.L10n.Iot.hotspotCompatibilityMode
-        label.font = .systemFont(ofSize: 14, weight: .semibold)
-        label.textColor = UIColor.themColor(named: "ai_green6")
-        label.textAlignment = .center
-        return label
-    }()
-    
-    private lazy var tipStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [checkTipLabel, maxCompatibilityLabel])
-        stackView.axis = .horizontal
-        stackView.spacing = 4
-        stackView.alignment = .center
-        return stackView
     }()
     
     private lazy var goToSettingsButton: UIButton = {
@@ -265,7 +257,7 @@ class HotspotView: UIView {
         stepOneContainer.addSubview(stepOneContainerBg)
         stepOneContainer.addSubview(setpOneContainerGreenbg)
         stepOneContainer.addSubview(openHotspotLabel)
-        stepOneContainer.addSubview(tipStackView)
+        stepOneContainer.addSubview(tipLabel)
         stepOneContainer.addSubview(hotspotImageView)
         stepOneContainer.addSubview(goToSettingsButton)
         
@@ -311,7 +303,7 @@ class HotspotView: UIView {
             make.right.equalTo(-53)
         }
             
-        tipStackView.snp.makeConstraints { make in
+        tipLabel.snp.makeConstraints { make in
             make.top.equalTo(openHotspotLabel.snp.bottom).offset(16)
             make.centerX.equalToSuperview()
             make.left.greaterThanOrEqualTo(10)
@@ -319,7 +311,7 @@ class HotspotView: UIView {
         }
         
         hotspotImageView.snp.makeConstraints { make in
-            make.top.equalTo(tipStackView.snp.bottom).offset(16)
+            make.top.equalTo(tipLabel.snp.bottom).offset(16)
             make.width.equalTo(270)
             make.height.equalTo(192)
             make.centerX.equalToSuperview()
@@ -350,8 +342,7 @@ class HotspotView: UIView {
         
         inputTipLabel.snp.makeConstraints { make in
             make.top.equalTo(13)
-            make.left.equalTo(53)
-            make.right.equalTo(-53)
+            make.left.right.equalToSuperview()
         }
         
         deviceNameField.snp.makeConstraints { make in

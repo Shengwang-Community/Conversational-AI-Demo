@@ -9,6 +9,8 @@ import UIKit
 import Common
 import CoreBluetooth
 import BLEManager
+import Network
+import SVProgressHUD
 
 class IOTWifiSettingViewController: BaseViewController {
     
@@ -90,6 +92,11 @@ class IOTWifiSettingViewController: BaseViewController {
             wifiSettingView.updateWifiName(currentSSID)
         } else {
             wifiSettingView.updateWifiName("")
+        }
+        checkWiFiStatus { connected in
+            if !connected {
+                SVProgressHUD.showInfo(withStatus: "No Wi-Fi connection detected, please connect to Wi-Fi first")
+            }
         }
     }
     
@@ -243,6 +250,19 @@ class IOTWifiSettingViewController: BaseViewController {
             result = ssid
         }
         return result
+    }
+    
+    private func checkWiFiStatus(completion: @escaping (Bool) -> Void) {
+        let monitor = NWPathMonitor(requiredInterfaceType: .wifi)
+        
+        monitor.pathUpdateHandler = { path in
+            DispatchQueue.main.async {
+                monitor.cancel()
+                completion(path.status == .satisfied)
+            }
+        }
+        
+        monitor.start(queue: DispatchQueue.global())
     }
     
     // MARK: - Actions
