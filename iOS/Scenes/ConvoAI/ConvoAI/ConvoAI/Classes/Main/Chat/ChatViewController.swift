@@ -371,13 +371,8 @@ public class ChatViewController: UIViewController {
             addLog("cancel to join channel")
             return
         }
-        let ret: Int32
-        if AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true {
-            ret = rtcManager.joinChannel(token: token, channelName: channelName, uid: uid, scenario: .chorus)
-        } else {
-            ret = rtcManager.joinChannel(token: token, channelName: channelName, uid: uid)
-        }
-        addLog("Join channel: \(ret)")
+        let independent = (AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true)
+        rtcManager.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
         AppContext.preferenceManager()?.updateRoomState(.connected)
         AppContext.preferenceManager()?.updateRoomId(channelName)
     }
@@ -409,7 +404,7 @@ public class ChatViewController: UIViewController {
         
     private func setupMuteState(state: Bool) {
         addLog("setupMuteState: \(state)")
-        rtcManager.muteVoice(state: state)
+        rtcManager.muteLocalAudio(mute: state)
     }
     
     private func addLog(_ txt: String) {
@@ -774,8 +769,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
                 return
             }
             self.addLog("will update token: \(newToken)")
-            let rtcEnigne = self.rtcManager.getRtcEntine()
-            rtcEnigne.renewToken(newToken)
+            self.rtcManager.renewRtcToken(value: newToken)
             self.token = newToken
         }
     }
@@ -817,7 +811,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
     }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, didAudioRouteChanged routing: AgoraAudioOutputRouting) {
-        rtcManager.setAudioConfig(config: routing)
+        rtcManager.setAudioConfigParameters(routing: routing)
     }
 }
 

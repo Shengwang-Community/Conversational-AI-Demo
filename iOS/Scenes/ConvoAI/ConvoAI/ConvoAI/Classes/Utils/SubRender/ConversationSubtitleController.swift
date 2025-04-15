@@ -466,6 +466,7 @@ extension ConversationSubtitleController {
         self.delegate = config.delegate
         config.rtcEngine.setAudioFrameDelegate(self)
         config.rtcEngine.addDelegate(self)
+        config.rtcEngine.setPlaybackAudioFrameBeforeMixingParametersWithSampleRate(44100, channel: 1)
     }
         
     @objc public func reset() {

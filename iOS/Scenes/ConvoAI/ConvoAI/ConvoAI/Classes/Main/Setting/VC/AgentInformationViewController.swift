@@ -285,7 +285,7 @@ class AgentInformationViewController: UIViewController {
         }
         let agentId = AppContext.preferenceManager()?.information.agentId
         feedbackItem.startLoading()        
-        rtcManager.predump {
+        rtcManager.generatePreDumpFile {
             self.feedBackPresenter.feedback(isSendLog: true, channel: channelName, agentId: agentId) { [weak self] error, result in
                 if error == nil {
                     SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.ChannelInfo.feedbackSuccess)

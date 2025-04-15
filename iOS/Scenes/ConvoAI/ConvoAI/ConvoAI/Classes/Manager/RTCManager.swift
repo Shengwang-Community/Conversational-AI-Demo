@@ -15,23 +15,22 @@ protocol RTCManagerProtocol {
     /// - Parameter delegate: The delegate object for the RTC engine to receive callback events
     /// - Returns: The initialized AgoraRtcEngineKit instance
     func createRtcEngine(delegate: AgoraRtcEngineDelegate) -> AgoraRtcEngineKit
-    /// Joins an RTC channel with the specified parameters
-    /// - Parameters:
-    ///   - token: The token for authentication
-    ///   - channelName: The name of the channel to join
-    ///   - uid: The user ID for the local user
-    /// - Returns: 0 if the join request was sent successfully, < 0 on failure
-    func joinChannel(token: String, channelName: String, uid: String, scenario: AgoraAudioScenario) -> Int32
+    
+    /// Joins an RTC channel
+    func joinChannel(rtcToken: String, channelName: String, uid: String, isIndependent: Bool)
     
     // Set audio routing and parameters
-    func setAudioConfig(config: AgoraAudioOutputRouting)
-    
+    func setAudioConfigParameters(routing: AgoraAudioOutputRouting)
+
     /// Leave RTC channel
     func leaveChannel()
     
+    // renew rtc token
+    func renewRtcToken(value: String)
+    
     /// Mutes or unmutes the voice
     /// - Parameter state: True to mute, false to unmute
-    func muteVoice(state: Bool)
+    func muteLocalAudio(mute: Bool)
     
     /// Returns the RTC engine instance
     func getRtcEntine() -> AgoraRtcEngineKit
@@ -40,7 +39,7 @@ protocol RTCManagerProtocol {
     func getAudioDump() -> Bool
     
     // Start predump, generate log files
-    func predump(completion: @escaping () -> Void)
+    func generatePreDumpFile(completion: @escaping () -> Void)
     
     /// Enables or disables audio dump
     func enableAudioDump(enabled: Bool)
@@ -61,31 +60,50 @@ extension RTCManager: RTCManagerProtocol {
         let config = AgoraRtcEngineConfig()
         config.appId = AppContext.shared.appId
         config.channelProfile = .liveBroadcasting
+        config.audioScenario = .aiClient
         rtcEngine = AgoraRtcEngineKit.sharedEngine(with: config, delegate: delegate)
         ConvoAILogger.info("rtc version: \(AgoraRtcEngineKit.getSdkVersion())")
         return rtcEngine
     }
     
-    func joinChannel(token: String, channelName: String, uid: String, scenario: AgoraAudioScenario = .aiClient) -> Int32 {
-        // enable predump
-        rtcEngine.setParameters("{\"che.audio.enable.predump\":{\"enable\":\"true\",\"duration\":\"60\"}}")
-        setAudioConfig(config: audioRouting)
+    func joinChannel(rtcToken: String, channelName: String, uid: String, isIndependent: Bool = false) {
+        // isIndependent is always false in your app
+        if (isIndependent) {
+            // ignore this, you should not set it
+            rtcEngine.setAudioScenario(.chorus)
+        } else {
+            // set audio scenario 10, open AI-QoS
+            rtcEngine.setAudioScenario(.aiClient)
+        }
         
-        rtcEngine.setAudioScenario(scenario)
+        // set audio config parameters
+        // you should set it before joinChannel and when audio route changed
+        setAudioConfigParameters(routing: audioRouting)
+        
+        // Calling this API enables the onAudioVolumeIndication callback to report volume values,
+        // which can be used to drive microphone volume animation rendering
+        // If you don't need this feature, you can skip this setting
         rtcEngine.enableAudioVolumeIndication(100, smooth: 3, reportVad: false)
-        rtcEngine.setPlaybackAudioFrameBeforeMixingParametersWithSampleRate(44100, channel: 1)
-        
+
+        // Audio pre-dump is enabled by default in demo, you don't need to set this in your app
+        rtcEngine.setParameters("{\"che.audio.enable.predump\":{\"enable\":\"true\",\"duration\":\"60\"}}")
+                
         let options = AgoraRtcChannelMediaOptions()
         options.clientRoleType = .broadcaster
         options.publishMicrophoneTrack = true
         options.publishCameraTrack = false
         options.autoSubscribeAudio = true
         options.autoSubscribeVideo = false
-        return rtcEngine.joinChannel(byToken: token, channelId: channelName, uid: UInt(uid) ?? 0, mediaOptions: options)
+        let ret = rtcEngine.joinChannel(byToken: rtcToken, channelId: channelName, uid: UInt(uid) ?? 0, mediaOptions: options)
+        
+        
+        
     }
     
-    func setAudioConfig(config: AgoraAudioOutputRouting) {
-        audioRouting = config
+    // set audio config parameters
+        // you should set it before joinChannel and when audio route changed
+    func setAudioConfigParameters(routing: AgoraAudioOutputRouting) {
+        audioRouting = routing
         rtcEngine.setParameters("{\"che.audio.aec.split_srate_for_48k\":16000}")
         rtcEngine.setParameters("{\"che.audio.sf.enabled\":true}")
         rtcEngine.setParameters("{\"che.audio.sf.stftType\":6}")
@@ -93,11 +111,11 @@ extension RTCManager: RTCManagerProtocol {
         rtcEngine.setParameters("{\"che.audio.sf.ainsLowLatencyFlag\":1}")
         rtcEngine.setParameters("{\"che.audio.sf.procChainMode\":1}")
         rtcEngine.setParameters("{\"che.audio.sf.nlpDynamicMode\":1}")
-        if config == .headset ||
-            config == .earpiece ||
-            config == .headsetNoMic ||
-            config == .bluetoothDeviceHfp ||
-            config == .bluetoothDeviceA2dp {
+        if routing == .headset ||
+            routing == .earpiece ||
+            routing == .headsetNoMic ||
+            routing == .bluetoothDeviceHfp ||
+            routing == .bluetoothDeviceA2dp {
             rtcEngine.setParameters("{\"che.audio.sf.nlpAlgRoute\":0}")
         } else {
             rtcEngine.setParameters("{\"che.audio.sf.nlpAlgRoute\":1}")
@@ -109,11 +127,11 @@ extension RTCManager: RTCManagerProtocol {
         rtcEngine.setParameters("{\"che.audio.agc.enable\":false}")
     }
     
-    func muteVoice(state: Bool) {
-        rtcEngine.adjustRecordingSignalVolume(state ? 0 : 100)
+    func muteLocalAudio(mute: Bool) {
+        rtcEngine.adjustRecordingSignalVolume(mute ? 0 : 100)
     }
     
-    func predump(completion: @escaping () -> Void) {
+    func generatePreDumpFile(completion: @escaping () -> Void) {
         rtcEngine.setParameters("{\"che.audio.start.predump\":true}")
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             completion()
@@ -141,8 +159,13 @@ extension RTCManager: RTCManagerProtocol {
         rtcEngine.leaveChannel()
     }
     
+    func renewRtcToken(value: String) {
+        rtcEngine.renewToken(value)
+    }
+    
     func destroy() {
         audioDumpEnabled = false
+        rtcEngine = nil
         AgoraRtcEngineKit.destroy()
     }
 }
