@@ -28,14 +28,58 @@ class HotspotTagView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        let path = UIBezierPath()
+        let topLeftRadius: CGFloat = 16
+        let topRightRadius: CGFloat = 4
+        let bottomLeftRadius: CGFloat = 4
+        let bottomRightRadius: CGFloat = 16
+        
+        path.move(to: CGPoint(x: topLeftRadius, y: 0))
+        path.addLine(to: CGPoint(x: bounds.width - topRightRadius, y: 0))
+        path.addArc(withCenter: CGPoint(x: bounds.width - topRightRadius, y: topRightRadius),
+                    radius: topRightRadius,
+                    startAngle: -CGFloat.pi / 2,
+                    endAngle: 0,
+                    clockwise: true)
+        
+        path.addLine(to: CGPoint(x: bounds.width, y: bounds.height - bottomRightRadius))
+        path.addArc(withCenter: CGPoint(x: bounds.width - bottomRightRadius, y: bounds.height - bottomRightRadius),
+                    radius: bottomRightRadius,
+                    startAngle: 0,
+                    endAngle: CGFloat.pi / 2,
+                    clockwise: true)
+        
+        path.addLine(to: CGPoint(x: bottomLeftRadius, y: bounds.height))
+        path.addArc(withCenter: CGPoint(x: bottomLeftRadius, y: bounds.height - bottomLeftRadius),
+                    radius: bottomLeftRadius,
+                    startAngle: CGFloat.pi / 2,
+                    endAngle: CGFloat.pi,
+                    clockwise: true)
+        
+        path.addLine(to: CGPoint(x: 0, y: topLeftRadius))
+        path.addArc(withCenter: CGPoint(x: topLeftRadius, y: topLeftRadius),
+                    radius: topLeftRadius,
+                    startAngle: CGFloat.pi,
+                    endAngle: -CGFloat.pi / 2,
+                    clockwise: true)
+        
+        path.close()
+        
+        let maskLayer = CAShapeLayer()
+        maskLayer.path = path.cgPath
+        layer.mask = maskLayer
+    }
+    
     private func setupViews() {
+        backgroundColor = UIColor.themColor(named: "ai_green6")
         addSubview(titleLabel)
     }
     
     private func setupConstraints() {
         titleLabel.snp.makeConstraints { make in
-            make.left.equalTo(15)
-            make.top.equalTo(9)
+            make.center.equalToSuperview()
         }
     }
 }
@@ -52,18 +96,17 @@ class HotspotView: UIView {
         return view
     }()
     
-    private lazy var stepOneContainerImagebg: UIImageView = {
-        let view = UIImageView()
-        view.image = UIImage.ag_named("ic_iot_hotspot_bg_icon")
+    private lazy var stepOneContainerBg: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.themColor(named: "ai_fill5")
+        view.layer.cornerRadius = 16
+        view.clipsToBounds = true
         return view
     }()
     
     private lazy var setpOneContainerGreenbg: HotspotTagView = {
         let view = HotspotTagView()
-        view.layer.cornerRadius = 16
-        view.layer.masksToBounds = true
         view.titleLabel.text = "1"
-        view.backgroundColor = UIColor.themColor(named: "ai_green6")
         return view
     }()
         
@@ -77,7 +120,7 @@ class HotspotView: UIView {
     private lazy var openHotspotLabel: UILabel = {
         let label = UILabel()
         label.text = ResourceManager.L10n.Iot.hotspotOpenTitle
-        label.font = .systemFont(ofSize: 20, weight: .bold)
+        label.font = .systemFont(ofSize: 16, weight: .bold)
         label.textColor = UIColor.themColor(named: "ai_icontext1")
         label.numberOfLines = 0
         label.textAlignment = .center
@@ -96,28 +139,13 @@ class HotspotView: UIView {
         return label
     }()
     
-    private lazy var maxCompatibilityLabel: UIView = {
-        let container = UIView()
-        container.backgroundColor = UIColor.themColor(named: "ai_green6")
-        container.layer.cornerRadius = 6
-        container.clipsToBounds = true
-        
+    private lazy var maxCompatibilityLabel: UILabel = {
         let label = UILabel()
         label.text = ResourceManager.L10n.Iot.hotspotCompatibilityMode
         label.font = .systemFont(ofSize: 14, weight: .semibold)
-        label.textColor = UIColor.themColor(named: "ai_icontext1")
+        label.textColor = UIColor.themColor(named: "ai_green6")
         label.textAlignment = .center
-        
-        container.addSubview(label)
-        label.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 8))
-        }
-        
-        // 设置较高的内容压缩阻力和紧凑优先级
-        container.setContentCompressionResistancePriority(.required, for: .horizontal)
-        container.setContentHuggingPriority(.required, for: .horizontal)
-        
-        return container
+        return label
     }()
     
     private lazy var tipStackView: UIStackView = {
@@ -144,18 +172,17 @@ class HotspotView: UIView {
         return view
     }()
     
-    private lazy var stepTwoContainerImagebg: UIImageView = {
-        let view = UIImageView()
-        view.image = UIImage.ag_named("ic_iot_hotspot_small_bg_icon")
+    private lazy var stepTwoContainerBg: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.themColor(named: "ai_fill5")
+        view.layer.cornerRadius = 16
+        view.clipsToBounds = true
         return view
     }()
     
     private lazy var stepTwoContainerGreenbg: HotspotTagView = {
         let view = HotspotTagView()
-        view.layer.cornerRadius = 16
-        view.layer.masksToBounds = true
         view.titleLabel.text = "2"
-        view.backgroundColor = UIColor.themColor(named: "ai_green6")
         return view
     }()
     
@@ -198,7 +225,7 @@ class HotspotView: UIView {
     private lazy var inputTipLabel: UILabel = {
         let label = UILabel()
         label.text = ResourceManager.L10n.Iot.hotspotInputTitle
-        label.font = .systemFont(ofSize: 20, weight: .bold)
+        label.font = .systemFont(ofSize: 16, weight: .bold)
         label.textColor = UIColor.themColor(named: "ai_icontext1")
         label.numberOfLines = 0
         label.textAlignment = .center
@@ -235,16 +262,16 @@ class HotspotView: UIView {
         backgroundColor = UIColor.themColor(named: "ai_fill1")
         
         addSubview(stepOneContainer)
+        stepOneContainer.addSubview(stepOneContainerBg)
         stepOneContainer.addSubview(setpOneContainerGreenbg)
-        stepOneContainer.addSubview(stepOneContainerImagebg)
         stepOneContainer.addSubview(openHotspotLabel)
         stepOneContainer.addSubview(tipStackView)
         stepOneContainer.addSubview(hotspotImageView)
         stepOneContainer.addSubview(goToSettingsButton)
         
         addSubview(stepTwoContainer)
+        stepTwoContainer.addSubview(stepTwoContainerBg)
         stepTwoContainer.addSubview(stepTwoContainerGreenbg)
-        stepTwoContainer.addSubview(stepTwoContainerImagebg)
         
         stepTwoContainer.addSubview(deviceNameField)
         stepTwoContainer.addSubview(passwordField)
@@ -269,12 +296,12 @@ class HotspotView: UIView {
         }
         
         setpOneContainerGreenbg.snp.makeConstraints { make in
-            make.top.left.equalTo(6)
-            make.right.equalTo(-6)
-            make.height.equalTo(63)
+            make.top.left.equalTo(4)
+            make.width.equalTo(40)
+            make.height.equalTo(36)
         }
         
-        stepOneContainerImagebg.snp.makeConstraints { make in
+        stepOneContainerBg.snp.makeConstraints { make in
             make.edges.equalTo(UIEdgeInsets.zero)
         }
                 
@@ -299,8 +326,8 @@ class HotspotView: UIView {
         }
         
         goToSettingsButton.snp.makeConstraints { make in
-            make.left.equalToSuperview().offset(20)
-            make.right.equalToSuperview().offset(-20)
+            make.left.equalToSuperview().offset(12)
+            make.right.equalToSuperview().offset(-12)
             make.height.equalTo(36)
             make.bottom.equalToSuperview().offset(-12)
         }
@@ -312,12 +339,12 @@ class HotspotView: UIView {
         }
         
         stepTwoContainerGreenbg.snp.makeConstraints { make in
-            make.top.left.equalTo(6)
-            make.right.equalTo(-6)
-            make.height.equalTo(63)
+            make.top.left.equalTo(4)
+            make.width.equalTo(40)
+            make.height.equalTo(36)
         }
         
-        stepTwoContainerImagebg.snp.makeConstraints { make in
+        stepTwoContainerBg.snp.makeConstraints { make in
             make.edges.equalTo(UIEdgeInsets.zero)
         }
         

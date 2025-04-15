@@ -7,8 +7,14 @@
 
 import Foundation
 import AgoraRtcKit
+import Common
 
 protocol RTCManagerProtocol {
+    
+    /// Creates and initializes an RTC engine instance
+    /// - Parameter delegate: The delegate object for the RTC engine to receive callback events
+    /// - Returns: The initialized AgoraRtcEngineKit instance
+    func createRtcEngine(delegate: AgoraRtcEngineDelegate) -> AgoraRtcEngineKit
     /// Joins an RTC channel with the specified parameters
     /// - Parameters:
     ///   - token: The token for authentication
@@ -39,44 +45,31 @@ protocol RTCManagerProtocol {
     /// Enables or disables audio dump
     func enableAudioDump(enabled: Bool)
     
-    /// Get current channel name
-    func getChannelName() -> String
-    
     /// Destroys the agent and releases resources
     func destroy()
 }
 
 class RTCManager: NSObject {
     private var rtcEngine: AgoraRtcEngineKit!
-    private weak var delegate: AgoraRtcEngineDelegate?
-    private var appId: String = ""
     private var audioDumpEnabled: Bool = false
-    private var channelId: String = ""
     private var audioRouting = AgoraAudioOutputRouting.default
-    
-    init(appId: String, delegate: AgoraRtcEngineDelegate?) {
-        self.appId = appId
-        self.delegate = delegate
-        super.init()
-        
-        initRtcEngine()
-    }
-    
-    private func initRtcEngine() {
-        let config = AgoraRtcEngineConfig()
-        config.appId = appId
-        config.channelProfile = .liveBroadcasting
-        rtcEngine = AgoraRtcEngineKit.sharedEngine(with: config, delegate: self.delegate)
-        ConvoAILogger.info("rtc version: \(AgoraRtcEngineKit.getSdkVersion())")
-    }
 }
 
 extension RTCManager: RTCManagerProtocol {
+    
+    func createRtcEngine(delegate: AgoraRtcEngineDelegate) -> AgoraRtcEngineKit {
+        let config = AgoraRtcEngineConfig()
+        config.appId = AppContext.shared.appId
+        config.channelProfile = .liveBroadcasting
+        rtcEngine = AgoraRtcEngineKit.sharedEngine(with: config, delegate: delegate)
+        ConvoAILogger.info("rtc version: \(AgoraRtcEngineKit.getSdkVersion())")
+        return rtcEngine
+    }
+    
     func joinChannel(token: String, channelName: String, uid: String, scenario: AgoraAudioScenario = .aiClient) -> Int32 {
         // enable predump
         rtcEngine.setParameters("{\"che.audio.enable.predump\":{\"enable\":\"true\",\"duration\":\"60\"}}")
         setAudioConfig(config: audioRouting)
-        channelId = channelName
         
         rtcEngine.setAudioScenario(scenario)
         rtcEngine.enableAudioVolumeIndication(100, smooth: 3, reportVad: false)
@@ -121,7 +114,6 @@ extension RTCManager: RTCManagerProtocol {
     }
     
     func predump(completion: @escaping () -> Void) {
-        
         rtcEngine.setParameters("{\"che.audio.start.predump\":true}")
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             completion()
@@ -146,17 +138,12 @@ extension RTCManager: RTCManagerProtocol {
     }
     
     func leaveChannel() {
-        channelId = ""
         rtcEngine.leaveChannel()
     }
     
     func destroy() {
         audioDumpEnabled = false
         AgoraRtcEngineKit.destroy()
-    }
-    
-    func getChannelName() -> String {
-        return channelId
     }
 }
 

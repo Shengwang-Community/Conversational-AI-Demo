@@ -100,8 +100,8 @@
 "iot.hotspot.open.title" = "Turn on Personal Hotspot";
 "iot.hotspot.settings.button" = "Go to set up the hotspot";
 "iot.hotspot.check.prefix" = "Check if it's turned on";
-"iot.hotspot.compatibility.mode" = "”Maximum Compatibility“";
-"iot.hotspot.input.title" = "Enter the hotspot name and password";
+"iot.hotspot.compatibility.mode" = "“Maximum Compatibility”";
+"iot.hotspot.input.title" = "Hotspot name and password";
 "iot.hotspot.device.name.placeholder" = "Hotspot Name";
 "iot.hotspot.password.placeholder" = "Password";
 "iot.hotspot.next" = "Next";

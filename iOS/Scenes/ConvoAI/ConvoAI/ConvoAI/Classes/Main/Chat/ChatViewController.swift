@@ -36,8 +36,8 @@ public class ChatViewController: UIViewController {
     }()
     
     private lazy var rtcManager: RTCManager = {
-        let manager = RTCManager(appId: AppContext.shared.appId, delegate: self)
-        addLog("rtc sdk version: \(AgoraRtcEngineKit.getSdkVersion())")
+        let manager = RTCManager()
+        let _ = manager.createRtcEngine(delegate: self)
         return manager
     }()
     
@@ -740,11 +740,6 @@ extension ChatViewController: AgoraRtcEngineDelegate {
     }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, didJoinedOfUid uid: UInt, elapsed: Int) {
-        let channelName = rtcManager.getChannelName()
-        if self.channelName != channelName {
-            return
-        }
-        
         annotationView.dismiss()
         remoteIsJoined = true
         timerCoordinator.stopJoinChannelTimer()

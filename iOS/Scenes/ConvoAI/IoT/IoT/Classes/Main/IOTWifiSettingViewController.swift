@@ -26,7 +26,7 @@ class IOTWifiSettingViewController: BaseViewController {
     
     private lazy var wifiTab: UIButton = {
         let button = UIButton(type: .custom)
-        button.setTitle("Wi-Fi", for: .normal)
+        button.setTitle(ResourceManager.L10n.Iot.hotspotTabWifi, for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 15, weight: .bold)
         button.backgroundColor = UIColor.themColor(named: "ai_brand_main6")
@@ -37,7 +37,7 @@ class IOTWifiSettingViewController: BaseViewController {
     
     private lazy var hotspotTab: UIButton = {
         let button = UIButton(type: .custom)
-        button.setTitle("移动热点", for: .normal)
+        button.setTitle(ResourceManager.L10n.Iot.hotspotTabMobile, for: .normal)
         button.setTitleColor(UIColor.themColor(named: "ai_icontext2"), for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 15, weight: .bold)
         button.backgroundColor = .clear
@@ -161,7 +161,10 @@ class IOTWifiSettingViewController: BaseViewController {
         
     private func setupCallbacks() {
         hotspotView.onGoToSettings = {
-            if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+            if let url = URL(string: "App-Prefs:root=INTERNET_TETHERING"),
+               UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            } else if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
                 UIApplication.shared.open(settingsUrl)
             }
         }

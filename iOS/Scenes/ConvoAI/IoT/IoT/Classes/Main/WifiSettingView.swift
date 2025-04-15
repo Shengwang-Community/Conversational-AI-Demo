@@ -25,7 +25,7 @@ class WifiSettingView: UIView {
                                     value: UIColor.themColor(named: "ai_green6"),
                                     range: range)
         label.attributedText = attributedString
-        label.font = .systemFont(ofSize: 24, weight: .medium)
+        label.font = .systemFont(ofSize: 16, weight: .bold)
         label.textAlignment = .center
         return label
     }()
@@ -33,7 +33,7 @@ class WifiSettingView: UIView {
     private lazy var subtitleLabel: UILabel = {
         let label = UILabel()
         label.text = ResourceManager.L10n.Iot.wifiSettingsSubtitle
-        label.font = .systemFont(ofSize: 24, weight: .medium)
+        label.font = .systemFont(ofSize: 16, weight: .bold)
         label.textColor = UIColor.themColor(named: "ai_icontext1")
         label.textAlignment = .center
         return label
@@ -58,7 +58,7 @@ class WifiSettingView: UIView {
     private lazy var wifiErrorLabel: UILabel = {
         let label = UILabel()
         label.text = ResourceManager.L10n.Iot.wifiSettingsError
-        label.font = .systemFont(ofSize: 14)
+        label.font = .systemFont(ofSize: 10)
         label.textColor = UIColor.themColor(named: "ai_icontext1")
         label.isHidden = true
         return label

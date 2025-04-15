@@ -101,7 +101,7 @@
 "iot.hotspot.open.title" = "打开个人热点";
 "iot.hotspot.settings.button" = "去设置热点";
 "iot.hotspot.check.prefix" = "检查是否打开";
-"iot.hotspot.compatibility.mode" = "”最大兼容性“";
+"iot.hotspot.compatibility.mode" = "“最大兼容性”";
 "iot.hotspot.input.title" = "输入热点名称与密码";
 "iot.hotspot.device.name.placeholder" = "热点名称";
 "iot.hotspot.password.placeholder" = "密码";
