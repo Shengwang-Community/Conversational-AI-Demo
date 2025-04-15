@@ -97,7 +97,7 @@
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cv_open_hotspot"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="@dimen/ai_dp_2small"
                     android:layout_marginHorizontal="12dp"
                     android:layout_marginTop="20dp"
                     android:layout_marginBottom="12dp"
@@ -116,7 +116,6 @@
                         android:layout_gravity="center"
                         android:gravity="center"
                         android:orientation="vertical"
-                        android:padding="6dp"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
@@ -127,14 +126,6 @@
                             android:text="@string/cov_iot_hotspot_go_setting"
                             android:textColor="@color/ai_brand_white10"
                             android:textSize="14sp" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/cov_iot_hotspot_go_setting_subtitle"
-                            android:textColor="@color/ai_brand_white10"
-                            android:textSize="11sp" />
-
                     </LinearLayout>
 
                 </androidx.cardview.widget.CardView>
@@ -292,7 +283,7 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_connect_hotspot"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="@dimen/ai_dp_default"
             android:layout_marginHorizontal="30dp"
             android:layout_marginTop="40dp"
             android:enabled="false"

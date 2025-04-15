@@ -37,8 +37,7 @@
     <string name="cov_iot_hotspot_tab">移动热点</string>
     <string name="cov_iot_hotspot_title">打开移动热点</string>
     <string name="cov_iot_hotspot_subtitle">请在高级选项里选择“2.4GHz”</string>
-    <string name="cov_iot_hotspot_go_setting">去启用热点</string>
-    <string name="cov_iot_hotspot_go_setting_subtitle">（选择2.4GHz）</string>
+    <string name="cov_iot_hotspot_go_setting">去启用热点，选择2.4GHz频段</string>
     <string name="cov_iot_hotspot_tips">输入热点名称和密码</string>
     <string name="cov_iot_hotspot_name">设备名称</string>
     <string name="cov_iot_hotspot_password">密码</string>

@@ -36,7 +36,7 @@
     <FrameLayout
         android:id="@+id/fl_input"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="24dp"
         android:layout_marginEnd="24dp"
@@ -53,7 +53,8 @@
             android:hint="@string/cov_iot_devices_setting_input_name"
             android:inputType="text"
             android:maxLength="10"
-            android:padding="16dp"
+            android:layout_gravity="center_vertical"
+            android:paddingHorizontal="16dp"
             android:textColor="@color/ai_icontext1"
             android:textColorHint="@color/ai_icontext2" />
 
@@ -81,7 +82,7 @@
     <Button
         android:id="@+id/btn_confirm"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/ai_dp_small"
         android:layout_marginStart="24dp"
         android:layout_marginTop="4dp"
         android:layout_marginEnd="24dp"

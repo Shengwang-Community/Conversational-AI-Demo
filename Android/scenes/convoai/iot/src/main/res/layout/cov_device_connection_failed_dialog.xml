@@ -35,7 +35,7 @@
                 android:layout_marginTop="24dp"
                 android:text="@string/cov_iot_devices_connect_connect_failed"
                 android:textColor="@color/ai_icontext1"
-                android:textSize="24sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
