@@ -60,6 +60,8 @@ class SearchDeviceViewController: BaseViewController {
         return tableView
     }()
     
+    private var wifiAlertShowed = false
+    
     private var devices: [BLEDevice] = []
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -175,16 +177,25 @@ extension SearchDeviceViewController: UITableViewDelegate, UITableViewDataSource
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        checkWiFiStatus { [weak self] isWiFiEnabled in
-            guard let self = self else { return }
-            if isWiFiEnabled {
-                let device = self.devices[indexPath.row]
-                let vc = IOTWifiSettingViewController()
-                vc.device = device
-                
-                self.navigationController?.pushViewController(vc)
-            } else {
-                self.showWifiAlert()
+        if wifiAlertShowed {
+            let device = self.devices[indexPath.row]
+            let vc = IOTWifiSettingViewController()
+            vc.device = device
+            
+            self.navigationController?.pushViewController(vc)
+        } else {
+            checkWiFiStatus { [weak self] isWiFiEnabled in
+                guard let self = self else { return }
+                if isWiFiEnabled {
+                    let device = self.devices[indexPath.row]
+                    let vc = IOTWifiSettingViewController()
+                    vc.device = device
+                    
+                    self.navigationController?.pushViewController(vc)
+                } else {
+                    self.showWifiAlert()
+                    wifiAlertShowed = true
+                }
             }
         }
     }

@@ -20,6 +20,7 @@ public class DeveloperModeViewController: UIViewController {
     public static func show(from vc: UIViewController,
                             audioDump: Bool,
                             serverHost: String,
+                            sessionLimit: Bool,
                             onCloseDevMode: (() -> Void)? = nil,
                             onAudioDump: ((Bool) -> Void)? = nil,
                             onSwitchServer: (() -> Void)? = nil,
@@ -29,7 +30,7 @@ public class DeveloperModeViewController: UIViewController {
         devViewController.modalTransitionStyle = .crossDissolve
         devViewController.modalPresentationStyle = .overCurrentContext
         devViewController.isAudioDumpEnabled = audioDump
-        devViewController.isSessionLimitEnabled = true
+        devViewController.isSessionLimitEnabled = sessionLimit
         devViewController.serverHost = serverHost
         devViewController.onCloseDevModeCallback = onCloseDevMode
         devViewController.audioDumpCallback = onAudioDump

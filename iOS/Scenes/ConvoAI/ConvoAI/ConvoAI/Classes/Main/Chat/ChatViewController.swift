@@ -1068,7 +1068,8 @@ extension ChatViewController {
         DeveloperModeViewController.show(
             from: self,
             audioDump: rtcManager.getAudioDump(),
-            serverHost: AppContext.preferenceManager()?.information.targetServer ?? "")
+            serverHost: AppContext.preferenceManager()?.information.targetServer ?? "",
+            sessionLimit: timerCoordinator.getDurationLimited())
         {
             self.devModeButton.isHidden = true
             self.switchEnvironment()

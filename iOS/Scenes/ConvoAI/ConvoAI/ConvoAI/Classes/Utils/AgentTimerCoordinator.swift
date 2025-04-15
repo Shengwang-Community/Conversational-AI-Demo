@@ -196,4 +196,8 @@ extension AgentTimerCoordinator: AgentTimerCoordinatorProtocol {
             initDurationLimitTimer()
         }
     }
+    
+    func getDurationLimited() -> Bool {
+        return isDurationLimited
+    }
 }
