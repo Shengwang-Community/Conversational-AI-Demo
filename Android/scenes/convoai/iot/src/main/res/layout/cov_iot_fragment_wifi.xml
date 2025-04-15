@@ -156,7 +156,7 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_change_wifi"
                 android:layout_width="wrap_content"
-                android:layout_height="36dp"
+                android:layout_height="@dimen/ai_dp_2small"
                 android:layout_marginEnd="6dp"
                 android:background="@drawable/cov_wift_change_btn_bg"
                 android:insetLeft="0dp"
@@ -246,7 +246,7 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_next"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="@dimen/ai_dp_default"
         android:layout_marginHorizontal="30dp"
         android:layout_marginTop="40dp"
         android:enabled="false"

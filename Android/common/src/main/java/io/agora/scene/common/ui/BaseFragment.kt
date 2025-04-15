@@ -28,12 +28,7 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
     }
 
     open fun onHandleOnBackPressed() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            activity?.onBackPressedDispatcher?.onBackPressed()
-        } else {
-            @Suppress("DEPRECATION")
-            activity?.onBackPressed()
-        }
+        activity?.finish()
     }
 
     override fun onCreateView(

@@ -272,7 +272,7 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnCloseDebug"
         android:layout_width="0dp"
-        android:layout_height="58dp"
+        android:layout_height="@dimen/ai_dp_large"
         android:layout_marginStart="8dp"
         android:insetTop="0dp"
         android:insetBottom="0dp"
