@@ -98,16 +98,16 @@
                     android:id="@+id/cv_open_hotspot"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="30dp"
+                    android:layout_marginHorizontal="12dp"
                     android:layout_marginTop="20dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_marginBottom="12dp"
+                    android:foreground="?attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/ai_brand_main6"
                     app:cardCornerRadius="10dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/iv_hotspot_icon"
-                    app:rippleColor="#1AFFFFFF">
+                    app:layout_constraintTop_toBottomOf="@+id/iv_hotspot_icon">
 
                     <LinearLayout
                         android:id="@+id/cov_open_hotspot"
@@ -199,7 +199,7 @@
                     android:id="@+id/cv_hotspot_name"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
-                    android:layout_marginHorizontal="30dp"
+                    android:layout_marginHorizontal="12dp"
                     android:layout_marginTop="26dp"
                     app:cardBackgroundColor="@color/ai_input"
                     app:cardCornerRadius="12dp"
@@ -240,9 +240,8 @@
                     android:id="@+id/cv_hotspot_password"
                     android:layout_width="0dp"
                     android:layout_height="48dp"
-                    android:layout_marginHorizontal="30dp"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_marginHorizontal="12dp"
+                    android:layout_marginVertical="12dp"
                     app:cardBackgroundColor="@color/ai_input"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="0dp"
@@ -286,11 +285,8 @@
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
                 </androidx.cardview.widget.CardView>
-
             </androidx.constraintlayout.widget.ConstraintLayout>
-
         </androidx.cardview.widget.CardView>
-
 
         <!-- next button -->
         <com.google.android.material.button.MaterialButton
@@ -303,6 +299,7 @@
             android:insetTop="0dp"
             android:insetBottom="0dp"
             android:text="@string/cov_iot_devices_prepare_next"
+            android:textAllCaps="false"
             android:textColor="@color/ai_brand_white10"
             android:textSize="16sp"
             android:textStyle="bold"

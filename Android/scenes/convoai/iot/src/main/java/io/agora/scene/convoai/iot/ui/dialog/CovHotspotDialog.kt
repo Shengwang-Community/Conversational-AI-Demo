@@ -44,7 +44,7 @@ class CovHotspotDialog : BaseDialogFragment<CovIotHotspotDialogLayoutBinding>() 
     private fun setupClickListeners() {
         mBinding?.apply {
             // "Go to settings" button click event
-            btnOpenHotspot.setOnClickListener {
+            cvOpenHotspot.setOnClickListener {
                 listener?.onGoToSettingsClicked()
                 dismiss()
             }
