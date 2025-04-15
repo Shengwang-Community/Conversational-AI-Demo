@@ -183,13 +183,16 @@ class CovWifiSelectActivity : BaseActivity<CovActivityWifiSelectBinding>() {
                     launch(Dispatchers.Main) {
                         // Update Wi-Fi fragment with empty Wi-Fi info
                         wifiFragment.updateWifiInfo("", false)
-                        ToastUtil.show("No Wi-Fi connection detected, please connect to Wi-Fi first")
+                        // Only show toast if currently on the WiFi tab
+                        if (mBinding?.viewPager?.currentItem == 0) {
+                            ToastUtil.show("No Wi-Fi connection detected, please connect to Wi-Fi first")
+                        }
                     }
                 }
             } catch (e: Exception) {
                 CovLogger.e(TAG, "Failed to get Wi-Fi information: ${e.message}")
-
-                launch(Dispatchers.Main) {
+                // Only show toast if currently on the WiFi tab
+                if (mBinding?.viewPager?.currentItem == 0) {
                     ToastUtil.show("Failed to get Wi-Fi information")
                 }
             }
