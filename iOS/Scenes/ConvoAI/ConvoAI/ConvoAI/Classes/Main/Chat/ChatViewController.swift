@@ -26,7 +26,7 @@ public class ChatViewController: UIViewController {
     private lazy var timerCoordinator: AgentTimerCoordinator = {
         let coordinator = AgentTimerCoordinator()
         coordinator.delegate = self
-        
+        coordinator.setDurationLimit(limited: !DeveloperParams.getSessionFree())
         return coordinator
     }()
 
@@ -126,8 +126,6 @@ public class ChatViewController: UIViewController {
         let button = UIButton(type: .custom)
         button.setImage(UIImage.ag_named("ic_setting_debug"), for: .normal)
         button.addTarget(self, action: #selector(onClickDevMode), for: .touchUpInside)
-        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(onLongPressDevMode(_:)))
-        button.addGestureRecognizer(longPressGesture)
         return button
     }()
     var clickCount = 0
@@ -322,7 +320,7 @@ public class ChatViewController: UIViewController {
         let subRenderConfig = SubtitleRenderConfig(rtcEngine: rtcEngine, renderMode: .words, delegate: self)
         subRenderController.setupWithConfig(subRenderConfig)
         
-        devModeButton.isHidden = !DeveloperModeViewController.getDeveloperMode()
+        devModeButton.isHidden = !DeveloperParams.getDeveloperMode()
     }
 
     
@@ -508,7 +506,7 @@ extension ChatViewController {
             return
         }
         manager.updateAgentState(.disconnected)
-        if DeveloperModeViewController.getDeveloperMode() {
+        if DeveloperParams.getDeveloperMode() {
             channelName = "agent_debug_\(UUID().uuidString.prefix(8))"
         } else {
             channelName = "agent_\(UUID().uuidString.prefix(8))"
@@ -895,14 +893,6 @@ private extension ChatViewController {
             return selectedState
         }
     }
-
-    @objc private func onLongPressDevMode(_ sender: UILongPressGestureRecognizer) {
-        if DeveloperModeViewController.getDeveloperMode() {
-            devModeButton.isHidden = true
-            DeveloperModeViewController.setDeveloperMode(false)
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-        }
-    }
     
     @objc private func onClickLogo(_ sender: UIButton) {
         let currentTime = Date()
@@ -918,9 +908,9 @@ private extension ChatViewController {
     }
     
     func onThresholdReached() {
-        if !DeveloperModeViewController.getDeveloperMode() {
+        if !DeveloperParams.getDeveloperMode() {
             devModeButton.isHidden = false
-            DeveloperModeViewController.setDeveloperMode(true)
+            DeveloperParams.setDeveloperMode(true)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         }
     }
@@ -1062,8 +1052,7 @@ extension ChatViewController {
         DeveloperModeViewController.show(
             from: self,
             audioDump: rtcManager.getAudioDump(),
-            serverHost: AppContext.preferenceManager()?.information.targetServer ?? "",
-            sessionLimit: timerCoordinator.getDurationLimited())
+            serverHost: AppContext.preferenceManager()?.information.targetServer ?? "")
         {
             self.devModeButton.isHidden = true
             self.switchEnvironment()

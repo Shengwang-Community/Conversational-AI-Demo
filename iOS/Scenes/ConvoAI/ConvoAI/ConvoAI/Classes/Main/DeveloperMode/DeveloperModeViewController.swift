@@ -4,23 +4,35 @@ import Common
 import AgoraRtcKit
 import SVProgressHUD
 
+public class DeveloperParams {
+    
+    private static let kDeveloperMode = "com.agora.convoai.DeveloperMode"
+    private static let kSessionFree = "com.agora.convoai.kSessionFree"
+    
+    public static func setDeveloperMode(_ enable: Bool) {
+        UserDefaults.standard.set(enable, forKey: kDeveloperMode)
+    }
+    public static func getDeveloperMode() -> Bool {
+        return UserDefaults.standard.bool(forKey: kDeveloperMode)
+    }
+    
+    public static func setSessionFree(_ enable: Bool) {
+        UserDefaults.standard.set(enable, forKey: kSessionFree)
+    }
+    public static func getSessionFree() -> Bool {
+        return UserDefaults.standard.bool(forKey: kSessionFree)
+    }
+}
+
 public class DeveloperModeViewController: UIViewController {
     
     private let kHost = "toolbox_server_host"
     private let kAppId = "rtc_app_id"
     private let kEnvName = "env_name"
     
-    public static func setDeveloperMode(_ enable: Bool) {
-        UserDefaults.standard.set(enable, forKey: "DeveloperMode")
-    }
-    public static func getDeveloperMode() -> Bool {
-        return UserDefaults.standard.bool(forKey: "DeveloperMode")
-    }
-    
     public static func show(from vc: UIViewController,
                             audioDump: Bool,
                             serverHost: String,
-                            sessionLimit: Bool,
                             onCloseDevMode: (() -> Void)? = nil,
                             onAudioDump: ((Bool) -> Void)? = nil,
                             onSwitchServer: (() -> Void)? = nil,
@@ -30,7 +42,6 @@ public class DeveloperModeViewController: UIViewController {
         devViewController.modalTransitionStyle = .crossDissolve
         devViewController.modalPresentationStyle = .overCurrentContext
         devViewController.isAudioDumpEnabled = audioDump
-        devViewController.isSessionLimitEnabled = sessionLimit
         devViewController.serverHost = serverHost
         devViewController.onCloseDevModeCallback = onCloseDevMode
         devViewController.audioDumpCallback = onAudioDump
@@ -48,7 +59,6 @@ public class DeveloperModeViewController: UIViewController {
     
     private var serverHost: String = ""
     private var isAudioDumpEnabled: Bool = false
-    private var isSessionLimitEnabled: Bool = true
     private let rtcVersionValueLabel = UILabel()
     private let serverHostValueLabel = UILabel()
     private let graphTextField = UITextField()
@@ -113,7 +123,7 @@ public class DeveloperModeViewController: UIViewController {
     }
     
     private func resetEnvironment() {
-        DeveloperModeViewController.setDeveloperMode(false)
+        DeveloperParams.setDeveloperMode(false)
         AppContext.shared.graphId = ""
         let environments = AppContext.shared.environments
         if environments.isEmpty {
@@ -172,6 +182,7 @@ extension DeveloperModeViewController {
     }
     
     @objc private func onClickSessionLimit(_ sender: UISwitch) {
+        DeveloperParams.setSessionFree(!sender.isOn)
         sessionLimitCallback?(sender.isOn)
     }
 }
@@ -357,7 +368,7 @@ extension DeveloperModeViewController {
         sessionLimitLabel.textColor = UIColor.themColor(named: "ai_icontext1")
         sessionLimitLabel.font = UIFont.systemFont(ofSize: 14)
         
-        sessionLimitSwitch.isOn = isSessionLimitEnabled
+        sessionLimitSwitch.isOn = !DeveloperParams.getSessionFree()
         sessionLimitSwitch.addTarget(self, action: #selector(onClickSessionLimit(_ :)), for: .touchUpInside)
         
         let sessionLimitStackView = UIStackView()

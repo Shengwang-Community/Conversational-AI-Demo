@@ -28,9 +28,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         AppContext.shared.ttsParams = KeyCenter.TTS_PARAMS
         AppContext.shared.baseServerUrl = KeyCenter.TOOLBOX_SERVER_HOST
         
-        if AppContext.shared.appId.isEmpty {
-            AppContext.shared.loadInnerEnvironment()
-        }
+        AppContext.shared.loadInnerEnvironment()
                 
         copyResource()
         
