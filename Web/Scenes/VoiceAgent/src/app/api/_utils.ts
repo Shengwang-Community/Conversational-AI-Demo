@@ -12,7 +12,7 @@ const remoteTokenServerUrl = process.env.NEXT_PUBLIC_DEMO_SERVER_URL || ''
 
 export const basicAuthKey = process.env.AGENT_BASIC_AUTH_KEY || undefined
 export const basicAuthSecret = process.env.AGENT_BASIC_AUTH_SECRET || undefined
-
+export const customParameter= process.env.CUSTOM_CONVOAI_PARAMETER || undefined
 
 const appCert = process.env.AGORA_APP_CERT || undefined
 export const getEndpointFromNextRequest = (request: NextRequest) => {
