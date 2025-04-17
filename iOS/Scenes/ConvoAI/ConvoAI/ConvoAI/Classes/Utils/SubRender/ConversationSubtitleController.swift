@@ -46,7 +46,7 @@ private struct TranscriptionMessage: Codable {
         if let turn_status = turn_status { dict["turn_status"] = turn_status }
         if let language = language { dict["language"] = language }
         if let user_id = user_id { dict["user_id"] = user_id }
-        if let words = words { dict["words"] = words.map { $0.word ?? "" }.joined(separator: "|") }
+        if let words = words { dict["words"] = words.map { $0.dict() } }
         if let duration_ms = duration_ms { dict["duration_ms"] = duration_ms }
         if let start_ms = start_ms { dict["start_ms"] = start_ms }
         if let latency_ms = latency_ms { dict["latency_ms"] = latency_ms }
@@ -67,6 +67,15 @@ private struct Word: Codable {
     let stable: Bool?
     let start_ms: Int64?
     let word: String?
+    
+    func dict() -> [String: Any] {
+        var dict: [String: Any] = [:]
+        if let duration_ms = duration_ms { dict["duration_ms"] = duration_ms }
+        if let stable = stable { dict["stable"] = stable }
+        if let start_ms = start_ms { dict["start_ms"] = start_ms }
+        if let word = word { dict["word"] = word }
+        return dict
+    }
 }
 
 private class TurnBuffer {
@@ -169,7 +178,7 @@ private typealias TurnState = SubtitleStatus
         case string = "string"
     }
     
-    
+    private let jsonEncoder = JSONEncoder()
     private var timer: Timer?
     private var audioTimestamp: Int64 = 0
     private var messageParser = MessageParser()
@@ -359,6 +368,7 @@ private typealias TurnState = SubtitleStatus
                     // sign last word
                     curBuffer.words.removeLast()
                     curBuffer.words.append(lastWord)
+                    self.addLog("🔔[CovSubRenderController] add end sign turn: \(curBuffer.turnId) last word: \(lastWord.text)")
                 }
             } else if (message.object == MessageType.interrupt.rawValue) {// handle interrupt
                 if let interruptTime = message.start_ms,
@@ -385,6 +395,7 @@ private typealias TurnState = SubtitleStatus
             for (index, buffer) in self.messageQueue.enumerated().reversed() {
                 if interrupte {
                     self.messageQueue.remove(at: index)
+                    self.addLog("🔔[CovSubRenderController] remove interrupte turn: \(buffer.turnId)")
                     continue
                 }
                 // if last turn is interrupte by this buffer
@@ -400,11 +411,13 @@ private typealias TurnState = SubtitleStatus
                 let inprogressSub = buffer.words.firstIndex(where: { $0.start_ms > audioTimestamp} )
                 let interruptSub = buffer.words.firstIndex(where: { $0.status == .interrupt} )
                 let endSub = buffer.words.firstIndex(where: { $0.status == .end} )
+                self.addLog("🔔[CovSubRenderController] get min subrange turn: \(buffer.turnId) range \(buffer.words.count) inprogress: \(inprogressSub ?? -1) interrupt: \(interruptSub ?? -1) end: \(endSub ?? -1)")
                 let minIndex = [inprogressSub, interruptSub, endSub].compactMap { $0 }.min()
                 guard let minRange = minIndex else {
                     return
                 }
                 let currentWords = Array(buffer.words[0..<minRange])
+                self.addLog("🔔[CovSubRenderController] get minRange: \(minRange) words: \(buffer.words.count) current: \(currentWords.count)")
                 // send turn with state
                 var subtitleMessage: SubtitleMessage
                 if minRange == interruptSub {
@@ -414,6 +427,7 @@ private typealias TurnState = SubtitleStatus
                                                       status: .interrupt)
                     // remove finished turn
                     self.messageQueue.remove(at: index)
+                    self.addLog("🔔[CovSubRenderController] remove signed interrupte turn: \(buffer.turnId)")
                     lastFinishMessage = subtitleMessage
                 } else if minRange == endSub {
                     subtitleMessage = SubtitleMessage(turnId: buffer.turnId,
@@ -422,6 +436,7 @@ private typealias TurnState = SubtitleStatus
                                                       status: .end)
                     // remove finished turn
                     self.messageQueue.remove(at: index)
+                    self.addLog("🔔[CovSubRenderController] remove signed end turn: \(buffer.turnId)")
                     lastFinishMessage = subtitleMessage
                 } else {
                     subtitleMessage = SubtitleMessage(turnId: buffer.turnId,
@@ -429,7 +444,7 @@ private typealias TurnState = SubtitleStatus
                                                       text: currentWords.map { $0.text }.joined(),
                                                       status: .inprogress)
                 }
-                print("📊 [CovSubRenderController] message flush state: \(subtitleMessage.status)")
+                print("📊 [CovSubRenderController] message flush turn: \(buffer.turnId) state: \(subtitleMessage.status)")
 //                print("📊 [CovSubRenderController] turn: \(buffer.turnId) range \(buffer.words.count) Subrange: \(minRange) words: \(currentWords.map { $0.text }.joined())")
                 if !subtitleMessage.text.isEmpty {
                     lastMessage = subtitleMessage
