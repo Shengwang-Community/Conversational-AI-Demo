@@ -11,11 +11,16 @@
     <string name="common_debug_convoai_host">ConvoAI Host</string>
     <string name="common_debug_audio_dump">音频 Dump</string>
     <string name="common_debug_session_limit">会话限制</string>
+    <string name="common_debug_graph_id">Graph id</string>
+    <string name="common_debug_sdk_parameters">SDK 私参</string>
+    <string name="common_debug_sc_config">SC 入口</string>
     <string name="common_debug_close">关闭开发者模式</string>
     <string name="common_debug_copy_user_question">复制用户当前通话提问</string>
     <string name="common_call_time_is_up">本次对话时间到！</string>
     <string name="common_call_time_is_up_tips">体验对话限时%1s分钟，本次对话时间已到。</string>
     <string name="common_i_known">我知道了</string>
+    <string name="common_close">关闭</string>
+    <string name="common_preview">预览</string>
 
     <string name="common_login_chat">一键登录</string>
     <string name="common_login_chat_tips">解锁 \u221E 免费畅聊</string>

@@ -1,6 +1,7 @@
 package io.agora.scene.common.ui
 
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,7 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
     private var negativeText: String? = null
     private var showNegative: Boolean = true
     private var showImage: Boolean = true
+    private var showJson: Boolean = false
     private var imageRes: Int? = null
     private var onPositiveClick: (() -> Unit)? = null
     private var onNegativeClick: (() -> Unit)? = null
@@ -54,6 +56,9 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
                 onNegativeClick?.invoke()
                 dismiss()
             }
+            if (showJson){
+                tvContent.gravity = Gravity.START
+            }
         }
     }
 
@@ -64,6 +69,7 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         private var negativeText: String? = null
         private var showNegative: Boolean = true
         private var showImage: Boolean = true
+        private var showJson: Boolean = false
         private var imageRes: Int? = null
         private var cancelable: Boolean = true
         private var onPositiveClick: (() -> Unit)? = null
@@ -84,6 +90,7 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         fun hideNegativeButton() = apply { this.showNegative = false }
 
         fun hideTopImage() = apply { this.showImage = false }
+        fun showJson() = apply { this.showJson = true }
 
         fun setCancelable(cancelable:Boolean) = apply { this.cancelable = cancelable }
 
@@ -97,6 +104,7 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
                 this@apply.onPositiveClick = this@Builder.onPositiveClick
                 this@apply.onNegativeClick = this@Builder.onNegativeClick
                 this@apply.showImage = this@Builder.showImage
+                this@apply.showJson = this@Builder.showJson
                 this@apply.imageRes = this@Builder.imageRes
                 this@apply.isCancelable = this@Builder.cancelable
             }

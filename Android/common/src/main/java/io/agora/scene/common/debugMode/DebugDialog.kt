@@ -1,5 +1,6 @@
 package io.agora.scene.common.debugMode
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,19 +14,21 @@ import io.agora.rtc2.RtcEngine
 import io.agora.scene.common.AgentApp
 import io.agora.scene.common.R
 import io.agora.scene.common.constant.AgentScenes
+import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.databinding.CommonDebugDialogBinding
 import io.agora.scene.common.databinding.CommonDebugOptionItemBinding
 import io.agora.scene.common.ui.BaseSheetDialog
+import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.ui.widget.LastItemDividerDecoration
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getDistanceFromScreenEdges
 import io.agora.scene.common.util.toast.ToastUtil
+import org.json.JSONObject
+import org.json.JSONArray
 
 interface DebugDialogCallback {
-    fun onCloseDebug() = Unit
-
     fun onDialogDismiss() = Unit
 
     fun onClickCopy() = Unit
@@ -50,6 +53,7 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
         return CommonDebugDialogBinding.inflate(inflater, container, false)
     }
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding?.apply {
@@ -134,6 +138,23 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
                 DebugConfigSettings.updateGraphId(it.toString())
             }
 
+            etParameters.setHint(DebugConfigSettings.sampleSdkParameters)
+            etParameters.doAfterTextChanged {
+                DebugConfigSettings.updateSdkParameters(it.toString())
+            }
+            btnPreviewParameters.setOnClickListener {
+                showPreJson(etParameters.text.toString().trim())
+            }
+
+            etScConfig.setHint(DebugConfigSettings.sampleScConfig)
+            etScConfig.doAfterTextChanged {
+                DebugConfigSettings.updateScConfig(it.toString().trim())
+            }
+            btnPreviewScConfig.setOnClickListener {
+                showPreJson(etScConfig.text.toString())
+            }
+
+
             updateEnvConfig()
         }
     }
@@ -201,7 +222,7 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
                 updateEnvConfig()
                 vOptionsMask.visibility = View.INVISIBLE
                 ToastUtil.show(
-                    getString(R.string.common_debug_current_server,ServerConfig.envName, ServerConfig.toolBoxUrl)
+                    getString(R.string.common_debug_current_server, ServerConfig.envName, ServerConfig.toolBoxUrl)
                 )
                 dismiss()
             }
@@ -218,6 +239,49 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
     private fun onClickMaskView() {
         binding?.apply {
             vOptionsMask.visibility = View.INVISIBLE
+        }
+    }
+
+    private fun showPreJson(json: String) {
+        try {
+            val formattedJson = formatJsonString(json)
+            CommonDialog.Builder()
+                .setTitle(getString(R.string.common_preview))
+                .setContent(formattedJson)
+                .hideTopImage()
+                .showJson()
+                .hideNegativeButton()
+                .setPositiveButton(getString(R.string.common_close), {
+
+                })
+                .build()
+                .show(childFragmentManager, "json_tag")
+        } catch (e: Exception) {
+            CommonDialog.Builder()
+                .setTitle(getString(R.string.common_preview))
+                .setContent(json)
+                .hideTopImage()
+                .showJson()
+                .hideNegativeButton()
+                .setPositiveButton(getString(R.string.common_close), {
+
+                })
+                .build()
+                .show(childFragmentManager, "json_tag")
+        }
+    }
+
+    private fun formatJsonString(input: String): String {
+        return try {
+            if (input.trim().startsWith("{")) {
+                JSONObject(input).toString(4)
+            } else if (input.trim().startsWith("[")) {
+                JSONArray(input).toString(4)
+            } else {
+                input
+            }
+        } catch (e: Exception) {
+            input
         }
     }
 

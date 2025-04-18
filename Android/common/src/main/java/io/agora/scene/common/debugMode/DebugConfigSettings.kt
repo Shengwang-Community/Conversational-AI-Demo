@@ -17,14 +17,33 @@ object DebugConfigSettings {
     private const val DEV_CONFIG_FILE = "dev_env_config.json"
     private const val DEV_SESSION_LIMIT_MODE = "dev_session_limit_mode"
 
-    private var instance: DevEnvConfig? = null
+    private const val DEV_SDK_PARAMETERS = "dev_sdk_parameters"
+    private const val DEV_SC_CONFIG = "dev_sc_config"
 
+    private var instance: DevEnvConfig? = null
 
     var graphId: String = ""
         private set
 
     fun updateGraphId(graphId: String) {
         this.graphId = graphId
+    }
+
+    val sampleSdkParameters: String get() = "{\"che.audio.sf.enabled\":true}"
+    val sampleScConfig: String get() = "{\"che.audio.sf.stftType\":6}"
+
+    var sdkParameters: String = ""
+        private set
+
+    fun updateSdkParameters(sdkParameters: String) {
+        this.sdkParameters = sdkParameters
+    }
+
+    var scConfig: String = ""
+        private set
+
+    fun updateScConfig(scConfig: String) {
+        this.scConfig = scConfig
     }
 
     var isDebug: Boolean = false
