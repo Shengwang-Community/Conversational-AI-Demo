@@ -26,10 +26,16 @@ object DebugConfigSettings {
         this.graphId = graphId
     }
 
-    val sdkAudioParameters = mutableListOf<String>()
+    private val _sdkAudioParameters = LinkedHashSet<String>()
+    val sdkAudioParameters: List<String>
+        get() = _sdkAudioParameters.toList()
 
+    /**
+     * Add SDK audio parameters, preserving the order and avoiding duplicates
+     * @param sdkParameters The list of parameters to add
+     */
     fun addSdkAudioParameter(sdkParameters: List<String>) {
-        sdkAudioParameters.addAll(sdkParameters)
+        _sdkAudioParameters.addAll(sdkParameters)
     }
 
     var convoAIParameter: String = ""
@@ -86,7 +92,7 @@ object DebugConfigSettings {
         graphId = ""
         isDebug = false
         isAudioDumpEnabled = false
-        sdkAudioParameters.clear()
+        _sdkAudioParameters.clear()
         convoAIParameter = ""
     }
 
