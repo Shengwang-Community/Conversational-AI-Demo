@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.RadioButton
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -87,10 +88,14 @@ class CovIotDeviceSettingsDialog : BaseSheetDialog<CovIotDeviceSettingsDialogBin
         // Set dialog to not close when touching outside area
         dialog?.setCanceledOnTouchOutside(false)
         
+        // Limit the maximum height of dialog to 70% of screen height
+        limitMaxHeight(0.75f)
+        
         binding?.apply {
             setOnApplyWindowInsets(root)
             rcOptions.adapter = optionsAdapter
             rcOptions.layoutManager = LinearLayoutManager(context)
+            
             rcOptions.context.getDrawable(io.agora.scene.common.R.drawable.shape_divider_line)?.let {
                 rcOptions.addItemDecoration(LastItemDividerDecoration(it))
             }
@@ -200,6 +205,37 @@ class CovIotDeviceSettingsDialog : BaseSheetDialog<CovIotDeviceSettingsDialogBin
 
     override fun disableDragging(): Boolean {
         return true
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Apply the height limitation again to ensure it works in all cases
+        limitMaxHeight(0.75f)
+    }
+
+    /**
+     * Limit the maximum height of dialog to specified ratio of screen height
+     * @param heightRatio Height ratio, range 0.0-1.0
+     */
+    private fun limitMaxHeight(heightRatio: Float) {
+        // Get screen height
+        val displayMetrics = requireContext().resources.displayMetrics
+        val screenHeight = displayMetrics.heightPixels
+        
+        // Calculate maximum height
+        val maxHeight = (screenHeight * heightRatio).toInt()
+        
+        // Apply to dialog
+        dialog?.window?.apply {
+            setLayout(ViewGroup.LayoutParams.MATCH_PARENT, maxHeight)
+            // Set gravity to bottom to position dialog at the bottom of screen
+            setGravity(android.view.Gravity.BOTTOM)
+            // Add hardware acceleration
+            setFlags(
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+            )
+        }
     }
 
     private fun updateBaseSettings() {

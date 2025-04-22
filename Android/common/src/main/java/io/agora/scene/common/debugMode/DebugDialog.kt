@@ -163,7 +163,6 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
                 }
             }
 
-            etApiParameter.setHint("{\"sessCtrlVadThr\":\"0.2\"}")
             etApiParameter.setText(DebugConfigSettings.convoAIParameter)
             btnApiParameterPreview.setOnClickListener {
                 showPreConfig(etApiParameter.text.toString())
