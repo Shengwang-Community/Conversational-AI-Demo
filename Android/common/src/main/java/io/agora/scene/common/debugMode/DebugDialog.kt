@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
-import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -14,10 +13,10 @@ import io.agora.rtc2.RtcEngine
 import io.agora.scene.common.AgentApp
 import io.agora.scene.common.R
 import io.agora.scene.common.constant.AgentScenes
-import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.databinding.CommonDebugDialogBinding
 import io.agora.scene.common.databinding.CommonDebugOptionItemBinding
+import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.common.ui.BaseSheetDialog
 import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.ui.OnFastClickListener
@@ -25,8 +24,6 @@ import io.agora.scene.common.ui.widget.LastItemDividerDecoration
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getDistanceFromScreenEdges
 import io.agora.scene.common.util.toast.ToastUtil
-import org.json.JSONObject
-import org.json.JSONArray
 
 interface DebugDialogCallback {
     fun onDialogDismiss() = Unit
@@ -134,26 +131,50 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
             })
 
             etGraphId.setText(DebugConfigSettings.graphId)
-            etGraphId.doAfterTextChanged {
-                DebugConfigSettings.updateGraphId(it.toString())
+            btnGraphIdSetting.setOnClickListener {
+                val graphId = etGraphId.text.toString().trim()
+                if (graphId.isNotEmpty()){
+                    DebugConfigSettings.setGraphId(graphId)
+                    ToastUtil.show("GraphId:$graphId")
+                }
             }
 
-            etParameters.setHint(DebugConfigSettings.sampleSdkParameters)
-            etParameters.doAfterTextChanged {
-                DebugConfigSettings.updateSdkParameters(it.toString())
+            etSdkAudioParameter.setHint("{\"che.audio.sf.ainlpLowLatencyFlag\":1}")
+            DebugConfigSettings.sdkAudioParameters.lastOrNull()?.let {
+                etSdkAudioParameter.setText(it)
             }
-            btnPreviewParameters.setOnClickListener {
-                showPreJson(etParameters.text.toString().trim())
+            btnSdkAudioParameterPreview.setOnClickListener {
+                val paramList = DebugConfigSettings.sdkAudioParameters
+                if (paramList.isEmpty()) return@setOnClickListener
+                val text = paramList.joinToString("|\n")
+                showPreConfig(text)
+            }
+            btnSdkAudioParameterSetting.setOnClickListener {
+                val sdkAudioParameter = etSdkAudioParameter.text.toString().trim()
+                if (sdkAudioParameter.isNotEmpty()){
+                    val audioParams = mutableListOf<String>()
+                    sdkAudioParameter.split("|").forEach { param ->
+                        if (param.trim().isNotEmpty()) {
+                            audioParams.add(param)
+                        }
+                    }
+                    DebugConfigSettings.addSdkAudioParameter(audioParams)
+                    ToastUtil.show("Sdk Audio Parameter:\n ${audioParams.joinToString("|\n")}")
+                }
             }
 
-            etScConfig.setHint(DebugConfigSettings.sampleScConfig)
-            etScConfig.doAfterTextChanged {
-                DebugConfigSettings.updateScConfig(it.toString().trim())
+            etApiParameter.setHint("{\"sessCtrlVadThr\":\"0.2\"}")
+            etApiParameter.setText(DebugConfigSettings.convoAIParameter)
+            btnApiParameterPreview.setOnClickListener {
+                showPreConfig(etApiParameter.text.toString())
             }
-            btnPreviewScConfig.setOnClickListener {
-                showPreJson(etScConfig.text.toString())
+            btnApiParameterSetting.setOnClickListener {
+                val convoAIParameter = etApiParameter.text.toString().trim()
+                if (convoAIParameter.isNotEmpty()){
+                    DebugConfigSettings.setConvoAIParameter(convoAIParameter)
+                    ToastUtil.show("Convo AI Parameter:\n $convoAIParameter")
+                }
             }
-
 
             updateEnvConfig()
         }
@@ -242,47 +263,17 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
         }
     }
 
-    private fun showPreJson(json: String) {
-        try {
-            val formattedJson = formatJsonString(json)
-            CommonDialog.Builder()
-                .setTitle(getString(R.string.common_preview))
-                .setContent(formattedJson)
-                .hideTopImage()
-                .showJson()
-                .hideNegativeButton()
-                .setPositiveButton(getString(R.string.common_close), {
+    private fun showPreConfig(text: String) {
+        CommonDialog.Builder()
+            .setTitle(getString(R.string.common_preview))
+            .setContent(text)
+            .hideTopImage()
+            .hideNegativeButton()
+            .setPositiveButton(getString(R.string.common_close), {
 
-                })
-                .build()
-                .show(childFragmentManager, "json_tag")
-        } catch (e: Exception) {
-            CommonDialog.Builder()
-                .setTitle(getString(R.string.common_preview))
-                .setContent(json)
-                .hideTopImage()
-                .showJson()
-                .hideNegativeButton()
-                .setPositiveButton(getString(R.string.common_close), {
-
-                })
-                .build()
-                .show(childFragmentManager, "json_tag")
-        }
-    }
-
-    private fun formatJsonString(input: String): String {
-        return try {
-            if (input.trim().startsWith("{")) {
-                JSONObject(input).toString(4)
-            } else if (input.trim().startsWith("[")) {
-                JSONArray(input).toString(4)
-            } else {
-                input
-            }
-        } catch (e: Exception) {
-            input
-        }
+            })
+            .build()
+            .show(childFragmentManager, "pre_tag")
     }
 
     inner class OptionsAdapter : RecyclerView.Adapter<OptionsAdapter.ViewHolder>() {

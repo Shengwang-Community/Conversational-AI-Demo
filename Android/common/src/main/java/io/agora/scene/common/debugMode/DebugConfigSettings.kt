@@ -17,33 +17,26 @@ object DebugConfigSettings {
     private const val DEV_CONFIG_FILE = "dev_env_config.json"
     private const val DEV_SESSION_LIMIT_MODE = "dev_session_limit_mode"
 
-    private const val DEV_SDK_PARAMETERS = "dev_sdk_parameters"
-    private const val DEV_SC_CONFIG = "dev_sc_config"
-
     private var instance: DevEnvConfig? = null
 
     var graphId: String = ""
         private set
 
-    fun updateGraphId(graphId: String) {
+    fun setGraphId(graphId: String) {
         this.graphId = graphId
     }
 
-    val sampleSdkParameters: String get() = "{\"che.audio.sf.enabled\":true}"
-    val sampleScConfig: String get() = "{\"che.audio.sf.stftType\":6}"
+    val sdkAudioParameters = mutableListOf<String>()
 
-    var sdkParameters: String = ""
-        private set
-
-    fun updateSdkParameters(sdkParameters: String) {
-        this.sdkParameters = sdkParameters
+    fun addSdkAudioParameter(sdkParameters: List<String>) {
+        sdkAudioParameters.addAll(sdkParameters)
     }
 
-    var scConfig: String = ""
+    var convoAIParameter: String = ""
         private set
 
-    fun updateScConfig(scConfig: String) {
-        this.scConfig = scConfig
+    fun setConvoAIParameter(apiParameter: String) {
+        this.convoAIParameter = apiParameter
     }
 
     var isDebug: Boolean = false
@@ -93,6 +86,8 @@ object DebugConfigSettings {
         graphId = ""
         isDebug = false
         isAudioDumpEnabled = false
+        sdkAudioParameters.clear()
+        convoAIParameter = ""
     }
 
     // Counter for debug mode activation
