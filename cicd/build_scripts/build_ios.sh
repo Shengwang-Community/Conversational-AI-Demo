@@ -181,7 +181,7 @@ if [ "$method" = "app-store" ]; then
     DEVELOPMENT_TEAM="48TB6ZZL5S"
 else
     # Development environment configuration
-    PROVISIONING_PROFILE="cn.shengwang.convoai.appstore"
+    PROVISIONING_PROFILE="cn.shengwang.convoai"
     CODE_SIGN_IDENTITY="iPhone Distribution"
     DEVELOPMENT_TEAM="48TB6ZZL5S"
 fi
