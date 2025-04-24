@@ -96,9 +96,9 @@ class CovDeviceScanActivity : BaseActivity<CovActivityDeviceScanBinding>() {
     override fun onResume() {
         super.onResume()
         // Check if WiFi is enabled, if enabled, close the permission dialog
-        if (isNetworkConnected() && permissionDialog?.isAdded == true) {
-            permissionDialog?.dismiss()
-        }
+//        if (isNetworkConnected() && permissionDialog?.isAdded == true) {
+//            permissionDialog?.dismiss()
+//        }
     }
 
     private fun setupView() {
@@ -138,18 +138,12 @@ class CovDeviceScanActivity : BaseActivity<CovActivityDeviceScanBinding>() {
         deviceAdapter = CovIotDeviceScanListAdapter(deviceList) { device ->
             // Device click event handling
             CovLogger.d(TAG, "Device clicked: ${device.name}")
-            // Check network connection status
-            if (!isNetworkConnected()) {
-                // Network not connected, show prompt dialog
-                showNetworkSettingsDialog()
-            } else {
-                try {
-                    stopScanIotDevice()
-                } catch (e: Exception) {
-                    CovLogger.e(TAG, "ble device stop scan error: $e")
-                }
-                CovWifiSelectActivity.startActivity(this, device.address)
+            try {
+                stopScanIotDevice()
+            } catch (e: Exception) {
+                CovLogger.e(TAG, "ble device stop scan error: $e")
             }
+            CovWifiSelectActivity.startActivity(this, device.address)
         }
 
         mBinding?.apply {

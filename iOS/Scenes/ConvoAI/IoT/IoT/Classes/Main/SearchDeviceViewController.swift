@@ -9,7 +9,6 @@ import Foundation
 import Common
 import CoreBluetooth
 import BLEManager
-import Network
 import SVProgressHUD
 
 class SearchDeviceViewController: BaseViewController {
@@ -59,7 +58,7 @@ class SearchDeviceViewController: BaseViewController {
         tableView.rowHeight = 90
         return tableView
     }()
-    
+        
     private var devices: [BLEDevice] = []
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -175,31 +174,10 @@ extension SearchDeviceViewController: UITableViewDelegate, UITableViewDataSource
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        checkWiFiStatus { [weak self] isWiFiEnabled in
-            guard let self = self else { return }
-            if isWiFiEnabled {
-                let device = self.devices[indexPath.row]
-                let vc = IOTWifiSettingViewController()
-                vc.device = device
-                
-                self.navigationController?.pushViewController(vc)
-            } else {
-                self.showWifiAlert()
-            }
-        }
-    }
-    
-    private func checkWiFiStatus(completion: @escaping (Bool) -> Void) {
-        let monitor = NWPathMonitor(requiredInterfaceType: .wifi)
-        
-        monitor.pathUpdateHandler = { path in
-            DispatchQueue.main.async {
-                monitor.cancel()
-                completion(path.status == .satisfied)
-            }
-        }
-        
-        monitor.start(queue: DispatchQueue.global())
+        let device = self.devices[indexPath.row]
+        let vc = IOTWifiSettingViewController()
+        vc.device = device
+        self.navigationController?.pushViewController(vc)
     }
 }
 

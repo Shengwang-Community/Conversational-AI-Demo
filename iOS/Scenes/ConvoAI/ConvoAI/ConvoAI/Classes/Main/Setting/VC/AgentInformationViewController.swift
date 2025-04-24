@@ -175,6 +175,26 @@ class AgentInformationViewController: UIViewController {
         card.layer.masksToBounds = true
         return card
     }()
+    
+    private lazy var versionLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 18)
+        label.textColor = UIColor.themColor(named: "ai_icontext3")
+        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+            label.text = "V\(version)"
+        }
+        return label
+    }()
+    
+    private lazy var buildLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14)
+        label.textColor = UIColor.themColor(named: "ai_icontext4")
+        if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+            label.text = "Build \(build)"
+        }
+        return label
+    }()
         
     deinit {
         unregisterDelegate()
@@ -265,7 +285,7 @@ class AgentInformationViewController: UIViewController {
         }
         let agentId = AppContext.preferenceManager()?.information.agentId
         feedbackItem.startLoading()        
-        rtcManager.predump {
+        rtcManager.generatePreDumpFile {
             self.feedBackPresenter.feedback(isSendLog: true, channel: channelName, agentId: agentId) { [weak self] error, result in
                 if error == nil {
                     SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.ChannelInfo.feedbackSuccess)
@@ -308,6 +328,8 @@ extension AgentInformationViewController {
         contentView.addSubview(moreInfoView)
         contentView.addSubview(channelInfoTitle)
         contentView.addSubview(channelInfoView)
+        contentView.addSubview(versionLabel)
+        contentView.addSubview(buildLabel)
         
         moreItems.forEach { moreInfoView.addSubview($0) }
         channelInfoItems.forEach { channelInfoView.addSubview($0) }
@@ -385,7 +407,6 @@ extension AgentInformationViewController {
             make.top.equalTo(moreInfoTitle.snp.bottom).offset(8)
             make.left.equalTo(16)
             make.right.equalTo(-16)
-            make.bottom.equalToSuperview()
         }
 
         for (index, item) in moreItems.enumerated() {
@@ -403,6 +424,17 @@ extension AgentInformationViewController {
                     make.bottom.equalToSuperview()
                 }
             }
+        }
+        
+        versionLabel.snp.makeConstraints { make in
+            make.top.equalTo(moreInfoView.snp.bottom).offset(30)
+            make.centerX.equalToSuperview()
+        }
+        
+        buildLabel.snp.makeConstraints { make in
+            make.top.equalTo(versionLabel.snp.bottom).offset(4)
+            make.centerX.equalToSuperview()
+            make.bottom.equalToSuperview().offset(-36)
         }
     }
     

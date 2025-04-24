@@ -22,11 +22,11 @@ public class ChatViewController: UIViewController {
     private var agentUid = 0
     private var remoteAgentId = ""
     private let uid = "\(RtcEnum.getUid())"
-        
+    
     private lazy var timerCoordinator: AgentTimerCoordinator = {
         let coordinator = AgentTimerCoordinator()
         coordinator.delegate = self
-        
+        coordinator.setDurationLimit(limited: !DeveloperParams.getSessionFree())
         return coordinator
     }()
 
@@ -36,8 +36,8 @@ public class ChatViewController: UIViewController {
     }()
     
     private lazy var rtcManager: RTCManager = {
-        let manager = RTCManager(appId: AppContext.shared.appId, delegate: self)
-        addLog("rtc sdk version: \(AgoraRtcEngineKit.getSdkVersion())")
+        let manager = RTCManager()
+        let _ = manager.createRtcEngine(delegate: self)
         return manager
     }()
     
@@ -126,8 +126,6 @@ public class ChatViewController: UIViewController {
         let button = UIButton(type: .custom)
         button.setImage(UIImage.ag_named("ic_setting_debug"), for: .normal)
         button.addTarget(self, action: #selector(onClickDevMode), for: .touchUpInside)
-        let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(onLongPressDevMode(_:)))
-        button.addGestureRecognizer(longPressGesture)
         return button
     }()
     var clickCount = 0
@@ -322,7 +320,7 @@ public class ChatViewController: UIViewController {
         let subRenderConfig = SubtitleRenderConfig(rtcEngine: rtcEngine, renderMode: .words, delegate: self)
         subRenderController.setupWithConfig(subRenderConfig)
         
-        devModeButton.isHidden = !DeveloperModeViewController.getDeveloperMode()
+        devModeButton.isHidden = !DeveloperParams.getDeveloperMode()
     }
 
     
@@ -341,7 +339,7 @@ public class ChatViewController: UIViewController {
                     joinChannel()
                 }
             } catch {
-                
+                addLog("Failed to prepare agent: \(error)")
                 handleStartError()
             }
         }
@@ -371,13 +369,8 @@ public class ChatViewController: UIViewController {
             addLog("cancel to join channel")
             return
         }
-        let ret: Int32
-        if AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true {
-            ret = rtcManager.joinChannel(token: token, channelName: channelName, uid: uid, scenario: .chorus)
-        } else {
-            ret = rtcManager.joinChannel(token: token, channelName: channelName, uid: uid)
-        }
-        addLog("Join channel: \(ret)")
+        let independent = (AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true)
+        rtcManager.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
         AppContext.preferenceManager()?.updateRoomState(.connected)
         AppContext.preferenceManager()?.updateRoomId(channelName)
     }
@@ -409,7 +402,7 @@ public class ChatViewController: UIViewController {
         
     private func setupMuteState(state: Bool) {
         addLog("setupMuteState: \(state)")
-        rtcManager.muteVoice(state: state)
+        rtcManager.muteLocalAudio(mute: state)
     }
     
     private func addLog(_ txt: String) {
@@ -513,21 +506,16 @@ extension ChatViewController {
             return
         }
         manager.updateAgentState(.disconnected)
-        let aiVad = manager.preference.aiVad
-        let bhvs = manager.preference.bhvs
-        let presetName = manager.preference.preset?.name ?? ""
-        let language = manager.preference.language?.languageCode ?? ""
-        channelName = RtcEnum.getChannel()
+        if DeveloperParams.getDeveloperMode() {
+            channelName = "agent_debug_\(UUID().uuidString.prefix(8))"
+        } else {
+            channelName = "agent_\(UUID().uuidString.prefix(8))"
+        }
         agentUid = AppContext.agentUid
         remoteIsJoined = false
-        agentManager.startAgent(appId: AppContext.shared.appId,
-                                uid: uid,
-                                agentUid: "\(agentUid)",
-                                channelName: channelName,
-                                aiVad: aiVad,
-                                bhvs: bhvs,
-                                presetName: presetName,
-                                language: language) { [weak self] error, channelName, remoteAgentId, targetServer in
+        
+        let parameters = getStartAgentParameters()
+        agentManager.startAgent(parameters: parameters, channelName: channelName) { [weak self] error, channelName, remoteAgentId, targetServer in
             guard let self = self else { return }
             if self.channelName != channelName {
                 self.addLog("channelName is different, current : \(self.channelName), before: \(channelName)")
@@ -585,6 +573,115 @@ extension ChatViewController {
         agentManager.stopAgent(appId: AppContext.shared.appId, agentId: remoteAgentId, channelName: channelName, presetName: presetName) { _, _ in }
     }
 }
+// MARK: - Agent Parameters
+extension ChatViewController {
+    
+    private func getStartAgentParameters() -> [String: Any] {
+        let parameters: [String: Any?] = [
+            // Basic parameters
+            "app_id": AppContext.shared.appId,
+            "preset_name": AppContext.preferenceManager()?.preference.preset?.name,
+            "app_cert": AppContext.shared.certificate.isEmpty ? nil : AppContext.shared.certificate,
+            "basic_auth_username": AppContext.shared.basicAuthKey.isEmpty ? nil : AppContext.shared.basicAuthKey,
+            "basic_auth_password": AppContext.shared.basicAuthSecret.isEmpty ? nil : AppContext.shared.basicAuthSecret,
+            
+            // ConvoAI request body
+            "convoai_body": getConvoaiBodyMap()
+        ]
+        return (removeNilValues(from: parameters) as? [String: Any]) ?? [:]
+    }
+    
+    private func getConvoaiBodyMap() -> [String: Any?] {
+        return [
+            "graph_id": AppContext.shared.graphId.isEmpty ? nil : AppContext.shared.graphId,
+            "name": nil,
+            "properties": [
+                "channel": channelName,
+                "token": nil,
+                "agent_rtc_uid": "\(agentUid)",
+                "remote_rtc_uids": [uid],
+                "enable_string_uid": nil,
+                "idle_timeout": nil,
+                "agent_rtm_uid": nil,
+                "advanced_features": [
+                    "enable_aivad": AppContext.preferenceManager()?.preference.aiVad,
+                    "enable_bhvs": AppContext.preferenceManager()?.preference.bhvs,
+                    "enable_rtm": nil
+                ],
+                "asr": [
+                    "language": AppContext.preferenceManager()?.preference.language?.languageCode,
+                    "vendor": nil,
+                    "vendor_model": nil
+                ],
+                "llm": [
+                    "url": AppContext.shared.llmUrl.isEmpty ? nil : AppContext.shared.llmUrl,
+                    "api_key": AppContext.shared.llmApiKey.isEmpty ? nil : AppContext.shared.llmApiKey,
+                    "system_messages": AppContext.shared.llmSystemMessages.isEmpty ? nil : AppContext.shared.llmSystemMessages,
+                    "greeting_message": nil,
+                    "params": AppContext.shared.llmParams.isEmpty ? nil : AppContext.shared.llmParams,
+                    "style": nil,
+                    "max_history": nil,
+                    "ignore_empty": nil,
+                    "input_modalities": nil,
+                    "output_modalities": nil,
+                    "failure_message": nil
+                ],
+                "tts": [
+                    "vendor": AppContext.shared.ttsVendor.isEmpty ? nil : AppContext.shared.ttsVendor as Any,
+                    "params": AppContext.shared.ttsParams.isEmpty ? nil : AppContext.shared.ttsParams,
+                    "adjust_volume": nil,
+                ],
+                "vad": [
+                    "interrupt_duration_ms": nil,
+                    "prefix_padding_ms": nil,
+                    "silence_duration_ms": nil,
+                    "threshold": nil
+                ],
+                "parameters": [
+                    "enable_flexible": nil,
+                    "enable_metrics": nil,
+                    "aivad_force_threshold": nil,
+                    "output_audio_codec": nil,
+                    "audio_scenario": nil,
+                    "transcript": [
+                        "enable": true,
+                        "enable_words": true,
+                        "protocol_version": "v2",
+                        "redundant": nil,
+                    ],
+                    "sc": [
+                        "sessCtrlStartSniffWordGapInMs": nil,
+                        "sessCtrlTimeOutInMs": nil,
+                        "sessCtrlWordGapLenVolumeThr": nil,
+                        "sessCtrlWordGapLenInMs": nil
+                    ]
+                ]
+            ]
+        ]
+    }
+    
+    private func removeNilValues(from value: Any?) -> Any? {
+        guard let value = value else { return nil }
+        if let dict = value as? [String: Any?] {
+            var result: [String: Any] = [:]
+            for (key, val) in dict {
+                if let processedVal = removeNilValues(from: val) {
+                    result[key] = processedVal
+                }
+            }
+            return result.isEmpty ? nil : result
+        }
+        if let array = value as? [[String: Any?]] {
+            let processedArray = array.compactMap { removeNilValues(from: $0) as? [String: Any] }
+            return processedArray.isEmpty ? nil : processedArray
+        }
+        if let array = value as? [Any?] {
+            let processedArray = array.compactMap { removeNilValues(from: $0) }
+            return processedArray.isEmpty ? nil : processedArray
+        }
+        return value
+    }
+}
 
 // MARK: - AgoraRtcEngineDelegate
 extension ChatViewController: AgoraRtcEngineDelegate {
@@ -636,11 +733,6 @@ extension ChatViewController: AgoraRtcEngineDelegate {
     }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, didJoinedOfUid uid: UInt, elapsed: Int) {
-        let channelName = rtcManager.getChannelName()
-        if self.channelName != channelName {
-            return
-        }
-        
         annotationView.dismiss()
         remoteIsJoined = true
         timerCoordinator.stopJoinChannelTimer()
@@ -675,8 +767,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
                 return
             }
             self.addLog("will update token: \(newToken)")
-            let rtcEnigne = self.rtcManager.getRtcEntine()
-            rtcEnigne.renewToken(newToken)
+            self.rtcManager.renewRtcToken(value: newToken)
             self.token = newToken
         }
     }
@@ -718,7 +809,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
     }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, didAudioRouteChanged routing: AgoraAudioOutputRouting) {
-        rtcManager.setAudioConfig(config: routing)
+        rtcManager.setAudioConfigParameters(routing: routing)
     }
 }
 
@@ -802,14 +893,6 @@ private extension ChatViewController {
             return selectedState
         }
     }
-
-    @objc private func onLongPressDevMode(_ sender: UILongPressGestureRecognizer) {
-        if DeveloperModeViewController.getDeveloperMode() {
-            devModeButton.isHidden = true
-            DeveloperModeViewController.setDeveloperMode(false)
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-        }
-    }
     
     @objc private func onClickLogo(_ sender: UIButton) {
         let currentTime = Date()
@@ -825,9 +908,9 @@ private extension ChatViewController {
     }
     
     func onThresholdReached() {
-        if !DeveloperModeViewController.getDeveloperMode() {
+        if !DeveloperParams.getDeveloperMode() {
             devModeButton.isHidden = false
-            DeveloperModeViewController.setDeveloperMode(true)
+            DeveloperParams.setDeveloperMode(true)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         }
     }
@@ -985,6 +1068,8 @@ extension ChatViewController {
             let pasteboard = UIPasteboard.general
             pasteboard.string = messageContents
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.DevMode.copy)
+        } onSessionLimit: { isOn in
+            self.timerCoordinator.setDurationLimit(limited: isOn)
         }
     }
     
@@ -999,4 +1084,5 @@ extension ChatViewController {
         NotificationCenter.default.post(name: .EnvironmentChanged, object: nil, userInfo: nil)
     }
 }
+
 

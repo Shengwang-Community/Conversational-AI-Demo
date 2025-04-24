@@ -26,6 +26,7 @@ import android.view.animation.LinearInterpolator
 import android.view.animation.RotateAnimation
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.iot.api.CovIotApiManager
 import io.agora.scene.convoai.iot.manager.CovIotPresetManager
@@ -211,7 +212,7 @@ class CovDeviceConnectActivity : BaseActivity<CovActivityDeviceConnectBinding>()
                                                     ssid = wifiSsid,
                                                     pwd = wifiPassword,
                                                     token = model?.auth_token ?: "",
-                                                    url = io.agora.scene.common.BuildConfig.TOOLBOX_SERVER_HOST
+                                                    url = ServerConfig.toolBoxUrl
                                                 )
 
                                                 runOnUiThread {

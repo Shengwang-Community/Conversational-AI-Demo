@@ -8,6 +8,7 @@ import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.net.SecureOkHttpClient
 import io.agora.scene.common.util.GsonTools
 import io.agora.scene.convoai.CovLogger
+import io.agora.scene.convoai.constant.CovAgentManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -16,6 +17,7 @@ import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONException
 import org.json.JSONObject
@@ -41,7 +43,129 @@ object CovAgentApiManager {
         private set
 
 
-    private const val SERVICE_VERSION = "v3"
+    private const val SERVICE_VERSION = "v4"
+
+    fun startAgentWithMap(channelName:String,convoaiBody: Map<String,Any?>, completion: (error: ApiException?, channelName: String) -> Unit) {
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/start"
+        val postBody = JSONObject()
+        try {
+            postBody.put("app_id", ServerConfig.rtcAppId)
+            ServerConfig.rtcAppCert.takeIf { it.isNotEmpty() }?.let {
+                postBody.put("app_cert",it)
+            }
+            BuildConfig.BASIC_AUTH_KEY.takeIf  { it.isNotEmpty() }?.let {
+                postBody.put("basic_auth_username",it)
+            }
+            BuildConfig.BASIC_AUTH_SECRET.takeIf  { it.isNotEmpty() }?.let {
+                postBody.put("basic_auth_password",it)
+            }
+            CovAgentManager.getPreset()?.name?.let {
+                postBody.put("preset_name", it)
+            }
+            
+            // Process convoaiBody, convert Map to JSONObject and filter out null values
+            val convoaiJsonObject = mapToJsonObjectWithFilter(convoaiBody)
+            postBody.put("convoai_body", convoaiJsonObject)
+
+        } catch (e: JSONException) {
+            CovLogger.e(TAG, "postBody error ${e.message}")
+        }
+
+        val requestBody = postBody.toString().toRequestBody(null)
+        val request = buildRequest(requestURL, "POST", requestBody)
+
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val json = response.body.string()
+                val httpCode = response.code
+                if (httpCode != 200) {
+                    runOnMainThread {
+                        completion.invoke(ApiException(httpCode, "Http error"), channelName)
+                    }
+                } else {
+                    try {
+                        val jsonObj = JSONObject(json)
+                        val code = jsonObj.optInt("code")
+                        val aid = jsonObj.optJSONObject("data")?.optString("agent_id")
+
+                        currentHost = jsonObj.optJSONObject("data")?.optString("agent_url")
+                        if (code == 0 && !aid.isNullOrEmpty()) {
+                            agentId = aid
+                            runOnMainThread {
+                                completion.invoke(null, channelName)
+                            }
+                        } else {
+                            runOnMainThread {
+                                completion.invoke(ApiException(code), channelName)
+                            }
+                        }
+                    } catch (e: JSONException) {
+                        CovLogger.e(TAG, "JSON parse error: ${e.message}")
+                        runOnMainThread {
+                            completion.invoke(ApiException(-1), channelName)
+                        }
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                CovLogger.e(TAG, "Start agent failed: $e")
+                runOnMainThread {
+                    completion.invoke(ApiException(-1), channelName)
+                }
+            }
+        })
+    }
+
+    /**
+     * Convert Map to JSONObject and filter out null values
+     * Support nested Map structures
+     */
+    private fun mapToJsonObjectWithFilter(map: Map<String, Any?>): JSONObject {
+        val jsonObject = JSONObject()
+        map.forEach { (key, value) ->
+            when {
+                value == null -> {
+                    // Skip null values
+                }
+                value is Map<*, *> -> {
+                    // Handle nested Map
+                    @Suppress("UNCHECKED_CAST")
+                    val nestedJsonObject = mapToJsonObjectWithFilter(value as Map<String, Any?>)
+                    if (nestedJsonObject.length() > 0) {
+                        jsonObject.put(key, nestedJsonObject)
+                    }
+                }
+                value is List<*> -> {
+                    // Handle List type
+                    val jsonArray = org.json.JSONArray()
+                    value.forEach { item ->
+                        when {
+                            item == null -> {
+                                // Skip null values
+                            }
+                            item is Map<*, *> -> {
+                                // Handle Map in List
+                                @Suppress("UNCHECKED_CAST")
+                                jsonArray.put(mapToJsonObjectWithFilter(item as Map<String, Any?>))
+                            }
+                            else -> {
+                                jsonArray.put(item)
+                            }
+                        }
+                    }
+                    if (jsonArray.length() > 0) {
+                        jsonObject.put(key, jsonArray)
+                    }
+                }
+                else -> {
+                    // Handle basic types
+                    jsonObject.put(key, value)
+                }
+            }
+        }
+        return jsonObject
+    }
 
     fun startAgent(params: AgentRequestParams, completion: (error: ApiException?, channelName: String) -> Unit) {
         val channelName = params.channelName
@@ -110,9 +234,8 @@ object CovAgentApiManager {
         } catch (e: JSONException) {
             CovLogger.e(TAG, "postBody error ${e.message}")
         }
-        Log.d(TAG, postBody.toString())
 
-        val requestBody = RequestBody.create(null, postBody.toString())
+        val requestBody = postBody.toString().toRequestBody(null)
         val request = buildRequest(requestURL, "POST", requestBody)
 
         okHttpClient.newCall(request).enqueue(object : Callback {
@@ -174,9 +297,16 @@ object CovAgentApiManager {
     }
 
     fun fetchPresets(completion: (error: Exception?, List<CovAgentPreset>) -> Unit) {
-        val requestURL =
-            "${ServerConfig.toolBoxUrl}/$SERVICE_VERSION/convoai/presetAgents?app_id=${ServerConfig.rtcAppId}"
-        val request = buildRequest(requestURL)
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/presets/list"
+
+        val postBody = JSONObject()
+        try {
+            postBody.put("app_id", ServerConfig.rtcAppId)
+        } catch (e: JSONException) {
+            CovLogger.e(TAG, "postBody error ${e.message}")
+        }
+        val requestBody = postBody.toString().toRequestBody(null)
+        val request = buildRequest(requestURL, "POST", requestBody)
 
         okHttpClient.newCall(request).enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
@@ -214,7 +344,7 @@ object CovAgentApiManager {
     }
 
     fun ping(channelName: String, preset: String) {
-        val requestURL = "${ServerConfig.toolBoxUrl}/$SERVICE_VERSION/convoai/ping"
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/ping"
         val postBody = JSONObject()
         try {
             postBody.put("app_id", ServerConfig.rtcAppId)
@@ -223,7 +353,7 @@ object CovAgentApiManager {
         } catch (e: JSONException) {
             CovLogger.e(TAG, "postBody error ${e.message}")
         }
-        val requestBody = RequestBody.create(null, postBody.toString())
+        val requestBody = postBody.toString().toRequestBody(null)
         val request = buildRequest(requestURL, "POST", requestBody)
 
         okHttpClient.newCall(request).enqueue(object : Callback {
@@ -255,7 +385,7 @@ object CovAgentApiManager {
             }
             return
         }
-        val requestURL = "${ServerConfig.toolBoxUrl}/$SERVICE_VERSION/convoai/stop"
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/stop"
         val postBody = JSONObject()
         try {
             postBody.put("app_id", ServerConfig.rtcAppId)
@@ -267,7 +397,7 @@ object CovAgentApiManager {
         } catch (e: JSONException) {
             CovLogger.e(TAG, "postBody error ${e.message}")
         }
-        val requestBody = RequestBody.create(null, postBody.toString())
+        val requestBody = postBody.toString().toRequestBody(null)
         val request = buildRequest(requestURL, "POST", requestBody)
 
         okHttpClient.newCall(request).enqueue(object : Callback {

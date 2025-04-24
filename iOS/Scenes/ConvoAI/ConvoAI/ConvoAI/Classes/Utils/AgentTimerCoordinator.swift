@@ -28,6 +28,8 @@ protocol AgentTimerCoordinatorProtocol {
     func stopUsageDurationLimitTimer()
     
     func stopAllTimer()
+    
+    func setDurationLimit(limited: Bool)
 }
 
 class AgentTimerCoordinator: NSObject {
@@ -38,7 +40,9 @@ class AgentTimerCoordinator: NSObject {
     private var pingTimer: Timer?
     private var joinChannelTimer: Timer?
     private var usageDurationLimitTimer: Timer?
-    private var useDuration = 600
+    
+    private var useDuration = 0
+    private var isDurationLimited = true
     
     // Timer configuration constants
     private let pingTimeInterval = 10.0
@@ -51,7 +55,7 @@ class AgentTimerCoordinator: NSObject {
             return
         }
         
-        useDuration = preset.callTimeLimitSecond
+        useDuration = isDurationLimited ? preset.callTimeLimitSecond : 0
         deinitDurationLimitTimer()
         
         usageDurationLimitTimer = Timer.scheduledTimer(
@@ -69,14 +73,19 @@ class AgentTimerCoordinator: NSObject {
     }
     
     @objc private func handleDurationLimitTimerTick() {
-        if useDuration <= 0 {
-            usageDurationLimitTimer?.invalidate()
-            usageDurationLimitTimer = nil
-            delegate?.agentUseLimitedTimerEnd()
-            delegate?.agentUseLimitedTimerClosed()
+        if isDurationLimited {
+            if useDuration <= 0 {
+                usageDurationLimitTimer?.invalidate()
+                usageDurationLimitTimer = nil
+                delegate?.agentUseLimitedTimerEnd()
+                delegate?.agentUseLimitedTimerClosed()
+            } else {
+                delegate?.agentUseLimitedTimerUpdated(duration: useDuration)
+                useDuration -= 1
+            }
         } else {
+            useDuration += 1
             delegate?.agentUseLimitedTimerUpdated(duration: useDuration)
-            useDuration -= 1
         }
     }
     
@@ -134,7 +143,7 @@ class AgentTimerCoordinator: NSObject {
         joinChannelCounter += 1
         
         if joinChannelCounter >= 30 {
-            joinChannelCounter = 0 
+            joinChannelCounter = 0
             delegate?.agentNotJoinedWithinTheScheduledTime()
         }
     }
@@ -142,7 +151,7 @@ class AgentTimerCoordinator: NSObject {
     private func deinitJoinChannelTimer() {
         joinChannelTimer?.invalidate()
         joinChannelTimer = nil
-        joinChannelCounter = 0 
+        joinChannelCounter = 0
     }
 }
 
@@ -178,5 +187,17 @@ extension AgentTimerCoordinator: AgentTimerCoordinatorProtocol {
         deinitPingTimer()
         deinitJoinChannelTimer()
         deinitDurationLimitTimer()
+    }
+    
+    func setDurationLimit(limited: Bool) {
+        isDurationLimited = limited
+        // if timer is running, reinit it
+        if usageDurationLimitTimer != nil {
+            initDurationLimitTimer()
+        }
+    }
+    
+    func getDurationLimited() -> Bool {
+        return isDurationLimited
     }
 }

@@ -1,6 +1,7 @@
 "login.title" = "一键登录";
 "login.description" = "解锁♾️免费畅聊";
 "login.start.button.title" = "账号登录";
+"login.start.button.signup" = "立即注册";
 "login.terms.service.prefix" = "我已阅读并同意 ";
 "login.terms.service.name" = "《用户协议》";
 "login.terms.service.and" = "和";
@@ -18,6 +19,7 @@
 "join.start.button.title" = "连接 AI 引擎";
 "join.start.agent.name" = "智能体";
 "join.start.tips" = "本次体验对话限制%d分钟";
+"join.start.tips.no.limit" = "本次体验对话无限制时长";
 "join.timeout.tips" = "智能体加入超时，请稍后重试。";
 
 "conversation.ai.hello" = "你好，人类";
@@ -98,11 +100,12 @@
 
 "devmode.title" = "开发者模式";
 "devmode.rtc" = "RTC 版本";
-"devmode.host" = "Server Host";
+"devmode.host" = "ConvoAI Host";
 "devmode.dump" = "音频 Dump";
+"devmode.sessionLimit" = "会话限制";
 "devmode.copy" = "复制用户当前通话问题";
 "devmode.close" = "关闭开发者模式";
-"devmode.graph" = "graph id";
+"devmode.graph" = "Graph id";
 "devmode.server" = "服务器";
 
 "iot.info.title" = "对话式 AI 设备";

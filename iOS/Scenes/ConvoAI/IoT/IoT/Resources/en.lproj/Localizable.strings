@@ -41,7 +41,7 @@
 "iot.device.empty.add_button" = "Add Device";
 
 "iot.device.setup.instruction.title" = "Preparation";
-"iot.device.setup.instruction" = "Hold the network button for 3 seconds to enter network mode";
+"iot.device.setup.instruction" = "Hold the network setup button for 3 seconds to enter network mode";
 "iot.device.setup.instruction.sub" = "";
 "iot.device.setup.permission_description" = "These permissions and switches will be requested during pairing";
 "iot.device.setup.complete" = "Completed the above actions";
@@ -96,3 +96,14 @@
 "iot.wifi.settings.password.placeholder" = "Password";
 "iot.wifi.settings.switch" = "Switch";
 "iot.wifi.settings.next" = "Next";
+
+"iot.hotspot.open.title" = "Turn on Mobile Hotspot";
+"iot.hotspot.settings.button" = "Enable the hotspot";
+"iot.hotspot.check.prefix" = "Check if it's turned on";
+"iot.hotspot.compatibility.mode" = "“Maximum Compatibility”";
+"iot.hotspot.input.title" = "Hotspot name and password";
+"iot.hotspot.device.name.placeholder" = "Hotspot Name";
+"iot.hotspot.password.placeholder" = "Password";
+"iot.hotspot.next" = "Next";
+"iot.hotspot.tab.wifi" = "Wi-Fi";
+"iot.hotspot.tab.mobile" = "Mobile Hotspot";

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Bugly
 
 @objc public class AppContext: NSObject {
     @objc public static let shared: AppContext = .init()
@@ -23,14 +24,46 @@ import Foundation
     private var _basicAuthSecret: String = ""
     private var _llmUrl: String = ""
     private var _llmApiKey: String = ""
-    private var _llmSystemMessages: String = ""
-    private var _llmModel: String = ""
+    private var _llmSystemMessages: [[String: Any]] = []
+    private var _llmParams: [String: Any] = [:]
     private var _ttsVendor: String = ""
     private var _ttsParams: [String: Any] = [:]
+    private var buglyIsStarted: Bool = false
+    
+    public var isAgreeLicense: Bool = false {
+        willSet {
+            if !newValue {
+                return
+            }
+            
+            if buglyIsStarted {
+                return
+            }
+            
+            setupBugly()
+        }
+    }
     
     override init() {
         super.init()
+        if UserCenter.shared.isLogin() {
+            setupBugly()
+        }
     }
+    
+    private func setupBugly() {
+#if DEBUG
+        print("debug mode")
+#else
+        let config = BuglyConfig()
+        config.reportLogLevel = BuglyLogLevel.warn
+        config.unexpectedTerminatingDetectionEnable = true
+        config.debugMode = true
+        Bugly.start(withAppId: "d3f8a1f528", config: config)
+        buglyIsStarted = true
+#endif
+    }
+
     
     @objc public var appId: String {
         get { return _appId }
@@ -91,14 +124,14 @@ import Foundation
         set { _llmApiKey = newValue }
     }
     
-    @objc public var llmSystemMessages: String {
+    @objc public var llmSystemMessages: [[String: Any]] {
         get { return _llmSystemMessages }
         set { _llmSystemMessages = newValue }
     }
     
-    @objc public var llmModel: String {
-        get { return _llmModel }
-        set { _llmModel = newValue }
+    @objc public var llmParams: [String: Any] {
+        get { return _llmParams }
+        set { _llmParams = newValue }
     }
     
     @objc public var ttsVendor: String {

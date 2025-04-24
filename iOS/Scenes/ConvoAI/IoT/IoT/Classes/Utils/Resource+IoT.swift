@@ -128,6 +128,18 @@ extension ResourceManager {
             public static let wifiSettingsSwitch = ResourceManager.localizedString("iot.wifi.settings.switch")
             public static let wifiSettingsNext = ResourceManager.localizedString("iot.wifi.settings.next")
             
+            // Hotspot Settings
+            public static let hotspotOpenTitle = ResourceManager.localizedString("iot.hotspot.open.title")
+            public static let hotspotSettingsButton = ResourceManager.localizedString("iot.hotspot.settings.button")
+            public static let hotspotCheckPrefix = ResourceManager.localizedString("iot.hotspot.check.prefix")
+            public static let hotspotCompatibilityMode = ResourceManager.localizedString("iot.hotspot.compatibility.mode")
+            public static let hotspotInputTitle = ResourceManager.localizedString("iot.hotspot.input.title")
+            public static let hotspotDeviceNamePlaceholder = ResourceManager.localizedString("iot.hotspot.device.name.placeholder")
+            public static let hotspotPasswordPlaceholder = ResourceManager.localizedString("iot.hotspot.password.placeholder")
+            public static let hotspotNext = ResourceManager.localizedString("iot.hotspot.next")
+            public static let hotspotTabWifi = ResourceManager.localizedString("iot.hotspot.tab.wifi")
+            public static let hotspotTabMobile = ResourceManager.localizedString("iot.hotspot.tab.mobile")
+
             // Device Search
             public static let deviceSearchTitle = ResourceManager.localizedString("iot.device.search.title")
             

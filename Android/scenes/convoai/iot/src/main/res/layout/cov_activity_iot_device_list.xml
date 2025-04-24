@@ -143,7 +143,7 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_add_device"
             android:layout_width="0dp"
-            android:layout_height="56dp"
+            android:layout_height="@dimen/ai_dp_large"
             android:layout_marginHorizontal="30dp"
             android:layout_marginBottom="58dp"
             android:background="@drawable/selector_gradient_button"
@@ -155,6 +155,8 @@
             app:icon="@drawable/cov_iot_add"
             app:iconGravity="textStart"
             app:iconSize="24dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             app:iconTint="@color/ai_brand_white10"
             app:iconPadding="10dp"
             app:layout_constraintBottom_toBottomOf="parent"

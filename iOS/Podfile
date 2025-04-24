@@ -8,9 +8,10 @@ target 'Agent-cn' do
   pod 'SSZipArchive'
   pod 'SwiftyBeaver', '1.9.5'
   pod 'ZSwiftBaseLib', '0.1.6.2'
+  pod 'Bugly'
 #  pod 'AgoraRtcEngine_iOS', :path => 'sdk.podspec'
   pod 'AgoraRtcEngine_iOS', '4.5.1'
- # pod 'LookinServer', :subspecs => ['Swift'], :configurations => ['Debug']
+  #pod 'LookinServer', :subspecs => ['Swift'], :configurations => ['Debug']
 
   pod 'Common', :path => 'Common'
 

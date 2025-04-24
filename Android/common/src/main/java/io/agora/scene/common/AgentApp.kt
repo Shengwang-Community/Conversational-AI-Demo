@@ -1,25 +1,26 @@
 package io.agora.scene.common
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.multidex.MultiDex
 import com.tencent.mmkv.MMKV
+import io.agora.scene.common.constant.AgentConstant
+import io.agora.scene.common.constant.ServerConfig
+import io.agora.scene.common.debugMode.DebugButton
+import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.common.util.AgoraLogger
 import io.agora.scene.common.util.CommonLogger
+import io.agora.scene.common.util.LocaleManager
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
-import io.agora.scene.common.debugMode.DebugButton
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ProcessLifecycleOwner
-import io.agora.scene.common.constant.AgentConstant
-import io.agora.scene.common.constant.ServerConfig
-import io.agora.scene.common.debugMode.DebugConfigSettings
-import io.agora.scene.common.util.LocaleManager
-import android.content.Context
 
 class AgentApp : Application() {
 
@@ -40,7 +41,8 @@ class AgentApp : Application() {
                 envName = it.envName(),
                 toolboxHost = it.toolboxHost(),
                 rtcAppId = it.rtcAppId(),
-                rtcAppCert = it.rtcAppCert()
+                rtcAppCert = it.rtcAppCert(),
+                appVersionName = it.appVersionName()
             )
         } ?: run {
             Log.d(TAG, "No data provider found")
@@ -51,14 +53,15 @@ class AgentApp : Application() {
         fetchAppData()
         LocaleManager.init(this)
         super.attachBaseContext(LocaleManager.wrapContext(base))
+        MultiDex.install(this)
     }
 
     override fun onCreate() {
         super.onCreate()
         app = this
-        DebugConfigSettings.init(this)
         AgoraLogger.initXLog(this)
         initMMKV()
+        DebugConfigSettings.init(this)
 
         try {
             extractResourceToCache(AgentConstant.RTC_COMMON_RESOURCE)

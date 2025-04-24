@@ -41,8 +41,8 @@ export async function POST(request: NextRequest) {
   const body = remoteAgentStopReqSchema.parse({
     ...reqBody,
     app_id: appId,
-    basic_auth_username: basicAuthKey,
-    basic_auth_password: basicAuthSecret
+    basic_auth_username:basicAuthKey,
+    basic_auth_password: basicAuthSecret,
   })
   logger.info({ body }, 'REMOTE request body')
   const res = await fetch(url, {

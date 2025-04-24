@@ -23,14 +23,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         AppContext.shared.llmUrl = KeyCenter.LLM_URL
         AppContext.shared.llmApiKey = KeyCenter.LLM_API_KEY
         AppContext.shared.llmSystemMessages = KeyCenter.LLM_SYSTEM_MESSAGES
-        AppContext.shared.llmModel = KeyCenter.LLM_MODEL
+        AppContext.shared.llmParams = KeyCenter.LLM_PARAMS
         AppContext.shared.ttsVendor = KeyCenter.TTS_VENDOR
         AppContext.shared.ttsParams = KeyCenter.TTS_PARAMS
         AppContext.shared.baseServerUrl = KeyCenter.TOOLBOX_SERVER_HOST
         
-        if AppContext.shared.appId.isEmpty {
-            AppContext.shared.loadInnerEnvironment()
-        }
+        AppContext.shared.loadInnerEnvironment()
                 
         copyResource()
         

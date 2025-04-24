@@ -53,6 +53,7 @@
         android:configChanges="locale|layoutDirection"
         android:screenOrientation="portrait"
         android:launchMode="singleTask"
+        android:windowSoftInputMode="adjustPan"
         android:exported="false" />
     </application>
 </manifest>

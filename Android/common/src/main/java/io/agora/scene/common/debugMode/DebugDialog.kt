@@ -13,7 +13,6 @@ import io.agora.rtc2.RtcEngine
 import io.agora.scene.common.AgentApp
 import io.agora.scene.common.R
 import io.agora.scene.common.constant.AgentScenes
-import io.agora.scene.common.constant.EnvConfig
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.databinding.CommonDebugDialogBinding
 import io.agora.scene.common.databinding.CommonDebugOptionItemBinding
@@ -86,7 +85,6 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
             divider.setDrawable(resources.getDrawable(R.drawable.shape_divider_line, null))
             rcOptions.addItemDecoration(divider)
 
-            mtvBuildNo.text = ServerConfig.appBuildNo
             mtvRtcVersion.text = RtcEngine.getSdkVersion()
 
             btnClose.setOnClickListener {
@@ -106,10 +104,10 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
                     onDebugDialogCallback?.onAudioDumpEnable(isChecked)
                 }
             }
-            cbSeamlessPlayMode.setChecked(DebugConfigSettings.isSeamlessPlayMode)
+            cbSeamlessPlayMode.setChecked(DebugConfigSettings.isSessionLimitMode)
             cbSeamlessPlayMode.setOnCheckedChangeListener { buttonView, isChecked ->
                 if (buttonView.isPressed) {
-                    DebugConfigSettings.enableSeamlessPlayMode(isChecked)
+                    DebugConfigSettings.enableSessionLimitMode(isChecked)
                     onDebugDialogCallback?.onSeamlessPlayMode(isChecked)
                 }
             }
@@ -193,10 +191,11 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
             ) { index ->
                 val selectConfig = serverConfigList[index]
                 if (selectConfig.toolboxServerHost == selectedEnvConfig?.toolboxServerHost &&
-                    selectConfig.rtcAppId == selectedEnvConfig?.rtcAppId
+                    selectConfig.rtcAppId == selectedEnvConfig.rtcAppId
                 ) {
                     return@updateOptions
                 }
+                DebugConfigSettings.enableSessionLimitMode(true)
                 ServerConfig.updateDebugConfig(selectConfig)
                 onDebugDialogCallback?.onEnvConfigChange()
                 updateEnvConfig()

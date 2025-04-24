@@ -9,7 +9,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 sealed class TokenGeneratorType {
-    data object Token006 : TokenGeneratorType()
     data object Token007 : TokenGeneratorType()
 }
 
@@ -52,8 +51,8 @@ object TokenGenerator {
     fun generateToken(
         channelName: String,
         uid: String,
-        genType: TokenGeneratorType,
-        tokenType: AgoraTokenType,
+        genType: TokenGeneratorType = TokenGeneratorType.Token007,
+        tokenType: AgoraTokenType = AgoraTokenType.Rtc,
         success: (String) -> Unit,
         failure: ((Exception?) -> Unit)? = null,
         specialAppId: String? = null
@@ -133,8 +132,7 @@ object TokenGenerator {
 
     private fun buildHttpRequest(genType: TokenGeneratorType, postBody: JSONObject): Request {
         val url = when (genType) {
-            is TokenGeneratorType.Token006 -> "${ServerConfig.toolBoxUrl}/v2/token006/generate"
-            is TokenGeneratorType.Token007 -> "${ServerConfig.toolBoxUrl}/v2/token/generate"
+            is TokenGeneratorType.Token007 -> "${ServerConfig.toolBoxUrl}/v2/convoai/token/generate"
         }
 
         return Request.Builder()
