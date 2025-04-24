@@ -155,6 +155,10 @@ extension ResourceManager {
             public static let copy = ResourceManager.localizedString("devmode.copy")
             public static let close = ResourceManager.localizedString("devmode.close")
             public static let server = ResourceManager.localizedString("devmode.server")
+            public static let sdkParams = ResourceManager.localizedString("devmode.sdk.params")
+            public static let convoai = ResourceManager.localizedString("devmode.sc.config")
+            public static let textView = ResourceManager.localizedString("devmode.text.view")
+            public static let textConfirm = ResourceManager.localizedString("devmode.text.confirm")
         }
 
         public enum Iot {

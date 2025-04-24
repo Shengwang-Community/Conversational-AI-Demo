@@ -22,11 +22,12 @@ public class ChatViewController: UIViewController {
     private var agentUid = 0
     private var remoteAgentId = ""
     private let uid = "\(RtcEnum.getUid())"
+    private var convoaiServerConfig: String? = nil
     
     private lazy var timerCoordinator: AgentTimerCoordinator = {
         let coordinator = AgentTimerCoordinator()
         coordinator.delegate = self
-        coordinator.setDurationLimit(limited: !DeveloperParams.getSessionFree())
+        coordinator.setDurationLimit(limited: !DeveloperConfig.shared.getSessionFree())
         return coordinator
     }()
 
@@ -320,7 +321,7 @@ public class ChatViewController: UIViewController {
         let subRenderConfig = SubtitleRenderConfig(rtcEngine: rtcEngine, renderMode: .words, delegate: self)
         subRenderController.setupWithConfig(subRenderConfig)
         
-        devModeButton.isHidden = !DeveloperParams.getDeveloperMode()
+        devModeButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
     }
 
     
@@ -506,7 +507,7 @@ extension ChatViewController {
             return
         }
         manager.updateAgentState(.disconnected)
-        if DeveloperParams.getDeveloperMode() {
+        if DeveloperConfig.shared.isDeveloperMode {
             channelName = "agent_debug_\(UUID().uuidString.prefix(8))"
         } else {
             channelName = "agent_\(UUID().uuidString.prefix(8))"
@@ -595,6 +596,7 @@ extension ChatViewController {
         return [
             "graph_id": AppContext.shared.graphId.isEmpty ? nil : AppContext.shared.graphId,
             "name": nil,
+            "preset": self.convoaiServerConfig,
             "properties": [
                 "channel": channelName,
                 "token": nil,
@@ -908,9 +910,9 @@ private extension ChatViewController {
     }
     
     func onThresholdReached() {
-        if !DeveloperParams.getDeveloperMode() {
+        if !DeveloperConfig.shared.isDeveloperMode {
             devModeButton.isHidden = false
-            DeveloperParams.setDeveloperMode(true)
+            DeveloperConfig.shared.isDeveloperMode = true
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         }
     }
@@ -1049,28 +1051,43 @@ extension ChatViewController: LoginManagerDelegate {
 
 extension ChatViewController {
     @objc private func onClickDevMode() {
-        DeveloperModeViewController.show(
-            from: self,
-            audioDump: rtcManager.getAudioDump(),
-            serverHost: AppContext.preferenceManager()?.information.targetServer ?? "")
-        {
-            self.devModeButton.isHidden = true
-            self.switchEnvironment()
-        } onAudioDump: { isOn in
-            self.rtcManager.enableAudioDump(enabled: isOn)
-        } onSwitchServer: {
-            self.switchEnvironment()
-        } onCopy: {
-            let messageContents = self.messageView.getAllMessages()
-                .filter { $0.isMine }
-                .map { $0.content }
-                .joined(separator: "\n")
-            let pasteboard = UIPasteboard.general
-            pasteboard.string = messageContents
-            SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.DevMode.copy)
-        } onSessionLimit: { isOn in
-            self.timerCoordinator.setDurationLimit(limited: isOn)
-        }
+        DeveloperConfig.shared
+            .setServerHost(AppContext.preferenceManager()?.information.targetServer ?? "")
+            .setAudioDump(enabled: rtcManager.getAudioDump(), onChange: { isOn in
+                self.rtcManager.enableAudioDump(enabled: isOn)
+            })
+            .setSessionLimit(enabled: !DeveloperConfig.shared.getSessionFree(), onChange: { isOn in
+                self.timerCoordinator.setDurationLimit(limited: isOn)
+            })
+            .setCloseDevModeCallback {
+                self.devModeButton.isHidden = true
+                self.switchEnvironment()
+            }
+            .setSwitchServerCallback {
+                self.switchEnvironment()
+            }
+            .setCopyCallback {
+                let messageContents = self.messageView.getAllMessages()
+                    .filter { $0.isMine }
+                    .map { $0.content }
+                    .joined(separator: "\n")
+                let pasteboard = UIPasteboard.general
+                pasteboard.string = messageContents
+                SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.DevMode.copy)
+            }
+            .setSDKParams { str in
+                self.addLog("[Developer] set sdk params \(str ?? "nil")")
+                if let s = str {
+                    self.rtcManager.getRtcEntine().setParameters(s)
+                    SVProgressHUD.showInfo(withStatus: "sdk setParameters: \(s)")
+                }
+            }
+            .setconvoai(content: self.convoaiServerConfig) { str in
+                self.convoaiServerConfig = str
+                self.addLog("[Developer] set convoai server config \(str ?? "nil")")
+            }
+        
+        DeveloperModeViewController.show(from: self)
     }
     
     

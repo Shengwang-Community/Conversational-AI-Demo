@@ -107,6 +107,10 @@
 "devmode.close" = "关闭开发者模式";
 "devmode.graph" = "Graph id";
 "devmode.server" = "服务器";
+"devmode.sdk.params" = "SDK 音频参数配置";
+"devmode.sc.config" = "Convo AI 服务参数配置";
+"devmode.text.view" = "预览";
+"devmode.text.confirm" = "确定";
 
 "iot.info.title" = "对话式 AI 设备";
 "iot.info.device" = "%@个设备";
