@@ -27,7 +27,7 @@ public class ChatViewController: UIViewController {
     private lazy var timerCoordinator: AgentTimerCoordinator = {
         let coordinator = AgentTimerCoordinator()
         coordinator.delegate = self
-        coordinator.setDurationLimit(limited: !DeveloperParams.getSessionFree())
+        coordinator.setDurationLimit(limited: !DeveloperConfig.shared.getSessionFree())
         return coordinator
     }()
 
@@ -321,7 +321,7 @@ public class ChatViewController: UIViewController {
         let subRenderConfig = SubtitleRenderConfig(rtcEngine: rtcEngine, renderMode: .words, delegate: self)
         subRenderController.setupWithConfig(subRenderConfig)
         
-        devModeButton.isHidden = !DeveloperParams.getDeveloperMode()
+        devModeButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
     }
 
     
@@ -507,7 +507,7 @@ extension ChatViewController {
             return
         }
         manager.updateAgentState(.disconnected)
-        if DeveloperParams.getDeveloperMode() {
+        if DeveloperConfig.shared.isDeveloperMode {
             channelName = "agent_debug_\(UUID().uuidString.prefix(8))"
         } else {
             channelName = "agent_\(UUID().uuidString.prefix(8))"
@@ -910,9 +910,9 @@ private extension ChatViewController {
     }
     
     func onThresholdReached() {
-        if !DeveloperParams.getDeveloperMode() {
+        if !DeveloperConfig.shared.isDeveloperMode {
             devModeButton.isHidden = false
-            DeveloperParams.setDeveloperMode(true)
+            DeveloperConfig.shared.isDeveloperMode = true
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         }
     }
@@ -1051,12 +1051,12 @@ extension ChatViewController: LoginManagerDelegate {
 
 extension ChatViewController {
     @objc private func onClickDevMode() {
-        let config = DeveloperConfig()
+        DeveloperConfig.shared
             .setServerHost(AppContext.preferenceManager()?.information.targetServer ?? "")
             .setAudioDump(enabled: rtcManager.getAudioDump(), onChange: { isOn in
                 self.rtcManager.enableAudioDump(enabled: isOn)
             })
-            .setSessionLimit(enabled: !DeveloperParams.getSessionFree(), onChange: { isOn in
+            .setSessionLimit(enabled: !DeveloperConfig.shared.getSessionFree(), onChange: { isOn in
                 self.timerCoordinator.setDurationLimit(limited: isOn)
             })
             .setCloseDevModeCallback {
@@ -1087,7 +1087,7 @@ extension ChatViewController {
                 self.addLog("[Developer] set convoai server config \(str ?? "nil")")
             }
         
-        DeveloperModeViewController.show(from: self, config: config)
+        DeveloperModeViewController.show(from: self)
     }
     
     

@@ -5,27 +5,17 @@ import AgoraRtcKit
 import SVProgressHUD
 import ObjectiveC
 
-public class DeveloperParams {
-    
-    private static let kDeveloperMode = "com.agora.convoai.DeveloperMode"
-    private static let kSessionFree = "com.agora.convoai.kSessionFree"
-    
-    public static func setDeveloperMode(_ enable: Bool) {
-        UserDefaults.standard.set(enable, forKey: kDeveloperMode)
-    }
-    public static func getDeveloperMode() -> Bool {
-        return UserDefaults.standard.bool(forKey: kDeveloperMode)
-    }
-    
-    public static func setSessionFree(_ enable: Bool) {
-        UserDefaults.standard.set(enable, forKey: kSessionFree)
-    }
-    public static func getSessionFree() -> Bool {
-        return UserDefaults.standard.bool(forKey: kSessionFree)
-    }
-}
 
 public class DeveloperConfig {
+    
+    private let kSessionFree = "io.agora.convoai.kSessionFree"
+    
+    static let shared = DeveloperConfig()
+    
+    public var isDeveloperMode = false
+    public var defaultAppId: String? = nil
+    public var defaultHost: String? = nil
+    
     internal var serverHost: String = ""
     internal var audioDump: Bool = false
     internal var convoaiContent: String? = nil
@@ -90,6 +80,13 @@ public class DeveloperConfig {
         self.onCopy = callback
         return self
     }
+    
+    public func setSessionFree(_ enable: Bool) {
+        UserDefaults.standard.set(enable, forKey: kSessionFree)
+    }
+    public func getSessionFree() -> Bool {
+        return UserDefaults.standard.bool(forKey: kSessionFree)
+    }
 }
 
 public class DeveloperModeViewController: UIViewController {
@@ -98,7 +95,7 @@ public class DeveloperModeViewController: UIViewController {
     private let kAppId = "rtc_app_id"
     private let kEnvName = "env_name"
     
-    private var config: DeveloperConfig
+    private var config = DeveloperConfig.shared
     private let rtcVersionValueLabel = UILabel()
     private let serverHostValueLabel = UILabel()
     private let graphTextField = UITextField()
@@ -109,8 +106,8 @@ public class DeveloperModeViewController: UIViewController {
     
     private let feedbackPresenter = FeedBackPresenter()
     
-    public static func show(from vc: UIViewController, config: DeveloperConfig) {
-        let devViewController = DeveloperModeViewController(config: config)
+    public static func show(from vc: UIViewController) {
+        let devViewController = DeveloperModeViewController()
         devViewController.modalTransitionStyle = .crossDissolve
         devViewController.modalPresentationStyle = .overCurrentContext
         vc.present(devViewController, animated: true)
@@ -145,8 +142,7 @@ public class DeveloperModeViewController: UIViewController {
         return UIMenu(children: actions)
     }
     
-    init(config: DeveloperConfig) {
-        self.config = config
+    init() {
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -190,24 +186,17 @@ public class DeveloperModeViewController: UIViewController {
     }
     
     private func resetEnvironment() {
-        DeveloperParams.setDeveloperMode(false)
+        DeveloperConfig.shared.isDeveloperMode = false
         AppContext.shared.graphId = ""
         config.onConvoaiConfirm?(nil)
-        let environments = AppContext.shared.environments
-        if environments.isEmpty {
-            return
+        if let defaultHost = DeveloperConfig.shared.defaultHost {
+            AppContext.shared.baseServerUrl = defaultHost
+            DeveloperConfig.shared.defaultHost = nil
         }
         
-        for env in environments {
-            if let host = env[kHost] {
-                AppContext.shared.baseServerUrl = host
-            }
-            
-            if let appid = env[kAppId] {
-                AppContext.shared.appId = appid
-            }
-            
-            break
+        if let defaultAppId = DeveloperConfig.shared.defaultAppId {
+            AppContext.shared.appId = defaultAppId
+            DeveloperConfig.shared.defaultAppId = nil
         }
     }
 }
@@ -246,6 +235,12 @@ extension DeveloperModeViewController {
         else {
             return
         }
+        if DeveloperConfig.shared.defaultHost == nil {
+            DeveloperConfig.shared.defaultHost = AppContext.shared.baseServerUrl
+        }
+        if DeveloperConfig.shared.defaultAppId == nil {
+            DeveloperConfig.shared.defaultAppId = AppContext.shared.appId
+        }
         AppContext.shared.baseServerUrl = host
         AppContext.shared.appId = appId
         SVProgressHUD.showInfo(withStatus: host)
@@ -254,19 +249,22 @@ extension DeveloperModeViewController {
     }
     
     @objc private func onClickSessionLimit(_ sender: UISwitch) {
-        DeveloperParams.setSessionFree(!sender.isOn)
+        DeveloperConfig.shared.setSessionFree(!sender.isOn)
         config.onSessionLimit?(sender.isOn)
     }
     
     @objc private func onClickViewSDKParams() {
+        view.endEditing(true)
         FullTextView.show(in: view, text: sdkParamsTextView.text ?? "")
     }
     
     @objc private func onClickViewconvoai() {
+        view.endEditing(true)
         FullTextView.show(in: view, text: convoaiTextView.text ?? "")
     }
     
     @objc private func onClickConfirmSDKParams() {
+        view.endEditing(true)
         if let text = sdkParamsTextView.text, !text.isEmpty {
             config.onSDKParamsConfirm?(text)
         } else {
@@ -275,6 +273,7 @@ extension DeveloperModeViewController {
     }
     
     @objc private func onClickConfirmConvoaiConfig() {
+        view.endEditing(true)
         if let text = convoaiTextView.text, !text.isEmpty {
             config.onConvoaiConfirm?(text)
         } else {
@@ -529,7 +528,7 @@ extension DeveloperModeViewController {
         sessionLimitLabel.textColor = UIColor.themColor(named: "ai_icontext1")
         sessionLimitLabel.font = UIFont.systemFont(ofSize: 14)
         
-        sessionLimitSwitch.isOn = !DeveloperParams.getSessionFree()
+        sessionLimitSwitch.isOn = !config.getSessionFree()
         sessionLimitSwitch.addTarget(self, action: #selector(onClickSessionLimit(_ :)), for: .touchUpInside)
         
         let sessionLimitStackView = createHorizontalStack(with: [sessionLimitLabel, sessionLimitSwitch])
