@@ -125,7 +125,6 @@ class BleScanner(private val config: BleConfig) : IBleScanner {
             result?.let {
                 val device = BleDevice(
                     device = result.device,
-                    scanRecord = result.scanRecord,
                     rssi = result.rssi,
                     name = result.device.name ?: "",
                     address = result.device.address,

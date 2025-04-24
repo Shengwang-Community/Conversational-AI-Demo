@@ -1,6 +1,5 @@
 package io.agora.scene.convoai.api
 
-import android.util.Log
 import com.google.gson.JsonObject
 import io.agora.scene.common.BuildConfig
 import io.agora.scene.common.constant.SSOUserManager
@@ -165,120 +164,6 @@ object CovAgentApiManager {
             }
         }
         return jsonObject
-    }
-
-    fun startAgent(params: AgentRequestParams, completion: (error: ApiException?, channelName: String) -> Unit) {
-        val channelName = params.channelName
-        val requestURL = "${ServerConfig.toolBoxUrl}/$SERVICE_VERSION/convoai/start"
-        val postBody = JSONObject()
-        try {
-            postBody.put("app_id", params.appId)
-            params.appCert?.let { postBody.put("app_cert", it) }
-            params.basicAuthKey?.let { postBody.put("basic_auth_username", it) }
-            params.basicAuthSecret?.let { postBody.put("basic_auth_password", it) }
-            params.presetName?.let { postBody.put("preset_name", it) }
-            params.graphId?.let { postBody.put("graph_id", it) }
-            postBody.put("channel_name", params.channelName)
-            postBody.put("agent_rtc_uid", params.agentRtcUid)
-            postBody.put("remote_rtc_uid", params.remoteRtcUid)
-            params.idleTimeout?.let { postBody.put("idle_timeout", it) }
-
-            // --------------- LLM Config ---------------
-            val customLlm = JSONObject()
-            params.llmUrl?.let { customLlm.put("url", it) }
-            params.llmApiKey?.let { customLlm.put("api_key", it) }
-            params.llmPrompt?.let { customLlm.put("prompt", it) }
-            params.llmModel?.let { customLlm.put("model", it) }
-            params.llmGreetingMessage?.let { customLlm.put("greeting_message", it) }
-            params.llmStyle?.let { customLlm.put("style", it) }
-            params.llmMaxHistory?.let { customLlm.put("max_history", it) }
-            if (customLlm.length() > 0) {
-                postBody.put("custom_llm", customLlm)
-            }
-
-            // --------------- TTS Config ---------------
-            val tts = JSONObject()
-            params.ttsVendor?.let { tts.put("vendor", it) }
-            params.ttsParams?.let { tts.put("params", it) }
-            params.ttsAdjustVolume?.let { tts.put("adjust_volume", it) }
-            if (tts.length() > 0) {
-                postBody.put("tts", tts)
-            }
-
-            // --------------- ASR Config ---------------
-            val asr = JSONObject()
-            params.asrLanguage?.let { asr.put("language", it) }
-            params.asrVendor?.let { asr.put("vendor", it) }
-            if (asr.length() > 0) {
-                postBody.put("asr", asr)
-            }
-
-            // --------------- VAD Config ---------------
-            val vad = JSONObject()
-            params.vadInterruptDurationMs?.let { vad.put("interrupt_duration_ms", it) }
-            params.vadPrefixPaddingMs?.let { vad.put("prefix_padding_ms", it) }
-            params.vadSilenceDurationMs?.let { vad.put("silence_duration_ms", it) }
-            params.vadThreshold?.let { vad.put("threshold", it) }
-            if (vad.length() > 0) {
-                postBody.put("vad", vad)
-            }
-
-            // --------------- Advance Config ---------------
-            val advancedFeatures = JSONObject()
-            params.enableAiVad?.let { advancedFeatures.put("enable_aivad", it) }
-            params.enableBHVS?.let { advancedFeatures.put("enable_bhvs", it) }
-            postBody.put("advanced_features", advancedFeatures)
-
-            // --------------- Other Params ---------------
-            params.parameters?.let { postBody.put("parameters", it) }
-        } catch (e: JSONException) {
-            CovLogger.e(TAG, "postBody error ${e.message}")
-        }
-
-        val requestBody = postBody.toString().toRequestBody(null)
-        val request = buildRequest(requestURL, "POST", requestBody)
-
-        okHttpClient.newCall(request).enqueue(object : Callback {
-            override fun onResponse(call: Call, response: Response) {
-                val json = response.body.string()
-                val httpCode = response.code
-                if (httpCode != 200) {
-                    runOnMainThread {
-                        completion.invoke(ApiException(httpCode, "Http error"), channelName)
-                    }
-                } else {
-                    try {
-                        val jsonObj = JSONObject(json)
-                        val code = jsonObj.optInt("code")
-                        val aid = jsonObj.optJSONObject("data")?.optString("agent_id")
-
-                        currentHost = jsonObj.optJSONObject("data")?.optString("agent_url")
-                        if (code == 0 && !aid.isNullOrEmpty()) {
-                            agentId = aid
-                            runOnMainThread {
-                                completion.invoke(null, channelName)
-                            }
-                        } else {
-                            runOnMainThread {
-                                completion.invoke(ApiException(code), channelName)
-                            }
-                        }
-                    } catch (e: JSONException) {
-                        CovLogger.e(TAG, "JSON parse error: ${e.message}")
-                        runOnMainThread {
-                            completion.invoke(ApiException(-1), channelName)
-                        }
-                    }
-                }
-            }
-
-            override fun onFailure(call: Call, e: IOException) {
-                CovLogger.e(TAG, "Start agent failed: $e")
-                runOnMainThread {
-                    completion.invoke(ApiException(-1), channelName)
-                }
-            }
-        })
     }
 
     private fun buildRequest(url: String, method: String = "GET", body: RequestBody? = null): Request {

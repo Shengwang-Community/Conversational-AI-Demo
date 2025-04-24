@@ -9,5 +9,10 @@
         android:screenOrientation="portrait"
         android:launchMode="singleTask"
         android:exported="false" />
+
+        <service
+            android:name=".ui.CovLocalRecordingService"
+            android:foregroundServiceType="microphone|mediaPlayback">
+        </service>
     </application>
 </manifest>

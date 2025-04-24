@@ -68,8 +68,11 @@
 
     <string name="cov_permission_required">需要权限</string>
     <string name="cov_mic_permission_required_content">语音聊天需要麦克风权限。请授予权限以继续。</string>
+    <string name="cov_notifications_enable_tip">请打开通知权限，防止后台录音中断。</string>
+    <string name="cov_setting">设置</string>
     <string name="cov_retry">重试</string>
     <string name="cov_exit">退出</string>
+    <string name="cov_notification_content">点击返回应用</string>
 
     <!-- IOT  -->
     <string name="cov_iot_title">对话式 AI 设备</string>

@@ -1,11 +1,11 @@
 package io.agora.scene.common.debugMode
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
-import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,7 +16,9 @@ import io.agora.scene.common.constant.AgentScenes
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.databinding.CommonDebugDialogBinding
 import io.agora.scene.common.databinding.CommonDebugOptionItemBinding
+import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.common.ui.BaseSheetDialog
+import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.ui.widget.LastItemDividerDecoration
 import io.agora.scene.common.util.dp
@@ -24,8 +26,6 @@ import io.agora.scene.common.util.getDistanceFromScreenEdges
 import io.agora.scene.common.util.toast.ToastUtil
 
 interface DebugDialogCallback {
-    fun onCloseDebug() = Unit
-
     fun onDialogDismiss() = Unit
 
     fun onClickCopy() = Unit
@@ -50,6 +50,7 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
         return CommonDebugDialogBinding.inflate(inflater, container, false)
     }
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding?.apply {
@@ -130,8 +131,48 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
             })
 
             etGraphId.setText(DebugConfigSettings.graphId)
-            etGraphId.doAfterTextChanged {
-                DebugConfigSettings.updateGraphId(it.toString())
+            btnGraphIdSetting.setOnClickListener {
+                val graphId = etGraphId.text.toString().trim()
+                if (graphId.isNotEmpty()){
+                    DebugConfigSettings.setGraphId(graphId)
+                    ToastUtil.show("GraphId:$graphId")
+                }
+            }
+
+            etSdkAudioParameter.setHint("{\"che.audio.sf.ainlpLowLatencyFlag\":1}")
+            DebugConfigSettings.sdkAudioParameters.lastOrNull()?.let {
+                etSdkAudioParameter.setText(it)
+            }
+            btnSdkAudioParameterPreview.setOnClickListener {
+                val paramList = DebugConfigSettings.sdkAudioParameters
+                if (paramList.isEmpty()) return@setOnClickListener
+                val text = paramList.joinToString("|\n")
+                showPreConfig(text)
+            }
+            btnSdkAudioParameterSetting.setOnClickListener {
+                val sdkAudioParameter = etSdkAudioParameter.text.toString().trim()
+                if (sdkAudioParameter.isNotEmpty()){
+                    val audioParams = mutableListOf<String>()
+                    sdkAudioParameter.split("|").forEach { param ->
+                        if (param.trim().isNotEmpty()) {
+                            audioParams.add(param)
+                        }
+                    }
+                    DebugConfigSettings.addSdkAudioParameter(audioParams)
+                    ToastUtil.show("Sdk Audio Parameter:\n ${audioParams.joinToString("|\n")}")
+                }
+            }
+
+            etApiParameter.setText(DebugConfigSettings.convoAIParameter)
+            btnApiParameterPreview.setOnClickListener {
+                showPreConfig(etApiParameter.text.toString())
+            }
+            btnApiParameterSetting.setOnClickListener {
+                val convoAIParameter = etApiParameter.text.toString().trim()
+                if (convoAIParameter.isNotEmpty()){
+                    DebugConfigSettings.setConvoAIParameter(convoAIParameter)
+                    ToastUtil.show("Convo AI Parameter:\n $convoAIParameter")
+                }
             }
 
             updateEnvConfig()
@@ -201,7 +242,7 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
                 updateEnvConfig()
                 vOptionsMask.visibility = View.INVISIBLE
                 ToastUtil.show(
-                    getString(R.string.common_debug_current_server,ServerConfig.envName, ServerConfig.toolBoxUrl)
+                    getString(R.string.common_debug_current_server, ServerConfig.envName, ServerConfig.toolBoxUrl)
                 )
                 dismiss()
             }
@@ -219,6 +260,19 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
         binding?.apply {
             vOptionsMask.visibility = View.INVISIBLE
         }
+    }
+
+    private fun showPreConfig(text: String) {
+        CommonDialog.Builder()
+            .setTitle(getString(R.string.common_preview))
+            .setContent(text)
+            .hideTopImage()
+            .hideNegativeButton()
+            .setPositiveButton(getString(R.string.common_close), {
+
+            })
+            .build()
+            .show(childFragmentManager, "pre_tag")
     }
 
     inner class OptionsAdapter : RecyclerView.Adapter<OptionsAdapter.ViewHolder>() {

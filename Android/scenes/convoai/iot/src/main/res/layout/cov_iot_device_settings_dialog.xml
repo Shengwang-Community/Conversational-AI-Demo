@@ -8,9 +8,58 @@
     android:layout_gravity="bottom"
     tools:theme="@style/Theme.AppCompat">
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_title"
+        android:layout_width="match_parent"
+        android:layout_height="56dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/iv_title"
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/grabber"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="56dp"
+            android:layout_gravity="start"
+            android:layout_marginStart="24dp"
+            android:gravity="center"
+            android:text="@string/cov_iot_devices_setting"
+            android:textColor="@color/ai_icontext1"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/btn_close"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="end"
+            android:layout_marginEnd="24dp"
+            android:background="@drawable/cov_iot_round_close"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tv_title"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_title"
+            app:tint="@null" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginTop="56dp"
+        android:scrollbars="none"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:fadingEdge="none">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/cl_content"
@@ -18,56 +67,19 @@
             android:layout_height="wrap_content"
             android:paddingBottom="15dp">
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/iv_title"
-                android:layout_width="40dp"
-                android:layout_height="4dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/grabber"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/tv_title"
-                android:layout_width="wrap_content"
-                android:layout_height="56dp"
-                android:layout_gravity="start"
-                android:layout_marginStart="24dp"
-                android:gravity="center"
-                android:text="@string/cov_iot_devices_setting"
-                android:textColor="@color/ai_icontext1"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <ImageButton
-                android:id="@+id/btn_close"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_gravity="end"
-                android:layout_marginEnd="24dp"
-                android:background="@drawable/cov_iot_round_close"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/tv_title"
-                app:layout_constraintBottom_toBottomOf="@+id/tv_title"
-                app:tint="@null" />
-
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/tv_preset_section"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
                 android:layout_marginStart="32dp"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="4dp"
                 android:text="@string/cov_iot_devices_setting_preset"
                 android:textColor="@color/ai_icontext4"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_title" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_preset"
@@ -75,6 +87,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="8dp"
+                android:overScrollMode="never"
+                android:scrollbars="none"
                 android:nestedScrollingEnabled="false"
                 android:background="@drawable/settings_item_bg"
                 app:layout_constraintEnd_toEndOf="parent"
