@@ -204,6 +204,7 @@ public class DeveloperModeViewController: UIViewController {
 // MARK: - Actions
 extension DeveloperModeViewController {
     @objc private func onClickClosePage(_ sender: UIButton) {
+        AppContext.shared.graphId = graphTextField.text ?? ""
         self.dismiss(animated: true)
     }
     
