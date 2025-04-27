@@ -119,7 +119,7 @@ extension RTCManager: RTCManagerProtocol {
         options.publishCameraTrack = false
         options.autoSubscribeAudio = true
         options.autoSubscribeVideo = false
-        let ret = rtcEngine.joinChannel(byToken: rtcToken, channelId: channelName, uid: UInt(uid) ?? 0, mediaOptions: options)
+        let _ = rtcEngine.joinChannel(byToken: rtcToken, channelId: channelName, uid: UInt(uid) ?? 0, mediaOptions: options)
     }
     
     func muteLocalAudio(mute: Bool) {

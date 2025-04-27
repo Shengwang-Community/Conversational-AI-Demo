@@ -20,6 +20,7 @@ public class DeveloperConfig {
     internal var audioDump: Bool = false
     internal var convoaiContent: String? = nil
     internal var sessionLimitEnabled: Bool = false
+    internal var graphId: String? = nil
     
     internal var onConvoaiConfirm: ((String?) -> Void)?
     internal var onCloseDevMode: (() -> Void)?
@@ -28,10 +29,18 @@ public class DeveloperConfig {
     internal var onSessionLimit: ((Bool) -> Void)?
     internal var onSDKParamsConfirm: ((String?) -> Void)?
     internal var onAudioDump: ((Bool) -> Void)?
+    internal var onGraphIdConfirm: ((String?) -> Void)?
     
     @discardableResult
     public func setServerHost(_ serverHost: String) -> Self {
         self.serverHost = serverHost
+        return self
+    }
+    
+    @discardableResult
+    public func setGraphId(_ graphId: String? = nil, onConfirm: ((String?) -> Void)? = nil) -> Self {
+        self.graphId = graphId
+        self.onGraphIdConfirm = onConfirm
         return self
     }
     
@@ -135,7 +144,10 @@ public class DeveloperModeViewController: UIViewController {
     private func createEnvironmentMenu() -> UIMenu {
         let environments = AppContext.shared.environments
         let actions = environments.enumerated().map { index, env in
-            UIAction(title: env[kEnvName] ?? "") { [weak self] _ in
+            let title = env[kEnvName] ?? ""
+            let isSelected = index == selectedEnvironmentIndex
+            let displayTitle = isSelected ? "\(title) ✅" : title
+            return UIAction(title: displayTitle) { [weak self] _ in
                 self?.selectedEnvironmentIndex = index
             }
         }
@@ -187,7 +199,7 @@ public class DeveloperModeViewController: UIViewController {
     
     private func resetEnvironment() {
         DeveloperConfig.shared.isDeveloperMode = false
-        AppContext.shared.graphId = ""
+        config.onGraphIdConfirm?(nil)
         config.onConvoaiConfirm?(nil)
         if let defaultHost = DeveloperConfig.shared.defaultHost {
             AppContext.shared.baseServerUrl = defaultHost
@@ -204,7 +216,6 @@ public class DeveloperModeViewController: UIViewController {
 // MARK: - Actions
 extension DeveloperModeViewController {
     @objc private func onClickClosePage(_ sender: UIButton) {
-        AppContext.shared.graphId = graphTextField.text ?? ""
         self.dismiss(animated: true)
     }
     
@@ -279,6 +290,15 @@ extension DeveloperModeViewController {
             config.onConvoaiConfirm?(text)
         } else {
             config.onConvoaiConfirm?(nil)
+        }
+    }
+    
+    @objc private func onClickConfirmGraphId() {
+        view.endEditing(true)
+        if let text = graphTextField.text, !text.isEmpty {
+            config.onGraphIdConfirm?(text)
+        } else {
+            config.onGraphIdConfirm?(nil)
         }
     }
 }
@@ -456,10 +476,16 @@ extension DeveloperModeViewController {
         graphTextField.borderStyle = .roundedRect
         graphTextField.backgroundColor = UIColor.themColor(named: "ai_block2")
         graphTextField.textColor = UIColor.themColor(named: "ai_icontext4")
-        graphTextField.text = AppContext.shared.graphId
+        graphTextField.text = config.graphId
         // Set TextField content priority
         graphTextField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         graphTextField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        
+        let graphConfirmButton = UIButton(type: .system)
+        graphConfirmButton.setTitle(ResourceManager.L10n.DevMode.textConfirm, for: .normal)
+        graphConfirmButton.addTarget(self, action: #selector(onClickConfirmGraphId), for: .touchUpInside)
+        graphConfirmButton.setContentHuggingPriority(.required, for: .horizontal)
+        graphConfirmButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         
         let graphStackView = UIStackView()
         graphStackView.axis = .horizontal
@@ -472,12 +498,17 @@ extension DeveloperModeViewController {
         
         graphStackView.addArrangedSubview(graphLabel)
         graphStackView.addArrangedSubview(graphTextField)
+        graphStackView.addArrangedSubview(graphConfirmButton)
         
         graphLabel.setContentHuggingPriority(.required, for: .horizontal)
         graphLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         
         graphTextField.snp.makeConstraints { make in
             make.height.equalTo(36)
+        }
+        
+        graphConfirmButton.snp.makeConstraints { make in
+            make.width.equalTo(52)
         }
         
         graphStackView.heightAnchor.constraint(equalToConstant: 44).isActive = true

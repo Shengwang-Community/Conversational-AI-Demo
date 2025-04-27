@@ -102,11 +102,11 @@
 "devmode.rtc" = "RTC 版本";
 "devmode.host" = "ConvoAI Host";
 "devmode.dump" = "音频 Dump";
-"devmode.sessionLimit" = "会话限制";
+"devmode.sessionLimit" = "会话时间限制";
 "devmode.copy" = "复制用户当前通话问题";
 "devmode.close" = "关闭开发者模式";
 "devmode.graph" = "Graph id";
-"devmode.server" = "服务器";
+"devmode.server" = "切换服务器";
 "devmode.sdk.params" = "SDK 音频参数配置";
 "devmode.sc.config" = "Convo AI 服务参数配置";
 "devmode.text.view" = "预览";

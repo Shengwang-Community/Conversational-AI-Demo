@@ -1082,10 +1082,11 @@ extension ChatViewController {
                 self.convoaiServerConfig = str
                 self.addLog("[Developer] set convoai server config \(str ?? "nil")")
             }
-        
+            .setGraphId(AppContext.shared.graphId) { str in
+                AppContext.shared.graphId = str ?? ""
+            }
         DeveloperModeViewController.show(from: self)
     }
-    
     
     private func switchEnvironment() {
         AppContext.preferenceManager()?.deleteAllPresets()
