@@ -916,12 +916,7 @@ export class MessageEngine {
   private _appendChatHistory(
     item: IMessageArrayItem<Partial<IUserTranscription | IAgentTranscription>>
   ) {
-    // if item.turn_id is 0, append to the front of messageList(greeting message)
-    if (item.turn_id === 0) {
-      this.messageList = [item, ...this.messageList]
-    } else {
       this.messageList.push(item)
-    }
   }
 
   private _mutateChatHistory() {
