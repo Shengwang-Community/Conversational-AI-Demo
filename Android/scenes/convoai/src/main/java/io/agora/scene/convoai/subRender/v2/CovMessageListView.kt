@@ -172,29 +172,43 @@ class CovMessageListView @JvmOverloads constructor(
             status = subtitleMessage.status
         )
 
-        // Determine message insertion position
-        when {
-            // User message: try to insert before corresponding agent message
-            subtitleMessage.userId == 0 -> {
-                messageAdapter.getMessageByTurnId(subtitleMessage.turnId, false)?.let { agentMessage ->
-                    val agentIndex = messageAdapter.getMessageIndex(agentMessage)
-                    if (agentIndex != -1) {
-                        messageAdapter.insertMessage(agentIndex, newMessage)
-                    } else {
-                        messageAdapter.addMessage(newMessage)
-                    }
-                } ?: run {
-                    messageAdapter.addMessage(newMessage)
+        // Unified message insertion position logic based on turnId and isMe
+        var insertPosition = -1
+        for (i in 0 until messageAdapter.itemCount) {
+            val message = messageAdapter.getMessageAt(i)
+            
+            // Case 1: Insert before a message with greater turnId
+            if (message.turnId > newMessage.turnId) {
+                insertPosition = i
+                break
+            }
+            
+            // Case 2: For same turnId, ensure user messages come before agent messages
+            if (message.turnId == newMessage.turnId) {
+                // If this is an agent message and we're inserting a user message, insert here
+                if (!message.isMe && newMessage.isMe) {
+                    insertPosition = i
+                    break
                 }
+                
+                // If both are agent messages or both are user messages, continue to next message
+                // (this allows multiple user messages with same turnId to maintain their order)
+                // (and multiple agent messages with same turnId to maintain their order)
+                if (message.isMe == newMessage.isMe) {
+                    continue
+                }
+                
+                // If this is a user message and we're inserting an agent message,
+                // continue to find the position after all user messages with this turnId
             }
-            // Agent greeting message: insert at list start
-            subtitleMessage.turnId == 0L -> {
-                messageAdapter.insertMessage(0, newMessage)
-            }
-            // Regular agent message: append to end
-            else -> {
-                messageAdapter.addMessage(newMessage)
-            }
+        }
+        
+        if (insertPosition != -1) {
+            // Found proper position
+            messageAdapter.insertMessage(insertPosition, newMessage)
+        } else {
+            // No proper position found, append to the end
+            messageAdapter.addMessage(newMessage)
         }
 
         // Handle scrolling logic in one place
@@ -397,6 +411,13 @@ class CovMessageListView @JvmOverloads constructor(
         fun updateAgentName(name: String) {
             agentName = name
             notifyDataSetChanged()
+        }
+
+        /**
+         * Get message at specific position
+         */
+        fun getMessageAt(position: Int): Message {
+            return messages[position]
         }
     }
 
