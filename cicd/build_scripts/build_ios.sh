@@ -8,8 +8,6 @@ if [ -z "$WORKSPACE" ]; then
     export WORKSPACE=$(pwd)/cicd/iosExport
     export LOCALPACKAGE="true"
     mkdir -p $WORKSPACE
-else
-    source /Users/admin/jenkins/bin/activate
 fi
 
 if [ -z "$build_date" ]; then
@@ -316,6 +314,29 @@ if [ -f "${EXPORT_PATH}/${TARGET_NAME}.ipa" ]; then
 else
     echo "Error: IPA file not found!"
     exit 1
+fi
+
+# upload ipa to appstore
+if [ "$LOCALPACKAGE" != "true" ]; then
+    if [ "$upload_app_store" = "true" ]; then
+        echo "Uploading IPA to App Store..."
+        UPLOAD_RESULT=$(xcrun altool --upload-app \
+            -f "${PACKAGE_DIR}/${ARTIFACT_NAME}.ipa" \
+            -u "${APPLE_ACCOUNT}" \
+            -p "${APPLE_APP_SPECIFIC_PASSWORD}" 2>&1)
+        
+        if [ $? -ne 0 ]; then
+            echo "Error: Failed to upload IPA to App Store"
+            echo "Upload error details:"
+            echo "$UPLOAD_RESULT"
+            exit 1
+        fi
+        echo "Successfully uploaded IPA to App Store"
+        echo "Upload details:"
+        echo "$UPLOAD_RESULT"
+    else
+        echo "Skipping App Store upload as upload_app_store is not set to true"
+    fi
 fi
 
 if [ -d "${ARCHIVE_PATH}/dSYMs" ] && [ "$(ls -A "${ARCHIVE_PATH}/dSYMs")" ]; then

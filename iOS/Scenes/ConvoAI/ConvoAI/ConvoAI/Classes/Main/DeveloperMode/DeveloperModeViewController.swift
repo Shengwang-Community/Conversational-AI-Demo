@@ -15,46 +15,23 @@ public class DeveloperConfig {
     public var isDeveloperMode = false
     public var defaultAppId: String? = nil
     public var defaultHost: String? = nil
+    public var convoaiServerConfig: String? = nil
+    public var graphId: String? = nil
+    public var sdkParams: [String] = []
     
     internal var serverHost: String = ""
     internal var audioDump: Bool = false
-    internal var convoaiContent: String? = nil
     internal var sessionLimitEnabled: Bool = false
-    internal var graphId: String? = nil
     
-    internal var onConvoaiConfirm: ((String?) -> Void)?
     internal var onCloseDevMode: (() -> Void)?
     internal var onSwitchServer: (() -> Void)?
     internal var onCopy: (() -> Void)?
     internal var onSessionLimit: ((Bool) -> Void)?
-    internal var onSDKParamsConfirm: ((String?) -> Void)?
     internal var onAudioDump: ((Bool) -> Void)?
-    internal var onGraphIdConfirm: ((String?) -> Void)?
     
     @discardableResult
     public func setServerHost(_ serverHost: String) -> Self {
         self.serverHost = serverHost
-        return self
-    }
-    
-    @discardableResult
-    public func setGraphId(_ graphId: String? = nil, onConfirm: ((String?) -> Void)? = nil) -> Self {
-        self.graphId = graphId
-        self.onGraphIdConfirm = onConfirm
-        return self
-    }
-    
-    // MARK: - Setters
-    @discardableResult
-    public func setconvoai(content: String? = nil, onConfirm: ((String?) -> Void)? = nil) -> Self {
-        self.convoaiContent = content
-        self.onConvoaiConfirm = onConfirm
-        return self
-    }
-    
-    @discardableResult
-    public func setSDKParams(onConfirm: ((String?) -> Void)? = nil) -> Self {
-        self.onSDKParamsConfirm = onConfirm
         return self
     }
     
@@ -95,6 +72,23 @@ public class DeveloperConfig {
     }
     public func getSessionFree() -> Bool {
         return UserDefaults.standard.bool(forKey: kSessionFree)
+    }
+    
+    public func resetDevParams() {
+        self.isDeveloperMode = false
+        self.graphId = nil
+        self.sdkParams.removeAll()
+        self.convoaiServerConfig = nil
+        if let defaultHost = self.defaultHost {
+            AppContext.shared.baseServerUrl = defaultHost
+            self.defaultHost = nil
+            self.onSwitchServer?()
+        }
+        
+        if let defaultAppId = self.defaultAppId {
+            AppContext.shared.appId = defaultAppId
+            self.defaultAppId = nil
+        }
     }
 }
 
@@ -187,7 +181,7 @@ public class DeveloperModeViewController: UIViewController {
         rtcVersionValueLabel.text = AgoraRtcEngineKit.getSdkVersion()
         serverHostValueLabel.text = config.serverHost
         
-        convoaiTextView.text = config.convoaiContent
+        convoaiTextView.text = config.convoaiServerConfig
         
         sessionLimitSwitch.isOn = config.sessionLimitEnabled
         audioDumpSwitch.isOn = config.audioDump
@@ -195,21 +189,6 @@ public class DeveloperModeViewController: UIViewController {
     
     @objc private func dismissKeyboard() {
         view.endEditing(true)
-    }
-    
-    private func resetEnvironment() {
-        DeveloperConfig.shared.isDeveloperMode = false
-        config.onGraphIdConfirm?(nil)
-        config.onConvoaiConfirm?(nil)
-        if let defaultHost = DeveloperConfig.shared.defaultHost {
-            AppContext.shared.baseServerUrl = defaultHost
-            DeveloperConfig.shared.defaultHost = nil
-        }
-        
-        if let defaultAppId = DeveloperConfig.shared.defaultAppId {
-            AppContext.shared.appId = defaultAppId
-            DeveloperConfig.shared.defaultAppId = nil
-        }
     }
 }
 
@@ -220,7 +199,7 @@ extension DeveloperModeViewController {
     }
     
     @objc private func onClickCloseMode(_ sender: UIButton) {
-        resetEnvironment()
+        config.resetDevParams()
         config.onCloseDevMode?()
         self.dismiss(animated: true)
     }
@@ -267,7 +246,8 @@ extension DeveloperModeViewController {
     
     @objc private func onClickViewSDKParams() {
         view.endEditing(true)
-        FullTextView.show(in: view, text: sdkParamsTextView.text ?? "")
+        let text = config.sdkParams.joined(separator: "\n")
+        FullTextView.show(in: view, text: text)
     }
     
     @objc private func onClickViewconvoai() {
@@ -277,28 +257,35 @@ extension DeveloperModeViewController {
     
     @objc private func onClickConfirmSDKParams() {
         view.endEditing(true)
-        if let text = sdkParamsTextView.text, !text.isEmpty {
-            config.onSDKParamsConfirm?(text)
-        } else {
-            config.onSDKParamsConfirm?(nil)
+        if let text = sdkParamsTextView.text,
+           !text.isEmpty {
+            let params = text.components(separatedBy: "|")
+            for param in params {
+                if !config.sdkParams.contains(param) {
+                    config.sdkParams.append(param)
+                }
+            }
+            SVProgressHUD.showInfo(withStatus: "sdk setParameters did set: \(text)")
+            sdkParamsTextView.text = ""
+            sdkParamsTextView.textDidChange()
         }
     }
     
     @objc private func onClickConfirmConvoaiConfig() {
         view.endEditing(true)
         if let text = convoaiTextView.text, !text.isEmpty {
-            config.onConvoaiConfirm?(text)
+            config.convoaiServerConfig = text
         } else {
-            config.onConvoaiConfirm?(nil)
+            config.convoaiServerConfig = nil
         }
     }
     
     @objc private func onClickConfirmGraphId() {
         view.endEditing(true)
         if let text = graphTextField.text, !text.isEmpty {
-            config.onGraphIdConfirm?(text)
+            config.graphId = text
         } else {
-            config.onGraphIdConfirm?(nil)
+            config.graphId = nil
         }
     }
 }
@@ -756,7 +743,7 @@ extension UITextView {
         }
     }
     
-    @objc private func textDidChange() {
+    @objc fileprivate func textDidChange() {
         placeholderLabel?.isHidden = !((self.text?.isEmpty ?? true) || self.text == nil)
     }
 }

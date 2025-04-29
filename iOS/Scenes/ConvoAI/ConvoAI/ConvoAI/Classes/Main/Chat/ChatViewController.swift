@@ -22,7 +22,6 @@ public class ChatViewController: UIViewController {
     private var agentUid = 0
     private var remoteAgentId = ""
     private let uid = "\(RtcEnum.getUid())"
-    private var convoaiServerConfig: String? = nil
     
     private lazy var timerCoordinator: AgentTimerCoordinator = {
         let coordinator = AgentTimerCoordinator()
@@ -374,6 +373,11 @@ public class ChatViewController: UIViewController {
         rtcManager.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
         AppContext.preferenceManager()?.updateRoomState(.connected)
         AppContext.preferenceManager()?.updateRoomId(channelName)
+        
+        // set debug params
+        DeveloperConfig.shared.sdkParams.forEach {
+            rtcManager.getRtcEntine().setParameters($0)
+        }
     }
     
     private func leaveChannel() {
@@ -594,9 +598,9 @@ extension ChatViewController {
     
     private func getConvoaiBodyMap() -> [String: Any?] {
         return [
-            "graph_id": AppContext.shared.graphId.isEmpty ? nil : AppContext.shared.graphId,
+            "graph_id": DeveloperConfig.shared.graphId,
             "name": nil,
-            "preset": self.convoaiServerConfig,
+            "preset": DeveloperConfig.shared.convoaiServerConfig,
             "properties": [
                 "channel": channelName,
                 "token": nil,
@@ -1057,7 +1061,6 @@ extension ChatViewController {
             })
             .setCloseDevModeCallback {
                 self.devModeButton.isHidden = true
-                self.switchEnvironment()
             }
             .setSwitchServerCallback {
                 self.switchEnvironment()
@@ -1070,20 +1073,6 @@ extension ChatViewController {
                 let pasteboard = UIPasteboard.general
                 pasteboard.string = messageContents
                 SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.DevMode.copy)
-            }
-            .setSDKParams { str in
-                self.addLog("[Developer] set sdk params \(str ?? "nil")")
-                if let s = str {
-                    self.rtcManager.getRtcEntine().setParameters(s)
-                    SVProgressHUD.showInfo(withStatus: "sdk setParameters: \(s)")
-                }
-            }
-            .setconvoai(content: self.convoaiServerConfig) { str in
-                self.convoaiServerConfig = str
-                self.addLog("[Developer] set convoai server config \(str ?? "nil")")
-            }
-            .setGraphId(AppContext.shared.graphId) { str in
-                AppContext.shared.graphId = str ?? ""
             }
         DeveloperModeViewController.show(from: self)
     }
