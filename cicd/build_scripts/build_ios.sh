@@ -298,7 +298,8 @@ if [ "$LOCALPACKAGE" != "true" ]; then
         UPLOAD_RESULT=$(xcrun altool --upload-app \
             -f "${PACKAGE_DIR}/${ARTIFACT_NAME}.ipa" \
             -u "${IOS_APPSTORE_USER}" \
-            -p "${IOS_APPSTORE_PASSW}" 2>&1)
+            -p "${IOS_APPSTORE_PASSW}" \
+            -t ios 2>&1)
         
         if [ $? -ne 0 ]; then
             echo "Error: Failed to upload IPA to App Store"
