@@ -252,7 +252,7 @@ extension DeveloperModeViewController {
     
     @objc private func onClickViewconvoai() {
         view.endEditing(true)
-        FullTextView.show(in: view, text: convoaiTextView.text ?? "")
+        FullTextView.show(in: view, text: config.convoaiServerConfig ?? "")
     }
     
     @objc private func onClickConfirmSDKParams() {
