@@ -205,20 +205,6 @@ if [ ! -f "${PBXPROJ_PATH}" ]; then
     exit 1
 fi
 
-# Unlock keychain for non-local builds
-if [ "$LOCALPACKAGE" != "true" ]; then
-    echo "Non-local build, starting keychain unlock..."
-    cd ~/Library/Keychains
-    cp login.keychain-db login.keychain
-    security unlock-keychain -p "123456" ~/Library/Keychains/login.keychain
-    if [ $? -eq 0 ]; then
-        echo "Keychain unlocked successfully"
-    else
-        echo "Error: Keychain unlock failed"
-        exit 1
-    fi
-fi
-
 # Main project configuration
 # Debug
 sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_VERSION};|g" $PBXPROJ_PATH
@@ -244,21 +230,16 @@ echo PROJECT_NAME: $PROJECT_NAME
 echo TARGET_NAME: $TARGET_NAME
 echo KEYCENTER_PATH: $KEYCENTER_PATH
 echo APP_PATH: $APP_PATH
-echo manifest_url: $manifest_url
 echo PLIST_PATH: $PLIST_PATH
 
 # Modify Keycenter file
 # Use sed to replace parameters in KeyCenter.swift
 if [ -n "$APP_ID" ]; then
-    sed -i '' "s|static let AppId: String = .*|static let AppId: String = \"$APP_ID\"|g" $KEYCENTER_PATH
+    sed -i '' "s|static let AG_APP_ID: String = .*|static let AG_APP_ID: String = \"$APP_ID\"|g" $KEYCENTER_PATH
 fi
 if [ -n "$toolbox_url" ]; then
     sed -i '' "s|static let TOOLBOX_SERVER_HOST: String = .*|static let TOOLBOX_SERVER_HOST: String = \"$toolbox_url\"|g" $KEYCENTER_PATH
 fi
-# Replace Certificate with empty string
-sed -i '' "s|static let Certificate: String? = .*|static let Certificate: String? = \"\"|g" $KEYCENTER_PATH
-# Replace manifestUrl
-sed -i '' "s|let manifestUrl = .*|let manifestUrl = \"$manifest_url\"|g" $KEYCENTER_PATH
 
 # Archive path
 ARCHIVE_PATH="${WORKSPACE}/${TARGET_NAME}_${BUILD_VERSION}.xcarchive"
