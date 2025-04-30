@@ -376,6 +376,7 @@ public class ChatViewController: UIViewController {
         
         // set debug params
         DeveloperConfig.shared.sdkParams.forEach {
+            addLog("rtc setParameter \($0)")
             rtcManager.getRtcEntine().setParameters($0)
         }
     }
