@@ -77,8 +77,8 @@ else
     echo "Setting export method to: development (test package)"
 fi
 
-if [ -z "$bundleId" ]; then
-    export bundleId="cn.shengwang.convoai"
+if [ -z "$bundle_id" ]; then
+    export bundle_id="cn.shengwang.convoai"
 fi
 
 echo Package_Publish: $Package_Publish
@@ -92,7 +92,7 @@ echo pwd: `pwd`
 echo sdk_url: $sdk_url
 echo toolbox_url: $toolbox_url
 echo "APP_ID: ${APP_ID}"
-
+echo "bundle_id: ${bundle_id}"
 # Check key environment variables
 echo "Checking iOS build environment variables:"
 echo "Xcode version: $(xcodebuild -version | head -n 1)"
@@ -166,22 +166,20 @@ KEYCENTER_PATH=${PROJECT_PATH}"/"${PROJECT_NAME}"/KeyCenter.swift"
 
 # Build environment
 CONFIGURATION='Release'
-result=$(echo ${method} | grep "development")
-if [[ ! -z "$result" ]]; then
-    CONFIGURATION='Debug'
-fi
 
 # Signing configuration
-if [ "$method" = "app-store" ]; then
+if [[ "$bundle_id" != *"test"* ]]; then
     # App Store release configuration
-    PROVISIONING_PROFILE="cn.shengwang.convoai.appstore"
+    PROVISIONING_PROFILE="shengwang_convoai_test"
     CODE_SIGN_IDENTITY="iPhone Distribution"
     DEVELOPMENT_TEAM="48TB6ZZL5S"
+    PLIST_PATH="${CURRENT_PATH}/cicd/build_scripts/ios_export_store_test.plist"
 else
     # Development environment configuration
-    PROVISIONING_PROFILE="cn.shengwang.convoai"
+    PROVISIONING_PROFILE="shengwang_convoai_appstore"
     CODE_SIGN_IDENTITY="iPhone Distribution"
     DEVELOPMENT_TEAM="48TB6ZZL5S"
+    PLIST_PATH="${CURRENT_PATH}/cicd/build_scripts/ios_export_store_prod.plist"
 fi
 
 # Project file path
@@ -224,7 +222,7 @@ fi
 # Main project configuration
 # Debug
 sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_VERSION};|g" $PBXPROJ_PATH
-sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = .*;|PRODUCT_BUNDLE_IDENTIFIER = \"${bundleId}\";|g" $PBXPROJ_PATH
+sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = .*;|PRODUCT_BUNDLE_IDENTIFIER = \"${bundle_id}\";|g" $PBXPROJ_PATH
 sed -i '' "s|CODE_SIGN_STYLE = .*;|CODE_SIGN_STYLE = \"Manual\";|g" $PBXPROJ_PATH
 sed -i '' "s|DEVELOPMENT_TEAM = .*;|DEVELOPMENT_TEAM = \"${DEVELOPMENT_TEAM}\";|g" $PBXPROJ_PATH
 sed -i '' "s|PROVISIONING_PROFILE_SPECIFIER = .*;|PROVISIONING_PROFILE_SPECIFIER = \"${PROVISIONING_PROFILE}\";|g" $PBXPROJ_PATH
@@ -232,7 +230,7 @@ sed -i '' "s|CODE_SIGN_IDENTITY = .*;|CODE_SIGN_IDENTITY = \"${CODE_SIGN_IDENTIT
 
 # Release
 sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_VERSION};|g" $PBXPROJ_PATH
-sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = .*;|PRODUCT_BUNDLE_IDENTIFIER = \"${bundleId}\";|g" $PBXPROJ_PATH
+sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = .*;|PRODUCT_BUNDLE_IDENTIFIER = \"${bundle_id}\";|g" $PBXPROJ_PATH
 sed -i '' "s|CODE_SIGN_STYLE = .*;|CODE_SIGN_STYLE = \"Manual\";|g" $PBXPROJ_PATH
 sed -i '' "s|DEVELOPMENT_TEAM = .*;|DEVELOPMENT_TEAM = \"${DEVELOPMENT_TEAM}\";|g" $PBXPROJ_PATH
 sed -i '' "s|PROVISIONING_PROFILE_SPECIFIER = .*;|PROVISIONING_PROFILE_SPECIFIER = \"${PROVISIONING_PROFILE}\";|g" $PBXPROJ_PATH
@@ -247,6 +245,7 @@ echo TARGET_NAME: $TARGET_NAME
 echo KEYCENTER_PATH: $KEYCENTER_PATH
 echo APP_PATH: $APP_PATH
 echo manifest_url: $manifest_url
+echo PLIST_PATH: $PLIST_PATH
 
 # Modify Keycenter file
 # Use sed to replace parameters in KeyCenter.swift
@@ -263,11 +262,6 @@ sed -i '' "s|let manifestUrl = .*|let manifestUrl = \"$manifest_url\"|g" $KEYCEN
 
 # Archive path
 ARCHIVE_PATH="${WORKSPACE}/${TARGET_NAME}_${BUILD_VERSION}.xcarchive"
-
-# plist path
-PLIST_PATH="${CURRENT_PATH}/cicd/build_scripts/ExportOptions_${method}.plist"
-
-echo PLIST_PATH: $PLIST_PATH
 
 # Build and archive
 echo "Starting build and archive..."
@@ -322,8 +316,8 @@ if [ "$LOCALPACKAGE" != "true" ]; then
         echo "Uploading IPA to App Store..."
         UPLOAD_RESULT=$(xcrun altool --upload-app \
             -f "${PACKAGE_DIR}/${ARTIFACT_NAME}.ipa" \
-            -u "${APPLE_ACCOUNT}" \
-            -p "${APPLE_APP_SPECIFIC_PASSWORD}" 2>&1)
+            -u "${IOS_APPSTORE_USER}" \
+            -p "${IOS_APPSTORE_PASSW}" 2>&1)
         
         if [ $? -ne 0 ]; then
             echo "Error: Failed to upload IPA to App Store"

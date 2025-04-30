@@ -7,11 +7,11 @@
 	<key>manageAppVersionAndBuildNumber</key>
 	<true/>
 	<key>method</key>
-	<string>app-store-connect</string>
+	<string>app-store</string>
 	<key>provisioningProfiles</key>
 	<dict>
 		<key>cn.shengwang.convoai</key>
-		<string>cn.shengwang.convoai.appstore</string>
+		<string>shengwang_convoai_appstore</string>
 	</dict>
 	<key>signingCertificate</key>
 	<string>Apple Distribution</string>
