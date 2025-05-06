@@ -37,6 +37,8 @@ interface DebugDialogCallback {
     fun onEnvConfigChange() = Unit  // Default implementation
 
     fun getConvoAiHost(): String = ""
+
+    fun onAudioParameter(parameter: String) = Unit
 }
 
 class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<CommonDebugDialogBinding>() {
@@ -134,32 +136,27 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
             etGraphId.setText(DebugConfigSettings.graphId)
             btnGraphIdSetting.setOnClickListener {
                 val graphId = etGraphId.text.toString().trim()
-                if (graphId.isNotEmpty()){
+                if (graphId.isNotEmpty()) {
                     DebugConfigSettings.setGraphId(graphId)
                     ToastUtil.show("GraphId:$graphId")
                 }
             }
 
             etSdkAudioParameter.setHint("{\"che.audio.sf.enabled\":true}|{\"che.audio.sf.stftType\":6}")
-            DebugConfigSettings.sdkAudioParameters.lastOrNull()?.let {
-                etSdkAudioParameter.setText(it)
-            }
-            btnSdkAudioParameterPreview.setOnClickListener {
-                val paramList = DebugConfigSettings.sdkAudioParameters
-                if (paramList.isEmpty()) return@setOnClickListener
-                val text = paramList.joinToString("|\n")
-                showPreConfig(text)
+            if (DebugConfigSettings.sdkAudioParameters.isNotEmpty()){
+                etSdkAudioParameter.setText(DebugConfigSettings.sdkAudioParameters.joinToString("|"))
             }
             btnSdkAudioParameterSetting.setOnClickListener {
                 val sdkAudioParameter = etSdkAudioParameter.text.toString().trim()
-                if (sdkAudioParameter.isNotEmpty()){
+                if (sdkAudioParameter.isNotEmpty()) {
                     val audioParams = mutableListOf<String>()
                     sdkAudioParameter.split("|").forEach { param ->
                         if (param.trim().isNotEmpty()) {
                             audioParams.add(param)
+                            onDebugDialogCallback?.onAudioParameter(param)
                         }
                     }
-                    DebugConfigSettings.addSdkAudioParameter(audioParams)
+                    DebugConfigSettings.updateSdkAudioParameter(audioParams)
                     ToastUtil.show("Sdk Audio Parameter:\n ${audioParams.joinToString("|\n")}")
                 }
             }
@@ -168,7 +165,7 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
             etApiParameter.setText(DebugConfigSettings.convoAIParameter)
             btnApiParameterSetting.setOnClickListener {
                 val convoAIParameter = etApiParameter.text.toString().trim()
-                if (convoAIParameter.isNotEmpty()){
+                if (convoAIParameter.isNotEmpty()) {
                     DebugConfigSettings.setConvoAIParameter(convoAIParameter)
                     ToastUtil.show("Convo AI Parameter:\n $convoAIParameter")
                 }

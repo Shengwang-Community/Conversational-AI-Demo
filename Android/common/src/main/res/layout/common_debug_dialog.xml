@@ -112,7 +112,7 @@
             android:textColorHint="@color/ai_icontext4"
             android:textSize="12sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btn_sdk_audio_parameter_preview"
+            app:layout_constraintEnd_toStartOf="@+id/btn_sdk_audio_parameter_setting"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_sdk_audio_parameter"
             tools:text="" />
@@ -137,28 +137,6 @@
             app:backgroundTint="@null"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:rippleColor="#1AFFFFFF" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_sdk_audio_parameter_preview"
-            android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:layout_marginEnd="5dp"
-            android:background="@drawable/bg_grey_btn"
-            android:insetLeft="0dp"
-            android:insetTop="0dp"
-            android:insetRight="0dp"
-            android:insetBottom="0dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:paddingHorizontal="8dp"
-            android:text="@string/common_preview"
-            android:textAllCaps="false"
-            android:textColor="@color/ai_icontext1"
-            android:textSize="11sp"
-            app:backgroundTint="@null"
-            app:layout_constraintBottom_toBottomOf="@id/btn_sdk_audio_parameter_setting"
-            app:layout_constraintEnd_toStartOf="@id/btn_sdk_audio_parameter_setting"
             app:rippleColor="#1AFFFFFF" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 

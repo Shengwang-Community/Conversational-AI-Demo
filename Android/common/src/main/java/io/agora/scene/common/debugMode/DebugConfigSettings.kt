@@ -34,7 +34,8 @@ object DebugConfigSettings {
      * Add SDK audio parameters, preserving the order and avoiding duplicates
      * @param sdkParameters The list of parameters to add
      */
-    fun addSdkAudioParameter(sdkParameters: List<String>) {
+    fun updateSdkAudioParameter(sdkParameters: List<String>) {
+        _sdkAudioParameters.clear()
         _sdkAudioParameters.addAll(sdkParameters)
     }
 
