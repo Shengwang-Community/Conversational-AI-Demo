@@ -28,7 +28,8 @@ public class DeveloperConfig {
     internal var onCopy: (() -> Void)?
     internal var onSessionLimit: ((Bool) -> Void)?
     internal var onAudioDump: ((Bool) -> Void)?
-    
+    internal var onSDKParams: ((String) -> Void)?
+
     @discardableResult
     public func setServerHost(_ serverHost: String) -> Self {
         self.serverHost = serverHost
@@ -64,6 +65,12 @@ public class DeveloperConfig {
     @discardableResult
     public func setCopyCallback(callback: (() -> Void)?) -> Self {
         self.onCopy = callback
+        return self
+    }
+
+    @discardableResult
+    public func setSDKParamsCallback(callback: ((String) -> Void)?) -> Self {
+        self.onSDKParams = callback
         return self
     }
     
@@ -244,29 +251,20 @@ extension DeveloperModeViewController {
         config.onSessionLimit?(sender.isOn)
     }
     
-    @objc private func onClickViewSDKParams() {
-        view.endEditing(true)
-        let text = config.sdkParams.joined(separator: "\n")
-        FullTextView.show(in: view, text: text)
-    }
-    
-    @objc private func onClickViewconvoai() {
-        view.endEditing(true)
-        FullTextView.show(in: view, text: config.convoaiServerConfig ?? "")
-    }
-    
     @objc private func onClickConfirmSDKParams() {
         view.endEditing(true)
         if let text = sdkParamsTextView.text,
            !text.isEmpty {
+            config.sdkParams.removeAll()
             let params = text.components(separatedBy: "|")
             for param in params {
                 if !config.sdkParams.contains(param) {
                     config.sdkParams.append(param)
+                    config.onSDKParams?(param)
                 }
             }
-            SVProgressHUD.showInfo(withStatus: "sdk setParameters did set: \(text)")
-            sdkParamsTextView.text = ""
+            SVProgressHUD.showInfo(withStatus: "sdk parameters did set: \(text)")
+            sdkParamsTextView.text = config.sdkParams.joined(separator: "|")
             sdkParamsTextView.textDidChange()
         }
     }
@@ -275,8 +273,10 @@ extension DeveloperModeViewController {
         view.endEditing(true)
         if let text = convoaiTextView.text, !text.isEmpty {
             config.convoaiServerConfig = text
+            SVProgressHUD.showInfo(withStatus: "convo ai presets did set: \(text)")
         } else {
             config.convoaiServerConfig = nil
+            SVProgressHUD.showInfo(withStatus: "convo ai presets did set: nil")
         }
     }
     
@@ -284,8 +284,10 @@ extension DeveloperModeViewController {
         view.endEditing(true)
         if let text = graphTextField.text, !text.isEmpty {
             config.graphId = text
+            SVProgressHUD.showInfo(withStatus: "graphId did set: \(text)")
         } else {
             config.graphId = nil
+            SVProgressHUD.showInfo(withStatus: "graphId did set: nil")
         }
     }
 }
@@ -385,13 +387,11 @@ extension DeveloperModeViewController {
         sdkParamsTextView.isScrollEnabled = true
         sdkParamsTextView.setContentHuggingPriority(.defaultLow, for: .horizontal)
         sdkParamsTextView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        sdkParamsTextView.placeholder = "{\"che.audio.sf.ainlpLowLatencyFlag\":1}"
-        
-        let sdkParamsViewButton = UIButton(type: .system)
-        sdkParamsViewButton.setTitle(ResourceManager.L10n.DevMode.textView, for: .normal)
-        sdkParamsViewButton.addTarget(self, action: #selector(onClickViewSDKParams), for: .touchUpInside)
-        sdkParamsViewButton.setContentHuggingPriority(.required, for: .horizontal)
-        sdkParamsViewButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        sdkParamsTextView.placeholder = "{\"che.audio.sf.enabled\":true}|{\"che.audio.sf.stftType\":6}"
+        if config.sdkParams.count > 0 {
+            sdkParamsTextView.text = config.sdkParams.joined(separator: "|")
+            sdkParamsTextView.textDidChange()
+        }
         
         let sdkParamsConfirmButton = UIButton(type: .system)
         sdkParamsConfirmButton.setTitle(ResourceManager.L10n.DevMode.textConfirm, for: .normal)
@@ -399,18 +399,15 @@ extension DeveloperModeViewController {
         sdkParamsConfirmButton.setContentHuggingPriority(.required, for: .horizontal)
         sdkParamsConfirmButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         
-        let inputButtonStack = createHorizontalStack(with: [sdkParamsTextView, sdkParamsViewButton, sdkParamsConfirmButton])
+        let inputButtonStack = createHorizontalStack(with: [sdkParamsTextView, sdkParamsConfirmButton])
         inputButtonStack.heightAnchor.constraint(equalToConstant: 44).isActive = true
         contentStackView.addArrangedSubview(inputButtonStack)
         
         sdkParamsTextView.snp.makeConstraints { make in
             make.height.equalTo(44)
         }
-        sdkParamsViewButton.snp.makeConstraints { make in
-            make.width.equalTo(52)
-        }
         sdkParamsConfirmButton.snp.makeConstraints { make in
-            make.width.equalTo(52)
+            make.width.equalTo(66)
         }
         
         // Title row
@@ -423,16 +420,11 @@ extension DeveloperModeViewController {
         contentStackView.addArrangedSubview(convoaiTitleStack)
         
         convoaiTextView.font = .systemFont(ofSize: 14)
+        convoaiTextView.placeholder = "sess_ctrl_dev"
         convoaiTextView.layer.cornerRadius = 5
         convoaiTextView.isScrollEnabled = true
         convoaiTextView.setContentHuggingPriority(.defaultLow, for: .horizontal)
         convoaiTextView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        
-        let convoaiViewButton = UIButton(type: .system)
-        convoaiViewButton.setTitle(ResourceManager.L10n.DevMode.textView, for: .normal)
-        convoaiViewButton.addTarget(self, action: #selector(onClickViewconvoai), for: .touchUpInside)
-        convoaiViewButton.setContentHuggingPriority(.required, for: .horizontal)
-        convoaiViewButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         
         let convoaiConfirmButton = UIButton(type: .system)
         convoaiConfirmButton.setTitle(ResourceManager.L10n.DevMode.textConfirm, for: .normal)
@@ -440,18 +432,15 @@ extension DeveloperModeViewController {
         convoaiConfirmButton.setContentHuggingPriority(.required, for: .horizontal)
         convoaiConfirmButton.setContentCompressionResistancePriority(.required, for: .horizontal)
         
-        let scInputButtonStack = createHorizontalStack(with: [convoaiTextView, convoaiViewButton, convoaiConfirmButton])
+        let scInputButtonStack = createHorizontalStack(with: [convoaiTextView, convoaiConfirmButton])
         scInputButtonStack.heightAnchor.constraint(equalToConstant: 44).isActive = true
         contentStackView.addArrangedSubview(scInputButtonStack)
         
         convoaiTextView.snp.makeConstraints { make in
             make.height.equalTo(44)
         }
-        convoaiViewButton.snp.makeConstraints { make in
-            make.width.equalTo(52)
-        }
         convoaiConfirmButton.snp.makeConstraints { make in
-            make.width.equalTo(52)
+            make.width.equalTo(66)
         }
         
         // Graph ID
@@ -462,8 +451,9 @@ extension DeveloperModeViewController {
         
         graphTextField.borderStyle = .roundedRect
         graphTextField.backgroundColor = UIColor.themColor(named: "ai_block2")
-        graphTextField.textColor = UIColor.themColor(named: "ai_icontext4")
+        graphTextField.textColor = UIColor.themColor(named: "ai_icontext1")
         graphTextField.text = config.graphId
+        graphTextField.placeholder = "1.3.0-12-ga443e7e"
         // Set TextField content priority
         graphTextField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         graphTextField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -495,7 +485,7 @@ extension DeveloperModeViewController {
         }
         
         graphConfirmButton.snp.makeConstraints { make in
-            make.width.equalTo(52)
+            make.width.equalTo(66)
         }
         
         graphStackView.heightAnchor.constraint(equalToConstant: 44).isActive = true

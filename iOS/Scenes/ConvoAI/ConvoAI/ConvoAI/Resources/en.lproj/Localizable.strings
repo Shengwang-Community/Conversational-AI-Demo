@@ -112,8 +112,8 @@
 "devmode.close" = "Close Developer Mode";
 "devmode.graph" = "Graph id";
 "devmode.server" = "Server";
-"devmode.sdk.params" = "SDK audio parameter configuration";
-"devmode.sc.config" = "Convo AI service parameter configuration";
+"devmode.sdk.params" = "SDK audio parameter config";
+"devmode.sc.config" = "Convo AI service Preset config";
 "devmode.text.view" = "View";
 "devmode.text.confirm" = "Confirm";
 

@@ -108,7 +108,7 @@
 "devmode.graph" = "Graph id";
 "devmode.server" = "切换服务器";
 "devmode.sdk.params" = "SDK 音频参数配置";
-"devmode.sc.config" = "Convo AI 服务参数配置";
+"devmode.sc.config" = "Convo AI 服务Preset配置";
 "devmode.text.view" = "预览";
 "devmode.text.confirm" = "确定";
 

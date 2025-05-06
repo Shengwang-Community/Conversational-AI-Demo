@@ -1066,6 +1066,9 @@ extension ChatViewController {
             .setSwitchServerCallback {
                 self.switchEnvironment()
             }
+            .setSDKParamsCallback { [weak self] param in
+                self?.rtcManager.getRtcEntine().setParameters(param)
+            }
             .setCopyCallback {
                 let messageContents = self.messageView.getAllMessages()
                     .filter { $0.isMine }

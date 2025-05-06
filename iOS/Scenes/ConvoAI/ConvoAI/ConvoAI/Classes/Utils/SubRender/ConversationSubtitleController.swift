@@ -416,7 +416,7 @@ private typealias TurnState = SubtitleStatus
                 guard let minRange = minIndex else {
                     return
                 }
-                let currentWords = Array(buffer.words[0..<minRange])
+                let currentWords = Array(buffer.words[0...minRange])
                 self.addLog("🔔[CovSubRenderController] get minRange: \(minRange) words: \(buffer.words.count) current: \(currentWords.count)")
                 // send turn with state
                 var subtitleMessage: SubtitleMessage
