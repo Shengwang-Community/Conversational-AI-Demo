@@ -130,6 +130,7 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
                 }
             })
 
+            etGraphId.setHint("1.3.0-12-ga443e7e")
             etGraphId.setText(DebugConfigSettings.graphId)
             btnGraphIdSetting.setOnClickListener {
                 val graphId = etGraphId.text.toString().trim()
@@ -139,7 +140,7 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
                 }
             }
 
-            etSdkAudioParameter.setHint("{\"che.audio.sf.ainlpLowLatencyFlag\":1}")
+            etSdkAudioParameter.setHint("{\"che.audio.sf.enabled\":true}|{\"che.audio.sf.stftType\":6}")
             DebugConfigSettings.sdkAudioParameters.lastOrNull()?.let {
                 etSdkAudioParameter.setText(it)
             }
@@ -163,10 +164,8 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
                 }
             }
 
+            etApiParameter.setHint("sess_ctrl_dev")
             etApiParameter.setText(DebugConfigSettings.convoAIParameter)
-            btnApiParameterPreview.setOnClickListener {
-                showPreConfig(etApiParameter.text.toString())
-            }
             btnApiParameterSetting.setOnClickListener {
                 val convoAIParameter = etApiParameter.text.toString().trim()
                 if (convoAIParameter.isNotEmpty()){
