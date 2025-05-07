@@ -1327,7 +1327,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     private fun startRecordingService() {
-        if (connectionState == AgentConnectionState.CONNECTING || connectionState == AgentConnectionState.CONNECTED) {
+        if (connectionState != AgentConnectionState.IDLE) {
             val intent = Intent(this, CovLocalRecordingService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(intent)
