@@ -26,9 +26,9 @@ export const API_UPLOAD_LOG = '/api/upload/log'
 export const REMOTE_TOKEN_GENERATE = '/v2/token/generate'
 
 export const REMOTE_CONVOAI_AGENT_PRESETS = '/v2/convoai/presetAgents'
-export const REMOTE_CONVOAI_AGENT_START = '/v3/convoai/start'
-export const REMOTE_CONVOAI_AGENT_STOP = '/v3/convoai/stop'
-export const REMOTE_CONVOAI_AGENT_PING = '/v3/convoai/ping'
+export const REMOTE_CONVOAI_AGENT_START = '/convoai/v4/start'
+export const REMOTE_CONVOAI_AGENT_STOP = '/convoai/v4/stop'
+export const REMOTE_CONVOAI_AGENT_PING = '/convoai/v4/ping'
 
 export const REMOTE_SSO_LOGIN = '/v1/convoai/sso/callback'
 export const REMOTE_USER_INFO = '/v1/convoai/sso/userInfo'
