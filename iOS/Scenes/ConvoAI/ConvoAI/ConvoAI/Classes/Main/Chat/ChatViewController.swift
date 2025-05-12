@@ -1082,12 +1082,17 @@ extension ChatViewController {
     }
     
     private func switchEnvironment() {
-        AppContext.preferenceManager()?.deleteAllPresets()
+        deleteAllPresets()
         stopLoading()
         stopAgent()
         animateView.releaseView()
         rtcManager.destroy()
         UserCenter.shared.logout()
         NotificationCenter.default.post(name: .EnvironmentChanged, object: nil, userInfo: nil)
+    }
+    
+    private func deleteAllPresets() {
+        IoTEntrance.deleteAllPresets()
+        AppContext.preferenceManager()?.deleteAllPresets()
     }
 }
