@@ -1054,23 +1054,23 @@ extension ChatViewController {
     @objc private func onClickDevMode() {
         DeveloperConfig.shared
             .setServerHost(AppContext.preferenceManager()?.information.targetServer ?? "")
-            .setAudioDump(enabled: rtcManager.getAudioDump(), onChange: { isOn in
-                self.rtcManager.enableAudioDump(enabled: isOn)
+            .setAudioDump(enabled: rtcManager.getAudioDump(), onChange: { [weak self] isOn in
+                self?.rtcManager.enableAudioDump(enabled: isOn)
             })
-            .setSessionLimit(enabled: !DeveloperConfig.shared.getSessionFree(), onChange: { isOn in
-                self.timerCoordinator.setDurationLimit(limited: isOn)
+            .setSessionLimit(enabled: !DeveloperConfig.shared.getSessionFree(), onChange: { [weak self] isOn in
+                self?.timerCoordinator.setDurationLimit(limited: isOn)
             })
-            .setCloseDevModeCallback {
-                self.devModeButton.isHidden = true
+            .setCloseDevModeCallback { [weak self] in
+                self?.devModeButton.isHidden = true
             }
-            .setSwitchServerCallback {
-                self.switchEnvironment()
+            .setSwitchServerCallback { [weak self] in
+                self?.switchEnvironment()
             }
             .setSDKParamsCallback { [weak self] param in
                 self?.rtcManager.getRtcEntine().setParameters(param)
             }
-            .setCopyCallback {
-                let messageContents = self.messageView.getAllMessages()
+            .setCopyCallback { [weak self] in
+                let messageContents = self?.messageView.getAllMessages()
                     .filter { $0.isMine }
                     .map { $0.content }
                     .joined(separator: "\n")
@@ -1091,5 +1091,3 @@ extension ChatViewController {
         NotificationCenter.default.post(name: .EnvironmentChanged, object: nil, userInfo: nil)
     }
 }
-
-

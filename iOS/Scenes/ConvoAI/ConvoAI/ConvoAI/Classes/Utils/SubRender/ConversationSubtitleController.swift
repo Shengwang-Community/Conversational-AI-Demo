@@ -151,7 +151,7 @@ private typealias TurnState = SubtitleStatus
 @objc public class SubtitleRenderConfig: NSObject {
     let rtcEngine: AgoraRtcEngineKit
     let renderMode: SubtitleRenderMode
-    let delegate: ConversationSubtitleDelegate?
+    weak var delegate: ConversationSubtitleDelegate?
     
     @objc public init(rtcEngine: AgoraRtcEngineKit, renderMode: SubtitleRenderMode, delegate: ConversationSubtitleDelegate?) {
         self.rtcEngine = rtcEngine
