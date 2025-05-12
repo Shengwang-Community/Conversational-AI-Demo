@@ -49,6 +49,13 @@ interface IConversationSubtitleCallback {
     fun onSubtitleUpdated(subtitle: SubtitleMessage)
 
     /**
+     * Called when AI conversation state changes
+     *
+     * @param agentConversationStatus agent conversation status
+     */
+    fun onAIConversationStatus(agentConversationStatus: AgentConversationStatus)
+
+    /**
      * Called when a debug log is received
      * 
      * @param tag The tag of the log
@@ -84,6 +91,17 @@ enum class SubtitleStatus {
     Progress,
     End,
     Interrupted
+}
+
+/**
+ *
+ * AI Conversation State
+ */
+enum class AgentConversationStatus {
+    Silent,
+    Listening,
+    Thinking,
+    Speaking
 }
 
 /**
@@ -167,6 +185,8 @@ class ConversationSubtitleController(
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var tickerJob: Job? = null
     private var enable = true
+    @Volatile
+    private var mLastMessageStateTs: Long = 0L
 
     init {
         config.rtcEngine.addHandler(this)
@@ -287,6 +307,23 @@ class ConversationSubtitleController(
                         "message.interrupt" -> {
                             isUserMsg = false
                             isInterrupt = true
+                        }
+                        "message.state" -> {
+                            isUserMsg = false
+                            val messageStateTs = (msg["ts"] as? Number)?.toLong() ?: 0L
+                            // Deduplication
+                            if (mLastMessageStateTs == messageStateTs) return
+                            mLastMessageStateTs = messageStateTs
+                            val current = msg["current"] as? String ?: ""
+                            val aiConversationStatus = if (current=="listening") AgentConversationStatus.Listening
+                            else if (current=="thinking") AgentConversationStatus.Thinking
+                            else if (current=="speaking") AgentConversationStatus.Speaking
+                            else AgentConversationStatus.Silent
+                            runOnMainThread {
+                                config.callback?.onAIConversationStatus(aiConversationStatus)
+                            }
+                            return
+
                         }
                         else -> return
                     }

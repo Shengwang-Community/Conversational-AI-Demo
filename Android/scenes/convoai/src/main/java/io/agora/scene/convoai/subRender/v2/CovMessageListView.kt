@@ -40,6 +40,9 @@ class CovMessageListView @JvmOverloads constructor(
     // Runnable for scrolling to bottom
     private val scrollRunnable = Runnable { scrollToBottom() }
 
+    // Callback for AI conversation status changes
+    var onAIStatusChanged: ((AgentConversationStatus) -> Unit)? = null
+
     init {
         setupRecyclerView()
         setupBottomButton()
@@ -423,6 +426,11 @@ class CovMessageListView @JvmOverloads constructor(
 
     override fun onSubtitleUpdated(subtitle: SubtitleMessage) {
         handleMessage(subtitle)
+    }
+
+    override fun onAIConversationStatus(agentConversationStatus: AgentConversationStatus) {
+        // Forward AI conversation status to the callback
+        onAIStatusChanged?.invoke(agentConversationStatus)
     }
 
     override fun onDebugLog(tag: String, msg: String) {
