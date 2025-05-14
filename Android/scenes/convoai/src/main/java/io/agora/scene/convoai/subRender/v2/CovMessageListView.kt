@@ -428,7 +428,7 @@ class CovMessageListView @JvmOverloads constructor(
         handleMessage(subtitle)
     }
 
-    override fun onAIConversationStatus(agentMessageState: AgentMessageState) {
+    override fun onAgentStateChange(agentMessageState: AgentMessageState) {
         // Forward AI conversation status to the callback
         onAIStatusChanged?.invoke(agentMessageState)
     }
