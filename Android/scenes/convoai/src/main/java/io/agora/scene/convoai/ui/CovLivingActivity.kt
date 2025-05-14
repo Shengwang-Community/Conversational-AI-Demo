@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.ui
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.graphics.PorterDuff
@@ -363,6 +364,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         )
     }
 
+    @SuppressLint("SetTextI18n")
     private fun onClickStartAgent() {
         subRenderController?.reset()
         // Immediately show the connecting status
@@ -386,6 +388,13 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 selfRenderController?.enable(false)
                 subRenderController?.enable(true)
                 messageListViewV2.updateAgentName(CovAgentManager.getPreset()?.display_name ?: "")
+                // Set AI status listener in v2 mode
+                messageListViewV2.onAIStatusChanged = { status ->
+                    // Only respond to AI status changes when connected
+                    if (connectionState == AgentConnectionState.CONNECTED) {
+                        mBinding?.tvConversationState?.text = "Agent State: $status"
+                    }
+                }
             }
         }
 

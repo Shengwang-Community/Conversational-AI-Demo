@@ -49,6 +49,13 @@ interface IConversationSubtitleCallback {
     fun onSubtitleUpdated(subtitle: SubtitleMessage)
 
     /**
+     * Called when AI conversation state changes
+     *
+     * @param agentConversationStatus agent conversation status
+     */
+    fun onAIConversationStatus(agentConversationStatus: AgentConversationStatus)
+
+    /**
      * Called when a debug log is received
      * 
      * @param tag The tag of the log
@@ -74,6 +81,16 @@ data class SubtitleMessage(
 )
 
 /**
+ * Agent Conversation State
+ */
+data class AgentMessageState(
+    val messageId: String,
+    val turnId: Long,
+    val ts: Long,
+    val state: AgentConversationStatus
+)
+
+/**
  * Represents the current status of a subtitle
  *
  * Progress: Subtitle is still being generated or spoken
@@ -84,6 +101,17 @@ enum class SubtitleStatus {
     Progress,
     End,
     Interrupted
+}
+
+/**
+ *
+ * AI Conversation State
+ */
+enum class AgentConversationStatus {
+    Silent,
+    Listening,
+    Thinking,
+    Speaking
 }
 
 /**
@@ -167,6 +195,8 @@ class ConversationSubtitleController(
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var tickerJob: Job? = null
     private var enable = true
+    @Volatile
+    private var mAgentMessageState: AgentMessageState? = null
 
     init {
         config.rtcEngine.addHandler(this)
@@ -287,6 +317,32 @@ class ConversationSubtitleController(
                         "message.interrupt" -> {
                             isUserMsg = false
                             isInterrupt = true
+                        }
+                        "message.state" -> {
+                            val messageId = msg["message_id"] as? String?:""
+                            // Deduplication
+                            if (messageId == mAgentMessageState?.messageId) return
+                            val ts = (msg["ts_ms"] as? Number)?.toLong() ?: 0L
+                            if (ts == mAgentMessageState?.ts) return
+                            val turnId = (msg["turn_id"] as? Number)?.toLong() ?: 0L
+                            val state = msg["state"] as? String ?: ""
+
+                            val aiConversationStatus = if (state == "listening") AgentConversationStatus.Listening
+                            else if (state == "thinking") AgentConversationStatus.Thinking
+                            else if (state == "speaking") AgentConversationStatus.Speaking
+                            else AgentConversationStatus.Silent
+                            runOnMainThread {
+                                mAgentMessageState = AgentMessageState(
+                                    messageId = messageId,
+                                    turnId = turnId,
+                                    ts = ts,
+                                    state = aiConversationStatus
+                                ).also {
+                                    config.callback?.onAIConversationStatus(it)
+                                }
+                            }
+                            return
+
                         }
                         else -> return
                     }

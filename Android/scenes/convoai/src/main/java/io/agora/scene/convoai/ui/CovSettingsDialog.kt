@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CompoundButton
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -75,9 +76,13 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
                 }
             })
             cbAiVad.isChecked = CovAgentManager.enableAiVad
-            cbAiVad.setOnClickListener {
-                CovAgentManager.enableAiVad = cbAiVad.isChecked
-            }
+            cbAiVad.setOnCheckedChangeListener(object : CompoundButton.OnCheckedChangeListener{
+                override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
+                    if (buttonView.isPressed){
+                        CovAgentManager.enableAiVad = isChecked
+                    }
+                }
+            })
             btnClose.setOnClickListener {
                 dismiss()
             }
