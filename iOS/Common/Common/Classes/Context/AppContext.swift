@@ -91,9 +91,15 @@ import Bugly
            let environments = try? JSONDecoder().decode([String: [[String: String]]].self, from: data) {
             _environments = environments["china"] ?? []
             if (appId.isEmpty) {
-                _appId = _environments.first?["rtc_app_id"] ?? ""
-                _certificate = _environments.first?["rtc_app_certificate"] ?? ""
-                _baseServerUrl = _environments.first?["toolbox_server_host"] ?? ""
+                if let matchingEnvironment = _environments.first(where: { $0["toolbox_server_host"] == _baseServerUrl }) {
+                    _appId = matchingEnvironment["rtc_app_id"] ?? ""
+                    _certificate = matchingEnvironment["rtc_app_certificate"] ?? ""
+                    _baseServerUrl = matchingEnvironment["toolbox_server_host"] ?? ""
+                } else {
+                    _appId = _environments.first?["rtc_app_id"] ?? ""
+                    _certificate = _environments.first?["rtc_app_certificate"] ?? ""
+                    _baseServerUrl = _environments.first?["toolbox_server_host"] ?? ""
+                }
             }
         }
     }

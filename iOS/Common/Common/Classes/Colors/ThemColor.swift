@@ -13,7 +13,7 @@ extension UIColor {
         }
     }
     
-    private static var lightColors: [String: String] {
+    private static let lightColors: [String: String] = {
         var colors = [String: String]()
         guard let bundlePath = Bundle.main.path(forResource: "Common", ofType: "bundle"),
               let bundle = Bundle(path: bundlePath)
@@ -26,9 +26,9 @@ extension UIColor {
             colors = dictionary
         }
         return colors
-    }
+    }()
     
-    private static var darkColors: [String: String] {
+    private static let darkColors: [String: String] = {
         var colors = [String: String]()
         guard let bundlePath = Bundle.main.path(forResource: "Common", ofType: "bundle"),
               let bundle = Bundle(path: bundlePath)
@@ -41,7 +41,7 @@ extension UIColor {
             colors = dictionary
         }
         return colors
-    }
+    }()
     
     fileprivate convenience init(argb: String) {
         let a, r, g, b: CGFloat

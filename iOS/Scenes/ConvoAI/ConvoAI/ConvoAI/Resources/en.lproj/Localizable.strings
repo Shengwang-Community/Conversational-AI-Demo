@@ -59,8 +59,8 @@
 "settings.microphone" = "Microphone";
 "settings.speaker" = "Speaker";
 "settings.noise.cancellation" = "Noise Cancellation";
-"settings.noise.aiVad.nomal" = "Intelligent Interruption Handling";
-"settings.noise.aiVad.highlight" = "";
+"settings.noise.aiVad.nomal" = "";
+"settings.noise.aiVad.highlight" = "Intelligent Interruption Handling";
 "settings.noise.forceResponse" = "Force Response";
 "settings.noise.bhvs" = "Background Human Voice Suppression";
 

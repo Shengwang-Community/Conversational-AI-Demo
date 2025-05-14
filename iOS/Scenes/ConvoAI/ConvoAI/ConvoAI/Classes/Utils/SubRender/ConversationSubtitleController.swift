@@ -78,6 +78,28 @@ private struct Word: Codable {
     }
 }
 
+private struct MessageStateItem: Codable {
+    let object: String?
+    let current: String?
+    let turn_id: Int?
+    let ts: Int64?
+    
+    func description() -> String {
+        var dict: [String: Any] = [:]
+        
+        if let object = object { dict["object"] = object }
+        if let current = current { dict["current"] = current }
+        if let turn_id = turn_id { dict["turn_id"] = turn_id }
+        if let ts = ts { dict["ts"] = ts }
+        
+        if let jsonData = try? JSONSerialization.data(withJSONObject: dict, options: []),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            return jsonString
+        }
+        return "{}"
+    }
+}
+
 private class TurnBuffer {
     var turnId = 0
     var text: String = ""
@@ -105,10 +127,18 @@ private struct WordBuffer {
 /// - Progress: Subtitle is still being generated or spoken
 /// - End: Subtitle has completed normally
 /// - Interrupted: Subtitle was interrupted before completion
-enum SubtitleStatus: Int {
+@objc public enum SubtitleStatus: Int {
     case inprogress = 0
     case end = 1
     case interrupt = 2
+}
+
+/// Message State
+@objc public enum MessageState: Int {
+    case waiting = 0      // AI waiting for user to start speaking
+    case listening = 1    // AI detected user voice input
+    case thinking = 2     // AI is understanding and processing
+    case speaking = 3     // AI is speaking
 }
 private typealias TurnState = SubtitleStatus
 /// Consumer-facing data class representing a complete subtitle message
@@ -139,6 +169,11 @@ private typealias TurnState = SubtitleStatus
     ///
     /// - Parameter subtitle: The updated subtitle message
     @objc func onSubtitleUpdated(subtitle: SubtitleMessage)
+
+    /// Called when the message state is updated
+    ///
+    /// - Parameter messageState: The updated message state
+    @objc func onMessageStateUpdated(messageState: MessageState)
     
     @objc optional func onDebugLog(_ txt: String)
 }
@@ -167,6 +202,7 @@ private typealias TurnState = SubtitleStatus
 ///
 @objc public class ConversationSubtitleController: NSObject {
     
+    public static let version: String = "1.4.0"
     public static let localUserId: UInt = 0
     public static let remoteUserId: UInt = 99
     
@@ -246,12 +282,12 @@ private typealias TurnState = SubtitleStatus
                 timer?.invalidate()
                 timer = nil
                 timer = Timer.scheduledTimer(timeInterval: 0.2, target: self, selector: #selector(eventLoop), userInfo: nil, repeats: true)
-                addLog("✅[CovSubRenderController] render mode: words")
+                addLog("✅[CovSubRenderController] render mode: words, version \(ConversationSubtitleController.version)")
             } else {
                 renderMode = .text
                 timer?.invalidate()
                 timer = nil
-                addLog("✅[CovSubRenderController] render mode: text")
+                addLog("✅[CovSubRenderController] render mode: text, version \(ConversationSubtitleController.version)")
             }
         } else if (renderConfig?.renderMode == .text) {
             renderMode = .text

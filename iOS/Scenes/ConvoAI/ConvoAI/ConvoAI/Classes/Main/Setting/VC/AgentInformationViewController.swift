@@ -180,9 +180,8 @@ class AgentInformationViewController: UIViewController {
         let label = UILabel()
         label.font = .systemFont(ofSize: 18)
         label.textColor = UIColor.themColor(named: "ai_icontext3")
-        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-            label.text = "V\(version)"
-        }
+        let version = ConversationSubtitleController.version
+        label.text = "V\(version)"
         return label
     }()
     
