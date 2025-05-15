@@ -550,7 +550,7 @@ extension ConversationSubtitleController: AgoraRtcEngineDelegate {
 extension ConversationSubtitleController: AgoraAudioFrameDelegate {
     
     public func onPlaybackAudioFrame(beforeMixing frame: AgoraAudioFrame, channelId: String, uid: UInt) -> Bool {
-        audioTimestamp = frame.presentationMs
+        audioTimestamp = frame.presentationMs+20
         return true
     }
     
@@ -568,7 +568,7 @@ extension ConversationSubtitleController {
         config.rtcEngine.addDelegate(self)
         config.rtcEngine.setPlaybackAudioFrameBeforeMixingParametersWithSampleRate(44100, channel: 1)
         if config.writeRtcLog {
-            let ret = config.rtcEngine.setParameters("{\"rtc.log_external_input\": true}")
+            config.rtcEngine.setParameters("{\"rtc.log_external_input\": true}")
         }
     }
         
