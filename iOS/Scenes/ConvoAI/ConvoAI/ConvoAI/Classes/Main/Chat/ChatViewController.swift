@@ -334,12 +334,11 @@ public class ChatViewController: UIViewController {
         animateView.setupMediaPlayer(rtcEngine)
         animateView.updateAgentState(.idle)
         
-        let subRenderConfig = SubtitleRenderConfig(rtcEngine: rtcEngine, renderMode: .words, delegate: self)
+        let subRenderConfig = SubtitleRenderConfig(rtcEngine: rtcEngine, renderMode: .words, delegate: self, writeRtcLog: false)
         subRenderController.setupWithConfig(subRenderConfig)
         
         devModeButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
     }
-
     
     @MainActor
     private func prepareToStartAgent() async {

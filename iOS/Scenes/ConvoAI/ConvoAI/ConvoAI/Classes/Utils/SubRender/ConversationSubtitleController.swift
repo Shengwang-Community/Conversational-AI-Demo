@@ -199,11 +199,13 @@ private typealias TurnState = SubtitleStatus
     let rtcEngine: AgoraRtcEngineKit
     let renderMode: SubtitleRenderMode
     weak var delegate: ConversationSubtitleDelegate?
+    let writeRtcLog: Bool
     
-    @objc public init(rtcEngine: AgoraRtcEngineKit, renderMode: SubtitleRenderMode, delegate: ConversationSubtitleDelegate?) {
+    @objc public init(rtcEngine: AgoraRtcEngineKit, renderMode: SubtitleRenderMode, delegate: ConversationSubtitleDelegate?, writeRtcLog: Bool = false) {
         self.rtcEngine = rtcEngine
         self.renderMode = renderMode
         self.delegate = delegate
+        self.writeRtcLog = writeRtcLog
     }
 }
 
@@ -245,6 +247,11 @@ private typealias TurnState = SubtitleStatus
     
     private func addLog(_ txt: String) {
         delegate?.onDebugLog?(txt)
+        if (renderConfig?.writeRtcLog == true) {
+            DispatchQueue.global().async {
+                self.renderConfig?.rtcEngine.writeLog(.info, content: txt)
+            }
+        }
     }
     
     private let queue = DispatchQueue(label: "com.voiceagent.messagequeue", attributes: .concurrent)
@@ -560,6 +567,9 @@ extension ConversationSubtitleController {
         config.rtcEngine.setAudioFrameDelegate(self)
         config.rtcEngine.addDelegate(self)
         config.rtcEngine.setPlaybackAudioFrameBeforeMixingParametersWithSampleRate(44100, channel: 1)
+        if config.writeRtcLog {
+            let ret = config.rtcEngine.setParameters("{\"rtc.log_external_input\": true}")
+        }
     }
         
     @objc public func reset() {
