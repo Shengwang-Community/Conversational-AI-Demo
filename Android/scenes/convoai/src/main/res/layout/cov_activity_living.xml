@@ -94,6 +94,7 @@
         android:paddingVertical="6dp"
         android:paddingHorizontal="12dp"
         android:layout_marginTop="12dp"
+        android:visibility="gone"
         android:text="Agent State: Idle"/>
 
     <FrameLayout
