@@ -59,6 +59,7 @@ public class ChatViewController: UIViewController {
         label.textColor = .white
         label.textAlignment = .center
         label.backgroundColor = UIColor(hex:0x000000, transparency: 0.25)
+        label.isHidden = true
         return label
     }()
 
@@ -271,6 +272,7 @@ public class ChatViewController: UIViewController {
         stateLabel.snp.makeConstraints { make in
             make.centerX.equalToSuperview()
             make.height.equalTo(44)
+            make.width.equalTo(120)
             make.top.equalTo(topBar.snp.bottom).offset(40)
         }
 
@@ -416,6 +418,7 @@ public class ChatViewController: UIViewController {
         animateView.updateAgentState(.idle)
         messageView.clearMessages()
         messageView.isHidden = true
+        stateLabel.isHidden = true
         bottomBar.resetState()
         timerCoordinator.stopAllTimer()
         AppContext.preferenceManager()?.resetAgentInformation()
@@ -527,9 +530,9 @@ extension ChatViewController {
             return
         }
         manager.updateAgentState(.disconnected)
-        stateLabel.isHidden = true
         if DeveloperConfig.shared.isDeveloperMode {
             channelName = "agent_debug_\(UUID().uuidString.prefix(8))"
+            stateLabel.isHidden = false
         } else {
             channelName = "agent_\(UUID().uuidString.prefix(8))"
         }
@@ -723,7 +726,6 @@ extension ChatViewController: AgoraRtcEngineDelegate {
         if reason == .reasonInterrupted {
             animateView.updateAgentState(.idle)
             AppContext.preferenceManager()?.updateAgentState(.disconnected)
-            stateLabel.isHidden = true
             AppContext.preferenceManager()?.updateRoomState(.disconnected)
             showErrorToast(text: ResourceManager.L10n.Error.networkDisconnected)
         } else if reason == .reasonRejoinSuccess {
@@ -737,7 +739,6 @@ extension ChatViewController: AgoraRtcEngineDelegate {
             }
             
             manager.updateAgentState(.connected)
-            stateLabel.isHidden = false
             manager.updateRoomState(.connected)
             
             dismissErrorToast()
@@ -764,7 +765,6 @@ extension ChatViewController: AgoraRtcEngineDelegate {
         timerCoordinator.startUsageDurationLimitTimer()
         addLog("[RTC Call Back] didJoinedOfUid uid: \(uid)")
         AppContext.preferenceManager()?.updateAgentState(.connected)
-        stateLabel.isHidden = false
         SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.agentJoined)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -776,7 +776,6 @@ extension ChatViewController: AgoraRtcEngineDelegate {
         addLog("[RTC Call Back] didOfflineOfUid uid: \(uid)")
         animateView.updateAgentState(.idle)
         AppContext.preferenceManager()?.updateAgentState(.disconnected)
-        stateLabel.isHidden = true
         showErrorToast(text: ResourceManager.L10n.Conversation.agentLeave)
         remoteIsJoined = false
     }
@@ -982,16 +981,23 @@ extension ChatViewController: ConversationSubtitleDelegate {
         }
     }
 
-    public func onMessageStateUpdated(messageState: MessageState) {
-        addLog("[Call] onMessageStateUpdated: \(messageState)")
-        switch messageState {
-        case .waiting:
+    public func onAgentStateChanged(stateMessage: AgentStateMessage) {
+        addLog("[Call] onAgentStateChanged: \(stateMessage.state)")
+        switch stateMessage.state {
+        case .idle:
+            stateLabel.text = "idle"
+            break
+        case .silent:
+            stateLabel.text = "silent"
             break
         case .listening:
+            stateLabel.text = "listening"
             break
         case .thinking:
+            stateLabel.text = "thinking"
             break
         case .speaking:
+            stateLabel.text = "speaking"
             break
         }
     }

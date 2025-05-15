@@ -26,9 +26,10 @@ private struct TranscriptionMessage: Codable {
     let duration_ms: Int64?
     let start_ms: Int64?
     let latency_ms: Int?
-    let send_ts: Int?
+    let send_ts: Int64?
     let module: String?
     let metric_name: String?
+    let state: String?
     
     func description() -> String {
         var dict: [String: Any] = [:]
@@ -53,6 +54,7 @@ private struct TranscriptionMessage: Codable {
         if let send_ts = send_ts { dict["send_ts"] = send_ts }
         if let module = module { dict["module"] = module }
         if let metric_name = metric_name { dict["metric_name"] = metric_name }
+        if let state = state { dict["state"] = state }
         
         if let jsonData = try? JSONSerialization.data(withJSONObject: dict, options: []),
            let jsonString = String(data: jsonData, encoding: .utf8) {
@@ -75,28 +77,6 @@ private struct Word: Codable {
         if let start_ms = start_ms { dict["start_ms"] = start_ms }
         if let word = word { dict["word"] = word }
         return dict
-    }
-}
-
-private struct MessageStateItem: Codable {
-    let object: String?
-    let current: String?
-    let turn_id: Int?
-    let ts: Int64?
-    
-    func description() -> String {
-        var dict: [String: Any] = [:]
-        
-        if let object = object { dict["object"] = object }
-        if let current = current { dict["current"] = current }
-        if let turn_id = turn_id { dict["turn_id"] = turn_id }
-        if let ts = ts { dict["ts"] = ts }
-        
-        if let jsonData = try? JSONSerialization.data(withJSONObject: dict, options: []),
-           let jsonString = String(data: jsonData, encoding: .utf8) {
-            return jsonString
-        }
-        return "{}"
     }
 }
 
@@ -135,10 +115,22 @@ private struct WordBuffer {
 
 /// Message State
 @objc public enum MessageState: Int {
-    case waiting = 0      // AI waiting for user to start speaking
-    case listening = 1    // AI detected user voice input
-    case thinking = 2     // AI is understanding and processing
-    case speaking = 3     // AI is speaking
+    case idle = 0
+    case silent = 1      // AI is in idle state
+    case listening = 2   // AI is receiving user voice input
+    case thinking = 3    // AI is processing and understanding
+    case speaking = 4    // AI is generating response
+    
+    init?(rawValue: String) {
+        switch rawValue {
+        case "idle": self = .idle
+        case "silent": self = .silent
+        case "listening": self = .listening
+        case "thinking": self = .thinking
+        case "speaking": self = .speaking
+        default: return nil
+        }
+    }
 }
 private typealias TurnState = SubtitleStatus
 /// Consumer-facing data class representing a complete subtitle message
@@ -162,6 +154,26 @@ private typealias TurnState = SubtitleStatus
         self.status = status
     }
 }
+/// Agent State Message
+/// Used for rendering in the UI layer
+///
+/// - Parameters:
+///   - turnId: Unique identifier for the conversation turn
+///   - state: Current state of the agent
+///   - timestamp: Timestamp of the message
+@objc public class AgentStateMessage: NSObject {
+    let turnId: Int
+    let state: MessageState
+    let timestamp: Int64
+    let messageId: String
+    
+    init(turnId: Int, state: MessageState, timestamp: Int64, messageId: String) {
+        self.turnId = turnId
+        self.state = state
+        self.timestamp = timestamp
+        self.messageId = messageId
+    }
+}
 /// Interface for receiving subtitle update events
 /// Implemented by UI components that need to display subtitles
 @objc public protocol ConversationSubtitleDelegate: AnyObject {
@@ -173,7 +185,7 @@ private typealias TurnState = SubtitleStatus
     /// Called when the message state is updated
     ///
     /// - Parameter messageState: The updated message state
-    @objc func onMessageStateUpdated(messageState: MessageState)
+    @objc func onAgentStateChanged(stateMessage: AgentStateMessage)
     
     @objc optional func onDebugLog(_ txt: String)
 }
@@ -210,6 +222,7 @@ private typealias TurnState = SubtitleStatus
         case assistant = "assistant.transcription"
         case user = "user.transcription"
         case interrupt = "message.interrupt"
+        case state = "message.state"
         case unknown = "unknown"
         case string = "string"
     }
@@ -227,6 +240,8 @@ private typealias TurnState = SubtitleStatus
     private var lastFinishMessage: SubtitleMessage? = nil
     
     private var renderConfig: SubtitleRenderConfig? = nil
+    
+    private var stateMessage: TranscriptionMessage? = nil
     
     private func addLog(_ txt: String) {
         delegate?.onDebugLog?(txt)
@@ -257,14 +272,15 @@ private typealias TurnState = SubtitleStatus
                                                   text: text,
                                                   status: (message.final == true) ? .end : .inprogress)
             self.delegate?.onSubtitleUpdated(subtitle: subtitleMessage)
-            return
-        }
-        
-        let renderMode = getMessageMode(message)
-        if renderMode == .words {
-            handleWordsMessage(message)
-        } else if renderMode == .text {
-            handleTextMessage(message)
+        } else if message.object == MessageType.state.rawValue {
+            handleStateMessage(message)
+        } else {
+            let renderMode = getMessageMode(message)
+            if renderMode == .words {
+                handleWordsMessage(message)
+            } else if renderMode == .text {
+                handleTextMessage(message)
+            }
         }
     }
     
@@ -293,6 +309,32 @@ private typealias TurnState = SubtitleStatus
             renderMode = .text
         }
         return renderMode
+    }
+    
+    private func handleStateMessage(_ message: TranscriptionMessage) {
+        guard let turnId = message.turn_id,
+              let messageId = message.message_id,
+              let messageTS = message.send_ts
+        else {
+            return
+        }
+        if let currentState = self.stateMessage {
+            guard let currentTurnId = currentState.turn_id,
+                  let currentMessageId = currentState.message_id,
+                  let currentTS = currentState.send_ts,
+                  messageId != currentMessageId,
+                  turnId >= currentTurnId,
+                  messageTS > currentTS else {
+                return
+            }
+        }
+        self.stateMessage = message
+        // call back state
+        if let stateString = message.state,
+           let state = MessageState(rawValue: stateString) {
+            let stateMessage = AgentStateMessage(turnId: turnId, state: state, timestamp: message.send_ts ?? 0, messageId: messageId)
+            self.delegate?.onAgentStateChanged(stateMessage: stateMessage)
+        }
     }
     
     private func handleTextMessage(_ message: TranscriptionMessage) {
@@ -526,9 +568,8 @@ extension ConversationSubtitleController {
         renderMode = nil
         lastMessage = nil
         lastFinishMessage = nil
+        stateMessage = nil
         audioTimestamp = 0
         messageQueue.removeAll()
     }
 }
-
-
