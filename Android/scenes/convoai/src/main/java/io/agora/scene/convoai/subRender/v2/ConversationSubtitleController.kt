@@ -110,6 +110,7 @@ enum class SubtitleStatus {
  * AI Conversation State
  */
 enum class AgentConversationStatus {
+    Idle,
     Silent,
     Listening,
     Thinking,
@@ -334,10 +335,13 @@ class ConversationSubtitleController(
                             if (ts <= (mAgentMessageState?.ts ?: 0)) return
 
                             val state = msg["state"] as? String ?: ""
-                            val aiConvStatus = if (state == "listening") AgentConversationStatus.Listening
-                            else if (state == "thinking") AgentConversationStatus.Thinking
-                            else if (state == "speaking") AgentConversationStatus.Speaking
-                            else AgentConversationStatus.Silent
+                            val aiConvStatus = when (state) {
+                                "idle" -> AgentConversationStatus.Idle
+                                "listening" -> AgentConversationStatus.Listening
+                                "thinking" -> AgentConversationStatus.Thinking
+                                "speaking" -> AgentConversationStatus.Speaking
+                                else -> AgentConversationStatus.Silent
+                            }
                             runOnMainThread {
                                 mAgentMessageState = AgentMessageState(
                                     messageId = messageId,
@@ -427,11 +431,13 @@ class ConversationSubtitleController(
 
     fun reset() {
         this.mRenderMode = null
+        this.mAgentMessageState = null
         stopSubtitleTicker()
     }
 
     fun release() {
         this.mRenderMode = null
+        this.mAgentMessageState = null
         stopSubtitleTicker()
         coroutineScope.cancel()
     }

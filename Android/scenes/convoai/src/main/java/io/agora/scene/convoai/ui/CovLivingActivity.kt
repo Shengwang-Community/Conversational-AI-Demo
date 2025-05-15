@@ -1,6 +1,5 @@
 package io.agora.scene.convoai.ui
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.graphics.PorterDuff
@@ -17,6 +16,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.view.isVisible
 import com.tencent.bugly.crashreport.CrashReport
 import io.agora.rtc2.Constants
 import io.agora.rtc2.IRtcEngineEventHandler
@@ -61,6 +61,7 @@ import io.agora.scene.convoai.iot.ui.CovIotDeviceListActivity
 import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.subRender.v1.SelfRenderConfig
 import io.agora.scene.convoai.subRender.v1.SelfSubRenderController
+import io.agora.scene.convoai.subRender.v2.AgentConversationStatus
 import io.agora.scene.convoai.subRender.v2.ConversationSubtitleController
 import io.agora.scene.convoai.subRender.v2.SubtitleRenderConfig
 import io.agora.scene.convoai.subRender.v2.SubtitleRenderMode
@@ -369,13 +370,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         // Immediately show the connecting status
         isUserEndCall = false
         connectionState = AgentConnectionState.CONNECTING
-        CovAgentManager.channelName =
-            if (DebugConfigSettings.isDebug) {
-                "agent_debug_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
-            } else {
-                "agent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
-            }
-
+        if (DebugConfigSettings.isDebug) {
+            mBinding?.tvConversationState?.text = "Agent State: ${AgentConversationStatus.Idle}"
+            mBinding?.tvConversationState?.isVisible = true
+            CovAgentManager.channelName = "agent_debug_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+        } else {
+            mBinding?.tvConversationState?.isVisible = false
+            "agent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+        }
 
         isSelfSubRender = CovAgentManager.getPreset()?.isIndependent() == true
         mBinding?.apply {
@@ -391,7 +393,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 messageListViewV2.onAIStatusChanged = { status ->
                     // Only respond to AI status changes when connected
                     if (connectionState == AgentConnectionState.CONNECTED) {
-                        mBinding?.tvConversationState?.text = "Agent State:${status.state}"
+                        mBinding?.tvConversationState?.text = "Agent State: ${status.state}"
                     }
                 }
             }
@@ -492,6 +494,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         stopAgentAndLeaveChannel()
         persistentToast(false, "")
         ToastUtil.show(getString(R.string.cov_detail_agent_leave))
+        mBinding?.tvConversationState?.isVisible = false
     }
 
     private fun stopAgentAndLeaveChannel() {
