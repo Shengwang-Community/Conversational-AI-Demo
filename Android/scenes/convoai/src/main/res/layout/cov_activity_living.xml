@@ -90,8 +90,11 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:textColor="@color/ai_red6"
         android:textSize="14sp"
+        android:background="@drawable/common_bg_name_radius4"
+        android:paddingVertical="6dp"
+        android:paddingHorizontal="12dp"
         android:layout_marginTop="12dp"
-        tools:text="Agent State: Silent"/>
+        android:text="Agent State: Idle"/>
 
     <FrameLayout
         android:id="@+id/layoutConnect"

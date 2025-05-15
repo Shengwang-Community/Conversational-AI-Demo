@@ -28,6 +28,8 @@ import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.rtc.CovRtcManager
 import kotlin.math.abs
 import io.agora.scene.convoai.iot.manager.CovIotDeviceManager
+import io.agora.scene.convoai.subRender.v2.ConversationSubtitleController
+import io.agora.scene.convoai.subRender.v2.SUBTITLE_VERSION
 
 class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
     private var onDismissCallback: (() -> Unit)? = null
@@ -144,7 +146,7 @@ class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
             updateUploadingStatus(disable = connectionState != AgentConnectionState.CONNECTED)
 
             tvVersionName.text =
-                getString(io.agora.scene.common.R.string.common_app_version, ServerConfig.appVersionName)
+                getString(io.agora.scene.common.R.string.common_app_version, SUBTITLE_VERSION)
             tvBuild.text = getString(io.agora.scene.common.R.string.common_app_build_no, ServerConfig.appBuildNo)
         }
     }
