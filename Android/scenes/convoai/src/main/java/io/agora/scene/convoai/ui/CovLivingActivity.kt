@@ -207,8 +207,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         subRenderController = ConversationSubtitleController(
             SubtitleRenderConfig(
                 rtcEngine = rtcEngine,
-                SubtitleRenderMode.Word,
-                mBinding?.messageListViewV2
+                renderMode = SubtitleRenderMode.Word,
+                callback = mBinding?.messageListViewV2
             )
         )
         ApiManager.setOnUnauthorizedCallback {
