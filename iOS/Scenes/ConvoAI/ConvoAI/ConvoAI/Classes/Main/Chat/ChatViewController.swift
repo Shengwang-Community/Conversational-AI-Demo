@@ -54,6 +54,15 @@ public class ChatViewController: UIViewController {
         return view
     }()
 
+    private lazy var stateLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .white
+        label.textAlignment = .center
+        label.backgroundColor = UIColor(hex:0x000000, transparency: 0.25)
+        label.isHidden = true
+        return label
+    }()
+
     private lazy var bottomBar: AgentControlToolbar = {
         let view = AgentControlToolbar()
         view.delegate = self
@@ -248,7 +257,7 @@ public class ChatViewController: UIViewController {
     
     private func setupViews() {
         view.backgroundColor = .black
-        [animateContentView, upperBackgroundView, lowerBackgroundView, contentView, messageView, topBar, welcomeMessageView, bottomBar, annotationView, devModeButton].forEach { view.addSubview($0) }
+        [animateContentView, upperBackgroundView, lowerBackgroundView, contentView, messageView, topBar, welcomeMessageView, bottomBar, annotationView, devModeButton, stateLabel].forEach { view.addSubview($0) }
         
         contentView.addSubview(aiNameLabel)
     }
@@ -259,6 +268,14 @@ public class ChatViewController: UIViewController {
             make.left.right.equalToSuperview()
             make.height.equalTo(48)
         }
+
+        stateLabel.snp.makeConstraints { make in
+            make.centerX.equalToSuperview()
+            make.height.equalTo(44)
+            make.width.equalTo(120)
+            make.top.equalTo(topBar.snp.bottom).offset(40)
+        }
+
         animateContentView.snp.makeConstraints { make in
             make.left.right.top.bottom.equalTo(0)
         }
@@ -317,12 +334,11 @@ public class ChatViewController: UIViewController {
         animateView.setupMediaPlayer(rtcEngine)
         animateView.updateAgentState(.idle)
         
-        let subRenderConfig = SubtitleRenderConfig(rtcEngine: rtcEngine, renderMode: .words, delegate: self)
+        let subRenderConfig = SubtitleRenderConfig(rtcEngine: rtcEngine, renderMode: .words, delegate: self, writeRtcLog: false)
         subRenderController.setupWithConfig(subRenderConfig)
         
         devModeButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
     }
-
     
     @MainActor
     private func prepareToStartAgent() async {
@@ -401,6 +417,7 @@ public class ChatViewController: UIViewController {
         animateView.updateAgentState(.idle)
         messageView.clearMessages()
         messageView.isHidden = true
+        stateLabel.isHidden = true
         bottomBar.resetState()
         timerCoordinator.stopAllTimer()
         AppContext.preferenceManager()?.resetAgentInformation()
@@ -514,6 +531,7 @@ extension ChatViewController {
         manager.updateAgentState(.disconnected)
         if DeveloperConfig.shared.isDeveloperMode {
             channelName = "agent_debug_\(UUID().uuidString.prefix(8))"
+            stateLabel.isHidden = false
         } else {
             channelName = "agent_\(UUID().uuidString.prefix(8))"
         }
@@ -961,6 +979,27 @@ extension ChatViewController: ConversationSubtitleDelegate {
             }
         }
     }
+
+    public func onAgentStateChanged(stateMessage: AgentStateMessage) {
+        addLog("[Call] onAgentStateChanged: \(stateMessage.state)")
+        switch stateMessage.state {
+        case .idle:
+            stateLabel.text = "idle"
+            break
+        case .silent:
+            stateLabel.text = "silent"
+            break
+        case .listening:
+            stateLabel.text = "listening"
+            break
+        case .thinking:
+            stateLabel.text = "thinking"
+            break
+        case .speaking:
+            stateLabel.text = "speaking"
+            break
+        }
+    }
     
     public func onDebugLog(_ txt: String) {
         addLog(txt)
@@ -1054,23 +1093,23 @@ extension ChatViewController {
     @objc private func onClickDevMode() {
         DeveloperConfig.shared
             .setServerHost(AppContext.preferenceManager()?.information.targetServer ?? "")
-            .setAudioDump(enabled: rtcManager.getAudioDump(), onChange: { isOn in
-                self.rtcManager.enableAudioDump(enabled: isOn)
+            .setAudioDump(enabled: rtcManager.getAudioDump(), onChange: { [weak self] isOn in
+                self?.rtcManager.enableAudioDump(enabled: isOn)
             })
-            .setSessionLimit(enabled: !DeveloperConfig.shared.getSessionFree(), onChange: { isOn in
-                self.timerCoordinator.setDurationLimit(limited: isOn)
+            .setSessionLimit(enabled: !DeveloperConfig.shared.getSessionFree(), onChange: { [weak self] isOn in
+                self?.timerCoordinator.setDurationLimit(limited: isOn)
             })
-            .setCloseDevModeCallback {
-                self.devModeButton.isHidden = true
+            .setCloseDevModeCallback { [weak self] in
+                self?.devModeButton.isHidden = true
             }
-            .setSwitchServerCallback {
-                self.switchEnvironment()
+            .setSwitchServerCallback { [weak self] in
+                self?.switchEnvironment()
             }
             .setSDKParamsCallback { [weak self] param in
                 self?.rtcManager.getRtcEntine().setParameters(param)
             }
-            .setCopyCallback {
-                let messageContents = self.messageView.getAllMessages()
+            .setCopyCallback { [weak self] in
+                let messageContents = self?.messageView.getAllMessages()
                     .filter { $0.isMine }
                     .map { $0.content }
                     .joined(separator: "\n")
@@ -1082,7 +1121,7 @@ extension ChatViewController {
     }
     
     private func switchEnvironment() {
-        AppContext.preferenceManager()?.deleteAllPresets()
+        deleteAllPresets()
         stopLoading()
         stopAgent()
         animateView.releaseView()
@@ -1090,6 +1129,9 @@ extension ChatViewController {
         UserCenter.shared.logout()
         NotificationCenter.default.post(name: .EnvironmentChanged, object: nil, userInfo: nil)
     }
+    
+    private func deleteAllPresets() {
+        IoTEntrance.deleteAllPresets()
+        AppContext.preferenceManager()?.deleteAllPresets()
+    }
 }
-
-

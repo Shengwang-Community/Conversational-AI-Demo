@@ -104,7 +104,16 @@ class AgentSettingViewController: UIViewController {
         attributedString.append(attrString2)
         view.titleLabel.attributedText = attributedString
         view.addtarget(self, action: #selector(onClickAiVad(_:)), for: .touchUpInside)
-        if let manager = AppContext.preferenceManager() {
+        if let manager = AppContext.preferenceManager(),
+           let language = manager.preference.preset,
+           let presetType = manager.preference.preset?.presetType
+        {
+            if manager.information.agentState != .unload ||
+                presetType.contains("independent") {
+                view.setEnable(false)
+            } else {
+                view.setEnable(true)
+            }
             view.setOn(manager.preference.aiVad)
         }
         view.bottomLine.isHidden = true
@@ -132,7 +141,6 @@ class AgentSettingViewController: UIViewController {
         createViews()
         createConstrains()
         setupPanGesture()
-        updateAiVADEnabelState()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -444,7 +452,7 @@ extension AgentSettingViewController {
         }
         
         selectTableMask.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
+            make.top.left.right.bottom.equalToSuperview()
         }
     }
     
@@ -468,40 +476,34 @@ extension AgentSettingViewController: AgentPreferenceManagerDelegate {
         if let language = supportLanguages.first(where: { $0.languageCode == resetLanguageCode }) {
             manager.updateLanguage(language)
         }
-        if (preset.presetType.contains("independent")) {
-            manager.updateAiVadState(false)
+        if preset.presetType.contains("independent") {
+            aiVadItem.setEnable(false)
+        } else {
+            aiVadItem.setEnable(true)
         }
-        updateAiVADEnabelState()
     }
     
     func preferenceManager(_ manager: AgentPreferenceManager, agentStateDidUpdated agentState: ConnectionStatus) {
-        updateAiVADEnabelState()
+        if agentState != .unload {
+            aiVadItem.setEnable(false)
+        } else {
+            if let presetType = manager.preference.preset?.presetType,
+               presetType.contains("independent") {
+                aiVadItem.setEnable(false)
+                AppContext.preferenceManager()?.updateAiVadState(false)
+            } else {
+                aiVadItem.setEnable(true)
+                AppContext.preferenceManager()?.updateAiVadState(false)
+            }
+        }
     }
     
     func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage) {
         languageItem.detailLabel.text = language.languageName
-        updateAiVADEnabelState()
     }
     
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool) {
         aiVadItem.setOn(state)
-    }
-    
-    func updateAiVADEnabelState() {
-        guard let preset = AppContext.preferenceManager()?.preference.preset,
-              let language = AppContext.preferenceManager()?.preference.language,
-              let agetnState = AppContext.preferenceManager()?.information.agentState
-        else {
-            return
-        }
-        var aiVadEnable = true
-        if (preset.presetType.contains("independent")) {
-            aiVadEnable = false
-        }
-        if (agetnState != .unload) {
-            aiVadEnable = false
-        }
-        aiVadItem.setEnable(aiVadEnable)
     }
 }
 

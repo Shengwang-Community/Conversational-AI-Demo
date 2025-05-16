@@ -26,9 +26,10 @@ private struct TranscriptionMessage: Codable {
     let duration_ms: Int64?
     let start_ms: Int64?
     let latency_ms: Int?
-    let send_ts: Int?
+    let send_ts: Int64?
     let module: String?
     let metric_name: String?
+    let state: String?
     
     func description() -> String {
         var dict: [String: Any] = [:]
@@ -53,6 +54,7 @@ private struct TranscriptionMessage: Codable {
         if let send_ts = send_ts { dict["send_ts"] = send_ts }
         if let module = module { dict["module"] = module }
         if let metric_name = metric_name { dict["metric_name"] = metric_name }
+        if let state = state { dict["state"] = state }
         
         if let jsonData = try? JSONSerialization.data(withJSONObject: dict, options: []),
            let jsonString = String(data: jsonData, encoding: .utf8) {
@@ -105,10 +107,30 @@ private struct WordBuffer {
 /// - Progress: Subtitle is still being generated or spoken
 /// - End: Subtitle has completed normally
 /// - Interrupted: Subtitle was interrupted before completion
-enum SubtitleStatus: Int {
+@objc public enum SubtitleStatus: Int {
     case inprogress = 0
     case end = 1
     case interrupt = 2
+}
+
+/// Message State
+@objc public enum MessageState: Int {
+    case idle = 0
+    case silent = 1      // AI is in idle state
+    case listening = 2   // AI is receiving user voice input
+    case thinking = 3    // AI is processing and understanding
+    case speaking = 4    // AI is generating response
+    
+    init?(rawValue: String) {
+        switch rawValue {
+        case "idle": self = .idle
+        case "silent": self = .silent
+        case "listening": self = .listening
+        case "thinking": self = .thinking
+        case "speaking": self = .speaking
+        default: return nil
+        }
+    }
 }
 private typealias TurnState = SubtitleStatus
 /// Consumer-facing data class representing a complete subtitle message
@@ -132,6 +154,26 @@ private typealias TurnState = SubtitleStatus
         self.status = status
     }
 }
+/// Agent State Message
+/// Used for rendering in the UI layer
+///
+/// - Parameters:
+///   - turnId: Unique identifier for the conversation turn
+///   - state: Current state of the agent
+///   - timestamp: Timestamp of the message
+@objc public class AgentStateMessage: NSObject {
+    let turnId: Int
+    let state: MessageState
+    let timestamp: Int64
+    let messageId: String
+    
+    init(turnId: Int, state: MessageState, timestamp: Int64, messageId: String) {
+        self.turnId = turnId
+        self.state = state
+        self.timestamp = timestamp
+        self.messageId = messageId
+    }
+}
 /// Interface for receiving subtitle update events
 /// Implemented by UI components that need to display subtitles
 @objc public protocol ConversationSubtitleDelegate: AnyObject {
@@ -139,6 +181,11 @@ private typealias TurnState = SubtitleStatus
     ///
     /// - Parameter subtitle: The updated subtitle message
     @objc func onSubtitleUpdated(subtitle: SubtitleMessage)
+
+    /// Called when the message state is updated
+    ///
+    /// - Parameter messageState: The updated message state
+    @objc func onAgentStateChanged(stateMessage: AgentStateMessage)
     
     @objc optional func onDebugLog(_ txt: String)
 }
@@ -151,12 +198,14 @@ private typealias TurnState = SubtitleStatus
 @objc public class SubtitleRenderConfig: NSObject {
     let rtcEngine: AgoraRtcEngineKit
     let renderMode: SubtitleRenderMode
-    let delegate: ConversationSubtitleDelegate?
+    weak var delegate: ConversationSubtitleDelegate?
+    let writeRtcLog: Bool
     
-    @objc public init(rtcEngine: AgoraRtcEngineKit, renderMode: SubtitleRenderMode, delegate: ConversationSubtitleDelegate?) {
+    @objc public init(rtcEngine: AgoraRtcEngineKit, renderMode: SubtitleRenderMode, delegate: ConversationSubtitleDelegate?, writeRtcLog: Bool = false) {
         self.rtcEngine = rtcEngine
         self.renderMode = renderMode
         self.delegate = delegate
+        self.writeRtcLog = writeRtcLog
     }
 }
 
@@ -167,6 +216,7 @@ private typealias TurnState = SubtitleStatus
 ///
 @objc public class ConversationSubtitleController: NSObject {
     
+    public static let version: String = "1.4.0"
     public static let localUserId: UInt = 0
     public static let remoteUserId: UInt = 99
     
@@ -174,6 +224,7 @@ private typealias TurnState = SubtitleStatus
         case assistant = "assistant.transcription"
         case user = "user.transcription"
         case interrupt = "message.interrupt"
+        case state = "message.state"
         case unknown = "unknown"
         case string = "string"
     }
@@ -192,8 +243,15 @@ private typealias TurnState = SubtitleStatus
     
     private var renderConfig: SubtitleRenderConfig? = nil
     
+    private var stateMessage: TranscriptionMessage? = nil
+    
     private func addLog(_ txt: String) {
         delegate?.onDebugLog?(txt)
+        if (renderConfig?.writeRtcLog == true) {
+            DispatchQueue.global().async {
+                self.renderConfig?.rtcEngine.writeLog(.info, content: txt)
+            }
+        }
     }
     
     private let queue = DispatchQueue(label: "com.voiceagent.messagequeue", attributes: .concurrent)
@@ -221,14 +279,15 @@ private typealias TurnState = SubtitleStatus
                                                   text: text,
                                                   status: (message.final == true) ? .end : .inprogress)
             self.delegate?.onSubtitleUpdated(subtitle: subtitleMessage)
-            return
-        }
-        
-        let renderMode = getMessageMode(message)
-        if renderMode == .words {
-            handleWordsMessage(message)
-        } else if renderMode == .text {
-            handleTextMessage(message)
+        } else if message.object == MessageType.state.rawValue {
+            handleStateMessage(message)
+        } else {
+            let renderMode = getMessageMode(message)
+            if renderMode == .words {
+                handleWordsMessage(message)
+            } else if renderMode == .text {
+                handleTextMessage(message)
+            }
         }
     }
     
@@ -246,17 +305,43 @@ private typealias TurnState = SubtitleStatus
                 timer?.invalidate()
                 timer = nil
                 timer = Timer.scheduledTimer(timeInterval: 0.2, target: self, selector: #selector(eventLoop), userInfo: nil, repeats: true)
-                addLog("✅[CovSubRenderController] render mode: words")
+                addLog("✅[CovSubRenderController] render mode: words, version \(ConversationSubtitleController.version)")
             } else {
                 renderMode = .text
                 timer?.invalidate()
                 timer = nil
-                addLog("✅[CovSubRenderController] render mode: text")
+                addLog("✅[CovSubRenderController] render mode: text, version \(ConversationSubtitleController.version)")
             }
         } else if (renderConfig?.renderMode == .text) {
             renderMode = .text
         }
         return renderMode
+    }
+    
+    private func handleStateMessage(_ message: TranscriptionMessage) {
+        guard let turnId = message.turn_id,
+              let messageId = message.message_id,
+              let messageTS = message.send_ts
+        else {
+            return
+        }
+        if let currentState = self.stateMessage {
+            guard let currentTurnId = currentState.turn_id,
+                  let currentMessageId = currentState.message_id,
+                  let currentTS = currentState.send_ts,
+                  messageId != currentMessageId,
+                  turnId >= currentTurnId,
+                  messageTS > currentTS else {
+                return
+            }
+        }
+        self.stateMessage = message
+        // call back state
+        if let stateString = message.state,
+           let state = MessageState(rawValue: stateString) {
+            let stateMessage = AgentStateMessage(turnId: turnId, state: state, timestamp: message.send_ts ?? 0, messageId: messageId)
+            self.delegate?.onAgentStateChanged(stateMessage: stateMessage)
+        }
     }
     
     private func handleTextMessage(_ message: TranscriptionMessage) {
@@ -465,7 +550,7 @@ extension ConversationSubtitleController: AgoraRtcEngineDelegate {
 extension ConversationSubtitleController: AgoraAudioFrameDelegate {
     
     public func onPlaybackAudioFrame(beforeMixing frame: AgoraAudioFrame, channelId: String, uid: UInt) -> Bool {
-        audioTimestamp = frame.presentationMs
+        audioTimestamp = frame.presentationMs+20
         return true
     }
     
@@ -482,6 +567,9 @@ extension ConversationSubtitleController {
         config.rtcEngine.setAudioFrameDelegate(self)
         config.rtcEngine.addDelegate(self)
         config.rtcEngine.setPlaybackAudioFrameBeforeMixingParametersWithSampleRate(44100, channel: 1)
+        if config.writeRtcLog {
+            config.rtcEngine.setParameters("{\"rtc.log_external_input\": true}")
+        }
     }
         
     @objc public func reset() {
@@ -490,9 +578,8 @@ extension ConversationSubtitleController {
         renderMode = nil
         lastMessage = nil
         lastFinishMessage = nil
+        stateMessage = nil
         audioTimestamp = 0
         messageQueue.removeAll()
     }
 }
-
-

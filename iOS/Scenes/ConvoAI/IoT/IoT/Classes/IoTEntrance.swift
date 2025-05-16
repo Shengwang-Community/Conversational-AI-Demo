@@ -42,6 +42,10 @@ public class IoTEntrance: NSObject {
         }
     }
     
+    public static func deleteAllPresets() {
+        AppContext.iotPresetsManager()?.deleteAllPresets()
+    }
+    
     public static func deviceCount() -> Int {
         guard let allDevice = AppContext.iotDeviceManager()?.getAllDevices() else {
             return 0
