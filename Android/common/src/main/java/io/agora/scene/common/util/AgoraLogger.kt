@@ -33,13 +33,16 @@ object AgoraLogger {
             .build()
 
         for (scene in AgentScenes.entries) {
-            val filePrinter = FilePrinter.Builder(logDir.absolutePath)
+            val filePrinterBuilder = FilePrinter.Builder(logDir.absolutePath)
                 .fileNameGenerator(ChangelessFileNameGenerator("${scene.name}.log"))
-                .backupStrategy(FileSizeBackupStrategy2(2 * 1024L * 1024, 1))
                 .flattener(ClassicFlattener())
-                .build()
+            if (scene == AgentScenes.ConvoAi) {
+                filePrinterBuilder.backupStrategy(FileSizeBackupStrategy2(2 * 1024L * 1024, 4))
+            } else {
+                filePrinterBuilder.backupStrategy(FileSizeBackupStrategy2(2 * 1024L * 1024, 1))
+            }
 
-            mPrinters[scene.name] = filePrinter
+            mPrinters[scene.name] = filePrinterBuilder.build()
         }
         mPrinters[LOGCAT] = AndroidPrinter(true)
         XLog.init(logConfig, *mPrinters.values.toTypedArray())
