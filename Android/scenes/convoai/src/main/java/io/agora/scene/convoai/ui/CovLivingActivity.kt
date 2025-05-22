@@ -376,7 +376,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             CovAgentManager.channelName = "agent_debug_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
         } else {
             mBinding?.tvConversationState?.isVisible = false
-            "agent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+            CovAgentManager.channelName = "agent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
         }
 
         isSelfSubRender = CovAgentManager.getPreset()?.isIndependent() == true

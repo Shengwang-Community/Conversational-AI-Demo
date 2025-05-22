@@ -302,9 +302,13 @@ class ConversationSubtitleController(
             }
         })
         config.rtcEngine.setPlaybackAudioFrameBeforeMixingParameters(44100, 1)
-        if (config.writeRtcLog){
+        if (config.writeRtcLog) {
             config.rtcEngine.setParameters("{\"rtc.log_external_input\": true}")
         }
+        onDebugLog(
+            TAG,
+            "init this:0x${this.hashCode().toString(16)}, version:$SUBTITLE_VERSION, renderMode:${config.renderMode}, writeRtcLog:${config.writeRtcLog}"
+        )
     }
 
     private val executorService = Executors.newSingleThreadExecutor()
@@ -331,13 +335,19 @@ class ConversationSubtitleController(
                     val isUserMsg: Boolean
                     when (transcription) {
                         // agent message
-                        "assistant.transcription" -> { isUserMsg = false }
+                        "assistant.transcription" -> {
+                            isUserMsg = false
+                        }
                         // user message
-                        "user.transcription" -> { isUserMsg = true }
+                        "user.transcription" -> {
+                            isUserMsg = true
+                        }
+
                         "message.interrupt" -> {
                             isUserMsg = false
                             isInterrupt = true
                         }
+
                         "message.state" -> {
                             onDebugLog(TAG, "onStreamMessage parser：$msg")
                             isUserMsg = false
@@ -371,6 +381,7 @@ class ConversationSubtitleController(
                             }
                             return
                         }
+
                         else -> return
                     }
                     onDebugLog(TAG, "onStreamMessage parser：$msg")
@@ -501,13 +512,13 @@ class ConversationSubtitleController(
                 } else {
                     SubtitleRenderMode.Text
                 }
-                onDebugLog(TAG, "Subtitle Version: $SUBTITLE_VERSION")
-                onDebugLog(TAG, "Mode auto detected: $mRenderMode")
             } else {
                 mRenderMode = SubtitleRenderMode.Text
-                onDebugLog(TAG, "Subtitle Version: $SUBTITLE_VERSION")
-                onDebugLog(TAG, "Mode auto: $mRenderMode")
             }
+            onDebugLog(
+                TAG,
+                "render mode auto detected: $mRenderMode, this:0x${this.hashCode().toString(16)}, version: $SUBTITLE_VERSION"
+            )
         }
 
         if (mRenderMode == SubtitleRenderMode.Text && status != TurnStatus.INTERRUPTED) {
@@ -540,7 +551,10 @@ class ConversationSubtitleController(
             // The last turn to be dequeued
             mLastDequeuedTurn?.let { lastEnd ->
                 if (turnId <= lastEnd.turnId) {
-                    onDebugLog(TAG, "Discarding the turn has already been processed: received=$turnId, latest=${lastEnd.turnId}")
+                    onDebugLog(
+                        TAG,
+                        "Discarding the turn has already been processed: received=$turnId, latest=${lastEnd.turnId}"
+                    )
                     return
                 }
             }
