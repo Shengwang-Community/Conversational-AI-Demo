@@ -532,6 +532,7 @@ extension ChatViewController {
         if DeveloperConfig.shared.isDeveloperMode {
             channelName = "agent_debug_\(UUID().uuidString.prefix(8))"
             stateLabel.isHidden = false
+            stateLabel.text = ""
         } else {
             channelName = "agent_\(UUID().uuidString.prefix(8))"
         }

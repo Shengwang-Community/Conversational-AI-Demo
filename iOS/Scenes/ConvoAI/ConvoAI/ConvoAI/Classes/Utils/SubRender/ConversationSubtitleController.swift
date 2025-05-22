@@ -245,6 +245,10 @@ private typealias TurnState = SubtitleStatus
     
     private var stateMessage: TranscriptionMessage? = nil
     
+    deinit {
+        addLog("[CovSubRenderController] deinit: \(self)")
+    }
+    
     private func addLog(_ txt: String) {
         delegate?.onDebugLog?(txt)
         if (renderConfig?.writeRtcLog == true) {
@@ -305,12 +309,12 @@ private typealias TurnState = SubtitleStatus
                 timer?.invalidate()
                 timer = nil
                 timer = Timer.scheduledTimer(timeInterval: 0.2, target: self, selector: #selector(eventLoop), userInfo: nil, repeats: true)
-                addLog("✅[CovSubRenderController] render mode: words, version \(ConversationSubtitleController.version)")
+                addLog("✅[CovSubRenderController] render mode: words, version \(ConversationSubtitleController.version), \(self)")
             } else {
                 renderMode = .text
                 timer?.invalidate()
                 timer = nil
-                addLog("✅[CovSubRenderController] render mode: text, version \(ConversationSubtitleController.version)")
+                addLog("✅[CovSubRenderController] render mode: text, version \(ConversationSubtitleController.version), \(self)")
             }
         } else if (renderConfig?.renderMode == .text) {
             renderMode = .text
@@ -570,6 +574,7 @@ extension ConversationSubtitleController {
         if config.writeRtcLog {
             config.rtcEngine.setParameters("{\"rtc.log_external_input\": true}")
         }
+        addLog("[CovSubRenderController] setupWithConfig: \(self)")
     }
         
     @objc public func reset() {
