@@ -16,7 +16,7 @@ public class DeveloperConfig {
     public var defaultAppId: String? = nil
     public var defaultHost: String? = nil
     public var convoaiServerConfig: String? = nil
-    public var graphId: String? = "1.3.1-305-g6c166102"
+    public var graphId: String? = nil
     public var sdkParams: [String] = []
     
     internal var serverHost: String = ""

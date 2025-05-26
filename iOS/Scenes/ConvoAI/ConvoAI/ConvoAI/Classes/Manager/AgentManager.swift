@@ -74,7 +74,7 @@ class AgentManager: AgentAPI {
                 presets.removeAll(where: { $0.presetType == "custom" })
                 completion(nil, presets)
             } catch {
-                let error = AgentError.serverError(code: -1, message: error.localizedDescription)
+                let error = AgentError.serverError(code: -1, message: "data error")
                 completion(error, nil)
             }
         } failure: { msg in

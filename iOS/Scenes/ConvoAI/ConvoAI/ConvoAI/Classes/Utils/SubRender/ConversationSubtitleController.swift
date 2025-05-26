@@ -199,13 +199,11 @@ private typealias TurnState = SubtitleStatus
     let rtcEngine: AgoraRtcEngineKit
     let renderMode: SubtitleRenderMode
     weak var delegate: ConversationSubtitleDelegate?
-    let writeRtcLog: Bool
     
-    @objc public init(rtcEngine: AgoraRtcEngineKit, renderMode: SubtitleRenderMode, delegate: ConversationSubtitleDelegate?, writeRtcLog: Bool = false) {
+    @objc public init(rtcEngine: AgoraRtcEngineKit, renderMode: SubtitleRenderMode, delegate: ConversationSubtitleDelegate?) {
         self.rtcEngine = rtcEngine
         self.renderMode = renderMode
         self.delegate = delegate
-        self.writeRtcLog = writeRtcLog
     }
 }
 
@@ -251,11 +249,6 @@ private typealias TurnState = SubtitleStatus
     
     private func addLog(_ txt: String) {
         delegate?.onDebugLog?(txt)
-        if (renderConfig?.writeRtcLog == true) {
-            DispatchQueue.global().async {
-                self.renderConfig?.rtcEngine.writeLog(.info, content: txt)
-            }
-        }
     }
     
     private let queue = DispatchQueue(label: "com.voiceagent.messagequeue", attributes: .concurrent)
@@ -336,6 +329,7 @@ private typealias TurnState = SubtitleStatus
                   messageId != currentMessageId,
                   turnId >= currentTurnId,
                   messageTS > currentTS else {
+                addLog("[CovSubRenderController] handleStateMessage return message: \(messageTS)")
                 return
             }
         }
@@ -343,6 +337,7 @@ private typealias TurnState = SubtitleStatus
         // call back state
         if let stateString = message.state,
            let state = MessageState(rawValue: stateString) {
+            addLog("[CovSubRenderController] handleStateMessage update \(stateString)")
             let stateMessage = AgentStateMessage(turnId: turnId, state: state, timestamp: message.send_ts ?? 0, messageId: messageId)
             self.delegate?.onAgentStateChanged(stateMessage: stateMessage)
         }
@@ -571,9 +566,6 @@ extension ConversationSubtitleController {
         config.rtcEngine.setAudioFrameDelegate(self)
         config.rtcEngine.addDelegate(self)
         config.rtcEngine.setPlaybackAudioFrameBeforeMixingParametersWithSampleRate(44100, channel: 1)
-        if config.writeRtcLog {
-            config.rtcEngine.setParameters("{\"rtc.log_external_input\": true}")
-        }
         addLog("[CovSubRenderController] setupWithConfig: \(self)")
     }
         
