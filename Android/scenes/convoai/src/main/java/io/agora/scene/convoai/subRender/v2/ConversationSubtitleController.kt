@@ -489,6 +489,8 @@ class ConversationSubtitleController(
     ) {
         // Auto detect mode
         if (mRenderMode == null) {
+            // fixs TEN-1790
+            agentTurnQueue.clear()
             if (config.renderMode == SubtitleRenderMode.Word) {
                 // TODO turn 0 interrupt ??
                 if (status == TurnStatus.INTERRUPTED) return
