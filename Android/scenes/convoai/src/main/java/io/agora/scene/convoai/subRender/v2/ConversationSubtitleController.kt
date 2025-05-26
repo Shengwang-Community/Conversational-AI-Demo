@@ -9,10 +9,8 @@ import io.agora.rtc2.RtcEngine
 import io.agora.rtc2.audio.AudioParams
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ticker
-import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Executors
 
 const val SUBTITLE_VERSION = "1.4.0"
 
@@ -21,13 +19,11 @@ const val SUBTITLE_VERSION = "1.4.0"
  *
  * @property rtcEngine The RTC engine instance used for real-time communication
  * @property renderMode The mode of subtitle rendering (Idle, Text, or Word)
- * @property writeRtcLog Whether to write RTC logs, default false
  * @property callback Callback interface for subtitle updates
  */
 data class SubtitleRenderConfig(
     val rtcEngine: RtcEngine,
     val renderMode: SubtitleRenderMode,
-    val writeRtcLog: Boolean = false,
     val callback: IConversationSubtitleCallback?
 )
 
@@ -302,25 +298,14 @@ class ConversationSubtitleController(
             }
         })
         config.rtcEngine.setPlaybackAudioFrameBeforeMixingParameters(44100, 1)
-        if (config.writeRtcLog) {
-            config.rtcEngine.setParameters("{\"rtc.log_external_input\": true}")
-        }
         onDebugLog(
             TAG,
-            "init this:0x${this.hashCode().toString(16)}, version:$SUBTITLE_VERSION, renderMode:${config.renderMode}, writeRtcLog:${config.writeRtcLog}"
+            "init this:0x${this.hashCode().toString(16)}, version:$SUBTITLE_VERSION, renderMode:${config.renderMode}"
         )
     }
 
-    private val executorService = Executors.newSingleThreadExecutor()
-    private val rtcEngineRef = WeakReference(config.rtcEngine)
-
     private fun onDebugLog(tag: String, message: String) {
         config.callback?.onDebugLog(tag, message)
-        if (config.writeRtcLog) {
-            executorService.submit {
-                rtcEngineRef.get()?.writeLog(Constants.LOG_LEVEL_INFO, "[$tag] : $message")
-            }
-        }
     }
 
     override fun onStreamMessage(uid: Int, streamId: Int, data: ByteArray?) {

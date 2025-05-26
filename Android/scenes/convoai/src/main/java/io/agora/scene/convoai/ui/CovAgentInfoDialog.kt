@@ -28,7 +28,6 @@ import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.rtc.CovRtcManager
 import kotlin.math.abs
 import io.agora.scene.convoai.iot.manager.CovIotDeviceManager
-import io.agora.scene.convoai.subRender.v2.ConversationSubtitleController
 import io.agora.scene.convoai.subRender.v2.SUBTITLE_VERSION
 
 class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
