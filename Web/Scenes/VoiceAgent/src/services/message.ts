@@ -50,7 +50,7 @@ export type TQueueItem = {
 // https://github.com/TEN-framework/ten_ai_base/blob/main/interface/ten_ai_base/transcription.py
 /**
  * Represents the current status of a message in the system
- * 
+ *
  * IN_PROGRESS (0): Message is still being processed/streamed
  * END (1): Message has completed normally
  * INTERRUPTED (2): Message was interrupted before completion
@@ -65,23 +65,41 @@ export enum ETranscriptionObjectType {
   USER_TRANSCRIPTION = 'user.transcription',
   AGENT_TRANSCRIPTION = 'assistant.transcription',
   MSG_INTERRUPTED = 'message.interrupt',
+  MSG_STATE = 'message.state',
+}
+
+/**
+ * Represents the state of an agent in the system
+ *
+ * IDLE: Agent is not actively processing or responding
+ * LISTENING: Agent is waiting for input or listening for commands
+ * THINKING: Agent is processing information or generating a response
+ * SPEAKING: Agent is actively communicating or delivering a response
+ * SILENT: Agent is not producing any audible output
+ */
+export enum EAgentState {
+  IDLE = 'idle',
+  LISTENING = 'listening',
+  THINKING = 'thinking',
+  SPEAKING = 'speaking',
+  SILENT = 'silent',
 }
 
 /**
  * Defines different modes for message rendering
- * 
+ *
  * TEXT: Processes messages as complete text blocks without word-by-word processing.
  * Messages are handled as entire units.
- * 
+ *
  * WORD: Processes messages word by word, enabling granular control.
  * Suitable for real-time word-by-word display or analysis.
- * 
+ *
  * AUTO: Automatically determines the most suitable processing mode (TEXT or WORD)
  * based on context or message characteristics.
  */
 export enum EMessageEngineMode {
   TEXT = 'text',
-  WORD = 'word', 
+  WORD = 'word',
   AUTO = 'auto',
 }
 
@@ -118,6 +136,14 @@ export interface IMessageInterrupt {
   send_ts: number
 }
 
+export interface IMessageState {
+  object: ETranscriptionObjectType.MSG_STATE // "message.state"
+  message_id: string
+  turn_id: number
+  ts_ms: number
+  state: EAgentState
+}
+
 /**
  * Represents a message item in the chat history
  * @property uid - Unique identifier for the message sender
@@ -125,7 +151,7 @@ export interface IMessageInterrupt {
  * @property text - The actual message content/transcript
  * @property status - Current status of the message (e.g. in progress, completed, interrupted)
  */
-export interface IMessageListItem{
+export interface IMessageListItem {
   uid: number
   turn_id: number
   text: string
@@ -142,7 +168,7 @@ interface IMessageArrayItem<T> {
 }
 /**
  * Message engine that handles real-time transcription and subtitle rendering
- * 
+ *
  * The engine processes incoming RTC messages and manages the state of transcribed text.
  * It supports different rendering modes:
  * - Auto: Automatically determines the best rendering mode based on message content
@@ -158,6 +184,7 @@ interface IMessageArrayItem<T> {
  * @property callback - Callback function invoked when message list updates
  */
 export class MessageEngine {
+  static _version = '1.4.0'
   // handle rtc-engine stream message
   private _messageCache: Record<string, TDataChunk[]> = {}
   private _messageCacheTimeout: number = DEFAULT_MESSAGE_CACHE_TIMEOUT
@@ -173,6 +200,7 @@ export class MessageEngine {
   private _lastPoppedQueueItem: TQueueItem | null | undefined = null
   private _isRunning: boolean = false
   private _rtcEngine: IAgoraRTCClient | null = null
+  private _agentMessageState: IMessageState | null = null
 
   public messageList: IMessageArrayItem<
     Partial<IUserTranscription | IAgentTranscription>
@@ -183,43 +211,43 @@ export class MessageEngine {
    * Can be null if no callback is needed
    */
   public onMessageListUpdate:
-    | ((
-      messageList: IMessageListItem[]
-    ) => void)
+    | ((messageList: IMessageListItem[]) => void)
     | null = null
+  public onAgentStateChange: ((state: IMessageState) => void) | null = null
 
   constructor(
     rtcEngine: IAgoraRTCClient,
     renderMode?: EMessageEngineMode,
-    callback?: (
-      messageList: IMessageListItem[]
-    ) => void
+    callback?: (messageList: IMessageListItem[]) => void,
+    onAgentStateChange?: (state: IMessageState) => void
   ) {
-    this._rtcEngine = rtcEngine;
+    this._rtcEngine = rtcEngine
     this._listenRtcEvents()
     this.run({
-      legacyMode: false
+      legacyMode: false,
     })
     this.setMode(renderMode ?? EMessageEngineMode.AUTO)
     this.onMessageListUpdate = callback ?? null
+    this.onAgentStateChange = onAgentStateChange ?? null
+    console.info(
+      CONSOLE_LOG_PREFIX,
+      'initialized',
+      `version: ${MessageEngine._version}`
+    )
   }
-
 
   private _listenRtcEvents() {
     if (!this._rtcEngine) {
-      return;
+      return
     }
     this._rtcEngine.on('audio-metadata', (metadata: Uint8Array) => {
       const pts64 = Number(new DataView(metadata.buffer).getBigUint64(0, true))
       this.setPts(pts64)
     })
 
-    this._rtcEngine.on(
-      'stream-message',
-      (_: UID, payload: Uint8Array) => {
-        this.handleStreamMessage(payload)
-      }
-    )
+    this._rtcEngine.on('stream-message', (_: UID, payload: Uint8Array) => {
+      this.handleStreamMessage(payload)
+    })
   }
 
   public run(options?: { legacyMode?: boolean }) {
@@ -266,7 +294,10 @@ export class MessageEngine {
       return
     }
     this.handleChunk<
-      IUserTranscription | IAgentTranscription | IMessageInterrupt
+      | IUserTranscription
+      | IAgentTranscription
+      | IMessageInterrupt
+      | IMessageState
     >(chunk, this.handleMessage.bind(this))
   }
 
@@ -366,7 +397,11 @@ export class MessageEngine {
   }
 
   public handleMessage(
-    message: IUserTranscription | IAgentTranscription | IMessageInterrupt
+    message:
+      | IUserTranscription
+      | IAgentTranscription
+      | IMessageInterrupt
+      | IMessageState
   ) {
     // check if message is transcription
     const isAgentMessage =
@@ -375,7 +410,13 @@ export class MessageEngine {
       message.object === ETranscriptionObjectType.USER_TRANSCRIPTION
     const isMessageInterrupt =
       message.object === ETranscriptionObjectType.MSG_INTERRUPTED
-    if (!isAgentMessage && !isUserMessage && !isMessageInterrupt) {
+    const isMessageState = message.object === ETranscriptionObjectType.MSG_STATE
+    if (
+      !isAgentMessage &&
+      !isUserMessage &&
+      !isMessageInterrupt &&
+      !isMessageState
+    ) {
       logger.debug(CONSOLE_LOG_PREFIX, 'Unknown message type', message)
       return
     }
@@ -406,6 +447,10 @@ export class MessageEngine {
     // handle Message Interrupt
     if (isMessageInterrupt) {
       this.handleMessageInterrupt(message)
+      return
+    }
+    if (isMessageState) {
+      this.handleAgentStatus(message)
       return
     }
     // unknown mode
@@ -449,6 +494,63 @@ export class MessageEngine {
       start_ms,
     })
     this._mutateChatHistory()
+  }
+
+  public handleAgentStatus(message: IMessageState) {
+    const prevMessageState = this._agentMessageState
+    logger.debug(
+      CONSOLE_LOG_PREFIX,
+      'handleAgentStatus',
+      'prevMessageState',
+      prevMessageState,
+      'currentMessageState',
+      message
+    )
+    const currentMsgId = message.message_id
+    // check if message is the same as previous one, if so, skip
+    if (this._agentMessageState?.message_id === currentMsgId) {
+      logger.debug(
+        CONSOLE_LOG_PREFIX,
+        'handleAgentStatus',
+        'ignore same message',
+        message?.message_id,
+        currentMsgId
+      )
+      return
+    }
+    // check if message is older(by turn_id) than previous one, if so, skip
+    const currentTurnId = message.turn_id
+    if ((this._agentMessageState?.turn_id || 0) > currentTurnId) {
+      logger.debug(
+        CONSOLE_LOG_PREFIX,
+        'handleAgentStatus',
+        'ignore older message(turn_id)',
+        message?.turn_id,
+        currentTurnId
+      )
+      return
+    }
+    // check if message is older(by ts_ms) than previous one, if so, skip
+    const currentMsgTs = message.ts_ms
+    if ((this._agentMessageState?.ts_ms || 0) >= currentMsgTs) {
+      logger.debug(
+        CONSOLE_LOG_PREFIX,
+        'handleAgentStatus',
+        'ignore older message(ts_ms)',
+        message?.ts_ms,
+        currentMsgTs
+      )
+      return
+    }
+    logger.debug(
+      CONSOLE_LOG_PREFIX,
+      'handleAgentStatus',
+      'set current message state',
+      message
+    )
+    // set current message state
+    this._agentMessageState = message
+    this.onAgentStateChange?.(message)
   }
 
   public handleWordAgentMessage(message: IAgentTranscription) {
@@ -565,6 +667,7 @@ export class MessageEngine {
     this.messageList = []
     // cleanup mode
     this._mode = EMessageEngineMode.AUTO
+    this._agentMessageState = null
   }
 
   // utils: Uint8Array -> string
@@ -585,7 +688,8 @@ export class MessageEngine {
       | TDataChunkMessageV1
       | IUserTranscription
       | IAgentTranscription
-      | IMessageInterrupt,
+      | IMessageInterrupt
+      | IMessageState,
   >(chunk: string, callback?: (message: T) => void): void {
     try {
       // split chunk by '|'
@@ -916,7 +1020,7 @@ export class MessageEngine {
   private _appendChatHistory(
     item: IMessageArrayItem<Partial<IUserTranscription | IAgentTranscription>>
   ) {
-      this.messageList.push(item)
+    this.messageList.push(item)
   }
 
   private _mutateChatHistory() {
