@@ -22,7 +22,10 @@ export const DEFAULT_LANGUAGE_OPTIONS = [
 
 export const MAX_PROMPT_LENGTH = 4096
 
-export const agentCustomLLMStyleSchema = z.string().describe('llm-style').optional()
+export const agentCustomLLMStyleSchema = z
+  .string()
+  .describe('llm-style')
+  .optional()
 export const agentCustomLLMSchema = z.object({
   url: z.string().url().optional().describe('llm-url'),
   api_key: z.string().optional().describe('llm-api-key'),
@@ -177,7 +180,7 @@ export const agentPresetLLMStyleConfigSchema = z.object({
 })
 
 export const agentPresetSchema = z.object({
-  index: z.number(),
+  index: z.number().optional(),
   name: z.string(),
   display_name: z.string(),
   preset_type: z.string(),
@@ -188,6 +191,8 @@ export const agentPresetSchema = z.object({
       z.object({
         language_code: z.string().optional(),
         language_name: z.string().optional(),
+        aivad_supported: z.boolean().optional(),
+        aivad_enabled_by_default: z.boolean().optional(),
       })
     )
     .optional(),

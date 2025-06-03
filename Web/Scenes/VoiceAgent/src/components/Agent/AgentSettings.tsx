@@ -113,6 +113,40 @@ function AgentSettingsForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsForm.watch('preset_name')])
 
+  const [
+    aivad_supported,
+    aivad_enabled_by_default,
+    aivad_target_preset,
+    aivad_target_language,
+  ] = React.useMemo(() => {
+    // TODO: tmp solution for en-US
+    if (process.env.NEXT_PUBLIC_LOCALE !== 'en-US') {
+      return [true, false]
+    }
+    const targetPreset = remotePresets.find(
+      (preset) => preset.name === settingsForm.getValues('preset_name')
+    )
+    const targetlanguage = targetPreset?.support_languages?.find(
+      (lang) => lang.language_code === settingsForm.watch('asr.language')
+    )
+    const aivad_supported = targetlanguage?.aivad_supported
+    const aivad_enabled_by_default = targetlanguage?.aivad_enabled_by_default
+    return [
+      aivad_supported,
+      aivad_enabled_by_default,
+      targetPreset,
+      targetlanguage,
+    ]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    settingsForm.watch('preset_name'),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    settingsForm.watch('asr.language'),
+    remotePresets,
+    process.env.NEXT_PUBLIC_LOCALE,
+  ])
+
   // init form with remote presets
   React.useEffect(() => {
     if (remotePresets?.length) {
@@ -204,6 +238,33 @@ function AgentSettingsForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsForm.watch('preset_name')])
 
+  React.useEffect(() => {
+    // TODO: tmp solution for en-US
+    if (
+      process.env.NEXT_PUBLIC_LOCALE !== 'en-US' ||
+      !aivad_target_preset ||
+      !aivad_target_language
+    ) {
+      return
+    }
+    if (aivad_supported) {
+      settingsForm.setValue(
+        'advanced_features.enable_aivad',
+        !!aivad_enabled_by_default
+      )
+    } else {
+      settingsForm.setValue('advanced_features.enable_aivad', false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    aivad_supported,
+    aivad_enabled_by_default,
+    aivad_target_preset,
+    aivad_target_language,
+    remotePresets,
+    process.env.NEXT_PUBLIC_LOCALE,
+  ])
+
   return (
     <>
       <Form {...settingsForm}>
@@ -262,10 +323,7 @@ function AgentSettingsForm() {
                 <FormItem>
                   <div className="flex items-center justify-between gap-3">
                     <Label className="w-1/3">{t('asr.language')}</Label>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger
                         className="w-2/3"
                         disabled={disableFormMemo}
@@ -471,7 +529,9 @@ function AgentSettingsForm() {
                     <FormControl>
                       <Switch
                         disabled={
-                          disableFormMemo || disableAdvancedFeaturesMemo
+                          disableFormMemo ||
+                          disableAdvancedFeaturesMemo ||
+                          !aivad_supported
                         }
                         checked={field.value}
                         onCheckedChange={field.onChange}
