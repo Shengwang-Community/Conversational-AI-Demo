@@ -55,7 +55,7 @@ import {
 } from '@/type/rtc'
 import { startAgent, stopAgent, pingAgent } from '@/services/agent'
 import { cn } from '@/lib/utils'
-import type { IMessageListItem } from '@/services/message'
+import { type IMessageListItem, EAgentState } from '@/services/message'
 
 import { logger } from '@/lib/logger'
 
@@ -74,12 +74,14 @@ export default function AgentControl() {
     remote_rtc_uid,
     roomStatus,
     agent_id,
+    agentState,
     updateAgentRunningStatus,
     updateRoomStatus,
     updateAgentId,
     updateAgentStatus,
     updateNetwork,
     updateChannelName,
+    updateAgentState,
   } = useRTCStore()
   const {
     settings,
@@ -122,6 +124,7 @@ export default function AgentControl() {
       rtcService.on(ERTCServicesEvents.REMOTE_USER_JOINED, onRemoteUserJoined)
       rtcService.on(ERTCServicesEvents.REMOTE_USER_LEFT, onRemoteUserLeft)
       rtcService.on(ERTCServicesEvents.TEXT_CHANGED, onTextChanged)
+      rtcService.on(ERTCServicesEvents.AGENT_STATE_CHANGED, onAgentStateChanged)
       rtcService.on(ERTCServicesEvents.NETWORK_QUALITY, onNetworkQuality)
       rtcService.on(
         ERTCServicesEvents.CONNECTION_STATE_CHANGE,
@@ -296,6 +299,7 @@ export default function AgentControl() {
     updateAgentStatus(EConnectionStatus.DISCONNECTED)
     updateNetwork(ENetworkStatus.DISCONNECTED)
     updateAgentRunningStatus(EAgentRunningStatus.DEFAULT)
+    updateAgentState(EAgentState.IDLE)
     setShowSubtitle(false)
     clearHistory()
   }
@@ -444,6 +448,15 @@ export default function AgentControl() {
     logger.info({ history }, 'onTextChanged')
     console.log('[Agent/Control] onTextChanged', history)
     setHistory(history)
+  }
+
+  const onAgentStateChanged = (status: EAgentState) => {
+    if (status === agentState) {
+      logger.debug('onAgentStateChanged: no change', agentState)
+      return
+    }
+    logger.info('onAgentStateChanged', agentState, '->', status)
+    updateAgentState(status)
   }
 
   const showActionMemo = React.useMemo(() => {

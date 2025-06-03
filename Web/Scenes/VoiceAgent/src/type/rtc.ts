@@ -7,9 +7,7 @@ import {
   ConnectionDisconnectedReason,
 } from 'agora-rtc-sdk-ng'
 
-import type {
-  IMessageListItem,
-} from '@/services/message'
+import type { IMessageListItem, EAgentState } from '@/services/message'
 
 export interface IUserTracks {
   videoTrack?: ICameraVideoTrack
@@ -20,6 +18,7 @@ export enum ERTCServicesEvents {
   NETWORK_QUALITY = 'networkQuality',
   REMOTE_USER_CHANGED = 'remoteUserChanged',
   TEXT_CHANGED = 'textChanged',
+  AGENT_STATE_CHANGED = 'agentStateChanged',
   LOCAL_TRACKS_CHANGED = 'localTracksChanged',
   REMOTE_USER_JOINED = 'remoteUserJoined',
   REMOTE_USER_LEFT = 'remoteUserLeft',
@@ -88,9 +87,8 @@ export interface IRtcEvents {
   remoteUserChanged: (user: IRtcUser) => void
   localTracksChanged: (tracks: IUserTracks) => void
   networkQuality: (quality: NetworkQuality) => void
-  textChanged: (
-    history: IMessageListItem[]
-  ) => void
+  textChanged: (history: IMessageListItem[]) => void
+  agentStateChanged: (status: EAgentState) => void
   remoteUserJoined: (user: IRtcUser) => void
   remoteUserLeft: (user: IRtcUser, reason: string) => void
   connectionStateChange: ({

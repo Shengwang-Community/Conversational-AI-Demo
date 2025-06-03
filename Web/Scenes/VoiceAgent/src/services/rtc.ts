@@ -50,7 +50,7 @@ export class RtcService extends EventService<IRtcEvents> {
     this.localTracks = {}
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(AgoraRTC as any).setParameter('ENABLE_AUDIO_PTS_METADATA', true)
-    AgoraRTC.enableLogUpload();
+    AgoraRTC.enableLogUpload()
     this.client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
     this.agoraRTC = AgoraRTC
   }
@@ -65,18 +65,23 @@ export class RtcService extends EventService<IRtcEvents> {
     userId: number
     options?: TDevModeQuery
     messageServiceMode?: 'default' | 'legacy'
-
   }) {
     if (this._joined) {
       logger.log(CONSOLE_PREFIX, { channel, userId }, 'Already initialized')
       return
     }
     this._listenRtcEvents()
-    if(!this.messageService){
-      this.messageService = new MessageEngine(this.client, EMessageEngineMode.AUTO, (chatHistory) => {
-        this.emit(ERTCServicesEvents.TEXT_CHANGED, chatHistory)
-
-      })
+    if (!this.messageService) {
+      this.messageService = new MessageEngine(
+        this.client,
+        EMessageEngineMode.AUTO,
+        (chatHistory) => {
+          this.emit(ERTCServicesEvents.TEXT_CHANGED, chatHistory)
+        },
+        (state) => {
+          this.emit(ERTCServicesEvents.AGENT_STATE_CHANGED, state.state)
+        }
+      )
     }
     this.channelName = channel
     if (!this.appId || !this.token) {
@@ -276,7 +281,7 @@ export class RtcService extends EventService<IRtcEvents> {
       logger.log('RTC event onMicrophoneChanged', info)
       this.emit(ERTCServicesEvents.MICROPHONE_CHANGED, info)
       this._eHandleMicrophoneChanged(info)
-    };
+    }
 
     // this.client.on('audio-metadata', this._eHandleAudioMetadata.bind(this))
     // network quality
@@ -336,18 +341,18 @@ export class RtcService extends EventService<IRtcEvents> {
 
   private async _eHandleMicrophoneChanged(changedDevice: DeviceInfo) {
     logger.log(CONSOLE_PREFIX, '[microphone-changed]', changedDevice)
-    const microphoneTrack = this.localTracks.audioTrack;
+    const microphoneTrack = this.localTracks.audioTrack
     if (!microphoneTrack) {
-      return;
+      return
     }
-    if (changedDevice.state === "ACTIVE") {
-      microphoneTrack.setDevice(changedDevice.device.deviceId);
-      return;
+    if (changedDevice.state === 'ACTIVE') {
+      microphoneTrack.setDevice(changedDevice.device.deviceId)
+      return
     }
-      const oldMicrophones = await AgoraRTC.getMicrophones();
-      if (oldMicrophones[0]) {
-        microphoneTrack.setDevice(oldMicrophones[0].deviceId);
-      }
+    const oldMicrophones = await AgoraRTC.getMicrophones()
+    if (oldMicrophones[0]) {
+      microphoneTrack.setDevice(oldMicrophones[0].deviceId)
+    }
   }
 
   private _eHandleAudioMetadata(metadata: Uint8Array) {
