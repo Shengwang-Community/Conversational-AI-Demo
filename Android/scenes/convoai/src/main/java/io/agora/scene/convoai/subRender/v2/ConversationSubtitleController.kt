@@ -314,8 +314,8 @@ class ConversationSubtitleController(
             try {
                 val rawString = String(bytes, Charsets.UTF_8)
                 val message =
-                    mMessageParser.parseStreamMessage(rawString, completion = { messageMap ->
-                        onDebugLog(TAG, "MessageParser Loop printing: $messageMap")
+                    mMessageParser.parseStreamMessage(rawString, completion = { messageParts ->
+                        onDebugLog(TAG, "MessageParser Loop printing: $messageParts")
                     })
                 message?.let { msg ->
                     val transcription = msg["object"] as? String ?: return

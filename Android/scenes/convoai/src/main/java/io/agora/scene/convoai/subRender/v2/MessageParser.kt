@@ -15,6 +15,7 @@ class MessageParser {
 
     // Change message storage structure to Map<Int, String> for more intuitive partIndex and content storage
     private val messageMap = mutableMapOf<String, MutableMap<Int, String>>()
+    private val messagePartsMap = mutableMapOf<String, Int>()
     private val gson = GsonBuilder()
         .setDateFormat("yyyy-MM-dd HH:mm:ss")
         .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
@@ -36,7 +37,7 @@ class MessageParser {
 
     fun parseStreamMessage(
         string: String,
-        completion: ((messageMap: Map<String, Map<Int, String>>) -> Unit)? = null
+        completion: ((messageParts: Map<String, Map<Int, Int>>) -> Unit)? = null
     ): Map<String, Any>? {
         try {
             // Clean up expired messages
@@ -59,11 +60,21 @@ class MessageParser {
 
             // Update last access time
             lastAccessMap[messageId] = System.currentTimeMillis()
+            messagePartsMap[messageId] = totalParts
 
             // Use Map to store message parts for more intuitive partIndex and content management
             val messageParts = messageMap.getOrPut(messageId) { mutableMapOf() }
             messageParts[partIndex] = base64Content
 
+            if (loopCount >= maxLoopCount) {
+                val transformedData = messageMap.mapValues { (outerKey, innerMap) ->
+                    val replacementValue = messagePartsMap[outerKey] ?: -1
+                    innerMap.mapValues { (_, _) -> replacementValue }
+                }
+                completion?.invoke(transformedData)
+                loopCount = 0
+            }
+            loopCount ++
             // Check if all parts are received
             if (messageParts.size == totalParts) {
                 // All parts received, merge in order and decode
@@ -86,14 +97,8 @@ class MessageParser {
                 // Clean up processed message
                 messageMap.remove(messageId)
                 lastAccessMap.remove(messageId)
-
-                if (loopCount >= maxLoopCount) {
-                    completion?.invoke(messageMap)
-                    loopCount = 0
-                }
                 return result
             }
-            loopCount ++
         } catch (e: Exception) {
             // Handle exception, can log or throw
             println("Error parsing message: ${e.message}")
@@ -107,6 +112,7 @@ class MessageParser {
         expiredIds.forEach {
             messageMap.remove(it)
             lastAccessMap.remove(it)
+            messagePartsMap.remove(it)
         }
     }
 }
