@@ -11,7 +11,7 @@ import java.io.IOException
 
 class MessageParser {
     private var loopCount = 0
-    private val maxLoopCount = 20
+    private val maxLoopCount = 5
 
     // Change message storage structure to Map<Int, String> for more intuitive partIndex and content storage
     private val messageMap = mutableMapOf<String, MutableMap<Int, String>>()
