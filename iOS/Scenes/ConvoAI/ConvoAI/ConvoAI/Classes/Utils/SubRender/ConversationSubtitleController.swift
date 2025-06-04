@@ -230,7 +230,13 @@ private typealias TurnState = SubtitleStatus
     private let jsonEncoder = JSONEncoder()
     private var timer: Timer?
     private var audioTimestamp: Int64 = 0
-    private var messageParser = MessageParser()
+    private lazy var messageParser: MessageParser = {
+        let parser = MessageParser()
+        parser.onDebugLog = { [weak self] tag, txt in
+            self?.addLog("\(tag) \(txt)")
+        }
+        return parser
+    }()
     
     private weak var delegate: ConversationSubtitleDelegate?
     private var messageQueue: [TurnBuffer] = []
@@ -254,7 +260,7 @@ private typealias TurnState = SubtitleStatus
     private let queue = DispatchQueue(label: "com.voiceagent.messagequeue", attributes: .concurrent)
     
     private func inputStreamMessageData(data: Data) {
-        guard let jsonData = messageParser.parseToJsonData(data) else {
+        guard let jsonData = messageParser.parseStreamMessage(data) else {
             return
         }
         do {
@@ -495,7 +501,7 @@ private typealias TurnState = SubtitleStatus
                 let inprogressSub = buffer.words.firstIndex(where: { $0.start_ms > audioTimestamp} )
                 let interruptSub = buffer.words.firstIndex(where: { $0.status == .interrupt} )
                 let endSub = buffer.words.firstIndex(where: { $0.status == .end} )
-                self.addLog("🔔[CovSubRenderController] get min subrange turn: \(buffer.turnId) range \(buffer.words.count) inprogress: \(inprogressSub ?? -1) interrupt: \(interruptSub ?? -1) end: \(endSub ?? -1)")
+                self.addLog("🔔[CovSubRenderController] get min subrange turn: \(buffer.turnId) range \(buffer.words.count) audioTimestamp: \(audioTimestamp) inprogress: \(inprogressSub ?? -1) interrupt: \(interruptSub ?? -1) end: \(endSub ?? -1)")
                 let minIndex = [inprogressSub, interruptSub, endSub].compactMap { $0 }.min()
                 guard let minRange = minIndex else {
                     return
