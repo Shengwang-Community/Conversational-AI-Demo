@@ -313,7 +313,10 @@ class ConversationSubtitleController(
         data?.let { bytes ->
             try {
                 val rawString = String(bytes, Charsets.UTF_8)
-                val message = mMessageParser.parseStreamMessage(rawString)
+                val message =
+                    mMessageParser.parseStreamMessage(rawString, completion = { messageMap ->
+                        onDebugLog(TAG, "MessageParser Loop printing: $messageMap")
+                    })
                 message?.let { msg ->
                     val transcription = msg["object"] as? String ?: return
                     var isInterrupt = false

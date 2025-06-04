@@ -10,6 +10,9 @@ import org.json.JSONObject
 import java.io.IOException
 
 class MessageParser {
+    private var loopCount = 0
+    private val maxLoopCount = 20
+
     // Change message storage structure to Map<Int, String> for more intuitive partIndex and content storage
     private val messageMap = mutableMapOf<String, MutableMap<Int, String>>()
     private val gson = GsonBuilder()
@@ -31,7 +34,10 @@ class MessageParser {
     private val maxMessageAge = 5 * 60 * 1000 // 5 minutes
     private val lastAccessMap = mutableMapOf<String, Long>()
 
-    fun parseStreamMessage(string: String): Map<String, Any>? {
+    fun parseStreamMessage(
+        string: String,
+        completion: ((messageMap: Map<String, Map<Int, String>>) -> Unit)? = null
+    ): Map<String, Any>? {
         try {
             // Clean up expired messages
             cleanExpiredMessages()
@@ -81,8 +87,13 @@ class MessageParser {
                 messageMap.remove(messageId)
                 lastAccessMap.remove(messageId)
 
+                if (loopCount >= maxLoopCount) {
+                    completion?.invoke(messageMap)
+                    loopCount = 0
+                }
                 return result
             }
+            loopCount ++
         } catch (e: Exception) {
             // Handle exception, can log or throw
             println("Error parsing message: ${e.message}")
