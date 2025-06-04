@@ -302,6 +302,9 @@ class ConversationSubtitleController(
             TAG,
             "init this:0x${this.hashCode().toString(16)}, version:$SUBTITLE_VERSION, renderMode:${config.renderMode}"
         )
+        mMessageParser.onDebugLog = { tag,message->
+            config.callback?.onDebugLog(tag, message)
+        }
     }
 
     private fun onDebugLog(tag: String, message: String) {
@@ -313,10 +316,7 @@ class ConversationSubtitleController(
         data?.let { bytes ->
             try {
                 val rawString = String(bytes, Charsets.UTF_8)
-                val message =
-                    mMessageParser.parseStreamMessage(rawString, completion = { messageParts ->
-                        onDebugLog(TAG, "MessageParser Loop printing: $messageParts")
-                    })
+                val message = mMessageParser.parseStreamMessage(rawString)
                 message?.let { msg ->
                     val transcription = msg["object"] as? String ?: return
                     var isInterrupt = false
