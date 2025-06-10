@@ -61,7 +61,7 @@ object CovRtcManager {
                 // load extension provider for AI-QoS
                 loadExtensionProvider("ai_echo_cancellation_extension")
                 loadExtensionProvider("ai_noise_suppression_extension")
-                addHandler(covRtcHandler)
+//                addHandler(covRtcHandler)
             }
         } catch (e: Exception) {
             CovLogger.e(TAG, "createRtcEngine error: $e")
@@ -95,7 +95,7 @@ object CovRtcManager {
 
         // set audio config parameters
         // you should set it before joinChannel and when audio route changed
-        setAudioConfigParameters(mAudioRouting)
+        // setAudioConfigParameters(mAudioRouting)
 
         // Calling this API enables the onAudioVolumeIndication callback to report volume values,
         // which can be used to drive microphone volume animation rendering
