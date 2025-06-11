@@ -1,4 +1,4 @@
-package io.agora.scene.convoai.subRender.v2
+package io.agora.scene.convoai.convoaiApi.subRender
 
 import android.content.Context
 import android.os.Handler
@@ -15,6 +15,9 @@ import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.databinding.CovMessageAgentItemBinding
 import io.agora.scene.convoai.databinding.CovMessageListViewBinding
 import io.agora.scene.convoai.databinding.CovMessageMineItemBinding
+import io.agora.scene.convoai.convoaiApi.subRender.v3.IConversationTranscriptionCallback
+import io.agora.scene.convoai.convoaiApi.subRender.v3.Status
+import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
 
 /**
  * Message list view for displaying conversation messages
@@ -24,7 +27,7 @@ class CovMessageListView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) : LinearLayout(context, attrs, defStyleAttr), IConversationSubtitleCallback {
+) : LinearLayout(context, attrs, defStyleAttr), IConversationTranscriptionCallback {
 
     private val binding = CovMessageListViewBinding.inflate(LayoutInflater.from(context), this, true)
     private val messageAdapter = MessageAdapter()
@@ -39,9 +42,6 @@ class CovMessageListView @JvmOverloads constructor(
 
     // Runnable for scrolling to bottom
     private val scrollRunnable = Runnable { scrollToBottom() }
-
-    // Callback for AI conversation status changes
-    var onAIStatusChanged: ((AgentMessageState) -> Unit)? = null
 
     init {
         setupRecyclerView()
@@ -147,14 +147,14 @@ class CovMessageListView @JvmOverloads constructor(
     /**
      * Handle received subtitle messages - fix scrolling issues
      */
-    private fun handleMessage(subtitleMessage: SubtitleMessage) {
-        val isNewMessage = messageAdapter.getMessageByTurnId(subtitleMessage.turnId, subtitleMessage.userId == 0) == null
+    private fun handleMessage(transcription: Transcription) {
+        val isNewMessage = messageAdapter.getMessageByTurnId(transcription.turnId, transcription.userId == 0) == null
 
         // Handle existing message updates
-        messageAdapter.getMessageByTurnId(subtitleMessage.turnId, subtitleMessage.userId == 0)?.let { existingMessage ->
+        messageAdapter.getMessageByTurnId(transcription.turnId, transcription.userId == 0)?.let { existingMessage ->
             existingMessage.apply {
-                content = subtitleMessage.text
-                status = subtitleMessage.status
+                content = transcription.text
+                status = transcription.status
             }
             messageAdapter.updateMessage(existingMessage)
             
@@ -169,10 +169,10 @@ class CovMessageListView @JvmOverloads constructor(
 
         // Create new message
         val newMessage = Message(
-            isMe = subtitleMessage.userId == 0,
-            turnId = subtitleMessage.turnId,
-            content = subtitleMessage.text,
-            status = subtitleMessage.status
+            isMe = transcription.userId == 0,
+            turnId = transcription.turnId,
+            content = transcription.text,
+            status = transcription.status
         )
 
         // Unified message insertion position logic based on turnId and isMe
@@ -269,7 +269,7 @@ class CovMessageListView @JvmOverloads constructor(
         val isMe: Boolean,
         val turnId: Long,
         var content: String,
-        var status: SubtitleStatus
+        var status: Status
     )
 
     /**
@@ -297,7 +297,7 @@ class CovMessageListView @JvmOverloads constructor(
             override fun bind(message: Message) {
                 binding.tvMessageTitle.text = agentName
                 binding.tvMessageContent.text = message.content
-                binding.layoutMessageInterrupt.isVisible = message.status == SubtitleStatus.Interrupted
+                binding.layoutMessageInterrupt.isVisible = message.status == Status.interrupt
             }
         }
 
@@ -424,13 +424,8 @@ class CovMessageListView @JvmOverloads constructor(
         }
     }
 
-    override fun onSubtitleUpdated(subtitle: SubtitleMessage) {
-        handleMessage(subtitle)
-    }
-
-    override fun onAgentStateChange(agentMessageState: AgentMessageState) {
-        // Forward AI conversation status to the callback
-        onAIStatusChanged?.invoke(agentMessageState)
+    override fun onTranscriptionUpdated(transcription: Transcription) {
+        handleMessage(transcription)
     }
 
     override fun onDebugLog(tag: String, msg: String) {

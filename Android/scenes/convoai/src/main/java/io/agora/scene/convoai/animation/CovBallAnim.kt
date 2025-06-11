@@ -120,9 +120,6 @@ class CovBallAnim constructor(
             // Use the latest pending execution parameters
             pendingAnimParams?.let { params ->
                 if (currentState == AgentState.SPEAKING) {
-                    if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "onAnimationRepeat call new Animation $scaleAnimator")
-                    }
                     startNewAnimation(params)
                 }
                 pendingAnimParams = null
@@ -130,26 +127,16 @@ class CovBallAnim constructor(
         }
 
         override fun onAnimationStart(animation: Animator) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "onAnimationStart $scaleAnimator")
-            }
         }
 
         override fun onAnimationCancel(animation: Animator) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "onAnimationCancel $scaleAnimator")
-            }
             updateParentScale(1.0f)
         }
 
         override fun onAnimationRepeat(animation: Animator) {
-            if (BuildConfig.DEBUG) {
-                Log.d(TAG, "onAnimationRepeat $scaleAnimator")
-            }
             // Check the state, stop the animation if it's not in the SPEAKING state
             if (currentState != AgentState.SPEAKING) {
                 pendingAnimParams = null
-                Log.d(TAG, "onAnimationRepeat call cancel $scaleAnimator")
                 animation.cancel()
             }
         }

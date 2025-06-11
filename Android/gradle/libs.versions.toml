@@ -15,7 +15,8 @@ navigation = "2.6.0"
 splashscreen = "1.0.1"
 
 commons-codec = "1.17.0"
-agora-full = "4.5.1"
+agora-rtc-full = "4.5.1"
+agora-rtm = "2.2.3"
 
 okhttp = "5.0.0-alpha.14"
 retrofit = "2.11.0"
@@ -54,7 +55,8 @@ multidex = { module = "androidx.multidex:multidex", version.ref = "multidex" }
 
 commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
 # rtc
-agora-rtc = { module = "io.agora.rtc:full-sdk", version.ref = "agora-full" }
+agora-rtc = { module = "io.agora.rtc:full-sdk", version.ref = "agora-rtc-full" }
+agora-rtm = { module = "io.agora:agora-rtm", version.ref = "agora-rtm" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

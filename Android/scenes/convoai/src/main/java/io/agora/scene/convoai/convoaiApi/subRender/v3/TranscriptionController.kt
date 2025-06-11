@@ -1,4 +1,4 @@
-package io.agora.scene.convoai.subRender.v2
+package io.agora.scene.convoai.convoaiApi.subRender.v3
 
 import android.os.Handler
 import android.os.Looper
@@ -7,54 +7,54 @@ import io.agora.rtc2.IAudioFrameObserver
 import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngine
 import io.agora.rtc2.audio.AudioParams
+import io.agora.rtm.MessageEvent
+import io.agora.rtm.RtmClient
+import io.agora.rtm.RtmConstants
+import io.agora.rtm.RtmEventListener
+import io.agora.scene.convoai.convoaiApi.MessageType
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ticker
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedQueue
 
-const val SUBTITLE_VERSION = "1.4.0"
+const val SUBTITLE_VERSION = "1.6.0"
 
 /**
  * Configuration class for subtitle rendering
  *
  * @property rtcEngine The RTC engine instance used for real-time communication
+ * @property rtmClient The RTC engine instance used for real-time communication
  * @property renderMode The mode of subtitle rendering (Idle, Text, or Word)
  * @property callback Callback interface for subtitle updates
  */
-data class SubtitleRenderConfig(
+data class TranscriptionConfig(
     val rtcEngine: RtcEngine,
-    val renderMode: SubtitleRenderMode,
-    val callback: IConversationSubtitleCallback?
+    val rtmClient: RtmClient,
+    val renderMode: TranscriptionRenderMode,
+    val callback: IConversationTranscriptionCallback?
 )
 
 /**
  * Defines different modes for subtitle rendering
- * Text: Full text subtitles are rendered
- * Word: Word-by-word subtitles are rendered
+ * @property Word: Word-by-word subtitles are rendered
+ * @property Text: Full text subtitles are rendered
  */
-enum class SubtitleRenderMode {
-    Text,
-    Word
+enum class TranscriptionRenderMode {
+    Word,
+    Text
 }
 
 /**
  * Interface for receiving subtitle update events
  * Implemented by UI components that need to display subtitles
  */
-interface IConversationSubtitleCallback {
+interface IConversationTranscriptionCallback {
     /**
-     * Called when a subtitle is updated and needs to be displayed
+     * Called when a transcription is updated and needs to be displayed
      *
-     * @param subtitle The updated subtitle message
+     * @param transcription The updated transcription
      */
-    fun onSubtitleUpdated(subtitle: SubtitleMessage)
-
-    /**
-     * Called when AI conversation state changes
-     *
-     * @param agentState agent message state
-     */
-    fun onAgentStateChange(agentState: AgentMessageState)
+    fun onTranscriptionUpdated(transcription: Transcription)
 
     /**
      * Called when a debug log is received
@@ -65,6 +65,7 @@ interface IConversationSubtitleCallback {
     fun onDebugLog(tag: String, msg: String)
 }
 
+
 /**
  * Consumer-facing data class representing a complete subtitle message
  * Used for rendering in the UI layer
@@ -74,46 +75,24 @@ interface IConversationSubtitleCallback {
  * @property text The actual subtitle text content
  * @property status Current status of the subtitle
  */
-data class SubtitleMessage(
+data class Transcription(
     val turnId: Long,
     val userId: Int,
     val text: String,
-    var status: SubtitleStatus
-)
-
-/**
- * Agent Conversation State
- */
-data class AgentMessageState(
-    val messageId: String,
-    val turnId: Long,
-    val ts: Long,
-    val state: AgentConversationStatus
+    var status: Status
 )
 
 /**
  * Represents the current status of a subtitle
  *
- * Progress: Subtitle is still being generated or spoken
- * End: Subtitle has completed normally
- * Interrupted: Subtitle was interrupted before completion
+ * @property inprogress: Subtitle is still being generated or spoken
+ * @property end: Subtitle has completed normally
+ * @property interrupt: Subtitle was interrupted before completion
  */
-enum class SubtitleStatus {
-    Progress,
-    End,
-    Interrupted
-}
-
-/**
- *
- * AI Conversation State
- */
-enum class AgentConversationStatus {
-    Idle,
-    Silent,
-    Listening,
-    Thinking,
-    Speaking
+enum class Status {
+    inprogress,
+    end,
+    interrupt
 }
 
 /**
@@ -121,8 +100,8 @@ enum class AgentConversationStatus {
  * Manages the processing and rendering of subtitles in conversation
  * @property config Configuration for the subtitle controller
  */
-class ConversationSubtitleController(
-    private val config: SubtitleRenderConfig
+class TranscriptionController(
+    private val config: TranscriptionConfig
 ) : IRtcEngineEventHandler() {
 
     /**
@@ -133,10 +112,10 @@ class ConversationSubtitleController(
      * @property startMs Timestamp when the word started (in milliseconds)
      * @property status Current status of the word
      */
-    private data class TurnWordInfo constructor(
+    private data class TurnWordInfo(
         val word: String,
         val startMs: Long,
-        var status: SubtitleStatus = SubtitleStatus.Progress
+        var status: TurnStatus = TurnStatus.IN_PROGRESS
     )
 
     /**
@@ -170,20 +149,21 @@ class ConversationSubtitleController(
     )
 
     companion object {
-        const val TAG = "CovSubRenderController"
-        const val TAG_UI = "CovSubRenderController-UI"
+        private const val TAG = "Transcription"
+        private const val TAG_UI = "Transcription-UI"
+        private const val TAG_RTM = "Transcription-RTM"
     }
 
     private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
     private var mMessageParser = MessageParser()
 
     @Volatile
-    private var mRenderMode: SubtitleRenderMode? = null
+    private var mRenderMode: TranscriptionRenderMode? = null
         set(value) {
             field = value
-            if (mRenderMode == SubtitleRenderMode.Word) {
+            if (mRenderMode == TranscriptionRenderMode.Word) {
                 mLastDequeuedTurn = null
-                mCurSubtitleMessage = null
+                mCurrentTranscription = null
                 startSubtitleTicker()
             } else {
                 stopSubtitleTicker()
@@ -196,8 +176,42 @@ class ConversationSubtitleController(
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var tickerJob: Job? = null
     private var enable = true
-    @Volatile
-    private var mAgentMessageState: AgentMessageState? = null
+
+
+    private val covRtmMsgProxy = object : RtmEventListener {
+
+        /**
+         * Receive RTM channel messages, get interrupt events, error information, and performance metrics
+         * The subtitle component only gets channel messages and interrupt events related to subtitles
+         */
+        override fun onMessageEvent(event: MessageEvent?) {
+            super.onMessageEvent(event)
+            event ?: return
+            val rtmMessage = event.message
+            if (rtmMessage.type == RtmConstants.RtmMessageType.BINARY) {
+                val bytes = rtmMessage.data as? ByteArray ?: return
+                try {
+                    val rawString = String(bytes, Charsets.UTF_8)
+                    val messageMap = mMessageParser.parseJsonToMap(rawString)
+                    messageMap?.let { map ->
+                        dealMessageWithMap(event.publisherId.toIntOrNull() ?: 0, map)
+                    }
+                } catch (e: Exception) {
+                    onDebugLog(TAG_RTM, "Process rtm message error: ${e.message}")
+                }
+            } else {
+                val rawString = rtmMessage.data as? String ?: return
+                try {
+                    val messageMap = mMessageParser.parseJsonToMap(rawString)
+                    messageMap?.let { map ->
+                        dealMessageWithMap(event.publisherId.toIntOrNull() ?: 0, map)
+                    }
+                } catch (e: Exception) {
+                    onDebugLog(TAG_RTM, "Process rtm message error: ${e.message}")
+                }
+            }
+        }
+    }
 
     init {
         config.rtcEngine.addHandler(this)
@@ -302,126 +316,87 @@ class ConversationSubtitleController(
             TAG,
             "init this:0x${this.hashCode().toString(16)}, version:$SUBTITLE_VERSION, renderMode:${config.renderMode}"
         )
-        mMessageParser.onDebugLog = { tag,message->
+        mMessageParser.onDebugLog = { tag, message ->
             config.callback?.onDebugLog(tag, message)
         }
+        config.rtmClient.addEventListener(covRtmMsgProxy)
     }
 
     private fun onDebugLog(tag: String, message: String) {
         config.callback?.onDebugLog(tag, message)
     }
 
-    override fun onStreamMessage(uid: Int, streamId: Int, data: ByteArray?) {
-        if (!enable) return
-        data?.let { bytes ->
-            try {
-                val rawString = String(bytes, Charsets.UTF_8)
-                val message = mMessageParser.parseStreamMessage(rawString)
-                message?.let { msg ->
-                    val transcription = msg["object"] as? String ?: return
-                    var isInterrupt = false
-                    val isUserMsg: Boolean
-                    when (transcription) {
-                        // agent message
-                        "assistant.transcription" -> {
-                            isUserMsg = false
-                        }
-                        // user message
-                        "user.transcription" -> {
-                            isUserMsg = true
-                        }
+    private fun dealMessageWithMap(uid: Int, msg: Map<String, Any>) {
+        try {
+            onDebugLog(TAG_RTM, "onMessageEvent publisherId: $uid, $msg")
+            val transcriptionObj = msg["object"] as? String ?: return
+            val messageType = MessageType.fromValue(transcriptionObj)
+            var isInterrupt = false
+            val isUserMsg: Boolean
+            when (messageType) {
+                // agent message
+                MessageType.ASSISTANT -> {
+                    isUserMsg = false
+                }
+                // user message
+                MessageType.USER -> {
+                    isUserMsg = true
+                }
 
-                        "message.interrupt" -> {
-                            isUserMsg = false
-                            isInterrupt = true
-                        }
+                MessageType.INTERRUPT -> {
+                    isUserMsg = false
+                    isInterrupt = true
+                }
 
-                        "message.state" -> {
-                            onDebugLog(TAG, "onStreamMessage parser：$msg")
-                            isUserMsg = false
-                            // Deduplication
-                            val messageId = msg["message_id"] as? String ?: ""
-                            if (messageId == mAgentMessageState?.messageId) return
+                else -> return
+            }
+            val turnId = (msg["turn_id"] as? Number)?.toLong() ?: 0L
+            val text = msg["text"] as? String ?: ""
 
-                            val turnId = (msg["turn_id"] as? Number)?.toLong() ?: 0L
-                            if (turnId < (mAgentMessageState?.turnId ?: 0)) return
+            // deal with interrupt message
+            if (isInterrupt) {
+                val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
+                onAgentMessageReceived(uid, turnId, startMs, text, null, TurnStatus.INTERRUPTED)
+                return
+            }
 
-                            val ts = (msg["ts_ms"] as? Number)?.toLong() ?: 0L
-                            if (ts <= (mAgentMessageState?.ts ?: 0)) return
-
-                            val state = msg["state"] as? String ?: ""
-                            val aiConvStatus = when (state) {
-                                "idle" -> AgentConversationStatus.Idle
-                                "listening" -> AgentConversationStatus.Listening
-                                "thinking" -> AgentConversationStatus.Thinking
-                                "speaking" -> AgentConversationStatus.Speaking
-                                else -> AgentConversationStatus.Silent
-                            }
-                            runOnMainThread {
-                                mAgentMessageState = AgentMessageState(
-                                    messageId = messageId,
-                                    turnId = turnId,
-                                    ts = ts,
-                                    state = aiConvStatus
-                                ).also {
-                                    config.callback?.onAgentStateChange(it)
-                                }
-                            }
-                            return
-                        }
-
-                        else -> return
+            if (text.isNotEmpty()) {
+                if (isUserMsg) {
+                    val isFinal = msg["final"] as? Boolean ?: false
+                    val transcription = Transcription(
+                        turnId = turnId,
+                        userId = 0,
+                        text = text,
+                        status = if (isFinal) Status.end else Status.inprogress
+                    )
+                    // Local user messages are directly callbacked out
+                    onDebugLog(TAG_UI, "pts: $mPresentationMs, $transcription")
+                    runOnMainThread {
+                        config.callback?.onTranscriptionUpdated(transcription)
                     }
-                    onDebugLog(TAG, "onStreamMessage parser：$msg")
-                    val turnId = (msg["turn_id"] as? Number)?.toLong() ?: 0L
-                    val text = msg["text"] as? String ?: ""
-
-                    // deal with interrupt message
-                    if (isInterrupt) {
-                        val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
-                        onAgentMessageReceived(uid, turnId, startMs, text, null, TurnStatus.INTERRUPTED)
+                } else {
+                    // 0: in-progress, 1: end gracefully, 2: interrupted, otherwise undefined
+                    val turnStatusInt = (msg["turn_status"] as? Number)?.toLong() ?: 0L
+                    val status: TurnStatus = when ((msg["turn_status"] as? Number)?.toLong() ?: 0L) {
+                        0L -> TurnStatus.IN_PROGRESS
+                        1L -> TurnStatus.END
+                        2L -> TurnStatus.END
+                        else -> TurnStatus.UNKNOWN
+                    }
+                    // Discarding and not processing the message with Unknown status.
+                    if (status == TurnStatus.UNKNOWN) {
+                        onDebugLog(TAG, "unknown turn_status:$turnStatusInt")
                         return
                     }
-
-                    if (text.isNotEmpty()) {
-                        if (isUserMsg) {
-                            val isFinal = msg["final"] as? Boolean ?: false
-                            val subtitleMessage = SubtitleMessage(
-                                turnId = turnId,
-                                userId = 0,
-                                text = text,
-                                status = if (isFinal) SubtitleStatus.End else SubtitleStatus.Progress
-                            )
-                            // Local user messages are directly callbacked out
-                            onDebugLog(TAG_UI, "pts：$mPresentationMs, $subtitleMessage")
-                            runOnMainThread {
-                                config.callback?.onSubtitleUpdated(subtitleMessage)
-                            }
-                        } else {
-                            // 0: in-progress, 1: end gracefully, 2: interrupted, otherwise undefined
-                            val turnStatusInt = (msg["turn_status"] as? Number)?.toLong() ?: 0L
-                            val status: TurnStatus = when ((msg["turn_status"] as? Number)?.toLong() ?: 0L) {
-                                0L -> TurnStatus.IN_PROGRESS
-                                1L -> TurnStatus.END
-                                2L -> TurnStatus.END
-                                else -> TurnStatus.UNKNOWN
-                            }
-                            // Discarding and not processing the message with Unknown status.
-                            if (status == TurnStatus.UNKNOWN) {
-                                onDebugLog(TAG, "unknown turn_status:$turnStatusInt")
-                                return
-                            }
-                            val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
-                            // Parse words array
-                            val wordsArray = msg["words"] as? List<Map<String, Any>>
-                            val words = parseWords(wordsArray)
-                            onAgentMessageReceived(uid, turnId, startMs, text, words, status)
-                        }
-                    }
+                    val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
+                    // Parse words array
+                    val wordsArray = msg["words"] as? List<Map<String, Any>>
+                    val words = parseWords(wordsArray)
+                    onAgentMessageReceived(uid, turnId, startMs, text, words, status)
                 }
-            } catch (e: Exception) {
-                onDebugLog(TAG, "Process stream message error: ${e.message}")
             }
+        } catch (e: Exception) {
+            onDebugLog(TAG, "Process stream message error: ${e.message}")
         }
     }
 
@@ -447,14 +422,12 @@ class ConversationSubtitleController(
     fun reset() {
         onDebugLog(TAG, "reset called")
         this.mRenderMode = null
-        this.mAgentMessageState = null
         stopSubtitleTicker()
     }
 
     fun release() {
         onDebugLog(TAG, "release called")
         this.mRenderMode = null
-        this.mAgentMessageState = null
         stopSubtitleTicker()
         coroutineScope.cancel()
     }
@@ -474,7 +447,7 @@ class ConversationSubtitleController(
     }
 
     private fun stopSubtitleTicker() {
-        mCurSubtitleMessage = null
+        mCurrentTranscription = null
         mLastDequeuedTurn = null
         agentTurnQueue.clear()
         tickerJob?.cancel()
@@ -494,34 +467,35 @@ class ConversationSubtitleController(
         if (mRenderMode == null) {
             // fixs TEN-1790
             agentTurnQueue.clear()
-            if (config.renderMode == SubtitleRenderMode.Word) {
-                // TODO turn 0 interrupt ??
+            if (config.renderMode == TranscriptionRenderMode.Word) {
                 if (status == TurnStatus.INTERRUPTED) return
                 mRenderMode = if (words != null) {
-                    SubtitleRenderMode.Word
+                    TranscriptionRenderMode.Word
                 } else {
-                    SubtitleRenderMode.Text
+                    TranscriptionRenderMode.Text
                 }
             } else {
-                mRenderMode = SubtitleRenderMode.Text
+                mRenderMode = TranscriptionRenderMode.Text
             }
             onDebugLog(
                 TAG,
-                "render mode auto detected: $mRenderMode, this:0x${this.hashCode().toString(16)}, version: $SUBTITLE_VERSION"
+                "render mode auto detected: $mRenderMode, this:0x${
+                    this.hashCode().toString(16)
+                }, version: $SUBTITLE_VERSION"
             )
         }
 
-        if (mRenderMode == SubtitleRenderMode.Text && status != TurnStatus.INTERRUPTED) {
-            val subtitleMessage = SubtitleMessage(
+        if (mRenderMode == TranscriptionRenderMode.Text && status != TurnStatus.INTERRUPTED) {
+            val subtitleMessage = Transcription(
                 turnId = turnId,
                 userId = uid,
                 text = text,
-                status = if (status == TurnStatus.END) SubtitleStatus.End else SubtitleStatus.Progress
+                status = if (status == TurnStatus.END) Status.end else Status.inprogress
             )
             // Agent text mode messages are directly callback out
-            onDebugLog(TAG_UI, "[Text Mode]pts：$mPresentationMs, $subtitleMessage")
+            onDebugLog(TAG_UI, "[Text Mode]pts: $mPresentationMs, $subtitleMessage")
             runOnMainThread {
-                config.callback?.onSubtitleUpdated(subtitleMessage)
+                config.callback?.onTranscriptionUpdated(subtitleMessage)
             }
             return
         }
@@ -566,10 +540,10 @@ class ConversationSubtitleController(
                             lastBeforeStartMs = word
                         }
                         if (word.startMs >= startMs) {
-                            word.status = SubtitleStatus.Interrupted
+                            word.status = TurnStatus.INTERRUPTED
                         }
                     }
-                    lastBeforeStartMs?.status = SubtitleStatus.Interrupted
+                    lastBeforeStartMs?.status = TurnStatus.INTERRUPTED
 
                     val newInfo = TurnMessageInfo(
                         userId = uid,
@@ -583,7 +557,7 @@ class ConversationSubtitleController(
                 } else {
                     // Reset end flag of existing words if needed
                     existingInfo.words.lastOrNull()?.let { lastWord ->
-                        if (lastWord.status == SubtitleStatus.End) lastWord.status = SubtitleStatus.Progress
+                        if (lastWord.status == TurnStatus.END) lastWord.status = TurnStatus.IN_PROGRESS
                     }
 
                     // Use new data if the new message has a later timestamp
@@ -604,8 +578,8 @@ class ConversationSubtitleController(
                     // Traverse sortedMergedWords, set the status of the word after the first Interrupted word to Interrupted
                     var foundInterrupted = false
                     sortedMergedWords.forEach { word ->
-                        if (foundInterrupted || word.status == SubtitleStatus.Interrupted) {
-                            word.status = SubtitleStatus.Interrupted
+                        if (foundInterrupted || word.status == TurnStatus.INTERRUPTED) {
+                            word.status = TurnStatus.INTERRUPTED
                             foundInterrupted = true
                         }
                     }
@@ -622,7 +596,7 @@ class ConversationSubtitleController(
 
                     // Mark the last word as end if this is the final message
                     if (newInfo.status == TurnStatus.END && sortedMergedWords.isNotEmpty()) {
-                        sortedMergedWords.last().status = SubtitleStatus.End
+                        sortedMergedWords.last().status = TurnStatus.END
                     }
                     agentTurnQueue.offer(newInfo)
                 }
@@ -638,7 +612,7 @@ class ConversationSubtitleController(
                 )
 
                 if (status == TurnStatus.END && newWords.isNotEmpty()) {
-                    newWords.last().status = SubtitleStatus.End
+                    newWords.last().status = TurnStatus.END
                 }
 
                 agentTurnQueue.offer(newInfo)
@@ -655,7 +629,7 @@ class ConversationSubtitleController(
 
     // Current subtitle rendering data, only kept if not in End or Interrupted status
     @Volatile
-    private var mCurSubtitleMessage: SubtitleMessage? = null
+    private var mCurrentTranscription: Transcription? = null
 
     // The last turn to be dequeued
     @Volatile
@@ -664,7 +638,7 @@ class ConversationSubtitleController(
     private fun updateSubtitleDisplay() {
         // Audio callback PTS is not assigned.
         if (mPresentationMs <= 0) return
-        if (mRenderMode != SubtitleRenderMode.Word) return
+        if (mRenderMode != TranscriptionRenderMode.Word) return
 
         synchronized(agentTurnQueue) {
             // Get all turns that meet display conditions
@@ -672,26 +646,26 @@ class ConversationSubtitleController(
                 .mapNotNull { turn ->
                     // Check for interrupt condition
                     val interruptWord =
-                        turn.words.find { it.status == SubtitleStatus.Interrupted && it.startMs <= mPresentationMs }
+                        turn.words.find { it.status == TurnStatus.INTERRUPTED && it.startMs <= mPresentationMs }
                     if (interruptWord != null) {
                         val words = turn.words.filter { it.startMs <= interruptWord.startMs }
                         val interruptedText = words.joinToString("") { it.word }
                         // create interrupted message
-                        val interruptedMessage = SubtitleMessage(
+                        val interruptedTranscription = Transcription(
                             turnId = turn.turnId,
                             userId = turn.userId,
                             text = interruptedText,
-                            status = SubtitleStatus.Interrupted
+                            status = Status.interrupt
                         )
-                        onDebugLog(TAG_UI, "[interrupt1]pts：$mPresentationMs, $interruptedMessage")
+                        onDebugLog(TAG_UI, "[interrupt1]pts: $mPresentationMs, $interruptedTranscription")
                         runOnMainThread {
-                            config.callback?.onSubtitleUpdated(interruptedMessage)
+                            config.callback?.onTranscriptionUpdated(interruptedTranscription)
                         }
 
                         // remove the turn if interrupt condition is met
                         mLastDequeuedTurn = turn
                         agentTurnQueue.remove(turn)
-                        mCurSubtitleMessage = null
+                        mCurrentTranscription = null
                         onDebugLog(TAG, "Removed interrupted turn: ${turn.turnId}")
                         null
                     } else {
@@ -706,19 +680,19 @@ class ConversationSubtitleController(
             // Find the latest turn to display
             val latestValidTurn = availableTurns.last()
             val (targetTurn, targetWords) = latestValidTurn
-            val targetIsEnd = targetWords.last().status == SubtitleStatus.End
+            val targetIsEnd = targetWords.last().status == TurnStatus.END
 
             // Interrupt all previous turns
             if (availableTurns.size > 1) {
                 // Iterate through all turns except the last one
                 for (i in 0 until availableTurns.size - 1) {
                     val (turn, _) = availableTurns[i]
-                    mCurSubtitleMessage?.let { current ->
+                    mCurrentTranscription?.let { current ->
                         if (current.turnId == turn.turnId) {
-                            val interruptedMessage = current.copy(status = SubtitleStatus.Interrupted)
-                            onDebugLog(TAG_UI, "[interrupt2]pts：$mPresentationMs, $interruptedMessage")
+                            val interruptedMessage = current.copy(status = Status.interrupt)
+                            onDebugLog(TAG_UI, "[interrupt2]pts: $mPresentationMs, $interruptedMessage")
                             runOnMainThread {
-                                config.callback?.onSubtitleUpdated(interruptedMessage)
+                                config.callback?.onTranscriptionUpdated(interruptedMessage)
                             }
                         }
                     }
@@ -726,32 +700,32 @@ class ConversationSubtitleController(
                     // Remove the interrupted turn from queue
                     agentTurnQueue.remove(turn)
                 }
-                mCurSubtitleMessage = null
+                mCurrentTranscription = null
             }
 
             // Display the latest turn
-            val newSubtitleMessage = SubtitleMessage(
+            val newTranscription = Transcription(
                 turnId = targetTurn.turnId,
                 userId = targetTurn.userId,
                 text = if (targetIsEnd) targetTurn.text
                 else targetWords.joinToString("") { it.word },
-                status = if (targetIsEnd) SubtitleStatus.End else SubtitleStatus.Progress
+                status = if (targetIsEnd) Status.end else Status.inprogress
             )
             if (targetIsEnd) {
-                onDebugLog(TAG_UI, "[end]pts：$mPresentationMs, $newSubtitleMessage")
+                onDebugLog(TAG_UI, "[end]pts: $mPresentationMs, $newTranscription")
             } else {
-                onDebugLog(TAG_UI, "[progress]pts：$mPresentationMs, $newSubtitleMessage")
+                onDebugLog(TAG_UI, "[progress]pts: $mPresentationMs, $newTranscription")
             }
             runOnMainThread {
-                config.callback?.onSubtitleUpdated(newSubtitleMessage)
+                config.callback?.onTranscriptionUpdated(newTranscription)
             }
 
             if (targetIsEnd) {
                 mLastDequeuedTurn = targetTurn
                 agentTurnQueue.remove(targetTurn)
-                mCurSubtitleMessage = null
+                mCurrentTranscription = null
             } else {
-                mCurSubtitleMessage = newSubtitleMessage
+                mCurrentTranscription = newTranscription
             }
         }
     }

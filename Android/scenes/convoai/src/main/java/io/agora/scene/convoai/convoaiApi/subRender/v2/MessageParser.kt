@@ -1,4 +1,4 @@
-package io.agora.scene.convoai.subRender.v2
+package io.agora.scene.convoai.convoaiApi.subRender.v2
 
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
@@ -7,7 +7,6 @@ import com.google.gson.reflect.TypeToken
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import org.json.JSONObject
-import retrofit2.http.Tag
 import java.io.IOException
 
 class MessageParser {
