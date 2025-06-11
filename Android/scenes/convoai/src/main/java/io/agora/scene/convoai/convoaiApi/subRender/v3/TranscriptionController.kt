@@ -2,14 +2,12 @@ package io.agora.scene.convoai.convoaiApi.subRender.v3
 
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import io.agora.rtc2.Constants
 import io.agora.rtc2.IAudioFrameObserver
 import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngine
 import io.agora.rtc2.audio.AudioParams
 import io.agora.rtm.MessageEvent
-import io.agora.rtm.PresenceEvent
 import io.agora.rtm.RtmClient
 import io.agora.rtm.RtmConstants
 import io.agora.rtm.RtmEventListener
@@ -151,9 +149,9 @@ class TranscriptionController(
     )
 
     companion object {
-        private const val TAG = "TranscriptionController"
-        private const val TAG_UI = "TranscriptionController-UI"
-        private const val TAG_RTM = "TranscriptionController-RTM"
+        private const val TAG = "Transcription"
+        private const val TAG_UI = "Transcription-UI"
+        private const val TAG_RTM = "Transcription-RTM"
     }
 
     private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
@@ -212,11 +210,6 @@ class TranscriptionController(
                     onDebugLog(TAG_RTM, "Process rtm message error: ${e.message}")
                 }
             }
-        }
-
-        override fun onPresenceEvent(event: PresenceEvent?) {
-            super.onPresenceEvent(event)
-            Log.d(TAG_RTM, "onPresenceEvent $event")
         }
     }
 
@@ -335,6 +328,7 @@ class TranscriptionController(
 
     private fun dealMessageWithMap(uid: Int, msg: Map<String, Any>) {
         try {
+            onDebugLog(TAG_RTM, "onMessageEvent publisherId: $uid, $msg")
             val transcriptionObj = msg["object"] as? String ?: return
             val messageType = MessageType.fromValue(transcriptionObj)
             var isInterrupt = false
@@ -356,7 +350,6 @@ class TranscriptionController(
 
                 else -> return
             }
-            onDebugLog(TAG_RTM, "publisherId: $uid, messageMap $msg")
             val turnId = (msg["turn_id"] as? Number)?.toLong() ?: 0L
             val text = msg["text"] as? String ?: ""
 

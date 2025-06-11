@@ -32,11 +32,19 @@ class ObservableHelper<EventHandler> {
     // Support lambda syntax
     fun notifyEventHandlers(action: (EventHandler) -> Unit) {
         for (eventHandler in eventHandlerList) {
-            if (mainHandler.looper.thread !== Thread.currentThread()) {
+            if (mainHandler.looper.thread != Thread.currentThread()) {
                 mainHandler.post { action(eventHandler) }
             } else {
                 action(eventHandler)
             }
+        }
+    }
+
+    fun runOnMainThread(r: Runnable) {
+        if (mainHandler.looper.thread != Thread.currentThread()) {
+            mainHandler.post(r)
+        } else {
+            r.run()
         }
     }
 }

@@ -11,6 +11,7 @@
     <string name="common_debug_convoai_host">ConvoAI Host</string>
     <string name="common_debug_audio_dump">音频 Dump</string>
     <string name="common_debug_session_limit">会话时间限制</string>
+    <string name="common_debug_metrics">性能指标</string>
     <string name="common_debug_graph_id">Graph id</string>
     <string name="common_debug_sdk_parameters">SDK 音频参数配置</string>
     <string name="common_debug_sc_config">ConvoAI 服务 preset 配置</string>

@@ -34,6 +34,8 @@ interface DebugDialogCallback {
 
     fun onSeamlessPlayMode(enable: Boolean) = Unit  // Default implementation
 
+    fun onMetricsEnable(enable: Boolean) = Unit  // Default implementation
+
     fun onEnvConfigChange() = Unit  // Default implementation
 
     fun getConvoAiHost(): String = ""
@@ -107,11 +109,20 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
                     onDebugDialogCallback?.onAudioDumpEnable(isChecked)
                 }
             }
+
             cbSeamlessPlayMode.setChecked(DebugConfigSettings.isSessionLimitMode)
             cbSeamlessPlayMode.setOnCheckedChangeListener { buttonView, isChecked ->
                 if (buttonView.isPressed) {
                     DebugConfigSettings.enableSessionLimitMode(isChecked)
                     onDebugDialogCallback?.onSeamlessPlayMode(isChecked)
+                }
+            }
+
+            cbMetrics.setChecked(DebugConfigSettings.isMetricsEnabled)
+            cbMetrics.setOnCheckedChangeListener { buttonView, isChecked ->
+                if (buttonView.isPressed) {
+                    DebugConfigSettings.enableMetricsEnabled(isChecked)
+                    onDebugDialogCallback?.onMetricsEnable(isChecked)
                 }
             }
 

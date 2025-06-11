@@ -71,6 +71,13 @@ object DebugConfigSettings {
         this.isSessionLimitMode = isSessionLimitMode
     }
 
+    var isMetricsEnabled: Boolean = false
+        private set
+
+    fun enableMetricsEnabled(isMetricsEnabled: Boolean) {
+        this.isMetricsEnabled = isMetricsEnabled
+    }
+
     @JvmStatic
     fun init(context: Context) {
         if (instance != null) return
@@ -93,6 +100,7 @@ object DebugConfigSettings {
         graphId = ""
         isDebug = false
         isAudioDumpEnabled = false
+        isMetricsEnabled = false
         _sdkAudioParameters.clear()
         convoAIParameter = ""
     }

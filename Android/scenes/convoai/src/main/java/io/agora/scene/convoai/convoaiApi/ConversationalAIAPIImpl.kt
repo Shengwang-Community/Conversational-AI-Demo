@@ -1,12 +1,7 @@
 package io.agora.scene.convoai.convoaiApi
 
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
 import io.agora.rtc2.Constants
 import io.agora.rtc2.IRtcEngineEventHandler
-import io.agora.rtc2.RtcEngine
-import io.agora.rtm.RtmClient
 
 import org.json.JSONObject
 
@@ -31,35 +26,22 @@ import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionController
 import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionConfig
 
 /**
- * Message type enum
+ * Implementation of ConversationalAI API
  *
- * @property value String value of the message type
+ * This class provides the concrete implementation of the ConversationalAI API interface.
+ * It handles RTM messaging, RTC audio configuration, and manages real-time communication
+ * with AI agents through Agora's RTM and RTC SDKs.
+ *
+ * Key responsibilities:
+ * - Manage RTM subscriptions and message routing
+ * - Parse and handle different message types (state, error, metrics, transcription)
+ * - Configure audio parameters for optimal AI conversation quality
+ * - Coordinate with transcription rendering system
+ * - Provide thread-safe delegate notifications
+ *
+ * @param config Configuration object containing required RTC/RTM instances and settings
  */
-enum class MessageType(val value: String) {
-    ASSISTANT("assistant.transcription"),
-    USER("user.transcription"),
-    ERROR("message.error"),
-    METRICS("message.metrics"),
-    INTERRUPT("message.interrupt"),
-    UNKNOWN("unknown");
-
-    companion object {
-        /**
-         * Get the corresponding message type based on string value
-         */
-        fun fromValue(value: String): MessageType {
-            return entries.find { it.value == value } ?: UNKNOWN
-        }
-    }
-}
-
-data class ConversationalAIAPIConfig(
-    val rtcEngine: RtcEngine,
-    val rtmClient: RtmClient,
-    val renderMode: TranscriptionRenderMode,
-)
-
-class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig) : ConversationalAIAPI {
+class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig) : ConversationalAIAPIProtocol {
 
     private var mMessageParser = MessageParser()
 
@@ -68,23 +50,17 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
 
     private val conversationalAIDelegateHelper = ObservableHelper<ConversationalAIAPIDelegate>()
 
-    private val TAG = "ConvoAiAPI"
-    private val TAG_RTM = "ConvoAiAPI-RTM"
+    // Log tags for better debugging
+    private companion object {
+        private const val TAG = "ConvoAiAPI"
+        private const val TAG_RTM = "ConvoAiAPI-RTM"
+        private const val TAG_RTC = "ConvoAiAPI-RTC"
+    }
 
     private var audioRouting = Constants.AUDIO_ROUTE_DEFAULT
 
     @Volatile
     private var stateChangeEvent: StateChangeEvent? = null
-
-    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
-
-    private fun runOnMainThread(r: Runnable) {
-        if (Thread.currentThread() == mainHandler.looper.thread) {
-            r.run()
-        } else {
-            mainHandler.post(r)
-        }
-    }
 
     private fun onDebugLog(tag: String, message: String) {
         conversationalAIDelegateHelper.notifyEventHandlers { eventHandler ->
@@ -95,8 +71,8 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
     private val covRtcHandler = object : IRtcEngineEventHandler() {
         override fun onAudioRouteChanged(routing: Int) {
             super.onAudioRouteChanged(routing)
-            runOnMainThread {
-                CovLogger.d(TAG, "onAudioRouteChanged, routing:$routing")
+            conversationalAIDelegateHelper.runOnMainThread {
+                CovLogger.d(TAG_RTC, "onAudioRouteChanged, routing:$routing")
                 // set audio config parameters
                 // you should set it before joinChannel and when audio route changed
                 setAudioConfigParameters(routing)
@@ -108,7 +84,7 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
 
         override fun onLinkStateEvent(event: LinkStateEvent?) {
             super.onLinkStateEvent(event)
-            Log.d(TAG_RTM, "onLinkStateEvent $event")
+            onDebugLog(TAG_RTM, "onPresenceEvent:$event")
         }
 
         /**
@@ -149,17 +125,46 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
                 val messageType = MessageType.fromValue(transcriptionObj)
                 when (messageType) {
                     // metrics message
+                    /**
+                     * {object=message.metrics, module=tts, metric_name=ttfb, turn_id=4, latency_ms=182, data_type=message, message_id=2d7de2a2, send_ts=1749630519485}
+                     */
                     MessageType.METRICS -> {
-
+                        // Parse and handle metrics
+                        val module = msg["module"] as? String ?: ""
+                        val metricType = MetricType.fromValue(module)
+                        val metricName = msg["metric_name"] as? String ?: "unknown"
+                        val latencyMs = (msg["latency_ms"] as? Number)?.toDouble() ?: 0.0
+                        val sendTs = (msg["turn_id"] as? Number)?.toLong() ?: 0L
+                        val metrics = Metrics(metricType, metricName, latencyMs, sendTs)
+                        conversationalAIDelegateHelper.notifyEventHandlers {
+                            it.didReceiveMetrics(uid.toString(), metrics)
+                        }
                     }
                     // error message
                     MessageType.ERROR -> {
+                        // TODO:  
+                        val errorTypeStr = msg["error_type"] as? String
+                        val errorType = when (errorTypeStr) {
+                            "llm_call_failed" -> AIErrorType.LLM_CALL_FAILED
+                            "tts_exception" -> AIErrorType.TTS_EXCEPTION
+                            else -> {
+                                onDebugLog(TAG, "Unknown error type: $errorTypeStr")
+                                return
+                            }
+                        }
 
+                        val code = (msg["code"] as? Number)?.toInt() ?: -1
+                        val message = msg["message"] as? String ?: "Unknown error"
+                        val timestamp = (msg["timestamp"] as? Number)?.toLong() ?: System.currentTimeMillis()
+
+                        val aiError = AIError(errorType, code, message, timestamp)
+                        conversationalAIDelegateHelper.notifyEventHandlers {
+                            it.didReceiveError(uid.toString(), aiError)
+                        }
                     }
 
                     else -> return
                 }
-                onDebugLog(TAG_RTM, "publisherId: $uid, messageMap $msg")
             } catch (e: Exception) {
                 onDebugLog(TAG, "Process rtm message error: ${e.message}")
             }
@@ -175,12 +180,11 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
             if (channelName != event.channelName) {
                 return
             }
-
             try {
                 // Check if channelType is MESSAGE
                 if (event.channelType == RtmConstants.RtmChannelType.MESSAGE) {
                     if (event.eventType == RtmConstants.RtmPresenceEventType.REMOTE_STATE_CHANGED) {
-                        val state = event.stateItems["state"]
+                        val state = event.stateItems["state"] ?: ""
 
                         val turnId = (event.stateItems["turn_id"] as? Number)?.toLong() ?: 0L
                         if (turnId < (stateChangeEvent?.turnId ?: 0)) return
@@ -188,27 +192,14 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
                         val ts = event.timestamp
                         if (ts <= (stateChangeEvent?.timestamp ?: 0)) return
 
-                        val aiState = when (state) {
-                            "idle" -> AIState.Silent
-                            "listening" -> AIState.Listening
-                            "thinking" -> AIState.Thinking
-                            "speaking" -> AIState.Speaking
-                            else -> AIState.Silent
-                        }
-                        runOnMainThread {
-                            val changeEvent = StateChangeEvent(
-                                state = aiState,
-                                turnId = turnId,
-                                timestamp = ts,
-                            )
-                            stateChangeEvent = changeEvent
-                            conversationalAIDelegateHelper.notifyEventHandlers {
-                                it.didChangeState(event.publisherId, changeEvent)
-                            }
+                        val aiState = AIState.fromValue(state)
+                        val changeEvent = StateChangeEvent(aiState, turnId, ts)
+                        stateChangeEvent = changeEvent
+                        conversationalAIDelegateHelper.notifyEventHandlers {
+                            it.didChangeState(event.publisherId, changeEvent)
                         }
                     }
                 }
-
             } catch (e: Exception) {
                 onDebugLog(TAG_RTM, "onPresenceEvent parse error: ${e.message}")
             }
@@ -216,22 +207,22 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
 
         override fun onTopicEvent(event: TopicEvent?) {
             super.onTopicEvent(event)
-            Log.d(TAG_RTM, "onTopicEvent $event")
+            onDebugLog(TAG_RTM, "onTopicEvent $event")
         }
 
         override fun onLockEvent(event: LockEvent?) {
             super.onLockEvent(event)
-            Log.d(TAG_RTM, "onLockEvent $event")
+            onDebugLog(TAG_RTM, "onLockEvent $event")
         }
 
         override fun onStorageEvent(event: StorageEvent?) {
             super.onStorageEvent(event)
-            Log.d(TAG_RTM, "onStorageEvent $event")
+            onDebugLog(TAG_RTM, "onStorageEvent $event")
         }
 
         override fun onTokenPrivilegeWillExpire(channelName: String?) {
             super.onTokenPrivilegeWillExpire(channelName)
-            Log.d(TAG_RTM, "onTokenPrivilegeWillExpire $channelName")
+            onDebugLog(TAG_RTM, "onTokenPrivilegeWillExpire $channelName")
         }
     }
 
@@ -248,7 +239,9 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
                 }
 
                 override fun onDebugLog(tag: String, msg: String) {
-                    this@ConversationalAIAPIImpl.onDebugLog(tag, msg)
+                    conversationalAIDelegateHelper.notifyEventHandlers { eventHandler ->
+                        eventHandler.didReceiveDebugLog(tag, msg)
+                    }
                 }
             }
         )
@@ -298,11 +291,8 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
         })
     }
 
-    override fun chat(
-        userId: String,
-        message: ChatMessage,
-        completion: (error: Exception?) -> Unit
-    ) {
+    override fun chat(userId: String, message: ChatMessage, completion: (error: Exception?) -> Unit) {
+        onDebugLog(TAG, "call chat")
         val receipt = mutableMapOf<String, Any>().apply {
             put("priority", message.priority?.name ?: Priority.INTERRUPT.name)
             put("interruptable", message.interruptable ?: true)
@@ -324,26 +314,33 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
             // Send RTM point-to-point message
             config.rtmClient.publish(userId, jsonMessage, options, object : ResultCallback<Void> {
                 override fun onSuccess(responseInfo: Void?) {
-                    completion(null)
+                    conversationalAIDelegateHelper.runOnMainThread {
+                        completion(null)
+                    }
                     onDebugLog(TAG, "chat onSuccess $jsonMessage to user $userId")
                 }
 
                 override fun onFailure(errorInfo: ErrorInfo) {
                     val error = Exception("chat onFailure: $errorInfo")
-                    completion(error)
                     onDebugLog(TAG, "chat onFailure $jsonMessage to user $userId $errorInfo")
+                    conversationalAIDelegateHelper.runOnMainThread {
+                        completion(error)
+                    }
                 }
             })
         } catch (e: Exception) {
-            completion(Exception("Message serialization failed: ${e.message}"))
+            conversationalAIDelegateHelper.runOnMainThread {
+                completion(Exception("Message serialization failed: ${e.message}"))
+            }
             onDebugLog(TAG, "chat onError ${e.message}")
         }
     }
 
     override fun interrupt(userId: String, completion: (error: Exception?) -> Unit) {
+        onDebugLog(TAG, "call interrupt")
         // Build interrupt message content with structure consistent with iOS
         val receipt = mutableMapOf<String, Any>().apply {
-            put("customType", MessageType.INTERRUPT.value )
+            put("customType", MessageType.INTERRUPT.value)
         }
 
         try {
@@ -359,29 +356,37 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
             // Send RTM point-to-point message
             config.rtmClient.publish(userId, jsonMessage, options, object : ResultCallback<Void> {
                 override fun onSuccess(responseInfo: Void?) {
-                    completion(null)
                     onDebugLog(TAG, "interrupt onSuccess $jsonMessage to user $userId")
+                    conversationalAIDelegateHelper.runOnMainThread {
+                        completion(null)
+                    }
                 }
 
                 override fun onFailure(errorInfo: ErrorInfo) {
                     val error = Exception("interrupt onFailure: $errorInfo")
-                    completion(error)
                     onDebugLog(TAG, "interrupt onFailure $jsonMessage to user $userId $errorInfo")
+                    conversationalAIDelegateHelper.runOnMainThread {
+                        completion(error)
+                    }
                 }
             })
         } catch (e: Exception) {
-            completion(Exception("Interrupt message serialization failed: ${e.message}"))
             onDebugLog(TAG, "interrupt onError ${e.message}")
+            conversationalAIDelegateHelper.runOnMainThread {
+                completion(Exception("Interrupt message serialization failed: ${e.message}"))
+            }
         }
     }
 
     override fun loadAudioSettings() {
+        onDebugLog(TAG, "call loadAudioSettings")
         setAudioConfigParameters(audioRouting)
     }
 
     // set audio config parameters
     // you should set it before joinChannel and when audio route changed
     private fun setAudioConfigParameters(routing: Int) {
+        CovLogger.d(TAG_RTC, "setAudioConfigParameters, routing:$routing")
         audioRouting = routing
         config.rtcEngine.apply {
             setParameters("{\"che.audio.aec.split_srate_for_48k\":16000}")
