@@ -49,5 +49,6 @@ TODO: Add long description of the pod here.
   s.dependency 'Common'
   s.dependency 'BLEManager'
   s.dependency 'IoT'
+  s.dependency 'AgoraRtm'
 
 end

@@ -12,14 +12,15 @@ target 'Agent-cn' do
 #  pod 'AgoraRtcEngine_iOS', :path => 'sdk.podspec'
   pod 'AgoraRtcEngine_iOS', '4.5.1'
   #pod 'LookinServer', :subspecs => ['Swift'], :configurations => ['Debug']
-
+  
   pod 'Common', :path => 'Common'
 
   # Agents
   pod 'ConvoAI', :path => 'Scenes/ConvoAI/ConvoAI'
   pod 'IoT', :path => 'Scenes/ConvoAI/IoT'
   pod 'BLEManager', :path => 'Scenes/ConvoAI/BLEManager'
-  
+  pod 'AgoraRtm', :path => 'AgoraRtm.podspec'
+
 end
 
 post_install do |installer|

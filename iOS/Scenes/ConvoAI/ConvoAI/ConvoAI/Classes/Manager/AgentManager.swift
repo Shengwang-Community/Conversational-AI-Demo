@@ -17,7 +17,7 @@ protocol AgentAPI {
     ///   - completion: Callback with optional error, channel name and agent ID string, and server address
     func startAgent(parameters: [String: Any],
                     channelName: String,
-                    completion: @escaping ((AgentError?, String, String?, String?) -> Void))
+                    completion: @escaping ((ConvoAIError?, String, String?, String?) -> Void))
     
     /// Stops a running AI agent
     /// - Parameters:
@@ -26,7 +26,7 @@ protocol AgentAPI {
     ///   - channelName: The name of the channel
     ///   - presetName: The name of the preset configuration
     ///   - completion: Callback with optional error and response data
-    func stopAgent(appId:String, agentId: String, channelName: String?, presetName: String?, completion: @escaping ((AgentError?, [String : Any]?) -> Void))
+    func stopAgent(appId:String, agentId: String, channelName: String?, presetName: String?, completion: @escaping ((ConvoAIError?, [String : Any]?) -> Void))
     
     /// Checks the connection status with the agent service
     /// - Parameters:
@@ -34,11 +34,11 @@ protocol AgentAPI {
     ///   - channelName: The name of the channel
     ///   - presetName: The name of the preset configuration
     ///   - completion: Callback with optional error and response data
-    func ping(appId: String, channelName: String, presetName: String, completion: @escaping ((AgentError?, [String : Any]?) -> Void))
+    func ping(appId: String, channelName: String, presetName: String, completion: @escaping ((ConvoAIError?, [String : Any]?) -> Void))
     
     /// Retrieves the list of available agent presets
     /// - Parameter completion: Callback with optional error and array of agent presets
-    func fetchAgentPresets(appId: String, completion: @escaping ((AgentError?, [AgentPreset]?) -> Void))
+    func fetchAgentPresets(appId: String, completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void))
 }
 
 class AgentManager: AgentAPI {
@@ -46,7 +46,7 @@ class AgentManager: AgentAPI {
         AgentServiceUrl.host = host
     }
     
-    func fetchAgentPresets(appId: String, completion: @escaping ((AgentError?, [AgentPreset]?) -> Void)) {
+    func fetchAgentPresets(appId: String, completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void)) {
         let url = AgentServiceUrl.fetchAgentPresetsPath("convoai/v4/presets/list").toHttpUrlSting()
         ConvoAILogger.info("request agent preset api: \(url)")
         let requesetBody: [String: Any] = [
@@ -56,13 +56,13 @@ class AgentManager: AgentAPI {
             ConvoAILogger.info("presets request response: \(result)")
             if let code = result["code"] as? Int, code != 0 {
                 let msg = result["msg"] as? String ?? "Unknown error"
-                let error = AgentError.serverError(code: code, message: msg)
+                let error = ConvoAIError.serverError(code: code, message: msg)
                 completion(error, nil)
                 return
             }
             
             guard let data = result["data"] as? [[String: Any]] else {
-                let error = AgentError.serverError(code: -1, message: "data error")
+                let error = ConvoAIError.serverError(code: -1, message: "data error")
                 completion(error, nil)
                 return
             }
@@ -74,25 +74,25 @@ class AgentManager: AgentAPI {
                 presets.removeAll(where: { $0.presetType == "custom" })
                 completion(nil, presets)
             } catch {
-                let error = AgentError.serverError(code: -1, message: "data error")
+                let error = ConvoAIError.serverError(code: -1, message: "data error")
                 completion(error, nil)
             }
         } failure: { msg in
-            let error = AgentError.serverError(code: -1, message: msg)
+            let error = ConvoAIError.serverError(code: -1, message: msg)
             completion(error, nil)
         }
     }
     
     func startAgent(parameters: [String: Any],
                     channelName: String,
-                    completion: @escaping ((AgentError?, String, String?, String?) -> Void)) {
+                    completion: @escaping ((ConvoAIError?, String, String?, String?) -> Void)) {
         let url = AgentServiceUrl.startAgentPath("convoai/v4/start").toHttpUrlSting()
         ConvoAILogger.info("request start api: \(url) convoai_body: \(String(describing: parameters["convoai_body"]))")
         NetworkManager.shared.postRequest(urlString: url, params: parameters) { result in
             ConvoAILogger.info("start request response: \(result)")
             if let code = result["code"] as? Int, code != 0 {
                 let msg = result["msg"] as? String ?? "Unknown error"
-                let error = AgentError.serverError(code: code, message: msg)
+                let error = ConvoAIError.serverError(code: code, message: msg)
                 completion(error, channelName, nil, nil)
                 return
             }
@@ -101,7 +101,7 @@ class AgentManager: AgentAPI {
                   let agentId = data["agent_id"] as? String,
                   let server = data["agent_url"] as? String
             else {
-                let error = AgentError.serverError(code: -1, message: "data error")
+                let error = ConvoAIError.serverError(code: -1, message: "data error")
                 completion(error, channelName, nil, nil)
                 return
             }
@@ -109,12 +109,12 @@ class AgentManager: AgentAPI {
             completion(nil, channelName, agentId, server)
             
         } failure: { msg in
-            let error = AgentError.serverError(code: -1, message: msg)
+            let error = ConvoAIError.serverError(code: -1, message: msg)
             completion(error, channelName, nil, nil)
         }
     }
     
-    func stopAgent(appId:String, agentId: String, channelName: String? = nil, presetName: String? = nil, completion: @escaping ((AgentError?, [String : Any]?) -> Void)) {
+    func stopAgent(appId:String, agentId: String, channelName: String? = nil, presetName: String? = nil, completion: @escaping ((ConvoAIError?, [String : Any]?) -> Void)) {
         let url = AgentServiceUrl.stopAgentPath("convoai/v4/stop").toHttpUrlSting()
         var parameters: [String: Any] = [:]
         parameters["app_id"] = appId
@@ -136,18 +136,18 @@ class AgentManager: AgentAPI {
             ConvoAILogger.info("stop request response: \(result)")
             if let code = result["code"] as? Int, code != 0 {
                 let msg = result["msg"] as? String ?? "Unknown error"
-                let error = AgentError.serverError(code: code, message: msg)
+                let error = ConvoAIError.serverError(code: code, message: msg)
                 completion(error, nil)
             } else {
                 completion(nil, result)
             }
         } failure: { msg in
-            let error = AgentError.serverError(code: -1, message: msg)
+            let error = ConvoAIError.serverError(code: -1, message: msg)
             completion(error, nil)
         }
     }
     
-    func ping(appId: String, channelName: String, presetName: String, completion: @escaping ((AgentError?, [String : Any]?) -> Void)) {
+    func ping(appId: String, channelName: String, presetName: String, completion: @escaping ((ConvoAIError?, [String : Any]?) -> Void)) {
         let url = AgentServiceUrl.stopAgentPath("convoai/v4/ping").toHttpUrlSting()
         let parameters: [String: Any] = [
             "app_id": appId,
@@ -159,13 +159,13 @@ class AgentManager: AgentAPI {
             ConvoAILogger.info("ping request response: \(result)")
             if let code = result["code"] as? Int, code != 0 {
                 let msg = result["msg"] as? String ?? "Unknown error"
-                let error = AgentError.serverError(code: code, message: msg)
+                let error = ConvoAIError.serverError(code: code, message: msg)
                 completion(error, nil)
             } else {
                 completion(nil, result)
             }
         } failure: { msg in
-            let error = AgentError.serverError(code: -1, message: msg)
+            let error = ConvoAIError.serverError(code: -1, message: msg)
             completion(error, nil)
         }
     }
@@ -198,7 +198,7 @@ enum AgentServiceUrl {
     }
 }
 
-enum AgentError: Error {
+enum ConvoAIError: Error {
     case serverError(code: Int, message: String)
     case unknownError(message: String)
 

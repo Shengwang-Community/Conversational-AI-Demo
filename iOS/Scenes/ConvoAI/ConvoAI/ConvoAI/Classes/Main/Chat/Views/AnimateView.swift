@@ -9,7 +9,7 @@ enum AgentState {
 }
 
 protocol AnimateViewDelegate: NSObject {
-    func onError(error: AgentError)
+    func onError(error: ConvoAIError)
 }
 
 class AnimateView: NSObject {
@@ -277,7 +277,7 @@ extension AnimateView: AgoraRtcMediaPlayerDelegate {
     func AgoraRtcMediaPlayer(_ playerKit: any AgoraRtcMediaPlayerProtocol, didPreloadEvent event: AgoraMediaPlayerPreloadEvent) {
         ConvoAILogger.info("onPreloadEvent : \(event)")
         if event == .error {
-            delegate?.onError(error: AgentError.unknownError(message: "video preload error: \(event)"))
+            delegate?.onError(error: ConvoAIError.unknownError(message: "video preload error: \(event)"))
         }
     }
     
@@ -302,7 +302,7 @@ extension AnimateView: AgoraRtcMediaPlayerDelegate {
                 rtcMediaPlayer?.setLoopCount(-1)
             }
         } else if state == .failed {
-            delegate?.onError(error: AgentError.unknownError(message: "play video error: \(state)"))
+            delegate?.onError(error: ConvoAIError.unknownError(message: "play video error: \(state)"))
         }
     }
 }

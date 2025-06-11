@@ -12,6 +12,7 @@ import SVProgressHUD
 import SwifterSwift
 import Common
 import IoT
+import AgoraRtmKit
 
 public class ChatViewController: UIViewController {
     private var isDenoise = true
@@ -22,17 +23,35 @@ public class ChatViewController: UIViewController {
     private var agentUid = 0
     private var remoteAgentId = ""
     private let uid = "\(RtcEnum.getUid())"
+    var rtmClient: AgoraRtmClientKit!
+    private var convoAIAPI: ConversationalAIAPI!
     
+    private lazy var sendMessageButton: UIButton = {
+        let button = UIButton()
+        button.addTarget(self, action: #selector(testChat), for: .touchUpInside)
+        button.setTitle("Chat", for: .normal)
+        button.backgroundColor = .blue
+        return button
+    }()
+    
+    private lazy var interruptButton: UIButton = {
+        let button = UIButton()
+        button.addTarget(self, action: #selector(testInterrupt), for: .touchUpInside)
+        button.setTitle("Interrupt", for: .normal)
+        button.backgroundColor = .blue
+        return button
+    }()
+
     private lazy var timerCoordinator: AgentTimerCoordinator = {
         let coordinator = AgentTimerCoordinator()
         coordinator.delegate = self
         coordinator.setDurationLimit(limited: !DeveloperConfig.shared.getSessionFree())
         return coordinator
     }()
-
-    private lazy var subRenderController: ConversationSubtitleController = {
-        let renderCtrl = ConversationSubtitleController()
-        return renderCtrl
+    
+    private lazy var rtmManager: RTMManager = {
+        let manager = RTMManager(appId: AppContext.shared.appId, userId: uid, delegate: self)
+        return manager
     }()
     
     private lazy var rtcManager: RTCManager = {
@@ -163,6 +182,19 @@ public class ChatViewController: UIViewController {
         setupViews()
         setupConstraints()
         setupSomeNecessaryConfig()
+        
+        view.addSubview(sendMessageButton)
+        view.addSubview(interruptButton)
+        
+        sendMessageButton.snp.makeConstraints { make in
+            make.centerX.equalTo(view)
+            make.centerY.equalTo(view)
+        }
+        
+        interruptButton.snp.makeConstraints { make in
+            make.centerX.equalTo(view)
+            make.top.equalTo(sendMessageButton.snp.bottom).offset(30)
+        }
     }
     
     public override func viewDidLayoutSubviews() {
@@ -330,27 +362,30 @@ public class ChatViewController: UIViewController {
     }
     
     private func setupSomeNecessaryConfig() {
+        initRTM()
         let rtcEngine = rtcManager.getRtcEntine()
         animateView.setupMediaPlayer(rtcEngine)
         animateView.updateAgentState(.idle)
         
-        let subRenderConfig = SubtitleRenderConfig(rtcEngine: rtcEngine, renderMode: .words, delegate: self)
-        subRenderController.setupWithConfig(subRenderConfig)
-        
+        let config = ConversationalAIAPIConfig(rtcEngine: rtcEngine, rtmEngine: rtmClient, renderMode: .words)
+        convoAIAPI = ConversationalAIAPI(config: config)
+    
         devModeButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
     }
-    
+        
     @MainActor
     private func prepareToStartAgent() async {
         startLoading()
-        
+    
         Task {
             do {
+                if !rtmManager.isLogin {
+                    try await loginRTM()
+                }
                 try await fetchPresetsIfNeeded()
                 try await fetchTokenIfNeeded()
                 await MainActor.run {
                     if bottomBar.style == .startButton { return }
-                    subRenderController.reset()
                     startAgentRequest()
                     joinChannel()
                 }
@@ -410,9 +445,10 @@ public class ChatViewController: UIViewController {
     
     private func stopAgent() {
         addLog("[Call] stopAgent()")
+        rtmManager.logout(completion: nil)
+        convoAIAPI.unsubscribe(channel: channelName, delegate: self)
         stopAgentRequest()
         leaveChannel()
-        subRenderController.reset()
         setupMuteState(state: false)
         animateView.updateAgentState(.idle)
         messageView.clearMessages()
@@ -461,6 +497,36 @@ public class ChatViewController: UIViewController {
 
 // MARK: - Agent Request
 extension ChatViewController {
+    private func logoutRTM() {
+        rtmManager.logout(completion: nil)
+    }
+    
+    private func loginRTM() async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkManager.shared.generateToken(
+                channelName: "",
+                uid: uid,
+                types: [.rtc, .rtm]
+            ) { [weak self] token in
+                guard let token = token else {
+                    continuation.resume(throwing: ConvoAIError.serverError(code: -1, message: "token is empty"))
+                    return
+                }
+                
+                print("rtm token is : \(token)")
+                self?.token = token
+                self?.rtmManager.login(token: token, completion: { res, err in
+                    if let error = err {
+                        continuation.resume(throwing: error)
+                        return
+                    }
+                    
+                    continuation.resume()
+                })
+            }
+        }
+    }
+    
     private func fetchIotPresetsIfNeeded() async throws {
         return try await withCheckedThrowingContinuation { continuation in
             IoTEntrance.fetchPresetIfNeed { error in
@@ -500,7 +566,7 @@ extension ChatViewController {
             NetworkManager.shared.generateToken(
                 channelName: "",
                 uid: uid,
-                types: [.rtc]
+                types: [.rtc, .rtm]
             ) { [weak self] token in
                 guard let self = self else { return }
                 
@@ -531,6 +597,7 @@ extension ChatViewController {
         manager.updateAgentState(.disconnected)
         if DeveloperConfig.shared.isDeveloperMode {
             channelName = "agent_debug_\(UUID().uuidString.prefix(8))"
+
             stateLabel.isHidden = false
             stateLabel.text = ""
         } else {
@@ -539,6 +606,7 @@ extension ChatViewController {
         agentUid = AppContext.agentUid
         remoteIsJoined = false
         
+        convoAIAPI.subscribe(channel: channelName, delegate: self)
         let parameters = getStartAgentParameters()
         agentManager.startAgent(parameters: parameters, channelName: channelName) { [weak self] error, channelName, remoteAgentId, targetServer in
             guard let self = self else { return }
@@ -618,7 +686,9 @@ extension ChatViewController {
     
     private func getConvoaiBodyMap() -> [String: Any?] {
         return [
-            "graph_id": DeveloperConfig.shared.graphId,
+            //1.5.1-12-g18f3d9c7
+            "graph_id": "1.5.1-15-g3e6ee1c1",
+//            "graph_id": DeveloperConfig.shared.graphId,
             "name": nil,
             "preset": DeveloperConfig.shared.convoaiServerConfig,
             "properties": [
@@ -628,11 +698,10 @@ extension ChatViewController {
                 "remote_rtc_uids": [uid],
                 "enable_string_uid": nil,
                 "idle_timeout": nil,
-                "agent_rtm_uid": nil,
                 "advanced_features": [
                     "enable_aivad": AppContext.preferenceManager()?.preference.aiVad,
                     "enable_bhvs": AppContext.preferenceManager()?.preference.bhvs,
-                    "enable_rtm": nil
+                    "enable_rtm": true
                 ],
                 "asr": [
                     "language": AppContext.preferenceManager()?.preference.language?.languageCode,
@@ -664,8 +733,9 @@ extension ChatViewController {
                     "threshold": nil
                 ],
                 "parameters": [
+                    "data_channel": "rtm",
                     "enable_flexible": nil,
-                    "enable_metrics": nil,
+                    "enable_metrics": true,
                     "aivad_force_threshold": nil,
                     "output_audio_codec": nil,
                     "audio_scenario": nil,
@@ -786,7 +856,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
         NetworkManager.shared.generateToken(
             channelName: "",
             uid: uid,
-            types: [.rtc]
+            types: [.rtc, .rtm]
         ) { [weak self] token in
             self?.addLog("regenerate token is: \(token ?? "")")
             guard let self = self, let newToken = token else {
@@ -958,52 +1028,11 @@ extension ChatViewController: AgentControlToolbarDelegate {
 }
 
 extension ChatViewController: AnimateViewDelegate {
-    func onError(error: AgentError) {
+    func onError(error: ConvoAIError) {
         ConvoAILogger.info(error.message)
         
         stopLoading()
         stopAgent()
-    }
-}
-
-extension ChatViewController: ConversationSubtitleDelegate {
-    
-    public func onSubtitleUpdated(subtitle: SubtitleMessage) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            let owner: MessageOwner = (subtitle.userId == ConversationSubtitleController.localUserId) ? .me : .agent
-            if (subtitle.turnId == -1) {
-                self.messageView.viewModel.reduceIndependentMessage(message: subtitle.text, timestamp: 0, owner: owner, isFinished: subtitle.status == .end)
-            } else {
-                print("=====\(subtitle.text)")
-                self.messageView.viewModel.reduceStandardMessage(turnId: subtitle.turnId, message: subtitle.text, timestamp: 0, owner: owner, isInterrupted: subtitle.status == .interrupt)
-            }
-        }
-    }
-
-    public func onAgentStateChanged(stateMessage: AgentStateMessage) {
-        addLog("[Call] onAgentStateChanged: \(stateMessage.state)")
-        switch stateMessage.state {
-        case .idle:
-            stateLabel.text = "idle"
-            break
-        case .silent:
-            stateLabel.text = "silent"
-            break
-        case .listening:
-            stateLabel.text = "listening"
-            break
-        case .thinking:
-            stateLabel.text = "thinking"
-            break
-        case .speaking:
-            stateLabel.text = "speaking"
-            break
-        }
-    }
-    
-    public func onDebugLog(_ txt: String) {
-        addLog(txt)
     }
 }
 
@@ -1134,5 +1163,102 @@ extension ChatViewController {
     private func deleteAllPresets() {
         IoTEntrance.deleteAllPresets()
         AppContext.preferenceManager()?.deleteAllPresets()
+    }
+    
+    func initRTM() {
+        do {
+            print("appid id \(AppContext.shared.appId)")
+            let config = AgoraRtmClientConfig(appId: AppContext.shared.appId, userId: "\(uid)")
+            config.areaCode = [.CN, .NA]
+            config.presenceTimeout = 30
+            config.heartbeatInterval = 10
+            config.useStringUserId = true
+            // Initializing the RTM client
+            rtmClient = try AgoraRtmClientKit(config, delegate: nil)
+        } catch let error {
+            print("Failed to initialize RTM client. Error: \(error)")
+        }
+    }
+}
+
+extension ChatViewController: AgoraRtmClientDelegate {
+    public func rtmKit(_ rtmKit: AgoraRtmClientKit, tokenPrivilegeWillExpire channel: String?) {
+        if !rtmManager.isLogin {
+            rtmManager.logout(completion: nil)
+        }
+        
+        NetworkManager.shared.generateToken(channelName: channelName, uid: uid, types: [.rtc, .rtm]) { [weak self] token in
+            guard let self = self else { return }
+            
+            if let token = token {
+                print("rtc token is : \(token)")
+                self.rtmManager.renewToken(token: token)
+            }
+        }
+    }
+    
+    @objc func testInterrupt() {
+        convoAIAPI.interrupt(userId: "\(agentUid)") { error in
+            
+        }
+    }
+    
+    @objc func testChat() {
+        let message = ChatMessage(text: "给我讲个笑话？", imageUrl: nil, audioUrl: nil)
+        convoAIAPI.chat(userId: "\(agentUid)", message: message) { error in
+            
+        }
+    }
+}
+
+extension ChatViewController: ConversationalAIAPIDelegate {
+    public func didReceiveError(userId: String, error: AgentError) {
+        
+    }
+    
+    public func didChangeState(userId: String, event: StateChangeEvent) {
+        switch event.state {
+            //TODO: 没有idle状态
+//        case .idle:
+//            stateLabel.text = "idle"
+//            break
+        case .silent:
+            stateLabel.text = "silent"
+            break
+        case .listening:
+            stateLabel.text = "listening"
+            break
+        case .thinking:
+            stateLabel.text = "thinking"
+            break
+        case .speaking:
+            stateLabel.text = "speaking"
+            break
+        }
+    }
+    
+    public func didInterrupt(userId: String, event: InterruptEvent) {
+        
+    }
+    
+    public func didReceiveMetrics(userId: String, metrics: Metrics) {
+        
+    }
+    
+    public func didReceiveTranscription(userId: String, transcription: Transcription) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            let owner: MessageOwner = (transcription.userId == TranscriptionController.localUserId) ? .me : .agent
+            if (transcription.turnId == -1) {
+                self.messageView.viewModel.reduceIndependentMessage(message: transcription.text, timestamp: 0, owner: owner, isFinished: transcription.status == .end)
+            } else {
+                print("=====\(transcription.text)")
+                self.messageView.viewModel.reduceStandardMessage(turnId: transcription.turnId, message: transcription.text, timestamp: 0, owner: owner, isInterrupted: transcription.status == .interrupt)
+            }
+        }
+    }
+    
+    public func didReceiveDebugLog(_ log: String) {
+        
     }
 }
