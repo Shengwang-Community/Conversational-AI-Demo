@@ -8,9 +8,9 @@
 import Foundation
 
 @objc public enum Priority: Int {
-    case interrupt = 0 ///（默认）高优先级，打断并播报。智能体会终止当前交互，直接播报消息。
-    case append = 1    ///中优先级，追加播报。智能体会在当前交互结束后播报消息。
-    case ignore = 2    ///低优先级，空闲时播报。如果此时智能体正在交互，智能体会直接忽略并丢弃要播报的消息；只有智能体不在交互中才会播报消息。
+    case interrupt = 0 /// (Default) High priority, interrupt and announce. The agent will terminate the current interaction and directly announce the message.
+    case append = 1    /// Medium priority, append announcement. The agent will announce the message after the current interaction ends.
+    case ignore = 2    /// Low priority, announce when idle. If the agent is currently interacting, it will directly ignore and discard the message to be announced; it will only announce the message when the agent is not in interaction.
     
     public var stringValue: String {
         switch self {
@@ -37,17 +37,17 @@ import Foundation
     }
 }
 
-/// 包含文本和图片信息的消息对象
+/// Message object containing text and image information
 @objc public class ChatMessage: NSObject {
-    /// 消息优先级
+    /// Message priority
     @objc public let priority: Priority
-    /// 该消息是否允许被打断
+    /// Whether this message can be interrupted
     @objc public let interruptable: Bool
-    /// 消息的文本内容
+    /// Text content of the message
     @objc public let text: String?
-    /// 图片的URL
+    /// Image URL
     @objc public let imageUrl: String?
-    /// 音频的URL
+    /// Audio URL
     @objc public let audioUrl: String?
     
     @objc public init(priority: Priority = .interrupt, interruptable: Bool = true, text: String?, imageUrl: String?, audioUrl: String?) {
@@ -60,29 +60,29 @@ import Foundation
     }
 }
 
-// 定义字幕渲染的不同模式
+// Define different modes for subtitle rendering
 @objc public enum TranscriptionRenderMode: Int {
-    case words = 0 ///逐字渲染字幕
-    case text = 1  ///整句渲染字幕
+    case words = 0 /// Word-by-word subtitle rendering
+    case text = 1  /// Sentence-by-sentence subtitle rendering
 }
  
-/// 表示字幕的当前状态
+/// Represents the current status of subtitles
 @objc public enum Status: Int {
-    case inprogress = 0 ///字幕正在生成或播放中
-    case end = 1        ///字幕已正常完成
-    case interrupt = 2  ///字幕在完成前被中断
+    case inprogress = 0 /// Subtitle is being generated or playing
+    case end = 1        /// Subtitle has completed normally
+    case interrupt = 2  /// Subtitle was interrupted before completion
 }
  
-/// 面向用户的字幕消息完整数据类
-/// 用于在UI层进行渲染
+/// Complete data class for user-facing subtitle messages
+/// Used for rendering in the UI layer
 @objc public class Transcription: NSObject {
-    ///对话轮次的唯一标识符
+    /// Unique identifier for the conversation turn
     @objc public let turnId: Int
-    ///与此字幕关联的用户标识符
+    /// User identifier associated with this subtitle
     @objc public let userId: UInt
-    ///实际的字幕文本内容
+    /// Actual subtitle text content
     @objc public let text: String
-    ///字幕的当前状态
+    /// Current status of the subtitle
     @objc public var status: Status
      
     @objc public init(turnId: Int, userId: UInt, text: String, status: Status) {
@@ -93,23 +93,23 @@ import Foundation
     }
 }
 
-/// AI 状态枚举
+/// AI state enumeration
 @objc public enum State: Int {
-    case silent     ///静默状态
-    case listening  ///聆听
-    case thinking   ///思考中
-    case speaking   ///正在说话
+    case silent     /// Silent state
+    case listening  /// Listening
+    case thinking   /// Thinking
+    case speaking   /// Speaking
 }
  
-/// 对话状态类
+/// Conversation state class
 @objc public class StateChangeEvent: NSObject {
-    ///当前代理状态
+    /// Current agent state
     let state: State
-    ///对话轮次ID
+    /// Conversation turn ID
     let turnId: Int
-    ///时间戳
+    /// Timestamp
     let timestamp: TimeInterval
-    ///状态变化原因
+    /// Reason for state change
     let reason: String
     
     @objc public init(state: State, turnId: Int, timestamp: TimeInterval, reason: String) {
@@ -121,11 +121,11 @@ import Foundation
    }
 }
 
-/// 打断事件类
+/// Interrupt event class
 @objc public class InterruptEvent: NSObject {
-    ///对话轮次ID
+    /// Conversation turn ID
     @objc public  let turnId: Int
-    /// 事件发生的时间戳
+    /// Timestamp when the event occurred
     @objc public let timestamp: TimeInterval
     
     @objc public init(turnId: Int, timestamp: TimeInterval) {
@@ -134,14 +134,14 @@ import Foundation
     }
 }
 
-/// 性能指标类型枚举
+/// Performance metric type enumeration
 @objc public enum ErrorType: Int {
-    case llm   ///LLM推理
-    case mllm  ///MLLM推理
-    case tts   ///文本转语音
-    case unknown ///未知错误
-
-    /// 从字符串创建类型
+    case llm   /// LLM inference
+    case mllm  /// MLLM inference
+    case tts   /// Text-to-speech
+    case unknown /// Unknown error
+    
+    /// Create type from string
     public static func fromValue(_ value: String) -> ErrorType {
         switch value.lowercased() {
         case "llm":
@@ -156,15 +156,15 @@ import Foundation
     }
 }
  
-/// 用于记录系统性能数据的指标类
+/// Class for recording system performance data metrics
 @objc public class Metrics: NSObject {
-    /// 指标的类型
+    /// Type of the metric
     @objc public let type: ErrorType
-    /// 指标名称
+    /// Metric name
     @objc public let name: String
-    /// 指标数值
+    /// Metric value
     @objc public let value: Double
-    /// 记录指标时的时间戳
+    /// Timestamp when the metric was recorded
     @objc public let timestamp: TimeInterval
     
     @objc public init(type: ErrorType, name: String, value: Double, timestamp: TimeInterval) {
@@ -175,15 +175,15 @@ import Foundation
     }
 }
 
-/// AI 错误信息类
+/// AI error information class
 @objc public class AgentError: NSObject {
-    /// 错误类型
+    /// Error type
     @objc public let errorType: ErrorType
-    /// 错误代码
+    /// Error code
     @objc public let code: Int
-    /// 错误消息
+    /// Error message
     @objc public let message: String
-    /// 错误发生时间戳
+    /// Timestamp when the error occurred
     @objc public let timestamp: TimeInterval
     
     @objc public init(errorType: ErrorType, code: Int, message: String, timestamp: TimeInterval) {

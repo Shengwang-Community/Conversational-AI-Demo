@@ -9,98 +9,115 @@ import Foundation
 import AgoraRtcKit
 import AgoraRtmKit
 
-/// ConvoAI组件的协议，用于回调通信事件和状态变更
+/// Message type enumeration
+public enum MessageType: String, CaseIterable {
+    case metrics = "message.metrics"
+    case error = "message.error"
+    case assistant = "assistant.transcription"
+    case user = "user.transcription"
+    case interrupt = "message.interrupt"
+    case state = "message.state"
+    case unknown = "unknown"
+    
+    /// Create message type from string
+    public static func fromValue(_ value: String) -> MessageType {
+        return MessageType(rawValue: value) ?? .unknown
+    }
+}
+
+/// Protocol for ConvoAI component callbacks for communication events and state changes
 ///
-/// 该协议定义了接收Agent对话事件、状态变更、性能指标、错误及字幕更新的回调接口。
+/// This protocol defines callback interfaces for receiving Agent conversation events, 
+/// state changes, performance metrics, errors, and subtitle updates.
 @objc public protocol ConversationalAIAPIDelegate: AnyObject {
-    /// 外部通过注册监听此方法
-    /// 当Agent状态发生变化时组件会回调这个方法
-    /// 每当代理在不同状态之间转换时（如静默、聆听、思考或说话）
-    /// 都会调用此方法。可用于更新UI界面或
-    /// 追踪对话流程。
+    /// External registration to listen to this method
+    /// The component will call this method when Agent state changes
+    /// This method is called whenever the agent transitions between different states 
+    /// (such as silent, listening, thinking, or speaking).
+    /// Can be used to update UI interface or track conversation flow.
     ///
-    /// - Parameter event: Agent状态事件（静默、监听、思考、说话）
-    /// - userId: RTM userId
+    /// - Parameter event: Agent state event (silent, listening, thinking, speaking)
+    /// - Parameter userId: RTM userId
     @objc func didChangeState(userId: String, event: StateChangeEvent)
      
-    /// 当发生打断事件时调用
+    /// Called when an interrupt event occurs
     ///
-    /// - Parameter event: 打断事件
-    /// - userId: RTM userId
+    /// - Parameter event: Interrupt event
+    /// - Parameter userId: RTM userId
     @objc func didInterrupt(userId: String, event: InterruptEvent)
  
  
-    /// 实时回调性能指标
+    /// Real-time callback for performance metrics
     ///
-    /// 此方法提供性能数据，例如LLM推理延迟
-    /// 和TTS语音合成延迟，用于监控系统性能。
+    /// This method provides performance data, such as LLM inference latency
+    /// and TTS speech synthesis latency, for monitoring system performance.
     ///
-    /// - Parameter metrics: 包含类型、数值和时间戳的性能指标
+    /// - Parameter metrics: Performance metrics containing type, value, and timestamp
     /// - Parameter userId: RTM userId
     @objc func didReceiveMetrics(userId: String, metrics: Metrics)
      
-    /// 当发生AI相关错误时会回调此方法
+    /// Called when AI-related errors occur
     ///
-    /// 当AI组件（LLM、TTS等）发生错误时会调用此方法，
-    /// 用于错误监控、日志记录和实现优雅降级策略。
+    /// This method is called when AI components (LLM, TTS, etc.) encounter errors,
+    /// used for error monitoring, logging, and implementing graceful degradation strategies.
     ///
-    /// - Parameter error: 包含类型、错误代码、错误信息和时间戳的AI错误
+    /// - Parameter error: AI error containing type, error code, error message, and timestamp
     /// - Parameter userId: RTM userId
     @objc func didReceiveError(userId: String, error: AgentError)
      
-    /// 当对话过程中字幕内容更新时调用
+    /// Called when subtitle content is updated during conversation
     ///
-    /// 此方法提供实时的字幕更新
+    /// This method provides real-time subtitle updates
     ///
-    /// - Parameter subtitle: 包含文本内容和时间信息的字幕消息
+    /// - Parameter transcription: Subtitle message containing text content and time information
     /// - Parameter userId: RTM userId
     @objc func didReceiveTranscription(userId: String, transcription: Transcription)
  
  
-    /// 调用此方法以向外部暴露内部日志
-    /// - Parameter log: 组件的内部日志
+    /// Call this method to expose internal logs to external components
+    /// - Parameter log: Internal logs from the component
     @objc func didReceiveDebugLog(_ log: String)
 }
 
-/// 用于管理ConvoAI组件操作的控制协议
+/// Control protocol for managing ConvoAI component operations
 ///
-/// 该协议定义了控制Agent对话行为的接口，
-/// 包括中断代理和发送消息。
+/// This protocol defines interfaces for controlling Agent conversation behavior,
+/// including interrupting agents and sending messages.
 @objc public protocol ConversationalAIAPIProtocol: AnyObject {
-    /// 向Agent发送消息以进行处理
+    /// Send a message to the Agent for processing
     ///
-    /// 该方法将消息（包含文本和/或图像）发送至Agent进行理解
-    /// 通过完成回调来表明操作的成功或失败。
+    /// This method sends a message (containing text and/or images) to the Agent for understanding
+    /// and indicates the success or failure of the operation through a completion callback.
     ///
-    /// - 参数:
+    /// - Parameters:
     ///   - userId: RTM userId
-    ///   - message: 消息对象，其中包含文本、图像URL以及中断设置
-    ///   - completion: 操作完成时被调用的回调处理函数。
-    ///                 操作成功返回nil，失败则返回NSError
+    ///   - message: Message object containing text, image URL, and interrupt settings
+    ///   - completion: Callback function called when the operation completes.
+    ///                 Returns nil on success, NSError on failure
     @objc func chat(userId: String, message: ChatMessage, completion: @escaping (NSError?) -> Void)
      
-    /// 打断Agent说话
+    /// Interrupt the Agent's speech
     ///
-    /// 可使用此方法来打断当前说话中的Agent。
+    /// Use this method to interrupt the currently speaking Agent.
     ///   - userId: RTM userId
-    ///   - completion: 操作完成时被调用的回调处理函数
-    /// error有值，表示消息发送失败
-    /// error为空表示消息发送成功，但并不代表Agent打断成功
+    ///   - completion: Callback function called when the operation completes
+    /// If error has a value, it indicates message sending failed
+    /// If error is nil, it indicates message sending succeeded, but doesn't guarantee Agent interruption success
     @objc func interrupt(userId: String, completion: @escaping (NSError?) -> Void)
      
-    /// 设置音频最佳实践参数以获得最优性能
+    /// Set audio best practice parameters for optimal performance
     ///
-    /// 配置AI对话中获得最佳性能所需的音频参数
+    /// Configure audio parameters required for optimal performance in AI conversations
     ///
-    /// **重要提示：** 如果需要启用音频最佳实践，必须在每次调用 `joinChannel` 之前调用此方法
-    /// **使用示例：**
+    /// **Important Note:** If you need to enable audio best practices, you must call this method before each `joinChannel` call
+    /// **Usage Example:**
     /// ```swift
     /// let api = ConversationalAIAPI(config: config)
     ///
-    /// // 在加入频道前设置音频最佳实践参数
+    /// // Set audio best practice parameters before joining channel
     /// api.loadAudioSettings()
     ///
-    /// // 然后加入频道
+    /// // Then join the channel
     /// rtcEngine.joinChannel(byToken: token, channelId: channelName, info: nil, uid: userId)
     /// ```
     @objc func loadAudioSettings()
@@ -396,20 +413,6 @@ extension ConversationalAIAPI: AgoraRtcEngineDelegate {
 }
 
 extension ConversationalAIAPI: AgoraRtmClientDelegate {
-    // 消息类型枚举
-    public enum MessageType: String, CaseIterable {
-        case metrics = "message.metrics"
-        case error = "message.error"
-        case interrupt = "message.interrupt"
-        case state = "message.state"
-        case unknown = "unknown"
-        
-        /// 从字符串创建消息类型
-        public static func fromValue(_ value: String) -> MessageType {
-            return MessageType(rawValue: value) ?? .unknown
-        }
-    }
-    
     public func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceiveMessageEvent event: AgoraRtmMessageEvent) {
         // 获取发布者 ID
         let publisherId = event.publisher
