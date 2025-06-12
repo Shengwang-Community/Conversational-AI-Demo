@@ -196,9 +196,7 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
     
     @objc public func chat(userId: String, message: ChatMessage, completion: @escaping (NSError?) -> Void) {
         let publishOptions = AgoraRtmPublishOptions()
-        // 设置频道类型
         publishOptions.channelType = .user
-        // 自定义类型为 "PlaintText,BinaryData"
         publishOptions.customType = "user.transcription"
         let messageData: [String : Any] = [
             "customType": "user.transcription",
@@ -216,13 +214,10 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
         
         self.config.rtmEngine.publish(channelName: userId, message: stringData, option: publishOptions, completion: { res, error in
             if let errorInfo = error {
-                // 处理错误情况
                 print("Unknown error publish message with error: \(errorInfo.reason)")
             } else if let publishResponse = res {
-                // 处理成功情况
                 print("Message published successfully. \(publishResponse)")
             } else {
-                // 处理未知错误
                 print("Unknown error occurred while publishing the message.")
             }
         })
@@ -230,9 +225,7 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
     
     @objc public func interrupt(userId: String, completion: @escaping (NSError?) -> Void) {
         let publishOptions = AgoraRtmPublishOptions()
-        // 设置频道类型
         publishOptions.channelType = .user
-        // 自定义类型为 "PlaintText,BinaryData"
         publishOptions.customType = "message.interrupt"
         
         let message: [String : Any] = [
@@ -246,13 +239,10 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
         
         self.config.rtmEngine.publish(channelName: "\(userId)", message: stringData, option: publishOptions, completion: { res, error in
             if let errorInfo = error {
-                // 处理错误情况
                 print("Unknown error publish message with error: \(errorInfo.reason)")
             } else if let publishResponse = res {
-                // 处理成功情况
                 print("Message published successfully. \(publishResponse)")
             } else {
-                // 处理未知错误
                 print("Unknown error occurred while publishing the message.")
             }
         })
@@ -338,7 +328,6 @@ extension ConversationalAIAPI {
         rtcEngine.setParameters("{\"che.audio.agc.enable\":false}")
     }
         
-    /// 解析 JSON 字符串为字典
     private func parseJsonToMap(_ jsonString: String) throws -> [String: Any] {
         guard let data = jsonString.data(using: .utf8) else {
             throw NSError(domain: "ConversationalAIAPI", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert string to data"])
@@ -351,7 +340,6 @@ extension ConversationalAIAPI {
         return json
     }
     
-    /// 根据消息类型处理消息
     private func dealMessageWithMap(uid: String, msg: [String: Any]) {
         guard let transcriptionObj = msg["object"] as? String else {
             return
@@ -367,12 +355,10 @@ extension ConversationalAIAPI {
             handleErrorMessage(uid: uid, msg: msg)
             
         default:
-            // 其他消息类型可以在这里处理
             break
         }
     }
     
-    /// 处理性能指标消息
     private func handleMetricsMessage(uid: String, msg: [String: Any]) {
         let module = msg["module"] as? String ?? ""
         let metricType = ErrorType.fromValue(module)
@@ -414,10 +400,8 @@ extension ConversationalAIAPI: AgoraRtcEngineDelegate {
 
 extension ConversationalAIAPI: AgoraRtmClientDelegate {
     public func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceiveMessageEvent event: AgoraRtmMessageEvent) {
-        // 获取发布者 ID
         let publisherId = event.publisher
         
-        // 处理字符串消息
         if let stringData = event.message.stringData {
             do {
                 let messageMap = try parseJsonToMap(stringData)
@@ -425,9 +409,7 @@ extension ConversationalAIAPI: AgoraRtmClientDelegate {
             } catch {
                 notifyDelegatesDebugLog("Process rtm string message error: \(error.localizedDescription)")
             }
-        } 
-        // 处理二进制数据消息
-        else if let rawData = event.message.rawData {
+        } else if let rawData = event.message.rawData {
             do {
                 guard let rawString = String(data: rawData, encoding: .utf8) else {
                     notifyDelegatesDebugLog("Failed to convert binary data to string")
@@ -442,7 +424,6 @@ extension ConversationalAIAPI: AgoraRtmClientDelegate {
     }
     
     public func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceivePresenceEvent event: AgoraRtmPresenceEvent) {
-        // 处理在线状态事件
     }
 }
 
