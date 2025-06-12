@@ -369,7 +369,7 @@ public class ChatViewController: UIViewController {
         
         let config = ConversationalAIAPIConfig(rtcEngine: rtcEngine, rtmEngine: rtmClient, renderMode: .words)
         convoAIAPI = ConversationalAIAPI(config: config)
-    
+        convoAIAPI.addHandler(handler: self)
         devModeButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
     }
         
@@ -446,7 +446,9 @@ public class ChatViewController: UIViewController {
     private func stopAgent() {
         addLog("[Call] stopAgent()")
         rtmManager.logout(completion: nil)
-        convoAIAPI.unsubscribe(channel: channelName, delegate: self)
+        convoAIAPI.unsubscribe(channel: channelName) { response, error in
+            
+        }
         stopAgentRequest()
         leaveChannel()
         setupMuteState(state: false)
@@ -606,7 +608,11 @@ extension ChatViewController {
         agentUid = AppContext.agentUid
         remoteIsJoined = false
         
-        convoAIAPI.subscribe(channel: channelName, delegate: self)
+        convoAIAPI.subscribe(channel: channelName) { response, err in
+            if let error = err {
+                
+            }
+        }
         let parameters = getStartAgentParameters()
         agentManager.startAgent(parameters: parameters, channelName: channelName) { [weak self] error, channelName, remoteAgentId, targetServer in
             guard let self = self else { return }
@@ -1182,6 +1188,10 @@ extension ChatViewController {
 }
 
 extension ChatViewController: AgoraRtmClientDelegate {
+    public func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceiveLinkStateEvent event: AgoraRtmLinkStateEvent) {
+        
+    }
+    
     public func rtmKit(_ rtmKit: AgoraRtmClientKit, tokenPrivilegeWillExpire channel: String?) {
         if !rtmManager.isLogin {
             rtmManager.logout(completion: nil)
@@ -1211,12 +1221,12 @@ extension ChatViewController: AgoraRtmClientDelegate {
     }
 }
 
-extension ChatViewController: ConversationalAIAPIDelegate {
-    public func didReceiveError(userId: String, error: AgentError) {
+extension ChatViewController: ConversationalAIEventHandler {
+    public func onReceiveError(userId: String, error: AgentError) {
         
     }
     
-    public func didChangeState(userId: String, event: StateChangeEvent) {
+    public func onChangeState(userId: String, event: StateChangeEvent) {
         switch event.state {
             //TODO: 没有idle状态
 //        case .idle:
@@ -1237,15 +1247,15 @@ extension ChatViewController: ConversationalAIAPIDelegate {
         }
     }
     
-    public func didInterrupt(userId: String, event: InterruptEvent) {
+    public func onInterrupt(userId: String, event: InterruptEvent) {
         
     }
     
-    public func didReceiveMetrics(userId: String, metrics: Metrics) {
+    public func onReceiveMetrics(userId: String, metrics: Metrics) {
         
     }
     
-    public func didReceiveTranscription(userId: String, transcription: Transcription) {
+    public func onReceiveTranscription(userId: String, transcription: Transcription) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             let owner: MessageOwner = (transcription.userId == TranscriptionController.localUserId) ? .me : .agent
@@ -1258,7 +1268,7 @@ extension ChatViewController: ConversationalAIAPIDelegate {
         }
     }
     
-    public func didReceiveDebugLog(_ log: String) {
+    public func onReceiveDebugLog(_ log: String) {
         
     }
 }

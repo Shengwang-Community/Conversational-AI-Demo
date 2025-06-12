@@ -29,7 +29,7 @@ public enum MessageType: String, CaseIterable {
 ///
 /// This protocol defines callback interfaces for receiving Agent conversation events, 
 /// state changes, performance metrics, errors, and subtitle updates.
-@objc public protocol ConversationalAIAPIDelegate: AnyObject {
+@objc public protocol ConversationalAIEventHandler: AnyObject {
     /// External registration to listen to this method
     /// The component will call this method when Agent state changes
     /// This method is called whenever the agent transitions between different states 
@@ -38,13 +38,13 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter event: Agent state event (silent, listening, thinking, speaking)
     /// - Parameter userId: RTM userId
-    @objc func didChangeState(userId: String, event: StateChangeEvent)
+    @objc func onChangeState(userId: String, event: StateChangeEvent)
      
     /// Called when an interrupt event occurs
     ///
     /// - Parameter event: Interrupt event
     /// - Parameter userId: RTM userId
-    @objc func didInterrupt(userId: String, event: InterruptEvent)
+    @objc func onInterrupt(userId: String, event: InterruptEvent)
  
  
     /// Real-time callback for performance metrics
@@ -54,7 +54,7 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter metrics: Performance metrics containing type, value, and timestamp
     /// - Parameter userId: RTM userId
-    @objc func didReceiveMetrics(userId: String, metrics: Metrics)
+    @objc func onReceiveMetrics(userId: String, metrics: Metrics)
      
     /// Called when AI-related errors occur
     ///
@@ -63,7 +63,7 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter error: AI error containing type, error code, error message, and timestamp
     /// - Parameter userId: RTM userId
-    @objc func didReceiveError(userId: String, error: AgentError)
+    @objc func onReceiveError(userId: String, error: AgentError)
      
     /// Called when subtitle content is updated during conversation
     ///
@@ -71,12 +71,12 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter transcription: Subtitle message containing text content and time information
     /// - Parameter userId: RTM userId
-    @objc func didReceiveTranscription(userId: String, transcription: Transcription)
+    @objc func onReceiveTranscription(userId: String, transcription: Transcription)
  
  
     /// Call this method to expose internal logs to external components
     /// - Parameter log: Internal logs from the component
-    @objc func didReceiveDebugLog(_ log: String)
+    @objc func onReceiveDebugLog(_ log: String)
 }
 
 /// Control protocol for managing ConvoAI component operations
@@ -122,15 +122,34 @@ public enum MessageType: String, CaseIterable {
     /// ```
     @objc func loadAudioSettings()
         
-    @objc func subscribe(channel: String, delegate: ConversationalAIAPIDelegate?)
+    /// Set the channel parameters and callback for subscription
+    /// Called when the channel number changes, typically invoked each time the Agent starts
+    /// - channelName: Channel number
+    /// - completion: Information callback
+    @objc func subscribe(channel: String, completion: @escaping AgoraRtmOperationBlock)
     
-    @objc func unsubscribe(channel: String, delegate: ConversationalAIAPIDelegate?)
+    /// Unsubscribe
+    /// Called when disconnecting the Agent
+    /// - channelName: Channel number
+    /// - completion: Information callback
+    @objc func unsubscribe(channel: String, completion: @escaping AgoraRtmOperationBlock)
+    
+    /// Add callback listener
+    /// - handler The listener
+    @objc func addHandler(handler: ConversationalAIEventHandler)
+    
+    /// Remove callback listener
+    /// - handler The listener
+    @objc func removeHander(handler: ConversationalAIEventHandler)
+    
+    ///This method releases all the resources used
+    @objc func destroy()
 }
 
 @objc public class ConversationalAIAPIConfig: NSObject {
-    @objc public let rtcEngine: AgoraRtcEngineKit
-    @objc public let rtmEngine: AgoraRtmClientKit
-    @objc public let renderMode: TranscriptionRenderMode
+    @objc public weak var rtcEngine: AgoraRtcEngineKit?
+    @objc public weak var rtmEngine: AgoraRtmClientKit?
+    @objc public var renderMode: TranscriptionRenderMode
     
     @objc public init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, renderMode: TranscriptionRenderMode) {
         self.rtcEngine = rtcEngine
@@ -138,13 +157,14 @@ public enum MessageType: String, CaseIterable {
         self.renderMode = renderMode
     }
     
-    @objc public convenience init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, delegate: ConversationalAIAPIDelegate) {
+    @objc public convenience init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, delegate: ConversationalAIEventHandler) {
+        AgoraRtcEngineKit.destroy()
         self.init(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words)
     }
 }
 
 @objc public class ConversationalAIAPI: NSObject {
-    private let delegates = NSHashTable<ConversationalAIAPIDelegate>.weakObjects()
+    private let delegates = NSHashTable<ConversationalAIEventHandler>.weakObjects()
     private let config: ConversationalAIAPIConfig
     private var channel: String? = nil
     private var audioRouting = AgoraAudioOutputRouting.default
@@ -158,43 +178,23 @@ public enum MessageType: String, CaseIterable {
         self.config = config
         super.init()
         
-        self.config.rtcEngine.addDelegate(self)
-        self.config.rtmEngine.addDelegate(self)
-        let subtitleConfig = TranscriptionRenderConfig(rtcEngine: config.rtcEngine, rtmEngine: config.rtmEngine, renderMode: config.renderMode, delegate: self)
+        guard let rtcEngine = config.rtcEngine, let rtmEngine = config.rtmEngine else {
+            return
+        }
+        
+        rtcEngine.addDelegate(self)
+        rtmEngine.addDelegate(self)
+        let subtitleConfig = TranscriptionRenderConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: config.renderMode, delegate: self)
         transcriptionController.setupWithConfig(subtitleConfig)
     }
 }
 
 extension ConversationalAIAPI: ConversationalAIAPIProtocol {
-    @objc public func subscribe(channel: String, delegate: ConversationalAIAPIDelegate?) {
-        if let delegate = delegate {
-            delegates.add(delegate)
-        }
-        
-        if let _ = self.channel {
+    @objc public func chat(userId: String, message: ChatMessage, completion: @escaping (NSError?) -> Void) {
+        guard let rtmEngine = self.config.rtmEngine else {
             return
         }
         
-        let subscribeOptions = AgoraRtmSubscribeOptions()
-        subscribeOptions.features = [.presence, .message]
-        self.config.rtmEngine.subscribe(channelName: channel, option: subscribeOptions) { response, errorInfo in
-            
-        }
-    }
-    
-    @objc public func unsubscribe(channel: String, delegate: ConversationalAIAPIDelegate?) {
-        if let delegate = delegate {
-            delegates.remove(delegate)
-        }
-        
-        self.channel = nil
-        self.config.rtmEngine.unsubscribe(channel) { response, errorInfo in
-            
-        }
-        self.transcriptionController.reset()
-    }
-    
-    @objc public func chat(userId: String, message: ChatMessage, completion: @escaping (NSError?) -> Void) {
         let publishOptions = AgoraRtmPublishOptions()
         publishOptions.channelType = .user
         publishOptions.customType = "user.transcription"
@@ -212,7 +212,7 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
             return
         }
         
-        self.config.rtmEngine.publish(channelName: userId, message: stringData, option: publishOptions, completion: { res, error in
+        rtmEngine.publish(channelName: userId, message: stringData, option: publishOptions, completion: { res, error in
             if let errorInfo = error {
                 print("Unknown error publish message with error: \(errorInfo.reason)")
             } else if let publishResponse = res {
@@ -224,6 +224,10 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
     }
     
     @objc public func interrupt(userId: String, completion: @escaping (NSError?) -> Void) {
+        guard let rtmEngine = self.config.rtmEngine else {
+            return
+        }
+        
         let publishOptions = AgoraRtmPublishOptions()
         publishOptions.channelType = .user
         publishOptions.customType = "message.interrupt"
@@ -237,7 +241,7 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
             return
         }
         
-        self.config.rtmEngine.publish(channelName: "\(userId)", message: stringData, option: publishOptions, completion: { res, error in
+        rtmEngine.publish(channelName: "\(userId)", message: stringData, option: publishOptions, completion: { res, error in
             if let errorInfo = error {
                 print("Unknown error publish message with error: \(errorInfo.reason)")
             } else if let publishResponse = res {
@@ -251,13 +255,51 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
     @objc public func loadAudioSettings() {
         setAudioConfigParameters(routing: audioRouting)
     }
+    
+    @objc public func subscribe(channel: String, completion: @escaping AgoraRtmOperationBlock) {
+        guard let rtmEngine = self.config.rtmEngine else {
+            return
+        }
+        
+        self.transcriptionController.reset()
+        let subscribeOptions = AgoraRtmSubscribeOptions()
+        subscribeOptions.features = [.presence, .message]
+        rtmEngine.subscribe(channelName: channel, option: subscribeOptions, completion: completion)
+    }
+    
+    @objc public func unsubscribe(channel: String, completion: @escaping AgoraRtmOperationBlock) {
+        guard let rtmEngine = self.config.rtmEngine else {
+            return
+        }
+        
+        rtmEngine.unsubscribe(channel, completion: completion)
+    }
+    
+    @objc public func addHandler(handler: ConversationalAIEventHandler) {
+        delegates.add(handler)
+    }
+    
+    @objc public func removeHander(handler: ConversationalAIEventHandler) {
+        delegates.remove(handler)
+    }
+    
+    @objc public func destroy() {
+        guard let rtcEngine = config.rtcEngine, let rtmEngine = config.rtmEngine else {
+            return
+        }
+        
+        rtcEngine.removeDelegate(self)
+        rtmEngine.removeDelegate(self)
+        
+        transcriptionController.reset()
+    }
 }
 
 extension ConversationalAIAPI {
     private func notifyDelegatesStateChange(userId: String, event: StateChangeEvent) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.didChangeState(userId: userId, event: event)
+                delegate.onChangeState(userId: userId, event: event)
             }
         }
     }
@@ -265,7 +307,7 @@ extension ConversationalAIAPI {
     private func notifyDelegatesInterrupt(userId: String, event: InterruptEvent) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.didInterrupt(userId: userId, event: event)
+                delegate.onInterrupt(userId: userId, event: event)
             }
         }
     }
@@ -273,7 +315,7 @@ extension ConversationalAIAPI {
     private func notifyDelegatesMetrics(userId: String, metrics: Metrics) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.didReceiveMetrics(userId: userId, metrics: metrics)
+                delegate.onReceiveMetrics(userId: userId, metrics: metrics)
             }
         }
     }
@@ -281,7 +323,7 @@ extension ConversationalAIAPI {
     private func notifyDelegatesError(userId: String, error: AgentError) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.didReceiveError(userId: userId, error: error)
+                delegate.onReceiveError(userId: userId, error: error)
             }
         }
     }
@@ -289,7 +331,7 @@ extension ConversationalAIAPI {
     private func notifyDelegatesTranscription(userId: String, transcription: Transcription) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.didReceiveTranscription(userId: userId, transcription: transcription)
+                delegate.onReceiveTranscription(userId: userId, transcription: transcription)
             }
         }
     }
@@ -297,14 +339,16 @@ extension ConversationalAIAPI {
     private func notifyDelegatesDebugLog(_ log: String) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.didReceiveDebugLog(log)
+                delegate.onReceiveDebugLog(log)
             }
         }
     }
     
     private func setAudioConfigParameters(routing: AgoraAudioOutputRouting) {
+        guard let rtcEngine = self.config.rtcEngine else {
+            return
+        }
         audioRouting = routing
-        let rtcEngine = self.config.rtcEngine
         rtcEngine.setParameters("{\"che.audio.aec.split_srate_for_48k\":16000}")
         rtcEngine.setParameters("{\"che.audio.sf.enabled\":true}")
         rtcEngine.setParameters("{\"che.audio.sf.stftType\":6}")
@@ -361,7 +405,7 @@ extension ConversationalAIAPI {
     
     private func handleMetricsMessage(uid: String, msg: [String: Any]) {
         let module = msg["module"] as? String ?? ""
-        let metricType = ErrorType.fromValue(module)
+        let metricType = VernderType.fromValue(module)
         
         if metricType == .unknown && !module.isEmpty {
             notifyDelegatesDebugLog("Unknown metric module: \(module)")
@@ -377,9 +421,9 @@ extension ConversationalAIAPI {
     
     private func handleErrorMessage(uid: String, msg: [String: Any]) {
         let errorTypeStr = msg["error_type"] as? String ?? ""
-        let errorType = ErrorType.fromValue(errorTypeStr)
+        let venderType = VernderType.fromValue(errorTypeStr)
         
-        if errorType == .unknown && !errorTypeStr.isEmpty {
+        if venderType == .unknown && !errorTypeStr.isEmpty {
             notifyDelegatesDebugLog("Unknown error type: \(errorTypeStr)")
         }
         
@@ -387,7 +431,7 @@ extension ConversationalAIAPI {
         let message = msg["message"] as? String ?? "Unknown error"
         let timestamp = (msg["timestamp"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970
         
-        let agentError = AgentError(errorType: errorType, code: code, message: message, timestamp: timestamp)
+        let agentError = AgentError(type: venderType, code: code, message: message, timestamp: timestamp)
         notifyDelegatesError(userId: uid, error: agentError)
     }
 }

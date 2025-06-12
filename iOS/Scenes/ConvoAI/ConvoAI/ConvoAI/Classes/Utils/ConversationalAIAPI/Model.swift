@@ -94,7 +94,7 @@ import Foundation
 }
 
 /// AI state enumeration
-@objc public enum State: Int {
+@objc public enum AgentState: Int {
     case silent     /// Silent state
     case listening  /// Listening
     case thinking   /// Thinking
@@ -104,7 +104,7 @@ import Foundation
 /// Conversation state class
 @objc public class StateChangeEvent: NSObject {
     /// Current agent state
-    let state: State
+    let state: AgentState
     /// Conversation turn ID
     let turnId: Int
     /// Timestamp
@@ -112,7 +112,7 @@ import Foundation
     /// Reason for state change
     let reason: String
     
-    @objc public init(state: State, turnId: Int, timestamp: TimeInterval, reason: String) {
+    @objc public init(state: AgentState, turnId: Int, timestamp: TimeInterval, reason: String) {
         self.state = state
         self.turnId = turnId
         self.timestamp = timestamp
@@ -135,14 +135,14 @@ import Foundation
 }
 
 /// Performance metric type enumeration
-@objc public enum ErrorType: Int {
+@objc public enum VernderType: Int {
     case llm   /// LLM inference
     case mllm  /// MLLM inference
     case tts   /// Text-to-speech
     case unknown /// Unknown error
     
     /// Create type from string
-    public static func fromValue(_ value: String) -> ErrorType {
+    public static func fromValue(_ value: String) -> VernderType {
         switch value.lowercased() {
         case "llm":
             return .llm
@@ -159,7 +159,7 @@ import Foundation
 /// Class for recording system performance data metrics
 @objc public class Metrics: NSObject {
     /// Type of the metric
-    @objc public let type: ErrorType
+    @objc public let type: VernderType
     /// Metric name
     @objc public let name: String
     /// Metric value
@@ -167,7 +167,7 @@ import Foundation
     /// Timestamp when the metric was recorded
     @objc public let timestamp: TimeInterval
     
-    @objc public init(type: ErrorType, name: String, value: Double, timestamp: TimeInterval) {
+    @objc public init(type: VernderType, name: String, value: Double, timestamp: TimeInterval) {
         self.type = type
         self.name = name
         self.value = value
@@ -178,7 +178,7 @@ import Foundation
 /// AI error information class
 @objc public class AgentError: NSObject {
     /// Error type
-    @objc public let errorType: ErrorType
+    @objc public let type: VernderType
     /// Error code
     @objc public let code: Int
     /// Error message
@@ -186,8 +186,8 @@ import Foundation
     /// Timestamp when the error occurred
     @objc public let timestamp: TimeInterval
     
-    @objc public init(errorType: ErrorType, code: Int, message: String, timestamp: TimeInterval) {
-        self.errorType = errorType
+    @objc public init(type: VernderType, code: Int, message: String, timestamp: TimeInterval) {
+        self.type = type
         self.code = code
         self.message = message
         self.timestamp = timestamp
