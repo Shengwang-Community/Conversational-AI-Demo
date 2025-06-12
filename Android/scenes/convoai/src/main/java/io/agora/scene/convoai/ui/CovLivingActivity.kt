@@ -21,7 +21,6 @@ import com.tencent.bugly.crashreport.CrashReport
 import io.agora.rtc2.Constants
 import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngineEx
-import io.agora.rtm.ErrorInfo
 import io.agora.rtm.RtmClient
 import io.agora.scene.common.BuildConfig
 import io.agora.scene.common.constant.AgentConstant
@@ -92,14 +91,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     private var infoDialog: CovAgentInfoDialog? = null
     private var settingDialog: CovSettingsDialog? = null
 
-    private val coroutineScope = CoroutineScope(Dispatchers.Main)
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private var waitingAgentJob: Job? = null
 
     private var pingJob: Job? = null
 
-    // Add a coroutine scope for log processing
-    private val logScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private var networkValue: Int = -1
 
@@ -188,7 +185,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
     private val mLoginViewModel: LoginViewModel by viewModels()
 
-    private var conversationalAIAPI: ConversationalAIAPIProtocol? = null
+    private var conversationalAIAPI: ConversationalAIAPI? = null
 
     override fun getViewBinding(): CovActivityLivingBinding {
         return CovActivityLivingBinding.inflate(layoutInflater)
@@ -219,11 +216,10 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
         // Create ConversationalAIAPI instance
         conversationalAIAPI = ConversationalAIAPIImpl(ConversationalAIAPIConfig(rtcEngine, rtmClient))
-        conversationalAIAPI?.addHandler(conversationalAIEventHandler)
+        conversationalAIAPI?.addHandler(covEventHandler)
     }
 
     override fun finish() {
-        logScope.cancel()
         stopRoomCountDownTask()
         coroutineScope.cancel()
         // if agent is connected, leave channel
@@ -236,11 +232,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
         // Clean up ConversationalAIAPI resources
         conversationalAIAPI?.let {
+            it.removeHandler(covEventHandler)
             it.destroy()
             conversationalAIAPI = null
         }
         CovRtcManager.destroy()
-        CovRtcManager.destroy()
+        CovRtmManager.destroy()
         CovAgentManager.resetData()
 
         super.finish()
@@ -368,8 +365,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         )
     }
 
-    private val conversationalAIEventHandler = object : ConversationalAIEventHandler {
-        override fun onChangeState(userId: String, event: StateChangeEvent) {
+    private val covEventHandler = object : ConversationalAIAPIEventHandler {
+        override fun onStateChanged(userId: String, event: StateChangeEvent) {
             // Update agent state display
             if (DebugConfigSettings.isDebug && connectionState == AgentConnectionState.CONNECTED) {
                 mBinding?.tvConversationState?.text = "Agent State: ${event.state}"
@@ -389,22 +386,22 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             CovLogger.d(TAG, "onChangeState: state=${event.state} - userId: $userId - turnId: ${event.turnId}")
         }
 
-        override fun onInterrupt(userId: String, event: InterruptEvent) {
+        override fun onInterrupted(userId: String, event: InterruptEvent) {
             // Handle interrupt event
             CovLogger.d(TAG, "onInterrupt: turnId=${event.turnId} - timestamp=${event.timestamp}")
         }
 
-        override fun onReceiveMetrics(userId: String, metrics: Metrics) {
+        override fun onMetricsInfo(userId: String, metrics: Metrics) {
             // Handle performance metrics
-            CovLogger.d(TAG, "onReceiveMetrics: ${metrics.metricType} - ${metrics.name}: ${metrics}ms")
+            CovLogger.d(TAG, "onReceiveMetrics: ${metrics.type} - ${metrics.name}: ${metrics}ms")
         }
 
-        override fun onReceiveError(userId: String, error: AgentError) {
+        override fun onError(userId: String, error: AgentError) {
             CovLogger.e(TAG, "onReceiveError: ${error.type} - ${error.message} - code: ${error.code})")
             // Show different messages based on error type
         }
 
-        override fun onReceiveTranscription(userId: String, transcription: Transcription) {
+        override fun onTranscriptionUpdated(userId: String, transcription: Transcription) {
             // Handle transcription updates
             CovLogger.d(TAG, "onReceiveTranscription: ${transcription.text} (status: ${transcription.status})")
             // Update subtitle display based on render mode
@@ -413,7 +410,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
         }
 
-        override fun onReceiveDebugLog(message: String) {
+        override fun onDebugLog(message: String) {
             CovLogger.d(TAG, message)
         }
     }
@@ -614,13 +611,13 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         val rtcEngine = CovRtcManager.createRtcEngine(object : IRtcEngineEventHandler() {
             override fun onError(err: Int) {
                 super.onError(err)
-                logScope.launch {
+                coroutineScope.launch {
                     CovLogger.e(TAG, "Rtc Error code:$err")
                 }
             }
 
             override fun onJoinChannelSuccess(channel: String?, uid: Int, elapsed: Int) {
-                logScope.launch {
+                coroutineScope.launch {
                     CovLogger.d(TAG, "local user didJoinChannel uid: $uid")
                 }
                 runOnUiThread {
@@ -630,7 +627,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
 
             override fun onLeaveChannel(stats: RtcStats?) {
-                logScope.launch {
+                coroutineScope.launch {
                     CovLogger.d(TAG, "local user didLeaveChannel")
                 }
                 runOnUiThread {
@@ -639,7 +636,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
 
             override fun onUserJoined(uid: Int, elapsed: Int) {
-                logScope.launch {
+                coroutineScope.launch {
                     CovLogger.d(TAG, "remote user didJoinedOfUid uid: $uid")
                 }
                 runOnUiThread {
@@ -658,7 +655,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
 
             override fun onUserOffline(uid: Int, reason: Int) {
-                logScope.launch {
+                coroutineScope.launch {
                     CovLogger.d(TAG, "remote user onUserOffline uid: $uid")
                 }
                 runOnUiThread {
@@ -762,14 +759,26 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
 
             override fun onTokenPrivilegeWillExpire(token: String?) {
-                CovLogger.d(TAG, "onTokenPrivilegeWillExpire")
-                updateToken { isTokenOK ->
-                    if (isTokenOK) {
-                        CovRtcManager.renewRtcToken(integratedToken ?: "")
-                        CovRtmManager.renewToken(integratedToken ?: "")
-                    } else {
-                        stopAgentAndLeaveChannel()
-                        ToastUtil.show("renew token error")
+                CovLogger.w(TAG, "RTC token will expire, renewing token")
+                coroutineScope.launch(Dispatchers.IO) {
+                    try {
+                        val isTokenOK = updateTokenAsync()
+                        if (isTokenOK) {
+                            CovLogger.d(TAG, "Token updated successfully, renewing RTC and RTM")
+                            // Since RTC and RTM use the same token, renew RTC token first
+                            CovRtcManager.renewRtcToken(integratedToken ?: "")
+                            CovRtmManager.renewToken(integratedToken ?: "")
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                stopAgentAndLeaveChannel()
+                            }
+                            ToastUtil.show(R.string.cov_detail_update_token_error, Toast.LENGTH_LONG)
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            stopAgentAndLeaveChannel()
+                        }
+                        CovLogger.e(TAG, "Exception during RTC renew token process $e")
                     }
                 }
             }
@@ -1072,6 +1081,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     )
                 }
             })
+
             clBottomNotLogged.btnStartWithoutLogin.setOnClickListener(object : OnFastClickListener() {
                 override fun onClickJacking(view: View) {
                     showLoginDialog()
@@ -1478,39 +1488,68 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     private fun createRtmClient(): RtmClient {
         val rtmClient = CovRtmManager.createRtmClient()
         CovRtmManager.addListener(object : IRtmManagerListener {
-            override fun onConnected() {
-                CovLogger.d(TAG, "rtm onConnected")
-            }
-
-            override fun onDisconnected() {
-                CovLogger.d(TAG, "rtm onDisconnected")
-            }
 
             override fun onFailed() {
-                CovLogger.d(TAG, "rtm onFailed，retry login")
+                CovLogger.w(TAG, "RTM connection failed, attempting re-login with new token")
+                
                 coroutineScope.launch(Dispatchers.IO) {
-                    val loginRTm = loginRtmClientAsync()
-                    withContext(Dispatchers.Main) {
-                        if (!loginRTm) {
-                            CovLogger.d(TAG, "rtm retry login failed")
-                            ToastUtil.show(getString(R.string.cov_detail_login_rtm_error), Toast.LENGTH_LONG)
-                            return@withContext
+                    try {
+                        // Request new token since RTM connection failed
+                        val isTokenOK = updateTokenAsync()
+                        if (isTokenOK) {
+                            CovLogger.d(TAG, "New token obtained successfully, updating RTC and RTM")
+                            // Since RTC and RTM use the same token, renew RTC token first
+                            CovRtcManager.renewRtcToken(integratedToken ?: "")
+                            // Then re-login RTM with new token
+                            val loginRTm = loginRtmClientAsync()
+                            withContext(Dispatchers.Main) {
+                                if (loginRTm) {
+                                    CovLogger.d(TAG, "RTM re-login successful")
+                                } else {
+                                    CovLogger.e(TAG, "RTM re-login failed even with new token")
+                                    stopAgentAndLeaveChannel()
+                                    ToastUtil.show(getString(R.string.cov_detail_login_rtm_error), Toast.LENGTH_LONG)
+                                }
+                            }
                         } else {
-                            CovLogger.d(TAG, "RTM retry login success")
+                            CovLogger.e(TAG, "Failed to obtain new token for RTM re-login")
+                            withContext(Dispatchers.Main) {
+                                stopAgentAndLeaveChannel()
+                                ToastUtil.show(getString(R.string.cov_detail_update_token_error), Toast.LENGTH_LONG)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        CovLogger.e(TAG, "Exception during RTM re-login process: ${e.message}")
+                        withContext(Dispatchers.Main) {
+                            stopAgentAndLeaveChannel()
                         }
                     }
                 }
             }
 
             override fun onTokenPrivilegeWillExpire(channelName: String) {
-                CovLogger.d(TAG, "rtm onTokenPrivilegeWillExpire")
-                updateToken { isTokenOK ->
-                    if (isTokenOK) {
-                        CovRtcManager.renewRtcToken(integratedToken ?: "")
-                        CovRtmManager.renewToken(integratedToken ?: "")
-                    } else {
-                        stopAgentAndLeaveChannel()
-                        ToastUtil.show("renew token error")
+                CovLogger.w(TAG, "RTM token will expire, renewing token")
+                
+                coroutineScope.launch(Dispatchers.IO) {
+                    try {
+                        val isTokenOK = updateTokenAsync()
+                        if (isTokenOK) {
+                            CovLogger.d(TAG, "Token renewed successfully, updating RTC and RTM")
+                            // Since RTC and RTM use the same token, renew both
+                            CovRtcManager.renewRtcToken(integratedToken ?: "")
+                            CovRtmManager.renewToken(integratedToken ?: "")
+                        } else {
+                            CovLogger.e(TAG, "Failed to renew token")
+                            withContext(Dispatchers.Main) {
+                                stopAgentAndLeaveChannel()
+                                ToastUtil.show(getString(R.string.cov_detail_update_token_error), Toast.LENGTH_LONG)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        CovLogger.e(TAG, "Exception during token renewal process: ${e.message}")
+                        withContext(Dispatchers.Main) {
+                            stopAgentAndLeaveChannel()
+                        }
                     }
                 }
             }

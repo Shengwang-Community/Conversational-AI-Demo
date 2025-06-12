@@ -10,18 +10,12 @@ import io.agora.rtm.RtmEventListener
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.constant.CovAgentManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 interface IRtmManagerListener {
-    /**
-     * rtm connected
-     */
-    fun onConnected()
-
-    /**
-     * rtm disconnected
-     */
-    fun onDisconnected()
-
     /**
      * rtm failed, need login
      */
@@ -36,9 +30,12 @@ interface IRtmManagerListener {
 object CovRtmManager : RtmEventListener {
     private val TAG = "CovRtmManager"
 
+    @Volatile
     private var isRtmLogin = false
 
     private var rtmClient: RtmClient? = null
+
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private val listeners = mutableListOf<IRtmManagerListener>()
 
@@ -49,18 +46,12 @@ object CovRtmManager : RtmEventListener {
         if (rtmClient != null) return rtmClient!!
         val rtmConfig = RtmConfig.Builder(ServerConfig.rtcAppId, CovAgentManager.uid.toString()).build()
         try {
-            rtmClient = RtmClient.create(rtmConfig).apply {
-                //publish message/set metadata timeout seconds = 3s
-                setParameters("{\"rtm.msg.tx_timeout\": 3000}")
-                setParameters("{\"rtm.metadata.api_timeout\": 3000}")
-                setParameters("{\"rtm.metadata.api_max_retries\": 1}")
-
-                setParameters("{\"rtm.heartbeat_interval\": 1}")
-                setParameters("{\"rtm.lock_ttl_minimum_value\": 5}")
-            }
+            rtmClient = RtmClient.create(rtmConfig)
             rtmClient?.addEventListener(this)
+            callMessagePrint("RTM createRtmClient success")
         } catch (e: Exception) {
             e.printStackTrace()
+            callMessagePrint("RTM createRtmClient error ${e.message}")
         }
         return rtmClient!!
     }
@@ -77,7 +68,7 @@ object CovRtmManager : RtmEventListener {
      * @param listener IRtmManagerListener
      */
     fun removeListener(listener: IRtmManagerListener) {
-        listeners.add(listener)
+        listeners.remove(listener)
     }
 
     /**
@@ -87,18 +78,21 @@ object CovRtmManager : RtmEventListener {
      */
     fun login(rtmToken: String, completion: (Exception?) -> Unit) {
         callMessagePrint("login")
-        val rtmClient = this.rtmClient ?: return
-        if (!isRtmLogin) {
-            loginRTM(rtmClient, rtmToken) { err ->
-                if (err != null) {
-                    val errorCode = RtmConstants.RtmErrorCode.getValue(err.errorCode)
-                    completion.invoke(Exception("errorCode:$errorCode, reason:${err.errorReason}"))
-                    return@loginRTM
-                }
+        val rtmClient = this.rtmClient ?: run {
+            completion.invoke(Exception("RTM client not initialized"))
+            callMessagePrint("RTM client not initialized")
+            return
+        }
+
+        loginRTM(rtmClient, rtmToken) { errorInfo ->
+            if (errorInfo != null) {
+                val errorCode = RtmConstants.RtmErrorCode.getValue(errorInfo.errorCode)
+                completion.invoke(Exception("errorCode:$errorCode, reason:${errorInfo.errorReason}"))
+                callMessagePrint("RTM login failed: ${errorInfo.errorReason}")
+            } else {
+                callMessagePrint("RTM login successful")
                 completion.invoke(null)
             }
-        } else {
-            completion.invoke(null)
         }
     }
 
@@ -106,11 +100,15 @@ object CovRtmManager : RtmEventListener {
      * logout rtm
      */
     fun logout() {
+        callMessagePrint("RTM logout")
+        isRtmLogin = false
         rtmClient?.logout(object : ResultCallback<Void> {
             override fun onSuccess(responseInfo: Void?) {
+                callMessagePrint("RTM logout successful")
             }
 
             override fun onFailure(errorInfo: ErrorInfo?) {
+                callMessagePrint("RTM logout failed: ${errorInfo?.errorReason}")
             }
         })
     }
@@ -119,21 +117,22 @@ object CovRtmManager : RtmEventListener {
      * renew rtm token
      */
     fun renewToken(rtmToken: String) {
+        callMessagePrint("Renewing RTM token")
         if (!isRtmLogin) {
-            callMessagePrint("renewToken need to reinit")
-            rtmClient?.logout(object : ResultCallback<Void> {
-                override fun onSuccess(responseInfo: Void?) {}
-                override fun onFailure(errorInfo: ErrorInfo?) {}
-            })
-            login(rtmToken) { }
+            callMessagePrint("RTM not logged in, performing login instead of token renewal")
+            rtmClient?.logout(null)
+            login(rtmToken) { error -> }
             return
         }
+
         rtmClient?.renewToken(rtmToken, object : ResultCallback<Void> {
             override fun onSuccess(responseInfo: Void?) {
-                callMessagePrint("rtm renewToken")
+                callMessagePrint("RTM token renewed successfully")
             }
 
             override fun onFailure(errorInfo: ErrorInfo?) {
+                callMessagePrint("RTM token renewal failed: ${errorInfo?.errorReason}, performing re-login")
+                isRtmLogin = false
             }
         })
     }
@@ -142,30 +141,25 @@ object CovRtmManager : RtmEventListener {
      * destroy
      */
     fun destroy() {
+        callMessagePrint("RTM destroy")
         logout()
         rtmClient = null
         RtmClient.release()
     }
 
     private fun loginRTM(rtmClient: RtmClient, token: String, completion: (ErrorInfo?) -> Unit) {
-        if (isRtmLogin) {
-            completion(null)
-            return
-        }
-        rtmClient.logout(object : ResultCallback<Void?> {
-            override fun onSuccess(responseInfo: Void?) {}
-            override fun onFailure(errorInfo: ErrorInfo?) {}
-        })
-        callMessagePrint("will login")
+        callMessagePrint("Performing logout to ensure clean environment before login")
+        rtmClient.logout(null)
+        callMessagePrint("Starting RTM login")
+        isRtmLogin = false
+
         rtmClient.login(token, object : ResultCallback<Void> {
             override fun onSuccess(p0: Void?) {
-                callMessagePrint("login completion")
                 isRtmLogin = true
                 completion(null)
             }
 
             override fun onFailure(errorInfo: ErrorInfo?) {
-                callMessagePrint("login completion: $errorInfo")
                 isRtmLogin = false
                 completion(errorInfo)
             }
@@ -175,26 +169,33 @@ object CovRtmManager : RtmEventListener {
     override fun onLinkStateEvent(event: LinkStateEvent?) {
         super.onLinkStateEvent(event)
         event ?: return
-        // TODO:
-        if (event.currentState == RtmConstants.RtmLinkState.CONNECTED) {
-            listeners.forEach {
-                it.onConnected()
+
+        callMessagePrint("RTM link state changed: ${event.currentState}")
+
+        when (event.currentState) {
+            RtmConstants.RtmLinkState.CONNECTED -> {
+                callMessagePrint("RTM connected successfully")
+                isRtmLogin = true
             }
-        } else if (event.currentState == RtmConstants.RtmLinkState.DISCONNECTED) {
-            listeners.forEach {
-                it.onDisconnected()
+
+            RtmConstants.RtmLinkState.FAILED -> {
+                callMessagePrint("RTM connection failed, need to re-login")
+                isRtmLogin = false
+                coroutineScope.launch {
+                    listeners.forEach { it.onFailed() }
+                }
             }
-        } else if (event.currentState == RtmConstants.RtmLinkState.FAILED) {
-            listeners.forEach {
-                it.onFailed()
+
+            else -> {
+                // nothing
             }
         }
     }
 
     override fun onTokenPrivilegeWillExpire(channelName: String) {
-        super.onTokenPrivilegeWillExpire(channelName)
-        listeners.forEach {
-            it.onTokenPrivilegeWillExpire(channelName)
+        callMessagePrint("RTM onTokenPrivilegeWillExpire $channelName")
+        coroutineScope.launch {
+            listeners.forEach { it.onTokenPrivilegeWillExpire(channelName) }
         }
     }
 

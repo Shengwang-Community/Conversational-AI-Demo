@@ -11,14 +11,13 @@ import io.agora.rtm.MessageEvent
 import io.agora.rtm.RtmClient
 import io.agora.rtm.RtmConstants
 import io.agora.rtm.RtmEventListener
+import io.agora.scene.convoai.convoaiApi.ConversationalAIAPI_VERSION
 import io.agora.scene.convoai.convoaiApi.InterruptEvent
 import io.agora.scene.convoai.convoaiApi.MessageType
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ticker
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedQueue
-
-const val SUBTITLE_VERSION = "1.6.0"
 
 /**
  * Configuration class for subtitle rendering
@@ -66,11 +65,11 @@ interface IConversationTranscriptionCallback {
     fun onDebugLog(tag: String, msg: String)
 
     /**
-     * Called when receive interrupt event
+     * Interrupt event callback
      * @param userId publisher uid
      * @param event Interrupt Event
      */
-    fun onInterrupt(userId: String, event: InterruptEvent)
+    fun onInterrupted(userId: String, event: InterruptEvent)
 }
 
 
@@ -108,7 +107,7 @@ enum class Status {
  * Manages the processing and rendering of subtitles in conversation
  * @property config Configuration for the subtitle controller
  */
-class TranscriptionController(
+internal class TranscriptionController(
     private val config: TranscriptionConfig
 ) : IRtcEngineEventHandler() {
 
@@ -194,6 +193,7 @@ class TranscriptionController(
          */
         override fun onMessageEvent(event: MessageEvent?) {
             super.onMessageEvent(event)
+            onDebugLog(TAG_RTM, "onMessageEvent: $event")
             event ?: return
             val rtmMessage = event.message
             if (rtmMessage.type == RtmConstants.RtmMessageType.BINARY) {
@@ -322,7 +322,8 @@ class TranscriptionController(
         config.rtcEngine.setPlaybackAudioFrameBeforeMixingParameters(44100, 1)
         onDebugLog(
             TAG,
-            "init this:0x${this.hashCode().toString(16)}, version:$SUBTITLE_VERSION, renderMode:${config.renderMode}"
+            "init this:0x${this.hashCode().toString(16)}," +
+                    " version:$ConversationalAIAPI_VERSION, renderMode:${config.renderMode}"
         )
         mMessageParser.onDebugLog = { tag, message ->
             config.callback?.onDebugLog(tag, message)
@@ -364,7 +365,7 @@ class TranscriptionController(
             // deal with interrupt message
             if (isInterrupt) {
                 val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
-                config.callback?.onInterrupt(uid.toString(), InterruptEvent(turnId, startMs))
+                config.callback?.onInterrupted(uid.toString(), InterruptEvent(turnId, startMs))
 
                 onAgentMessageReceived(uid, turnId, startMs, text, null, TurnStatus.INTERRUPTED)
                 return
@@ -490,7 +491,7 @@ class TranscriptionController(
                 TAG,
                 "render mode auto detected: $mRenderMode, this:0x${
                     this.hashCode().toString(16)
-                }, version: $SUBTITLE_VERSION"
+                }, version: $ConversationalAIAPI_VERSION"
             )
         }
 
@@ -542,18 +543,12 @@ class TranscriptionController(
             if (existingInfo != null) {
                 if (status == TurnStatus.INTERRUPTED) {
                     // Interrupt all words from the last one before startMs to the end of the word list
-                    var lastBeforeStartMs: TurnWordInfo? = null
                     val mergedWords = existingInfo.words.toMutableList()
                     mergedWords.forEach { word ->
-                        if (word.startMs <= startMs) {
-                            lastBeforeStartMs = word
-                        }
                         if (word.startMs >= startMs) {
                             word.status = TurnStatus.INTERRUPTED
                         }
                     }
-                    lastBeforeStartMs?.status = TurnStatus.INTERRUPTED
-
                     val newInfo = TurnMessageInfo(
                         userId = uid,
                         turnId = turnId,
@@ -739,7 +734,7 @@ class TranscriptionController(
         }
     }
 
-    private fun runOnMainThread(r: java.lang.Runnable) {
+    private fun runOnMainThread(r: Runnable) {
         if (Thread.currentThread() == mainHandler.looper.thread) {
             r.run()
         } else {

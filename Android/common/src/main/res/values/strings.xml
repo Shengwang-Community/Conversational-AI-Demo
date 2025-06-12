@@ -5,6 +5,7 @@
     <string name="common_debug_mode_disable">开发者模式已关闭</string>
     <string name="common_debug_setting">开发者模式</string>
     <string name="common_debug_rtc_version">Rtc 版本</string>
+    <string name="common_debug_rtm_version">Rtm 版本</string>
     <string name="common_debug_switch_server">切换服务器</string>
     <string name="common_debug_current_server">已切换到 %1s \n %2s</string>
     <string name="common_debug_switch_tips">进入场景前可以切换服务器</string>
@@ -46,5 +47,6 @@
     <string name="common_login_typing_text2">你好，我是对话式AI引擎</string>
     <string name="common_login_typing_text3">秒应智答，零滞畅聊</string>
     <string name="common_app_version">v%1s</string>
+    <string name="common_conversational_version">conversational ai api v%1s</string>
     <string name="common_app_build_no">Build %1s</string>
 </resources>

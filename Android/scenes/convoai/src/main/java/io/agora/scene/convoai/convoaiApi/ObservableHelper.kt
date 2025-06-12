@@ -4,7 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import java.util.Collections
 
-class ObservableHelper<EventHandler> {
+internal class ObservableHelper<EventHandler> {
     private val eventHandlerList: MutableList<EventHandler> = Collections.synchronizedList(ArrayList())
     private val mainHandler = Handler(Looper.getMainLooper())
 
