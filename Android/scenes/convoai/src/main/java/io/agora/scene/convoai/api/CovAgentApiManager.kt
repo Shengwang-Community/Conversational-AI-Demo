@@ -44,24 +44,28 @@ object CovAgentApiManager {
 
     private const val SERVICE_VERSION = "v4"
 
-    fun startAgentWithMap(channelName:String,convoaiBody: Map<String,Any?>, completion: (error: ApiException?, channelName: String) -> Unit) {
+    fun startAgentWithMap(
+        channelName: String,
+        convoaiBody: Map<String, Any?>,
+        completion: (error: ApiException?, channelName: String) -> Unit
+    ) {
         val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/start"
         val postBody = JSONObject()
         try {
             postBody.put("app_id", ServerConfig.rtcAppId)
             ServerConfig.rtcAppCert.takeIf { it.isNotEmpty() }?.let {
-                postBody.put("app_cert",it)
+                postBody.put("app_cert", it)
             }
-            BuildConfig.BASIC_AUTH_KEY.takeIf  { it.isNotEmpty() }?.let {
-                postBody.put("basic_auth_username",it)
+            BuildConfig.BASIC_AUTH_KEY.takeIf { it.isNotEmpty() }?.let {
+                postBody.put("basic_auth_username", it)
             }
-            BuildConfig.BASIC_AUTH_SECRET.takeIf  { it.isNotEmpty() }?.let {
-                postBody.put("basic_auth_password",it)
+            BuildConfig.BASIC_AUTH_SECRET.takeIf { it.isNotEmpty() }?.let {
+                postBody.put("basic_auth_password", it)
             }
             CovAgentManager.getPreset()?.name?.let {
                 postBody.put("preset_name", it)
             }
-            
+
             // Process convoaiBody, convert Map to JSONObject and filter out null values
             val convoaiJsonObject = mapToJsonObjectWithFilter(convoaiBody)
             postBody.put("convoai_body", convoaiJsonObject)
@@ -127,6 +131,7 @@ object CovAgentApiManager {
                 value == null -> {
                     // Skip null values
                 }
+
                 value is Map<*, *> -> {
                     // Handle nested Map
                     @Suppress("UNCHECKED_CAST")
@@ -135,6 +140,7 @@ object CovAgentApiManager {
                         jsonObject.put(key, nestedJsonObject)
                     }
                 }
+
                 value is List<*> -> {
                     // Handle List type
                     val jsonArray = org.json.JSONArray()
@@ -143,11 +149,13 @@ object CovAgentApiManager {
                             item == null -> {
                                 // Skip null values
                             }
+
                             item is Map<*, *> -> {
                                 // Handle Map in List
                                 @Suppress("UNCHECKED_CAST")
                                 jsonArray.put(mapToJsonObjectWithFilter(item as Map<String, Any?>))
                             }
+
                             else -> {
                                 jsonArray.put(item)
                             }
@@ -157,6 +165,7 @@ object CovAgentApiManager {
                         jsonObject.put(key, jsonArray)
                     }
                 }
+
                 else -> {
                     // Handle basic types
                     jsonObject.put(key, value)

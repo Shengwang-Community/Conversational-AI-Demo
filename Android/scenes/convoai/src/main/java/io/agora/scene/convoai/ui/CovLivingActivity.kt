@@ -21,6 +21,7 @@ import com.tencent.bugly.crashreport.CrashReport
 import io.agora.rtc2.Constants
 import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngineEx
+import io.agora.rtm.ErrorInfo
 import io.agora.rtm.RtmClient
 import io.agora.scene.common.BuildConfig
 import io.agora.scene.common.constant.AgentConstant
@@ -51,7 +52,7 @@ import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.R
-import io.agora.scene.convoai.animation.AgentState
+import io.agora.scene.convoai.animation.BallAnimState
 import io.agora.scene.convoai.animation.CovBallAnim
 import io.agora.scene.convoai.animation.CovBallAnimCallback
 import io.agora.scene.convoai.api.CovAgentApiManager
@@ -142,17 +143,17 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     AgentConnectionState.IDLE -> {
                         // cancel ping
                         innerCancelJob()
-                        mCovBallAnim?.updateAgentState(AgentState.STATIC)
+                        mCovBallAnim?.updateAgentState(BallAnimState.STATIC)
                     }
 
                     AgentConnectionState.ERROR -> {
                         // cancel ping
                         innerCancelJob()
-                        mCovBallAnim?.updateAgentState(AgentState.STATIC)
+                        mCovBallAnim?.updateAgentState(BallAnimState.STATIC)
                     }
 
                     AgentConnectionState.CONNECTED_INTERRUPT -> {
-                        mCovBallAnim?.updateAgentState(AgentState.STATIC)
+                        mCovBallAnim?.updateAgentState(BallAnimState.STATIC)
                     }
 
                     AgentConnectionState.CONNECTING -> {
@@ -218,6 +219,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
         // Create ConversationalAIAPI instance
         conversationalAIAPI = ConversationalAIAPIImpl(ConversationalAIAPIConfig(rtcEngine, rtmClient))
+        conversationalAIAPI?.addHandler(conversationalAIEventHandler)
     }
 
     override fun finish() {
@@ -232,11 +234,15 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             it.release()
             mCovBallAnim = null
         }
+        // Clean up ConversationalAIAPI resources
+        conversationalAIAPI?.let {
+            it.destroy()
+            conversationalAIAPI = null
+        }
         CovRtcManager.destroy()
         CovRtcManager.destroy()
         CovAgentManager.resetData()
-        // Clean up ConversationalAIAPI resources
-        conversationalAIAPI = null
+
         super.finish()
     }
 
@@ -362,8 +368,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         )
     }
 
-    private val mConversationalAIAPIDelegate = object : ConversationalAIAPIDelegate {
-        override fun didChangeState(userId: String, event: StateChangeEvent) {
+    private val conversationalAIEventHandler = object : ConversationalAIEventHandler {
+        override fun onChangeState(userId: String, event: StateChangeEvent) {
             // Update agent state display
             if (DebugConfigSettings.isDebug && connectionState == AgentConnectionState.CONNECTED) {
                 mBinding?.tvConversationState?.text = "Agent State: ${event.state}"
@@ -371,59 +377,44 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
             // Update ball animation based on agent state
             val agentState = when (event.state) {
-                AIState.SILENT -> AgentState.LISTENING
-                AIState.LISTENING -> AgentState.LISTENING
-                AIState.THINKING -> AgentState.LISTENING
-                AIState.SPEAKING -> AgentState.SPEAKING
-                else -> AgentState.STATIC
+                AgentState.SILENT -> BallAnimState.LISTENING
+                AgentState.LISTENING -> BallAnimState.LISTENING
+                AgentState.THINKING -> BallAnimState.LISTENING
+                AgentState.SPEAKING -> BallAnimState.SPEAKING
+                else -> BallAnimState.STATIC
             }
             mCovBallAnim?.updateAgentState(agentState)
 
             // Log debug information
-            CovLogger.d(TAG, "didChangeState: state=${event.state} - userId: $userId - turnId: ${event.turnId}")
+            CovLogger.d(TAG, "onChangeState: state=${event.state} - userId: $userId - turnId: ${event.turnId}")
         }
 
-        override fun didInterrupt(userId: String, event: InterruptEvent) {
+        override fun onInterrupt(userId: String, event: InterruptEvent) {
             // Handle interrupt event
-            CovLogger.d(TAG, "didInterrupt: turnId=${event.turnId} - timestamp=${event.timestamp}")
-
-            // Show interrupt notification UI if needed
-            // TODO:  
+            CovLogger.d(TAG, "onInterrupt: turnId=${event.turnId} - timestamp=${event.timestamp}")
         }
 
-        override fun didReceiveMetrics(userId: String, metrics: Metrics) {
+        override fun onReceiveMetrics(userId: String, metrics: Metrics) {
             // Handle performance metrics
-            CovLogger.d(TAG, "didReceiveMetrics: ${metrics.metricType} - ${metrics.name}: ${metrics}ms")
-
-            // Display performance metrics in UI if needed
-            // TODO:
+            CovLogger.d(TAG, "onReceiveMetrics: ${metrics.metricType} - ${metrics.name}: ${metrics}ms")
         }
 
-        override fun didReceiveError(userId: String, error: AIError) {
-            CovLogger.e(TAG, "didReceiveError: ${error.type} - ${error.message} - code: ${error.code})")
-
+        override fun onReceiveError(userId: String, error: AgentError) {
+            CovLogger.e(TAG, "onReceiveError: ${error.type} - ${error.message} - code: ${error.code})")
             // Show different messages based on error type
-            val errorMessage = when (error.type) {
-                AIErrorType.LLM_CALL_FAILED -> getString(R.string.cov_detail_llm_error)
-                AIErrorType.TTS_EXCEPTION -> getString(R.string.cov_detail_tts_error)
-            }
-            if (connectionState == AgentConnectionState.CONNECTED) {
-                ToastUtil.show("$errorMessage (${error.code})")
-            }
         }
 
-        override fun didReceiveTranscription(userId: String, transcription: Transcription) {
+        override fun onReceiveTranscription(userId: String, transcription: Transcription) {
             // Handle transcription updates
-            CovLogger.d(TAG, "Received transcription: ${transcription.text} (status: ${transcription.status})")
-
+            CovLogger.d(TAG, "onReceiveTranscription: ${transcription.text} (status: ${transcription.status})")
             // Update subtitle display based on render mode
             if (!isSelfSubRender) {
                 mBinding?.messageListViewV2?.onTranscriptionUpdated(transcription)
             }
         }
 
-        override fun didReceiveDebugLog(tag: String, log: String) {
-            CovLogger.d(tag, log)
+        override fun onReceiveDebugLog(message: String) {
+            CovLogger.d(TAG, message)
         }
     }
 
@@ -432,7 +423,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         isUserEndCall = false
         connectionState = AgentConnectionState.CONNECTING
         if (DebugConfigSettings.isDebug) {
-            mBinding?.tvConversationState?.text = "Agent State: ${AIState.SILENT}"
+            mBinding?.tvConversationState?.text = "Agent State: ${AgentState.SILENT}"
             mBinding?.tvConversationState?.isVisible = true
             CovAgentManager.channelName =
                 "agent_debug_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
@@ -495,12 +486,16 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 }
             }
 
-            conversationalAIAPI?.subscribe(CovAgentManager.channelName, mConversationalAIAPIDelegate)
+            conversationalAIAPI?.subscribe(CovAgentManager.channelName, completion = { errorInfo ->
+                if (errorInfo != null) {
+                    stopAgentAndLeaveChannel()
+                    CovLogger.e(TAG, "subscribe ${CovAgentManager.channelName} error")
+                }
+            })
             // waiting RTM login success, start agent
             val startRet = startAgentAsync()
 
             withContext(Dispatchers.Main) {
-
                 val channelName = startRet.first
                 if (channelName != CovAgentManager.channelName) {
                     return@withContext
@@ -520,20 +515,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     stopAgentAndLeaveChannel()
                     connectionState = AgentConnectionState.IDLE
                     CovLogger.e(TAG, "Agent start error: $errorCode")
-
                     when (errorCode) {
-                        -1 -> {
-                            // Token retrieval failed
-                            ToastUtil.show("Failed to get agent token", Toast.LENGTH_LONG)
-                        }
-
-                        CovAgentApiManager.ERROR_RESOURCE_LIMIT_EXCEEDED -> {
+                        CovAgentApiManager.ERROR_RESOURCE_LIMIT_EXCEEDED ->
                             ToastUtil.show(getString(R.string.cov_detail_start_agent_limit_error), Toast.LENGTH_LONG)
-                        }
 
-                        else -> {
+                        else ->
                             ToastUtil.show(getString(R.string.cov_detail_join_call_failed), Toast.LENGTH_LONG)
-                        }
                     }
                 }
             }
@@ -594,7 +581,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         stopRoomCountDownTask()
         stopTitleAnim()
         CovRtcManager.leaveChannel()
-        conversationalAIAPI?.unsubscribe(CovAgentManager.channelName, mConversationalAIAPIDelegate)
+        conversationalAIAPI?.unsubscribe(CovAgentManager.channelName, completion = {})
         if (connectionState == AgentConnectionState.IDLE) {
             return
         }
@@ -611,10 +598,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             channelName = "",
             uid = CovAgentManager.uid.toString(),
             genType = TokenGeneratorType.Token007,
-            tokenTypes = arrayOf(
-                AgoraTokenType.Rtc,
-                AgoraTokenType.Rtm
-            ),
+            tokenTypes = arrayOf(AgoraTokenType.Rtc, AgoraTokenType.Rtm),
             success = { token ->
                 CovLogger.d(TAG, "getToken success")
                 integratedToken = token
@@ -738,31 +722,25 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
 
             override fun onRemoteAudioStateChanged(uid: Int, state: Int, reason: Int, elapsed: Int) {
-                super.onRemoteAudioStateChanged(uid, state, reason, elapsed)
                 runOnUiThread {
                     if (uid == CovAgentManager.agentUID) {
-                        if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "onRemoteAudioStateChanged $uid $state $reason")
-                        }
                         if (state == Constants.REMOTE_AUDIO_STATE_STOPPED) {
-                            mCovBallAnim?.updateAgentState(AgentState.LISTENING)
+                            mCovBallAnim?.updateAgentState(BallAnimState.LISTENING)
                         }
                     }
                 }
             }
 
-            override fun onAudioVolumeIndication(
-                speakers: Array<out AudioVolumeInfo>?, totalVolume: Int
-            ) {
+            override fun onAudioVolumeIndication(speakers: Array<out AudioVolumeInfo>?, totalVolume: Int) {
                 runOnUiThread {
                     speakers?.forEach {
                         when (it.uid) {
                             CovAgentManager.agentUID -> {
                                 if (connectionState != AgentConnectionState.IDLE) {
                                     if (it.volume > 0) {
-                                        mCovBallAnim?.updateAgentState(AgentState.SPEAKING, it.volume)
+                                        mCovBallAnim?.updateAgentState(BallAnimState.SPEAKING, it.volume)
                                     } else {
-                                        mCovBallAnim?.updateAgentState(AgentState.LISTENING, it.volume)
+                                        mCovBallAnim?.updateAgentState(BallAnimState.LISTENING, it.volume)
                                     }
                                 }
                             }

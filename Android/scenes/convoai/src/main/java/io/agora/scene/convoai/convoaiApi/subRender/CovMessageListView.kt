@@ -27,7 +27,7 @@ class CovMessageListView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) : LinearLayout(context, attrs, defStyleAttr), IConversationTranscriptionCallback {
+) : LinearLayout(context, attrs, defStyleAttr) {
 
     private val binding = CovMessageListViewBinding.inflate(LayoutInflater.from(context), this, true)
     private val messageAdapter = MessageAdapter()
@@ -424,12 +424,8 @@ class CovMessageListView @JvmOverloads constructor(
         }
     }
 
-    override fun onTranscriptionUpdated(transcription: Transcription) {
+    fun onTranscriptionUpdated(transcription: Transcription) {
         handleMessage(transcription)
-    }
-
-    override fun onDebugLog(tag: String, msg: String) {
-        CovLogger.d(tag, msg)
     }
 
     // Schedule scrolling to bottom with debouncing
