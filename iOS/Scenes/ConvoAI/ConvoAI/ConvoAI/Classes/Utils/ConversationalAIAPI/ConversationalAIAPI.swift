@@ -38,13 +38,13 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter event: Agent state event (silent, listening, thinking, speaking)
     /// - Parameter userId: RTM userId
-    @objc func onChangeState(userId: String, event: StateChangeEvent)
+    @objc func onStateChanged(userId: String, event: StateChangeEvent)
      
     /// Called when an interrupt event occurs
     ///
     /// - Parameter event: Interrupt event
     /// - Parameter userId: RTM userId
-    @objc func onInterrupt(userId: String, event: InterruptEvent)
+    @objc func onInterrupted(userId: String, event: InterruptEvent)
  
  
     /// Real-time callback for performance metrics
@@ -54,7 +54,7 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter metrics: Performance metrics containing type, value, and timestamp
     /// - Parameter userId: RTM userId
-    @objc func onReceiveMetrics(userId: String, metrics: Metrics)
+    @objc func onMetricsInfo(userId: String, metrics: Metrics)
      
     /// Called when AI-related errors occur
     ///
@@ -63,7 +63,7 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter error: AI error containing type, error code, error message, and timestamp
     /// - Parameter userId: RTM userId
-    @objc func onReceiveError(userId: String, error: AgentError)
+    @objc func onError(userId: String, error: AgentError)
      
     /// Called when subtitle content is updated during conversation
     ///
@@ -71,12 +71,12 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter transcription: Subtitle message containing text content and time information
     /// - Parameter userId: RTM userId
-    @objc func onReceiveTranscription(userId: String, transcription: Transcription)
+    @objc func onTranscriptionUpdated(userId: String, transcription: Transcription)
  
  
     /// Call this method to expose internal logs to external components
     /// - Parameter log: Internal logs from the component
-    @objc func onReceiveDebugLog(_ log: String)
+    @objc func onDebugLog(_ log: String)
 }
 
 /// Control protocol for managing ConvoAI component operations
@@ -126,13 +126,13 @@ public enum MessageType: String, CaseIterable {
     /// Called when the channel number changes, typically invoked each time the Agent starts
     /// - channelName: Channel number
     /// - completion: Information callback
-    @objc func subscribe(channel: String, completion: @escaping AgoraRtmOperationBlock)
+    @objc func subscribe(channelName: String, completion: @escaping AgoraRtmOperationBlock)
     
     /// Unsubscribe
     /// Called when disconnecting the Agent
     /// - channelName: Channel number
     /// - completion: Information callback
-    @objc func unsubscribe(channel: String, completion: @escaping AgoraRtmOperationBlock)
+    @objc func unsubscribe(channelName: String, completion: @escaping AgoraRtmOperationBlock)
     
     /// Add callback listener
     /// - handler The listener
@@ -140,7 +140,7 @@ public enum MessageType: String, CaseIterable {
     
     /// Remove callback listener
     /// - handler The listener
-    @objc func removeHander(handler: ConversationalAIEventHandler)
+    @objc func removeHandler(handler: ConversationalAIEventHandler)
     
     ///This method releases all the resources used
     @objc func destroy()
@@ -256,7 +256,7 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
         setAudioConfigParameters(routing: audioRouting)
     }
     
-    @objc public func subscribe(channel: String, completion: @escaping AgoraRtmOperationBlock) {
+    @objc public func subscribe(channelName: String, completion: @escaping AgoraRtmOperationBlock) {
         guard let rtmEngine = self.config.rtmEngine else {
             return
         }
@@ -264,22 +264,22 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
         self.transcriptionController.reset()
         let subscribeOptions = AgoraRtmSubscribeOptions()
         subscribeOptions.features = [.presence, .message]
-        rtmEngine.subscribe(channelName: channel, option: subscribeOptions, completion: completion)
+        rtmEngine.subscribe(channelName: channelName, option: subscribeOptions, completion: completion)
     }
     
-    @objc public func unsubscribe(channel: String, completion: @escaping AgoraRtmOperationBlock) {
+    @objc public func unsubscribe(channelName: String, completion: @escaping AgoraRtmOperationBlock) {
         guard let rtmEngine = self.config.rtmEngine else {
             return
         }
         
-        rtmEngine.unsubscribe(channel, completion: completion)
+        rtmEngine.unsubscribe(channelName, completion: completion)
     }
     
     @objc public func addHandler(handler: ConversationalAIEventHandler) {
         delegates.add(handler)
     }
     
-    @objc public func removeHander(handler: ConversationalAIEventHandler) {
+    @objc public func removeHandler(handler: ConversationalAIEventHandler) {
         delegates.remove(handler)
     }
     
@@ -299,7 +299,7 @@ extension ConversationalAIAPI {
     private func notifyDelegatesStateChange(userId: String, event: StateChangeEvent) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onChangeState(userId: userId, event: event)
+                delegate.onStateChanged(userId: userId, event: event)
             }
         }
     }
@@ -307,7 +307,7 @@ extension ConversationalAIAPI {
     private func notifyDelegatesInterrupt(userId: String, event: InterruptEvent) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onInterrupt(userId: userId, event: event)
+                delegate.onInterrupted(userId: userId, event: event)
             }
         }
     }
@@ -315,7 +315,7 @@ extension ConversationalAIAPI {
     private func notifyDelegatesMetrics(userId: String, metrics: Metrics) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onReceiveMetrics(userId: userId, metrics: metrics)
+                delegate.onMetricsInfo(userId: userId, metrics: metrics)
             }
         }
     }
@@ -323,7 +323,7 @@ extension ConversationalAIAPI {
     private func notifyDelegatesError(userId: String, error: AgentError) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onReceiveError(userId: userId, error: error)
+                delegate.onError(userId: userId, error: error)
             }
         }
     }
@@ -331,7 +331,7 @@ extension ConversationalAIAPI {
     private func notifyDelegatesTranscription(userId: String, transcription: Transcription) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onReceiveTranscription(userId: userId, transcription: transcription)
+                delegate.onTranscriptionUpdated(userId: userId, transcription: transcription)
             }
         }
     }
@@ -339,7 +339,7 @@ extension ConversationalAIAPI {
     private func notifyDelegatesDebugLog(_ log: String) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onReceiveDebugLog(log)
+                delegate.onDebugLog(log)
             }
         }
     }

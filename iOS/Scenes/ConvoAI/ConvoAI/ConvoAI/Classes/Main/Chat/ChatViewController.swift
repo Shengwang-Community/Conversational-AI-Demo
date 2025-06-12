@@ -23,7 +23,6 @@ public class ChatViewController: UIViewController {
     private var agentUid = 0
     private var remoteAgentId = ""
     private let uid = "\(RtcEnum.getUid())"
-    var rtmClient: AgoraRtmClientKit!
     private var convoAIAPI: ConversationalAIAPI!
     
     private lazy var sendMessageButton: UIButton = {
@@ -362,15 +361,18 @@ public class ChatViewController: UIViewController {
     }
     
     private func setupSomeNecessaryConfig() {
-        initRTM()
         let rtcEngine = rtcManager.getRtcEntine()
         animateView.setupMediaPlayer(rtcEngine)
         animateView.updateAgentState(.idle)
-        
-        let config = ConversationalAIAPIConfig(rtcEngine: rtcEngine, rtmEngine: rtmClient, renderMode: .words)
+        devModeButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
+
+        guard let rtmEngine = rtmManager.getRtmEngine() else {
+            //TODO: log
+            return
+        }
+        let config = ConversationalAIAPIConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words)
         convoAIAPI = ConversationalAIAPI(config: config)
         convoAIAPI.addHandler(handler: self)
-        devModeButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
     }
         
     @MainActor
@@ -446,7 +448,7 @@ public class ChatViewController: UIViewController {
     private func stopAgent() {
         addLog("[Call] stopAgent()")
         rtmManager.logout(completion: nil)
-        convoAIAPI.unsubscribe(channel: channelName) { response, error in
+        convoAIAPI.unsubscribe(channelName: channelName) { response, error in
             
         }
         stopAgentRequest()
@@ -608,7 +610,7 @@ extension ChatViewController {
         agentUid = AppContext.agentUid
         remoteIsJoined = false
         
-        convoAIAPI.subscribe(channel: channelName) { response, err in
+        convoAIAPI.subscribe(channelName: channelName) { response, err in
             if let error = err {
                 
             }
@@ -1170,26 +1172,12 @@ extension ChatViewController {
         IoTEntrance.deleteAllPresets()
         AppContext.preferenceManager()?.deleteAllPresets()
     }
-    
-    func initRTM() {
-        do {
-            print("appid id \(AppContext.shared.appId)")
-            let config = AgoraRtmClientConfig(appId: AppContext.shared.appId, userId: "\(uid)")
-            config.areaCode = [.CN, .NA]
-            config.presenceTimeout = 30
-            config.heartbeatInterval = 10
-            config.useStringUserId = true
-            // Initializing the RTM client
-            rtmClient = try AgoraRtmClientKit(config, delegate: nil)
-        } catch let error {
-            print("Failed to initialize RTM client. Error: \(error)")
-        }
-    }
 }
 
 extension ChatViewController: AgoraRtmClientDelegate {
     public func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceiveLinkStateEvent event: AgoraRtmLinkStateEvent) {
-        
+        //TODO: rtm connect state
+        print(event.currentState)
     }
     
     public func rtmKit(_ rtmKit: AgoraRtmClientKit, tokenPrivilegeWillExpire channel: String?) {
@@ -1222,11 +1210,11 @@ extension ChatViewController: AgoraRtmClientDelegate {
 }
 
 extension ChatViewController: ConversationalAIEventHandler {
-    public func onReceiveError(userId: String, error: AgentError) {
+    public func onError(userId: String, error: AgentError) {
         
     }
     
-    public func onChangeState(userId: String, event: StateChangeEvent) {
+    public func onStateChanged(userId: String, event: StateChangeEvent) {
         switch event.state {
             //TODO: 没有idle状态
 //        case .idle:
@@ -1247,15 +1235,15 @@ extension ChatViewController: ConversationalAIEventHandler {
         }
     }
     
-    public func onInterrupt(userId: String, event: InterruptEvent) {
+    public func onInterrupted(userId: String, event: InterruptEvent) {
         
     }
     
-    public func onReceiveMetrics(userId: String, metrics: Metrics) {
+    public func onMetricsInfo(userId: String, metrics: Metrics) {
         
     }
     
-    public func onReceiveTranscription(userId: String, transcription: Transcription) {
+    public func onTranscriptionUpdated(userId: String, transcription: Transcription) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             let owner: MessageOwner = (transcription.userId == TranscriptionController.localUserId) ? .me : .agent
@@ -1268,7 +1256,7 @@ extension ChatViewController: ConversationalAIEventHandler {
         }
     }
     
-    public func onReceiveDebugLog(_ log: String) {
+    public func onDebugLog(_ log: String) {
         
     }
 }

@@ -14,6 +14,7 @@ protocol RTMManagerProtocol {
     func login(token: String, completion: RTMManagerCallback?)
     func logout(completion: RTMManagerCallback?)
     func renewToken(token: String)
+    func getRtmEngine() -> AgoraRtmClientKit?
 }
 
 class RTMManager: NSObject, RTMManagerProtocol {
@@ -49,6 +50,10 @@ class RTMManager: NSObject, RTMManagerProtocol {
             self?.isLogin = false
             completion?(res, error)
         }
+    }
+    
+    func getRtmEngine() -> AgoraRtmClientKit? {
+        return rtmClient
     }
 }
 
