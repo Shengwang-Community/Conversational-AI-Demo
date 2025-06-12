@@ -11,6 +11,7 @@ import io.agora.rtm.MessageEvent
 import io.agora.rtm.RtmClient
 import io.agora.rtm.RtmConstants
 import io.agora.rtm.RtmEventListener
+import io.agora.scene.convoai.convoaiApi.InterruptEvent
 import io.agora.scene.convoai.convoaiApi.MessageType
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ticker
@@ -63,6 +64,13 @@ interface IConversationTranscriptionCallback {
      * @param msg The log message
      */
     fun onDebugLog(tag: String, msg: String)
+
+    /**
+     * Called when receive interrupt event
+     * @param userId publisher uid
+     * @param event Interrupt Event
+     */
+    fun onInterrupt(userId: String, event: InterruptEvent)
 }
 
 
@@ -356,6 +364,8 @@ class TranscriptionController(
             // deal with interrupt message
             if (isInterrupt) {
                 val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
+                config.callback?.onInterrupt(uid.toString(), InterruptEvent(turnId, startMs))
+
                 onAgentMessageReceived(uid, turnId, startMs, text, null, TurnStatus.INTERRUPTED)
                 return
             }
@@ -426,9 +436,8 @@ class TranscriptionController(
     }
 
     fun release() {
+        reset()
         onDebugLog(TAG, "release called")
-        this.mRenderMode = null
-        stopSubtitleTicker()
         coroutineScope.cancel()
     }
 
