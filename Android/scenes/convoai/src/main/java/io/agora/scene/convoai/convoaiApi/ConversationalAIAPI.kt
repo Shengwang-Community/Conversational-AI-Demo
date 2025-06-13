@@ -96,7 +96,7 @@ data class StateChangeEvent(
 /**
  * Interrupt event
  *
- * Represents an event when conversation is interrupted, typically triggered when user actively 
+ * Represents an event when conversation is interrupted, typically triggered when user actively
  * interrupts AI speaking or system detects high-priority messages.
  * Used for recording interrupt behavior and performing corresponding processing.
  *
@@ -137,8 +137,8 @@ enum class VendorType(val value: String) {
 /**
  * Performance metrics data class
  *
- * Used for recording and transmitting system performance data, such as LLM inference latency, 
- * TTS synthesis latency, etc. This data can be used for performance monitoring, system 
+ * Used for recording and transmitting system performance data, such as LLM inference latency,
+ * TTS synthesis latency, etc. This data can be used for performance monitoring, system
  * optimization, and user experience improvement.
  *
  * @property type Metric type (LLM, MLLM, TTS, etc.)
@@ -242,7 +242,7 @@ interface ConversationalAIAPIEventHandler {
      * @param userId RTM user ID identifying the user whose state has changed
      * @param event State change event containing new state, turn ID, and timestamp
      */
-    fun onStateChanged(userId: String, event: StateChangeEvent)
+    fun onAgentStateChanged(userId: String, event: StateChangeEvent)
 
     /**
      * Interrupt event callback
@@ -253,7 +253,7 @@ interface ConversationalAIAPIEventHandler {
      * @param userId RTM user ID identifying the user for whom the interrupt event occurred
      * @param event Interrupt event containing turn ID and timestamp
      */
-    fun onInterrupted(userId: String, event: InterruptEvent)
+    fun onAgentInterrupted(userId: String, event: InterruptEvent)
 
     /**
      * Performance metrics info callback
@@ -265,7 +265,7 @@ interface ConversationalAIAPIEventHandler {
      * @param userId RTM user ID identifying the user related to the performance metrics
      * @param metrics Performance metrics containing type, name, value, and timestamp
      */
-    fun onMetricsInfo(userId: String, metrics: Metrics)
+    fun onAgentMetricsInfo(userId: String, metrics: Metrics)
 
     /**
      * AI error callback
@@ -276,7 +276,7 @@ interface ConversationalAIAPIEventHandler {
      * @param userId RTM user ID identifying the user related to the error
      * @param error AI error containing type, code, message, and timestamp
      */
-    fun onError(userId: String, error: AgentError)
+    fun onAgentError(userId: String, error: AgentError)
 
     /**
      * Transcription update callback
@@ -321,7 +321,7 @@ interface ConversationalAIAPIEventHandler {
  */
 interface ConversationalAIAPI {
 
-        /**
+    /**
      * Add event handler
      *
      * Register an event handler to receive various AI conversation-related event callbacks.
@@ -334,8 +334,8 @@ interface ConversationalAIAPI {
     /**
      * Remove event handler
      *
-     * Remove the specified handler from the event handler list, and this handler will no longer 
-     * receive event callbacks. It is recommended to call this method when events are no longer 
+     * Remove the specified handler from the event handler list, and this handler will no longer
+     * receive event callbacks. It is recommended to call this method when events are no longer
      * needed to avoid memory leaks.
      *
      * @param eventHandler The event handler instance to remove
@@ -345,8 +345,8 @@ interface ConversationalAIAPI {
     /**
      * Subscribe to a channel to receive AI conversation events
      *
-     * This method establishes a connection to the specified channel and starts receiving 
-     * various AI conversation-related events. Once successfully subscribed, the following 
+     * This method establishes a connection to the specified channel and starts receiving
+     * various AI conversation-related events. Once successfully subscribed, the following
      * types of events will be received through registered event handlers:
      * - Agent state change events (onStateChanged)
      * - Interrupt events (onInterrupted)
@@ -380,8 +380,8 @@ interface ConversationalAIAPI {
     /**
      * Send message to AI agent
      *
-     * This method sends messages containing text, images, or audio to the AI agent for 
-     * understanding and processing. Supports combinations of multiple content types and 
+     * This method sends messages containing text, images, or audio to the AI agent for
+     * understanding and processing. Supports combinations of multiple content types and
      * allows setting message priority to control processing behavior.
      *
      * Message processing flow:
@@ -404,8 +404,8 @@ interface ConversationalAIAPI {
     /**
      * Interrupt AI agent speaking
      *
-     * Use this method to interrupt the currently speaking AI agent. The interrupt operation 
-     * will immediately stop the agent's voice output and transition the agent state from 
+     * Use this method to interrupt the currently speaking AI agent. The interrupt operation
+     * will immediately stop the agent's voice output and transition the agent state from
      * SPEAKING to another state (usually LISTENING or SILENT).
      *
      * Interrupt scenarios:
@@ -414,7 +414,7 @@ interface ConversationalAIAPI {
      * - User is dissatisfied with current response and wants to ask again
      *
      * Important notes:
-     * - The completion callback only indicates whether the interrupt request was successfully sent, 
+     * - The completion callback only indicates whether the interrupt request was successfully sent,
      *   it does not guarantee the agent will be interrupted
      * - The actual interrupt status of the agent will be notified through the onInterrupt callback
      * - If the agent is not currently in SPEAKING state, the interrupt request may be ignored

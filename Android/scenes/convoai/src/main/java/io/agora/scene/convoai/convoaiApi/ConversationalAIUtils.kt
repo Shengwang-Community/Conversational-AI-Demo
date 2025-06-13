@@ -2,7 +2,20 @@ package io.agora.scene.convoai.convoaiApi
 
 import android.os.Handler
 import android.os.Looper
+import kotlinx.coroutines.Runnable
 import java.util.Collections
+
+internal object ConversationalAIUtils {
+
+    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
+    fun runOnMainThread(r: Runnable) {
+        if (Thread.currentThread() == mainHandler.looper.thread) {
+            r.run()
+        } else {
+            mainHandler.post(r)
+        }
+    }
+}
 
 internal class ObservableHelper<EventHandler> {
     private val eventHandlerList: MutableList<EventHandler> = Collections.synchronizedList(ArrayList())
@@ -37,14 +50,6 @@ internal class ObservableHelper<EventHandler> {
             } else {
                 action(eventHandler)
             }
-        }
-    }
-
-    fun runOnMainThread(r: Runnable) {
-        if (mainHandler.looper.thread != Thread.currentThread()) {
-            mainHandler.post(r)
-        } else {
-            r.run()
         }
     }
 }

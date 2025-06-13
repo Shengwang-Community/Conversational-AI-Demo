@@ -366,44 +366,28 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     private val covEventHandler = object : ConversationalAIAPIEventHandler {
-        override fun onStateChanged(userId: String, event: StateChangeEvent) {
+        private val tag = "ConversationalAI"
+        override fun onAgentStateChanged(userId: String, event: StateChangeEvent) {
             // Update agent state display
             if (DebugConfigSettings.isDebug && connectionState == AgentConnectionState.CONNECTED) {
                 mBinding?.tvConversationState?.text = "Agent State: ${event.state}"
             }
-
-            // Update ball animation based on agent state
-            val agentState = when (event.state) {
-                AgentState.SILENT -> BallAnimState.LISTENING
-                AgentState.LISTENING -> BallAnimState.LISTENING
-                AgentState.THINKING -> BallAnimState.LISTENING
-                AgentState.SPEAKING -> BallAnimState.SPEAKING
-                else -> BallAnimState.STATIC
-            }
-            mCovBallAnim?.updateAgentState(agentState)
-
-            // Log debug information
-            CovLogger.d(TAG, "onChangeState: state=${event.state} - userId: $userId - turnId: ${event.turnId}")
         }
 
-        override fun onInterrupted(userId: String, event: InterruptEvent) {
-            // Handle interrupt event
-            CovLogger.d(TAG, "onInterrupt: turnId=${event.turnId} - timestamp=${event.timestamp}")
+        override fun onAgentInterrupted(userId: String, event: InterruptEvent) {
+            // TODO: something
         }
 
-        override fun onMetricsInfo(userId: String, metrics: Metrics) {
-            // Handle performance metrics
-            CovLogger.d(TAG, "onReceiveMetrics: ${metrics.type} - ${metrics.name}: ${metrics}ms")
+        override fun onAgentMetricsInfo(userId: String, metrics: Metrics) {
+            // TODO: something
         }
 
-        override fun onError(userId: String, error: AgentError) {
-            CovLogger.e(TAG, "onReceiveError: ${error.type} - ${error.message} - code: ${error.code})")
-            // Show different messages based on error type
+        override fun onAgentError(userId: String, error: AgentError) {
+            // TODO: something
         }
 
         override fun onTranscriptionUpdated(userId: String, transcription: Transcription) {
             // Handle transcription updates
-            CovLogger.d(TAG, "onReceiveTranscription: ${transcription.text} (status: ${transcription.status})")
             // Update subtitle display based on render mode
             if (!isSelfSubRender) {
                 mBinding?.messageListViewV2?.onTranscriptionUpdated(transcription)
@@ -411,7 +395,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
 
         override fun onDebugLog(message: String) {
-            CovLogger.d(TAG, message)
+            CovLogger.d(tag, message)
         }
     }
 

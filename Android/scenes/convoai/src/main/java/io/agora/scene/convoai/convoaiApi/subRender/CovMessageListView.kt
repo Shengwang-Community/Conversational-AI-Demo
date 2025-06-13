@@ -11,11 +11,9 @@ import android.widget.LinearLayout
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.databinding.CovMessageAgentItemBinding
 import io.agora.scene.convoai.databinding.CovMessageListViewBinding
 import io.agora.scene.convoai.databinding.CovMessageMineItemBinding
-import io.agora.scene.convoai.convoaiApi.subRender.v3.IConversationTranscriptionCallback
 import io.agora.scene.convoai.convoaiApi.subRender.v3.Status
 import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
 
