@@ -360,13 +360,20 @@ extension TranscriptionDelegate {
                 if let interruptTime = message.start_ms,
                    let buffer: TurnBuffer = self.messageQueue.first(where: { $0.turnId == message.turn_id })
                 {
-                    
                     self.callMessagePrint(tag: TranscriptionController.uiTag, msg: "reveive interrupted message, pts: \(self.audioTimestamp), \(message) ")
+                    var lastWord: WordBuffer? = nil
                     for index in buffer.words.indices {
                         if buffer.words[index].start_ms > interruptTime {
                             buffer.words[index].status = .interrupt
                         }
+                        
+                        if buffer.words[index].start_ms < interruptTime {
+                            lastWord = buffer.words[index]
+                        }
                     }
+                    
+                    lastWord?.status = .interrupt
+                    
                     let interruptedEvent = InterruptEvent(turnId: buffer.turnId, timestamp: TimeInterval(buffer.start_ms))
                     //TODO: userId 传值
                     self.delegate?.interrupted(userId: "", event: interruptedEvent)
