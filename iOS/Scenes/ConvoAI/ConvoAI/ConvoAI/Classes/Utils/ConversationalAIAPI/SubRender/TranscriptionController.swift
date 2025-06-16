@@ -82,6 +82,7 @@ private struct Word: Codable {
 
 private class TurnBuffer {
     var turnId = 0
+    var userId: UInt = 0
     var text: String = ""
     var start_ms: Int64 = 0
     var words: [WordBuffer] = []
@@ -141,8 +142,6 @@ extension TranscriptionDelegate {
 ///
 @objc public class TranscriptionController: NSObject {
     public static let version: String = "1.4.0"
-    public static let localUserId: UInt = 0
-    public static let remoteUserId: UInt = 99
     static let tag = "[Transcription]"
     static let uiTag = "[Transcription-UI]"
 
@@ -202,8 +201,10 @@ extension TranscriptionDelegate {
     private func handleMessage(_ message: TranscriptionMessage) {
         if message.object == MessageType.user.rawValue {
             let text = message.text ?? ""
-            let transcriptionMessage = Transcription(turnId: message.turn_id ?? 0,
-                                                  userId: TranscriptionController.localUserId,
+            let userId = UInt(message.user_id ?? "0") ?? 0
+            let turnId = message.turn_id ?? 0
+            let transcriptionMessage = Transcription(turnId: turnId,
+                                                     userId: userId,
                                                   text: text,
                                                      status: (message.final == true) ? .end : .inprogress, type: .user)
             self.delegate?.onTranscriptionUpdated(transcription: transcriptionMessage)
@@ -211,7 +212,7 @@ extension TranscriptionDelegate {
             let renderMode = getMessageMode(message)
             if renderMode == .words {
                 handleWordsMessage(message)
-            } else if renderMode == .text {
+            } else if renderMode == .text && message.turn_status != TranscriptionState.interrupt.rawValue {
                 handleTextMessage(message)
             }
         }
@@ -250,32 +251,16 @@ extension TranscriptionDelegate {
             callMessagePrint(tag: TranscriptionController.tag, msg: "message text is nil")
             return
         }
-        let messageState: TranscriptionState
+        var messageState: TranscriptionState = .inprogress
         if let turnStatus = message.turn_status {
             var state = TurnState(rawValue: turnStatus) ?? .inprogress
             if state == .interrupt {
                 state = .end
             }
             messageState = state
-        } else {
-            let isFinal = message.is_final ?? message.final ?? false
-            messageState = isFinal ? .end : .inprogress
         }
-        var userId: UInt
-        if let messageObject = message.object {
-            if messageObject == MessageType.user.rawValue {
-                userId = TranscriptionController.localUserId
-            } else {
-                userId = TranscriptionController.remoteUserId
-            }
-        } else {
-            if message.stream_id == 0 {
-                userId = TranscriptionController.remoteUserId
-            } else {
-                userId = TranscriptionController.localUserId
-            }
-        }
-        let turnId = message.turn_id ?? -1
+        var userId = UInt(message.user_id ?? "0") ?? 0
+        let turnId = message.turn_id ?? 0
         let transcriptionMessage = Transcription(turnId: turnId,
                                                  userId: userId,
                                                    text: text,
@@ -307,6 +292,7 @@ extension TranscriptionDelegate {
                 let curBuffer: TurnBuffer = self.messageQueue.first { $0.turnId == message.turn_id } ?? {
                     let newTurn = TurnBuffer()
                     newTurn.turnId = message.turn_id ?? 0
+                    newTurn.userId = UInt(message.user_id ?? "0") ?? 0
                     self.messageQueue.append(newTurn)
                     print("[CovSubRenderController] new turn")
                     return newTurn
@@ -420,7 +406,7 @@ extension TranscriptionDelegate {
                 var transcriptionMessage: Transcription
                 if minRange == interruptSub {
                     transcriptionMessage = Transcription(turnId: buffer.turnId,
-                                                         userId: TranscriptionController.remoteUserId,
+                                                         userId: buffer.userId,
                                                          text: currentWords.map { $0.text }.joined(),
                                                          status: .interrupt,
                                                          type: .agent)
@@ -431,7 +417,7 @@ extension TranscriptionDelegate {
                     callMessagePrint(tag: TranscriptionController.uiTag, msg: "[interrupt1] pts: \(audioTimestamp), message: \(transcriptionMessage)")
                 } else if minRange == endSub {
                     transcriptionMessage = Transcription(turnId: buffer.turnId,
-                                                      userId: TranscriptionController.remoteUserId,
+                                                      userId: buffer.userId,
                                                       text: buffer.text,
                                                          status: .end, type: .agent)
                     // remove finished turn
@@ -441,7 +427,7 @@ extension TranscriptionDelegate {
                     callMessagePrint(tag: TranscriptionController.uiTag, msg: "[end] pts: \(audioTimestamp), message: \(transcriptionMessage)")
                 } else {
                     transcriptionMessage = Transcription(turnId: buffer.turnId,
-                                                      userId: TranscriptionController.remoteUserId,
+                                                      userId: buffer.userId,
                                                       text: currentWords.map { $0.text }.joined(),
                                                          status: .inprogress, type: .agent)
                     callMessagePrint(tag: TranscriptionController.uiTag, msg: "[progress] pts: \(audioTimestamp), message: \(transcriptionMessage)")

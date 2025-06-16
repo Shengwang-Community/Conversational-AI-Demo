@@ -221,7 +221,7 @@ import Foundation
     case rtmError = 3
 }
 
-@objc public class ConversationalAIAPIError: NSObject, Error {
+@objc public class ConversationalAIAPIError: NSObject {
     @objc public let type: ConversationalAIAPIErrorType
     @objc public let code: Int
     @objc public let message: String

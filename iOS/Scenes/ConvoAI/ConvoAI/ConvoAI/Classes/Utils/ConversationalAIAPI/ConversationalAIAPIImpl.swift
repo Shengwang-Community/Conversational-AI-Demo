@@ -164,7 +164,7 @@ public enum MessageType: String, CaseIterable {
 }
 
 @objc public class ConversationalAIAPIImpl: NSObject {
-    public static let version: String = "1.0.0"
+    public static let version: String = "1.6.0"
     private let tag: String = "[ConvoAPI]"
     private let delegates = NSHashTable<ConversationalAIAPIEventHandler>.weakObjects()
     private let config: ConversationalAIAPIConfig
@@ -332,7 +332,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         rtmEngine.unsubscribe(channelName) {[weak self] response, error in
             if let errorInfo = error {
                 let covoAiError = ConversationalAIAPIError(type: .rtmError, code: errorInfo.code, message: errorInfo.reason)
-                self?.callMessagePrint(msg: "<<< [traceId:\(traceId)] [unsubscribe] error: \(covoAiError.localizedDescription)")
+                self?.callMessagePrint(msg: "<<< [traceId:\(traceId)] [unsubscribe] error: \(covoAiError.message)")
                 completion(covoAiError)
             } else {
                 self?.callMessagePrint(msg: "<<< [traceId:\(traceId)] [unsubscribe] success)")
