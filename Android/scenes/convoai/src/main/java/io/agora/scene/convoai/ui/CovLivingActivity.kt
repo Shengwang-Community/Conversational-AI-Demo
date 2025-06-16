@@ -393,8 +393,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
         }
 
-        override fun onDebugLog(message: String) {
-            CovLogger.d(tag, message)
+        override fun onDebugLog(log: String) {
+            CovLogger.d(tag, log)
         }
     }
 

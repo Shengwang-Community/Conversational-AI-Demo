@@ -6,7 +6,7 @@ import io.agora.rtm.RtmClient
 import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
 import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionRenderMode
 
-const val ConversationalAIAPI_VERSION = "1.0.0"
+const val ConversationalAIAPI_VERSION = "1.6.0"
 
 /**
  * Message priority levels for AI agent processing
@@ -270,9 +270,9 @@ interface IConversationalAIAPIEventHandler {
     fun onTranscriptionUpdated(userId: String, transcription: Transcription)
     /**
      * Called for internal debug logs.
-     * @param message Debug log message
+     * @param log Debug log message
      */
-    fun onDebugLog(message: String)
+    fun onDebugLog(log: String)
 }
 
 /**
@@ -283,26 +283,26 @@ interface IConversationalAIAPIEventHandler {
 interface IConversationalAIAPI {
     /**
      * Register an event handler to receive AI conversation events.
-     * @param eventHandler Event handler instance
+     * @param handler Event handler instance
      */
-    fun addHandler(eventHandler: IConversationalAIAPIEventHandler)
+    fun addHandler(handler: IConversationalAIAPIEventHandler)
     /**
      * Remove a registered event handler.
-     * @param eventHandler Event handler instance
+     * @param handler Event handler instance
      */
-    fun removeHandler(eventHandler: IConversationalAIAPIEventHandler)
+    fun removeHandler(handler: IConversationalAIAPIEventHandler)
     /**
      * Subscribe to a channel to receive AI conversation events.
-     * @param channel Channel name
+     * @param channelName Channel name
      * @param completion Callback, error is null on success
      */
-    fun subscribe(channel: String, completion: (error: ConversationalAIAPIError?) -> Unit)
+    fun subscribe(channelName: String, completion: (error: ConversationalAIAPIError?) -> Unit)
     /**
      * Unsubscribe from a channel and stop receiving events.
-     * @param channel Channel name
+     * @param channelName Channel name
      * @param completion Callback, error is null on success
      */
-    fun unsubscribe(channel: String, completion: (error: ConversationalAIAPIError?) -> Unit)
+    fun unsubscribe(channelName: String, completion: (error: ConversationalAIAPIError?) -> Unit)
     /**
      * Send a message to the AI agent.
      * @param userId RTM user ID
