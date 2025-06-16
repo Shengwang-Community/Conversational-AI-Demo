@@ -149,6 +149,7 @@ extension ResourceManager {
             public static let title = ResourceManager.localizedString("devmode.title")
             public static let graph = ResourceManager.localizedString("devmode.graph")
             public static let rtc = ResourceManager.localizedString("devmode.rtc")
+            public static let rtm = ResourceManager.localizedString("devmode.rtm")
             public static let host = ResourceManager.localizedString("devmode.host")
             public static let dump = ResourceManager.localizedString("devmode.dump")
             public static let sessionLimit = ResourceManager.localizedString("devmode.sessionLimit")

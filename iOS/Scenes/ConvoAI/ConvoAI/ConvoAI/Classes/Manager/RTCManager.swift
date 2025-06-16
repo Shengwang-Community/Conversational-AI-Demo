@@ -23,7 +23,7 @@ protocol RTCManagerProtocol {
     func leaveChannel()
     
     // renew rtc token
-    func renewRtcToken(value: String)
+    func renewToken(token: String)
     
     /// Mutes or unmutes the voice
     /// - Parameter state: True to mute, false to unmute
@@ -48,34 +48,6 @@ protocol RTCManagerProtocol {
 class RTCManager: NSObject {
     private var rtcEngine: AgoraRtcEngineKit!
     private var audioDumpEnabled: Bool = false
-    private var audioRouting = AgoraAudioOutputRouting.default
-    
-    // set audio config parameters
-    // you should set it before joinChannel and when audio route changed
-    private func setAudioConfigParameters(routing: AgoraAudioOutputRouting) {
-        audioRouting = routing
-        rtcEngine.setParameters("{\"che.audio.aec.split_srate_for_48k\":16000}")
-        rtcEngine.setParameters("{\"che.audio.sf.enabled\":true}")
-        rtcEngine.setParameters("{\"che.audio.sf.stftType\":6}")
-        rtcEngine.setParameters("{\"che.audio.sf.ainlpLowLatencyFlag\":1}")
-        rtcEngine.setParameters("{\"che.audio.sf.ainsLowLatencyFlag\":1}")
-        rtcEngine.setParameters("{\"che.audio.sf.procChainMode\":1}")
-        rtcEngine.setParameters("{\"che.audio.sf.nlpDynamicMode\":1}")
-        if routing == .headset ||
-            routing == .earpiece ||
-            routing == .headsetNoMic ||
-            routing == .bluetoothDeviceHfp ||
-            routing == .bluetoothDeviceA2dp {
-            rtcEngine.setParameters("{\"che.audio.sf.nlpAlgRoute\":0}")
-        } else {
-            rtcEngine.setParameters("{\"che.audio.sf.nlpAlgRoute\":1}")
-        }
-        rtcEngine.setParameters("{\"che.audio.sf.ainlpModelPref\":10}")
-        rtcEngine.setParameters("{\"che.audio.sf.nsngAlgRoute\":12}")
-        rtcEngine.setParameters("{\"che.audio.sf.ainsModelPref\":10}")
-        rtcEngine.setParameters("{\"che.audio.sf.nsngPredefAgg\":11}")
-        rtcEngine.setParameters("{\"che.audio.agc.enable\":false}")
-    }
 }
 
 extension RTCManager: RTCManagerProtocol {
@@ -86,7 +58,6 @@ extension RTCManager: RTCManagerProtocol {
         config.channelProfile = .liveBroadcasting
         config.audioScenario = .aiClient
         rtcEngine = AgoraRtcEngineKit.sharedEngine(with: config, delegate: delegate)
-        rtcEngine.addDelegate(self)
         ConvoAILogger.info("rtc version: \(AgoraRtcEngineKit.getSdkVersion())")
         return rtcEngine
     }
@@ -100,11 +71,7 @@ extension RTCManager: RTCManagerProtocol {
             // set audio scenario 10, open AI-QoS
             rtcEngine.setAudioScenario(.aiClient)
         }
-        
-        // set audio config parameters
-        // you should set it before joinChannel and when audio route changed
-        setAudioConfigParameters(routing: audioRouting)
-        
+    
         // Calling this API enables the onAudioVolumeIndication callback to report volume values,
         // which can be used to drive microphone volume animation rendering
         // If you don't need this feature, you can skip this setting
@@ -154,21 +121,14 @@ extension RTCManager: RTCManagerProtocol {
         rtcEngine.leaveChannel()
     }
     
-    func renewRtcToken(value: String) {
-        rtcEngine.renewToken(value)
+    func renewToken(token: String) {
+        rtcEngine.renewToken(token)
     }
     
     func destroy() {
         audioDumpEnabled = false
-        rtcEngine.removeDelegate(self)
         rtcEngine = nil
         AgoraRtcEngineKit.destroy()
-    }
-}
-
-extension RTCManager: AgoraRtcEngineDelegate {
-    public func rtcEngine(_ engine: AgoraRtcEngineKit, didAudioRouteChanged routing: AgoraAudioOutputRouting) {
-        setAudioConfigParameters(routing: routing)
     }
 }
 

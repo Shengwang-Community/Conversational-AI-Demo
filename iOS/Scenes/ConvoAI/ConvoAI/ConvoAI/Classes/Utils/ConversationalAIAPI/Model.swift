@@ -91,6 +91,10 @@ import Foundation
         self.text = text
         self.status = status
     }
+    
+    public override var description: String {
+        return "Transcription(turnId: \(turnId), userId: \(userId), text: \(text), status: \(status))"
+    }
 }
 
 /// AI state enumeration
@@ -99,6 +103,11 @@ import Foundation
     case listening  /// Listening
     case thinking   /// Thinking
     case speaking   /// Speaking
+    case unknow    /// unknow
+    
+    static func fromValue(_ value: Int) -> AgentState {
+        return AgentState(rawValue: value) ?? .unknow
+    }
 }
  
 /// Conversation state class
@@ -119,6 +128,10 @@ import Foundation
         self.reason = reason
         super.init()
    }
+    
+    public override var description: String {
+        return "StateChangeEvent(state: \(state), turnId: \(turnId), timestamp: \(timestamp), reason: \(reason))"
+    }
 }
 
 /// Interrupt event class

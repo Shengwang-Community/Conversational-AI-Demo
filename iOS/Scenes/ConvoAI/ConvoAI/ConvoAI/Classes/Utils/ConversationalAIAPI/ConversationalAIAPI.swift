@@ -38,13 +38,13 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter event: Agent state event (silent, listening, thinking, speaking)
     /// - Parameter userId: RTM userId
-    @objc func onStateChanged(userId: String, event: StateChangeEvent)
+    @objc func onAgentStateChanged(userId: String, event: StateChangeEvent)
      
     /// Called when an interrupt event occurs
     ///
     /// - Parameter event: Interrupt event
     /// - Parameter userId: RTM userId
-    @objc func onInterrupted(userId: String, event: InterruptEvent)
+    @objc func onAgentInterrupted(userId: String, event: InterruptEvent)
  
  
     /// Real-time callback for performance metrics
@@ -54,7 +54,7 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter metrics: Performance metrics containing type, value, and timestamp
     /// - Parameter userId: RTM userId
-    @objc func onMetricsInfo(userId: String, metrics: Metrics)
+    @objc func onAgentMetricsInfo(userId: String, metrics: Metrics)
      
     /// Called when AI-related errors occur
     ///
@@ -63,7 +63,7 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter error: AI error containing type, error code, error message, and timestamp
     /// - Parameter userId: RTM userId
-    @objc func onError(userId: String, error: AgentError)
+    @objc func onAgentError(userId: String, error: AgentError)
      
     /// Called when subtitle content is updated during conversation
     ///
@@ -164,10 +164,13 @@ public enum MessageType: String, CaseIterable {
 }
 
 @objc public class ConversationalAIAPI: NSObject {
+    public static let version: String = "1.0.0"
+    static let tag: String = "[ConvoAPI]"
     private let delegates = NSHashTable<ConversationalAIEventHandler>.weakObjects()
     private let config: ConversationalAIAPIConfig
     private var channel: String? = nil
     private var audioRouting = AgoraAudioOutputRouting.default
+    private var stateChangeEvent: StateChangeEvent? = nil
 
     private lazy var transcriptionController: TranscriptionController = {
         let subtitleController = TranscriptionController()
@@ -191,7 +194,10 @@ public enum MessageType: String, CaseIterable {
 
 extension ConversationalAIAPI: ConversationalAIAPIProtocol {
     @objc public func chat(userId: String, message: ChatMessage, completion: @escaping (NSError?) -> Void) {
+        let traceId = UUID().uuidString.prefix(8)
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: ">>> [traceId:\(traceId)] [chat] \(userId), \(message)")
         guard let rtmEngine = self.config.rtmEngine else {
+            callMessagePrint(tag: ConversationalAIAPI.tag, msg: "[traceId:\(traceId)] !!! rtmEngine is nil")
             return
         }
         
@@ -206,21 +212,29 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
             "image_url": message.imageUrl ?? "",
             "audio": message.audioUrl ?? ""
         ]
-        
-        guard let data = try? JSONSerialization.data(withJSONObject: messageData), let stringData = String(data: data, encoding: .utf8) else {
-            print("rtm Message data conversion failed")
-            return
-        }
-        
-        rtmEngine.publish(channelName: userId, message: stringData, option: publishOptions, completion: { res, error in
-            if let errorInfo = error {
-                print("Unknown error publish message with error: \(errorInfo.reason)")
-            } else if let publishResponse = res {
-                print("Message published successfully. \(publishResponse)")
-            } else {
-                print("Unknown error occurred while publishing the message.")
+
+        do {
+            let data = try JSONSerialization.data(withJSONObject: messageData)
+            guard let stringData = String(data: data, encoding: .utf8) else {
+                print("字符串转换失败")
+                callMessagePrint(tag: ConversationalAIAPI.tag, msg: "[traceId:\(traceId)] 字符串转换失败")
+                return
             }
-        })
+            // 后续处理 stringData
+            callMessagePrint(tag: ConversationalAIAPI.tag, msg: "[traceId:\(traceId)] rtm publish \(stringData)")
+            rtmEngine.publish(channelName: userId, message: stringData, option: publishOptions, completion: { [weak self] res, error in
+                if let errorInfo = error {
+                    self?.callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [traceId:\(traceId)] rtm publish error: \(errorInfo.reason)")
+                } else if let _ = res {
+                    self?.callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [traceId:\(traceId)] rtm publish success")
+                } else {
+                    self?.callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [traceId:\(traceId)] rtm publish error: unknow error")
+                }
+            })
+        } catch {
+            print("JSON 序列化失败: \(error)")
+            callMessagePrint(tag: ConversationalAIAPI.tag, msg: "[traceId:\(traceId)] JSON 序列化失败: \(error.localizedDescription)")
+        }
     }
     
     @objc public func interrupt(userId: String, completion: @escaping (NSError?) -> Void) {
@@ -228,6 +242,8 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
             return
         }
         
+        let traceId = UUID().uuidString.prefix(8)
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: ">>> [traceId:\(traceId)] [interrupt] \(userId)")
         let publishOptions = AgoraRtmPublishOptions()
         publishOptions.channelType = .user
         publishOptions.customType = "message.interrupt"
@@ -253,6 +269,7 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
     }
     
     @objc public func loadAudioSettings() {
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: ">>> [loadAudioSettings]")
         setAudioConfigParameters(routing: audioRouting)
     }
     
@@ -261,25 +278,50 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
             return
         }
         
+        channel = channelName
+        let traceId = UUID().uuidString.prefix(8)
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: ">>> [traceId:\(traceId)] [subscribe] channel: \(channelName)")
+        
         self.transcriptionController.reset()
         let subscribeOptions = AgoraRtmSubscribeOptions()
         subscribeOptions.features = [.presence, .message]
-        rtmEngine.subscribe(channelName: channelName, option: subscribeOptions, completion: completion)
+        rtmEngine.subscribe(channelName: channelName, option: subscribeOptions) {[weak self] response, error in
+            if let error = error {
+                self?.callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [traceId:\(traceId)] [subscribe] error: \(error.localizedDescription)")
+            } else {
+                self?.callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [traceId:\(traceId)] [subscribe] success)")
+            }
+            
+            completion(response, error)
+        }
     }
     
     @objc public func unsubscribe(channelName: String, completion: @escaping AgoraRtmOperationBlock) {
         guard let rtmEngine = self.config.rtmEngine else {
             return
         }
-        
-        rtmEngine.unsubscribe(channelName, completion: completion)
+        channel = nil
+        let traceId = UUID().uuidString.prefix(8)
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: ">>> [traceId:\(traceId)] [unsubscribe] channel: \(channelName)")
+
+        rtmEngine.unsubscribe(channelName) {[weak self] response, error in
+            if let error = error {
+                self?.callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [traceId:\(traceId)] [unsubscribe] error: \(error.localizedDescription)")
+            } else {
+                self?.callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [traceId:\(traceId)] [unsubscribe] success)")
+            }
+            
+            completion(response, error)
+        }
     }
     
     @objc public func addHandler(handler: ConversationalAIEventHandler) {
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: ">>> [addHandler] handler \(handler)")
         delegates.add(handler)
     }
     
     @objc public func removeHandler(handler: ConversationalAIEventHandler) {
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: ">>> [removeHandler] handler \(handler)")
         delegates.remove(handler)
     }
     
@@ -288,6 +330,8 @@ extension ConversationalAIAPI: ConversationalAIAPIProtocol {
             return
         }
         
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: ">>> [destroy]")
+
         rtcEngine.removeDelegate(self)
         rtmEngine.removeDelegate(self)
         
@@ -299,7 +343,7 @@ extension ConversationalAIAPI {
     private func notifyDelegatesStateChange(userId: String, event: StateChangeEvent) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onStateChanged(userId: userId, event: event)
+                delegate.onAgentStateChanged(userId: userId, event: event)
             }
         }
     }
@@ -307,23 +351,27 @@ extension ConversationalAIAPI {
     private func notifyDelegatesInterrupt(userId: String, event: InterruptEvent) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onInterrupted(userId: userId, event: event)
+                delegate.onAgentInterrupted(userId: userId, event: event)
             }
         }
     }
     
     private func notifyDelegatesMetrics(userId: String, metrics: Metrics) {
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [onAgentMetricsInfo], userId: \(userId), metrics: \(metrics)")
+
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onMetricsInfo(userId: userId, metrics: metrics)
+                delegate.onAgentMetricsInfo(userId: userId, metrics: metrics)
             }
         }
     }
     
     private func notifyDelegatesError(userId: String, error: AgentError) {
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [onAgentError], userId: \(userId), error: \(error)")
+
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onError(userId: userId, error: error)
+                delegate.onAgentError(userId: userId, error: error)
             }
         }
     }
@@ -398,6 +446,7 @@ extension ConversationalAIAPI {
         case .error:
             handleErrorMessage(uid: uid, msg: msg)
             
+            break
         default:
             break
         }
@@ -416,6 +465,7 @@ extension ConversationalAIAPI {
         let sendTs = (msg["send_ts"] as? NSNumber)?.doubleValue ?? 0.0
         
         let metrics = Metrics(type: metricType, name: metricName, value: latencyMs, timestamp: sendTs)
+    
         notifyDelegatesMetrics(userId: uid, metrics: metrics)
     }
     
@@ -434,10 +484,15 @@ extension ConversationalAIAPI {
         let agentError = AgentError(type: venderType, code: code, message: message, timestamp: timestamp)
         notifyDelegatesError(userId: uid, error: agentError)
     }
+    
+    func callMessagePrint(tag: String, msg: String) {
+        notifyDelegatesDebugLog("\(tag) \(msg)")
+    }
 }
 
 extension ConversationalAIAPI: AgoraRtcEngineDelegate {
     public func rtcEngine(_ engine: AgoraRtcEngineKit, didAudioRouteChanged routing: AgoraAudioOutputRouting) {
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [didAudioRouteChanged] routing: \(routing)")
         setAudioConfigParameters(routing: routing)
     }
 }
@@ -445,7 +500,6 @@ extension ConversationalAIAPI: AgoraRtcEngineDelegate {
 extension ConversationalAIAPI: AgoraRtmClientDelegate {
     public func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceiveMessageEvent event: AgoraRtmMessageEvent) {
         let publisherId = event.publisher
-        
         if let stringData = event.message.stringData {
             do {
                 let messageMap = try parseJsonToMap(stringData)
@@ -467,13 +521,50 @@ extension ConversationalAIAPI: AgoraRtmClientDelegate {
         }
     }
     
+    public func rtmKit(_ rtmKit: AgoraRtmClientKit, tokenPrivilegeWillExpire channel: String?) {
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [tokenPrivilegeWillExpire] channel: \(channel ?? "")")
+    }
+    
     public func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceivePresenceEvent event: AgoraRtmPresenceEvent) {
+        callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [didReceivePresenceEvent] routing: \(event)")
+        if event.channelName != channel {
+            return
+        }
+        
+        if event.channelType == .message {
+            if event.type == .remoteStateChanged {
+                let state = Int(event.states["state"] ?? "") ?? 0
+                let turnId = Int(event.states["turn_id"] ?? "") ?? 0
+                if turnId < (self.stateChangeEvent?.turnId ?? 0) {
+                    return
+                }
+                
+                let ts = Double(event.timestamp)
+                if ts <= (self.stateChangeEvent?.timestamp ?? 0) {
+                    return
+                }
+                let aiState = AgentState.fromValue(state)
+                let changeEvent = StateChangeEvent(state: aiState, turnId: turnId, timestamp: ts, reason: "")
+                self.stateChangeEvent = changeEvent
+                callMessagePrint(tag: ConversationalAIAPI.tag, msg: "<<< [onAgentStateChanged] userId:\(event.publisher ?? "0"), event:\(changeEvent)")
+                notifyDelegatesStateChange(userId: event.publisher ?? "0", event: changeEvent)
+            }
+            //other
+        }
     }
 }
 
 extension ConversationalAIAPI: TranscriptionDelegate {
+    func interrupted(userId: String, event: InterruptEvent) {
+        notifyDelegatesInterrupt(userId: userId, event: event)
+    }
+    
     func onTranscriptionUpdated(transcription: Transcription) {
         notifyDelegatesTranscription(userId: "\(transcription.userId)", transcription: transcription)
+    }
+    
+    func onDebugLog(_ txt: String) {
+        notifyDelegatesDebugLog(txt)
     }
 }
 

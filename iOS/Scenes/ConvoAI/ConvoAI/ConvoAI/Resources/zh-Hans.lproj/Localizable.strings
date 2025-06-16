@@ -100,6 +100,7 @@
 
 "devmode.title" = "开发者模式";
 "devmode.rtc" = "RTC 版本";
+"devmode.rtm" = "RTM 版本";
 "devmode.host" = "ConvoAI Host";
 "devmode.dump" = "音频 Dump";
 "devmode.sessionLimit" = "会话时间限制";

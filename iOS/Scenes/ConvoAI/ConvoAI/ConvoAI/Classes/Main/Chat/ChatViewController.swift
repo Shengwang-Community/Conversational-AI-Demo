@@ -24,6 +24,7 @@ public class ChatViewController: UIViewController {
     private var remoteAgentId = ""
     private let uid = "\(RtcEnum.getUid())"
     private var convoAIAPI: ConversationalAIAPI!
+    private let tag = "ChatViewController"
     
     private lazy var sendMessageButton: UIButton = {
         let button = UIButton()
@@ -155,6 +156,12 @@ public class ChatViewController: UIViewController {
         button.addTarget(self, action: #selector(onClickDevMode), for: .touchUpInside)
         return button
     }()
+    
+    private var traceId: String {
+        get {
+            return "\(UUID().uuidString.prefix(8))"
+        }
+    }
     var clickCount = 0
     var lastClickTime: Date?
     
@@ -423,6 +430,7 @@ public class ChatViewController: UIViewController {
             return
         }
         let independent = (AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true)
+        convoAIAPI.loadAudioSettings()
         rtcManager.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
         AppContext.preferenceManager()?.updateRoomState(.connected)
         AppContext.preferenceManager()?.updateRoomId(channelName)
@@ -469,7 +477,7 @@ public class ChatViewController: UIViewController {
     }
     
     private func addLog(_ txt: String) {
-        ConvoAILogger.info(txt)
+        ConvoAILogger.info("\(tag) \(txt)")
     }
     
     private func goToSSOViewController() {
@@ -519,7 +527,7 @@ extension ChatViewController {
                 
                 print("rtm token is : \(token)")
                 self?.token = token
-                self?.rtmManager.login(token: token, completion: { res, err in
+                self?.rtmManager.login(token: token, completion: {err in
                     if let error = err {
                         continuation.resume(throwing: error)
                         return
@@ -695,7 +703,8 @@ extension ChatViewController {
     private func getConvoaiBodyMap() -> [String: Any?] {
         return [
             //1.5.1-12-g18f3d9c7
-            "graph_id": "1.5.1-15-g3e6ee1c1",
+//            "graph_id": "1.5.1-15-g3e6ee1c1",
+            "graph_id": "1.5.1-66-g352ed082",
 //            "graph_id": DeveloperConfig.shared.graphId,
             "name": nil,
             "preset": DeveloperConfig.shared.convoaiServerConfig,
@@ -744,6 +753,7 @@ extension ChatViewController {
                     "data_channel": "rtm",
                     "enable_flexible": nil,
                     "enable_metrics": true,
+                    "enable_error_message": true,
                     "aivad_force_threshold": nil,
                     "output_audio_codec": nil,
                     "audio_scenario": nil,
@@ -871,7 +881,8 @@ extension ChatViewController: AgoraRtcEngineDelegate {
                 return
             }
             self.addLog("will update token: \(newToken)")
-            self.rtcManager.renewRtcToken(value: newToken)
+            self.rtcManager.renewToken(token: newToken)
+            self.rtmManager.renewToken(token: newToken)
             self.token = newToken
         }
     }
@@ -1174,25 +1185,42 @@ extension ChatViewController {
     }
 }
 
-extension ChatViewController: AgoraRtmClientDelegate {
-    public func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceiveLinkStateEvent event: AgoraRtmLinkStateEvent) {
-        //TODO: rtm connect state
-        print(event.currentState)
+extension ChatViewController: RTMManagerDelegate {
+    func onConnected() {
+        addLog("<<< onConnected")
     }
     
-    public func rtmKit(_ rtmKit: AgoraRtmClientKit, tokenPrivilegeWillExpire channel: String?) {
+    func onDisconnected() {
+        addLog("<<< onDisconnected")
+    }
+    
+    func onFailed() {
+        addLog("<<< onFailed")
         if !rtmManager.isLogin {
-            rtmManager.logout(completion: nil)
-        }
-        
-        NetworkManager.shared.generateToken(channelName: channelName, uid: uid, types: [.rtc, .rtm]) { [weak self] token in
-            guard let self = self else { return }
             
-            if let token = token {
-                print("rtc token is : \(token)")
-                self.rtmManager.renewToken(token: token)
-            }
         }
+    }
+    
+    func onTokenPrivilegeWillExpire(channelName: String) {
+        addLog("[traceId: \(traceId)] <<< onTokenPrivilegeWillExpire")
+        NetworkManager.shared.generateToken(
+            channelName: "",
+            uid: uid,
+            types: [.rtc, .rtm]
+        ) { [weak self] token in
+            guard let self = self, let newToken = token else {
+                return
+            }
+            
+            self.addLog("[traceId: \(traceId)] token regenerated")
+            self.rtcManager.renewToken(token: newToken)
+            self.rtmManager.renewToken(token: newToken)
+            self.token = newToken
+        }
+    }
+    
+    func onDebuLog(_ log: String) {
+        addLog(log)
     }
     
     @objc func testInterrupt() {
@@ -1207,14 +1235,15 @@ extension ChatViewController: AgoraRtmClientDelegate {
             
         }
     }
+    
 }
 
 extension ChatViewController: ConversationalAIEventHandler {
-    public func onError(userId: String, error: AgentError) {
+    public func onAgentError(userId: String, error: AgentError) {
         
     }
     
-    public func onStateChanged(userId: String, event: StateChangeEvent) {
+    public func onAgentStateChanged(userId: String, event: StateChangeEvent) {
         switch event.state {
             //TODO: 没有idle状态
 //        case .idle:
@@ -1232,14 +1261,16 @@ extension ChatViewController: ConversationalAIEventHandler {
         case .speaking:
             stateLabel.text = "speaking"
             break
+        default:
+            break
         }
     }
     
-    public func onInterrupted(userId: String, event: InterruptEvent) {
+    public func onAgentInterrupted(userId: String, event: InterruptEvent) {
         
     }
     
-    public func onMetricsInfo(userId: String, metrics: Metrics) {
+    public func onAgentMetricsInfo(userId: String, metrics: Metrics) {
         
     }
     
@@ -1257,6 +1288,6 @@ extension ChatViewController: ConversationalAIEventHandler {
     }
     
     public func onDebugLog(_ log: String) {
-        
+        addLog(log)
     }
 }

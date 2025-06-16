@@ -185,6 +185,15 @@ class AgentInformationViewController: UIViewController {
         return label
     }()
     
+    private lazy var convoAIAPIVersionLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14)
+        label.textColor = UIColor.themColor(named: "ai_icontext3")
+        let version = TranscriptionController.version
+        label.text = "Conversational ai api version V\(version)"
+        return label
+    }()
+    
     private lazy var buildLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 14)
@@ -328,6 +337,7 @@ extension AgentInformationViewController {
         contentView.addSubview(channelInfoTitle)
         contentView.addSubview(channelInfoView)
         contentView.addSubview(versionLabel)
+        contentView.addSubview(convoAIAPIVersionLabel)
         contentView.addSubview(buildLabel)
         
         moreItems.forEach { moreInfoView.addSubview($0) }
@@ -430,8 +440,13 @@ extension AgentInformationViewController {
             make.centerX.equalToSuperview()
         }
         
-        buildLabel.snp.makeConstraints { make in
+        convoAIAPIVersionLabel.snp.makeConstraints { make in
             make.top.equalTo(versionLabel.snp.bottom).offset(4)
+            make.centerX.equalToSuperview()
+        }
+        
+        buildLabel.snp.makeConstraints { make in
+            make.top.equalTo(convoAIAPIVersionLabel.snp.bottom).offset(4)
             make.centerX.equalToSuperview()
             make.bottom.equalToSuperview().offset(-36)
         }

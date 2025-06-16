@@ -2,6 +2,7 @@ import UIKit
 import SnapKit
 import Common
 import AgoraRtcKit
+import AgoraRtmKit
 import SVProgressHUD
 import ObjectiveC
 
@@ -107,6 +108,7 @@ public class DeveloperModeViewController: UIViewController {
     
     private var config = DeveloperConfig.shared
     private let rtcVersionValueLabel = UILabel()
+    private let rtmVersionValueLabel = UILabel()
     private let serverHostValueLabel = UILabel()
     private let graphTextField = UITextField()
     private let audioDumpSwitch = UISwitch()
@@ -372,6 +374,20 @@ extension DeveloperModeViewController {
         let rtcStackView = createHorizontalStack(with: [rtcVersionLabel, rtcVersionValueLabel])
         rtcStackView.heightAnchor.constraint(equalToConstant: 44).isActive = true
         contentStackView.addArrangedSubview(rtcStackView)
+        
+        // RTC Version Stack
+        let rtmVersionLabel = UILabel()
+        rtmVersionLabel.text = ResourceManager.L10n.DevMode.rtm
+        rtmVersionLabel.textColor = UIColor.themColor(named: "ai_icontext1")
+        rtmVersionLabel.font = UIFont.systemFont(ofSize: 14)
+        
+        rtmVersionValueLabel.text = AgoraRtmClientKit.getVersion()
+        rtmVersionValueLabel.textColor = UIColor.themColor(named: "ai_icontext4")
+        rtmVersionValueLabel.font = UIFont.systemFont(ofSize: 14)
+        
+        let rtmStackView = createHorizontalStack(with: [rtmVersionLabel, rtmVersionValueLabel])
+        rtmStackView.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        contentStackView.addArrangedSubview(rtmStackView)
         
         // Title row
         let sdkParamsLabel = UILabel()
