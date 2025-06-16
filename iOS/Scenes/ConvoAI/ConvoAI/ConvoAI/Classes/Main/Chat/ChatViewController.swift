@@ -16,7 +16,6 @@ import AgoraRtmKit
 
 public class ChatViewController: UIViewController {
     private var isDenoise = true
-    private let messageParser = MessageParser()
     private var remoteIsJoined = false
     private var channelName = ""
     private var token = ""
@@ -25,7 +24,7 @@ public class ChatViewController: UIViewController {
     private let uid = "\(RtcEnum.getUid())"
     private var convoAIAPI: ConversationalAIAPIImpl!
     private let tag = "ChatViewController"
-    
+    private var isSelfSubRender = false
     private lazy var sendMessageButton: UIButton = {
         let button = UIButton()
         button.addTarget(self, action: #selector(testChat), for: .touchUpInside)
@@ -41,6 +40,11 @@ public class ChatViewController: UIViewController {
         button.backgroundColor = .blue
         return button
     }()
+    
+    private lazy var subRenderController: ConversationSubtitleController = {
+            let renderCtrl = ConversationSubtitleController()
+            return renderCtrl
+        }()
 
     private lazy var timerCoordinator: AgentTimerCoordinator = {
         let coordinator = AgentTimerCoordinator()
@@ -377,8 +381,16 @@ public class ChatViewController: UIViewController {
             //TODO: log
             return
         }
+        
+        //init transcritpion V3
+
         let config = ConversationalAIAPIConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words)
         convoAIAPI = ConversationalAIAPIImpl(config: config)
+        
+        //init transcritpion V1
+        let subRenderConfig = SubtitleRenderConfig(rtcEngine: rtcEngine, delegate: self)
+        subRenderController.setupWithConfig(subRenderConfig)
+        
         convoAIAPI.addHandler(handler: self)
     }
         
@@ -624,6 +636,8 @@ extension ChatViewController {
             }
         }
         let parameters = getStartAgentParameters()
+        isSelfSubRender = (AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true)
+
         agentManager.startAgent(parameters: parameters, channelName: channelName) { [weak self] error, channelName, remoteAgentId, targetServer in
             guard let self = self else { return }
             if self.channelName != channelName {
@@ -703,8 +717,8 @@ extension ChatViewController {
     private func getConvoaiBodyMap() -> [String: Any?] {
         return [
             //1.5.1-12-g18f3d9c7
-//            "graph_id": "1.5.1-15-g3e6ee1c1",
-            "graph_id": "1.5.1-66-g352ed082",
+            "graph_id": "1.5.1-15-g3e6ee1c1",
+//            "graph_id": "1.5.1-66-g352ed082",
 //            "graph_id": DeveloperConfig.shared.graphId,
             "name": nil,
             "preset": DeveloperConfig.shared.convoaiServerConfig,
@@ -1275,18 +1289,32 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     }
     
     public func onTranscriptionUpdated(userId: String, transcription: Transcription) {
+        if isSelfSubRender {
+            return
+        }
+        
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            if (transcription.turnId == -1) {
-                self.messageView.viewModel.reduceIndependentMessage(message: transcription.text, timestamp: 0, owner: transcription.type, isFinished: transcription.status == .end)
-            } else {
-                print("=====\(transcription.text)")
-                self.messageView.viewModel.reduceStandardMessage(turnId: transcription.turnId, message: transcription.text, timestamp: 0, owner: transcription.type, isInterrupted: transcription.status == .interrupt)
-            }
+            self.messageView.viewModel.reduceStandardMessage(turnId: transcription.turnId, message: transcription.text, timestamp: 0, owner: transcription.type, isInterrupted: transcription.status == .interrupt)
         }
     }
     
     public func onDebugLog(_ log: String) {
         addLog(log)
+    }
+}
+
+extension ChatViewController: ConversationSubtitleDelegate {
+    public func onSubtitleUpdated(subtitle: SubtitleMessage) {
+        if !isSelfSubRender {
+            return
+        }
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            let owner: MessageOwner = (subtitle.userId == ConversationSubtitleController.localUserId) ? .me : .agent
+            if (subtitle.turnId == -1) {
+                self.messageView.viewModel.reduceIndependentMessage(message: subtitle.text, timestamp: 0, owner: owner, isFinished: subtitle.status == .end)
+            }
+        }
     }
 }

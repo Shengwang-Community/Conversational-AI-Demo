@@ -7,12 +7,17 @@
 
 import Foundation
 
+enum MessageOwner {
+    case agent
+    case me
+}
+
 protocol MessageIndependent {
-    func reduceIndependentMessage(message: String, timestamp: Int64, owner: TranscriptionType, isFinished: Bool)
+    func reduceIndependentMessage(message: String, timestamp: Int64, owner: MessageOwner, isFinished: Bool)
 }
 
 extension ChatMessageViewModel: MessageIndependent {
-    func reduceIndependentMessage(message: String, timestamp: Int64, owner: TranscriptionType, isFinished: Bool) {
+    func reduceIndependentMessage(message: String, timestamp: Int64, owner: MessageOwner, isFinished: Bool) {
         if owner == .agent {
             // AI response message
             if isLastMessageFromMine() || isEmpty() || lastMessgeIsFinal() {

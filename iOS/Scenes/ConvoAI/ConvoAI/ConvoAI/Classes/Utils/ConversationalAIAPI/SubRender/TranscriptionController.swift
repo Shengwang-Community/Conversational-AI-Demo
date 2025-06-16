@@ -158,14 +158,6 @@ extension TranscriptionDelegate {
     private let jsonEncoder = JSONEncoder()
     private var timer: Timer?
     private var audioTimestamp: Int64 = 0
-    private lazy var messageParser: MessageParser = {
-        let parser = MessageParser()
-        parser.onDebugLog = { [weak self] tag, txt in
-            self?.addLog("\(tag) \(txt)")
-        }
-        return parser
-    }()
-    
     private var traceId: String {
         get {
             return "\(UUID().uuidString.prefix(8))"
@@ -259,7 +251,7 @@ extension TranscriptionDelegate {
             }
             messageState = state
         }
-        var userId = UInt(message.user_id ?? "0") ?? 0
+        let userId = UInt(message.user_id ?? "0") ?? 0
         let turnId = message.turn_id ?? 0
         let transcriptionMessage = Transcription(turnId: turnId,
                                                  userId: userId,
@@ -465,6 +457,7 @@ extension TranscriptionController {
         }
         
         self.delegate = config.delegate
+        
         rtcEngine.setAudioFrameDelegate(self)
         rtcEngine.setPlaybackAudioFrameBeforeMixingParametersWithSampleRate(44100, channel: 1)
         
