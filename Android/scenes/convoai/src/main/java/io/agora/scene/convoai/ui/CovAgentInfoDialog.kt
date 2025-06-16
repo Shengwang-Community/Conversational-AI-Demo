@@ -145,9 +145,7 @@ class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
             updateUploadingStatus(disable = connectionState != AgentConnectionState.CONNECTED)
 
             tvVersionName.text =
-                getString(io.agora.scene.common.R.string.common_app_version, ServerConfig.appVersionName)
-            tvConversationAiApiVersion.text =
-                getString(io.agora.scene.common.R.string.common_conversational_version, ConversationalAIAPI_VERSION)
+                getString(io.agora.scene.common.R.string.common_app_version, ConversationalAIAPI_VERSION)
             tvBuild.text = getString(io.agora.scene.common.R.string.common_app_build_no, ServerConfig.appBuildNo)
         }
     }
