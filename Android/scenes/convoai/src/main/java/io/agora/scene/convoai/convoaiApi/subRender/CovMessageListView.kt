@@ -14,8 +14,9 @@ import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.convoai.databinding.CovMessageAgentItemBinding
 import io.agora.scene.convoai.databinding.CovMessageListViewBinding
 import io.agora.scene.convoai.databinding.CovMessageMineItemBinding
-import io.agora.scene.convoai.convoaiApi.subRender.v3.Status
+import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionStatus
 import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
+import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionType
 
 /**
  * Message list view for displaying conversation messages
@@ -167,7 +168,7 @@ class CovMessageListView @JvmOverloads constructor(
 
         // Create new message
         val newMessage = Message(
-            isMe = transcription.userId == 0,
+            isMe = transcription.type == TranscriptionType.USER,
             turnId = transcription.turnId,
             content = transcription.text,
             status = transcription.status
@@ -267,7 +268,7 @@ class CovMessageListView @JvmOverloads constructor(
         val isMe: Boolean,
         val turnId: Long,
         var content: String,
-        var status: Status
+        var status: TranscriptionStatus
     )
 
     /**
@@ -295,7 +296,7 @@ class CovMessageListView @JvmOverloads constructor(
             override fun bind(message: Message) {
                 binding.tvMessageTitle.text = agentName
                 binding.tvMessageContent.text = message.content
-                binding.layoutMessageInterrupt.isVisible = message.status == Status.interrupt
+                binding.layoutMessageInterrupt.isVisible = message.status == TranscriptionStatus.INTERRUPT
             }
         }
 

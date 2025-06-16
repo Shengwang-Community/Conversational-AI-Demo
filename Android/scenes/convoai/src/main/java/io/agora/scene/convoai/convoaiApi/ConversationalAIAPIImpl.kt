@@ -37,14 +37,14 @@ import java.util.UUID
  *
  * @param config Configuration object containing required RTC/RTM instances and settings
  */
-class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig) : ConversationalAIAPI {
+class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig) : IConversationalAIAPI {
 
     private var mMessageParser = MessageParser()
 
     private var transcriptionController: TranscriptionController
     private var channelName: String? = null
 
-    private val conversationalAIHandlerHelper = ObservableHelper<ConversationalAIAPIEventHandler>()
+    private val conversationalAIHandlerHelper = ObservableHelper<IConversationalAIAPIEventHandler>()
 
     // Log tags for better debugging
     private companion object {
@@ -62,10 +62,14 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
         }
     }
 
+    private fun runOnMainThread(r: Runnable) {
+        ConversationalAIUtils.runOnMainThread(r)
+    }
+
     private val covRtcHandler = object : IRtcEngineEventHandler() {
         override fun onAudioRouteChanged(routing: Int) {
             super.onAudioRouteChanged(routing)
-            ConversationalAIUtils.runOnMainThread {
+            runOnMainThread {
                 callMessagePrint(TAG, "<<< [onAudioRouteChanged] routing:$routing")
                 // set audio config parameters
                 // you should set it before joinChannel and when audio route changed
@@ -116,7 +120,7 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
 
                     callMessagePrint(TAG, "<<< [onAgentMetricsInfo] $uid $metrics")
                     conversationalAIHandlerHelper.notifyEventHandlers {
-                        it.onAgentMetricsInfo(uid.toString(), metrics)
+                        it.onAgentMetrics(uid.toString(), metrics)
                     }
                 }
                 /**
@@ -196,9 +200,10 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
                     }
                 }
 
-                override fun onDebugLog(tag: String, msg: String) {
+                override fun onDebugLog(tag: String, message: String) {
                     conversationalAIHandlerHelper.notifyEventHandlers { eventHandler ->
-                        eventHandler.onDebugLog("$tag $msg")
+                        eventHandler.onDebugLog("$tag $message")
+
                     }
                 }
             }
@@ -214,17 +219,17 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
         config.rtmClient.addEventListener(covRtmMsgProxy)
     }
 
-    override fun addHandler(eventHandler: ConversationalAIAPIEventHandler) {
+    override fun addHandler(eventHandler: IConversationalAIAPIEventHandler) {
         callMessagePrint(TAG, ">>> [addHandler] eventHandler:0x${eventHandler.hashCode().toString(16)}")
         conversationalAIHandlerHelper.subscribeEvent(eventHandler)
     }
 
-    override fun removeHandler(eventHandler: ConversationalAIAPIEventHandler) {
+    override fun removeHandler(eventHandler: IConversationalAIAPIEventHandler) {
         callMessagePrint(TAG, ">>> [removeHandler] eventHandler:0x${eventHandler.hashCode().toString(16)}")
         conversationalAIHandlerHelper.unSubscribeEvent(eventHandler)
     }
 
-    override fun subscribe(channel: String, completion: (ErrorInfo?) -> Unit) {
+    override fun subscribe(channel: String, completion: (ConversationalAIAPIError?) -> Unit) {
         val traceId = genTraceId
         callMessagePrint(TAG, ">>> [traceId:$traceId] [subscribe] $channel")
         transcriptionController.reset()
@@ -237,35 +242,45 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
         config.rtmClient.subscribe(channel, option, object : ResultCallback<Void> {
             override fun onSuccess(responseInfo: Void?) {
                 callMessagePrint(TAG, "<<< [traceId:$traceId] rtm subscribe onSuccess")
-                completion(null)
+                runOnMainThread {
+                    completion.invoke(null)
+                }
             }
 
-            override fun onFailure(errorInfo: ErrorInfo?) {
-                callMessagePrint(TAG, "<<< [traceId:$traceId] rtm subscribe onFailure ${errorInfo?.str()}")
+            override fun onFailure(errorInfo: ErrorInfo) {
+                callMessagePrint(TAG, "<<< [traceId:$traceId] rtm subscribe onFailure ${errorInfo.str()}")
                 channelName = null
-                completion(errorInfo)
+                runOnMainThread {
+                    val errorCode = RtmConstants.RtmErrorCode.getValue(errorInfo.errorCode)
+                    completion.invoke(ConversationalAIAPIError.RtmError(errorCode, errorInfo.errorReason))
+                }
             }
         })
     }
 
-    override fun unsubscribe(channel: String, completion: (ErrorInfo?) -> Unit) {
+    override fun unsubscribe(channel: String, completion: (ConversationalAIAPIError?) -> Unit) {
+        channelName = null
         val traceId = genTraceId
         callMessagePrint(TAG, ">>> [traceId:$traceId] [unsubscribe] $channel")
         config.rtmClient.unsubscribe(channel, object : ResultCallback<Void> {
             override fun onSuccess(responseInfo: Void?) {
                 callMessagePrint(TAG, "<<< [traceId:$traceId] rtm unsubscribe onSuccess")
-                channelName = null
-                completion(null)
+                runOnMainThread {
+                    completion.invoke(null)
+                }
             }
 
-            override fun onFailure(errorInfo: ErrorInfo?) {
-                callMessagePrint(TAG, "<<< [traceId:$traceId] rtm unsubscribe onFailure ${errorInfo?.str()}")
-                completion(errorInfo)
+            override fun onFailure(errorInfo: ErrorInfo) {
+                callMessagePrint(TAG, "<<< [traceId:$traceId] rtm unsubscribe onFailure ${errorInfo.str()}")
+                runOnMainThread {
+                    val errorCode = RtmConstants.RtmErrorCode.getValue(errorInfo.errorCode)
+                    completion.invoke(ConversationalAIAPIError.RtmError(errorCode, errorInfo.errorReason))
+                }
             }
         })
     }
 
-    override fun chat(userId: String, message: ChatMessage, completion: (error: Exception?) -> Unit) {
+    override fun chat(userId: String, message: ChatMessage, completion: (error: ConversationalAIAPIError?) -> Unit) {
         val traceId = genTraceId
         callMessagePrint(TAG, ">>> [traceId:$traceId] [chat] $userId $message")
         val receipt = mutableMapOf<String, Any>().apply {
@@ -290,27 +305,28 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
             config.rtmClient.publish(userId, jsonMessage, options, object : ResultCallback<Void> {
                 override fun onSuccess(responseInfo: Void?) {
                     callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onSuccess")
-                    ConversationalAIUtils.runOnMainThread {
-                        completion(null)
+                    runOnMainThread {
+                        completion.invoke(null)
                     }
                 }
 
-                override fun onFailure(errorInfo: ErrorInfo?) {
+                override fun onFailure(errorInfo: ErrorInfo) {
                     callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onFailure ${errorInfo?.str()}")
-                    ConversationalAIUtils.runOnMainThread {
-                        completion(Exception("$errorInfo"))
+                    runOnMainThread {
+                        val errorCode = RtmConstants.RtmErrorCode.getValue(errorInfo.errorCode)
+                        completion.invoke(ConversationalAIAPIError.RtmError(errorCode, errorInfo.errorReason))
                     }
                 }
             })
         } catch (e: Exception) {
             callMessagePrint(TAG, "[traceId:$traceId] [!] ${e.message}")
-            ConversationalAIUtils.runOnMainThread {
-                completion(Exception("Message serialization failed: ${e.message}"))
+            runOnMainThread {
+                completion.invoke(ConversationalAIAPIError.UnknownError("Message serialization failed: ${e.message}"))
             }
         }
     }
 
-    override fun interrupt(userId: String, completion: (error: Exception?) -> Unit) {
+    override fun interrupt(userId: String, completion: (error: ConversationalAIAPIError?) -> Unit) {
         val traceId = genTraceId
         callMessagePrint(TAG, ">>> [traceId:$traceId] [interrupt] $userId")
         // Build interrupt message content with structure consistent with iOS
@@ -333,28 +349,30 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
             config.rtmClient.publish(userId, jsonMessage, options, object : ResultCallback<Void> {
                 override fun onSuccess(responseInfo: Void?) {
                     callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onSuccess")
-                    ConversationalAIUtils.runOnMainThread {
-                        completion(null)
+                    runOnMainThread {
+                        completion.invoke(null)
                     }
                 }
 
-                override fun onFailure(errorInfo: ErrorInfo?) {
+                override fun onFailure(errorInfo: ErrorInfo) {
                     callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onFailure ${errorInfo?.str()}")
-                    ConversationalAIUtils.runOnMainThread {
-                        completion(Exception(errorInfo?.str() ?: "interrupt onFailure"))
+                    runOnMainThread {
+                        val errorCode = RtmConstants.RtmErrorCode.getValue(errorInfo.errorCode)
+                        completion.invoke(ConversationalAIAPIError.RtmError(errorCode, errorInfo.errorReason))
                     }
                 }
             })
         } catch (e: Exception) {
             callMessagePrint(TAG, "[traceId:$traceId] [!] ${e.message}")
-            ConversationalAIUtils.runOnMainThread {
-                completion(Exception("Interrupt message serialization failed: ${e.message}"))
+            runOnMainThread {
+                completion.invoke(ConversationalAIAPIError.UnknownError("Message serialization failed: ${e.message}"))
             }
         }
     }
 
-    override fun loadAudioSettings() {
-        callMessagePrint(TAG, ">>> [loadAudioSettings]")
+    override fun loadAudioSettings(scenario: Int) {
+        callMessagePrint(TAG, ">>> [loadAudioSettings] scenario:$scenario")
+        config.rtcEngine.setAudioScenario(scenario)
         setAudioConfigParameters(audioRouting)
     }
 

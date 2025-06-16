@@ -54,22 +54,8 @@ object CovRtcManager {
     }
 
     // join rtc channel
-    fun joinChannel(rtcToken: String, channelName: String, uid: Int, isIndependent: Boolean = false) {
-        CovLogger.d(TAG, "joinChannel channelName: $channelName, localUid: $uid, isIndependent: $isIndependent")
-        
-        // isIndependent is always false in your app
-        if (isIndependent) {
-            // ignore this, you should not set it
-            rtcEngine?.setAudioScenario(Constants.AUDIO_SCENARIO_CHORUS)
-        } else {
-            // set audio scenario 10, open AI-QoS
-            rtcEngine?.setAudioScenario(Constants.AUDIO_SCENARIO_AI_CLIENT)
-        }
-
-        // set audio config parameters
-        // you should set it before joinChannel and when audio route changed
-        // setAudioConfigParameters(mAudioRouting)
-
+    fun joinChannel(rtcToken: String, channelName: String, uid: Int) {
+        CovLogger.d(TAG, "joinChannel channelName: $channelName, localUid: $uid")
         // Calling this API enables the onAudioVolumeIndication callback to report volume values,
         // which can be used to drive microphone volume animation rendering
         // If you don't need this feature, you can skip this setting

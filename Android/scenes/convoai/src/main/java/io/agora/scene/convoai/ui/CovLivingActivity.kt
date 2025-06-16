@@ -97,7 +97,6 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
     private var pingJob: Job? = null
 
-
     private var networkValue: Int = -1
 
     private var integratedToken: String? = null
@@ -185,7 +184,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
     private val mLoginViewModel: LoginViewModel by viewModels()
 
-    private var conversationalAIAPI: ConversationalAIAPI? = null
+    private var conversationalAIAPI: IConversationalAIAPI? = null
 
     override fun getViewBinding(): CovActivityLivingBinding {
         return CovActivityLivingBinding.inflate(layoutInflater)
@@ -365,7 +364,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         )
     }
 
-    private val covEventHandler = object : ConversationalAIAPIEventHandler {
+    private val covEventHandler = object : IConversationalAIAPIEventHandler {
         private val tag = "ConversationalAI"
         override fun onAgentStateChanged(userId: String, event: StateChangeEvent) {
             // Update agent state display
@@ -378,7 +377,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             // TODO: something
         }
 
-        override fun onAgentMetricsInfo(userId: String, metrics: Metrics) {
+        override fun onAgentMetrics(userId: String, metrics: Metrics) {
             // TODO: something
         }
 
@@ -445,13 +444,13 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 }
             }
 
-            conversationalAIAPI?.loadAudioSettings()
+            val isIndependent = CovAgentManager.getPreset()?.isIndependent() == true
+            conversationalAIAPI?.loadAudioSettings(if (isIndependent) Constants.AUDIO_SCENARIO_CHORUS else Constants.AUDIO_SCENARIO_AI_CLIENT)
 
             CovRtcManager.joinChannel(
                 rtcToken = integratedToken ?: "",
                 channelName = CovAgentManager.channelName,
                 uid = CovAgentManager.uid,
-                isIndependent = CovAgentManager.getPreset()?.isIndependent() == true
             )
             val loginRTm = loginRtmClientAsync()
 
@@ -1475,7 +1474,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
             override fun onFailed() {
                 CovLogger.w(TAG, "RTM connection failed, attempting re-login with new token")
-                
+
                 coroutineScope.launch(Dispatchers.IO) {
                     try {
                         // Request new token since RTM connection failed
@@ -1513,7 +1512,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
             override fun onTokenPrivilegeWillExpire(channelName: String) {
                 CovLogger.w(TAG, "RTM token will expire, renewing token")
-                
+
                 coroutineScope.launch(Dispatchers.IO) {
                     try {
                         val isTokenOK = updateTokenAsync()
