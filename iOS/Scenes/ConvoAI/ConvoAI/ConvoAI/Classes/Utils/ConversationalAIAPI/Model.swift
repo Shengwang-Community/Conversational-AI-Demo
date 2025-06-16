@@ -15,21 +15,21 @@ import Foundation
     public var stringValue: String {
         switch self {
         case .interrupt:
-            return "interrupt"
+            return "INTERRUPT"
         case .append:
-            return "append"
+            return "APPEND"
         case .ignore:
-            return "ignore"
+            return "IGNORE"
         }
     }
     
     public init?(stringValue: String) {
         switch stringValue.lowercased() {
-        case "interrupt":
+        case "INTERRUPT":
             self = .interrupt
-        case "append":
+        case "APPEND":
             self = .append
-        case "ignore":
+        case "IGNORE":
             self = .ignore
         default:
             return nil
@@ -67,12 +67,17 @@ import Foundation
 }
  
 /// Represents the current status of subtitles
-@objc public enum Status: Int {
+@objc public enum TranscriptionState: Int {
     case inprogress = 0 /// Subtitle is being generated or playing
     case end = 1        /// Subtitle has completed normally
     case interrupt = 2  /// Subtitle was interrupted before completion
 }
  
+@objc public enum TranscriptionType: Int {
+    case agent
+    case user
+}
+
 /// Complete data class for user-facing subtitle messages
 /// Used for rendering in the UI layer
 @objc public class Transcription: NSObject {
@@ -82,14 +87,17 @@ import Foundation
     @objc public let userId: UInt
     /// Actual subtitle text content
     @objc public let text: String
-    /// Current status of the subtitle
-    @objc public var status: Status
+    /// Current status of the transcription
+    @objc public var status: TranscriptionState
+    /// Current type of transcription
+    @objc public var type: TranscriptionType
      
-    @objc public init(turnId: Int, userId: UInt, text: String, status: Status) {
+    @objc public init(turnId: Int, userId: UInt, text: String, status: TranscriptionState, type: TranscriptionType) {
         self.turnId = turnId
         self.userId = userId
         self.text = text
         self.status = status
+        self.type = type
     }
     
     public override var description: String {
@@ -206,4 +214,28 @@ import Foundation
         self.timestamp = timestamp
     }
 }
+
+@objc public enum ConversationalAIAPIErrorType: Int {
+    case unknown = 0
+    case rtcError = 2
+    case rtmError = 3
+}
+
+@objc public class ConversationalAIAPIError: NSObject, Error {
+    @objc public let type: ConversationalAIAPIErrorType
+    @objc public let code: Int
+    @objc public let message: String
+
+    @objc public init(type: ConversationalAIAPIErrorType, code: Int, message: String) {
+        self.type = type
+        self.code = code
+        self.message = message
+    }
+
+    public override var description: String {
+        return "ConversationalAIAPIError(type: \(type), code: \(code), message: \(message))"
+    }
+}
+
+
 

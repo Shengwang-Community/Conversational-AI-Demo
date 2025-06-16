@@ -23,7 +23,7 @@ public class ChatViewController: UIViewController {
     private var agentUid = 0
     private var remoteAgentId = ""
     private let uid = "\(RtcEnum.getUid())"
-    private var convoAIAPI: ConversationalAIAPI!
+    private var convoAIAPI: ConversationalAIAPIImpl!
     private let tag = "ChatViewController"
     
     private lazy var sendMessageButton: UIButton = {
@@ -378,7 +378,7 @@ public class ChatViewController: UIViewController {
             return
         }
         let config = ConversationalAIAPIConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words)
-        convoAIAPI = ConversationalAIAPI(config: config)
+        convoAIAPI = ConversationalAIAPIImpl(config: config)
         convoAIAPI.addHandler(handler: self)
     }
         
@@ -430,7 +430,7 @@ public class ChatViewController: UIViewController {
             return
         }
         let independent = (AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true)
-        convoAIAPI.loadAudioSettings()
+        convoAIAPI.loadAudioSettings(secnario: independent ? .chorus : .aiClient)
         rtcManager.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
         AppContext.preferenceManager()?.updateRoomState(.connected)
         AppContext.preferenceManager()?.updateRoomId(channelName)
@@ -456,7 +456,7 @@ public class ChatViewController: UIViewController {
     private func stopAgent() {
         addLog("[Call] stopAgent()")
         rtmManager.logout(completion: nil)
-        convoAIAPI.unsubscribe(channelName: channelName) { response, error in
+        convoAIAPI.unsubscribe(channelName: channelName) { error in
             
         }
         stopAgentRequest()
@@ -618,7 +618,7 @@ extension ChatViewController {
         agentUid = AppContext.agentUid
         remoteIsJoined = false
         
-        convoAIAPI.subscribe(channelName: channelName) { response, err in
+        convoAIAPI.subscribe(channelName: channelName) { err in
             if let error = err {
                 
             }
@@ -1238,7 +1238,7 @@ extension ChatViewController: RTMManagerDelegate {
     
 }
 
-extension ChatViewController: ConversationalAIEventHandler {
+extension ChatViewController: ConversationalAIAPIEventHandler {
     public func onAgentError(userId: String, error: AgentError) {
         
     }
@@ -1270,19 +1270,18 @@ extension ChatViewController: ConversationalAIEventHandler {
         
     }
     
-    public func onAgentMetricsInfo(userId: String, metrics: Metrics) {
+    public func onAgentMetrics(userId: String, metrics: Metrics) {
         
     }
     
     public func onTranscriptionUpdated(userId: String, transcription: Transcription) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            let owner: MessageOwner = (transcription.userId == TranscriptionController.localUserId) ? .me : .agent
             if (transcription.turnId == -1) {
-                self.messageView.viewModel.reduceIndependentMessage(message: transcription.text, timestamp: 0, owner: owner, isFinished: transcription.status == .end)
+                self.messageView.viewModel.reduceIndependentMessage(message: transcription.text, timestamp: 0, owner: transcription.type, isFinished: transcription.status == .end)
             } else {
                 print("=====\(transcription.text)")
-                self.messageView.viewModel.reduceStandardMessage(turnId: transcription.turnId, message: transcription.text, timestamp: 0, owner: owner, isInterrupted: transcription.status == .interrupt)
+                self.messageView.viewModel.reduceStandardMessage(turnId: transcription.turnId, message: transcription.text, timestamp: 0, owner: transcription.type, isInterrupted: transcription.status == .interrupt)
             }
         }
     }

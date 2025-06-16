@@ -85,16 +85,16 @@ private class TurnBuffer {
     var text: String = ""
     var start_ms: Int64 = 0
     var words: [WordBuffer] = []
-    var bufferState: Status = .inprogress
+    var bufferState: TranscriptionState = .inprogress
 }
 
 private struct WordBuffer {
     let text: String
     let start_ms: Int64
-    var status: Status = .inprogress
+    var status: TranscriptionState = .inprogress
 }
 
-private typealias TurnState = Status
+private typealias TurnState = TranscriptionState
 
 /// Interface for receiving transcription update events
 /// Implemented by UI components that need to display transcriptions
@@ -205,7 +205,7 @@ extension TranscriptionDelegate {
             let transcriptionMessage = Transcription(turnId: message.turn_id ?? 0,
                                                   userId: TranscriptionController.localUserId,
                                                   text: text,
-                                                  status: (message.final == true) ? .end : .inprogress)
+                                                     status: (message.final == true) ? .end : .inprogress, type: .user)
             self.delegate?.onTranscriptionUpdated(transcription: transcriptionMessage)
         } else {
             let renderMode = getMessageMode(message)
@@ -250,7 +250,7 @@ extension TranscriptionDelegate {
             callMessagePrint(tag: TranscriptionController.tag, msg: "message text is nil")
             return
         }
-        let messageState: Status
+        let messageState: TranscriptionState
         if let turnStatus = message.turn_status {
             var state = TurnState(rawValue: turnStatus) ?? .inprogress
             if state == .interrupt {
@@ -277,9 +277,10 @@ extension TranscriptionDelegate {
         }
         let turnId = message.turn_id ?? -1
         let transcriptionMessage = Transcription(turnId: turnId,
-                                              userId: userId,
-                                              text: text,
-                                              status: messageState)
+                                                 userId: userId,
+                                                   text: text,
+                                                 status: messageState,
+                                                   type: .agent)
         callMessagePrint(tag: TranscriptionController.uiTag, msg: "[Text Mode] pts: \(audioTimestamp), \(transcriptionMessage)")
         self.delegate?.onTranscriptionUpdated(transcription: transcriptionMessage)
     }
@@ -354,7 +355,6 @@ extension TranscriptionDelegate {
                     // sign last word
                     curBuffer.words.removeLast()
                     curBuffer.words.append(lastWord)
-//                    self.callMessagePrint(tag: TranscriptionController.tag, msg: "update last word end: \(curBuffer.turnId) \(lastWord.text)")
                 }
             } else if (message.object == MessageType.interrupt.rawValue) {// handle interrupt
                 if let interruptTime = message.start_ms,
@@ -362,7 +362,6 @@ extension TranscriptionDelegate {
                 {
                     
                     self.callMessagePrint(tag: TranscriptionController.uiTag, msg: "reveive interrupted message, pts: \(self.audioTimestamp), \(message) ")
-//                    callMessagePrint(tag: Trans, msg: <#T##String#>)("🚧[CovSubRenderController] interrupt: \(buffer.turnId) after \(buffer.words.first(where: {$0.start_ms > interruptTime})?.text ?? "")")
                     for index in buffer.words.indices {
                         if buffer.words[index].start_ms > interruptTime {
                             buffer.words[index].status = .interrupt
@@ -414,9 +413,10 @@ extension TranscriptionDelegate {
                 var transcriptionMessage: Transcription
                 if minRange == interruptSub {
                     transcriptionMessage = Transcription(turnId: buffer.turnId,
-                                                      userId: TranscriptionController.remoteUserId,
-                                                      text: currentWords.map { $0.text }.joined(),
-                                                      status: .interrupt)
+                                                         userId: TranscriptionController.remoteUserId,
+                                                         text: currentWords.map { $0.text }.joined(),
+                                                         status: .interrupt,
+                                                         type: .agent)
                     // remove finished turn
                     self.messageQueue.remove(at: index)
                     self.addLog("🔔[CovSubRenderController] remove signed interrupte turn: \(buffer.turnId)")
@@ -426,7 +426,7 @@ extension TranscriptionDelegate {
                     transcriptionMessage = Transcription(turnId: buffer.turnId,
                                                       userId: TranscriptionController.remoteUserId,
                                                       text: buffer.text,
-                                                      status: .end)
+                                                         status: .end, type: .agent)
                     // remove finished turn
                     self.messageQueue.remove(at: index)
                     self.addLog("🔔[CovSubRenderController] remove signed end turn: \(buffer.turnId)")
@@ -436,7 +436,7 @@ extension TranscriptionDelegate {
                     transcriptionMessage = Transcription(turnId: buffer.turnId,
                                                       userId: TranscriptionController.remoteUserId,
                                                       text: currentWords.map { $0.text }.joined(),
-                                                      status: .inprogress)
+                                                         status: .inprogress, type: .agent)
                     callMessagePrint(tag: TranscriptionController.uiTag, msg: "[progress] pts: \(audioTimestamp), message: \(transcriptionMessage)")
                 }
                 print("📊 [CovSubRenderController] message flush turn: \(buffer.turnId) state: \(transcriptionMessage.status)")
@@ -495,9 +495,7 @@ extension TranscriptionController {
         guard let data = message else { return }
         
         do {
-            // 使用 JSONDecoder 解析 JSON 数据为 TranscriptionMessage 对象
             let transcription = try JSONDecoder().decode(TranscriptionMessage.self, from: data)
-            // 调用现有的处理方法
             handleMessage(transcription)
             addLog("✅[CovSubRenderController] inputRtmMessage: \(transcription.description())")
         } catch {
@@ -509,13 +507,11 @@ extension TranscriptionController {
 
 extension TranscriptionController: AgoraRtmClientDelegate {
     public func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceiveMessageEvent event: AgoraRtmMessageEvent) {
-        //TODO: user id 换成 publisher
         if let stringData = event.message.stringData {
             guard let data = stringData.data(using: .utf8) else {
                 addLog("⚠️[CovSubRenderController] inputRtmMessage: Failed to convert string to data")
                 return
             }
-            // 反序列化再序列化，保证日志输出中文
             if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),
                let cleanData = try? JSONSerialization.data(withJSONObject: jsonObject, options: []),
                let cleanString = String(data: cleanData, encoding: .utf8) {

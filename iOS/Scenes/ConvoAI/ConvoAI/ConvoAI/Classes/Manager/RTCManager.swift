@@ -63,15 +63,6 @@ extension RTCManager: RTCManagerProtocol {
     }
     
     func joinChannel(rtcToken: String, channelName: String, uid: String, isIndependent: Bool = false) {
-        // isIndependent is always false in your app
-        if (isIndependent) {
-            // ignore this, you should not set it
-            rtcEngine.setAudioScenario(.chorus)
-        } else {
-            // set audio scenario 10, open AI-QoS
-            rtcEngine.setAudioScenario(.aiClient)
-        }
-    
         // Calling this API enables the onAudioVolumeIndication callback to report volume values,
         // which can be used to drive microphone volume animation rendering
         // If you don't need this feature, you can skip this setting
