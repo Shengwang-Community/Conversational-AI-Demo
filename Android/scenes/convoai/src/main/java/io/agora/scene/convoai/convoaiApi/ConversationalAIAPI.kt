@@ -6,6 +6,8 @@ import io.agora.rtm.RtmClient
 import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
 import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionRenderMode
 
+const val ConversationalAIAPI_VERSION = "1.0.0"
+
 /**
  * Message priority levels for AI agent processing
  *
@@ -94,7 +96,7 @@ data class StateChangeEvent(
 /**
  * Interrupt event
  *
- * Represents an event when conversation is interrupted, typically triggered when user actively 
+ * Represents an event when conversation is interrupted, typically triggered when user actively
  * interrupts AI speaking or system detects high-priority messages.
  * Used for recording interrupt behavior and performing corresponding processing.
  *
@@ -135,17 +137,17 @@ enum class VendorType(val value: String) {
 /**
  * Performance metrics data class
  *
- * Used for recording and transmitting system performance data, such as LLM inference latency, 
- * TTS synthesis latency, etc. This data can be used for performance monitoring, system 
+ * Used for recording and transmitting system performance data, such as LLM inference latency,
+ * TTS synthesis latency, etc. This data can be used for performance monitoring, system
  * optimization, and user experience improvement.
  *
- * @property metricType Metric type (LLM, MLLM, TTS, etc.)
+ * @property type Metric type (LLM, MLLM, TTS, etc.)
  * @property name Metric name, describing the specific performance item
  * @property value Metric value, typically latency time (milliseconds) or other quantitative metrics
  * @property timestamp Metric recording timestamp (milliseconds since January 1, 1970 UTC)
  */
 data class Metrics(
-    val metricType: VendorType,
+    val type: VendorType,
     val name: String,
     val value: Double,
     val timestamp: Long
@@ -210,7 +212,7 @@ data class ConversationalAIAPIConfig(
 )
 
 /**
- * Delegate interface for receiving Conversational AI events
+ * Event handler interface for receiving Conversational AI API events
  *
  * This interface defines callback methods that external developers should implement
  * to handle various events from the AI conversation system. All callbacks are
@@ -223,7 +225,7 @@ data class ConversationalAIAPIConfig(
  * - Metrics can be used for performance monitoring and optimization
  * - Debug logs help with troubleshooting during development
  */
-interface ConversationalAIEventHandler {
+interface ConversationalAIAPIEventHandler {
 
     /**
      * Agent state change callback
@@ -240,58 +242,66 @@ interface ConversationalAIEventHandler {
      * @param userId RTM user ID identifying the user whose state has changed
      * @param event State change event containing new state, turn ID, and timestamp
      */
-    fun onChangeState(userId: String, event: StateChangeEvent)
+    fun onAgentStateChanged(userId: String, event: StateChangeEvent)
 
     /**
-     * Called when an interrupt event occurs
+     * Interrupt event callback
      *
-     * @param userId RTM userId, identifying the user for whom the interrupt event occurred
-     * @param event Interrupt event
+     * Triggered when an interrupt event occurs during conversation. This callback provides
+     * information about when and which conversation turn was interrupted.
+     *
+     * @param userId RTM user ID identifying the user for whom the interrupt event occurred
+     * @param event Interrupt event containing turn ID and timestamp
      */
-    fun onInterrupt(userId: String, event: InterruptEvent)
+    fun onAgentInterrupted(userId: String, event: InterruptEvent)
 
     /**
-     * Real-time callback for performance metrics
+     * Performance metrics info callback
      *
-     * This method provides performance data, such as LLM inference latency
-     * and TTS speech synthesis latency, for monitoring system performance.
+     * Real-time callback for performance metrics information. This method provides performance data
+     * such as LLM inference latency and TTS synthesis latency for monitoring system performance
+     * and optimizing user experience. Called for each conversation turn.
      *
-     * @param userId RTM userId, identifying the user related to the performance metrics
-     * @param metrics Performance metrics containing type, value, and timestamp
+     * @param userId RTM user ID identifying the user related to the performance metrics
+     * @param metrics Performance metrics containing type, name, value, and timestamp
      */
-    fun onReceiveMetrics(userId: String, metrics: Metrics)
+    fun onAgentMetricsInfo(userId: String, metrics: Metrics)
 
     /**
-     * This method will be called back when AI-related errors occur
+     * AI error callback
      *
-     * This method is called when AI components (LLM, TTS, etc.) encounter errors,
-     * used for error monitoring, logging, and implementing graceful degradation strategies.
+     * Called when AI components (LLM, TTS, STT, etc.) encounter errors. This method is used
+     * for error monitoring, logging, and implementing graceful degradation strategies.
      *
-     * @param userId RTM userId, identifying the user related to the error
-     * @param error AI error containing type, error code, error message, and timestamp
+     * @param userId RTM user ID identifying the user related to the error
+     * @param error AI error containing type, code, message, and timestamp
      */
-    fun onReceiveError(userId: String, error: AgentError)
+    fun onAgentError(userId: String, error: AgentError)
 
     /**
-     * Called when subtitle content is updated during conversation
+     * Transcription update callback
      *
-     * This method provides real-time subtitle updates
+     * Called when real-time transcription content is updated during conversation.
+     * Provides subtitle updates for both user speech and AI responses.
      *
-     * @param userId RTM userId, identifying the user related to the subtitles
-     * @param transcription Subtitle message containing text content and timing information
+     * @param userId RTM user ID identifying the user related to the transcription
+     * @param transcription Transcription data containing text content and timing information
      */
-    fun onReceiveTranscription(userId: String, transcription: Transcription)
+    fun onTranscriptionUpdated(userId: String, transcription: Transcription)
 
     /**
-     * Call this method to expose internal logs to external parties
+     * Debug log callback
      *
-     * @param message Internal log of the component
+     * Called to expose internal debug logs to external developers for troubleshooting
+     * and development purposes.
+     *
+     * @param message Internal debug log message
      */
-    fun onReceiveDebugLog(message: String)
+    fun onDebugLog(message: String)
 }
 
 /**
- * Conversational AI API Interface
+ * Conversational AI API
  *
  * This interface provides the main functionality for interacting with AI agents,
  * including sending messages, interrupting conversations, and managing audio settings.
@@ -305,13 +315,13 @@ interface ConversationalAIEventHandler {
  * Usage:
  * 1. Create a ConversationalAIAPIConfig with required dependencies
  * 2. Initialize the API implementation
- * 3. Subscribe to a channel with a delegate to receive callbacks
+ * 3. Subscribe to a channel with an event handler to receive callbacks
  * 4. Use chat() to send messages and interrupt() to stop AI responses
  * 5. Call loadAudioSettings() before joining RTC channels for optimal audio quality
  */
-interface ConversationalAIAPIProtocol {
+interface ConversationalAIAPI {
 
-        /**
+    /**
      * Add event handler
      *
      * Register an event handler to receive various AI conversation-related event callbacks.
@@ -319,31 +329,31 @@ interface ConversationalAIAPIProtocol {
      *
      * @param eventHandler The event handler instance to add
      */
-    fun addHandler(eventHandler: ConversationalAIEventHandler)
+    fun addHandler(eventHandler: ConversationalAIAPIEventHandler)
 
     /**
      * Remove event handler
      *
-     * Remove the specified handler from the event handler list, and this handler will no longer 
-     * receive event callbacks. It is recommended to call this method when events are no longer 
+     * Remove the specified handler from the event handler list, and this handler will no longer
+     * receive event callbacks. It is recommended to call this method when events are no longer
      * needed to avoid memory leaks.
      *
      * @param eventHandler The event handler instance to remove
      */
-    fun removeHandler(eventHandler: ConversationalAIEventHandler)
+    fun removeHandler(eventHandler: ConversationalAIAPIEventHandler)
 
     /**
      * Subscribe to a channel to receive AI conversation events
      *
-     * This method establishes a connection to the specified channel and starts receiving 
-     * various AI conversation-related events. Once successfully subscribed, the following 
+     * This method establishes a connection to the specified channel and starts receiving
+     * various AI conversation-related events. Once successfully subscribed, the following
      * types of events will be received through registered event handlers:
-     * - Agent state change events (onChangeState)
-     * - Interrupt events (onInterrupt)
-     * - Performance metrics data (onReceiveMetrics)
-     * - Error events (onReceiveError)
-     * - Real-time transcription updates (onReceiveTranscription)
-     * - Debug log information (onReceiveDebugLog)
+     * - Agent state change events (onStateChanged)
+     * - Interrupt events (onInterrupted)
+     * - Performance metrics data (onMetricsInfo)
+     * - Error events (onError)
+     * - Real-time transcription updates (onTranscriptionUpdated)
+     * - Debug log information (onDebugLog)
      *
      * Usage steps:
      * 1. Ensure event handlers have been added via addHandler
@@ -370,8 +380,8 @@ interface ConversationalAIAPIProtocol {
     /**
      * Send message to AI agent
      *
-     * This method sends messages containing text, images, or audio to the AI agent for 
-     * understanding and processing. Supports combinations of multiple content types and 
+     * This method sends messages containing text, images, or audio to the AI agent for
+     * understanding and processing. Supports combinations of multiple content types and
      * allows setting message priority to control processing behavior.
      *
      * Message processing flow:
@@ -394,8 +404,8 @@ interface ConversationalAIAPIProtocol {
     /**
      * Interrupt AI agent speaking
      *
-     * Use this method to interrupt the currently speaking AI agent. The interrupt operation 
-     * will immediately stop the agent's voice output and transition the agent state from 
+     * Use this method to interrupt the currently speaking AI agent. The interrupt operation
+     * will immediately stop the agent's voice output and transition the agent state from
      * SPEAKING to another state (usually LISTENING or SILENT).
      *
      * Interrupt scenarios:
@@ -404,7 +414,7 @@ interface ConversationalAIAPIProtocol {
      * - User is dissatisfied with current response and wants to ask again
      *
      * Important notes:
-     * - The completion callback only indicates whether the interrupt request was successfully sent, 
+     * - The completion callback only indicates whether the interrupt request was successfully sent,
      *   it does not guarantee the agent will be interrupted
      * - The actual interrupt status of the agent will be notified through the onInterrupt callback
      * - If the agent is not currently in SPEAKING state, the interrupt request may be ignored

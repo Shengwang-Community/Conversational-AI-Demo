@@ -35,6 +35,7 @@ object CovRtcManager {
                 loadExtensionProvider("ai_echo_cancellation_extension")
                 loadExtensionProvider("ai_noise_suppression_extension")
             }
+            CovLogger.e(TAG, "createRtcEngine success")
         } catch (e: Exception) {
             CovLogger.e(TAG, "createRtcEngine error: $e")
         }
@@ -126,6 +127,7 @@ object CovRtcManager {
     }
 
     fun destroy() {
+        rtcEngine?.leaveChannel()
         rtcEngine = null
         mediaPlayer = null
         RtcEngine.destroy()

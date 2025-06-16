@@ -19,6 +19,7 @@
     <string name="cov_detail_room_error">房间已经不存在了，请发起一个新的会话。</string>
     <string name="cov_detail_start_agent_limit_error">当前预设资源超限，请稍后重试</string>
     <string name="cov_detail_login_rtm_error">RTM 登录失败，请稍后重试</string>
+    <string name="cov_detail_update_token_error">获取 Token 失败</string>
     <string name="cov_detail_llm_error">LLM 异常</string>
     <string name="cov_detail_tts_error">TTS 异常</string>
 

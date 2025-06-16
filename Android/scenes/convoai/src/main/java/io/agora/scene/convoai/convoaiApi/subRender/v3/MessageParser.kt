@@ -10,7 +10,6 @@ import org.json.JSONObject
 import java.io.IOException
 
 class MessageParser {
-    private val TAG = "MessageParser"
 
     private val gson = GsonBuilder()
         .setDateFormat("yyyy-MM-dd HH:mm:ss")
@@ -29,7 +28,7 @@ class MessageParser {
         .enableComplexMapKeySerialization()
         .create()
 
-    var onDebugLog: ((tag: String,message: String) -> Unit)? = null
+    var onError: ((message: String) -> Unit)? = null
 
     /**
      * Parse JSON string directly to Map (for RTM messages)
@@ -40,7 +39,7 @@ class MessageParser {
         return try {
             gson.fromJson(jsonString, Map::class.java) as Map<String, Any>
         } catch (e: Exception) {
-            onDebugLog?.invoke(TAG, "Error parsing JSON: ${e.message}")
+            onError?.invoke("[MessageParser] parseJsonToMap: ${e.message}")
             null
         }
     }

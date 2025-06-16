@@ -382,6 +382,15 @@
             tools:text="V1.3"/>
 
         <TextView
+            android:id="@+id/tv_conversation_ai_api_version"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="10sp"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/ai_icontext4"
+            tools:text="V1.3"/>
+
+        <TextView
             android:id="@+id/tv_build"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

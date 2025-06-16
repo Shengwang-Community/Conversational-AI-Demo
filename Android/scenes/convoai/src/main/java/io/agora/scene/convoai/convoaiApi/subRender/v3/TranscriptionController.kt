@@ -1,7 +1,5 @@
 package io.agora.scene.convoai.convoaiApi.subRender.v3
 
-import android.os.Handler
-import android.os.Looper
 import io.agora.rtc2.Constants
 import io.agora.rtc2.IAudioFrameObserver
 import io.agora.rtc2.IRtcEngineEventHandler
@@ -11,14 +9,14 @@ import io.agora.rtm.MessageEvent
 import io.agora.rtm.RtmClient
 import io.agora.rtm.RtmConstants
 import io.agora.rtm.RtmEventListener
+import io.agora.scene.convoai.convoaiApi.ConversationalAIAPI_VERSION
+import io.agora.scene.convoai.convoaiApi.ConversationalAIUtils
 import io.agora.scene.convoai.convoaiApi.InterruptEvent
 import io.agora.scene.convoai.convoaiApi.MessageType
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ticker
 import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedQueue
-
-const val SUBTITLE_VERSION = "1.6.0"
 
 /**
  * Configuration class for subtitle rendering
@@ -66,11 +64,11 @@ interface IConversationTranscriptionCallback {
     fun onDebugLog(tag: String, msg: String)
 
     /**
-     * Called when receive interrupt event
+     * Interrupt event callback
      * @param userId publisher uid
      * @param event Interrupt Event
      */
-    fun onInterrupt(userId: String, event: InterruptEvent)
+    fun onAgentInterrupted(userId: String, event: InterruptEvent)
 }
 
 
@@ -108,7 +106,7 @@ enum class Status {
  * Manages the processing and rendering of subtitles in conversation
  * @property config Configuration for the subtitle controller
  */
-class TranscriptionController(
+internal class TranscriptionController(
     private val config: TranscriptionConfig
 ) : IRtcEngineEventHandler() {
 
@@ -157,12 +155,10 @@ class TranscriptionController(
     )
 
     companion object {
-        private const val TAG = "Transcription"
-        private const val TAG_UI = "Transcription-UI"
-        private const val TAG_RTM = "Transcription-RTM"
+        private const val TAG = "[Transcription]"
+        private const val TAG_UI = "[Transcription-UI]"
     }
 
-    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
     private var mMessageParser = MessageParser()
 
     @Volatile
@@ -198,24 +194,24 @@ class TranscriptionController(
             val rtmMessage = event.message
             if (rtmMessage.type == RtmConstants.RtmMessageType.BINARY) {
                 val bytes = rtmMessage.data as? ByteArray ?: return
-                try {
-                    val rawString = String(bytes, Charsets.UTF_8)
-                    val messageMap = mMessageParser.parseJsonToMap(rawString)
-                    messageMap?.let { map ->
-                        dealMessageWithMap(event.publisherId.toIntOrNull() ?: 0, map)
-                    }
-                } catch (e: Exception) {
-                    onDebugLog(TAG_RTM, "Process rtm message error: ${e.message}")
+                val rawString = String(bytes, Charsets.UTF_8)
+                val messageMap = mMessageParser.parseJsonToMap(rawString)
+                callMessagePrint(
+                    TAG,
+                    "<<< [onMessageEvent] publisherId:${event.publisherId}, channelName:${event.channelName}, channelType:${event.channelType}, customType:${event.customType}, messageType:${rtmMessage.type} $messageMap "
+                )
+                messageMap?.let { map ->
+                    dealMessageWithMap(event.publisherId.toIntOrNull() ?: 0, map)
                 }
             } else {
                 val rawString = rtmMessage.data as? String ?: return
-                try {
-                    val messageMap = mMessageParser.parseJsonToMap(rawString)
-                    messageMap?.let { map ->
-                        dealMessageWithMap(event.publisherId.toIntOrNull() ?: 0, map)
-                    }
-                } catch (e: Exception) {
-                    onDebugLog(TAG_RTM, "Process rtm message error: ${e.message}")
+                val messageMap = mMessageParser.parseJsonToMap(rawString)
+                callMessagePrint(
+                    TAG,
+                    "<<< [onMessageEvent] publisherId:${event.publisherId}, channelName:${event.channelName}, channelType:${event.channelType}, customType:${event.customType}, messageType:${rtmMessage.type} $messageMap "
+                )
+                messageMap?.let { map ->
+                    dealMessageWithMap(event.publisherId.toIntOrNull() ?: 0, map)
                 }
             }
         }
@@ -320,38 +316,38 @@ class TranscriptionController(
             }
         })
         config.rtcEngine.setPlaybackAudioFrameBeforeMixingParameters(44100, 1)
-        onDebugLog(
+        callMessagePrint(
             TAG,
-            "init this:0x${this.hashCode().toString(16)}, version:$SUBTITLE_VERSION, renderMode:${config.renderMode}"
+            "init this:0x${
+                this.hashCode().toString(16)
+            } version:$ConversationalAIAPI_VERSION RenderMode:${config.renderMode}"
         )
-        mMessageParser.onDebugLog = { tag, message ->
-            config.callback?.onDebugLog(tag, message)
+        mMessageParser.onError = { message ->
+            config.callback?.onDebugLog(TAG, message)
         }
         config.rtmClient.addEventListener(covRtmMsgProxy)
     }
 
-    private fun onDebugLog(tag: String, message: String) {
+    private fun callMessagePrint(tag: String, message: String) {
         config.callback?.onDebugLog(tag, message)
     }
 
     private fun dealMessageWithMap(uid: Int, msg: Map<String, Any>) {
         try {
-            onDebugLog(TAG_RTM, "onMessageEvent publisherId: $uid, $msg")
             val transcriptionObj = msg["object"] as? String ?: return
             val messageType = MessageType.fromValue(transcriptionObj)
             var isInterrupt = false
             val isUserMsg: Boolean
             when (messageType) {
-                // agent message
-                MessageType.ASSISTANT -> {
+                MessageType.ASSISTANT -> {   // agent message
                     isUserMsg = false
                 }
-                // user message
-                MessageType.USER -> {
+
+                MessageType.USER -> {    // user message
                     isUserMsg = true
                 }
 
-                MessageType.INTERRUPT -> {
+                MessageType.INTERRUPT -> {   // interrupt message
                     isUserMsg = false
                     isInterrupt = true
                 }
@@ -364,8 +360,9 @@ class TranscriptionController(
             // deal with interrupt message
             if (isInterrupt) {
                 val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
-                config.callback?.onInterrupt(uid.toString(), InterruptEvent(turnId, startMs))
-
+                val interruptEvent = InterruptEvent(turnId, startMs)
+                config.callback?.onAgentInterrupted(uid.toString(), interruptEvent)
+                callMessagePrint(TAG, "<<< [onInterrupted] userId:$uid, event:$interruptEvent")
                 onAgentMessageReceived(uid, turnId, startMs, text, null, TurnStatus.INTERRUPTED)
                 return
             }
@@ -380,8 +377,8 @@ class TranscriptionController(
                         status = if (isFinal) Status.end else Status.inprogress
                     )
                     // Local user messages are directly callbacked out
-                    onDebugLog(TAG_UI, "pts: $mPresentationMs, $transcription")
-                    runOnMainThread {
+                    callMessagePrint(TAG_UI, "<<< [onTranscriptionUpdated] pts:$mPresentationMs, $transcription")
+                    ConversationalAIUtils.runOnMainThread {
                         config.callback?.onTranscriptionUpdated(transcription)
                     }
                 } else {
@@ -395,7 +392,7 @@ class TranscriptionController(
                     }
                     // Discarding and not processing the message with Unknown status.
                     if (status == TurnStatus.UNKNOWN) {
-                        onDebugLog(TAG, "unknown turn_status:$turnStatusInt")
+                        callMessagePrint(TAG, "unknown turn_status:$turnStatusInt")
                         return
                     }
                     val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
@@ -406,7 +403,7 @@ class TranscriptionController(
                 }
             }
         } catch (e: Exception) {
-            onDebugLog(TAG, "Process stream message error: ${e.message}")
+            callMessagePrint(TAG, "[!] dealMessageWithMap Exception: ${e.message}")
         }
     }
 
@@ -426,22 +423,24 @@ class TranscriptionController(
     }
 
     fun enable(enable: Boolean) {
+        callMessagePrint(TAG, ">>> [enable] $enable")
         this.enable = enable
     }
 
     fun reset() {
-        onDebugLog(TAG, "reset called")
+        callMessagePrint(TAG, ">>> [reset]")
         this.mRenderMode = null
         stopSubtitleTicker()
     }
 
     fun release() {
         reset()
-        onDebugLog(TAG, "release called")
+        callMessagePrint(TAG, ">>> [release]")
         coroutineScope.cancel()
     }
 
     private fun startSubtitleTicker() {
+        callMessagePrint(TAG, "startSubtitleTicker")
         tickerJob?.cancel()
         tickerJob = coroutineScope.launch {
             val ticker = ticker(delayMillis = 200)
@@ -456,6 +455,7 @@ class TranscriptionController(
     }
 
     private fun stopSubtitleTicker() {
+        callMessagePrint(TAG, "stopSubtitleTicker")
         mCurrentTranscription = null
         mLastDequeuedTurn = null
         agentTurnQueue.clear()
@@ -486,25 +486,23 @@ class TranscriptionController(
             } else {
                 mRenderMode = TranscriptionRenderMode.Text
             }
-            onDebugLog(
+            callMessagePrint(
                 TAG,
-                "render mode auto detected: $mRenderMode, this:0x${
-                    this.hashCode().toString(16)
-                }, version: $SUBTITLE_VERSION"
+                "this:0x${this.hashCode().toString(16)} version:$ConversationalAIAPI_VERSION RenderMode:$mRenderMode"
             )
         }
 
         if (mRenderMode == TranscriptionRenderMode.Text && status != TurnStatus.INTERRUPTED) {
-            val subtitleMessage = Transcription(
+            val transcription = Transcription(
                 turnId = turnId,
                 userId = uid,
                 text = text,
                 status = if (status == TurnStatus.END) Status.end else Status.inprogress
             )
             // Agent text mode messages are directly callback out
-            onDebugLog(TAG_UI, "[Text Mode]pts: $mPresentationMs, $subtitleMessage")
-            runOnMainThread {
-                config.callback?.onTranscriptionUpdated(subtitleMessage)
+            callMessagePrint(TAG_UI, "<<< [Text Mode] pts:$mPresentationMs $transcription")
+            ConversationalAIUtils.runOnMainThread {
+                config.callback?.onTranscriptionUpdated(transcription)
             }
             return
         }
@@ -513,20 +511,19 @@ class TranscriptionController(
         val newWords = words?.toList() ?: emptyList()
 
         synchronized(agentTurnQueue) {
-            // TODO ? if turn2 agent message is before turn1 interrupt
             // Check if this turn is older than the latest turn in queue
             val lastTurn = agentTurnQueue.lastOrNull()
             if (lastTurn != null && turnId < lastTurn.turnId) {
-                onDebugLog(TAG, "Discarding old turn: received=$turnId, latest=${lastTurn.turnId}")
+                callMessagePrint(TAG, "Discarding old turn: received=$turnId latest=${lastTurn.turnId}")
                 return
             }
 
             // The last turn to be dequeued
             mLastDequeuedTurn?.let { lastEnd ->
                 if (turnId <= lastEnd.turnId) {
-                    onDebugLog(
+                    callMessagePrint(
                         TAG,
-                        "Discarding the turn has already been processed: received=$turnId, latest=${lastEnd.turnId}"
+                        "Discarding the turn has already been processed: received=$turnId latest=${lastEnd.turnId}"
                     )
                     return
                 }
@@ -542,18 +539,12 @@ class TranscriptionController(
             if (existingInfo != null) {
                 if (status == TurnStatus.INTERRUPTED) {
                     // Interrupt all words from the last one before startMs to the end of the word list
-                    var lastBeforeStartMs: TurnWordInfo? = null
                     val mergedWords = existingInfo.words.toMutableList()
                     mergedWords.forEach { word ->
-                        if (word.startMs <= startMs) {
-                            lastBeforeStartMs = word
-                        }
                         if (word.startMs >= startMs) {
                             word.status = TurnStatus.INTERRUPTED
                         }
                     }
-                    lastBeforeStartMs?.status = TurnStatus.INTERRUPTED
-
                     val newInfo = TurnMessageInfo(
                         userId = uid,
                         turnId = turnId,
@@ -623,14 +614,13 @@ class TranscriptionController(
                 if (status == TurnStatus.END && newWords.isNotEmpty()) {
                     newWords.last().status = TurnStatus.END
                 }
-
                 agentTurnQueue.offer(newInfo)
             }
 
             // Cleanup old turns
             while (agentTurnQueue.size > 5) {
                 agentTurnQueue.poll()?.let { removed ->
-                    onDebugLog(TAG, "Removed old turn: ${removed.turnId}")
+                    callMessagePrint(TAG, "Removed old turn: ${removed.turnId}")
                 }
             }
         }
@@ -666,8 +656,8 @@ class TranscriptionController(
                             text = interruptedText,
                             status = Status.interrupt
                         )
-                        onDebugLog(TAG_UI, "[interrupt1]pts: $mPresentationMs, $interruptedTranscription")
-                        runOnMainThread {
+                        callMessagePrint(TAG_UI, "<<< [interrupt1] pts: $mPresentationMs, $interruptedTranscription")
+                        ConversationalAIUtils.runOnMainThread {
                             config.callback?.onTranscriptionUpdated(interruptedTranscription)
                         }
 
@@ -675,7 +665,7 @@ class TranscriptionController(
                         mLastDequeuedTurn = turn
                         agentTurnQueue.remove(turn)
                         mCurrentTranscription = null
-                        onDebugLog(TAG, "Removed interrupted turn: ${turn.turnId}")
+                        callMessagePrint(TAG, "Removed interrupted turn:${turn.turnId}")
                         null
                     } else {
                         val words = turn.words.filter { it.startMs <= mPresentationMs }
@@ -698,10 +688,10 @@ class TranscriptionController(
                     val (turn, _) = availableTurns[i]
                     mCurrentTranscription?.let { current ->
                         if (current.turnId == turn.turnId) {
-                            val interruptedMessage = current.copy(status = Status.interrupt)
-                            onDebugLog(TAG_UI, "[interrupt2]pts: $mPresentationMs, $interruptedMessage")
-                            runOnMainThread {
-                                config.callback?.onTranscriptionUpdated(interruptedMessage)
+                            val interruptedTranscription = current.copy(status = Status.interrupt)
+                            callMessagePrint(TAG_UI, "<<< [interrupt2] pts:$mPresentationMs $interruptedTranscription")
+                            ConversationalAIUtils.runOnMainThread {
+                                config.callback?.onTranscriptionUpdated(interruptedTranscription)
                             }
                         }
                     }
@@ -721,11 +711,11 @@ class TranscriptionController(
                 status = if (targetIsEnd) Status.end else Status.inprogress
             )
             if (targetIsEnd) {
-                onDebugLog(TAG_UI, "[end]pts: $mPresentationMs, $newTranscription")
+                callMessagePrint(TAG_UI, "<<< [end] pts:$mPresentationMs $newTranscription")
             } else {
-                onDebugLog(TAG_UI, "[progress]pts: $mPresentationMs, $newTranscription")
+                callMessagePrint(TAG_UI, "<<< [progress] pts:$mPresentationMs $newTranscription")
             }
-            runOnMainThread {
+            ConversationalAIUtils.runOnMainThread {
                 config.callback?.onTranscriptionUpdated(newTranscription)
             }
 
@@ -736,14 +726,6 @@ class TranscriptionController(
             } else {
                 mCurrentTranscription = newTranscription
             }
-        }
-    }
-
-    private fun runOnMainThread(r: java.lang.Runnable) {
-        if (Thread.currentThread() == mainHandler.looper.thread) {
-            r.run()
-        } else {
-            mainHandler.post(r)
         }
     }
 }

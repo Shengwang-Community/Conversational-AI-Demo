@@ -503,18 +503,12 @@ class ConversationSubtitleController(
             if (existingInfo != null) {
                 if (status == TurnStatus.INTERRUPTED) {
                     // Interrupt all words from the last one before startMs to the end of the word list
-                    var lastBeforeStartMs: TurnWordInfo? = null
                     val mergedWords = existingInfo.words.toMutableList()
                     mergedWords.forEach { word ->
-                        if (word.startMs <= startMs) {
-                            lastBeforeStartMs = word
-                        }
                         if (word.startMs >= startMs) {
                             word.status = TurnStatus.INTERRUPTED
                         }
                     }
-                    lastBeforeStartMs?.status = TurnStatus.INTERRUPTED
-
                     val newInfo = TurnMessageInfo(
                         userId = uid,
                         turnId = turnId,

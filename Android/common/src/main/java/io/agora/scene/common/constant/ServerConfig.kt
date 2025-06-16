@@ -57,7 +57,12 @@ object ServerConfig {
     val isBuildEnv: Boolean get() = buildEnvConfig.toolboxServerHost == toolBoxUrl
 
     fun initBuildConfig(
-        appBuildNo: String, envName: String, toolboxHost: String, rtcAppId: String, rtcAppCert: String,appVersionName:String
+        appBuildNo: String,
+        envName: String,
+        toolboxHost: String,
+        rtcAppId: String,
+        rtcAppCert: String,
+        appVersionName: String
     ) {
         this.appBuildNo = appBuildNo
         this.appVersionName = appVersionName
