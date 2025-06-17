@@ -209,9 +209,6 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
                     conversationalAIHandlerHelper.notifyEventHandlers { eventHandler ->
                         eventHandler.onDebugLog("$tag $message")
                     }
-                    runOnMainThread {
-                        config.rtcEngine.writeLog(Constants.LogLevel.LOG_LEVEL_INFO.ordinal, "$tag $message")
-                    }
                 }
             }
         )

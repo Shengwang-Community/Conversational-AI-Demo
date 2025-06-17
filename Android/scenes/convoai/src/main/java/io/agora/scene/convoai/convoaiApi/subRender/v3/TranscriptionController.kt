@@ -65,7 +65,7 @@ interface IConversationTranscriptionCallback {
 
     /**
      * Interrupt event callback
-     * @param userId publisher uid
+     * @param agentSession AgentSession
      * @param event Interrupt Event
      */
     fun onAgentInterrupted(agentSession: AgentSession, event: InterruptEvent)
