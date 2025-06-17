@@ -271,13 +271,13 @@ public enum MessageType: String, CaseIterable {
     /// Can be used to update UI interface or track conversation flow.
     ///
     /// - Parameter event: Agent state event (silent, listening, thinking, speaking)
-    /// - Parameter userId: RTM userId
+    /// - Parameter agentSession: agent session
     @objc func onAgentStateChanged(agentSession: AgentSession, event: StateChangeEvent)
      
     /// Called when an interrupt event occurs
     ///
     /// - Parameter event: Interrupt event
-    /// - Parameter userId: RTM userId
+    /// - Parameter agentSession: agent session
     @objc func onAgentInterrupted(agentSession: AgentSession, event: InterruptEvent)
  
  
@@ -287,7 +287,7 @@ public enum MessageType: String, CaseIterable {
     /// and TTS speech synthesis latency, for monitoring system performance.
     ///
     /// - Parameter metrics: Performance metrics containing type, value, and timestamp
-    /// - Parameter userId: RTM userId
+    /// - Parameter agentSession: agent session
     @objc func onAgentMetrics(agentSession: AgentSession, metrics: Metrics)
      
     /// Called when AI-related errors occur
@@ -296,7 +296,7 @@ public enum MessageType: String, CaseIterable {
     /// used for error monitoring, logging, and implementing graceful degradation strategies.
     ///
     /// - Parameter error: AI error containing type, error code, error message, and timestamp
-    /// - Parameter userId: RTM userId
+    /// - Parameter agentSession: agent session
     @objc func onAgentError(agentSession: AgentSession, error: AgentError)
      
     /// Called when subtitle content is updated during conversation
@@ -304,7 +304,7 @@ public enum MessageType: String, CaseIterable {
     /// This method provides real-time subtitle updates
     ///
     /// - Parameter transcription: Subtitle message containing text content and time information
-    /// - Parameter userId: RTM userId
+    /// - Parameter agentSession: agent session
     @objc func onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription)
  
  
@@ -324,7 +324,7 @@ public enum MessageType: String, CaseIterable {
     /// and indicates the success or failure of the operation through a completion callback.
     ///
     /// - Parameters:
-    ///   - userId: RTM userId
+    ///   - agentSession: agent session
     ///   - message: Message object containing text, image URL, and interrupt settings
     ///   - completion: Callback function called when the operation completes.
     ///                 Returns nil on success, NSError on failure
@@ -333,7 +333,7 @@ public enum MessageType: String, CaseIterable {
     /// Interrupt the Agent's speech
     ///
     /// Use this method to interrupt the currently speaking Agent.
-    ///   - userId: RTM userId
+    ///   - agentSession: agent session
     ///   - completion: Callback function called when the operation completes
     /// If error has a value, it indicates message sending failed
     /// If error is nil, it indicates message sending succeeded, but doesn't guarantee Agent interruption success
