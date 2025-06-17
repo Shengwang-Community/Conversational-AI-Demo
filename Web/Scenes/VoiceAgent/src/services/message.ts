@@ -153,6 +153,7 @@ export interface IMessageState {
  */
 export interface IMessageListItem {
   uid: number
+  stream_id: number
   turn_id: number
   text: string
   status: EMessageStatus
@@ -160,6 +161,7 @@ export interface IMessageListItem {
 
 interface IMessageArrayItem<T> {
   uid: number
+  stream_id: number
   turn_id: number
   _time: number
   text: string
@@ -185,6 +187,10 @@ interface IMessageArrayItem<T> {
  */
 export class MessageEngine {
   static _version = '1.4.0'
+
+  public static localUserId: number = 0
+  public static remoteUserId: number = 99
+
   // handle rtc-engine stream message
   private _messageCache: Record<string, TDataChunk[]> = {}
   private _messageCacheTimeout: number = DEFAULT_MESSAGE_CACHE_TIMEOUT
@@ -315,11 +321,12 @@ export class MessageEngine {
     }
     const lastEndedItem = this.messageList.findLast(
       (item) =>
-        item.uid === message.stream_id && item.status === EMessageStatus.END
+        item.stream_id === message.stream_id &&
+        item.status === EMessageStatus.END
     )
     const lastInProgressItem = this.messageList.findLast(
       (item) =>
-        item.uid === message.stream_id &&
+        item.stream_id === message.stream_id &&
         item.status === EMessageStatus.IN_PROGRESS
     )
     if (lastEndedItem) {
@@ -353,7 +360,10 @@ export class MessageEngine {
             '[handleMessageLegacy] append new item'
           )
           this._appendChatHistory({
-            uid: message.stream_id,
+            uid: message.stream_id
+              ? MessageEngine.remoteUserId
+              : MessageEngine.localUserId,
+            stream_id: message.stream_id,
             turn_id: message.text_ts,
             _time: message.text_ts,
             text: message.text,
@@ -381,7 +391,10 @@ export class MessageEngine {
           '[handleMessageLegacy] append new item'
         )
         this._appendChatHistory({
-          uid: message.stream_id,
+          uid: message.stream_id
+            ? MessageEngine.remoteUserId
+            : MessageEngine.localUserId,
+          stream_id: message.stream_id,
           turn_id: message.text_ts,
           _time: message.text_ts,
           text: message.text,
@@ -464,13 +477,14 @@ export class MessageEngine {
     const turn_status = EMessageStatus.END
 
     const targetChatHistoryItem = this.messageList.find(
-      (item) => item.turn_id === turn_id && item.uid === stream_id
+      (item) => item.turn_id === turn_id && item.stream_id === stream_id
     )
     // if not found, push to messageList
     if (!targetChatHistoryItem) {
       this._appendChatHistory({
         turn_id,
-        uid: stream_id,
+        uid: stream_id ? MessageEngine.remoteUserId : MessageEngine.localUserId,
+        stream_id,
         _time: new Date().getTime(),
         text,
         status: turn_status,
@@ -875,7 +889,8 @@ export class MessageEngine {
       // if firstWordOfNextItem.start_ms <= curPTS, work on nextItem, assume lastItem is interrupted(and drop it)
       const lastItemCorrespondingChatHistoryItem = this.messageList.find(
         (item) =>
-          item.turn_id === lastItem.turn_id && item.uid === lastItem.stream_id
+          item.turn_id === lastItem.turn_id &&
+          item.stream_id === lastItem.stream_id
       )
       if (!lastItemCorrespondingChatHistoryItem) {
         logger.warn(
@@ -939,7 +954,8 @@ export class MessageEngine {
   private _handleTurnObj(queueItem: TQueueItem, curPTS: number) {
     let correspondingChatHistoryItem = this.messageList.find(
       (item) =>
-        item.turn_id === queueItem.turn_id && item.uid === queueItem.stream_id
+        item.turn_id === queueItem.turn_id &&
+        item.stream_id === queueItem.stream_id
     )
     logger.debug(
       CONSOLE_LOG_PREFIX,
@@ -958,7 +974,10 @@ export class MessageEngine {
       )
       correspondingChatHistoryItem = {
         turn_id: queueItem.turn_id,
-        uid: queueItem.stream_id,
+        uid: queueItem.stream_id
+          ? MessageEngine.remoteUserId
+          : MessageEngine.localUserId,
+        stream_id: queueItem.stream_id,
         _time: new Date().getTime(),
         text: '',
         status: queueItem.status,
