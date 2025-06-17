@@ -116,21 +116,28 @@ export function SubTitle(props: { className?: string }) {
         type="auto"
         viewportRef={scrollAreaRef}
       >
-        {history.map((item) => (
-          <ChatItem
-            key={`${item.turn_id}-${item.uid}`}
-            type={item.uid ? EChatItemType.USER : EChatItemType.AGENT}
-            label={
-              item.uid ? tAgent('userLabel') : presetSelected?.display_name
+        {history
+          .sort((a, b) => {
+            if (a.turn_id !== b.turn_id) {
+              return a.turn_id - b.turn_id
             }
-            status={item.status}
-            className={cn({
-              hidden: item.text === '',
-            })}
-          >
-            {item.text}
-          </ChatItem>
-        ))}
+            return a.uid - b.uid
+          })
+          .map((item) => (
+            <ChatItem
+              key={`${item.turn_id}-${item.uid}`}
+              type={item.uid ? EChatItemType.AGENT : EChatItemType.USER}
+              label={
+                item.uid ? presetSelected?.display_name : tAgent('userLabel')
+              }
+              status={item.status}
+              className={cn({
+                hidden: item.text === '',
+              })}
+            >
+              {item.text}
+            </ChatItem>
+          ))}
       </ScrollArea>
       {!isAutoScrollEnabledRef.current && (
         <ScrollDownButton
