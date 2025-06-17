@@ -111,7 +111,9 @@ class RTMManager: NSObject, RTMManagerProtocol {
     func destroy() {
         delegate = nil
         isLogin = false
+        rtmClient?.logout()
         rtmClient?.destroy()
+        rtmClient = nil
     }
     
     private func addLog(msg: String) {

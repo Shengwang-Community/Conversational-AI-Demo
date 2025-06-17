@@ -177,6 +177,19 @@ import AgoraRtmKit
             return .unknown
         }
     }
+
+    public var stringValue: String {
+        switch self {
+        case .llm:
+            return "llm"
+        case .mllm:
+            return "mllm"
+        case .tts:
+            return "tts"
+        default:
+            return "unknown"
+        }
+    }
 }
  
 /// Class for recording system performance data metrics
@@ -196,6 +209,10 @@ import AgoraRtmKit
         self.value = value
         self.timestamp = timestamp
     }
+
+    public override var description: String {
+        return "Metrics(type: \(type.stringValue), name: \(name), value: \(value), timestamp: \(timestamp))"
+    }
 }
 
 /// AI error information class
@@ -214,6 +231,9 @@ import AgoraRtmKit
         self.code = code
         self.message = message
         self.timestamp = timestamp
+    }
+    public override var description: String {
+        return "AgentError(type: \(type.stringValue), code: \(code), message: \(message), timestamp: \(timestamp))"
     }
 }
 

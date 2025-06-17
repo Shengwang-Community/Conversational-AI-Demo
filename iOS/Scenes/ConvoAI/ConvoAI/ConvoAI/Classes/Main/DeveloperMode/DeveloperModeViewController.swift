@@ -10,7 +10,8 @@ import ObjectiveC
 public class DeveloperConfig {
     
     private let kSessionFree = "io.agora.convoai.kSessionFree"
-    
+    private let kMetrics = "io.agora.convoai.kMetrics"
+
     static let shared = DeveloperConfig()
     
     public var isDeveloperMode = false
@@ -22,6 +23,7 @@ public class DeveloperConfig {
     
     internal var serverHost: String = ""
     internal var audioDump: Bool = false
+    internal var metrics: Bool = false
     internal var sessionLimitEnabled: Bool = false
     
     internal var onCloseDevMode: (() -> Void)?
@@ -29,6 +31,7 @@ public class DeveloperConfig {
     internal var onCopy: (() -> Void)?
     internal var onSessionLimit: ((Bool) -> Void)?
     internal var onAudioDump: ((Bool) -> Void)?
+    internal var onMetrics: ((Bool) -> Void)?
     internal var onSDKParams: ((String) -> Void)?
 
     @discardableResult
@@ -48,6 +51,13 @@ public class DeveloperConfig {
     public func setAudioDump(enabled: Bool = false, onChange: ((Bool) -> Void)? = nil) -> Self {
         self.audioDump = enabled
         self.onAudioDump = onChange
+        return self
+    }
+    
+    @discardableResult
+    public func setMetrics(enabled: Bool = false, onChange: ((Bool) -> Void)? = nil) -> Self {
+        self.metrics = enabled
+        self.onMetrics = onChange
         return self
     }
     
@@ -78,8 +88,18 @@ public class DeveloperConfig {
     public func setSessionFree(_ enable: Bool) {
         UserDefaults.standard.set(enable, forKey: kSessionFree)
     }
+    
     public func getSessionFree() -> Bool {
         return UserDefaults.standard.bool(forKey: kSessionFree)
+    }
+    
+    public func setMetricsEnable(_ enable: Bool) {
+        UserDefaults.standard.set(enable, forKey: kMetrics)
+    }
+    
+    public func getMetrics() -> Bool {
+        let res = UserDefaults.standard.bool(forKey: kMetrics)
+        return res
     }
     
     public func resetDevParams() {
@@ -112,6 +132,7 @@ public class DeveloperModeViewController: UIViewController {
     private let serverHostValueLabel = UILabel()
     private let graphTextField = UITextField()
     private let audioDumpSwitch = UISwitch()
+    private let metricsSwitch = UISwitch()
     private let sessionLimitSwitch = UISwitch()
     private let sdkParamsTextView = UITextView()
     private let convoaiTextView = UITextView()
@@ -194,6 +215,7 @@ public class DeveloperModeViewController: UIViewController {
         
         sessionLimitSwitch.isOn = config.sessionLimitEnabled
         audioDumpSwitch.isOn = config.audioDump
+        metricsSwitch.isOn = config.metrics
     }
     
     @objc private func dismissKeyboard() {
@@ -215,6 +237,11 @@ extension DeveloperModeViewController {
     
     @objc private func onClickAudioDump(_ sender: UISwitch) {
         config.onAudioDump?(sender.isOn)
+    }
+    
+    @objc private func onClickMetricsButton(_ sender: UISwitch) {
+        DeveloperConfig.shared.setMetricsEnable(sender.isOn)
+        config.onMetrics?(sender.isOn)
     }
     
     @objc private func onClickCopy(_ sender: UIButton) {
@@ -534,6 +561,18 @@ extension DeveloperModeViewController {
         let serverHostStackView = createHorizontalStack(with: [serverHostLabel, serverHostValueLabel])
         serverHostStackView.heightAnchor.constraint(equalToConstant: 44).isActive = true
         contentStackView.addArrangedSubview(serverHostStackView)
+        
+        // Metrics
+        let metricsLabel = UILabel()
+        metricsLabel.text = ResourceManager.L10n.DevMode.metrics
+        metricsLabel.textColor = UIColor.themColor(named: "ai_icontext1")
+        metricsLabel.font = UIFont.systemFont(ofSize: 14)
+        
+        metricsSwitch.addTarget(self, action: #selector(onClickMetricsButton(_ :)), for: .touchUpInside)
+        
+        let metricsStackView = createHorizontalStack(with: [metricsLabel, metricsSwitch])
+        metricsStackView.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        contentStackView.addArrangedSubview(metricsStackView)
         
         // Audio Dump
         let audioDumpLabel = UILabel()

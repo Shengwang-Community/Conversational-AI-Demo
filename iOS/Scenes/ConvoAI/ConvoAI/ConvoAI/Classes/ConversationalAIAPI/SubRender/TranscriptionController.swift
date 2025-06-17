@@ -204,7 +204,7 @@ extension TranscriptionDelegate {
                                                      status: (message.final == true) ? .end : .inprogress, type: .user)
             let session = AgentSession()
             session.userId = message.publish_id ?? "-1"
-            callMessagePrint(tag: TranscriptionController.uiTag, msg: "[user message] pts: \(audioTimestamp), \(transcriptionMessage), publisher:\(session.userId)")
+            callMessagePrint(tag: TranscriptionController.uiTag, msg: "<<< [user message] pts: \(audioTimestamp), \(transcriptionMessage), publisher:\(session.userId)")
 
             self.delegate?.onTranscriptionUpdated(agentSession: session, transcription: transcriptionMessage)
         } else {
@@ -247,7 +247,7 @@ extension TranscriptionDelegate {
     
     private func handleTextMessage(_ message: TranscriptionMessage) {
         guard let text = message.text, !text.isEmpty else {
-            callMessagePrint(tag: TranscriptionController.tag, msg: "message text is nil")
+            callMessagePrint(tag: TranscriptionController.tag, msg: "<<< message text is nil")
             return
         }
         var messageState: TranscriptionState = .inprogress
@@ -277,16 +277,16 @@ extension TranscriptionDelegate {
             if message.object == MessageType.assistant.rawValue {
                 if let lastFinishId = self.lastFinishMessage?.turnId,
                    lastFinishId >= (message.turn_id ?? 0) {
-                    self.callMessagePrint(tag: TranscriptionController.tag, msg: "Discarding old turn: received=\(String(describing: message.turn_id))  lateset=\(lastFinishId), publisher:\(message.publish_id ?? "-1")")
+                    self.callMessagePrint(tag: TranscriptionController.tag, msg: "<<< Discarding old turn: received=\(String(describing: message.turn_id))  lateset=\(lastFinishId), publisher:\(message.publish_id ?? "-1")")
                     return
                 }
                 if let queueLastTurnId = self.messageQueue.last?.turnId,
                    queueLastTurnId > (message.turn_id ?? 0) {
-                    self.callMessagePrint(tag: TranscriptionController.tag, msg: "Discarding the turn has already been processed: received=\(message.turn_id ?? -1) lateset=\(queueLastTurnId), publisher:\(message.publish_id ?? "-1")")
+                    self.callMessagePrint(tag: TranscriptionController.tag, msg: "<<< Discarding the turn has already been processed: received=\(message.turn_id ?? -1) lateset=\(queueLastTurnId), publisher:\(message.publish_id ?? "-1")")
                     return
                 }
                 guard let turnStatus = TranscriptionState(rawValue: message.turn_status ?? 0) else {
-                    self.callMessagePrint(tag: TranscriptionController.tag, msg: "Discarding the turn unKnow state received=\(message.turn_id ?? -1) turnStatus=\(message.turn_status ?? -1), publisher:\(message.publish_id ?? "-1")")
+                    self.callMessagePrint(tag: TranscriptionController.tag, msg: "<<< Discarding the turn unKnow state received=\(message.turn_id ?? -1) turnStatus=\(message.turn_status ?? -1), publisher:\(message.publish_id ?? "-1")")
                     return
                 }
                 print("🔔[CovSubRenderController] turn_id: \(message.turn_id ?? 0), status: \(turnStatus)")
@@ -396,12 +396,14 @@ extension TranscriptionDelegate {
                     let publish = lastPublish ?? "-1"
                     let session = AgentSession()
                     session.userId = publish
-                    callMessagePrint(tag: TranscriptionController.uiTag, msg: "[interrupt2] pts: \(audioTimestamp), \(lastMessage), publisher:\(publish)")
+                    callMessagePrint(tag: TranscriptionController.uiTag, msg: "<<< [interrupt2] pts: \(audioTimestamp), \(lastMessage), publisher:\(publish)")
                     self.delegate?.onTranscriptionUpdated(agentSession: session, transcription: lastMessage)
                     interrupte = true
                 }
                 // get turn sub range
                 let inprogressSub = buffer.words.firstIndex(where: { $0.start_ms > audioTimestamp} )
+//                let inprogressSub = buffer.words.lastIndex(where: { $0.start_ms <= audioTimestamp })
+
                 let interruptSub = buffer.words.firstIndex(where: { $0.status == .interrupt} )
                 let endSub = buffer.words.firstIndex(where: { $0.status == .end} )
                 self.addLog("🔔[CovSubRenderController] get min subrange turn: \(buffer.turnId) range \(buffer.words.count) audioTimestamp: \(audioTimestamp) inprogress: \(inprogressSub ?? -1) interrupt: \(interruptSub ?? -1) end: \(endSub ?? -1)")
@@ -409,7 +411,9 @@ extension TranscriptionDelegate {
                 guard let minRange = minIndex else {
                     return
                 }
-                let currentWords = Array(buffer.words[0...minRange])
+                let currentWords = Array(buffer.words[0...minRange]).filter { $0.start_ms <= audioTimestamp }
+                if currentWords.isEmpty { return }
+                
                 self.addLog("🔔[CovSubRenderController] get minRange: \(minRange) words: \(buffer.words.count) current: \(currentWords.count)")
                 // send turn with state
                 var transcriptionMessage: Transcription
@@ -423,7 +427,7 @@ extension TranscriptionDelegate {
                     self.messageQueue.remove(at: index)
                     self.addLog("🔔[CovSubRenderController] remove signed interrupte turn: \(buffer.turnId)")
                     lastFinishMessage = transcriptionMessage
-                    callMessagePrint(tag: TranscriptionController.uiTag, msg: "[interrupt1] pts: \(audioTimestamp), message: \(transcriptionMessage), publisher:\(buffer.session?.userId ?? "")")
+                    callMessagePrint(tag: TranscriptionController.uiTag, msg: "<<< [interrupt1] pts: \(audioTimestamp), message: \(transcriptionMessage), publisher:\(buffer.session?.userId ?? "")")
                 } else if minRange == endSub {
                     transcriptionMessage = Transcription(turnId: buffer.turnId,
                                                       userId: buffer.userId,
@@ -439,7 +443,7 @@ extension TranscriptionDelegate {
                                                       userId: buffer.userId,
                                                       text: currentWords.map { $0.text }.joined(),
                                                          status: .inprogress, type: .agent)
-                    callMessagePrint(tag: TranscriptionController.uiTag, msg: "[progress] pts: \(audioTimestamp), message: \(transcriptionMessage), publisher:\(buffer.session?.userId ?? "")")
+                    callMessagePrint(tag: TranscriptionController.uiTag, msg: "<<< [progress] pts: \(audioTimestamp), message: \(transcriptionMessage), publisher:\(buffer.session?.userId ?? "")")
                 }
                 print("📊 [CovSubRenderController] message flush turn: \(buffer.turnId) state: \(transcriptionMessage.status)")
 //                print("📊 [CovSubRenderController] turn: \(buffer.turnId) range \(buffer.words.count) Subrange: \(minRange) words: \(currentWords.map { $0.text }.joined())")
@@ -521,9 +525,9 @@ extension TranscriptionController: AgoraRtmClientDelegate {
             if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),
                let cleanData = try? JSONSerialization.data(withJSONObject: jsonObject, options: []),
                let cleanString = String(data: cleanData, encoding: .utf8) {
-                callMessagePrint(tag: TranscriptionController.tag, msg: "rtm data: \(cleanString)")
+                callMessagePrint(tag: TranscriptionController.tag, msg: "<<< rtm data: \(cleanString)")
             } else {
-                callMessagePrint(tag: TranscriptionController.tag, msg: "rtm data: \(stringData)")
+                callMessagePrint(tag: TranscriptionController.tag, msg: "<<< rtm data: \(stringData)")
             }
             inputRtmMessage(message: data, publisherId: event.publisher)
         } else if let rawData = event.message.rawData {

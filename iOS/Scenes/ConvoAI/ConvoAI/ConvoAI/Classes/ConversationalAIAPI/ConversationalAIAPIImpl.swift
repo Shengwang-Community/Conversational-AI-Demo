@@ -175,6 +175,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
             return
         }
         channel = nil
+        transcriptionController.reset()
         let traceId = UUID().uuidString.prefix(8)
         callMessagePrint(msg: ">>> [traceId:\(traceId)] [unsubscribe] channel: \(channelName)")
 
@@ -423,6 +424,7 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
                 if ts <= (self.stateChangeEvent?.timestamp ?? 0) {
                     return
                 }
+                callMessagePrint(msg: "agent state: \(state)")
                 let aiState = AgentState.fromValue(state)
                 let changeEvent = StateChangeEvent(state: aiState, turnId: turnId, timestamp: ts, reason: "")
                 self.stateChangeEvent = changeEvent

@@ -25,6 +25,11 @@ public class ChatViewController: UIViewController {
     private var convoAIAPI: ConversationalAIAPIImpl!
     private let tag = "ChatViewController"
     private var isSelfSubRender = false
+    private lazy var enableMetric: Bool = {
+        let res = DeveloperConfig.shared.getMetrics()
+        return res
+    }()
+    
     private lazy var sendMessageButton: UIButton = {
         let button = UIButton()
         button.addTarget(self, action: #selector(testChat), for: .touchUpInside)
@@ -717,10 +722,8 @@ extension ChatViewController {
     private func getConvoaiBodyMap() -> [String: Any?] {
         return [
             //1.5.1-12-g18f3d9c7
-//            "graph_id": "1.5.1-114-g3e1a25b3",
-            "graph_id": "1.5.1-115-g582c71f4",
-//            "graph_id": "1.5.1-66-g352ed082",
-//            "graph_id": DeveloperConfig.shared.graphId,
+//            "graph_id": "1.5.1-115-g582c71f4",
+            "graph_id": DeveloperConfig.shared.graphId,
             "name": nil,
             "preset": DeveloperConfig.shared.convoaiServerConfig,
             "properties": [
@@ -767,7 +770,7 @@ extension ChatViewController {
                 "parameters": [
                     "data_channel": "rtm",
                     "enable_flexible": nil,
-                    "enable_metrics": true,
+                    "enable_metrics": self.enableMetric,
                     "enable_error_message": true,
                     "aivad_force_threshold": nil,
                     "output_audio_codec": nil,
@@ -1163,6 +1166,9 @@ extension ChatViewController {
             .setSessionLimit(enabled: !DeveloperConfig.shared.getSessionFree(), onChange: { [weak self] isOn in
                 self?.timerCoordinator.setDurationLimit(limited: isOn)
             })
+            .setMetrics(enabled: DeveloperConfig.shared.getMetrics(), onChange: { [weak self] isOn in
+                self?.enableMetric = isOn
+            })
             .setCloseDevModeCallback { [weak self] in
                 self?.devModeButton.isHidden = true
             }
@@ -1190,6 +1196,7 @@ extension ChatViewController {
         stopAgent()
         animateView.releaseView()
         rtcManager.destroy()
+        rtmManager.destroy()
         UserCenter.shared.logout()
         NotificationCenter.default.post(name: .EnvironmentChanged, object: nil, userInfo: nil)
     }
@@ -1247,7 +1254,7 @@ extension ChatViewController: RTMManagerDelegate {
     }
     
     @objc func testChat() {
-        let message = ChatMessage(text: "给我讲个笑话？", imageUrl: nil, audioUrl: nil)
+        let message = ChatMessage(text: "tell me a joke？", imageUrl: nil, audioUrl: nil)
         let session = AgentSession()
         session.userId = "\(agentUid)"
         convoAIAPI.chat(agentSession: session, message: message) { error in
@@ -1260,7 +1267,7 @@ extension ChatViewController: RTMManagerDelegate {
 extension ChatViewController: ConversationalAIAPIEventHandler {
     public func onAgentStateChanged(agentSession: AgentSession, event: StateChangeEvent) {
         switch event.state {
-            //TODO: 没有idle状态
+            //TODO: idle state???
 //        case .idle:
 //            stateLabel.text = "idle"
 //            break
@@ -1286,7 +1293,7 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     }
     
     public func onAgentMetrics(agentSession: AgentSession, metrics: Metrics) {
-        
+        addLog("<<< [onAgentMetrics] metrics: \(metrics)")
     }
     
     public func onAgentError(agentSession: AgentSession, error: AgentError) {
