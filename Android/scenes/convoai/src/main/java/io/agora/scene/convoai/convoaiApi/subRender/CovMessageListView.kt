@@ -147,10 +147,10 @@ class CovMessageListView @JvmOverloads constructor(
      * Handle received subtitle messages - fix scrolling issues
      */
     private fun handleMessage(transcription: Transcription) {
-        val isNewMessage = messageAdapter.getMessageByTurnId(transcription.turnId, transcription.userId == 0) == null
+        val isNewMessage = messageAdapter.getMessageByTurnId(transcription.turnId, transcription.type == TranscriptionType.USER) == null
 
         // Handle existing message updates
-        messageAdapter.getMessageByTurnId(transcription.turnId, transcription.userId == 0)?.let { existingMessage ->
+        messageAdapter.getMessageByTurnId(transcription.turnId, transcription.type == TranscriptionType.USER)?.let { existingMessage ->
             existingMessage.apply {
                 content = transcription.text
                 status = transcription.status

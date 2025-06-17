@@ -3,6 +3,7 @@ package io.agora.scene.convoai.convoaiApi
 import io.agora.rtc2.Constants
 import io.agora.rtc2.RtcEngine
 import io.agora.rtm.RtmClient
+import io.agora.scene.convoai.convoaiApi.subRender.v3.AgentSession
 import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
 import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionRenderMode
 
@@ -236,38 +237,46 @@ sealed class ConversationalAIAPIError : Exception() {
  *
  * Implement this interface to receive AI conversation events such as state changes, transcriptions, errors, and metrics.
  * All callbacks are invoked on the main thread for UI updates.
+ *
+ * @note Some callbacks (such as onTranscriptionUpdated) may be triggered at high frequency for reliability. If your business requires deduplication, please handle it at the business layer.
  */
 interface IConversationalAIAPIEventHandler {
     /**
      * Called when the agent state changes (silent, listening, thinking, speaking).
-     * @param userId RTM user ID
+     * @param agentSession AgentSession
      * @param event State change event
      */
-    fun onAgentStateChanged(userId: String, event: StateChangeEvent)
+    fun onAgentStateChanged(agentSession: AgentSession, event: StateChangeEvent)
+
     /**
      * Called when an interrupt event occurs.
-     * @param userId RTM user ID
+     * @param agentSession AgentSession
      * @param event Interrupt event
      */
-    fun onAgentInterrupted(userId: String, event: InterruptEvent)
+    fun onAgentInterrupted(agentSession: AgentSession, event: InterruptEvent)
+
     /**
      * Called when performance metrics are available.
-     * @param userId RTM user ID
+     * @param agentSession AgentSession
      * @param metrics Performance metrics
      */
-    fun onAgentMetrics(userId: String, metrics: Metrics)
+    fun onAgentMetrics(agentSession: AgentSession, metrics: Metrics)
+
     /**
      * Called when an AI error occurs.
-     * @param userId RTM user ID
+     * @param agentSession AgentSession
      * @param error AI error
      */
-    fun onAgentError(userId: String, error: AgentError)
+    fun onAgentError(agentSession: AgentSession, error: AgentError)
+
     /**
      * Called when transcription content is updated.
-     * @param userId RTM user ID
+     * @param agentSession AgentSession
      * @param transcription Transcription data
+     * @note This callback may be triggered at high frequency. If you need to deduplicate, please handle it at the business layer.
      */
-    fun onTranscriptionUpdated(userId: String, transcription: Transcription)
+    fun onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription)
+
     /**
      * Called for internal debug logs.
      * @param log Debug log message
@@ -279,6 +288,8 @@ interface IConversationalAIAPIEventHandler {
  * Conversational AI API interface.
  *
  * Provides methods for sending messages, interrupting conversations, managing audio settings, and subscribing to events.
+
+ *
  */
 interface IConversationalAIAPI {
     /**
@@ -286,36 +297,42 @@ interface IConversationalAIAPI {
      * @param handler Event handler instance
      */
     fun addHandler(handler: IConversationalAIAPIEventHandler)
+
     /**
      * Remove a registered event handler.
      * @param handler Event handler instance
      */
     fun removeHandler(handler: IConversationalAIAPIEventHandler)
+
     /**
      * Subscribe to a channel to receive AI conversation events.
      * @param channelName Channel name
-     * @param completion Callback, error is null on success
+     * @param completion Callback, error is null on success, non-null on failure
      */
     fun subscribe(channelName: String, completion: (error: ConversationalAIAPIError?) -> Unit)
+
     /**
      * Unsubscribe from a channel and stop receiving events.
      * @param channelName Channel name
-     * @param completion Callback, error is null on success
+     * @param completion Callback, error is null on success, non-null on failure
      */
     fun unsubscribe(channelName: String, completion: (error: ConversationalAIAPIError?) -> Unit)
+
     /**
      * Send a message to the AI agent.
-     * @param userId RTM user ID
+     * @param agentSession AgentSession
      * @param message Message object
-     * @param completion Callback, error is null on success
+     * @param completion Callback, error is null on success, non-null on failure
      */
-    fun chat(userId: String, message: ChatMessage, completion: (error: ConversationalAIAPIError?) -> Unit)
+    fun chat(agentSession: AgentSession, message: ChatMessage, completion: (error: ConversationalAIAPIError?) -> Unit)
+
     /**
      * Interrupt the AI agent's speaking.
-     * @param userId RTM user ID
-     * @param completion Callback, error is null on success
+     * @param agentSession AgentSession
+     * @param completion Callback, error is null on success, non-null on failure
      */
-    fun interrupt(userId: String, completion: (error: ConversationalAIAPIError?) -> Unit)
+    fun interrupt(agentSession: AgentSession, completion: (error: ConversationalAIAPIError?) -> Unit)
+
     /**
      * Set audio parameters for optimal AI conversation performance.
      * Call before joining RTC channel.
@@ -325,14 +342,18 @@ interface IConversationalAIAPI {
      * @note This method must be called before each `joinChannel` call to ensure best audio quality.
      *
      * @example
+     * ```kotlin
      * val api = ConversationalAIAPI(config)
      * api.loadAudioSettings()
      * rtcEngine.joinChannel(token, channelName, null, userId)
+     * ```
      */
     fun loadAudioSettings(scenario: Int = Constants.AUDIO_SCENARIO_AI_CLIENT)
+
     /**
      * Destroy the API instance and release resources.
-     * After calling, this instance cannot be used again.
+     * After calling, this instance cannot be used again. All resources will be released.
+     *
      */
     fun destroy()
 }

@@ -13,6 +13,7 @@ import io.agora.rtm.PresenceEvent
 import io.agora.rtm.RtmConstants
 import io.agora.rtm.RtmEventListener
 import io.agora.rtm.SubscribeOptions
+import io.agora.scene.convoai.convoaiApi.subRender.v3.AgentSession
 import io.agora.scene.convoai.convoaiApi.subRender.v3.IConversationTranscriptionCallback
 import io.agora.scene.convoai.convoaiApi.subRender.v3.MessageParser
 import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
@@ -35,7 +36,7 @@ import java.util.UUID
  * - Coordinate with transcription rendering system
  * - Provide thread-safe delegate notifications
  *
- * @param config Configuration object containing required RTC/RTM instances and settings
+ * @see IConversationalAIAPI
  */
 class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig) : IConversationalAIAPI {
 
@@ -92,18 +93,18 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
                 val rawString = String(bytes, Charsets.UTF_8)
                 val messageMap = mMessageParser.parseJsonToMap(rawString)
                 messageMap?.let { map ->
-                    dealMessageWithMap(event.publisherId.toIntOrNull() ?: 0, map)
+                    dealMessageWithMap(event.publisherId ?: "", map)
                 }
             } else {
                 val rawString = rtmMessage.data as? String ?: return
                 val messageMap = mMessageParser.parseJsonToMap(rawString)
                 messageMap?.let { map ->
-                    dealMessageWithMap(event.publisherId.toIntOrNull() ?: 0, map)
+                    dealMessageWithMap(event.publisherId ?: "", map)
                 }
             }
         }
 
-        private fun dealMessageWithMap(uid: Int, msg: Map<String, Any>) {
+        private fun dealMessageWithMap(publisherId: String, msg: Map<String, Any>) {
             val transcriptionObj = msg["object"] as? String ?: return
             val messageType = MessageType.fromValue(transcriptionObj)
             when (messageType) {
@@ -118,9 +119,10 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
                     val sendTs = (msg["send_ts"] as? Number)?.toLong() ?: 0L
                     val metrics = Metrics(type, metricName, value, sendTs)
 
-                    callMessagePrint(TAG, "<<< [onAgentMetricsInfo] $uid $metrics")
+                    val session = AgentSession(publisherId)
+                    callMessagePrint(TAG, "<<< [onAgentMetricsInfo] $session $metrics")
                     conversationalAIHandlerHelper.notifyEventHandlers {
-                        it.onAgentMetrics(uid.toString(), metrics)
+                        it.onAgentMetrics(session, metrics)
                     }
                 }
                 /**
@@ -133,9 +135,11 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
                     val code = (msg["code"] as? Number)?.toInt() ?: -1
                     val sendTs = (msg["send_ts"] as? Number)?.toLong() ?: 0L
                     val aiError = AgentError(type, code, message, sendTs)
-                    callMessagePrint(TAG, "<<< [onAgentError] $uid $aiError")
+
+                    val session = AgentSession(publisherId)
+                    callMessagePrint(TAG, "<<< [onAgentError] $session $aiError")
                     conversationalAIHandlerHelper.notifyEventHandlers {
-                        it.onAgentError(uid.toString(), aiError)
+                        it.onAgentError(session, aiError)
                     }
                 }
 
@@ -168,9 +172,10 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
                     val aiState = AgentState.fromValue(state)
                     val changeEvent = StateChangeEvent(aiState, turnId, ts)
                     stateChangeEvent = changeEvent
-                    callMessagePrint(TAG, "<<< [onAgentStateChanged] userId:${event.publisherId}, event:$changeEvent")
+                    val session = AgentSession(event.publisherId)
+                    callMessagePrint(TAG, "<<< [onAgentStateChanged] $session $changeEvent")
                     conversationalAIHandlerHelper.notifyEventHandlers {
-                        it.onAgentStateChanged(event.publisherId, changeEvent)
+                        it.onAgentStateChanged(session, changeEvent)
                     }
                 }
             }
@@ -188,22 +193,24 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
             rtmClient = config.rtmClient,
             renderMode = if (config.renderMode == TranscriptionRenderMode.Word) TranscriptionRenderMode.Word else TranscriptionRenderMode.Text,
             callback = object : IConversationTranscriptionCallback {
-                override fun onTranscriptionUpdated(transcription: Transcription) {
+                override fun onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription) {
                     conversationalAIHandlerHelper.notifyEventHandlers { delegate ->
-                        delegate.onTranscriptionUpdated(transcription.userId.toString(), transcription)
+                        delegate.onTranscriptionUpdated(agentSession, transcription)
                     }
                 }
 
-                override fun onAgentInterrupted(userId: String, event: InterruptEvent) {
+                override fun onAgentInterrupted(agentSession: AgentSession, event: InterruptEvent) {
                     conversationalAIHandlerHelper.notifyEventHandlers { eventHandler ->
-                        eventHandler.onAgentInterrupted(userId, event)
+                        eventHandler.onAgentInterrupted(agentSession, event)
                     }
                 }
 
                 override fun onDebugLog(tag: String, message: String) {
                     conversationalAIHandlerHelper.notifyEventHandlers { eventHandler ->
                         eventHandler.onDebugLog("$tag $message")
-
+                    }
+                    runOnMainThread {
+                        config.rtcEngine.writeLog(Constants.LogLevel.LOG_LEVEL_INFO.ordinal, "$tag $message")
                     }
                 }
             }
@@ -262,6 +269,7 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
         channelName = null
         val traceId = genTraceId
         callMessagePrint(TAG, ">>> [traceId:$traceId] [unsubscribe] $channel")
+        transcriptionController.reset()
         config.rtmClient.unsubscribe(channel, object : ResultCallback<Void> {
             override fun onSuccess(responseInfo: Void?) {
                 callMessagePrint(TAG, "<<< [traceId:$traceId] rtm unsubscribe onSuccess")
@@ -280,9 +288,13 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
         })
     }
 
-    override fun chat(userId: String, message: ChatMessage, completion: (error: ConversationalAIAPIError?) -> Unit) {
+    override fun chat(
+        agentSession: AgentSession,
+        message: ChatMessage,
+        completion: (ConversationalAIAPIError?) -> Unit
+    ) {
         val traceId = genTraceId
-        callMessagePrint(TAG, ">>> [traceId:$traceId] [chat] $userId $message")
+        callMessagePrint(TAG, ">>> [traceId:$traceId] [chat] $agentSession $message")
         val receipt = mutableMapOf<String, Any>().apply {
             put("priority", message.priority?.name ?: Priority.INTERRUPT.name)
             put("interruptable", message.interruptable ?: true)
@@ -302,22 +314,24 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
 
             callMessagePrint(TAG, "[traceId:$traceId] rtm publish $jsonMessage")
             // Send RTM point-to-point message
-            config.rtmClient.publish(userId, jsonMessage, options, object : ResultCallback<Void> {
-                override fun onSuccess(responseInfo: Void?) {
-                    callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onSuccess")
-                    runOnMainThread {
-                        completion.invoke(null)
+            config.rtmClient.publish(
+                agentSession.userId, jsonMessage, options,
+                object : ResultCallback<Void> {
+                    override fun onSuccess(responseInfo: Void?) {
+                        callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onSuccess")
+                        runOnMainThread {
+                            completion.invoke(null)
+                        }
                     }
-                }
 
-                override fun onFailure(errorInfo: ErrorInfo) {
-                    callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onFailure ${errorInfo?.str()}")
-                    runOnMainThread {
-                        val errorCode = RtmConstants.RtmErrorCode.getValue(errorInfo.errorCode)
-                        completion.invoke(ConversationalAIAPIError.RtmError(errorCode, errorInfo.errorReason))
+                    override fun onFailure(errorInfo: ErrorInfo) {
+                        callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onFailure ${errorInfo?.str()}")
+                        runOnMainThread {
+                            val errorCode = RtmConstants.RtmErrorCode.getValue(errorInfo.errorCode)
+                            completion.invoke(ConversationalAIAPIError.RtmError(errorCode, errorInfo.errorReason))
+                        }
                     }
-                }
-            })
+                })
         } catch (e: Exception) {
             callMessagePrint(TAG, "[traceId:$traceId] [!] ${e.message}")
             runOnMainThread {
@@ -326,9 +340,9 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
         }
     }
 
-    override fun interrupt(userId: String, completion: (error: ConversationalAIAPIError?) -> Unit) {
+    override fun interrupt(agentSession: AgentSession, completion: (error: ConversationalAIAPIError?) -> Unit) {
         val traceId = genTraceId
-        callMessagePrint(TAG, ">>> [traceId:$traceId] [interrupt] $userId")
+        callMessagePrint(TAG, ">>> [traceId:$traceId] [interrupt] $agentSession")
         // Build interrupt message content with structure consistent with iOS
         val receipt = mutableMapOf<String, Any>().apply {
             put("customType", MessageType.INTERRUPT.value)
@@ -346,22 +360,24 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
 
             callMessagePrint(TAG, "[traceId:$traceId] rtm publish $jsonMessage")
             // Send RTM point-to-point message
-            config.rtmClient.publish(userId, jsonMessage, options, object : ResultCallback<Void> {
-                override fun onSuccess(responseInfo: Void?) {
-                    callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onSuccess")
-                    runOnMainThread {
-                        completion.invoke(null)
+            config.rtmClient.publish(
+                agentSession.userId, jsonMessage, options,
+                object : ResultCallback<Void> {
+                    override fun onSuccess(responseInfo: Void?) {
+                        callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onSuccess")
+                        runOnMainThread {
+                            completion.invoke(null)
+                        }
                     }
-                }
 
-                override fun onFailure(errorInfo: ErrorInfo) {
-                    callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onFailure ${errorInfo?.str()}")
-                    runOnMainThread {
-                        val errorCode = RtmConstants.RtmErrorCode.getValue(errorInfo.errorCode)
-                        completion.invoke(ConversationalAIAPIError.RtmError(errorCode, errorInfo.errorReason))
+                    override fun onFailure(errorInfo: ErrorInfo) {
+                        callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onFailure ${errorInfo?.str()}")
+                        runOnMainThread {
+                            val errorCode = RtmConstants.RtmErrorCode.getValue(errorInfo.errorCode)
+                            completion.invoke(ConversationalAIAPIError.RtmError(errorCode, errorInfo.errorReason))
+                        }
                     }
-                }
-            })
+                })
         } catch (e: Exception) {
             callMessagePrint(TAG, "[traceId:$traceId] [!] ${e.message}")
             runOnMainThread {

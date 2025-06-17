@@ -66,6 +66,7 @@ import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.rtm.CovRtmManager
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfRenderConfig
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfSubRenderController
+import io.agora.scene.convoai.convoaiApi.subRender.v3.AgentSession
 import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
 import io.agora.scene.convoai.rtm.IRtmManagerListener
 import kotlinx.coroutines.CoroutineScope
@@ -366,26 +367,26 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
     private val covEventHandler = object : IConversationalAIAPIEventHandler {
         private val tag = "ConversationalAI"
-        override fun onAgentStateChanged(userId: String, event: StateChangeEvent) {
+        override fun onAgentStateChanged(agentSession: AgentSession, event: StateChangeEvent) {
             // Update agent state display
             if (DebugConfigSettings.isDebug && connectionState == AgentConnectionState.CONNECTED) {
-                mBinding?.tvConversationState?.text = "Agent State: ${event.state}"
+                mBinding?.tvConversationState?.text = "onAgentStateChanged: ${event.state.value}"
             }
         }
 
-        override fun onAgentInterrupted(userId: String, event: InterruptEvent) {
+        override fun onAgentInterrupted(agentSession: AgentSession, event: InterruptEvent) {
             // TODO: something
         }
 
-        override fun onAgentMetrics(userId: String, metrics: Metrics) {
+        override fun onAgentMetrics(agentSession: AgentSession, metrics: Metrics) {
             // TODO: something
         }
 
-        override fun onAgentError(userId: String, error: AgentError) {
+        override fun onAgentError(agentSession: AgentSession, error: AgentError) {
             // TODO: something
         }
 
-        override fun onTranscriptionUpdated(userId: String, transcription: Transcription) {
+        override fun onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription) {
             // Handle transcription updates
             // Update subtitle display based on render mode
             if (!isSelfSubRender) {
@@ -403,7 +404,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         isUserEndCall = false
         connectionState = AgentConnectionState.CONNECTING
         if (DebugConfigSettings.isDebug) {
-            mBinding?.tvConversationState?.text = "Agent State: ${AgentState.SILENT}"
+            mBinding?.tvConversationState?.text = "onAgentStateChanged: ${AgentState.SILENT.value}"
             mBinding?.tvConversationState?.isVisible = true
             CovAgentManager.channelName =
                 "agent_debug_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
@@ -580,7 +581,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             genType = TokenGeneratorType.Token007,
             tokenTypes = arrayOf(AgoraTokenType.Rtc, AgoraTokenType.Rtm),
             success = { token ->
-                CovLogger.d(TAG, "getToken success")
+                CovLogger.d(TAG, "getToken success ${CovAgentManager.uid}")
                 integratedToken = token
                 complete.invoke(true)
             },
@@ -1080,7 +1081,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                         text = "tell me a joke!"
                     )
                     conversationalAIAPI?.chat(
-                        CovAgentManager.agentUID.toString(),
+                        AgentSession(CovAgentManager.agentUID.toString()),
                         chatMessage,
                         completion = { error ->
                             if (error != null) {
@@ -1100,7 +1101,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             btnSendInterrupt.setOnClickListener {
                 if (connectionState == AgentConnectionState.CONNECTED) {
                     conversationalAIAPI?.interrupt(
-                        CovAgentManager.agentUID.toString(),
+                        AgentSession(CovAgentManager.agentUID.toString()),
                         completion = { error ->
                             if (error != null) {
                                 CovLogger.e(TAG, "Send interrupt failed: ${error.message}")

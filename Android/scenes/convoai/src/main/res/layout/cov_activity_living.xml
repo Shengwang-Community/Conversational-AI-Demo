@@ -95,7 +95,7 @@
         android:paddingHorizontal="12dp"
         android:layout_marginTop="12dp"
         android:visibility="gone"
-        android:text="Agent State: Idle"/>
+        android:text="onAgentStateChanged: silent"/>
 
     <FrameLayout
         android:id="@+id/layoutConnect"
