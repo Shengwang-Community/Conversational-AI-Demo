@@ -120,7 +120,7 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
                     val metrics = Metrics(type, metricName, value, sendTs)
 
                     val session = AgentSession(publisherId)
-                    callMessagePrint(TAG, "<<< [onAgentMetricsInfo] $session $metrics")
+                    callMessagePrint(TAG, "<<< [onAgentMetrics] $session $metrics")
                     conversationalAIHandlerHelper.notifyEventHandlers {
                         it.onAgentMetrics(session, metrics)
                     }
