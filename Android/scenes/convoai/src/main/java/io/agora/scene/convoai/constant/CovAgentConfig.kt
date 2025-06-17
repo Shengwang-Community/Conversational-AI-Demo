@@ -27,7 +27,7 @@ object CovAgentManager {
     val enableBHVS = true
 
     // values
-    val uid = Random.nextInt(1000, 10000000)
+    val uid = Random.nextInt(10000, 100000000)
     const val agentUID = 999
     var channelName: String = ""
 
