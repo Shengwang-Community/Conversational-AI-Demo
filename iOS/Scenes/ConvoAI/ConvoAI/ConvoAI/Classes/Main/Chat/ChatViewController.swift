@@ -717,7 +717,8 @@ extension ChatViewController {
     private func getConvoaiBodyMap() -> [String: Any?] {
         return [
             //1.5.1-12-g18f3d9c7
-            "graph_id": "1.5.1-15-g3e6ee1c1",
+//            "graph_id": "1.5.1-114-g3e1a25b3",
+            "graph_id": "1.5.1-115-g582c71f4",
 //            "graph_id": "1.5.1-66-g352ed082",
 //            "graph_id": DeveloperConfig.shared.graphId,
             "name": nil,
@@ -1238,14 +1239,18 @@ extension ChatViewController: RTMManagerDelegate {
     }
     
     @objc func testInterrupt() {
-        convoAIAPI.interrupt(userId: "\(agentUid)") { error in
+        let session = AgentSession()
+        session.userId = agentUid
+        convoAIAPI.interrupt(agentSession: session) { error in
             
         }
     }
     
     @objc func testChat() {
         let message = ChatMessage(text: "给我讲个笑话？", imageUrl: nil, audioUrl: nil)
-        convoAIAPI.chat(userId: "\(agentUid)", message: message) { error in
+        let session = AgentSession()
+        session.userId = agentUid
+        convoAIAPI.chat(agentSession: session, message: message) { error in
             
         }
     }
@@ -1253,11 +1258,7 @@ extension ChatViewController: RTMManagerDelegate {
 }
 
 extension ChatViewController: ConversationalAIAPIEventHandler {
-    public func onAgentError(userId: String, error: AgentError) {
-        
-    }
-    
-    public func onAgentStateChanged(userId: String, event: StateChangeEvent) {
+    public func onAgentStateChanged(agentSession: AgentSession, event: StateChangeEvent) {
         switch event.state {
             //TODO: 没有idle状态
 //        case .idle:
@@ -1280,15 +1281,19 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
         }
     }
     
-    public func onAgentInterrupted(userId: String, event: InterruptEvent) {
+    public func onAgentInterrupted(agentSession: AgentSession, event: InterruptEvent) {
         
     }
     
-    public func onAgentMetrics(userId: String, metrics: Metrics) {
+    public func onAgentMetrics(agentSession: AgentSession, metrics: Metrics) {
         
     }
     
-    public func onTranscriptionUpdated(userId: String, transcription: Transcription) {
+    public func onAgentError(agentSession: AgentSession, error: AgentError) {
+        
+    }
+    
+    public func onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription) {
         if isSelfSubRender {
             return
         }

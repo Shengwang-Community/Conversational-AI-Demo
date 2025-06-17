@@ -9,160 +9,6 @@ import Foundation
 import AgoraRtcKit
 import AgoraRtmKit
 
-/// Message type enumeration
-public enum MessageType: String, CaseIterable {
-    case metrics = "message.metrics"
-    case error = "message.error"
-    case assistant = "assistant.transcription"
-    case user = "user.transcription"
-    case interrupt = "message.interrupt"
-    case state = "message.state"
-    case unknown = "unknown"
-    
-    /// Create message type from string
-    public static func fromValue(_ value: String) -> MessageType {
-        return MessageType(rawValue: value) ?? .unknown
-    }
-}
-
-/// Protocol for ConvoAI component callbacks for communication events and state changes
-///
-/// This protocol defines callback interfaces for receiving Agent conversation events, 
-/// state changes, performance metrics, errors, and subtitle updates.
-@objc public protocol ConversationalAIAPIEventHandler: AnyObject {
-    /// External registration to listen to this method
-    /// The component will call this method when Agent state changes
-    /// This method is called whenever the agent transitions between different states 
-    /// (such as silent, listening, thinking, or speaking).
-    /// Can be used to update UI interface or track conversation flow.
-    ///
-    /// - Parameter event: Agent state event (silent, listening, thinking, speaking)
-    /// - Parameter userId: RTM userId
-    @objc func onAgentStateChanged(userId: String, event: StateChangeEvent)
-     
-    /// Called when an interrupt event occurs
-    ///
-    /// - Parameter event: Interrupt event
-    /// - Parameter userId: RTM userId
-    @objc func onAgentInterrupted(userId: String, event: InterruptEvent)
- 
- 
-    /// Real-time callback for performance metrics
-    ///
-    /// This method provides performance data, such as LLM inference latency
-    /// and TTS speech synthesis latency, for monitoring system performance.
-    ///
-    /// - Parameter metrics: Performance metrics containing type, value, and timestamp
-    /// - Parameter userId: RTM userId
-    @objc func onAgentMetrics(userId: String, metrics: Metrics)
-     
-    /// Called when AI-related errors occur
-    ///
-    /// This method is called when AI components (LLM, TTS, etc.) encounter errors,
-    /// used for error monitoring, logging, and implementing graceful degradation strategies.
-    ///
-    /// - Parameter error: AI error containing type, error code, error message, and timestamp
-    /// - Parameter userId: RTM userId
-    @objc func onAgentError(userId: String, error: AgentError)
-     
-    /// Called when subtitle content is updated during conversation
-    ///
-    /// This method provides real-time subtitle updates
-    ///
-    /// - Parameter transcription: Subtitle message containing text content and time information
-    /// - Parameter userId: RTM userId
-    @objc func onTranscriptionUpdated(userId: String, transcription: Transcription)
- 
- 
-    /// Call this method to expose internal logs to external components
-    /// - Parameter log: Internal logs from the component
-    @objc func onDebugLog(_ log: String)
-}
-
-/// Control protocol for managing ConvoAI component operations
-///
-/// This protocol defines interfaces for controlling Agent conversation behavior,
-/// including interrupting agents and sending messages.
-@objc public protocol ConversationalAIAPI: AnyObject {
-    /// Send a message to the Agent for processing
-    ///
-    /// This method sends a message (containing text and/or images) to the Agent for understanding
-    /// and indicates the success or failure of the operation through a completion callback.
-    ///
-    /// - Parameters:
-    ///   - userId: RTM userId
-    ///   - message: Message object containing text, image URL, and interrupt settings
-    ///   - completion: Callback function called when the operation completes.
-    ///                 Returns nil on success, NSError on failure
-    @objc func chat(userId: String, message: ChatMessage, completion: @escaping (ConversationalAIAPIError?) -> Void)
-     
-    /// Interrupt the Agent's speech
-    ///
-    /// Use this method to interrupt the currently speaking Agent.
-    ///   - userId: RTM userId
-    ///   - completion: Callback function called when the operation completes
-    /// If error has a value, it indicates message sending failed
-    /// If error is nil, it indicates message sending succeeded, but doesn't guarantee Agent interruption success
-    @objc func interrupt(userId: String, completion: @escaping (ConversationalAIAPIError?) -> Void)
-     
-    /// Set audio best practice parameters for optimal performance
-    ///
-    /// Configure audio parameters required for optimal performance in AI conversations
-    ///
-    /// **Important Note:** If you need to enable audio best practices, you must call this method before each `joinChannel` call
-    /// **Usage Example:**
-    /// ```swift
-    /// let api = ConversationalAIAPI(config: config)
-    ///
-    /// // Set audio best practice parameters before joining channel
-    /// api.loadAudioSettings(secnario: .aiClient)
-    ///
-    /// // Then join the channel
-    /// rtcEngine.joinChannel(byToken: token, channelId: channelName, info: nil, uid: userId)
-    /// ```
-    @objc func loadAudioSettings(secnario: AgoraAudioScenario)
-        
-    /// Set the channel parameters and callback for subscription
-    /// Called when the channel number changes, typically invoked each time the Agent starts
-    /// - channelName: Channel number
-    /// - completion: Information callback
-    @objc func subscribe(channelName: String, completion: @escaping (ConversationalAIAPIError?) -> Void)
-    
-    /// Unsubscribe
-    /// Called when disconnecting the Agent
-    /// - channelName: Channel number
-    /// - completion: Information callback
-    @objc func unsubscribe(channelName: String, completion: @escaping (ConversationalAIAPIError?) -> Void)
-    
-    /// Add callback listener
-    /// - handler The listener
-    @objc func addHandler(handler: ConversationalAIAPIEventHandler)
-    
-    /// Remove callback listener
-    /// - handler The listener
-    @objc func removeHandler(handler: ConversationalAIAPIEventHandler)
-    
-    ///This method releases all the resources used
-    @objc func destroy()
-}
-
-@objc public class ConversationalAIAPIConfig: NSObject {
-    @objc public weak var rtcEngine: AgoraRtcEngineKit?
-    @objc public weak var rtmEngine: AgoraRtmClientKit?
-    @objc public var renderMode: TranscriptionRenderMode
-    
-    @objc public init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, renderMode: TranscriptionRenderMode) {
-        self.rtcEngine = rtcEngine
-        self.rtmEngine = rtmEngine
-        self.renderMode = renderMode
-    }
-    
-    @objc public convenience init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, delegate: ConversationalAIAPIEventHandler) {
-        AgoraRtcEngineKit.destroy()
-        self.init(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words)
-    }
-}
-
 @objc public class ConversationalAIAPIImpl: NSObject {
     public static let version: String = "1.6.0"
     private let tag: String = "[ConvoAPI]"
@@ -194,8 +40,9 @@ public enum MessageType: String, CaseIterable {
 }
 
 extension ConversationalAIAPIImpl: ConversationalAIAPI {
-    @objc public func chat(userId: String, message: ChatMessage, completion: @escaping (ConversationalAIAPIError?) -> Void) {
+    @objc public func chat(agentSession: AgentSession, message: ChatMessage, completion: @escaping (ConversationalAIAPIError?) -> Void) {
         let traceId = UUID().uuidString.prefix(8)
+        let userId = "\(agentSession.userId)"
         callMessagePrint(msg: ">>> [traceId:\(traceId)] [chat] \(userId), \(message)")
         guard let rtmEngine = self.config.rtmEngine else {
             callMessagePrint(msg: "[traceId:\(traceId)] !!! rtmEngine is nil")
@@ -207,7 +54,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         publishOptions.customType = "user.transcription"
         let messageData: [String : Any] = [
             "customType": "user.transcription",
-            "priority": message.priority.rawValue,
+            "priority": message.priority.stringValue,
             "interruptable": message.interruptable,
             "message": message.text ?? "",
             "image_url": message.imageUrl ?? "",
@@ -223,6 +70,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
                 return
             }
 
+            print("\(stringData)")
             callMessagePrint(msg: "[traceId:\(traceId)] rtm publish \(stringData)")
             rtmEngine.publish(channelName: userId, message: stringData, option: publishOptions, completion: { [weak self] res, error in
                 if let errorInfo = error {
@@ -245,12 +93,13 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         }
     }
     
-    @objc public func interrupt(userId: String, completion: @escaping (ConversationalAIAPIError?) -> Void) {
+    @objc public func interrupt(agentSession: AgentSession, completion: @escaping (ConversationalAIAPIError?) -> Void) {
         guard let rtmEngine = self.config.rtmEngine else {
             return
         }
         
         let traceId = UUID().uuidString.prefix(8)
+        let userId = "\(agentSession.userId)"
         callMessagePrint(msg: ">>> [traceId:\(traceId)] [interrupt] \(userId)")
         let publishOptions = AgoraRtmPublishOptions()
         publishOptions.channelType = .user
@@ -366,46 +215,46 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
 }
 
 extension ConversationalAIAPIImpl {
-    private func notifyDelegatesStateChange(userId: String, event: StateChangeEvent) {
+    private func notifyDelegatesStateChange(agentSession: AgentSession, event: StateChangeEvent) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onAgentStateChanged(userId: userId, event: event)
+                delegate.onAgentStateChanged(agentSession: agentSession, event: event)
             }
         }
     }
     
-    private func notifyDelegatesInterrupt(userId: String, event: InterruptEvent) {
+    private func notifyDelegatesInterrupt(agentSession: AgentSession, event: InterruptEvent) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onAgentInterrupted(userId: userId, event: event)
+                delegate.onAgentInterrupted(agentSession:agentSession, event: event)
             }
         }
     }
     
-    private func notifyDelegatesMetrics(userId: String, metrics: Metrics) {
-        callMessagePrint(msg: "<<< [onAgentMetricsInfo], userId: \(userId), metrics: \(metrics)")
+    private func notifyDelegatesMetrics(agentSession: AgentSession, metrics: Metrics) {
+        callMessagePrint(msg: "<<< [onAgentMetricsInfo], userId: \(agentSession.userId), metrics: \(metrics)")
 
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onAgentMetrics(userId: userId, metrics: metrics)
+                delegate.onAgentMetrics(agentSession: agentSession, metrics: metrics)
             }
         }
     }
     
-    private func notifyDelegatesError(userId: String, error: AgentError) {
-        callMessagePrint(msg: "<<< [onAgentError], userId: \(userId), error: \(error)")
+    private func notifyDelegatesError(agentSession: AgentSession, error: AgentError) {
+        callMessagePrint(msg: "<<< [onAgentError], userId: \(agentSession.userId), error: \(error)")
 
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onAgentError(userId: userId, error: error)
+                delegate.onAgentError(agentSession: agentSession, error: error)
             }
         }
     }
     
-    private func notifyDelegatesTranscription(userId: String, transcription: Transcription) {
+    private func notifyDelegatesTranscription(agentSession: AgentSession, transcription: Transcription) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onTranscriptionUpdated(userId: userId, transcription: transcription)
+                delegate.onTranscriptionUpdated(agentSession: agentSession, transcription: transcription)
             }
         }
     }
@@ -491,8 +340,10 @@ extension ConversationalAIAPIImpl {
         let sendTs = (msg["send_ts"] as? NSNumber)?.doubleValue ?? 0.0
         
         let metrics = Metrics(type: metricType, name: metricName, value: latencyMs, timestamp: sendTs)
-    
-        notifyDelegatesMetrics(userId: uid, metrics: metrics)
+        let session = AgentSession()
+        session.userId = Int(uid) ?? -1
+        
+        notifyDelegatesMetrics(agentSession: session, metrics: metrics)
     }
     
     private func handleErrorMessage(uid: String, msg: [String: Any]) {
@@ -508,7 +359,10 @@ extension ConversationalAIAPIImpl {
         let timestamp = (msg["timestamp"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970
         
         let agentError = AgentError(type: venderType, code: code, message: message, timestamp: timestamp)
-        notifyDelegatesError(userId: uid, error: agentError)
+        let session = AgentSession()
+        session.userId = Int(uid) ?? -1
+        
+        notifyDelegatesError(agentSession: session, error: agentError)
     }
     
     func callMessagePrint(msg: String) {
@@ -573,7 +427,9 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
                 let changeEvent = StateChangeEvent(state: aiState, turnId: turnId, timestamp: ts, reason: "")
                 self.stateChangeEvent = changeEvent
                 callMessagePrint(msg: "<<< [onAgentStateChanged] userId:\(event.publisher ?? "0"), event:\(changeEvent)")
-                notifyDelegatesStateChange(userId: event.publisher ?? "0", event: changeEvent)
+                let session = AgentSession()
+                session.userId = Int(event.publisher ?? "0") ?? -1
+                notifyDelegatesStateChange(agentSession: session, event: changeEvent)
             }
             //other
         }
@@ -581,12 +437,12 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
 }
 
 extension ConversationalAIAPIImpl: TranscriptionDelegate {
-    func interrupted(userId: String, event: InterruptEvent) {
-        notifyDelegatesInterrupt(userId: userId, event: event)
+    func interrupted(agentSession: AgentSession, event: InterruptEvent) {
+        notifyDelegatesInterrupt(agentSession: agentSession, event: event)
     }
     
-    func onTranscriptionUpdated(transcription: Transcription) {
-        notifyDelegatesTranscription(userId: "\(transcription.userId)", transcription: transcription)
+    func onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription) {
+        notifyDelegatesTranscription(agentSession: agentSession, transcription: transcription)
     }
     
     func onDebugLog(_ txt: String) {
