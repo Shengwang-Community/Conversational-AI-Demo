@@ -341,7 +341,7 @@ extension ConversationalAIAPIImpl {
         
         let metrics = Metrics(type: metricType, name: metricName, value: latencyMs, timestamp: sendTs)
         let session = AgentSession()
-        session.userId = Int(uid) ?? -1
+        session.userId = uid
         
         notifyDelegatesMetrics(agentSession: session, metrics: metrics)
     }
@@ -360,7 +360,7 @@ extension ConversationalAIAPIImpl {
         
         let agentError = AgentError(type: venderType, code: code, message: message, timestamp: timestamp)
         let session = AgentSession()
-        session.userId = Int(uid) ?? -1
+        session.userId = uid
         
         notifyDelegatesError(agentSession: session, error: agentError)
     }
@@ -428,7 +428,7 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
                 self.stateChangeEvent = changeEvent
                 callMessagePrint(msg: "<<< [onAgentStateChanged] userId:\(event.publisher ?? "0"), event:\(changeEvent)")
                 let session = AgentSession()
-                session.userId = Int(event.publisher ?? "0") ?? -1
+                session.userId = event.publisher ?? "-1"
                 notifyDelegatesStateChange(agentSession: session, event: changeEvent)
             }
             //other

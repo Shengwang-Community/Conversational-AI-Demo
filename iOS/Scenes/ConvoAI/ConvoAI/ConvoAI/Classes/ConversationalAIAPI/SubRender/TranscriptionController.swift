@@ -171,7 +171,7 @@ extension TranscriptionDelegate {
     private var renderMode: TranscriptionRenderMode? = nil
     
     private var lastMessage: Transcription? = nil
-    private var lastPublish: Int? = nil
+    private var lastPublish: String? = nil
     private var lastFinishMessage: Transcription? = nil
     
     private var renderConfig: TranscriptionRenderConfig? = nil
@@ -203,7 +203,7 @@ extension TranscriptionDelegate {
                                                   text: text,
                                                      status: (message.final == true) ? .end : .inprogress, type: .user)
             let session = AgentSession()
-            session.userId = Int(message.publish_id ?? "-1") ?? -1
+            session.userId = message.publish_id ?? "-1"
             self.delegate?.onTranscriptionUpdated(agentSession: session, transcription: transcriptionMessage)
         } else {
             let renderMode = getMessageMode(message)
@@ -265,7 +265,7 @@ extension TranscriptionDelegate {
                                                    type: .agent)
         callMessagePrint(tag: TranscriptionController.uiTag, msg: "[Text Mode] pts: \(audioTimestamp), \(transcriptionMessage)")
         let session = AgentSession()
-        session.userId = Int(message.publish_id ?? "-1") ?? -1
+        session.userId = message.publish_id ?? "-1"
         self.delegate?.onTranscriptionUpdated(agentSession: session, transcription: transcriptionMessage)
     }
     
@@ -293,7 +293,7 @@ extension TranscriptionDelegate {
                     newTurn.turnId = message.turn_id ?? 0
                     newTurn.userId = UInt(message.user_id ?? "0") ?? 0
                     let session = AgentSession()
-                    session.userId = Int(message.publish_id ?? "0") ?? -1
+                    session.userId = message.publish_id ?? "0"
                     newTurn.session = session
                     self.messageQueue.append(newTurn)
                     print("[CovSubRenderController] new turn")
@@ -364,7 +364,7 @@ extension TranscriptionDelegate {
                     
                     let interruptedEvent = InterruptEvent(turnId: buffer.turnId, timestamp: TimeInterval(buffer.start_ms))
                     let session = AgentSession()
-                    session.userId = buffer.session?.userId ?? -1
+                    session.userId = buffer.session?.userId ?? "-1"
                     self.delegate?.interrupted(agentSession: session, event: interruptedEvent)
                 }
             }
@@ -392,7 +392,7 @@ extension TranscriptionDelegate {
                     lastMessage.status = .interrupt
             
                     callMessagePrint(tag: TranscriptionController.uiTag, msg: "[interrupt2] pts: \(audioTimestamp), \(lastMessage)")
-                    let publish = lastPublish ?? -1
+                    let publish = lastPublish ?? "-1"
                     let session = AgentSession()
                     session.userId = publish
                     self.delegate?.onTranscriptionUpdated(agentSession: session, transcription: lastMessage)
@@ -445,7 +445,7 @@ extension TranscriptionDelegate {
                     lastMessage = transcriptionMessage
                     lastPublish = buffer.session?.userId
                     let session = AgentSession()
-                    session.userId = buffer.session?.userId ?? -1
+                    session.userId = buffer.session?.userId ?? "-1"
                     self.delegate?.onTranscriptionUpdated(agentSession: session, transcription: transcriptionMessage)
                 }
             }

@@ -218,7 +218,7 @@ import AgoraRtmKit
 }
 
 @objc public class AgentSession: NSObject {
-    var userId: Int = -1
+    var userId: String = "-1"
 }
 
 @objc public enum ConversationalAIAPIErrorType: Int {

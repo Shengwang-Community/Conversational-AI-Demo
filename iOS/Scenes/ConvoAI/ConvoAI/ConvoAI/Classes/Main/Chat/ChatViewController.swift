@@ -1240,7 +1240,7 @@ extension ChatViewController: RTMManagerDelegate {
     
     @objc func testInterrupt() {
         let session = AgentSession()
-        session.userId = agentUid
+        session.userId = "\(agentUid)"
         convoAIAPI.interrupt(agentSession: session) { error in
             
         }
@@ -1249,7 +1249,7 @@ extension ChatViewController: RTMManagerDelegate {
     @objc func testChat() {
         let message = ChatMessage(text: "给我讲个笑话？", imageUrl: nil, audioUrl: nil)
         let session = AgentSession()
-        session.userId = agentUid
+        session.userId = "\(agentUid)"
         convoAIAPI.chat(agentSession: session, message: message) { error in
             
         }
