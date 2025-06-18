@@ -31,7 +31,7 @@ import AgoraRtmKit
         guard let rtcEngine = config.rtcEngine, let rtmEngine = config.rtmEngine else {
             return
         }
-        
+        rtcEngine.setParameters("{\"rtc.log_external_input\": true}")
         rtcEngine.addDelegate(self)
         rtmEngine.addDelegate(self)
         let subtitleConfig = TranscriptionRenderConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: config.renderMode, delegate: self)
@@ -217,6 +217,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
 
 extension ConversationalAIAPIImpl {
     private func notifyDelegatesStateChange(agentSession: AgentSession, event: StateChangeEvent) {
+        callMessagePrint(msg: "<<< [onAgentStateChanged] agentSession:\(agentSession), event:\(event)")
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
                 delegate.onAgentStateChanged(agentSession: agentSession, event: event)
@@ -225,6 +226,7 @@ extension ConversationalAIAPIImpl {
     }
     
     private func notifyDelegatesInterrupt(agentSession: AgentSession, event: InterruptEvent) {
+        callMessagePrint(msg: "<<< [onInterrupted], agentSession: \(agentSession), event: \(event)")
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
                 delegate.onAgentInterrupted(agentSession:agentSession, event: event)
@@ -233,7 +235,7 @@ extension ConversationalAIAPIImpl {
     }
     
     private func notifyDelegatesMetrics(agentSession: AgentSession, metrics: Metrics) {
-        callMessagePrint(msg: "<<< [onAgentMetricsInfo], userId: \(agentSession.userId), metrics: \(metrics)")
+        callMessagePrint(msg: "<<< [onAgentMetricsInfo], agentSession: \(agentSession), metrics: \(metrics)")
 
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
@@ -243,7 +245,7 @@ extension ConversationalAIAPIImpl {
     }
     
     private func notifyDelegatesError(agentSession: AgentSession, error: AgentError) {
-        callMessagePrint(msg: "<<< [onAgentError], userId: \(agentSession.userId), error: \(error)")
+        callMessagePrint(msg: "<<< [onAgentError], agentSession: \(agentSession), error: \(error)")
 
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
@@ -367,7 +369,13 @@ extension ConversationalAIAPIImpl {
     }
     
     func callMessagePrint(msg: String) {
-        notifyDelegatesDebugLog("\(tag) \(msg)")
+        let log = "\(tag) \(msg)"
+        writeLogToRTCSDK(log: log)
+        notifyDelegatesDebugLog(log)
+    }
+    
+    func writeLogToRTCSDK(log: String) {
+        config.rtcEngine?.writeLog(.info, content: log)
     }
 }
 
@@ -383,6 +391,8 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
         let publisherId = event.publisher
         if let stringData = event.message.stringData {
             do {
+                callMessagePrint(msg: "<<< [didReceiveMessageEvent] publishId:\(publisherId), channelName:\(event.channelName), channelType:\(event.channelType), customType: \(event.customType ?? ""), messageType:\(event.message)")
+                
                 let messageMap = try parseJsonToMap(stringData)
                 dealMessageWithMap(uid: publisherId, msg: messageMap)
             } catch {
@@ -394,6 +404,8 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
                     notifyDelegatesDebugLog("Failed to convert binary data to string")
                     return
                 }
+                callMessagePrint(msg: "<<< [didReceiveMessageEvent] publishId:\(publisherId), channelName:\(event.channelName), channelType:\(event.channelType), customType: \(event.customType ?? ""), messageType:\(event.message)")
+                
                 let messageMap = try parseJsonToMap(rawString)
                 dealMessageWithMap(uid: publisherId, msg: messageMap)
             } catch {
@@ -414,7 +426,20 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
         
         if event.channelType == .message {
             if event.type == .remoteStateChanged {
-                let state = Int(event.states["state"] ?? "") ?? 0
+                print(event.states)
+                let state = event.states["state"] ?? "idle"
+                var value = 0
+                if state == "idle" {
+                    value = 0
+                } else if state == "silent" {
+                    value = 1
+                } else if state == "listening" {
+                    value = 2
+                } else if state == "thinking" {
+                    value = 3
+                } else if state == "speaking" {
+                    value = 4
+                }
                 let turnId = Int(event.states["turn_id"] ?? "") ?? 0
                 if turnId < (self.stateChangeEvent?.turnId ?? 0) {
                     return
@@ -424,11 +449,10 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
                 if ts <= (self.stateChangeEvent?.timestamp ?? 0) {
                     return
                 }
-                callMessagePrint(msg: "agent state: \(state)")
-                let aiState = AgentState.fromValue(state)
+                callMessagePrint(msg: "<<< [didReceivePresenceEvent] agent state: \(state)")
+                let aiState = AgentState.fromValue(value)
                 let changeEvent = StateChangeEvent(state: aiState, turnId: turnId, timestamp: ts, reason: "")
                 self.stateChangeEvent = changeEvent
-                callMessagePrint(msg: "<<< [onAgentStateChanged] userId:\(event.publisher ?? "0"), event:\(changeEvent)")
                 let session = AgentSession()
                 session.userId = event.publisher ?? "-1"
                 notifyDelegatesStateChange(agentSession: session, event: changeEvent)
@@ -439,7 +463,7 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
 }
 
 extension ConversationalAIAPIImpl: TranscriptionDelegate {
-    func interrupted(agentSession: AgentSession, event: InterruptEvent) {
+    func onInterrupted(agentSession: AgentSession, event: InterruptEvent) {
         notifyDelegatesInterrupt(agentSession: agentSession, event: event)
     }
     
@@ -448,7 +472,7 @@ extension ConversationalAIAPIImpl: TranscriptionDelegate {
     }
     
     func onDebugLog(_ txt: String) {
-        notifyDelegatesDebugLog(txt)
+        callMessagePrint(msg: txt)
     }
 }
 

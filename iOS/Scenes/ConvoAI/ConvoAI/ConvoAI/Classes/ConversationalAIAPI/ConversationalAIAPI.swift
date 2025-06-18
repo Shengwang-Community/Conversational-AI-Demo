@@ -109,6 +109,7 @@ import AgoraRtmKit
 
 /// AI state enumeration
 @objc public enum AgentState: Int {
+    case idle       /// Idle state
     case silent     /// Silent state
     case listening  /// Listening
     case thinking   /// Thinking
@@ -154,6 +155,10 @@ import AgoraRtmKit
     @objc public init(turnId: Int, timestamp: TimeInterval) {
         self.turnId = turnId
         self.timestamp = timestamp
+    }
+
+    public override var description: String {
+        return "InterruptEvent(turnId: \(turnId), timestamp: \(timestamp))"
     }
 }
 
@@ -239,6 +244,10 @@ import AgoraRtmKit
 
 @objc public class AgentSession: NSObject {
     var userId: String = "-1"
+
+    public override var description: String {
+        return "AgentSession(userId: \(userId))"
+    }
 }
 
 @objc public enum ConversationalAIAPIErrorType: Int {
@@ -396,7 +405,8 @@ public enum MessageType: String, CaseIterable {
     /// - handler The listener
     @objc func removeHandler(handler: ConversationalAIAPIEventHandler)
     
-    ///This method releases all the resources used
+    /// Destroy the API instance and release resources.
+    /// After calling, this instance cannot be used again. All resources will be released.
     @objc func destroy()
 }
 

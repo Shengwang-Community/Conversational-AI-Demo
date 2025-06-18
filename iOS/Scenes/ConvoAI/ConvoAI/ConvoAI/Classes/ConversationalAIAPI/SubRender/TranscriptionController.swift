@@ -106,14 +106,14 @@ protocol TranscriptionDelegate: AnyObject {
     /// - Parameter transcription: The updated transcription message
     func onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription)
     
-    func interrupted(agentSession: AgentSession, event: InterruptEvent)
+    func onInterrupted(agentSession: AgentSession, event: InterruptEvent)
     
     func onDebugLog(_ txt: String)
 }
 
 extension TranscriptionDelegate {
     func onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription) {}
-    func interrupted(agentSession: AgentSession, event: InterruptEvent) {}
+    func onInterrupted(agentSession: AgentSession, event: InterruptEvent) {}
     func onDebugLog(_ txt: String) {}
 }
 
@@ -179,16 +179,12 @@ extension TranscriptionDelegate {
     private var stateMessage: TranscriptionMessage? = nil
     
     deinit {
-        addLog("[CovSubRenderController] deinit: \(self)")
+        callMessagePrint(tag: TranscriptionController.tag, msg: "deinit: \(self)")
     }
     
     func callMessagePrint(tag: String, msg: String) {
         print("\(tag) \(msg)")
         delegate?.onDebugLog("\(tag) \(msg)")
-    }
-    
-    private func addLog(_ txt: String) {
-        delegate?.onDebugLog(txt)
     }
     
     private let queue = DispatchQueue(label: "com.voiceagent.messagequeue", attributes: .concurrent)
@@ -247,7 +243,7 @@ extension TranscriptionDelegate {
     
     private func handleTextMessage(_ message: TranscriptionMessage) {
         guard let text = message.text, !text.isEmpty else {
-            callMessagePrint(tag: TranscriptionController.tag, msg: "<<< message text is nil")
+            callMessagePrint(tag: TranscriptionController.tag, msg: "<<< [Text Mode] text is nil")
             return
         }
         var messageState: TranscriptionState = .inprogress
@@ -267,7 +263,7 @@ extension TranscriptionDelegate {
                                                    type: .agent)
         let session = AgentSession()
         session.userId = message.publish_id ?? "-1"
-        callMessagePrint(tag: TranscriptionController.uiTag, msg: "[Text Mode] pts: \(audioTimestamp), \(transcriptionMessage), publisher:\(session.userId)")
+        callMessagePrint(tag: TranscriptionController.uiTag, msg: "[Text Mode] pts: \(audioTimestamp), \(session), \(transcriptionMessage)")
         self.delegate?.onTranscriptionUpdated(agentSession: session, transcription: transcriptionMessage)
     }
     
@@ -289,7 +285,7 @@ extension TranscriptionDelegate {
                     self.callMessagePrint(tag: TranscriptionController.tag, msg: "<<< Discarding the turn unKnow state received=\(message.turn_id ?? -1) turnStatus=\(message.turn_status ?? -1), publisher:\(message.publish_id ?? "-1")")
                     return
                 }
-                print("🔔[CovSubRenderController] turn_id: \(message.turn_id ?? 0), status: \(turnStatus)")
+
                 let curBuffer: TurnMessageInfo = self.messageQueue.first { $0.turnId == message.turn_id } ?? {
                     let newTurn = TurnMessageInfo()
                     newTurn.turnId = message.turn_id ?? 0
@@ -354,7 +350,8 @@ extension TranscriptionDelegate {
                     let session = AgentSession()
                     session.userId = buffer.session?.userId ?? "-1"
                     
-                    self.callMessagePrint(tag: TranscriptionController.uiTag, msg: "reveive interrupted message, pts: \(self.audioTimestamp), \(message), publisher:\(session.userId) ")
+                    self.callMessagePrint(tag: TranscriptionController.tag, msg: "<<< [onInterrupted], pts: \(self.audioTimestamp), \(session), \(message), \(interruptedEvent) ")
+
                     var lastWord: TurnWordInfo? = nil
                     for index in buffer.words.indices {
                         if buffer.words[index].start_ms > interruptTime {
@@ -367,7 +364,7 @@ extension TranscriptionDelegate {
                     }
                     
                     lastWord?.status = .interrupt
-                    self.delegate?.interrupted(agentSession: session, event: interruptedEvent)
+                    self.delegate?.onInterrupted(agentSession: session, event: interruptedEvent)
                 }
             }
         }
@@ -383,7 +380,7 @@ extension TranscriptionDelegate {
             for (index, buffer) in self.messageQueue.enumerated().reversed() {
                 if interrupte {
                     self.messageQueue.remove(at: index)
-                    self.addLog("🔔[CovSubRenderController] remove interrupte turn: \(buffer.turnId)")
+                    callMessagePrint(tag: TranscriptionController.tag, msg: "remove interrupte turn: \(buffer.turnId)")
                     continue
                 }
                 // if last turn is interrupte by this buffer
@@ -406,7 +403,6 @@ extension TranscriptionDelegate {
 
                 let interruptSub = buffer.words.firstIndex(where: { $0.status == .interrupt} )
                 let endSub = buffer.words.firstIndex(where: { $0.status == .end} )
-                self.addLog("🔔[CovSubRenderController] get min subrange turn: \(buffer.turnId) range \(buffer.words.count) audioTimestamp: \(audioTimestamp) inprogress: \(inprogressSub ?? -1) interrupt: \(interruptSub ?? -1) end: \(endSub ?? -1)")
                 let minIndex = [inprogressSub, interruptSub, endSub].compactMap { $0 }.min()
                 guard let minRange = minIndex else {
                     return
@@ -414,7 +410,6 @@ extension TranscriptionDelegate {
                 let currentWords = Array(buffer.words[0...minRange]).filter { $0.start_ms <= audioTimestamp }
                 if currentWords.isEmpty { return }
                 
-                self.addLog("🔔[CovSubRenderController] get minRange: \(minRange) words: \(buffer.words.count) current: \(currentWords.count)")
                 // send turn with state
                 var transcriptionMessage: Transcription
                 if minRange == interruptSub {
@@ -425,7 +420,6 @@ extension TranscriptionDelegate {
                                                          type: .agent)
                     // remove finished turn
                     self.messageQueue.remove(at: index)
-                    self.addLog("🔔[CovSubRenderController] remove signed interrupte turn: \(buffer.turnId)")
                     lastFinishMessage = transcriptionMessage
                     callMessagePrint(tag: TranscriptionController.uiTag, msg: "<<< [interrupt1] pts: \(audioTimestamp), message: \(transcriptionMessage), publisher:\(buffer.session?.userId ?? "")")
                 } else if minRange == endSub {
@@ -435,7 +429,6 @@ extension TranscriptionDelegate {
                                                          status: .end, type: .agent)
                     // remove finished turn
                     self.messageQueue.remove(at: index)
-                    self.addLog("🔔[CovSubRenderController] remove signed end turn: \(buffer.turnId)")
                     lastFinishMessage = transcriptionMessage
                     callMessagePrint(tag: TranscriptionController.uiTag, msg: "[end] pts: \(audioTimestamp), message: \(transcriptionMessage), publisher:\(buffer.session?.userId ?? "")")
                 } else {
@@ -445,8 +438,6 @@ extension TranscriptionDelegate {
                                                          status: .inprogress, type: .agent)
                     callMessagePrint(tag: TranscriptionController.uiTag, msg: "<<< [progress] pts: \(audioTimestamp), message: \(transcriptionMessage), publisher:\(buffer.session?.userId ?? "")")
                 }
-                print("📊 [CovSubRenderController] message flush turn: \(buffer.turnId) state: \(transcriptionMessage.status)")
-//                print("📊 [CovSubRenderController] turn: \(buffer.turnId) range \(buffer.words.count) Subrange: \(minRange) words: \(currentWords.map { $0.text }.joined())")
                 if !transcriptionMessage.text.isEmpty {
                     lastMessage = transcriptionMessage
                     lastPublish = buffer.session?.userId
@@ -486,11 +477,10 @@ extension TranscriptionController {
         rtcEngine.setPlaybackAudioFrameBeforeMixingParametersWithSampleRate(44100, channel: 1)
         
         rtmEngine.addDelegate(self)
-        addLog("[CovSubRenderController] setupWithConfig: \(self)")
+        callMessagePrint(tag: TranscriptionController.tag, msg: ">>> [setupWithConfig]")
     }
         
     @objc public func reset() {
-        //TODO:
         timer?.invalidate()
         timer = nil
         renderMode = nil
@@ -507,9 +497,8 @@ extension TranscriptionController {
             var transcription = try JSONDecoder().decode(TranscriptionMessage.self, from: data)
             transcription.publish_id = publisherId
             handleMessage(transcription)
-            addLog("✅[CovSubRenderController] inputRtmMessage: \(transcription.description())")
         } catch {
-            addLog("⚠️[CovSubRenderController] inputRtmMessage: Failed to parse JSON content, error: \(error.localizedDescription)")
+            callMessagePrint(tag: TranscriptionController.tag, msg: "!!!Failed to parse JSON content, error: \(error.localizedDescription)")
             return
         }
     }
@@ -519,7 +508,7 @@ extension TranscriptionController: AgoraRtmClientDelegate {
     public func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceiveMessageEvent event: AgoraRtmMessageEvent) {
         if let stringData = event.message.stringData {
             guard let data = stringData.data(using: .utf8) else {
-                addLog("⚠️[CovSubRenderController] inputRtmMessage: Failed to convert string to data")
+                callMessagePrint(tag: TranscriptionController.tag, msg: "!!!inputRtmMessage: Failed to convert string to data")
                 return
             }
             if let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []),

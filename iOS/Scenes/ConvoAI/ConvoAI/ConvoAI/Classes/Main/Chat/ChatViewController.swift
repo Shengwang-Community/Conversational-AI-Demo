@@ -779,7 +779,7 @@ extension ChatViewController {
                         "enable": true,
                         "enable_words": true,
                         "protocol_version": "v2",
-                        "redundant": nil,
+//                        "redundant": nil,
                     ],
                     "sc": [
                         "sessCtrlStartSniffWordGapInMs": nil,
@@ -1267,10 +1267,9 @@ extension ChatViewController: RTMManagerDelegate {
 extension ChatViewController: ConversationalAIAPIEventHandler {
     public func onAgentStateChanged(agentSession: AgentSession, event: StateChangeEvent) {
         switch event.state {
-            //TODO: idle state???
-//        case .idle:
-//            stateLabel.text = "idle"
-//            break
+        case .idle:
+            stateLabel.text = "idle"
+            break
         case .silent:
             stateLabel.text = "silent"
             break
@@ -1297,7 +1296,7 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     }
     
     public func onAgentError(agentSession: AgentSession, error: AgentError) {
-        
+        addLog("<<< [onAgentError] error: \(error)")
     }
     
     public func onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription) {
