@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.convoaiApi
 
+import android.util.Log
 import io.agora.rtc2.Constants
 import io.agora.rtc2.IRtcEngineEventHandler
 
@@ -60,6 +61,14 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
     private fun callMessagePrint(tag: String, message: String) {
         conversationalAIHandlerHelper.notifyEventHandlers { eventHandler ->
             eventHandler.onDebugLog("$tag $message")
+        }
+        runOnMainThread {
+            try {
+                config.rtcEngine.writeLog(Constants.LogLevel.LOG_LEVEL_INFO.ordinal, "$tag $message")
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.d(TAG, "rtcEngine writeLog ${e.message}")
+            }
         }
     }
 
@@ -206,9 +215,7 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
                 }
 
                 override fun onDebugLog(tag: String, message: String) {
-                    conversationalAIHandlerHelper.notifyEventHandlers { eventHandler ->
-                        eventHandler.onDebugLog("$tag $message")
-                    }
+                    callMessagePrint(tag, message)
                 }
             }
         )
@@ -216,11 +223,14 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
         mMessageParser.onError = { message ->
             callMessagePrint(TAG, message)
         }
+        // Initialize transcription controller for subtitle rendering
         transcriptionController = TranscriptionController(subtitleRenderConfig)
-
+        // Register RTC event handler to receive audio/video events
         config.rtcEngine.addHandler(covRtcHandler)
-
+        // Register RTM event listener to receive real-time messages
         config.rtmClient.addEventListener(covRtmMsgProxy)
+        // Enable writing logs to SDK log file via private parameters
+        config.rtcEngine.setParameters("{\"rtc.log_external_input\": true}")
     }
 
     override fun addHandler(eventHandler: IConversationalAIAPIEventHandler) {

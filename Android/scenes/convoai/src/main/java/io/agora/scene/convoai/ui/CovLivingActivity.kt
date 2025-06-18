@@ -220,26 +220,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     override fun finish() {
-        stopRoomCountDownTask()
-        coroutineScope.cancel()
-        // if agent is connected, leave channel
-        if (connectionState == AgentConnectionState.CONNECTED || connectionState == AgentConnectionState.ERROR) {
-            stopAgentAndLeaveChannel()
-        }
-        mCovBallAnim?.let {
-            it.release()
-            mCovBallAnim = null
-        }
-        // Clean up ConversationalAIAPI resources
-        conversationalAIAPI?.let {
-            it.removeHandler(covEventHandler)
-            it.destroy()
-            conversationalAIAPI = null
-        }
-        CovRtcManager.destroy()
-        CovRtmManager.destroy()
-        CovAgentManager.resetData()
-
+        release()
         super.finish()
     }
 
@@ -458,12 +439,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             withContext(Dispatchers.Main) {
                 if (!loginRTm) {
                     // RTM login error，return
-                    ToastUtil.show(getString(R.string.cov_detail_login_rtm_error), Toast.LENGTH_LONG)
-                    CovLogger.d(TAG, "RTM login failed")
+                    stopAgentAndLeaveChannel()
                     return@withContext
-                } else {
-                    // After RTM login success, ConversationalAIAPI RTM event listening is enabled
-                    CovLogger.d(TAG, "RTM login success")
                 }
             }
 
@@ -744,27 +721,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
             override fun onTokenPrivilegeWillExpire(token: String?) {
                 CovLogger.w(TAG, "RTC token will expire, renewing token")
-                coroutineScope.launch(Dispatchers.IO) {
-                    try {
-                        val isTokenOK = updateTokenAsync()
-                        if (isTokenOK) {
-                            CovLogger.d(TAG, "Token updated successfully, renewing RTC and RTM")
-                            // Since RTC and RTM use the same token, renew RTC token first
-                            CovRtcManager.renewRtcToken(integratedToken ?: "")
-                            CovRtmManager.renewToken(integratedToken ?: "")
-                        } else {
-                            withContext(Dispatchers.Main) {
-                                stopAgentAndLeaveChannel()
-                            }
-                            ToastUtil.show(R.string.cov_detail_update_token_error, Toast.LENGTH_LONG)
-                        }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            stopAgentAndLeaveChannel()
-                        }
-                        CovLogger.e(TAG, "Exception during RTC renew token process $e")
-                    }
-                }
+                innerTokenPrivilegeWillExpire()
             }
         })
         return rtcEngine
@@ -1218,10 +1175,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 }
 
                 override fun onEnvConfigChange() {
-                    stopAgentAndLeaveChannel()
-                    SSOUserManager.logout()
-                    CovRtmManager.logout()
-                    updateLoginStatus(false)
+                    restartActivity()
                 }
 
                 override fun onAudioParameter(parameter: String) {
@@ -1475,75 +1429,116 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
             override fun onFailed() {
                 CovLogger.w(TAG, "RTM connection failed, attempting re-login with new token")
-
-                coroutineScope.launch(Dispatchers.IO) {
-                    try {
-                        // Request new token since RTM connection failed
-                        val isTokenOK = updateTokenAsync()
-                        if (isTokenOK) {
-                            CovLogger.d(TAG, "New token obtained successfully, updating RTC and RTM")
-                            // Since RTC and RTM use the same token, renew RTC token first
-                            CovRtcManager.renewRtcToken(integratedToken ?: "")
-                            // Then re-login RTM with new token
-                            val loginRTm = loginRtmClientAsync()
-                            withContext(Dispatchers.Main) {
-                                if (loginRTm) {
-                                    CovLogger.d(TAG, "RTM re-login successful")
-                                } else {
-                                    CovLogger.e(TAG, "RTM re-login failed even with new token")
-                                    stopAgentAndLeaveChannel()
-                                    ToastUtil.show(getString(R.string.cov_detail_login_rtm_error), Toast.LENGTH_LONG)
-                                }
-                            }
-                        } else {
-                            CovLogger.e(TAG, "Failed to obtain new token for RTM re-login")
-                            withContext(Dispatchers.Main) {
-                                stopAgentAndLeaveChannel()
-                                ToastUtil.show(getString(R.string.cov_detail_update_token_error), Toast.LENGTH_LONG)
-                            }
-                        }
-                    } catch (e: Exception) {
-                        CovLogger.e(TAG, "Exception during RTM re-login process: ${e.message}")
-                        withContext(Dispatchers.Main) {
-                            stopAgentAndLeaveChannel()
-                        }
-                    }
-                }
+                integratedToken = null
+                stopAgentAndLeaveChannel()
             }
 
             override fun onTokenPrivilegeWillExpire(channelName: String) {
                 CovLogger.w(TAG, "RTM token will expire, renewing token")
-
-                coroutineScope.launch(Dispatchers.IO) {
-                    try {
-                        val isTokenOK = updateTokenAsync()
-                        if (isTokenOK) {
-                            CovLogger.d(TAG, "Token renewed successfully, updating RTC and RTM")
-                            // Since RTC and RTM use the same token, renew both
-                            CovRtcManager.renewRtcToken(integratedToken ?: "")
-                            CovRtmManager.renewToken(integratedToken ?: "")
-                        } else {
-                            CovLogger.e(TAG, "Failed to renew token")
-                            withContext(Dispatchers.Main) {
-                                stopAgentAndLeaveChannel()
-                                ToastUtil.show(getString(R.string.cov_detail_update_token_error), Toast.LENGTH_LONG)
-                            }
-                        }
-                    } catch (e: Exception) {
-                        CovLogger.e(TAG, "Exception during token renewal process: ${e.message}")
-                        withContext(Dispatchers.Main) {
-                            stopAgentAndLeaveChannel()
-                        }
-                    }
-                }
+                innerTokenPrivilegeWillExpire()
             }
         })
         return rtmClient
     }
 
+    private fun innerTokenPrivilegeWillExpire(){
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                val isTokenOK = updateTokenAsync()
+                if (isTokenOK) {
+                    CovLogger.d(TAG, "Token renewed successfully, updating RTC and RTM")
+                    // Since RTC and RTM use the same token, renew both
+                    CovRtcManager.renewRtcToken(integratedToken ?: "")
+                    CovRtmManager.renewToken(integratedToken ?: "", { error->
+                        if (error!=null){
+                            integratedToken = null
+                            ToastUtil.show(R.string.cov_detail_update_token_error, "${error.message}")
+                        }
+                    })
+                } else {
+                    CovLogger.e(TAG, "Failed to renew token")
+                    withContext(Dispatchers.Main) {
+                        stopAgentAndLeaveChannel()
+                        ToastUtil.show(getString(R.string.cov_detail_update_token_error))
+                    }
+                }
+            } catch (e: Exception) {
+                CovLogger.e(TAG, "Exception during token renewal process: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    stopAgentAndLeaveChannel()
+                }
+            }
+        }
+    }
+
     private suspend fun loginRtmClientAsync(): Boolean = suspendCoroutine { cont ->
         CovRtmManager.login(integratedToken ?: "", completion = { error ->
-            cont.resume(error == null)
+            if (error != null) {
+                integratedToken = null
+                ToastUtil.show(R.string.cov_detail_login_rtm_error, "${error.message}")
+                cont.resume(false)
+            } else {
+                cont.resume(true)
+            }
         })
+    }
+
+    private fun restartActivity() {
+        release()
+        recreate()
+    }
+
+    private var isReleased = false
+    private val releaseLock = Any()
+
+    /**
+     * Safely release all resources, supports multiple calls (idempotent)
+     * Can be safely called in both restartActivity() and finish()
+     */
+    private fun release() {
+        synchronized(releaseLock) {
+            // Idempotent protection, prevent multiple releases
+            if (isReleased) {
+                return
+            }
+            try {
+                // Mark as releasing
+                isReleased = true
+                // Clear integrated token
+                integratedToken = null
+                // Stop room countdown task
+                stopRoomCountDownTask()
+                // Leave channel and disconnect
+                if (connectionState == AgentConnectionState.CONNECTED || connectionState == AgentConnectionState.ERROR) {
+                    stopAgentAndLeaveChannel()
+                }
+                // Cancel coroutine scope
+                if (coroutineScope.isActive) {
+                    coroutineScope.cancel("Activity release")
+                }
+                // Release animation resources
+                mCovBallAnim?.let { anim ->
+                    anim.release()
+                    mCovBallAnim = null
+                }
+                // Clean up ConversationalAIAPI resources
+                conversationalAIAPI?.let { api ->
+                    api.removeHandler(covEventHandler)
+                    api.destroy()
+                    conversationalAIAPI = null
+                }
+                // User logout
+                SSOUserManager.logout()
+                // Destroy RTC manager
+                CovRtcManager.destroy()
+                // Destroy RTM manager
+                CovRtmManager.destroy()
+                // Reset Agent manager data
+                CovAgentManager.resetData()
+
+            } catch (e: Exception) {
+                CovLogger.w(TAG, "Release failed: ${e.message}")
+            }
+        }
     }
 }

@@ -298,8 +298,7 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                 rtpTimestamp: Int,
                 presentationMs: Long
             ): Boolean {
-                // Pass render time to subtitle controller
-                // config.callback?.onDebugLog(TAG, "onPlaybackAudioFrameBeforeMixing $presentationMs")
+                // Pass render time to transcription controller
                 mPresentationMs = presentationMs + 20
                 return false
             }
