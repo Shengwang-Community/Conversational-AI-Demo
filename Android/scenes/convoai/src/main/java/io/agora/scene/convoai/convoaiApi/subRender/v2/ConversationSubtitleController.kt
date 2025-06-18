@@ -243,7 +243,7 @@ class ConversationSubtitleController(
                 rtpTimestamp: Int,
                 presentationMs: Long
             ): Boolean {
-                // Pass render time to subtitle controller
+                // Pass render time to tran controller
                 // config.callback?.onDebugLog(TAG, "onPlaybackAudioFrameBeforeMixing $presentationMs")
                 mPresentationMs = presentationMs + 20
                 return false
