@@ -38,14 +38,6 @@ public class ChatViewController: UIViewController {
         return button
     }()
     
-    private lazy var interruptButton: UIButton = {
-        let button = UIButton()
-        button.addTarget(self, action: #selector(testInterrupt), for: .touchUpInside)
-        button.setTitle("Interrupt", for: .normal)
-        button.backgroundColor = .blue
-        return button
-    }()
-    
     private lazy var subRenderController: ConversationSubtitleController = {
             let renderCtrl = ConversationSubtitleController()
             return renderCtrl
@@ -80,15 +72,6 @@ public class ChatViewController: UIViewController {
         view.settingButton.addTarget(self, action: #selector(onClickSettingButton), for: .touchUpInside)
         view.centerTitleButton.addTarget(self, action: #selector(onClickLogo), for: .touchUpInside)
         return view
-    }()
-
-    private lazy var stateLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = .white
-        label.textAlignment = .center
-        label.backgroundColor = UIColor(hex:0x000000, transparency: 0.25)
-        label.isHidden = true
-        return label
     }()
 
     private lazy var bottomBar: AgentControlToolbar = {
@@ -132,13 +115,6 @@ public class ChatViewController: UIViewController {
         return view
     }()
     
-    private lazy var contentView: UIView = {
-        let view = UIView()
-        view.layerCornerRadius = 16
-        view.clipsToBounds = true
-        return view
-    }()
-    
     private lazy var aiNameLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
@@ -156,6 +132,13 @@ public class ChatViewController: UIViewController {
     private lazy var messageView: ChatView = {
         let view = ChatView()
         view.isHidden = true
+        return view
+    }()
+
+    private lazy var agentStateView: AgentStateView = {
+        let view = AgentStateView()
+        view.isHidden = true
+        view.stopButton.addTarget(self, action: #selector(onClickStopSpeakingButton(_:)), for: .touchUpInside)
         return view
     }()
     
@@ -199,16 +182,10 @@ public class ChatViewController: UIViewController {
         setupSomeNecessaryConfig()
         
         view.addSubview(sendMessageButton)
-        view.addSubview(interruptButton)
         
         sendMessageButton.snp.makeConstraints { make in
             make.centerX.equalTo(view)
             make.centerY.equalTo(view)
-        }
-        
-        interruptButton.snp.makeConstraints { make in
-            make.centerX.equalTo(view)
-            make.top.equalTo(sendMessageButton.snp.bottom).offset(30)
         }
     }
     
@@ -304,9 +281,7 @@ public class ChatViewController: UIViewController {
     
     private func setupViews() {
         view.backgroundColor = .black
-        [animateContentView, upperBackgroundView, lowerBackgroundView, contentView, messageView, topBar, welcomeMessageView, bottomBar, annotationView, devModeButton, stateLabel].forEach { view.addSubview($0) }
-        
-        contentView.addSubview(aiNameLabel)
+        [animateContentView, upperBackgroundView, lowerBackgroundView, messageView, agentStateView, topBar, welcomeMessageView, bottomBar, annotationView, devModeButton].forEach { view.addSubview($0) }
     }
     
     private func setupConstraints() {
@@ -315,35 +290,9 @@ public class ChatViewController: UIViewController {
             make.left.right.equalToSuperview()
             make.height.equalTo(48)
         }
-
-        stateLabel.snp.makeConstraints { make in
-            make.centerX.equalToSuperview()
-            make.height.equalTo(44)
-            make.width.equalTo(120)
-            make.top.equalTo(topBar.snp.bottom).offset(40)
-        }
-
+        
         animateContentView.snp.makeConstraints { make in
             make.left.right.top.bottom.equalTo(0)
-        }
-        
-        contentView.snp.makeConstraints { make in
-            make.left.equalTo(0)
-            make.right.equalTo(0)
-            make.top.equalTo(topBar.snp.bottom).offset(20)
-            make.bottom.equalTo(bottomBar.snp.top).offset(-20)
-        }
-        
-        messageView.snp.makeConstraints { make in
-            make.top.equalTo(topBar.snp.bottom).offset(22)
-            make.left.right.equalTo(0)
-            make.bottom.equalTo(0)
-        }
-        
-        annotationView.snp.makeConstraints { make in
-            make.bottom.equalTo(bottomBar.snp.top).offset(-94)
-            make.left.right.equalTo(0)
-            make.height.equalTo(44)
         }
         
         bottomBar.snp.makeConstraints { make in
@@ -352,6 +301,24 @@ public class ChatViewController: UIViewController {
             make.height.equalTo(76)
         }
         
+        agentStateView.snp.makeConstraints { make in
+            make.bottom.equalTo(bottomBar.snp.top).offset(-24)
+            make.left.right.equalTo(0)
+            make.height.equalTo(58)
+        }
+        
+        messageView.snp.makeConstraints { make in
+            make.top.equalTo(topBar.snp.bottom).offset(22)
+            make.left.right.equalTo(0)
+            make.bottom.equalTo(agentStateView.snp.top)
+        }
+        
+        annotationView.snp.makeConstraints { make in
+            make.bottom.equalTo(bottomBar.snp.top).offset(-94)
+            make.left.right.equalTo(0)
+            make.height.equalTo(44)
+        }
+                
         welcomeMessageView.snp.makeConstraints { make in
             make.left.equalTo(29)
             make.right.equalTo(-29)
@@ -482,10 +449,10 @@ public class ChatViewController: UIViewController {
         animateView.updateAgentState(.idle)
         messageView.clearMessages()
         messageView.isHidden = true
-        stateLabel.isHidden = true
         bottomBar.resetState()
         timerCoordinator.stopAllTimer()
         AppContext.preferenceManager()?.resetAgentInformation()
+        agentStateView.isHidden = true
     }
         
     private func setupMuteState(state: Bool) {
@@ -624,11 +591,9 @@ extension ChatViewController {
             return
         }
         manager.updateAgentState(.disconnected)
+        agentStateView.isHidden = true
         if DeveloperConfig.shared.isDeveloperMode {
             channelName = "agent_debug_\(UUID().uuidString.prefix(8))"
-
-            stateLabel.isHidden = false
-            stateLabel.text = ""
         } else {
             channelName = "agent_\(UUID().uuidString.prefix(8))"
         }
@@ -834,6 +799,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
             AppContext.preferenceManager()?.updateAgentState(.disconnected)
             AppContext.preferenceManager()?.updateRoomState(.disconnected)
             showErrorToast(text: ResourceManager.L10n.Error.networkDisconnected)
+            agentStateView.isHidden = true
         } else if reason == .reasonRejoinSuccess {
             guard let manager = AppContext.preferenceManager() else {
                 dismissErrorToast()
@@ -846,7 +812,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
             
             manager.updateAgentState(.connected)
             manager.updateRoomState(.connected)
-            
+            agentStateView.isHidden = false
             dismissErrorToast()
         } else if reason == .reasonLeaveChannel {
             dismissErrorToast()
@@ -871,6 +837,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
         timerCoordinator.startUsageDurationLimitTimer()
         addLog("[RTC Call Back] didJoinedOfUid uid: \(uid)")
         AppContext.preferenceManager()?.updateAgentState(.connected)
+        agentStateView.isHidden = false
         SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.agentJoined)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -883,6 +850,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
         animateView.updateAgentState(.idle)
         AppContext.preferenceManager()?.updateAgentState(.disconnected)
         showErrorToast(text: ResourceManager.L10n.Conversation.agentLeave)
+        agentStateView.isHidden = true
         remoteIsJoined = false
     }
     
@@ -1020,6 +988,14 @@ private extension ChatViewController {
             let selectedState = !state
             setupMuteState(state: selectedState)
             return selectedState
+        }
+    }
+    
+    @objc private func onClickStopSpeakingButton(_ sender: UIButton) {
+        let session = AgentSession()
+        session.userId = "\(agentUid)"
+        convoAIAPI.interrupt(agentSession: session) { error in
+            
         }
     }
     
@@ -1245,14 +1221,6 @@ extension ChatViewController: RTMManagerDelegate {
         addLog(log)
     }
     
-    @objc func testInterrupt() {
-        let session = AgentSession()
-        session.userId = "\(agentUid)"
-        convoAIAPI.interrupt(agentSession: session) { error in
-            
-        }
-    }
-    
     @objc func testChat() {
         let message = ChatMessage(text: "tell me a joke？", imageUrl: nil, audioUrl: nil)
         let session = AgentSession()
@@ -1266,25 +1234,7 @@ extension ChatViewController: RTMManagerDelegate {
 
 extension ChatViewController: ConversationalAIAPIEventHandler {
     public func onAgentStateChanged(agentSession: AgentSession, event: StateChangeEvent) {
-        switch event.state {
-        case .idle:
-            stateLabel.text = "idle"
-            break
-        case .silent:
-            stateLabel.text = "silent"
-            break
-        case .listening:
-            stateLabel.text = "listening"
-            break
-        case .thinking:
-            stateLabel.text = "thinking"
-            break
-        case .speaking:
-            stateLabel.text = "speaking"
-            break
-        default:
-            break
-        }
+        agentStateView.updateState(event.state)
     }
     
     public func onAgentInterrupted(agentSession: AgentSession, event: InterruptEvent) {

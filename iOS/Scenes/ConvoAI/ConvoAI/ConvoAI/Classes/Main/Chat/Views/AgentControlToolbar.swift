@@ -225,26 +225,25 @@ class AgentControlToolbar: UIView {
         }
         
         muteButton.snp.makeConstraints { make in
-            make.center.equalTo(buttonControlContentView)
+            make.left.equalTo(buttonControlContentView).offset(34)
+            make.centerY.equalTo(buttonControlContentView)
             make.width.equalTo(buttonWidth)
             make.height.equalTo(buttonHeight)
         }
         micProgressView.snp.makeConstraints { make in
-            make.centerX.equalToSuperview()
+            make.centerX.equalTo(muteButton)
             make.top.equalTo(26)
             make.width.equalTo(21)
             make.height.equalTo(15)
         }
-        captionsButton.snp.makeConstraints { make in
-            make.right.equalTo(muteButton.snp.left).offset(-34)
-            make.centerY.equalTo(muteButton)
+        closeButton.snp.makeConstraints { make in
+            make.center.equalTo(buttonControlContentView)
             make.width.equalTo(buttonWidth)
             make.height.equalTo(buttonHeight)
         }
-        
-        closeButton.snp.makeConstraints { make in
-            make.left.equalTo(muteButton.snp.right).offset(34)
-            make.centerY.equalTo(muteButton)
+        captionsButton.snp.makeConstraints { make in
+            make.right.equalTo(buttonControlContentView).offset(-34)
+            make.centerY.equalTo(buttonControlContentView)
             make.width.equalTo(buttonWidth)
             make.height.equalTo(buttonHeight)
         }
