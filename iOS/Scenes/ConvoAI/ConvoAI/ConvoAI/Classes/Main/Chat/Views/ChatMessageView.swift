@@ -244,7 +244,6 @@ class ChatView: UIView {
     
     // MARK: - Setup
     private func setupViews() {
-        backgroundColor = UIColor.themColor(named: "ai_mask1")
         addSubview(tableView)
         addSubview(arrowButton)
     }

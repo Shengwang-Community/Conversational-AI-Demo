@@ -39,6 +39,10 @@
 "conversation.agent.connecting" = "Connecting...";
 "conversation.user.speak.toast" = "At the beginning of the conversation, please speak loudly and clearly to help the AI agent better lock onto your voice.";
 "conversation.agent.interrputed" = "Interrupted";
+"conversation.agent.state.silent" = "You can start speaking";
+"conversation.agent.state.listening" = "Listening...";
+"conversation.agent.state.speaking" = "Speak or tap to interrupt";
+"conversation.agent.state.muted" = "Muted";
 
 "conversation.message.alert.title" = "Clear Messages";
 "conversation.message.alert.content" = "Are you sure you want to clear all messages?";

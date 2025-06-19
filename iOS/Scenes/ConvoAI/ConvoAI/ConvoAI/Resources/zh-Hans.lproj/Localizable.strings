@@ -41,6 +41,10 @@
 "conversation.agent.connecting" = "连接中...";
 "conversation.user.speak.toast" = "请在对话初期大声、清晰地说话，提升智能体对您的声音锁定效果。";
 "conversation.agent.interrputed" = "已打断";
+"conversation.agent.state.silent" = "你可以开始说话";
+"conversation.agent.state.listening" = "正在听...";
+"conversation.agent.state.speaking" = "说话或点击打断";
+"conversation.agent.state.muted" = "已静音";
 
 "conversation.alert.cancel" = "取消";
 "conversation.alert.confirm" = "确定";

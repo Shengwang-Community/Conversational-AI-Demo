@@ -79,6 +79,10 @@ extension ResourceManager {
             public static let alertClear = ResourceManager.localizedString("conversation.alert.clear")
             public static let userSpeakToast = ResourceManager.localizedString("conversation.user.speak.toast")
             public static let agentInterrputed = ResourceManager.localizedString("conversation.agent.interrputed")
+            public static let agentStateSilent = ResourceManager.localizedString("conversation.agent.state.silent")
+            public static let agentStateListening = ResourceManager.localizedString("conversation.agent.state.listening")
+            public static let agentStateSpeaking = ResourceManager.localizedString("conversation.agent.state.speaking")
+            public static let agentStateMuted = ResourceManager.localizedString("conversation.agent.state.muted")
         }
         
         public enum Setting {

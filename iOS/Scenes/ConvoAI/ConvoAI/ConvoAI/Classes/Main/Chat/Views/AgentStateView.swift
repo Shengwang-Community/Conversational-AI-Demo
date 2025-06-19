@@ -11,6 +11,9 @@ import Common
 class AgentStateView: UIView {
     
     private var isAnimating = false
+    private var state: AgentState = .idle
+    private var isMute = false
+    private var muteTimer: Timer?
     
     private let stateLabel: UILabel = {
         let label = UILabel()
@@ -18,6 +21,21 @@ class AgentStateView: UIView {
         label.textColor = UIColor.themColor(named: "ai_icontext1")
         label.textAlignment = .center
         return label
+    }()
+
+    private let muteLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 13)
+        label.textColor = UIColor.themColor(named: "ai_icontext2")
+        label.textAlignment = .center
+        label.text = ResourceManager.localizedString("conversation.agent.state.muted")
+        return label
+    }()
+
+    private let agentStateContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        return view
     }()
 
     private let volumeViews: [UIView] = {
@@ -59,36 +77,74 @@ class AgentStateView: UIView {
     
     deinit {
         stopVolumeAnimation(hidden: true)
+        muteTimer?.invalidate()
+        muteTimer = nil
     }
 
-    public func updateState(_ state: AgentState) {
+    public func setMute(_ isMute: Bool) {
+        self.isMute = isMute
+        if isMute {
+            agentStateContainerView.isHidden = true
+            muteLabel.isHidden = false
+            if state == .thinking || state == .speaking {
+                if muteTimer != nil {
+                    muteTimer?.invalidate()
+                    muteTimer = nil
+                }
+                muteTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
+                    guard let self = self else { return }
+                    if self.isMute && (self.state == .thinking || self.state == .speaking) {
+                        self.muteLabel.isHidden = true
+                        self.agentStateContainerView.isHidden = false
+                    }
+                }
+            }
+        } else {
+            muteLabel.isHidden = true
+            agentStateContainerView.isHidden = false
+        }
+    }
+
+    public func setState(_ state: AgentState) {
+        if self.state == state {
+            return
+        }
+        self.state = state
+        updateState()
+        if isMute {
+            agentStateContainerView.isHidden = true
+            muteLabel.isHidden = false
+        }
+    }
+
+    private func updateState() {
         switch state {
         case .idle:
-            stateLabel.text = "idle"
+            stateLabel.text = ""
             stateLabel.textColor = UIColor.themColor(named: "ai_icontext2")
             stopButton.isHidden = true
             volumeContainerView.isHidden = true
             stopVolumeAnimation(hidden: true)
         case .listening:
-            stateLabel.text = "listening"
+            stateLabel.text = ResourceManager.localizedString("conversation.agent.state.listening")
             stateLabel.textColor = UIColor.themColor(named: "ai_icontext1")
             volumeContainerView.isHidden = true
             stopButton.isHidden = true
             startVolumeAnimation()
         case .silent:
-            stateLabel.text = "silent"
+            stateLabel.text = ResourceManager.localizedString("conversation.agent.state.silent")
             stateLabel.textColor = UIColor.themColor(named: "ai_icontext1")
             volumeContainerView.isHidden = true
             stopButton.isHidden = true
             stopVolumeAnimation(hidden: false)
         case .thinking:
-            stateLabel.text = "thinking"
+            stateLabel.text = ResourceManager.localizedString("conversation.agent.state.speaking")
             stateLabel.textColor = UIColor.themColor(named: "ai_icontext2")
             volumeContainerView.isHidden = true
             stopButton.isHidden = false
             stopVolumeAnimation(hidden: true)
         case .speaking:
-            stateLabel.text = "speaking"
+            stateLabel.text = ResourceManager.localizedString("conversation.agent.state.speaking")
             stateLabel.textColor = UIColor.themColor(named: "ai_icontext2")
             volumeContainerView.isHidden = true
             stopButton.isHidden = false
@@ -99,29 +155,15 @@ class AgentStateView: UIView {
     }
 
     private func startVolumeAnimation() {
-        if isAnimating {
-            return
-        }
-        
+        guard !isAnimating else { return }
         isAnimating = true
         volumeContainerView.isHidden = false
-        
-        volumeViews.forEach { view in
-            view.isHidden = false
-            view.layer.removeAllAnimations()
-            view.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
-        }
-        
-        performAnimationCycle()
-    }
-    
-    private func performAnimationCycle() {
-        guard isAnimating else { return }
         
         let animationDuration = 0.5
         let delayBetweenViews = 0.08
         
         for (index, view) in volumeViews.enumerated() {
+            view.layer.removeAllAnimations()
             let delay = Double(index) * delayBetweenViews
             
             let heightAnimation = CAKeyframeAnimation(keyPath: "bounds.size.height")
@@ -150,15 +192,19 @@ class AgentStateView: UIView {
 extension AgentStateView {
 
     private func setupViews() {
+        [agentStateContainerView, muteLabel].forEach { addSubview($0) }
+
         [stateLabel, 
         volumeContainerView, 
-        stopButton]
-        .forEach { addSubview($0) }
+        stopButton].forEach { agentStateContainerView.addSubview($0) }
 
         volumeContainerView.addArrangedSubviews(volumeViews)        
     }
     
     private func setupConstraints() {
+        agentStateContainerView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
         stopButton.snp.makeConstraints { make in
             make.centerX.top.equalToSuperview()
             make.size.equalTo(CGSize(width: 44, height: 32))
@@ -177,6 +223,9 @@ extension AgentStateView {
         
         stateLabel.snp.makeConstraints { make in
             make.left.right.bottom.equalToSuperview()
+        }
+        muteLabel.snp.makeConstraints { make in
+            make.center.equalToSuperview()
         }
     }
 }

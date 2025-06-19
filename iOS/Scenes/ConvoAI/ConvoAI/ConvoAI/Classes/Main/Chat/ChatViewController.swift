@@ -135,6 +135,13 @@ public class ChatViewController: UIViewController {
         return view
     }()
 
+    private lazy var messageMaskView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.themColor(named: "ai_mask1")
+        view.isHidden = true
+        return view
+    }()
+
     private lazy var agentStateView: AgentStateView = {
         let view = AgentStateView()
         view.isHidden = true
@@ -281,7 +288,7 @@ public class ChatViewController: UIViewController {
     
     private func setupViews() {
         view.backgroundColor = .black
-        [animateContentView, upperBackgroundView, lowerBackgroundView, messageView, agentStateView, topBar, welcomeMessageView, bottomBar, annotationView, devModeButton].forEach { view.addSubview($0) }
+        [animateContentView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, agentStateView, topBar, welcomeMessageView, bottomBar, annotationView, devModeButton].forEach { view.addSubview($0) }
     }
     
     private func setupConstraints() {
@@ -305,6 +312,10 @@ public class ChatViewController: UIViewController {
             make.bottom.equalTo(bottomBar.snp.top).offset(-24)
             make.left.right.equalTo(0)
             make.height.equalTo(58)
+        }
+        
+        messageMaskView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
         }
         
         messageView.snp.makeConstraints { make in
@@ -449,6 +460,7 @@ public class ChatViewController: UIViewController {
         animateView.updateAgentState(.idle)
         messageView.clearMessages()
         messageView.isHidden = true
+        messageMaskView.isHidden = true
         bottomBar.resetState()
         timerCoordinator.stopAllTimer()
         AppContext.preferenceManager()?.resetAgentInformation()
@@ -457,6 +469,7 @@ public class ChatViewController: UIViewController {
         
     private func setupMuteState(state: Bool) {
         addLog("setupMuteState: \(state)")
+        agentStateView.setMute(state)
         rtcManager.muteLocalAudio(mute: state)
     }
     
@@ -970,6 +983,7 @@ private extension ChatViewController {
     
     private func clickCaptionsButton(state: Bool) {
         messageView.isHidden = !state
+        messageMaskView.isHidden = !state
     }
     
     private func clickMuteButton(state: Bool) -> Bool{
@@ -1234,7 +1248,7 @@ extension ChatViewController: RTMManagerDelegate {
 
 extension ChatViewController: ConversationalAIAPIEventHandler {
     public func onAgentStateChanged(agentSession: AgentSession, event: StateChangeEvent) {
-        agentStateView.updateState(event.state)
+        agentStateView.setState(event.state)
     }
     
     public func onAgentInterrupted(agentSession: AgentSession, event: InterruptEvent) {
