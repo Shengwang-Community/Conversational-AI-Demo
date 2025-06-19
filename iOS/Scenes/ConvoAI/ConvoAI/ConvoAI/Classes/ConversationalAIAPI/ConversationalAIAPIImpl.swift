@@ -55,7 +55,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         let messageData: [String : Any] = [
             "customType": "user.transcription",
             "priority": message.priority.stringValue,
-            "interruptable": message.interruptable,
+            "interruptable": message.responseInterruptable,
             "message": message.text ?? "",
             "image_url": message.imageUrl ?? "",
             "audio": message.audioUrl ?? ""
@@ -146,7 +146,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         setAudioConfigParameters(routing: audioRouting)
     }
     
-    @objc public func subscribe(channelName: String, completion: @escaping (ConversationalAIAPIError?) -> Void) {
+    @objc public func subscribeMessage(channelName: String, completion: @escaping (ConversationalAIAPIError?) -> Void) {
         guard let rtmEngine = self.config.rtmEngine else {
             return
         }
@@ -170,7 +170,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         }
     }
     
-    @objc public func unsubscribe(channelName: String, completion: @escaping (ConversationalAIAPIError?) -> Void) {
+    @objc public func unsubscribeMessage(channelName: String, completion: @escaping (ConversationalAIAPIError?) -> Void) {
         guard let rtmEngine = self.config.rtmEngine else {
             return
         }
@@ -244,7 +244,7 @@ extension ConversationalAIAPIImpl {
         }
     }
     
-    private func notifyDelegatesError(agentSession: AgentSession, error: AgentError) {
+    private func notifyDelegatesError(agentSession: AgentSession, error: ModuleError) {
         callMessagePrint(msg: "<<< [onAgentError], agentSession: \(agentSession), error: \(error)")
 
         DispatchQueue.main.async {
@@ -332,7 +332,7 @@ extension ConversationalAIAPIImpl {
     
     private func handleMetricsMessage(uid: String, msg: [String: Any]) {
         let module = msg["module"] as? String ?? ""
-        let metricType = VernderType.fromValue(module)
+        let metricType = ModuleType.fromValue(module)
         
         if metricType == .unknown && !module.isEmpty {
             notifyDelegatesDebugLog("Unknown metric module: \(module)")
@@ -351,7 +351,7 @@ extension ConversationalAIAPIImpl {
     
     private func handleErrorMessage(uid: String, msg: [String: Any]) {
         let errorTypeStr = msg["error_type"] as? String ?? ""
-        let venderType = VernderType.fromValue(errorTypeStr)
+        let venderType = ModuleType.fromValue(errorTypeStr)
         
         if venderType == .unknown && !errorTypeStr.isEmpty {
             notifyDelegatesDebugLog("Unknown error type: \(errorTypeStr)")
@@ -361,7 +361,7 @@ extension ConversationalAIAPIImpl {
         let message = msg["message"] as? String ?? "Unknown error"
         let timestamp = (msg["timestamp"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970
         
-        let agentError = AgentError(type: venderType, code: code, message: message, timestamp: timestamp)
+        let agentError = ModuleError(type: venderType, code: code, message: message, timestamp: timestamp)
         let session = AgentSession()
         session.userId = uid
         

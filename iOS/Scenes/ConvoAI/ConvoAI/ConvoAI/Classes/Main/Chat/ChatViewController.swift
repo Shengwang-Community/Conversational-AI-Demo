@@ -451,7 +451,7 @@ public class ChatViewController: UIViewController {
     private func stopAgent() {
         addLog("[Call] stopAgent()")
         rtmManager.logout(completion: nil)
-        convoAIAPI.unsubscribe(channelName: channelName) { error in
+        convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
             
         }
         stopAgentRequest()
@@ -613,7 +613,7 @@ extension ChatViewController {
         agentUid = AppContext.agentUid
         remoteIsJoined = false
         
-        convoAIAPI.subscribe(channelName: channelName) { err in
+        convoAIAPI.subscribeMessage(channelName: channelName) { err in
             if let error = err {
                 
             }
@@ -1259,7 +1259,7 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
         addLog("<<< [onAgentMetrics] metrics: \(metrics)")
     }
     
-    public func onAgentError(agentSession: AgentSession, error: AgentError) {
+    public func onAgentError(agentSession: AgentSession, error: ModuleError) {
         addLog("<<< [onAgentError] error: \(error)")
     }
     
