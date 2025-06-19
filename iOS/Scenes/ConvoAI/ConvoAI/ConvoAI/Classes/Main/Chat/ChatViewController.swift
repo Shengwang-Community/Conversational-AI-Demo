@@ -825,7 +825,9 @@ extension ChatViewController: AgoraRtcEngineDelegate {
             
             manager.updateAgentState(.connected)
             manager.updateRoomState(.connected)
-            agentStateView.isHidden = false
+            if !isSelfSubRender {
+                agentStateView.isHidden = false
+            }
             dismissErrorToast()
         } else if reason == .reasonLeaveChannel {
             dismissErrorToast()
@@ -850,7 +852,9 @@ extension ChatViewController: AgoraRtcEngineDelegate {
         timerCoordinator.startUsageDurationLimitTimer()
         addLog("[RTC Call Back] didJoinedOfUid uid: \(uid)")
         AppContext.preferenceManager()?.updateAgentState(.connected)
-        agentStateView.isHidden = false
+        if !isSelfSubRender {
+            agentStateView.isHidden = false
+        }
         SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.agentJoined)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
