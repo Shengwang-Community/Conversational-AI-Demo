@@ -296,7 +296,7 @@ class CovMessageListView @JvmOverloads constructor(
             override fun bind(message: Message) {
                 binding.tvMessageTitle.text = agentName
                 binding.tvMessageContent.text = message.content
-                binding.layoutMessageInterrupt.isVisible = message.status == TranscriptionStatus.INTERRUPT
+                binding.layoutMessageInterrupt.isVisible = message.status == TranscriptionStatus.INTERRUPTED
             }
         }
 

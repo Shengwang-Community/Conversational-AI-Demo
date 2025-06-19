@@ -286,10 +286,10 @@ class ConversationSubtitleController(
     private fun dealMessageWithMap(uid: Int, msg: Map<String, Any>) {
         try {
             val transcriptionObj = msg["object"] as? String ?: return
-            val messageType = MessageType.fromValue(transcriptionObj)
+            val moduleType = MessageType.fromValue(transcriptionObj)
             var isInterrupt = false
             val isUserMsg: Boolean
-            when (messageType) {
+            when (moduleType) {
                 // agent message
                 MessageType.ASSISTANT -> {
                     isUserMsg = false
