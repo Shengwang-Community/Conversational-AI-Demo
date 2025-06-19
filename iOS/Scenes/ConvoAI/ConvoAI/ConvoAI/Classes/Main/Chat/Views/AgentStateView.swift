@@ -70,6 +70,7 @@ class AgentStateView: UIView {
         super.init(frame: frame)
         setupViews()
         setupConstraints()
+        setState(.silent)
     }
     
     required init?(coder: NSCoder) {
