@@ -349,10 +349,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     private val covEventHandler = object : IConversationalAIAPIEventHandler {
         private val tag = "ConversationalAI"
         override fun onAgentStateChanged(agentSession: AgentSession, event: StateChangeEvent) {
-            // Update agent state display
-            if (DebugConfigSettings.isDebug && connectionState == AgentConnectionState.CONNECTED) {
-                mBinding?.tvConversationState?.text = "onAgentStateChanged: ${event.state.value}"
-            }
+            mBinding?.agentStateView?.updateAgentState(event.state)
         }
 
         override fun onAgentInterrupted(agentSession: AgentSession, event: InterruptEvent) {
@@ -385,14 +382,11 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         isUserEndCall = false
         connectionState = AgentConnectionState.CONNECTING
         if (DebugConfigSettings.isDebug) {
-            mBinding?.tvConversationState?.text = "onAgentStateChanged: ${AgentState.SILENT.value}"
-            mBinding?.tvConversationState?.isVisible = true
-            CovAgentManager.channelName =
-                "agent_debug_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+            mBinding?.btnSendMsg?.isVisible = true
+            CovAgentManager.channelName = "agent_debug_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
         } else {
-            mBinding?.tvConversationState?.isVisible = false
-            CovAgentManager.channelName =
-                "agent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+            mBinding?.btnSendMsg?.isVisible = false
+            CovAgentManager.channelName = "agent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
         }
 
         isSelfSubRender = CovAgentManager.getPreset()?.isIndependent() == true
@@ -532,7 +526,6 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         stopAgentAndLeaveChannel()
         persistentToast(false, "")
         ToastUtil.show(getString(R.string.cov_detail_agent_leave))
-        mBinding?.tvConversationState?.isVisible = false
     }
 
     private fun stopAgentAndLeaveChannel() {
@@ -824,12 +817,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     clBottomLogged.llCalling.visibility = View.INVISIBLE
                     clBottomLogged.btnJoinCall.visibility = View.VISIBLE
                     vConnecting.visibility = View.GONE
+                    agentStateView.visibility = View.GONE
                 }
 
                 AgentConnectionState.CONNECTING -> {
                     clBottomLogged.llCalling.visibility = View.VISIBLE
                     clBottomLogged.btnJoinCall.visibility = View.INVISIBLE
                     vConnecting.visibility = View.VISIBLE
+                    agentStateView.visibility = View.GONE
                 }
 
                 AgentConnectionState.CONNECTED,
@@ -837,6 +832,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     clBottomLogged.llCalling.visibility = View.VISIBLE
                     clBottomLogged.btnJoinCall.visibility = View.INVISIBLE
                     vConnecting.visibility = View.GONE
+                    agentStateView.visibility =
+                        if (connectionState == AgentConnectionState.CONNECTED) View.VISIBLE else View.GONE
                 }
 
                 AgentConnectionState.ERROR -> {}
@@ -940,6 +937,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             val layoutParams = clTop.root.layoutParams as ViewGroup.MarginLayoutParams
             layoutParams.topMargin = statusBarHeight
             clTop.root.layoutParams = layoutParams
+            agentStateView.configureStateTexts(
+                silent = getString(R.string.cov_agent_silent),
+                listening = getString(R.string.cov_agent_listening),
+                thinking = getString(R.string.cov_agent_thinking),
+                speaking = getString(R.string.cov_agent_speaking),
+                mute = getString(R.string.cov_user_muted),
+            )
+
             clBottomLogged.btnEndCall.setOnClickListener(object : OnFastClickListener() {
                 override fun onClickJacking(view: View) {
                     onClickEndCall()
@@ -952,6 +957,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                         if (it) {
                             isLocalAudioMuted = !isLocalAudioMuted
                             CovRtcManager.muteLocalAudio(isLocalAudioMuted)
+                            agentStateView.setMuted(isLocalAudioMuted)
                         }
                     },
                     force = currentAudioMuted,
@@ -1031,46 +1037,40 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
             // TODO: only test
             btnSendMsg.setOnClickListener {
-                if (connectionState == AgentConnectionState.CONNECTED) {
-                    val chatMessage = ChatMessage(
-                        priority = Priority.INTERRUPT,
-                        interruptable = true,
-                        text = "tell me a joke!"
-                    )
-                    conversationalAIAPI?.chat(
-                        AgentSession(CovAgentManager.agentUID.toString()),
-                        chatMessage,
-                        completion = { error ->
-                            if (error != null) {
-                                CovLogger.e(TAG, "Send message failed: ${error.message}")
-                                ToastUtil.show("Send message failed: ${error.message}")
-                            } else {
-                                CovLogger.d(TAG, "Send message success")
-                                ToastUtil.show("Message sent successfully!")
-                            }
-                        })
-                } else {
+                if (connectionState != AgentConnectionState.CONNECTED) {
                     ToastUtil.show("Please connect to agent first")
+                    return@setOnClickListener
                 }
+                val chatMessage = ChatMessage(
+                    priority = Priority.INTERRUPT,
+                    interruptable = true,
+                    text = "tell me a joke!"
+                )
+                conversationalAIAPI?.chat(
+                    AgentSession(CovAgentManager.agentUID.toString()),
+                    chatMessage,
+                    completion = { error ->
+                        if (error != null) {
+                            CovLogger.e(TAG, "Send message failed: ${error.message}")
+                            ToastUtil.show("Send message failed: ${error.message}")
+                        } else {
+                            CovLogger.d(TAG, "Send message success")
+                            ToastUtil.show("Message sent successfully!")
+                        }
+                    })
             }
 
-            // TODO: only test
-            btnSendInterrupt.setOnClickListener {
-                if (connectionState == AgentConnectionState.CONNECTED) {
-                    conversationalAIAPI?.interrupt(
-                        AgentSession(CovAgentManager.agentUID.toString()),
-                        completion = { error ->
-                            if (error != null) {
-                                CovLogger.e(TAG, "Send interrupt failed: ${error.message}")
-                                ToastUtil.show("Interrupt failed: ${error.message}")
-                            } else {
-                                CovLogger.d(TAG, "Send interrupt success")
-                                ToastUtil.show("Interrupt sent successfully!")
-                            }
-                        })
-                } else {
-                    ToastUtil.show("Please connect to agent first")
-                }
+            agentStateView.setOnInterruptClickListener {
+                if (connectionState != AgentConnectionState.CONNECTED) return@setOnInterruptClickListener
+                conversationalAIAPI?.interrupt(
+                    AgentSession(CovAgentManager.agentUID.toString()),
+                    completion = { error ->
+                        if (error != null) {
+                            CovLogger.e(TAG, "Send interrupt failed: ${error.message}")
+                        } else {
+                            CovLogger.d(TAG, "Send interrupt success")
+                        }
+                    })
             }
         }
     }
@@ -1441,7 +1441,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         return rtmClient
     }
 
-    private fun innerTokenPrivilegeWillExpire(){
+    private fun innerTokenPrivilegeWillExpire() {
         coroutineScope.launch(Dispatchers.IO) {
             try {
                 val isTokenOK = updateTokenAsync()
@@ -1449,8 +1449,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     CovLogger.d(TAG, "Token renewed successfully, updating RTC and RTM")
                     // Since RTC and RTM use the same token, renew both
                     CovRtcManager.renewRtcToken(integratedToken ?: "")
-                    CovRtmManager.renewToken(integratedToken ?: "", { error->
-                        if (error!=null){
+                    CovRtmManager.renewToken(integratedToken ?: "", { error ->
+                        if (error != null) {
                             integratedToken = null
                             ToastUtil.show(R.string.cov_detail_update_token_error, "${error.message}")
                         }

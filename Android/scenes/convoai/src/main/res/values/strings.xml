@@ -62,6 +62,11 @@
     <string name="cov_agent_connecting">连接中...</string>
     <string name="cov_copy_succeed">已复制</string>
     <string name="cov_interrupted">已打断</string>
+    <string name="cov_agent_silent">你可以开始说话</string>
+    <string name="cov_agent_listening">正在听…</string>
+    <string name="cov_agent_thinking">说话或点击打断</string>
+    <string name="cov_agent_speaking">说话或点击打断</string>
+    <string name="cov_user_muted">已静音</string>
 
     <string-array name="cov_setting_microphone_array">
         <item>内置麦克风</item>

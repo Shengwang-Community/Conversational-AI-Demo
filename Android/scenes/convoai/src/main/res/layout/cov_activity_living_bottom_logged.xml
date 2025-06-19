@@ -19,29 +19,6 @@
         tools:visibility="visible">
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/cv_cc"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:backgroundTint="@android:color/transparent"
-            app:cardCornerRadius="36dp"
-            app:cardElevation="0dp">
-
-            <ImageButton
-                android:id="@+id/btn_cc"
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                android:background="@drawable/btn_bg_block1_selector"
-                android:src="@drawable/scene_detail_captions"
-                app:tint="@color/ai_icontext1" />
-        </androidx.cardview.widget.CardView>
-
-
-        <Space
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-
-        <androidx.cardview.widget.CardView
             android:id="@+id/cv_mic"
             android:layout_width="72dp"
             android:layout_height="72dp"
@@ -78,29 +55,51 @@
                 android:src="@drawable/scene_detail_close"
                 app:tint="@color/ai_icontext1" />
         </androidx.cardview.widget.CardView>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_cc"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:backgroundTint="@android:color/transparent"
+            app:cardCornerRadius="36dp"
+            app:cardElevation="0dp">
+
+            <ImageButton
+                android:id="@+id/btn_cc"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/btn_bg_block1_selector"
+                android:src="@drawable/scene_detail_captions"
+                app:tint="@color/ai_icontext1" />
+        </androidx.cardview.widget.CardView>
     </LinearLayout>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnJoinCall"
         android:layout_width="0dp"
         android:layout_height="@dimen/ai_dp_large"
+        android:background="@drawable/selector_gradient_button"
         android:insetTop="0dp"
         android:insetBottom="0dp"
+        android:stateListAnimator="@null"
         android:text="@string/cov_detail_join_call"
         android:textAllCaps="false"
         android:textColor="@color/ai_brand_white10"
         android:textSize="18sp"
         app:backgroundTint="@null"
+        app:cornerRadius="15dp"
         app:icon="@drawable/cov_detail_join_call"
         app:iconGravity="textStart"
         app:iconPadding="10dp"
         app:iconSize="24dp"
         app:iconTint="@color/ai_brand_white10"
-        app:cornerRadius="15dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintWidth_percent="0.84"
-        android:background="@drawable/selector_gradient_button"
-        android:stateListAnimator="@null" />
+        app:layout_constraintWidth_percent="0.84" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -172,7 +172,7 @@ class ConversationalAIAPIImpl constructor(val config: ConversationalAIAPIConfig)
                 if (event.eventType == RtmConstants.RtmPresenceEventType.REMOTE_STATE_CHANGED) {
                     val state = event.stateItems["state"] ?: ""
 
-                    val turnId = (event.stateItems["turn_id"] as? Number)?.toLong() ?: 0L
+                    val turnId: Long = event.stateItems["turn_id"]?.toString()?.toLongOrNull() ?: 0L
                     if (turnId < (stateChangeEvent?.turnId ?: 0)) return
 
                     val ts = event.timestamp
