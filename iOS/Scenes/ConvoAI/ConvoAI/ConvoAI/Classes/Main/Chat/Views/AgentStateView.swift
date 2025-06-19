@@ -29,6 +29,7 @@ class AgentStateView: UIView {
         label.textColor = UIColor.themColor(named: "ai_icontext2")
         label.textAlignment = .center
         label.text = ResourceManager.localizedString("conversation.agent.state.muted")
+        label.isHidden = true
         return label
     }()
 
