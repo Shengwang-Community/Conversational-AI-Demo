@@ -3,7 +3,6 @@ package io.agora.scene.convoai.convoaiApi
 import io.agora.rtc2.Constants
 import io.agora.rtc2.RtcEngine
 import io.agora.rtm.RtmClient
-import io.agora.scene.convoai.convoaiApi.subRender.v3.AgentSession
 import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
 import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionRenderMode
 
@@ -39,14 +38,14 @@ enum class Priority {
  * - Priority control: ChatMessage(text = "Urgent message", priority = Priority.INTERRUPT)
  *
  * @property priority Message processing priority (default: INTERRUPT)
- * @property interruptable Whether this message can be interrupted by higher priority messages (default: true)
+ * @property responseInterruptable Whether this message can be interrupted by higher priority messages (default: true)
  * @property text Text content of the message (optional)
  * @property imageUrl HTTP/HTTPS URL pointing to an image file (optional)
  * @property audioUrl HTTP/HTTPS URL pointing to an audio file (optional)
  */
 data class ChatMessage(
     val priority: Priority? = null,
-    val interruptable: Boolean? = null,
+    val responseInterruptable: Boolean? = null,
     val text: String? = null,
     val imageUrl: String? = null,
     val audioUrl: String? = null
@@ -116,7 +115,7 @@ data class InterruptEvent(
  * @property MLLM MLLM inference latency measurement
  * @property TTS Text-to-speech synthesis latency measurement
  */
-enum class VendorType(val value: String) {
+enum class ModuleType(val value: String) {
     LLM("llm"),
     MLLM("mllm"),
     TTS("tts"),
@@ -129,8 +128,8 @@ enum class VendorType(val value: String) {
          * @param value String value to match
          * @return Corresponding VendorType enum value, returns UNKNOWN if not found
          */
-        fun fromValue(value: String): VendorType {
-            return VendorType.entries.find { it.value == value } ?: UNKNOWN
+        fun fromValue(value: String): ModuleType {
+            return ModuleType.entries.find { it.value == value } ?: UNKNOWN
         }
     }
 }
@@ -147,8 +146,8 @@ enum class VendorType(val value: String) {
  * @property value Metric value, typically latency time (milliseconds) or other quantitative metrics
  * @property timestamp Metric recording timestamp (milliseconds since January 1, 1970 UTC)
  */
-data class Metrics(
-    val type: VendorType,
+data class Metric(
+    val type: ModuleType,
     val name: String,
     val value: Double,
     val timestamp: Long
@@ -165,8 +164,8 @@ data class Metrics(
  * @property message Error description message providing detailed error explanation
  * @property timestamp Error occurrence timestamp (milliseconds since January 1, 1970 UTC)
  */
-data class AgentError(
-    val type: VendorType,
+data class ModuleError(
+    val type: ModuleType,
     val code: Int,
     val message: String,
     val timestamp: Long
@@ -205,11 +204,13 @@ enum class MessageType(val value: String) {
  * @property rtcEngine RTC engine instance for audio/video communication
  * @property rtmClient RTM client instance for real-time messaging
  * @property renderMode Subtitle rendering mode (Word or Text level)
+ * @property enableLog
  */
 data class ConversationalAIAPIConfig(
     val rtcEngine: RtcEngine,
     val rtmClient: RtmClient,
     val renderMode: TranscriptionRenderMode = TranscriptionRenderMode.Word,
+    val enableLog: Boolean = false
 )
 
 sealed class ConversationalAIAPIError : Exception() {
@@ -243,39 +244,39 @@ sealed class ConversationalAIAPIError : Exception() {
 interface IConversationalAIAPIEventHandler {
     /**
      * Called when the agent state changes (silent, listening, thinking, speaking).
-     * @param agentSession AgentSession
+     * @param agentUserId Agent user id
      * @param event State change event
      */
-    fun onAgentStateChanged(agentSession: AgentSession, event: StateChangeEvent)
+    fun onAgentStateChanged(agentUserId: String, event: StateChangeEvent)
 
     /**
      * Called when an interrupt event occurs.
-     * @param agentSession AgentSession
+     * @param agentUserId Agent user id
      * @param event Interrupt event
      */
-    fun onAgentInterrupted(agentSession: AgentSession, event: InterruptEvent)
+    fun onAgentInterrupted(agentUserId: String, event: InterruptEvent)
 
     /**
      * Called when performance metrics are available.
-     * @param agentSession AgentSession
-     * @param metrics Performance metrics
+     * @param agentUserId Agent user id
+     * @param metric Performance metrics
      */
-    fun onAgentMetrics(agentSession: AgentSession, metrics: Metrics)
+    fun onAgentMetrics(agentUserId: String, metric: Metric)
 
     /**
      * Called when an AI error occurs.
-     * @param agentSession AgentSession
+     * @param agentUserId Agent user id
      * @param error AI error
      */
-    fun onAgentError(agentSession: AgentSession, error: AgentError)
+    fun onAgentError(agentUserId: String, error: ModuleError)
 
     /**
      * Called when transcription content is updated.
-     * @param agentSession AgentSession
+     * @param agentUserId Agent user id
      * @param transcription Transcription data
      * @note This callback may be triggered at high frequency. If you need to deduplicate, please handle it at the business layer.
      */
-    fun onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription)
+    fun onTranscriptionUpdated(agentUserId: String, transcription: Transcription)
 
     /**
      * Called for internal debug logs.
@@ -309,29 +310,29 @@ interface IConversationalAIAPI {
      * @param channelName Channel name
      * @param completion Callback, error is null on success, non-null on failure
      */
-    fun subscribe(channelName: String, completion: (error: ConversationalAIAPIError?) -> Unit)
+    fun subscribeMessage(channelName: String, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
      * Unsubscribe from a channel and stop receiving events.
      * @param channelName Channel name
      * @param completion Callback, error is null on success, non-null on failure
      */
-    fun unsubscribe(channelName: String, completion: (error: ConversationalAIAPIError?) -> Unit)
+    fun unsubscribeMessage(channelName: String, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
      * Send a message to the AI agent.
-     * @param agentSession AgentSession
+     * @param agentUserId Agent user id
      * @param message Message object
      * @param completion Callback, error is null on success, non-null on failure
      */
-    fun chat(agentSession: AgentSession, message: ChatMessage, completion: (error: ConversationalAIAPIError?) -> Unit)
+    fun chat(agentUserId: String, message: ChatMessage, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
      * Interrupt the AI agent's speaking.
-     * @param agentSession AgentSession
+     * @param agentUserId Agent user id
      * @param completion Callback, error is null on success, non-null on failure
      */
-    fun interrupt(agentSession: AgentSession, completion: (error: ConversationalAIAPIError?) -> Unit)
+    fun interrupt(agentUserId: String, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
      * Set audio parameters for optimal AI conversation performance.
