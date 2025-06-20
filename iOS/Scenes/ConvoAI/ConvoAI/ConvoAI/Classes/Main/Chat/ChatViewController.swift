@@ -700,8 +700,8 @@ extension ChatViewController {
     private func getConvoaiBodyMap() -> [String: Any?] {
         return [
             //1.5.1-12-g18f3d9c7
-//            "graph_id": "1.5.1-115-g582c71f4",
-            "graph_id": DeveloperConfig.shared.graphId,
+            "graph_id": "1.5.1-115-g582c71f4",
+//            "graph_id": DeveloperConfig.shared.graphId,
             "name": nil,
             "preset": DeveloperConfig.shared.convoaiServerConfig,
             "properties": [
@@ -1010,9 +1010,7 @@ private extension ChatViewController {
     }
     
     @objc private func onClickStopSpeakingButton(_ sender: UIButton) {
-        let session = AgentSession()
-        session.userId = "\(agentUid)"
-        convoAIAPI.interrupt(agentSession: session) { error in
+        convoAIAPI.interrupt(agentUserId: "\(agentUid)") { error in
             
         }
     }
@@ -1241,9 +1239,7 @@ extension ChatViewController: RTMManagerDelegate {
     
     @objc func testChat() {
         let message = ChatMessage(text: "tell me a joke？", imageUrl: nil, audioUrl: nil)
-        let session = AgentSession()
-        session.userId = "\(agentUid)"
-        convoAIAPI.chat(agentSession: session, message: message) { error in
+        convoAIAPI.chat(agentUserId: "\(agentUid)", message: message) { error in
             
         }
     }
@@ -1251,30 +1247,30 @@ extension ChatViewController: RTMManagerDelegate {
 }
 
 extension ChatViewController: ConversationalAIAPIEventHandler {
-    public func onAgentStateChanged(agentSession: AgentSession, event: StateChangeEvent) {
+    public func onAgentStateChanged(agentUserId: String, event: StateChangeEvent) {
         agentStateView.setState(event.state)
     }
     
-    public func onAgentInterrupted(agentSession: AgentSession, event: InterruptEvent) {
+    public func onAgentInterrupted(agentUserId: String, event: InterruptEvent) {
         
     }
     
-    public func onAgentMetrics(agentSession: AgentSession, metrics: Metrics) {
+    public func onAgentMetrics(agentUserId: String, metrics: Metric) {
         addLog("<<< [onAgentMetrics] metrics: \(metrics)")
     }
     
-    public func onAgentError(agentSession: AgentSession, error: ModuleError) {
+    public func onAgentError(agentUserId: String, error: ModuleError) {
         addLog("<<< [onAgentError] error: \(error)")
     }
     
-    public func onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription) {
+    public func onTranscriptionUpdated(agentUserId: String, transcription: Transcription) {
         if isSelfSubRender {
             return
         }
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.messageView.viewModel.reduceStandardMessage(turnId: transcription.turnId, message: transcription.text, timestamp: 0, owner: transcription.type, isInterrupted: transcription.status == .interrupt)
+            self.messageView.viewModel.reduceStandardMessage(turnId: transcription.turnId, message: transcription.text, timestamp: 0, owner: transcription.type, isInterrupted: transcription.status == .interrupted)
         }
     }
     

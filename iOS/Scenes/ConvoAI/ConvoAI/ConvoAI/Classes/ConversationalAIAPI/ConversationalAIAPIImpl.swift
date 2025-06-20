@@ -40,9 +40,10 @@ import AgoraRtmKit
 }
 
 extension ConversationalAIAPIImpl: ConversationalAIAPI {
-    @objc public func chat(agentSession: AgentSession, message: ChatMessage, completion: @escaping (ConversationalAIAPIError?) -> Void) {
+    @objc public func chat(agentUserId: String, message: ChatMessage, completion: @escaping (ConversationalAIAPIError?) -> Void) {
         let traceId = UUID().uuidString.prefix(8)
-        let userId = "\(agentSession.userId)"
+        let userId = agentUserId
+        
         callMessagePrint(msg: ">>> [traceId:\(traceId)] [chat] \(userId), \(message)")
         guard let rtmEngine = self.config.rtmEngine else {
             callMessagePrint(msg: "[traceId:\(traceId)] !!! rtmEngine is nil")
@@ -93,13 +94,13 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         }
     }
     
-    @objc public func interrupt(agentSession: AgentSession, completion: @escaping (ConversationalAIAPIError?) -> Void) {
+    @objc public func interrupt(agentUserId: String, completion: @escaping (ConversationalAIAPIError?) -> Void) {
         guard let rtmEngine = self.config.rtmEngine else {
             return
         }
         
         let traceId = UUID().uuidString.prefix(8)
-        let userId = "\(agentSession.userId)"
+        let userId = agentUserId
         callMessagePrint(msg: ">>> [traceId:\(traceId)] [interrupt] \(userId)")
         let publishOptions = AgoraRtmPublishOptions()
         publishOptions.channelType = .user
@@ -187,7 +188,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
             } else {
                 self?.callMessagePrint(msg: "<<< [traceId:\(traceId)] [unsubscribe] success)")
                 completion(nil)
-            }            
+            }
         }
     }
     
@@ -216,48 +217,48 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
 }
 
 extension ConversationalAIAPIImpl {
-    private func notifyDelegatesStateChange(agentSession: AgentSession, event: StateChangeEvent) {
-        callMessagePrint(msg: "<<< [onAgentStateChanged] agentSession:\(agentSession), event:\(event)")
+    private func notifyDelegatesStateChange(agentUserId: String, event: StateChangeEvent) {
+        callMessagePrint(msg: "<<< [onAgentStateChanged] agentUserId:\(agentUserId), event:\(event)")
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onAgentStateChanged(agentSession: agentSession, event: event)
+                delegate.onAgentStateChanged(agentUserId: agentUserId, event: event)
             }
         }
     }
     
-    private func notifyDelegatesInterrupt(agentSession: AgentSession, event: InterruptEvent) {
-        callMessagePrint(msg: "<<< [onInterrupted], agentSession: \(agentSession), event: \(event)")
+    private func notifyDelegatesInterrupt(agentUserId: String, event: InterruptEvent) {
+        callMessagePrint(msg: "<<< [onInterrupted], agentUserId: \(agentUserId), event: \(event)")
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onAgentInterrupted(agentSession:agentSession, event: event)
+                delegate.onAgentInterrupted(agentUserId:agentUserId, event: event)
             }
         }
     }
     
-    private func notifyDelegatesMetrics(agentSession: AgentSession, metrics: Metrics) {
-        callMessagePrint(msg: "<<< [onAgentMetricsInfo], agentSession: \(agentSession), metrics: \(metrics)")
+    private func notifyDelegatesMetrics(agentUserId: String, metrics: Metric) {
+        callMessagePrint(msg: "<<< [onAgentMetricsInfo], agentSession: \(agentUserId), metrics: \(metrics)")
 
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onAgentMetrics(agentSession: agentSession, metrics: metrics)
+                delegate.onAgentMetrics(agentUserId: agentUserId, metrics: metrics)
             }
         }
     }
     
-    private func notifyDelegatesError(agentSession: AgentSession, error: ModuleError) {
-        callMessagePrint(msg: "<<< [onAgentError], agentSession: \(agentSession), error: \(error)")
+    private func notifyDelegatesError(agentUserId: String, error: ModuleError) {
+        callMessagePrint(msg: "<<< [onAgentError], agentUserId: \(agentUserId), error: \(error)")
 
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onAgentError(agentSession: agentSession, error: error)
+                delegate.onAgentError(agentUserId: agentUserId, error: error)
             }
         }
     }
     
-    private func notifyDelegatesTranscription(agentSession: AgentSession, transcription: Transcription) {
+    private func notifyDelegatesTranscription(agentUserId: String, transcription: Transcription) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onTranscriptionUpdated(agentSession: agentSession, transcription: transcription)
+                delegate.onTranscriptionUpdated(agentUserId: agentUserId, transcription: transcription)
             }
         }
     }
@@ -342,11 +343,8 @@ extension ConversationalAIAPIImpl {
         let latencyMs = (msg["latency_ms"] as? NSNumber)?.doubleValue ?? 0.0
         let sendTs = (msg["send_ts"] as? NSNumber)?.doubleValue ?? 0.0
         
-        let metrics = Metrics(type: metricType, name: metricName, value: latencyMs, timestamp: sendTs)
-        let session = AgentSession()
-        session.userId = uid
-        
-        notifyDelegatesMetrics(agentSession: session, metrics: metrics)
+        let metrics = Metric(type: metricType, name: metricName, value: latencyMs, timestamp: sendTs)
+        notifyDelegatesMetrics(agentUserId: uid, metrics: metrics)
     }
     
     private func handleErrorMessage(uid: String, msg: [String: Any]) {
@@ -362,10 +360,7 @@ extension ConversationalAIAPIImpl {
         let timestamp = (msg["timestamp"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970
         
         let agentError = ModuleError(type: venderType, code: code, message: message, timestamp: timestamp)
-        let session = AgentSession()
-        session.userId = uid
-        
-        notifyDelegatesError(agentSession: session, error: agentError)
+        notifyDelegatesError(agentUserId: uid, error: agentError)
     }
     
     func callMessagePrint(msg: String) {
@@ -453,9 +448,8 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
                 let aiState = AgentState.fromValue(value)
                 let changeEvent = StateChangeEvent(state: aiState, turnId: turnId, timestamp: ts, reason: "")
                 self.stateChangeEvent = changeEvent
-                let session = AgentSession()
-                session.userId = event.publisher ?? "-1"
-                notifyDelegatesStateChange(agentSession: session, event: changeEvent)
+                let agentUserId = event.publisher ?? "-1"
+                notifyDelegatesStateChange(agentUserId: agentUserId, event: changeEvent)
             }
             //other
         }
@@ -463,16 +457,17 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
 }
 
 extension ConversationalAIAPIImpl: TranscriptionDelegate {
-    func onInterrupted(agentSession: AgentSession, event: InterruptEvent) {
-        notifyDelegatesInterrupt(agentSession: agentSession, event: event)
+    func onInterrupted(agentUserId: String, event: InterruptEvent) {
+        notifyDelegatesInterrupt(agentUserId: agentUserId, event: event)
     }
     
-    func onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription) {
-        notifyDelegatesTranscription(agentSession: agentSession, transcription: transcription)
+    func onTranscriptionUpdated(agentUserId: String, transcription: Transcription) {
+        notifyDelegatesTranscription(agentUserId: agentUserId, transcription: transcription)
     }
     
     func onDebugLog(_ txt: String) {
         callMessagePrint(msg: txt)
     }
 }
+
 

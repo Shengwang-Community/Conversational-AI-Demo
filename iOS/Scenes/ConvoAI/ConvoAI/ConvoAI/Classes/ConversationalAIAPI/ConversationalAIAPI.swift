@@ -69,10 +69,10 @@ import AgoraRtmKit
 }
  
 /// Represents the current status of subtitles
-@objc public enum TranscriptionState: Int {
-    case inprogress = 0 /// Subtitle is being generated or playing
-    case end = 1        /// Subtitle has completed normally
-    case interrupt = 2  /// Subtitle was interrupted before completion
+@objc public enum TranscriptionStatus: Int {
+    case inprogress = 0   /// Subtitle is being generated or playing
+    case end = 1          /// Subtitle has completed normally
+    case interrupted = 2  /// Subtitle was interrupted before completion
 }
  
 @objc public enum TranscriptionType: Int {
@@ -86,15 +86,15 @@ import AgoraRtmKit
     /// Unique identifier for the conversation turn
     @objc public let turnId: Int
     /// User identifier associated with this subtitle
-    @objc public let userId: UInt
+    @objc public let userId: String
     /// Actual subtitle text content
     @objc public let text: String
     /// Current status of the transcription
-    @objc public var status: TranscriptionState
+    @objc public var status: TranscriptionStatus
     /// Current type of transcription
     @objc public var type: TranscriptionType
      
-    @objc public init(turnId: Int, userId: UInt, text: String, status: TranscriptionState, type: TranscriptionType) {
+    @objc public init(turnId: Int, userId: String, text: String, status: TranscriptionStatus, type: TranscriptionType) {
         self.turnId = turnId
         self.userId = userId
         self.text = text
@@ -198,7 +198,7 @@ import AgoraRtmKit
 }
  
 /// Class for recording system performance data metrics
-@objc public class Metrics: NSObject {
+@objc public class Metric: NSObject {
     /// Type of the metric
     @objc public let type: ModuleType
     /// Metric name
@@ -239,14 +239,6 @@ import AgoraRtmKit
     }
     public override var description: String {
         return "AgentError(type: \(type.stringValue), code: \(code), message: \(message), timestamp: \(timestamp))"
-    }
-}
-
-@objc public class AgentSession: NSObject {
-    var userId: String = "-1"
-
-    public override var description: String {
-        return "AgentSession(userId: \(userId))"
     }
 }
 
@@ -301,13 +293,13 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter event: Agent state event (silent, listening, thinking, speaking)
     /// - Parameter agentSession: agent session
-    @objc func onAgentStateChanged(agentSession: AgentSession, event: StateChangeEvent)
+    @objc func onAgentStateChanged(agentUserId: String, event: StateChangeEvent)
      
     /// Called when an interrupt event occurs
     ///
     /// - Parameter event: Interrupt event
     /// - Parameter agentSession: agent session
-    @objc func onAgentInterrupted(agentSession: AgentSession, event: InterruptEvent)
+    @objc func onAgentInterrupted(agentUserId: String, event: InterruptEvent)
  
  
     /// Real-time callback for performance metrics
@@ -317,7 +309,7 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter metrics: Performance metrics containing type, value, and timestamp
     /// - Parameter agentSession: agent session
-    @objc func onAgentMetrics(agentSession: AgentSession, metrics: Metrics)
+    @objc func onAgentMetrics(agentUserId: String, metrics: Metric)
      
     /// Called when AI-related errors occur
     ///
@@ -326,7 +318,7 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter error: AI error containing type, error code, error message, and timestamp
     /// - Parameter agentSession: agent session
-    @objc func onAgentError(agentSession: AgentSession, error: ModuleError)
+    @objc func onAgentError(agentUserId: String, error: ModuleError)
      
     /// Called when subtitle content is updated during conversation
     ///
@@ -334,7 +326,7 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameter transcription: Subtitle message containing text content and time information
     /// - Parameter agentSession: agent session
-    @objc func onTranscriptionUpdated(agentSession: AgentSession, transcription: Transcription)
+    @objc func onTranscriptionUpdated(agentUserId: String, transcription: Transcription)
  
  
     /// Call this method to expose internal logs to external components
@@ -357,7 +349,7 @@ public enum MessageType: String, CaseIterable {
     ///   - message: Message object containing text, image URL, and interrupt settings
     ///   - completion: Callback function called when the operation completes.
     ///                 Returns nil on success, NSError on failure
-    @objc func chat(agentSession: AgentSession, message: ChatMessage, completion: @escaping (ConversationalAIAPIError?) -> Void)
+    @objc func chat(agentUserId: String, message: ChatMessage, completion: @escaping (ConversationalAIAPIError?) -> Void)
      
     /// Interrupt the Agent's speech
     ///
@@ -366,7 +358,7 @@ public enum MessageType: String, CaseIterable {
     ///   - completion: Callback function called when the operation completes
     /// If error has a value, it indicates message sending failed
     /// If error is nil, it indicates message sending succeeded, but doesn't guarantee Agent interruption success
-    @objc func interrupt(agentSession: AgentSession, completion: @escaping (ConversationalAIAPIError?) -> Void)
+    @objc func interrupt(agentUserId: String, completion: @escaping (ConversationalAIAPIError?) -> Void)
      
     /// Set audio best practice parameters for optimal performance
     ///
@@ -438,3 +430,4 @@ public enum MessageType: String, CaseIterable {
         self.init(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words)
     }
 }
+
