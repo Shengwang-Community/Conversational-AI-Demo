@@ -8,7 +8,7 @@
 import Foundation
 import AgoraRtcKit
 
-private struct TranscriptionMessage: Codable {
+private struct TranscriptionMessage1: Codable {
     let data_type: String?
     let stream_id: Int?
     let text: String?
@@ -68,7 +68,7 @@ private struct TranscriptionMessage: Codable {
 /// - Progress: Subtitle is still being generated or spoken
 /// - End: Subtitle has completed normally
 /// - Interrupted: Subtitle was interrupted before completion
-@objc public enum SubtitleStatus: Int {
+@objc public enum SubtitleStatus1: Int {
     case inprogress = 0
     case end = 1
     case interrupt = 2
@@ -82,13 +82,13 @@ private struct TranscriptionMessage: Codable {
 ///   - userId: User identifier associated with this subtitle
 ///   - text: The actual subtitle text content
 ///   - status: Current status of the subtitle
-@objc public class SubtitleMessage: NSObject {
+@objc public class SubtitleMessage1: NSObject {
     let turnId: Int
     let userId: UInt
     let text: String
-    var status: SubtitleStatus
+    var status: SubtitleStatus1
     
-    init(turnId: Int, userId: UInt, text: String, status: SubtitleStatus) {
+    init(turnId: Int, userId: UInt, text: String, status: SubtitleStatus1) {
         self.turnId = turnId
         self.userId = userId
         self.text = text
@@ -98,13 +98,13 @@ private struct TranscriptionMessage: Codable {
 
 /// Interface for receiving subtitle update events
 /// Implemented by UI components that need to display subtitles
-@objc public protocol ConversationSubtitleDelegate: AnyObject {
+@objc public protocol ConversationSubtitleDelegate1: AnyObject {
     /// Called when a subtitle is updated and needs to be displayed
     ///
     /// - Parameter subtitle: The updated subtitle message
-    @objc func onSubtitleUpdated(subtitle: SubtitleMessage)
+    @objc func onSubtitleUpdated1(subtitle: SubtitleMessage1)
     
-    @objc optional func onDebugLog(_ txt: String)
+    @objc optional func onDebugLog1(_ txt: String)
 }
 /// Configuration class for subtitle rendering
 ///
@@ -112,11 +112,11 @@ private struct TranscriptionMessage: Codable {
 ///   - rtcEngine: The RTC engine instance used for real-time communication
 ///   - renderMode: The mode of subtitle rendering (Auto, Text, or Word)
 ///   - callback: Callback interface for subtitle updates
-@objc public class SubtitleRenderConfig: NSObject {
+@objc public class SubtitleRenderConfig1: NSObject {
     let rtcEngine: AgoraRtcEngineKit
-    weak var delegate: ConversationSubtitleDelegate?
+    weak var delegate: ConversationSubtitleDelegate1?
     
-    @objc public init(rtcEngine: AgoraRtcEngineKit, delegate: ConversationSubtitleDelegate?) {
+    @objc public init(rtcEngine: AgoraRtcEngineKit, delegate: ConversationSubtitleDelegate1?) {
         self.rtcEngine = rtcEngine
         self.delegate = delegate
     }
@@ -127,7 +127,7 @@ private struct TranscriptionMessage: Codable {
 /// Subtitle Rendering Controller
 /// Manages the processing and rendering of subtitles in conversation
 ///
-@objc public class ConversationSubtitleController: NSObject {
+@objc public class ConversationSubtitleController1: NSObject {
     public static let version: String = "1.0.0"
     public static let localUserId: UInt = 0
     public static let remoteUserId: UInt = 99
@@ -142,16 +142,16 @@ private struct TranscriptionMessage: Codable {
     }
     
     private let jsonEncoder = JSONEncoder()
-    private var messageParser = MessageParser()
-    private weak var delegate: ConversationSubtitleDelegate?
-    private var renderConfig: SubtitleRenderConfig? = nil
+    private var messageParser = MessageParser1()
+    private weak var delegate: ConversationSubtitleDelegate1?
+    private var renderConfig: SubtitleRenderConfig1? = nil
     
     deinit {
         addLog("[CovSubRenderController] deinit: \(self)")
     }
     
     private func addLog(_ txt: String) {
-        delegate?.onDebugLog?(txt)
+        delegate?.onDebugLog1?(txt)
     }
     
     private let queue = DispatchQueue(label: "com.voiceagent.messagequeue", attributes: .concurrent)
@@ -161,7 +161,7 @@ private struct TranscriptionMessage: Codable {
             return
         }
         do {
-            let transcription = try JSONDecoder().decode(TranscriptionMessage.self, from: jsonData)
+            let transcription = try JSONDecoder().decode(TranscriptionMessage1.self, from: jsonData)
             handleMessage(transcription)
             addLog("✅[CovSubRenderController] input: \(transcription.description())")
         } catch {
@@ -171,47 +171,47 @@ private struct TranscriptionMessage: Codable {
         }
     }
     
-    private func handleMessage(_ message: TranscriptionMessage) {
+    private func handleMessage(_ message: TranscriptionMessage1) {
         if message.object == MessageType.user.rawValue {
             let text = message.text ?? ""
-            let subtitleMessage = SubtitleMessage(turnId: message.turn_id ?? 0,
-                                                  userId: ConversationSubtitleController.localUserId,
+            let subtitleMessage = SubtitleMessage1(turnId: message.turn_id ?? 0,
+                                                  userId: ConversationSubtitleController1.localUserId,
                                                   text: text,
                                                   status: (message.final == true) ? .end : .inprogress)
-            self.delegate?.onSubtitleUpdated(subtitle: subtitleMessage)
+            self.delegate?.onSubtitleUpdated1(subtitle: subtitleMessage)
         } else {
             handleTextMessage(message)
         }
     }
     
-    private func handleTextMessage(_ message: TranscriptionMessage) {
+    private func handleTextMessage(_ message: TranscriptionMessage1) {
         guard let text = message.text, !text.isEmpty else {
             return
         }
-        let messageState: SubtitleStatus
+        let messageState: SubtitleStatus1
         let isFinal = message.is_final ?? message.final ?? false
         messageState = isFinal ? .end : .inprogress
         
         var userId: UInt
         if let messageObject = message.object {
             if messageObject == MessageType.user.rawValue {
-                userId = ConversationSubtitleController.localUserId
+                userId = ConversationSubtitleController1.localUserId
             } else {
-                userId = ConversationSubtitleController.remoteUserId
+                userId = ConversationSubtitleController1.remoteUserId
             }
         } else {
             if message.stream_id == 0 {
-                userId = ConversationSubtitleController.remoteUserId
+                userId = ConversationSubtitleController1.remoteUserId
             } else {
-                userId = ConversationSubtitleController.localUserId
+                userId = ConversationSubtitleController1.localUserId
             }
         }
         let turnId = message.turn_id ?? -1
-        let subtitleMessage = SubtitleMessage(turnId: turnId,
+        let subtitleMessage = SubtitleMessage1(turnId: turnId,
                                               userId: userId,
                                               text: text,
                                               status: messageState)
-        self.delegate?.onSubtitleUpdated(subtitle: subtitleMessage)
+        self.delegate?.onSubtitleUpdated1(subtitle: subtitleMessage)
         if userId == 0 {
             print("🙋🏻‍♀️[CovSubRenderController] send user text: \(text), state: \(messageState)")
         } else {
@@ -220,7 +220,7 @@ private struct TranscriptionMessage: Codable {
     }
 }
 // MARK: - AgoraRtcEngineDelegate
-extension ConversationSubtitleController: AgoraRtcEngineDelegate {
+extension ConversationSubtitleController1: AgoraRtcEngineDelegate {
     public func rtcEngine(_ engine: AgoraRtcEngineKit, receiveStreamMessageFromUid uid: UInt, streamId: Int, data: Data) {
         inputStreamMessageData(data: data)
     }
@@ -228,8 +228,8 @@ extension ConversationSubtitleController: AgoraRtcEngineDelegate {
 
 
 // MARK: - CovSubRenderControllerProtocol
-extension ConversationSubtitleController {
-    @objc public func setupWithConfig(_ config: SubtitleRenderConfig) {
+extension ConversationSubtitleController1 {
+    @objc public func setupWithConfig(_ config: SubtitleRenderConfig1) {
         renderConfig = config
         self.delegate = config.delegate
         config.rtcEngine.addDelegate(self)

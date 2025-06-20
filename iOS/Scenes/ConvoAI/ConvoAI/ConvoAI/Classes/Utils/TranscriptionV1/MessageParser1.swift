@@ -1,6 +1,6 @@
 import Foundation
 
-class MessageParser {
+class MessageParser1 {
     
     private var messageBuffer: [String: [String]] = [:]
     private var lastAccessTime: [String: Date] = [:]

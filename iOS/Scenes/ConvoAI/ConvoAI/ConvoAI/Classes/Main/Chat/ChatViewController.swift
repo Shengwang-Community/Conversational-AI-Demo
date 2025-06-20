@@ -38,10 +38,15 @@ public class ChatViewController: UIViewController {
         return button
     }()
     
-    private lazy var subRenderController: ConversationSubtitleController = {
-            let renderCtrl = ConversationSubtitleController()
-            return renderCtrl
-        }()
+    private lazy var subRenderController1: ConversationSubtitleController1 = {
+        let renderCtrl = ConversationSubtitleController1()
+        return renderCtrl
+    }()
+    
+    private lazy var subRenderController2: ConversationSubtitleController2 = {
+        let renderCtrl = ConversationSubtitleController2()
+        return renderCtrl
+    }()
 
     private lazy var timerCoordinator: AgentTimerCoordinator = {
         let coordinator = AgentTimerCoordinator()
@@ -371,8 +376,12 @@ public class ChatViewController: UIViewController {
         convoAIAPI = ConversationalAIAPIImpl(config: config)
         
         //init transcritpion V1
-        let subRenderConfig = SubtitleRenderConfig(rtcEngine: rtcEngine, delegate: self)
-        subRenderController.setupWithConfig(subRenderConfig)
+        let subRenderConfig1 = SubtitleRenderConfig1(rtcEngine: rtcEngine, delegate: self)
+        subRenderController1.setupWithConfig(subRenderConfig1)
+        
+        //init transcritpion V2
+//        let subRenderConfig2 = SubtitleRenderConfig2(rtcEngine: rtcEngine, renderMode: .words, delegate: self)
+//        subRenderController2.setupWithConfig(subRenderConfig2)
         
         convoAIAPI.addHandler(handler: self)
     }
@@ -700,8 +709,8 @@ extension ChatViewController {
     private func getConvoaiBodyMap() -> [String: Any?] {
         return [
             //1.5.1-12-g18f3d9c7
-            "graph_id": "1.5.1-115-g582c71f4",
-//            "graph_id": DeveloperConfig.shared.graphId,
+//            "graph_id": "1.5.1-115-g582c71f4",
+            "graph_id": DeveloperConfig.shared.graphId,
             "name": nil,
             "preset": DeveloperConfig.shared.convoaiServerConfig,
             "properties": [
@@ -909,6 +918,8 @@ extension ChatViewController: AgoraRtcEngineDelegate {
                         animateView.updateAgentState(.listening, volume: Int(currentVolume))
                     }
                 }
+            } else if (info.uid == 0) {
+                bottomBar.setVolumeProgress(value: Float(info.volume))
             }
         }
     }
@@ -1277,17 +1288,53 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     }
 }
 
-extension ChatViewController: ConversationSubtitleDelegate {
-    public func onSubtitleUpdated(subtitle: SubtitleMessage) {
+extension ChatViewController: ConversationSubtitleDelegate2 {
+    public func onSubtitleUpdated(subtitle: SubtitleMessage2) {
+        if isSelfSubRender {
+            return
+        }
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            let owner: TranscriptionType = (subtitle.userId == ConversationSubtitleController2.localUserId) ? .user : .agent
+            self.messageView.viewModel.reduceStandardMessage(turnId: subtitle.turnId, message: subtitle.text, timestamp: 0, owner: owner, isInterrupted: subtitle.status == .interrupt)
+        }
+    }
+
+    public func onAgentStateChanged(stateMessage: AgentStateMessage2) {
+        addLog("[Call] onAgentStateChanged: \(stateMessage.state)")
+            switch stateMessage.state {
+            case .idle:
+                agentStateView.setState(.idle)
+                break
+            case .silent:
+                agentStateView.setState(.silent)
+                break
+            case .listening:
+                agentStateView.setState(.listening)
+                break
+            case .thinking:
+                agentStateView.setState(.thinking)
+                break
+            case .speaking:
+                agentStateView.setState(.speaking)
+                break
+            }
+    }
+}
+
+extension ChatViewController: ConversationSubtitleDelegate1 {
+    public func onSubtitleUpdated1(subtitle: SubtitleMessage1) {
         if !isSelfSubRender {
             return
         }
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            let owner: MessageOwner = (subtitle.userId == ConversationSubtitleController.localUserId) ? .me : .agent
+            let owner: MessageOwner = (subtitle.userId == ConversationSubtitleController1.localUserId) ? .me : .agent
             if (subtitle.turnId == -1) {
                 self.messageView.viewModel.reduceIndependentMessage(message: subtitle.text, timestamp: 0, owner: owner, isFinished: subtitle.status == .end)
             }
         }
     }
 }
+
