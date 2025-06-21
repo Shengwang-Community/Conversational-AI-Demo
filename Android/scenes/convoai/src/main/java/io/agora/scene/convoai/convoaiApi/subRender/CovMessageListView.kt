@@ -11,6 +11,7 @@ import android.widget.LinearLayout
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.databinding.CovMessageAgentItemBinding
 import io.agora.scene.convoai.databinding.CovMessageListViewBinding
 import io.agora.scene.convoai.databinding.CovMessageMineItemBinding
@@ -424,6 +425,10 @@ class CovMessageListView @JvmOverloads constructor(
     }
 
     fun onTranscriptionUpdated(transcription: Transcription) {
+        // Transcription for other users
+        if (transcription.type == TranscriptionType.USER && transcription.userId != CovAgentManager.uid.toString()) {
+            return
+        }
         handleMessage(transcription)
     }
 
