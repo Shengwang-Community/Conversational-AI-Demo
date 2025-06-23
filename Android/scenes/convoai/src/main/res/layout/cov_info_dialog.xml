@@ -173,10 +173,11 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="12dp"
                 android:layout_weight="1"
+                android:lineSpacingMultiplier="0.8"
                 android:gravity="center_vertical|end"
                 android:text="xxx"
                 android:textColor="@color/ai_icontext4"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
         </LinearLayout>
 
         <View
