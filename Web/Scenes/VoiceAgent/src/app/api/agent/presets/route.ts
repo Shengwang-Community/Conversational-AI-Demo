@@ -5,10 +5,12 @@ import {
   agentPresetSchema,
   basicRemoteResSchema,
   REMOTE_CONVOAI_AGENT_PRESETS,
+  agentPresetFallbackData,
 } from '@/constants'
 import { getEndpointFromNextRequest } from '@/app/api/_utils'
 
 import { logger } from '@/lib/logger'
+import _ from 'lodash'
 
 const remoteResSchema = basicRemoteResSchema.extend({
   data: z.array(agentPresetSchema),
@@ -56,6 +58,10 @@ export const revalidate = 60
 
 export async function GET(request: NextRequest) {
   const presets = await getAgentPresets(request)
+  if (_.isArray(presets) && presets.length === 0) {
+    logger.info('No presets found, returning fallback data')
+    return NextResponse.json([agentPresetFallbackData])
+  }
 
   return NextResponse.json(presets)
 }

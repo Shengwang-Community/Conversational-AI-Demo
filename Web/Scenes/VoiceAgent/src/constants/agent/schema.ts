@@ -200,7 +200,7 @@ export const agentPresetSchema = z.object({
   call_time_limit_second: z.number().optional(),
 })
 
-export const agentPresetFallbackData = {
+export const agentPresetFallbackData: z.infer<typeof agentPresetSchema> = {
   index: -1,
   name: EAgentPresetMode.CUSTOM,
   display_name: isCN ? '自定义' : 'Custom',
