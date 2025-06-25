@@ -1,14 +1,17 @@
 # ConversationalAI API
 
-**Note**: The component does not handle the initialization, lifecycle management of RTC and RTM, or login logic internally. The business layer must ensure that the RTC and RTM instance lifecycles are longer than the component lifecycle.
+**Note**:
+
+Users need to maintain the initialization, lifecycle, and login logic of RTC and RTM themselves, and need to ensure that the RTC and RTM instance lifecycles are longer than the component lifecycle. Before using the component, ensure that RTC is available and RTM is in a logged-in state.
 
 ## Usage Steps
 
 1. Copy the ConversationalAIAPI folder and its files to your own project
 2. Initialize the component
 3. Add listeners
-4. Subscribe to messages when starting a call
-5. Implement listener callbacks to get relevant data
+4. Subscribe to messages
+5. Audio settings
+6. Implement callbacks
 
 ## Code Implementation
 
@@ -40,7 +43,8 @@ convoAIAPI.addHandler(handler: self)
 ```
 
 #### 4. Subscribe to Channel Messages
-Subscribe to channel messages before starting each call:
+Subscribe to channel messages every time you start a call
+**Note: Must be called after logging in to RTM**
 
 ```swift
 convoAIAPI.subscribeMessage(channelName: channelName) { error in
@@ -54,7 +58,18 @@ convoAIAPI.subscribeMessage(channelName: channelName) { error in
 startAgent()
 ```
 
-#### 5. Implement Callback Protocol
+#### 5. Audio Settings
+**Note: Call audio settings before joining the RTC channel each time:**
+
+```swift
+convoAIAPI.loadAudioSettings()
+
+//..
+rtcEngine.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
+
+```
+
+#### 6. Implement Callback Protocol
 Implement the `ConversationalAIAPIEventHandler` callback protocol according to your needs.
 
 For example, the subtitle protocol - the component will update subtitle information through this callback:
@@ -82,8 +97,8 @@ extension YourViewController: ConversationalAIAPIEventHandler {
 }
 ```
 
-#### 6. Unsubscribe from Messages
-Unsubscribe from messages before stopping each call:
+#### 7. Unsubscribe from Messages
+Unsubscribe from messages every time you stop a call:
 
 ```swift
 convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
@@ -97,8 +112,8 @@ convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
 stopAgent()
 ```
 
-#### 7. Destroy Component
-Destroy the component before exiting the current UI module:
+#### 8. Destroy Component
+Destroy the component when exiting the current UI module:
 
 ```swift
 convoAIAPI.destroy()
@@ -123,15 +138,5 @@ convoAIAPI.interrupt(agentUserId: "\(agentUid)") { error in
 }
 ```
 
-#### Audio Settings
-When you need to optimize audio effects, call the audio settings before joining the RTC channel each time:
-
-```swift
-convoAIAPI.loadAudioSettings()
-
-//..
-rtcEngine.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
-
-```
 
 

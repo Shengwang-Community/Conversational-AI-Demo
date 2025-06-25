@@ -1,14 +1,17 @@
 # ConversationalAI API
 
-**注意**：组件内部不负责维护 RTC、RTM 的初始化、生命周期，以及登录态的逻辑，并且业务需要确保 RTC、RTM 实例生命周期大于组件生命周期。
+**注意**：
+
+用户需要自行维护 RTC、RTM 的初始化、生命周期，以及登录态的逻辑，并且需要确保 RTC、RTM 实例生命周期大于组件生命周期， 在使用组件之前，确保RTC可用, RTM为登录状态。
 
 ## 使用步骤
 
 1. 将 ConversationalAIAPI 文件夹以及里面的文件拷贝到你自己的项目中
 2. 初始化组件
 3. 添加监听
-4. 在开始通话时订阅消息
-5. 实现监听回调，获取相关数据
+4. 订阅消息
+5. 音频设置
+5. 实现回调
 
 ## 代码实现
 
@@ -40,7 +43,8 @@ convoAIAPI.addHandler(handler: self)
 ```
 
 #### 4. 订阅频道消息
-在每次将要开启通话的时候订阅频道消息：
+每次开启通话的时候订阅频道消息
+**注意：必须在登录RTM之后调用**
 
 ```swift
 convoAIAPI.subscribeMessage(channelName: channelName) { error in
@@ -54,7 +58,18 @@ convoAIAPI.subscribeMessage(channelName: channelName) { error in
 startAgent()
 ```
 
-#### 5. 实现回调协议
+#### 5. 音频设置
+**注意：每次加入rtc频道之前调用音频设置：**
+
+```swift
+convoAIAPI.loadAudioSettings()
+
+//..
+rtcEngine.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
+
+```
+
+#### 6. 实现回调协议
 根据需求，实现 `ConversationalAIAPIEventHandler` 回调协议。
 
 例如字幕协议，组件会通过该回调更新字幕信息：
@@ -82,8 +97,8 @@ extension YourViewController: ConversationalAIAPIEventHandler {
 }
 ```
 
-#### 6. 取消订阅消息
-在每次将要停止通话的时候，取消订阅消息：
+#### 7. 取消订阅消息
+每次停止通话的时候，取消订阅消息：
 
 ```swift
 convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
@@ -97,8 +112,8 @@ convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
 stopAgent()
 ```
 
-#### 7. 销毁组件
-在将要退出当前 UI 模块的时候，销毁组件：
+#### 8. 销毁组件
+退出当前 UI 模块的时候，销毁组件：
 
 ```swift
 convoAIAPI.destroy()
@@ -123,15 +138,5 @@ convoAIAPI.interrupt(agentUserId: "\(agentUid)") { error in
 }
 ```
 
-#### 音频设置
-在需要优化音频效果时，可以在每次加入rtc频道之前调用音频设置：
-
-```swift
-convoAIAPI.loadAudioSettings()
-
-//..
-rtcEngine.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
-
-```
 
 
