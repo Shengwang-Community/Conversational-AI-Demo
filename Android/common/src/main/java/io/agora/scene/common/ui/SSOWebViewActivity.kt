@@ -3,27 +3,34 @@ package io.agora.scene.common.ui;
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.text.TextUtils
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.core.view.isVisible
 import io.agora.scene.common.constant.ServerConfig.toolBoxUrl
 import io.agora.scene.common.databinding.CommonActivitySsoBinding
 import io.agora.scene.common.util.CommonLogger
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getStatusBarHeight
+import io.agora.scene.common.util.toast.ToastUtil
 
 class SSOWebViewActivity : BaseActivity<CommonActivitySsoBinding>() {
 
     override fun getViewBinding(): CommonActivitySsoBinding {
         return CommonActivitySsoBinding.inflate(layoutInflater)
     }
+
+    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
     companion object {
         private const val TAG = "SSOWebViewActivity"
@@ -161,14 +168,26 @@ class SSOWebViewActivity : BaseActivity<CommonActivitySsoBinding>() {
             } else {
                 // Handle error messages
                 runOnUiThread {
+                    CommonLogger.e(TAG, "SSO Error: $response")
+                    ToastUtil.show(response, Toast.LENGTH_LONG)
                     mLoadingDialog?.dismiss()
                     mBinding?.emptyView?.isVisible = false
+
+                    // Add a delay before clearing cookies and reloading
+                    mainHandler.postDelayed({
+                        // Clear cookies and reload to allow re-login
+                        val cookieManager = CookieManager.getInstance()
+                        cookieManager.removeAllCookies(null)
+                        cookieManager.flush()
+                        mBinding?.webView?.loadUrl(ssoUrl)
+                    }, 1500) // 1.5-second delay
                 }
             }
         }
     }
 
     override fun onDestroy() {
+        mainHandler.removeCallbacksAndMessages(null)
         mLoadingDialog?.dismiss()
         mBinding?.emptyView?.isVisible = false
         super.onDestroy()

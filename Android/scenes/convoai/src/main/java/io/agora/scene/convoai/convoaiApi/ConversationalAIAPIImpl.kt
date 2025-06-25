@@ -249,6 +249,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
         callMessagePrint(TAG, ">>> [traceId:$traceId] [subscribeMessage] $channel")
         transcriptionController.reset()
         channelName = channel
+        stateChangeEvent = null
         val option = SubscribeOptions().apply {
             withMessage = true
             withPresence = true
@@ -265,6 +266,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
             override fun onFailure(errorInfo: ErrorInfo) {
                 callMessagePrint(TAG, "<<< [traceId:$traceId] rtm subscribe onFailure ${errorInfo.str()}")
                 channelName = null
+                stateChangeEvent = null
                 runOnMainThread {
                     val errorCode = RtmConstants.RtmErrorCode.getValue(errorInfo.errorCode)
                     completion.invoke(ConversationalAIAPIError.RtmError(errorCode, errorInfo.errorReason))
