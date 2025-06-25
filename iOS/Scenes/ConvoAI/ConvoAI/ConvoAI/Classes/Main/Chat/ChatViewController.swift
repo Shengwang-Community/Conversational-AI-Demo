@@ -26,7 +26,7 @@ public class ChatViewController: UIViewController {
     private let tag = "ChatViewController"
     private var isSelfSubRender = false
     private lazy var enableMetric: Bool = {
-        let res = DeveloperConfig.shared.getMetrics()
+        let res = DeveloperConfig.shared.metrics
         return res
     }()
     
@@ -35,6 +35,7 @@ public class ChatViewController: UIViewController {
         button.addTarget(self, action: #selector(testChat), for: .touchUpInside)
         button.setTitle("Chat", for: .normal)
         button.backgroundColor = .blue
+        button.isHidden = true
         return button
     }()
     
@@ -364,6 +365,7 @@ public class ChatViewController: UIViewController {
         animateView.setupMediaPlayer(rtcEngine)
         animateView.updateAgentState(.idle)
         devModeButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
+        sendMessageButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
 
         guard let rtmEngine = rtmManager.getRtmEngine() else {
             //TODO: log
@@ -372,7 +374,7 @@ public class ChatViewController: UIViewController {
         
         //init transcritpion V3
 
-        let config = ConversationalAIAPIConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words)
+        let config = ConversationalAIAPIConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words, enableLog: true)
         convoAIAPI = ConversationalAIAPIImpl(config: config)
         
         //init transcritpion V1
@@ -507,6 +509,8 @@ public class ChatViewController: UIViewController {
                         SVProgressHUD.showInfo(withStatus: err.localizedDescription)
                     }
                 }
+            } else {
+                AppContext.loginManager()?.logout()
             }
         }
         self.navigationController?.pushViewController(ssoWebVC, animated: false)
@@ -1040,6 +1044,7 @@ private extension ChatViewController {
     func onThresholdReached() {
         if !DeveloperConfig.shared.isDeveloperMode {
             devModeButton.isHidden = false
+            sendMessageButton.isHidden = false
             DeveloperConfig.shared.isDeveloperMode = true
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         }
@@ -1167,11 +1172,12 @@ extension ChatViewController {
             .setSessionLimit(enabled: !DeveloperConfig.shared.getSessionFree(), onChange: { [weak self] isOn in
                 self?.timerCoordinator.setDurationLimit(limited: isOn)
             })
-            .setMetrics(enabled: DeveloperConfig.shared.getMetrics(), onChange: { [weak self] isOn in
+            .setMetrics(enabled: DeveloperConfig.shared.metrics, onChange: { [weak self] isOn in
                 self?.enableMetric = isOn
             })
             .setCloseDevModeCallback { [weak self] in
                 self?.devModeButton.isHidden = true
+                self?.sendMessageButton.isHidden = true
             }
             .setSwitchServerCallback { [weak self] in
                 self?.switchEnvironment()

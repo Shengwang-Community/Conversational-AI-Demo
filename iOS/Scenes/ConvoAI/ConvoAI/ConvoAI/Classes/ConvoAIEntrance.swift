@@ -49,7 +49,7 @@ extension AppContext {
     }
     
     static var agentUid: Int {
-        return 999
+        return Int(arc4random_uniform(90000000))
     }
     
     static var uid: Int {

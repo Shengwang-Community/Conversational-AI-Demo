@@ -20,10 +20,10 @@ public class DeveloperConfig {
     public var convoaiServerConfig: String? = nil
     public var graphId: String? = nil
     public var sdkParams: [String] = []
-    
+    public var metrics: Bool = false
+
     internal var serverHost: String = ""
     internal var audioDump: Bool = false
-    internal var metrics: Bool = false
     internal var sessionLimitEnabled: Bool = false
     
     internal var onCloseDevMode: (() -> Void)?
@@ -55,15 +55,15 @@ public class DeveloperConfig {
     }
     
     @discardableResult
-    public func setMetrics(enabled: Bool = false, onChange: ((Bool) -> Void)? = nil) -> Self {
-        self.metrics = enabled
-        self.onMetrics = onChange
+    public func setCloseDevModeCallback(callback: (() -> Void)?) -> Self {
+        self.onCloseDevMode = callback
         return self
     }
     
     @discardableResult
-    public func setCloseDevModeCallback(callback: (() -> Void)?) -> Self {
-        self.onCloseDevMode = callback
+    public func setMetrics(enabled: Bool = false, onChange: ((Bool) -> Void)? = nil) -> Self {
+        self.metrics = enabled
+        self.onMetrics = onChange
         return self
     }
     
@@ -93,18 +93,10 @@ public class DeveloperConfig {
         return UserDefaults.standard.bool(forKey: kSessionFree)
     }
     
-    public func setMetricsEnable(_ enable: Bool) {
-        UserDefaults.standard.set(enable, forKey: kMetrics)
-    }
-    
-    public func getMetrics() -> Bool {
-        let res = UserDefaults.standard.bool(forKey: kMetrics)
-        return res
-    }
-    
     public func resetDevParams() {
         self.isDeveloperMode = false
         self.graphId = nil
+        self.metrics = false
         self.sdkParams.removeAll()
         self.convoaiServerConfig = nil
         if let defaultHost = self.defaultHost {
@@ -240,8 +232,9 @@ extension DeveloperModeViewController {
     }
     
     @objc private func onClickMetricsButton(_ sender: UISwitch) {
-        DeveloperConfig.shared.setMetricsEnable(sender.isOn)
-        config.onMetrics?(sender.isOn)
+        let state = sender.isOn
+        config.metrics = state
+        config.onMetrics?(state)
     }
     
     @objc private func onClickCopy(_ sender: UIButton) {

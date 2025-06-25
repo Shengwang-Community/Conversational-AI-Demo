@@ -52,9 +52,8 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         
         let publishOptions = AgoraRtmPublishOptions()
         publishOptions.channelType = .user
-        publishOptions.customType = "user.transcription"
+        publishOptions.customType = MessageType.user.rawValue
         let messageData: [String : Any] = [
-            "customType": "user.transcription",
             "priority": message.priority.stringValue,
             "interruptable": message.responseInterruptable,
             "message": message.text ?? "",
@@ -156,6 +155,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         let traceId = UUID().uuidString.prefix(8)
         callMessagePrint(msg: ">>> [traceId:\(traceId)] [subscribe] channel: \(channelName)")
         
+        stateChangeEvent = nil
         self.transcriptionController.reset()
         let subscribeOptions = AgoraRtmSubscribeOptions()
         subscribeOptions.features = [.presence, .message]
@@ -176,6 +176,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
             return
         }
         channel = nil
+        stateChangeEvent = nil
         transcriptionController.reset()
         let traceId = UUID().uuidString.prefix(8)
         callMessagePrint(msg: ">>> [traceId:\(traceId)] [unsubscribe] channel: \(channelName)")
@@ -266,7 +267,7 @@ extension ConversationalAIAPIImpl {
     private func notifyDelegatesDebugLog(_ log: String) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onDebugLog(log)
+//                delegate.onDebugLog(log)
             }
         }
     }
@@ -365,7 +366,9 @@ extension ConversationalAIAPIImpl {
     
     func callMessagePrint(msg: String) {
         let log = "\(tag) \(msg)"
-        writeLogToRTCSDK(log: log)
+        if config.enableLog {
+            writeLogToRTCSDK(log: log)
+        }
         notifyDelegatesDebugLog(log)
     }
     
@@ -416,6 +419,7 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
     public func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceivePresenceEvent event: AgoraRtmPresenceEvent) {
         callMessagePrint(msg: "<<< [didReceivePresenceEvent] routing: \(event)")
         if event.channelName != channel {
+            callMessagePrint(msg: "<<< channel name is not equal current chanel: \(event)")
             return
         }
         

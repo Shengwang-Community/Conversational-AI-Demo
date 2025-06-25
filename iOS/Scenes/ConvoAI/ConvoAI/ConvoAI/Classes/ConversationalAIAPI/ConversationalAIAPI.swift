@@ -9,10 +9,18 @@ import Foundation
 import AgoraRtcKit
 import AgoraRtmKit
 
+///Message priority levels for AI agent processing
+///You can control the broadcast behavior by specifying the following parameters.
 @objc public enum Priority: Int {
-    case interrupt = 0 /// (Default) High priority, interrupt and announce. The agent will terminate the current interaction and directly announce the message.
-    case append = 1    /// Medium priority, append announcement. The agent will announce the message after the current interaction ends.
-    case ignore = 2    /// Low priority, announce when idle. If the agent is currently interacting, it will directly ignore and discard the message to be announced; it will only announce the message when the agent is not in interaction.
+    /// (Default) High priority - The agent will immediately stop current
+    /// interaction and process this message. Use for urgent or time-sensitive messages
+    case interrupt = 0 
+    /// Medium priority - The agent will queue this message and process it
+    /// after the current interaction completes. Use for follow-up questions.
+    case append = 1    
+    /// Low priority - If the agent is currently interacting, this message
+    /// will be discarded. Only processed when agent is idle. Use for optional content.
+    case ignore = 2    
     
     public var stringValue: String {
         switch self {
@@ -39,20 +47,27 @@ import AgoraRtmKit
     }
 }
 
-/// Message object containing text and image information
+/// Message object for sending content to AI agents
+/// Supports multiple content types that can be combined in a single message:
+/// - Text content for natural language communication
+/// - Image URLs for visual context (JPEG, PNG formats recommended)
+/// - Audio URLs for voice input (WAV, MP3 formats recommended)
+///
+/// Usage examples:
+/// - Text only: ChatMessage(text: "tell me a joke？")
 @objc public class ChatMessage: NSObject {
-    /// Message priority
+    ///priority Message processing priority (default: INTERRUPT)
     @objc public let priority: Priority
-    /// Whether this message can be interrupted
+    /// responseInterruptable Whether this message can be interrupted by higher priority messages (default: true)
     @objc public let responseInterruptable: Bool
-    /// Text content of the message
+    /// Text content of the message (optional)      
     @objc public let text: String?
-    /// Image URL
+    /// imageUrl HTTP/HTTPS URL pointing to an image file (optional)
     @objc public let imageUrl: String?
-    /// Audio URL
+    /// audioUrl HTTP/HTTPS URL pointing to an audio file (optional)
     @objc public let audioUrl: String?
     
-    @objc public init(priority: Priority = .interrupt, interruptable: Bool = true, text: String?, imageUrl: String?, audioUrl: String?) {
+    @objc public init(priority: Priority = .interrupt, interruptable: Bool = true, text: String? = "", imageUrl: String? = "", audioUrl: String? = "") {
         self.priority = priority
         self.responseInterruptable = interruptable
         self.text = text
@@ -62,21 +77,217 @@ import AgoraRtmKit
     }
 }
 
-// Define different modes for subtitle rendering
+/// AI state enumeration
+@objc public enum AgentState: Int {
+    case idle       /// Idle state
+    case silent     /// Silent state
+    case listening  /// Listening state
+    case thinking   /// Thinking state
+    case speaking   /// Speaking state
+    case unknow     /// unknow state
+    
+    static func fromValue(_ value: Int) -> AgentState {
+        return AgentState(rawValue: value) ?? .unknow
+    }
+}
+
+/// Conversation state class
+/// Represents an event when AI agent state changes, containing complete state information and timestamp.
+/// Used for tracking conversation flow and updating user interface state indicators.
+@objc public class StateChangeEvent: NSObject {
+    /// Current agent state (silent, listening, thinking, speaking, unknow)
+    let state: AgentState
+    /// Conversation turn ID, used to identify specific conversation rounds
+    let turnId: Int
+    /// Event occurrence timestamp (milliseconds since January 1, 1970 UTC)
+    let timestamp: TimeInterval
+    /// Reason for state change
+    let reason: String
+    
+    @objc public init(state: AgentState, turnId: Int, timestamp: TimeInterval, reason: String) {
+        self.state = state
+        self.turnId = turnId
+        self.timestamp = timestamp
+        self.reason = reason
+        super.init()
+   }
+    
+    public override var description: String {
+        return "StateChangeEvent(state: \(state), turnId: \(turnId), timestamp: \(timestamp), reason: \(reason))"
+    }
+}
+
+/// Represents an event when conversation is interrupted, typically triggered when user actively
+/// interrupts AI speaking or system detects high-priority messages.
+/// Used for recording interrupt behavior and performing corresponding processing.
+@objc public class InterruptEvent: NSObject {
+    /// The conversation turn ID that was interrupted
+    @objc public  let turnId: Int
+    /// Interrupt event occurrence timestamp (milliseconds since January 1, 1970 UTC)
+    @objc public let timestamp: TimeInterval
+    
+    @objc public init(turnId: Int, timestamp: TimeInterval) {
+        self.turnId = turnId
+        self.timestamp = timestamp
+    }
+
+    public override var description: String {
+        return "InterruptEvent(turnId: \(turnId), timestamp: \(timestamp))"
+    }
+}
+
+/// Performance metric module type enumeration
+@objc public enum ModuleType: Int {
+    /// LLM inference
+    case llm   
+    /// MLLM inference
+    case mllm  
+    /// Text-to-speech
+    case tts   
+    /// Unknown error
+    case unknown 
+    
+    /// Create type from string
+    public static func fromValue(_ value: String) -> ModuleType {
+        switch value.lowercased() {
+        case "llm":
+            return .llm
+        case "mllm":
+            return .mllm
+        case "tts":
+            return .tts
+        default:
+            return .unknown
+        }
+    }
+
+    public var stringValue: String {
+        switch self {
+        case .llm:
+            return "llm"
+        case .mllm:
+            return "mllm"
+        case .tts:
+            return "tts"
+        default:
+            return "unknown"
+        }
+    }
+}
+
+/// Used for recording and transmitting system performance data, such as LLM inference latency,
+/// TTS synthesis latency, etc. This data can be used for performance monitoring, system
+/// optimization, and user experience improvement.
+@objc public class Metric: NSObject {
+    /// Metric type (LLM, MLLM, TTS, etc.)
+    @objc public let type: ModuleType
+    /// Metric name describing the specific performance item
+    @objc public let name: String
+    /// Metric value, typically latency time (milliseconds) or other quantitative metrics
+    @objc public let value: Double
+    /// Metric recording timestamp (milliseconds since January 1, 1970 UTC)
+    @objc public let timestamp: TimeInterval
+    
+    @objc public init(type: ModuleType, name: String, value: Double, timestamp: TimeInterval) {
+        self.type = type
+        self.name = name
+        self.value = value
+        self.timestamp = timestamp
+    }
+
+    public override var description: String {
+        return "Metrics(type: \(type.stringValue), name: \(name), value: \(value), timestamp: \(timestamp))"
+    }
+}
+
+/// AI agent error information
+/// Data class for handling and reporting AI-related errors. Contains error type, error code,
+/// error description and timestamp, facilitating error monitoring, logging, and troubleshooting.
+@objc public class ModuleError: NSObject {
+    /// AI error type (LLM call failed, TTS exception, etc.)
+    @objc public let type: ModuleType
+    /// Specific error code for identifying particular error conditions
+    @objc public let code: Int
+    /// Error description message providing detailed error explanation
+    @objc public let message: String
+    /// Error occurrence timestamp (milliseconds since January 1, 1970 UTC)
+    @objc public let timestamp: TimeInterval
+    
+    @objc public init(type: ModuleType, code: Int, message: String, timestamp: TimeInterval) {
+        self.type = type
+        self.code = code
+        self.message = message
+        self.timestamp = timestamp
+    }
+    public override var description: String {
+        return "AgentError(type: \(type.stringValue), code: \(code), message: \(message), timestamp: \(timestamp))"
+    }
+}
+
+/// Message type enumeration
+/// Used to distinguish different types of messages in the conversation
+/// String value of the message type
+public enum MessageType: String, CaseIterable {
+    /// Metrics message type
+    case metrics = "message.metrics"
+    /// Error message type
+    case error = "message.error"
+    /// Assistant transcription message type
+    case assistant = "assistant.transcription"
+    /// User transcription message type
+    case user = "user.transcription"
+    /// Interrupt message type
+    case interrupt = "message.interrupt"
+    /// State message type
+    case state = "message.state"
+    /// Unknown message type
+    case unknown = "unknown"
+    
+    /// Create message type from string
+    public static func fromValue(_ value: String) -> MessageType {
+        return MessageType(rawValue: value) ?? .unknown
+    }
+}
+
+/// Define different modes for transcription rendering
 @objc public enum TranscriptionRenderMode: Int {
-    case words = 0 /// Word-by-word subtitle rendering
-    case text = 1  /// Sentence-by-sentence subtitle rendering
+    /// Word-by-word transcription rendering
+    case words = 0 
+    /// Sentence-by-sentence transcription rendering
+    case text = 1 
 }
  
-/// Represents the current status of subtitles
+/// Represents the current status of a transcription in the conversation flow
+/// Used to track and manage the lifecycle state of transcribed text
 @objc public enum TranscriptionStatus: Int {
-    case inprogress = 0   /// Subtitle is being generated or playing
-    case end = 1          /// Subtitle has completed normally
-    case interrupted = 2  /// Subtitle was interrupted before completion
+    /// Indicates that the transcription is currently in progress
+    /// This status is set when text is actively being generated or played back
+    /// Used to show that content is still being processed or streamed
+    case inprogress = 0
+    
+    /// Indicates that the transcription has completed successfully
+    /// This status is set when text generation has finished normally
+    /// Represents the natural end of a transcription segment
+    case end = 1
+    
+    /// Indicates that the transcription was interrupted before completion
+    /// This status is set when text generation was stopped prematurely
+    /// Used when a transcription is cut off by a higher priority message
+    case interrupted = 2
 }
  
+/// Enumeration representing the type of transcription
+/// Used to distinguish whether the transcription text comes from AI agent or user
+/// Helps in managing conversation flow and UI display by identifying different speakers
 @objc public enum TranscriptionType: Int {
+    /// Transcription text generated by the AI agent
+    /// Typically contains the AI assistant's responses and utterances
+    /// Used for rendering agent's speech in the conversation interface
     case agent
+    
+    /// Transcription text from the user
+    /// Contains the converted text from user's voice input
+    /// Used for displaying user's speech in the conversation flow
     case user
 }
 
@@ -107,150 +318,27 @@ import AgoraRtmKit
     }
 }
 
-/// AI state enumeration
-@objc public enum AgentState: Int {
-    case idle       /// Idle state
-    case silent     /// Silent state
-    case listening  /// Listening
-    case thinking   /// Thinking
-    case speaking   /// Speaking
-    case unknow    /// unknow
-    
-    static func fromValue(_ value: Int) -> AgentState {
-        return AgentState(rawValue: value) ?? .unknow
-    }
-}
- 
-/// Conversation state class
-@objc public class StateChangeEvent: NSObject {
-    /// Current agent state
-    let state: AgentState
-    /// Conversation turn ID
-    let turnId: Int
-    /// Timestamp
-    let timestamp: TimeInterval
-    /// Reason for state change
-    let reason: String
-    
-    @objc public init(state: AgentState, turnId: Int, timestamp: TimeInterval, reason: String) {
-        self.state = state
-        self.turnId = turnId
-        self.timestamp = timestamp
-        self.reason = reason
-        super.init()
-   }
-    
-    public override var description: String {
-        return "StateChangeEvent(state: \(state), turnId: \(turnId), timestamp: \(timestamp), reason: \(reason))"
-    }
-}
-
-/// Interrupt event class
-@objc public class InterruptEvent: NSObject {
-    /// Conversation turn ID
-    @objc public  let turnId: Int
-    /// Timestamp when the event occurred
-    @objc public let timestamp: TimeInterval
-    
-    @objc public init(turnId: Int, timestamp: TimeInterval) {
-        self.turnId = turnId
-        self.timestamp = timestamp
-    }
-
-    public override var description: String {
-        return "InterruptEvent(turnId: \(turnId), timestamp: \(timestamp))"
-    }
-}
-
-/// Performance metric type enumeration
-@objc public enum ModuleType: Int {
-    case llm   /// LLM inference
-    case mllm  /// MLLM inference
-    case tts   /// Text-to-speech
-    case unknown /// Unknown error
-    
-    /// Create type from string
-    public static func fromValue(_ value: String) -> ModuleType {
-        switch value.lowercased() {
-        case "llm":
-            return .llm
-        case "mllm":
-            return .mllm
-        case "tts":
-            return .tts
-        default:
-            return .unknown
-        }
-    }
-
-    public var stringValue: String {
-        switch self {
-        case .llm:
-            return "llm"
-        case .mllm:
-            return "mllm"
-        case .tts:
-            return "tts"
-        default:
-            return "unknown"
-        }
-    }
-}
- 
-/// Class for recording system performance data metrics
-@objc public class Metric: NSObject {
-    /// Type of the metric
-    @objc public let type: ModuleType
-    /// Metric name
-    @objc public let name: String
-    /// Metric value
-    @objc public let value: Double
-    /// Timestamp when the metric was recorded
-    @objc public let timestamp: TimeInterval
-    
-    @objc public init(type: ModuleType, name: String, value: Double, timestamp: TimeInterval) {
-        self.type = type
-        self.name = name
-        self.value = value
-        self.timestamp = timestamp
-    }
-
-    public override var description: String {
-        return "Metrics(type: \(type.stringValue), name: \(name), value: \(value), timestamp: \(timestamp))"
-    }
-}
-
-/// AI error information class
-@objc public class ModuleError: NSObject {
-    /// Error type
-    @objc public let type: ModuleType
-    /// Error code
-    @objc public let code: Int
-    /// Error message
-    @objc public let message: String
-    /// Timestamp when the error occurred
-    @objc public let timestamp: TimeInterval
-    
-    @objc public init(type: ModuleType, code: Int, message: String, timestamp: TimeInterval) {
-        self.type = type
-        self.code = code
-        self.message = message
-        self.timestamp = timestamp
-    }
-    public override var description: String {
-        return "AgentError(type: \(type.stringValue), code: \(code), message: \(message), timestamp: \(timestamp))"
-    }
-}
-
+/// Error type enumeration
+/// Used to distinguish different types of errors in the conversation
+/// String value of the error type
 @objc public enum ConversationalAIAPIErrorType: Int {
+    /// Unknown error type
     case unknown = 0
+    /// RTC error type
     case rtcError = 2
+    /// RTM error type
     case rtmError = 3
 }
 
+/// Conversational AI API Error information class
+/// Used to record and transmit error information, including error type, error code,
+/// error description and timestamp, facilitating error monitoring, logging, and troubleshooting.
 @objc public class ConversationalAIAPIError: NSObject {
+    /// Error type
     @objc public let type: ConversationalAIAPIErrorType
+    /// Error code
     @objc public let code: Int
+    /// Error description message providing detailed error explanation
     @objc public let message: String
 
     @objc public init(type: ConversationalAIAPIErrorType, code: Int, message: String) {
@@ -264,19 +352,36 @@ import AgoraRtmKit
     }
 }
 
-/// Message type enumeration
-public enum MessageType: String, CaseIterable {
-    case metrics = "message.metrics"
-    case error = "message.error"
-    case assistant = "assistant.transcription"
-    case user = "user.transcription"
-    case interrupt = "message.interrupt"
-    case state = "message.state"
-    case unknown = "unknown"
+/// Conversational AI API Configuration
+ 
+/// Contains the necessary configuration parameters to initialize the Conversational AI API.
+/// This configuration includes RTC engine for audio communication, RTM client for messaging,
+/// and subtitle rendering mode settings.
+///
+/// @property 
+/// @property rtmClient RTM client instance for real-time messaging
+/// @property renderMode Subtitle rendering mode (Word or Text level)
+///
+@objc public class ConversationalAIAPIConfig: NSObject {
+    /// rtcEngine RTC engine instance for audio/video communication
+    @objc public weak var rtcEngine: AgoraRtcEngineKit?
+    /// rtmEngine RTM client instance for real-time messaging
+    @objc public weak var rtmEngine: AgoraRtmClientKit?
+    /// renderMode Subtitle rendering mode (Word or Text level)
+    @objc public var renderMode: TranscriptionRenderMode
+    /// enableLog Whether to enable logging
+    @objc public var enableLog: Bool
     
-    /// Create message type from string
-    public static func fromValue(_ value: String) -> MessageType {
-        return MessageType(rawValue: value) ?? .unknown
+    @objc public init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, renderMode: TranscriptionRenderMode, enableLog: Bool = false) {
+        self.rtcEngine = rtcEngine
+        self.rtmEngine = rtmEngine
+        self.renderMode = renderMode
+        self.enableLog = enableLog
+    }
+    
+    @objc public convenience init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, delegate: ConversationalAIAPIEventHandler) {
+        AgoraRtcEngineKit.destroy()
+        self.init(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words)
     }
 }
 
@@ -327,11 +432,6 @@ public enum MessageType: String, CaseIterable {
     /// - Parameter transcription: Subtitle message containing text content and time information
     /// - Parameter agentSession: agent session
     @objc func onTranscriptionUpdated(agentUserId: String, transcription: Transcription)
- 
- 
-    /// Call this method to expose internal logs to external components
-    /// - Parameter log: Internal logs from the component
-    @objc func onDebugLog(_ log: String)
 }
 
 /// Control protocol for managing ConvoAI component operations
@@ -402,32 +502,4 @@ public enum MessageType: String, CaseIterable {
     @objc func destroy()
 }
 
-/// Conversational AI API Configuration
- 
-/// Contains the necessary configuration parameters to initialize the Conversational AI API.
-/// This configuration includes RTC engine for audio communication, RTM client for messaging,
-/// and subtitle rendering mode settings.
-///
-/// @property rtcEngine RTC engine instance for audio/video communication
-/// @property rtmClient RTM client instance for real-time messaging
-/// @property renderMode Subtitle rendering mode (Word or Text level)
-///
-@objc public class ConversationalAIAPIConfig: NSObject {
-    @objc public weak var rtcEngine: AgoraRtcEngineKit?
-    @objc public weak var rtmEngine: AgoraRtmClientKit?
-    @objc public var renderMode: TranscriptionRenderMode
-    @objc public var enableLog: Bool
-    
-    @objc public init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, renderMode: TranscriptionRenderMode, enableLog: Bool = false) {
-        self.rtcEngine = rtcEngine
-        self.rtmEngine = rtmEngine
-        self.renderMode = renderMode
-        self.enableLog = enableLog
-    }
-    
-    @objc public convenience init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, delegate: ConversationalAIAPIEventHandler) {
-        AgoraRtcEngineKit.destroy()
-        self.init(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words)
-    }
-}
 
