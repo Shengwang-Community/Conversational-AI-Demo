@@ -14,13 +14,13 @@ import AgoraRtmKit
 @objc public enum Priority: Int {
     /// (Default) High priority - The agent will immediately stop current
     /// interaction and process this message. Use for urgent or time-sensitive messages
-    case interrupt = 0 
+    case interrupt = 0
     /// Medium priority - The agent will queue this message and process it
     /// after the current interaction completes. Use for follow-up questions.
-    case append = 1    
+    case append = 1
     /// Low priority - If the agent is currently interacting, this message
     /// will be discarded. Only processed when agent is idle. Use for optional content.
-    case ignore = 2    
+    case ignore = 2
     
     public var stringValue: String {
         switch self {
@@ -60,7 +60,7 @@ import AgoraRtmKit
     @objc public let priority: Priority
     /// responseInterruptable Whether this message can be interrupted by higher priority messages (default: true)
     @objc public let responseInterruptable: Bool
-    /// Text content of the message (optional)      
+    /// Text content of the message (optional)
     @objc public let text: String?
     /// imageUrl HTTP/HTTPS URL pointing to an image file (optional)
     @objc public let imageUrl: String?
@@ -139,13 +139,13 @@ import AgoraRtmKit
 /// Performance metric module type enumeration
 @objc public enum ModuleType: Int {
     /// LLM inference
-    case llm   
+    case llm
     /// MLLM inference
-    case mllm  
+    case mllm
     /// Text-to-speech
-    case tts   
+    case tts
     /// Unknown error
-    case unknown 
+    case unknown
     
     /// Create type from string
     public static func fromValue(_ value: String) -> ModuleType {
@@ -252,9 +252,9 @@ public enum MessageType: String, CaseIterable {
 /// Define different modes for transcription rendering
 @objc public enum TranscriptionRenderMode: Int {
     /// Word-by-word transcription rendering
-    case words = 0 
+    case words = 0
     /// Sentence-by-sentence transcription rendering
-    case text = 1 
+    case text = 1
 }
  
 /// Represents the current status of a transcription in the conversation flow
@@ -358,7 +358,7 @@ public enum MessageType: String, CaseIterable {
 /// This configuration includes RTC engine for audio communication, RTM client for messaging,
 /// and subtitle rendering mode settings.
 ///
-/// @property 
+/// @property
 /// @property rtmClient RTM client instance for real-time messaging
 /// @property renderMode Subtitle rendering mode (Word or Text level)
 ///
@@ -397,32 +397,38 @@ public enum MessageType: String, CaseIterable {
     /// Can be used to update UI interface or track conversation flow.
     ///
     /// - Parameter event: Agent state event (silent, listening, thinking, speaking)
-    /// - Parameter agentSession: agent session
+    /// - Parameter agentUserId: agent rtm user id
     @objc func onAgentStateChanged(agentUserId: String, event: StateChangeEvent)
      
     /// Called when an interrupt event occurs
     ///
     /// - Parameter event: Interrupt event
-    /// - Parameter agentSession: agent session
+    /// - Parameter agentUserId: agent rtm user id
+    /// Note: The interrupt callback is not necessarily synchronized with the agent's state,
+    /// so it is not recommended to process business logic in this callback
     @objc func onAgentInterrupted(agentUserId: String, event: InterruptEvent)
  
  
-    /// Real-time callback for performance metrics
+    /// callback for performance metrics
     ///
     /// This method provides performance data, such as LLM inference latency
     /// and TTS speech synthesis latency, for monitoring system performance.
     ///
     /// - Parameter metrics: Performance metrics containing type, value, and timestamp
-    /// - Parameter agentSession: agent session
+    /// - Parameter agentUserId: agent rtm user id
+    /// Note: The metrics callback is not necessarily synchronized with the agent's state,
+    /// so it is not recommended to process business logic in this callback
     @objc func onAgentMetrics(agentUserId: String, metrics: Metric)
      
     /// Called when AI-related errors occur
     ///
-    /// This method is called when AI components (LLM, TTS, etc.) encounter errors,
+    /// This method is called when module components (LLM, TTS, etc.) encounter errors,
     /// used for error monitoring, logging, and implementing graceful degradation strategies.
     ///
-    /// - Parameter error: AI error containing type, error code, error message, and timestamp
-    /// - Parameter agentSession: agent session
+    /// - Parameter error: Module error containing type, error code, error message, and timestamp
+    /// - Parameter agentUserId: agent rtm user id
+    /// Note: The error callback is not necessarily synchronized with the agent's state,
+    /// so it is not recommended to process business logic in this callback
     @objc func onAgentError(agentUserId: String, error: ModuleError)
      
     /// Called when subtitle content is updated during conversation
@@ -430,7 +436,7 @@ public enum MessageType: String, CaseIterable {
     /// This method provides real-time subtitle updates
     ///
     /// - Parameter transcription: Subtitle message containing text content and time information
-    /// - Parameter agentSession: agent session
+    /// - Parameter agentUserId: agent rtm user id
     @objc func onTranscriptionUpdated(agentUserId: String, transcription: Transcription)
 }
 
@@ -445,7 +451,7 @@ public enum MessageType: String, CaseIterable {
     /// and indicates the success or failure of the operation through a completion callback.
     ///
     /// - Parameters:
-    ///   - agentSession: agent session
+    ///   - agentUserId: agent rtm user id
     ///   - message: Message object containing text, image URL, and interrupt settings
     ///   - completion: Callback function called when the operation completes.
     ///                 Returns nil on success, NSError on failure
@@ -454,7 +460,7 @@ public enum MessageType: String, CaseIterable {
     /// Interrupt the Agent's speech
     ///
     /// Use this method to interrupt the currently speaking Agent.
-    ///   - agentSession: agent session
+    ///   - agentUserId: agent rtm user id
     ///   - completion: Callback function called when the operation completes
     /// If error has a value, it indicates message sending failed
     /// If error is nil, it indicates message sending succeeded, but doesn't guarantee Agent interruption success
@@ -501,5 +507,7 @@ public enum MessageType: String, CaseIterable {
     /// After calling, this instance cannot be used again. All resources will be released.
     @objc func destroy()
 }
+
+
 
 
