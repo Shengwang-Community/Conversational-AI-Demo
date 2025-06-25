@@ -451,7 +451,7 @@ public enum MessageType: String, CaseIterable {
     /// and indicates the success or failure of the operation through a completion callback.
     ///
     /// - Parameters:
-    ///   - agentUserId: agent rtm user id
+    ///   - agentUserId: agent rtm user id, must be globally unique
     ///   - message: Message object containing text, image URL, and interrupt settings
     ///   - completion: Callback function called when the operation completes.
     ///                 Returns nil on success, NSError on failure
@@ -460,7 +460,7 @@ public enum MessageType: String, CaseIterable {
     /// Interrupt the Agent's speech
     ///
     /// Use this method to interrupt the currently speaking Agent.
-    ///   - agentUserId: agent rtm user id
+    ///   - agentUserId: agent rtm user id, must be globally unique
     ///   - completion: Callback function called when the operation completes
     /// If error has a value, it indicates message sending failed
     /// If error is nil, it indicates message sending succeeded, but doesn't guarantee Agent interruption success
@@ -476,13 +476,23 @@ public enum MessageType: String, CaseIterable {
     /// let api = ConversationalAIAPI(config: config)
     ///
     /// // Set audio best practice parameters before joining channel
-    /// api.loadAudioSettings(secnario: .aiClient)
+    /// api.loadAudioSettings()  // Use default scene, default is aiClient
+    /// // or
+    /// api.loadAudioSettings(secnario: .aiClient)  // Specified scenario
     ///
     /// // Then join the channel
     /// rtcEngine.joinChannel(byToken: token, channelId: channelName, info: nil, uid: userId)
     /// ```
+    @objc func loadAudioSettings()
+    
+    /// Set audio best practice parameters for optimal performance with specific scenario
+    ///
+    /// Configure audio parameters required for optimal performance in AI conversations
+    ///
+    /// **Important Note:** If you need to enable audio best practices, you must call this method before each `joinChannel` call
+    /// - Parameter secnario: Audio scenario for optimization
     @objc func loadAudioSettings(secnario: AgoraAudioScenario)
-        
+    
     /// Set the channel parameters and callback for subscription
     /// Called when the channel number changes, typically invoked each time the Agent starts
     /// - channelName: Channel number
