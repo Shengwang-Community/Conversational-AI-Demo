@@ -36,7 +36,6 @@ class AgentStateView @JvmOverloads constructor(
     // Current state for click handling
     private var currentState: AgentState = AgentState.SILENT
     private var isMuted = false
-    private var muteRestoreRunnable: Runnable? = null
 
     init {
         orientation = VERTICAL
@@ -63,9 +62,8 @@ class AgentStateView @JvmOverloads constructor(
         if (isMuted) {
             if (state != AgentState.THINKING && state != AgentState.SPEAKING) {
                 showMuteState()
-            }
-            if (state == AgentState.THINKING || state == AgentState.SPEAKING) {
-                startMuteRestoreTimer()
+            }else{
+                showNormalState()
             }
         } else {
             showNormalState()
@@ -107,41 +105,15 @@ class AgentStateView @JvmOverloads constructor(
     fun setMuted(muted: Boolean) {
         if (isMuted != muted) {
             isMuted = muted
-            clearMuteRestoreTimer()
-            
+
             if (muted) {
                 if (currentState != AgentState.THINKING && currentState != AgentState.SPEAKING) {
                     showMuteState()
-                }
-                if (currentState == AgentState.THINKING || currentState == AgentState.SPEAKING) {
-                    startMuteRestoreTimer()
                 }
             } else {
                 showNormalState()
             }
         }
-    }
-
-    /**
-     * Start 2-second restore timer for THINKING/SPEAKING states
-     */
-    private fun startMuteRestoreTimer() {
-        clearMuteRestoreTimer()
-        
-        muteRestoreRunnable = Runnable {
-            if (isMuted && (currentState == AgentState.THINKING || currentState == AgentState.SPEAKING)) {
-                showTemporaryOriginalState()
-            }
-        }
-        handler.postDelayed(muteRestoreRunnable!!, 2000)
-    }
-
-    /**
-     * Clear mute restore timer
-     */
-    private fun clearMuteRestoreTimer() {
-        muteRestoreRunnable?.let { handler.removeCallbacks(it) }
-        muteRestoreRunnable = null
     }
 
     /**
@@ -179,22 +151,8 @@ class AgentStateView @JvmOverloads constructor(
         binding.tvStateText.text = stateText
     }
 
-    /**
-     * Show temporary original state for THINKING/SPEAKING
-     */
-    private fun showTemporaryOriginalState() {
-        binding.tvMuteText.visibility = GONE
-        binding.tvStateText.visibility = VISIBLE
-        binding.agentStateIndicator.visibility = VISIBLE
-
-        val stateText = if (currentState == AgentState.THINKING) thinkingText else speakingText
-        binding.tvStateText.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_icontext3))
-        binding.tvStateText.text = stateText
-    }
-
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        clearMuteRestoreTimer()
         handler.removeCallbacksAndMessages(null)
     }
 
@@ -202,7 +160,6 @@ class AgentStateView @JvmOverloads constructor(
         super.setVisibility(visibility)
         if (visibility != VISIBLE) {
             isMuted = false
-            clearMuteRestoreTimer()
             showNormalState()
         }
     }
