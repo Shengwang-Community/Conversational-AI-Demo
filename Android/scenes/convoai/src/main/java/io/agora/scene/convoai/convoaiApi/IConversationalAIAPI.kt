@@ -3,8 +3,6 @@ package io.agora.scene.convoai.convoaiApi
 import io.agora.rtc2.Constants
 import io.agora.rtc2.RtcEngine
 import io.agora.rtm.RtmClient
-import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
-import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionRenderMode
 
 const val ConversationalAIAPI_VERSION = "1.6.0"
 
@@ -192,6 +190,53 @@ enum class MessageType(val value: String) {
             return entries.find { it.value == value } ?: UNKNOWN
         }
     }
+}
+
+
+/**
+ * Defines different modes for subtitle rendering
+ * @property Word: Word-by-word subtitles are rendered
+ * @property Text: Full text subtitles are rendered
+ */
+enum class TranscriptionRenderMode {
+    Word,
+    Text
+}
+
+/**
+ * Consumer-facing data class representing a complete subtitle message
+ * Used for rendering in the UI layer
+ *
+ * @property turnId Unique identifier for the conversation turn
+ * @property userId User identifier associated with this subtitle
+ * @property text The actual subtitle text content
+ * @property status Current status of the subtitle
+ */
+data class Transcription(
+    val turnId: Long,
+    val userId: String = "",
+    val text: String,
+    var status: TranscriptionStatus,
+    var type: TranscriptionType
+)
+
+enum class TranscriptionType {
+    AGENT,
+    USER
+}
+
+/**
+ * Represents the current status of a subtitle
+ *
+ * @property IN_PROGRESS: Subtitle is still being generated or spoken
+ * @property END: Subtitle has completed normally
+ * @property INTERRUPTED: Subtitle was interrupted before completion
+ */
+enum class TranscriptionStatus {
+    IN_PROGRESS,
+    END,
+    INTERRUPTED,
+    UNKNOWN
 }
 
 /**

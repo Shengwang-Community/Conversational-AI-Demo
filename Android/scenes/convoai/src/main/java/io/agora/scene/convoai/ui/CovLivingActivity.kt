@@ -66,7 +66,7 @@ import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.rtm.CovRtmManager
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfRenderConfig
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfSubRenderController
-import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
+import io.agora.scene.convoai.convoaiApi.Transcription
 import io.agora.scene.convoai.rtm.IRtmManagerListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

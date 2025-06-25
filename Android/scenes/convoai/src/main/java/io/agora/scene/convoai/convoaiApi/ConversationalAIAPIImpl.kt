@@ -16,8 +16,6 @@ import io.agora.rtm.RtmEventListener
 import io.agora.rtm.SubscribeOptions
 import io.agora.scene.convoai.convoaiApi.subRender.v3.IConversationTranscriptionCallback
 import io.agora.scene.convoai.convoaiApi.subRender.v3.MessageParser
-import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
-import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionRenderMode
 import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionController
 import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionConfig
 import java.util.UUID

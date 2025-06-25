@@ -13,6 +13,10 @@ import io.agora.scene.convoai.convoaiApi.ConversationalAIAPI_VERSION
 import io.agora.scene.convoai.convoaiApi.ConversationalAIUtils
 import io.agora.scene.convoai.convoaiApi.InterruptEvent
 import io.agora.scene.convoai.convoaiApi.MessageType
+import io.agora.scene.convoai.convoaiApi.Transcription
+import io.agora.scene.convoai.convoaiApi.TranscriptionRenderMode
+import io.agora.scene.convoai.convoaiApi.TranscriptionStatus
+import io.agora.scene.convoai.convoaiApi.TranscriptionType
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ticker
 import java.nio.ByteBuffer
@@ -32,16 +36,6 @@ data class TranscriptionConfig(
     val renderMode: TranscriptionRenderMode,
     val callback: IConversationTranscriptionCallback?
 )
-
-/**
- * Defines different modes for subtitle rendering
- * @property Word: Word-by-word subtitles are rendered
- * @property Text: Full text subtitles are rendered
- */
-enum class TranscriptionRenderMode {
-    Word,
-    Text
-}
 
 /**
  * Interface for receiving subtitle update events
@@ -70,42 +64,6 @@ interface IConversationTranscriptionCallback {
      * @param event Interrupt Event
      */
     fun onAgentInterrupted(agentUserId: String, event: InterruptEvent)
-}
-
-/**
- * Consumer-facing data class representing a complete subtitle message
- * Used for rendering in the UI layer
- *
- * @property turnId Unique identifier for the conversation turn
- * @property userId User identifier associated with this subtitle
- * @property text The actual subtitle text content
- * @property status Current status of the subtitle
- */
-data class Transcription(
-    val turnId: Long,
-    val userId: String = "",
-    val text: String,
-    var status: TranscriptionStatus,
-    var type: TranscriptionType
-)
-
-enum class TranscriptionType {
-    AGENT,
-    USER
-}
-
-/**
- * Represents the current status of a subtitle
- *
- * @property IN_PROGRESS: Subtitle is still being generated or spoken
- * @property END: Subtitle has completed normally
- * @property INTERRUPTED: Subtitle was interrupted before completion
- */
-enum class TranscriptionStatus {
-    IN_PROGRESS,
-    END,
-    INTERRUPTED,
-    UNKNOWN
 }
 
 /**

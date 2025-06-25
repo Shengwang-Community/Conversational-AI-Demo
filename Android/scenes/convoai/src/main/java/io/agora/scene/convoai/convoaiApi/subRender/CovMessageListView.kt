@@ -12,12 +12,12 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.convoai.constant.CovAgentManager
+import io.agora.scene.convoai.convoaiApi.Transcription
+import io.agora.scene.convoai.convoaiApi.TranscriptionStatus
+import io.agora.scene.convoai.convoaiApi.TranscriptionType
 import io.agora.scene.convoai.databinding.CovMessageAgentItemBinding
 import io.agora.scene.convoai.databinding.CovMessageListViewBinding
 import io.agora.scene.convoai.databinding.CovMessageMineItemBinding
-import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionStatus
-import io.agora.scene.convoai.convoaiApi.subRender.v3.Transcription
-import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionType
 
 /**
  * Message list view for displaying conversation messages
