@@ -13,7 +13,6 @@ class AgentStateView: UIView {
     private var isAnimating = false
     private var state: AgentState = .idle
     private var isMute = false
-    private var muteTimer: Timer?
     
     private let stateLabel: UILabel = {
         let label = UILabel()
@@ -79,32 +78,11 @@ class AgentStateView: UIView {
     
     deinit {
         stopVolumeAnimation(hidden: true)
-        muteTimer?.invalidate()
-        muteTimer = nil
     }
 
     public func setMute(_ isMute: Bool) {
         self.isMute = isMute
-        if isMute {
-            agentStateContainerView.isHidden = true
-            muteLabel.isHidden = false
-            if state == .thinking || state == .speaking {
-                if muteTimer != nil {
-                    muteTimer?.invalidate()
-                    muteTimer = nil
-                }
-                muteTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
-                    guard let self = self else { return }
-                    if self.isMute && (self.state == .thinking || self.state == .speaking) {
-                        self.muteLabel.isHidden = true
-                        self.agentStateContainerView.isHidden = false
-                    }
-                }
-            }
-        } else {
-            muteLabel.isHidden = true
-            agentStateContainerView.isHidden = false
-        }
+        updateMute()
     }
 
     public func setState(_ state: AgentState) {
@@ -113,10 +91,7 @@ class AgentStateView: UIView {
         }
         self.state = state
         updateState()
-        if isMute {
-            agentStateContainerView.isHidden = true
-            muteLabel.isHidden = false
-        }
+        updateMute()
     }
 
     private func updateState() {
@@ -153,6 +128,21 @@ class AgentStateView: UIView {
             stopVolumeAnimation(hidden: true)
         case .unknow:
             return
+        }
+    }
+    
+    private func updateMute() {
+        if isMute {
+            if state == .thinking || state == .speaking {
+                muteLabel.isHidden = true
+                agentStateContainerView.isHidden = false
+            } else {
+                agentStateContainerView.isHidden = true
+                muteLabel.isHidden = false
+            }
+        } else {
+            muteLabel.isHidden = true
+            agentStateContainerView.isHidden = false
         }
     }
 
@@ -196,11 +186,11 @@ extension AgentStateView {
     private func setupViews() {
         [agentStateContainerView, muteLabel].forEach { addSubview($0) }
 
-        [stateLabel, 
-        volumeContainerView, 
+        [stateLabel,
+        volumeContainerView,
         stopButton].forEach { agentStateContainerView.addSubview($0) }
 
-        volumeContainerView.addArrangedSubviews(volumeViews)        
+        volumeContainerView.addArrangedSubviews(volumeViews)
     }
     
     private func setupConstraints() {
