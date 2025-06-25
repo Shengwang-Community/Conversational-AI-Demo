@@ -4,6 +4,12 @@
 
 用户需要自行维护 RTC、RTM 的初始化、生命周期，以及登录态的逻辑，并且需要确保 RTC、RTM 实例生命周期大于组件生命周期， 在使用组件之前，确保RTC可用, RTM为登录状态。
 
+若未开通RTM，需要前往项目的功能配置中启用"实时消息 RTM"功能
+**注: 如果没有启动"实时消息 RTM"功能, 将无法体验组件功能**
+  ![图片](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/sdhy_7.jpg)  
+
+RTM接入指南：https://doc.shengwang.cn/doc/rtm2/swift/landing-page
+
 ## 使用步骤
 
 1. 将 ConversationalAIAPI 文件夹以及里面的文件拷贝到你自己的项目中

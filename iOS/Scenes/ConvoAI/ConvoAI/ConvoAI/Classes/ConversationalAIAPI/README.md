@@ -1,8 +1,14 @@
 # ConversationalAI API
 
-**Note**:
+**注意**：
 
-Users need to maintain the initialization, lifecycle, and login logic of RTC and RTM themselves, and need to ensure that the RTC and RTM instance lifecycles are longer than the component lifecycle. Before using the component, ensure that RTC is available and RTM is in a logged-in state.
+Users need to maintain the initialization, lifecycle, and login state logic of RTC and RTM themselves, and ensure that the lifecycle of RTC and RTM instances is longer than the component lifecycle. Before using the component, make sure RTC is available and RTM is in a logged-in state.
+
+If RTM is not enabled, you need to go to the project's function configuration to enable the "Real-time Messaging RTM feature
+**Note: If the "Real-time Messaging RTM" feature is not enabled, you will not be able to experience the component functionality**
+  ![图片](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/sdhy_7.jpg)  
+
+RTM Access Guide：https://doc.shengwang.cn/doc/rtm2/swift/landing-page
 
 ## Usage Steps
 
