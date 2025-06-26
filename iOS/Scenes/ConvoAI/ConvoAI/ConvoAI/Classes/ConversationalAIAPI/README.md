@@ -116,7 +116,7 @@ Please follow these steps to quickly integrate and use the ConversationalAI API:
 - [ConversationalAIAPI.swift](./ConversationalAIAPI.swift) — API interfaces and related data structures and enums
 - [ConversationalAIAPIImpl.swift](./ConversationalAIAPIImpl.swift) — ConversationalAI API main implementation logic
 - [Transcription/](./Transcription/)
-  - [TranscriptionController.swift](./SubRender/TranscriptionController.swift) — Subtitle controller
+  - [TranscriptionController.swift](./Transcription/TranscriptionController.swift) — Subtitle controller
 
 > The above files and folders are all the content needed to integrate ConversationalAI API, no need to copy other files.
 

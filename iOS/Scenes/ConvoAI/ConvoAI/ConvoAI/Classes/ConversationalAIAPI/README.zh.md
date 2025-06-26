@@ -115,7 +115,7 @@
 - [ConversationalAIAPI.swift](./ConversationalAIAPI.swift) — API 接口及相关数据结构和枚举
 - [ConversationalAIAPIImpl.swift](./ConversationalAIAPIImpl.swift) — ConversationalAI API 主要实现逻辑
 - [Transcription/](./Transcription/)
-  - [TranscriptionController.swift](./SubRender/TranscriptionController.swift) — 字幕控制器
+  - [TranscriptionController.swift](./Transcription/TranscriptionController.swift) — 字幕控制器
 
 > 以上文件和文件夹即为集成 ConversationalAI API 所需全部内容，无需拷贝其他文件。
 
