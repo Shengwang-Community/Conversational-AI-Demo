@@ -20,8 +20,8 @@ import AgoraRtmKit
     private var stateChangeEvent: StateChangeEvent? = nil
 
     private lazy var transcriptionController: TranscriptionController = {
-        let subtitleController = TranscriptionController()
-        return subtitleController
+        let transcriptionController = TranscriptionController()
+        return transcriptionController
     }()
 
     @objc public init(config: ConversationalAIAPIConfig) {
@@ -34,8 +34,8 @@ import AgoraRtmKit
         rtcEngine.setParameters("{\"rtc.log_external_input\": true}")
         rtcEngine.addDelegate(self)
         rtmEngine.addDelegate(self)
-        let subtitleConfig = TranscriptionRenderConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: config.renderMode, delegate: self)
-        transcriptionController.setupWithConfig(subtitleConfig)
+        let transcriptionConfig = TranscriptionRenderConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: config.renderMode, delegate: self)
+        transcriptionController.setupWithConfig(transcriptionConfig)
     }
 }
 

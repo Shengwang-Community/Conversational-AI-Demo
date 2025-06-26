@@ -12,7 +12,7 @@ import AgoraRtmKit
 /// Message priority levels for AI agent processing
 /// You can control the broadcast behavior by specifying the following parameters.
 @objc public enum Priority: Int {
-    /// (Default) High priority - The agent will immediately stop current
+    /// High priority - The agent will immediately stop current
     /// interaction and process this message. Use for urgent or time-sensitive messages
     case interrupt = 0
     /// Medium priority - The agent will queue this message and process it
@@ -348,7 +348,7 @@ public enum MessageType: String, CaseIterable {
 }
 
 /// Transcription data model
-/// Complete data class for user-facing subtitle messages
+/// Complete data class for user-facing transcription messages
 /// Used for rendering transcription content in the UI layer
 @objc public class Transcription: NSObject {
     /// Unique identifier for the conversation turn

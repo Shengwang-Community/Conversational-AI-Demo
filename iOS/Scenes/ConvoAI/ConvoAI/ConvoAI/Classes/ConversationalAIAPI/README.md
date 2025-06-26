@@ -1,148 +1,126 @@
-# ConversationalAI API
+# ConversationalAI API for iOS
 
-**Note**：
+**Important Notes:**
+> Users need to integrate and manage the initialization, lifecycle, and login status of RTC and RTM themselves.
+>
+> Please ensure that the lifecycle of RTC and RTM instances is longer than the component's lifecycle.
+>
+> Before using this component, please ensure RTC is available and RTM is logged in.
+>
+> This component assumes you have integrated Agora RTC/RTM in your project, and the RTC SDK version must be **4.5.1 or above**.
+>
+> ⚠️ Before using this component, you must enable the "Real-time Messaging RTM" feature in the Agora Console, otherwise the component will not work properly.
+>
+> RTM Access Guide: [RTM](https://doc.shengwang.cn/doc/rtm2/swift/landing-page)
 
-Users need to maintain the initialization, lifecycle, and login state logic of RTC and RTM themselves, and ensure that the lifecycle of RTC and RTM instances is longer than the component lifecycle. Before using the component, make sure RTC is available and RTM is in a logged-in state.
+![Enable RTM feature in Agora Console](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/sdhy_7.jpg)
+*Screenshot: Enable RTM feature in Agora Console project settings*
 
-If RTM is not enabled, you need to go to the project's function configuration to enable the "Real-time Messaging RTM feature
-**Note: If the "Real-time Messaging RTM" feature is not enabled, you will not be able to experience the component functionality**
-  ![图片](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/sdhy_7.jpg)  
+---
 
-RTM Access Guide：https://doc.shengwang.cn/doc/rtm2/swift/landing-page
+## Integration Steps
 
-## Usage Steps
+1. Copy the following files and folders to your iOS project:
+   - [ConversationalAIAPI](./ConversationalAIAPI/) (entire folder)
 
-1. Copy the ConversationalAIAPI folder and its files to your own project
-2. Initialize the component
-3. Add listeners
-4. Subscribe to messages
-5. Audio settings
-6. Implement callbacks
+2. Ensure your project has integrated Agora RTC/RTM, and RTC version is **4.5.1 or above**.
 
-## Code Implementation
+---
 
-### Basic Usage
+## Quick Start
 
-#### 1. Declare Properties
-In the UI module where you need to implement subtitles, declare the component as a member property:
+Please follow these steps to quickly integrate and use the ConversationalAI API:
 
-```swift
-private var convoAIAPI: ConversationalAIAPI!
-```
+1. **Initialize API Configuration**
 
-#### 2. Initialize Component
+   Create a configuration object using your RTC and RTM instances:
+   ```swift
+    let config = ConversationalAIAPIConfig(
+        rtcEngine: rtcEngine, 
+        rtmEngine: rtmEngine, 
+        renderMode: .words, 
+        enableLog: true
+    )
+   ```
 
-```swift
-let config = ConversationalAIAPIConfig(
-    rtcEngine: rtcEngine, 
-    rtmEngine: rtmEngine, 
-    renderMode: .words, 
-    enableLog: true
-)
-self.convoAIAPI = ConversationalAIAPIImpl(config: config)
-```
+2. **Create API Instance**
 
-#### 3. Add Callback Listeners
+   ```swift
+    convoAIAPI = ConversationalAIAPIImpl(config: config)
+   ```
 
-```swift
-convoAIAPI.addHandler(handler: self)
-```
+3. **Register Event Callbacks**
 
-#### 4. Subscribe to Channel Messages
-Subscribe to channel messages every time you start a call
-**Note: Must be called after logging in to RTM**
+   Implement and add event callbacks to receive AI agent events and transcription content:
+   ```swift
+   convoAIAPI.addHandler(handler: self)
+   ```
 
-```swift
-convoAIAPI.subscribeMessage(channelName: channelName) { error in
-    if let error = error {
-        print("Subscription failed: \(error.message)")
-    } else {
-        print("Subscription successful")
+4. **Subscribe to Channel Messages**
+
+   Call before starting a session:
+   **Must be called after logging in to RTM**
+   ```swift
+    convoAIAPI.subscribeMessage(channelName: channelName) { error in
+        if let error = error {
+            print("Subscription failed: \(error.message)")
+        } else {
+            print("Subscription successful")
+        }
     }
-}
-// ...
-startAgent()
-```
+   ```
 
-#### 5. Audio Settings
-**Note: Call audio settings before joining the RTC channel each time:**
+5. **(Optional) Set Audio Parameters Before Joining RTC Channel**
 
-```swift
-convoAIAPI.loadAudioSettings()
+   ```swift
+    convoAIAPI.loadAudioSettings()
+    rtcEngine.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
+   ```
 
-//..
-rtcEngine.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
+7. **(Optional) Interrupt Agent**
 
-```
-
-#### 6. Implement Callback Protocol
-Implement the `ConversationalAIAPIEventHandler` callback protocol according to your needs.
-
-For example, the subtitle protocol - the component will update subtitle information through this callback:
-
-```swift
-extension YourViewController: ConversationalAIAPIEventHandler {
-    /// Real-time transcription update callback for displaying AI and user conversation content.
-    func onTranscriptionUpdated(agentUserId: String, transcription: Transcription) {
-        // Handle transcription updates
+   ```swift
+    convoAIAPI.interrupt(agentUserId: "\(agentUid)") { error in
+        if let error = error {
+            print("Interrupt failed: \(error.message)")
+        } else {
+            print("Interrupt successful")
+        }
     }
+   ```
 
-    
-    /// AI state change callback, including the following states:
-    /// - `idle` - Idle state
-    /// - `silent` - Silent state  
-    /// - `listening` - Listening state
-    /// - `thinking` - Thinking state
-    /// - `speaking` - Speaking state
-    func onAgentStateChanged(agentUserId: String, event: StateChangeEvent) {
-        // Handle state changes
-    }
+8. **Destroy API Instance**
 
-    //...
-    //...
-}
-```
+   ```swift
+    convoAIAPI.destroy()
+   ```
+---
 
-#### 7. Unsubscribe from Messages
-Unsubscribe from messages every time you stop a call:
+## Notes
 
-```swift
-convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
-    if let error = error {
-        print("Unsubscription failed: \(error.message)")
-    } else {
-        print("Unsubscription successful")
-    }
-}
-// ...
-stopAgent()
-```
+- **Audio Settings:**
+  Before joining the RTC channel each time, you must call `loadAudioSettings()` to ensure optimal AI conversation audio quality.
+  ```swift
+    convoAIAPI.loadAudioSettings()
+    rtcEngine.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
+  ```
 
-#### 8. Destroy Component
-Destroy the component when exiting the current UI module:
+- **All event callbacks are executed on the main thread.**
+  You can safely update the UI directly in callbacks.
 
-```swift
-convoAIAPI.destroy()
-// ...
-self.navigationController?.popViewController(animated: true)
-```
+---
 
-### Advanced Features
+## File Structure
 
-#### Interrupt Function
-You can actively interrupt the Agent by calling the component's `interrupt` function.
+- [ConversationalAIAPI.swift](./ConversationalAIAPI.swift) — API interfaces and related data structures and enums
+- [ConversationalAIAPIImpl.swift](./ConversationalAIAPIImpl.swift) — ConversationalAI API main implementation logic
+- [Transcription/](./Transcription/)
+  - [TranscriptionController.swift](./SubRender/TranscriptionController.swift) — Subtitle controller
 
-**Note**: The `agentUserId` here must be the agent's RTM userId and must be globally unique.
+> The above files and folders are all the content needed to integrate ConversationalAI API, no need to copy other files.
 
-```swift
-convoAIAPI.interrupt(agentUserId: "\(agentUid)") { error in
-    if let error = error {
-        print("Interrupt failed: \(error.message)")
-    } else {
-        print("Interrupt successful")
-    }
-}
-```
+---
 
+## Support
 
-
+- Get help through [Agora Support](https://ticket.shengwang.cn/form?type_id=&sdk_product=&sdk_platform=&sdk_version=&current=0&project_id=&call_id=&channel_name=) for intelligent customer service or contact technical support staff
