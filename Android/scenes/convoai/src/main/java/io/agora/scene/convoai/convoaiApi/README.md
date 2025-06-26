@@ -21,7 +21,7 @@
 ## 集成步骤
 
 1. 将以下文件和文件夹拷贝到你的 Android 项目中：
-   - [subRender/v3/](./subRender/v3/)（整个文件夹）
+   - [subRender/v3/](./subRender/v3/)（v3整个文件夹）
    - [ConversationalAIAPIImpl.kt](./ConversationalAIAPIImpl.kt)
    - [IConversationalAIAPI.kt](./IConversationalAIAPI.kt)
    - [ConversationalAIUtils.kt](./ConversationalAIUtils.kt)
@@ -86,35 +86,17 @@
    rtcEngine.joinChannel(token, channelName, null, userId)
    ```
 
-6. **发送消息给 AI agent**
-
-   ```kotlin
-   api.chat(
-       agentUserId = "agentId",
-       message = ChatMessage(
-           priority = Priority.INTERRUPT,
-           responseInterruptable = true,
-           text = "你好！"
-       )
-   ) { error ->
-       if (error != null) {
-           // 处理错误
-       }
-   }
-   ```
-
-7. **（可选）打断 agent**
+6. **（可选）打断 agent**
 
    ```kotlin
    api.interrupt("agentId") { error -> /* ... */ }
    ```
 
-8. **销毁 API 实例**
+7. **销毁 API 实例**
 
    ```kotlin
    api.destroy()
    ```
-
 ---
 
 ## 注意事项
@@ -128,12 +110,6 @@
 
 - **所有事件回调均在主线程执行。**
   可直接在回调中安全更新 UI。
-
-- **部分回调（如 `onTranscriptionUpdated`）可能高频触发。**
-  如有需要，请在业务层自行去重或限流。
-
-- **错误处理：**
-  所有 API 方法均有错误回调，请务必处理 error。
 
 ---
 

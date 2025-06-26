@@ -1,15 +1,16 @@
-package io.agora.scene.convoai.convoaiApi.subRender.v1
+package io.agora.scene.convoai.ui.widget
 
-import android.view.ViewGroup
 import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.common.util.dp
+import io.agora.scene.convoai.convoaiApi.subRender.v1.ISelfMessageListView
 import io.agora.scene.convoai.databinding.CovMessageAgentItemBinding
 import io.agora.scene.convoai.databinding.CovMessageListViewBinding
 import io.agora.scene.convoai.databinding.CovMessageMineItemBinding
@@ -53,14 +54,14 @@ class SelfMessageListView @JvmOverloads constructor(
         })
         binding.btnToBottom.setOnClickListener {
             autoScrollToBottom = true
-            binding.cvToBottom.visibility = View.INVISIBLE
+            binding.cvToBottom.visibility = INVISIBLE
             scrollToBottom()
         }
     }
 
     fun clearMessages() {
         autoScrollToBottom = true
-        binding.cvToBottom.visibility = View.INVISIBLE
+        binding.cvToBottom.visibility = INVISIBLE
         currentAgentMessage = null
         currentUserMessage = null
         messageAdapter.clearMessages()
@@ -123,7 +124,7 @@ class SelfMessageListView @JvmOverloads constructor(
         if (isScrollScheduled) {
             scrollRunnable?.let { binding.rvMessages.removeCallbacks(it) }
         }
-        
+
         scrollRunnable = Runnable {
             binding.rvMessages.post {
                 scrollToBottom()
@@ -151,10 +152,10 @@ class SelfMessageListView @JvmOverloads constructor(
         val lastVisible = (lastIndex == lastItemPosition)
         Log.d(TAG, "lastItemPosition: $lastItemPosition, lastIndex: $lastIndex, lastVisible: $lastVisible")
         if (lastVisible) {
-            binding.cvToBottom.visibility = View.INVISIBLE
+            binding.cvToBottom.visibility = INVISIBLE
             autoScrollToBottom = true
         } else {
-            binding.cvToBottom.visibility = View.VISIBLE
+            binding.cvToBottom.visibility = VISIBLE
             autoScrollToBottom = false
         }
     }

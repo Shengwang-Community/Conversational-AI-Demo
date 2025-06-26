@@ -30,26 +30,31 @@
   ![图片](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/sdhy_2.jpg)
 - 获取项目 APP ID 与 APP 证书
 
-#### 1.2.2 开启对话式 AI 引擎功能权限
+#### 1.2.2 开通 RTM 权限
+
+![在声网控制台开通 RTM 功能](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/sdhy_7.jpg)
+*截图：在声网控制台项目设置中开通 RTM 功能*
+
+#### 1.2.3 开启对话式 AI 引擎功能权限
 
 - 在 [声网控制台](https://console.shengwang.cn/product/ConversationAI?tab=config) 开启权限
   ![图片](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/ConvoAI.png)
 
-#### 1.2.3 获取 RESTful API 密钥
+#### 1.2.4 获取 RESTful API 密钥
 
 - 在 [声网控制台](https://console.shengwang.cn/settings/restfulApi) 点击添加密钥
   ![图片](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/restful.png)
 - 下载密钥文件，复制 BASIC_AUTH_KEY 和 BASIC_AUTH_SECRET
 
-#### 1.2.4 获取 LLM 配置信息
+#### 1.2.5 获取 LLM 配置信息
 
 - 自行在 LLM 厂商官网获取相关配置信息
 
-#### 1.2.5 获取 TTS 配置信息
+#### 1.2.6 获取 TTS 配置信息
 
 - 自行在 TTS 厂商官网获取相关配置信息
 
-#### 1.2.6 配置项目
+#### 1.2.7 配置项目
 
 - 在项目的 [**gradle.properties**](../../gradle.properties) 里填写必须的配置信息：
 
