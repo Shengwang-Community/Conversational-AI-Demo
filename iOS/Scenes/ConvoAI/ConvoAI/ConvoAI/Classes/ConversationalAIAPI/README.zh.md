@@ -21,7 +21,7 @@
 ## 集成步骤
 
 1. 将以下文件和文件夹拷贝到你的 iOS 项目中：
-   - [ConversationalAIAPI](./ConversationalAIAPI/)（整个文件夹）
+   - [ConversationalAIAPI](./)（整个文件夹）
 
 2. 确保你的项目已集成 Agora RTC/RTM，且 RTC 版本为 **4.5.1 及以上**。
 

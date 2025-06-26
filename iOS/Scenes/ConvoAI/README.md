@@ -34,21 +34,24 @@
 - 在 [声网控制台](https://console.shengwang.cn/product/ConversationAI?tab=config) 开启权限
   ![图片](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/ConvoAI.png)
 
-#### 1.2.3 获取 RESTful API 密钥
+### 1.2.3 开启RTM 功能权限
+- 在[声网控制台开通 RTM 功能](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/sdhy_7.jpg)
+
+#### 1.2.4 获取 RESTful API 密钥
 
 - 在 [声网控制台](https://console.shengwang.cn/settings/restfulApi) 点击添加密钥
   ![图片](https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/github_readme/ent-full/restful.png)
 - 下载密钥文件，复制 BASIC_AUTH_KEY 和 BASIC_AUTH_SECRET
 
-#### 1.2.4 获取 LLM 配置信息
+#### 1.2.5 获取 LLM 配置信息
 
 - 自行在 LLM 厂商官网获取相关配置信息
 
-#### 1.2.5 获取 TTS 配置信息
+#### 1.2.6 获取 TTS 配置信息
 
 - 自行在 TTS 厂商官网获取相关配置信息
 
-#### 1.2.6 配置项目
+#### 1.2.7 配置项目
 
 - 打开 `iOS` 项目，在 [**KeyCenter.swift**](../../Agent/KeyCenter.swift) 文件中填写上述获取的配置信息：
 

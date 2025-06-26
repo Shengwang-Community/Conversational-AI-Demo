@@ -21,7 +21,8 @@
 ## Integration Steps
 
 1. Copy the following files and folders to your iOS project:
-   - [ConversationalAIAPI](./ConversationalAIAPI/) (entire folder)
+
+   - [ConversationalAIAPI](./) (entire folder)
 
 2. Ensure your project has integrated Agora RTC/RTM, and RTC version is **4.5.1 or above**.
 
