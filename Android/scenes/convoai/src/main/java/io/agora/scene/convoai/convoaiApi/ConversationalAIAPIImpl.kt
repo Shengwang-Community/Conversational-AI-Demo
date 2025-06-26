@@ -196,7 +196,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
     }
 
     init {
-        val subtitleRenderConfig = TranscriptionConfig(
+        val transcriptionConfig = TranscriptionConfig(
             rtcEngine = config.rtcEngine,
             rtmClient = config.rtmClient,
             renderMode = if (config.renderMode == TranscriptionRenderMode.Word) TranscriptionRenderMode.Word else TranscriptionRenderMode.Text,
@@ -222,8 +222,8 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
         mMessageParser.onError = { message ->
             callMessagePrint(TAG, message)
         }
-        // Initialize transcription controller for subtitle rendering
-        transcriptionController = TranscriptionController(subtitleRenderConfig)
+        // Initialize transcription controller for transcription
+        transcriptionController = TranscriptionController(transcriptionConfig)
         // Register RTC event handler to receive audio/video events
         config.rtcEngine.addHandler(covRtcHandler)
         // Register RTM event listener to receive real-time messages

@@ -94,7 +94,7 @@ TTS_PARAMS=<TTS 参数>
 ### 2.2 实时字幕
 与对话式智能体进行实时互动时，你可能需要实时字幕显示你与智能体的对话内容。
 - 📖 查看我们的 [实时字幕功能指南](https://doc.shengwang.cn/doc/convoai/restful/user-guides/realtime-sub) 了解如何实现该功能
-- 实现该功能需要使用 [开源字幕处理模块](src/main/java/io/agora/scene/convoai/convoaiApi/IConversationalAIAPI.kt)，请参考上述文档将对应文件集成进您的项目
+- 实现该功能请参考 [convoaiApi 目录下的 README.md](src/main/java/io/agora/scene/convoai/convoaiApi/README.md) 进行集成
 - ⚠️ 开源字幕处理模块由 Kotlin 语言开发，如果您的项目是纯 Java 项目，您可以参考 Google 官方文档 [将 Kotlin 添加到现有应用](https://developer.android.com/kotlin/add-kotlin?hl=zh-cn) 把对应文件集成进您的项目
 
 ## 📚 三、相关资源
