@@ -24,7 +24,7 @@ import AgoraRtmKit
         return subtitleController
     }()
 
-    init(config: ConversationalAIAPIConfig) {
+    @objc public init(config: ConversationalAIAPIConfig) {
         self.config = config
         super.init()
         

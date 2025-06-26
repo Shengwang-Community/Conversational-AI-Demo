@@ -126,7 +126,7 @@ class AgentStateView: UIView {
             volumeContainerView.isHidden = true
             stopButton.isHidden = false
             stopVolumeAnimation(hidden: true)
-        case .unknow:
+        case .unknown:
             return
         }
     }

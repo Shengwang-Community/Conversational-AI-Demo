@@ -22,7 +22,7 @@ public class ChatViewController: UIViewController {
     private var agentUid = 0
     private var remoteAgentId = ""
     private let uid = "\(RtcEnum.getUid())"
-    private var convoAIAPI: ConversationalAIAPIImpl!
+    private var convoAIAPI: ConversationalAIAPI!
     private let tag = "ChatViewController"
     private var isSelfSubRender = false
     private lazy var enableMetric: Bool = {

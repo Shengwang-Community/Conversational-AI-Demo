@@ -17,7 +17,7 @@ RTM接入指南：https://doc.shengwang.cn/doc/rtm2/swift/landing-page
 3. 添加监听
 4. 订阅消息
 5. 音频设置
-5. 实现回调
+6. 实现回调
 
 ## 代码实现
 
@@ -27,7 +27,7 @@ RTM接入指南：https://doc.shengwang.cn/doc/rtm2/swift/landing-page
 在需要实现字幕的 UI 模块中，将组件作为成员属性：
 
 ```swift
-private var convoAIAPI: ConversationalAIAPIImpl!
+private var convoAIAPI: ConversationalAIAPI!
 ```
 
 #### 2. 初始化组件

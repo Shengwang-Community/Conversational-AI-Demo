@@ -1,6 +1,6 @@
 # ConversationalAI API
 
-**注意**：
+**Note**：
 
 Users need to maintain the initialization, lifecycle, and login state logic of RTC and RTM themselves, and ensure that the lifecycle of RTC and RTM instances is longer than the component lifecycle. Before using the component, make sure RTC is available and RTM is in a logged-in state.
 
@@ -27,7 +27,7 @@ RTM Access Guide：https://doc.shengwang.cn/doc/rtm2/swift/landing-page
 In the UI module where you need to implement subtitles, declare the component as a member property:
 
 ```swift
-private var convoAIAPI: ConversationalAIAPIImpl!
+private var convoAIAPI: ConversationalAIAPI!
 ```
 
 #### 2. Initialize Component
