@@ -346,18 +346,23 @@ extension TranscriptionDelegate {
                     let agentUserId = buffer.agentUserId
                     self.callMessagePrint(tag: TranscriptionController.tag, msg: "<<< [onInterrupted], pts: \(self.audioTimestamp), \(agentUserId), \(message), \(interruptedEvent) ")
 
-                    var lastWord: TurnWordInfo? = nil
+                    var lastIndex: Int = 0
+                    let interruptMarkMs = min(interruptTime, self.audioTimestamp)
+                    self.callMessagePrint(tag: TranscriptionController.tag, msg: "interruptMarkMs: \(interruptMarkMs), startMs: \(interruptTime), pts: \(self.audioTimestamp)")
                     for index in buffer.words.indices {
-                        if buffer.words[index].start_ms > interruptTime {
+                        if buffer.words[index].start_ms >= interruptMarkMs {
                             buffer.words[index].status = .interrupted
                         }
                         
-                        if buffer.words[index].start_ms < interruptTime {
-                            lastWord = buffer.words[index]
+                        if buffer.words[index].start_ms < interruptMarkMs {
+                            lastIndex = index
                         }
                     }
                     
-                    lastWord?.status = .interrupted
+                    if !buffer.words.isEmpty {
+                        buffer.words[lastIndex].status = .interrupted
+                    }
+
                     self.delegate?.onInterrupted(agentUserId: agentUserId, event: interruptedEvent)
                 }
             }
@@ -390,31 +395,28 @@ extension TranscriptionDelegate {
                     interrupte = true
                 }
                 // get turn sub range
-                let inprogressSub = buffer.words.firstIndex(where: { $0.start_ms > audioTimestamp} )
-//                let inprogressSub = buffer.words.lastIndex(where: { $0.start_ms <= audioTimestamp })
-
-                let interruptSub = buffer.words.firstIndex(where: { $0.status == .interrupted} )
-                let endSub = buffer.words.firstIndex(where: { $0.status == .end} )
-                let minIndex = [inprogressSub, interruptSub, endSub].compactMap { $0 }.min()
-                guard let minRange = minIndex else {
-                    return
-                }
-                let currentWords = Array(buffer.words[0...minRange]).filter { $0.start_ms <= audioTimestamp }
-                if currentWords.isEmpty { return }
                 
-                // send turn with state
+                let availableWords = buffer.words.filter { $0.start_ms <= audioTimestamp }
+                
+                if availableWords.isEmpty { continue }
+                
+                guard let lastWord = availableWords.last else {
+                    continue
+                }
+                
+                callMessagePrint(tag: TranscriptionController.uiTag, msg: "last word===3, pts: \(self.audioTimestamp), word: \(lastWord), status: \(lastWord.status), turnId: \(buffer.turnId)， word start_ms: \(lastWord.start_ms)")
                 var transcriptionMessage: Transcription
-                if minRange == interruptSub {
+                if lastWord.status == .interrupted {
                     transcriptionMessage = Transcription(turnId: buffer.turnId,
                                                          userId: buffer.userId,
-                                                         text: currentWords.map { $0.text }.joined(),
+                                                         text: availableWords.map { $0.text }.joined(),
                                                          status: .interrupted,
                                                          type: .agent)
                     // remove finished turn
                     self.messageQueue.remove(at: index)
                     lastFinishMessage = transcriptionMessage
                     callMessagePrint(tag: TranscriptionController.uiTag, msg: "<<< [interrupt1] pts: \(audioTimestamp), message: \(transcriptionMessage), publisher:\(buffer.agentUserId)")
-                } else if minRange == endSub {
+                } else if lastWord.status == .end {
                     transcriptionMessage = Transcription(turnId: buffer.turnId,
                                                       userId: buffer.userId,
                                                       text: buffer.text,
@@ -426,10 +428,11 @@ extension TranscriptionDelegate {
                 } else {
                     transcriptionMessage = Transcription(turnId: buffer.turnId,
                                                       userId: buffer.userId,
-                                                      text: currentWords.map { $0.text }.joined(),
+                                                      text: availableWords.map { $0.text }.joined(),
                                                          status: .inprogress, type: .agent)
                     callMessagePrint(tag: TranscriptionController.uiTag, msg: "<<< [progress] pts: \(audioTimestamp), message: \(transcriptionMessage), publisher:\(buffer.agentUserId)")
                 }
+                
                 if !transcriptionMessage.text.isEmpty {
                     lastMessage = transcriptionMessage
                     lastPublish = buffer.agentUserId
