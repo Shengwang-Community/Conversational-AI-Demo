@@ -251,7 +251,7 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                 presentationMs: Long
             ): Boolean {
                 // Pass render time to transcription controller
-                mPresentationMs = presentationMs + 20
+                mPresentationMs = presentationMs
                 return false
             }
 
