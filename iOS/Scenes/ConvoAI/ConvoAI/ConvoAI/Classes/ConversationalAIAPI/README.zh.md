@@ -88,6 +88,13 @@
         }
     }
    ```
+   
+8. **取消订阅**
+```swift
+    convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
+        
+    }
+```
 
 8. **销毁 API 实例**
 
@@ -97,7 +104,27 @@
 ---
 
 ## 注意事项
+- **订阅频道消息**
+ 在开始会话调用：
+   **必须在登录RTM之后调用**
+   ```swift
+    convoAIAPI.subscribeMessage(channelName: channelName) { error in
+        if let error = error {
+            print("订阅失败: \(error.message)")
+        } else {
+            print("订阅成功")
+        }
+    }
+   ```
 
+- **取消订阅**
+  每次结束会话调用：
+   ```swift
+    convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
+        
+    }
+  ```
+  
 - **音频设置：**
   每次加入 RTC 频道前，必须调用 `loadAudioSettings()`，以保证 AI 会话音质最佳。
   ```swift

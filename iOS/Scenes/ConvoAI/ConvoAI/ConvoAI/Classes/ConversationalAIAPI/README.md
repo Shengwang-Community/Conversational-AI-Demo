@@ -90,7 +90,14 @@ Please follow these steps to quickly integrate and use the ConversationalAI API:
     }
    ```
 
-8. **Destroy API Instance**
+8. **Unsubscribe**
+```swift
+    convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
+        
+    }
+```
+
+9. **Destroy API Instance**
 
    ```swift
     convoAIAPI.destroy()
@@ -98,7 +105,27 @@ Please follow these steps to quickly integrate and use the ConversationalAI API:
 ---
 
 ## Notes
+- **Subscribe to Channel Messages**
+ Call before starting a session:
+   **Must be called after logging in to RTM**
+   ```swift
+    convoAIAPI.subscribeMessage(channelName: channelName) { error in
+        if let error = error {
+            print("Subscription failed: \(error.message)")
+        } else {
+            print("Subscription successful")
+        }
+    }
+   ```
 
+- **Unsubscribe**
+  Call at the end of each session:
+   ```swift
+    convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
+        
+    }
+  ```
+  
 - **Audio Settings:**
   Before joining the RTC channel each time, you must call `loadAudioSettings()` to ensure optimal AI conversation audio quality.
   ```swift
