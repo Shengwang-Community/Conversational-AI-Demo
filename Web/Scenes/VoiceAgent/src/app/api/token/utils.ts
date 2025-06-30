@@ -1,9 +1,8 @@
-import z from 'zod'
+import z from "zod"
 
-import { basicRemoteResSchema } from '@/constants'
+import { basicRemoteResSchema } from "@/constants"
 
-import { logger } from '@/lib/logger'
-
+import { logger } from "@/lib/logger"
 
 export const inputSchema = z.object({
   request_id: z.string(),
@@ -14,10 +13,11 @@ export const inputSchema = z.object({
 const payloadSchema = z.object({
   appId: z.string(),
   uid: z.string(),
-  channelName: z.string().default(''),
+  channelName: z.string().default(""),
   expire: z.number().default(3600).optional(),
   type: z.number().min(1).max(3).default(1).optional(),
-  src: z.string().default('web').optional(),
+  types: z.array(z.number().min(1).max(3)).default([1, 2, 3]).optional(),
+  src: z.string().default("web").optional(),
   appCertificate: z.string().optional(),
 })
 
@@ -43,15 +43,15 @@ export const genAgoraToken = async (
   const payload = payloadSchema.parse(config)
 
   const res = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
   })
   const data = await res.json()
-  logger.info({ data }, '[genAgoraToken] [res data]')
+  logger.info({ data }, "[genAgoraToken] [res data]")
   const resData = remoteResSchema.parse(data)
-  logger.info({ data: resData }, '[genAgoraToken] [resData]')
+  logger.info({ data: resData }, "[genAgoraToken] [resData]")
   return resData
 }

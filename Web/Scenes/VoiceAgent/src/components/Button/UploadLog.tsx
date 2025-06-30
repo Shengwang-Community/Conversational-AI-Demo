@@ -1,28 +1,29 @@
-'use client'
+"use client"
 
-import * as React from 'react'
-import { useTranslations } from 'next-intl'
-import { BugIcon } from 'lucide-react'
-import { toast } from 'sonner'
+import * as React from "react"
+import { useTranslations } from "next-intl"
+import { BugIcon } from "lucide-react"
+import { toast } from "sonner"
 
-import { Button } from '@/components/ui/button'
-import { InfoItemLabel, InfoItemValue } from '@/components/Card/InfoCard'
-import { LoadingSpinner, CheckFilledIcon } from '@/components/Icons'
-import { uploadLog } from '@/services/agent'
-import { getRtcService } from '@/services/rtc'
-import { useRTCStore, useUserInfoStore } from '@/store'
-import { logger } from '@/lib/logger'
-import { cn } from '@/lib/utils'
-import { useIsMobile } from '@/hooks/use-mobile'
-import { ERROR_MESSAGE } from '@/constants'
-import { EUploadLogStatus } from '@/type/rtc'
+import { Button } from "@/components/ui/button"
+import { InfoItemLabel, InfoItemValue } from "@/components/Card/InfoCard"
+import { LoadingSpinner, CheckFilledIcon } from "@/components/Icons"
+import { uploadLog } from "@/services/agent"
+import { RTCHelper } from "@/conversational-ai-api/helper/rtc"
+import { useRTCStore, useUserInfoStore } from "@/store"
+import { logger } from "@/lib/logger"
+import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { ERROR_MESSAGE } from "@/constants"
+import { EUploadLogStatus } from "@/type/rtc"
 
 export default function UploadLogButton(props: { className?: string }) {
   const { className } = props
-  const tLog = useTranslations('log')
-  const tLogin = useTranslations('login')
+  const tLog = useTranslations("log")
+  const tLogin = useTranslations("login")
 
-  const { appId } = getRtcService()
+  const rtcHelper = RTCHelper.getInstance()
+  const appId = rtcHelper.appId
   const { channel_name, agent_id, upload_log_status, updateUploadLogStatus } =
     useRTCStore()
   const isMobile = useIsMobile()
@@ -34,9 +35,9 @@ export default function UploadLogButton(props: { className?: string }) {
     try {
       const { code } = await uploadLog({
         content: {
-          appId: appId || '',
+          appId: appId || "",
           channelName: channel_name,
-          agentId: agent_id || '',
+          agentId: agent_id || "",
         },
         file,
       })
@@ -50,11 +51,11 @@ export default function UploadLogButton(props: { className?: string }) {
         (error as Error).message === ERROR_MESSAGE.UNAUTHORIZED_ERROR_MESSAGE
       ) {
         clearUserInfo()
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('stop-agent'))
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("stop-agent"))
         }
-        logger.log('upload log unauthorizedError')
-        toast.error(tLogin('unauthorizedError'))
+        logger.log("upload log unauthorizedError")
+        toast.error(tLogin("unauthorizedError"))
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -62,11 +63,11 @@ export default function UploadLogButton(props: { className?: string }) {
 
   React.useEffect(() => {
     if (upload_log_status === EUploadLogStatus.UPLOAD_ERROR) {
-      toast.error(tLog('uploadErrorTip'))
+      toast.error(tLog("uploadErrorTip"))
       updateUploadLogStatus(EUploadLogStatus.IDLE)
     }
     if (upload_log_status === EUploadLogStatus.UPLOADED) {
-      toast.success(tLog('uploadSuccessTip'))
+      toast.success(tLog("uploadSuccessTip"))
       setTimeout(() => {
         updateUploadLogStatus(EUploadLogStatus.IDLE)
       }, 2000)
@@ -78,7 +79,7 @@ export default function UploadLogButton(props: { className?: string }) {
     return (
       <Button
         variant="info"
-        className={cn('w-fit', className)}
+        className={cn("w-fit", className)}
         onClick={handleClick}
         disabled={upload_log_status === EUploadLogStatus.UPLOADING}
       >
@@ -124,12 +125,12 @@ const UploadIcon = (props: { status: EUploadLogStatus }) => {
 
 const UploadText = (props: { status: EUploadLogStatus }) => {
   const { status } = props
-  const tLog = useTranslations('log')
+  const tLog = useTranslations("log")
   return (
     <>
       {status === EUploadLogStatus.UPLOADED
-        ? tLog('uploadSuccess')
-        : tLog('label')}
+        ? tLog("uploadSuccess")
+        : tLog("label")}
     </>
   )
 }

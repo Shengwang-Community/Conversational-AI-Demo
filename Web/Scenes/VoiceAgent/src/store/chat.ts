@@ -1,12 +1,19 @@
-import { create } from 'zustand'
+import { create } from "zustand"
 
 import type {
-  IMessageListItem,
-} from '@/services/message'
+  IAgentTranscription,
+  ISubtitleHelperItem,
+  IUserTranscription,
+} from "@/conversational-ai-api/type"
+
 export interface IChatStore {
-  history: IMessageListItem[]
+  history: ISubtitleHelperItem<
+    Partial<IUserTranscription | IAgentTranscription>
+  >[]
   setHistory: (
-    history: IMessageListItem[]
+    history: ISubtitleHelperItem<
+      Partial<IUserTranscription | IAgentTranscription>
+    >[]
   ) => void
   clearHistory: () => void
 }

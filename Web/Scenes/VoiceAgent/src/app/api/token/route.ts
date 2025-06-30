@@ -1,26 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from "next/server"
 
-import { inputSchema, genAgoraToken } from './utils'
-import { REMOTE_TOKEN_GENERATE } from '@/constants'
-import { getEndpointFromNextRequest } from '@/app/api/_utils'
+import { inputSchema, genAgoraToken } from "./utils"
+import { REMOTE_TOKEN_GENERATE } from "@/constants"
+import { getEndpointFromNextRequest } from "@/app/api/_utils"
 
-import { logger } from '@/lib/logger'
-
+import { logger } from "@/lib/logger"
 
 export async function POST(request: NextRequest) {
-  const { tokenServer, agentServer, appId, devMode, endpoint ,appCert} =
+  const { tokenServer, agentServer, appId, devMode, endpoint, appCert } =
     getEndpointFromNextRequest(request)
 
   const url = `${tokenServer}${REMOTE_TOKEN_GENERATE}`
 
   logger.info(
     { tokenServer, agentServer, appId, devMode, endpoint, url, appCert },
-    'getEndpointFromNextRequest'
+    "getEndpointFromNextRequest"
   )
 
   try {
     const body = await request.json()
-    logger.info({ body }, 'request body')
+    logger.info({ body }, "request body")
     const { uid } = inputSchema.parse(body)
 
     const resData = await genAgoraToken(
@@ -28,10 +27,10 @@ export async function POST(request: NextRequest) {
         appId,
         appCertificate: appCert,
         uid: `${uid}`,
-        channelName: '*',
+        channelName: "*",
         expire: 86400,
-        type: 1,
-        src: 'web',
+        types: [1, 2, 3],
+        src: "web",
       },
       url
     )
@@ -43,9 +42,9 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error({ error }, 'error')
+    console.error({ error }, "error")
     return NextResponse.json(
-      { code: 1, msg: 'Invalid request', error },
+      { code: 1, msg: "Invalid request", error },
       { status: 400 }
     )
   }

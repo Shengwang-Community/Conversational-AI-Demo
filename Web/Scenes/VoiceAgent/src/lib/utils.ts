@@ -1,6 +1,6 @@
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-import _ from 'lodash'
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+import _ from "lodash"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -12,11 +12,24 @@ export function decodeStreamMessage(stream: Uint8Array) {
 }
 
 export const genUUID = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    const v = c === "x" ? r : (r & 0x3) | 0x8
     return v.toString(16)
   })
+}
+
+export const genTranceID = (length: number = 8) => {
+  let result = ""
+  const characters = "abcdefghijklmnopqrstuvwxyz0123456789"
+  const charactersLength = characters.length
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * charactersLength)
+    result += characters[randomIndex]
+  }
+
+  return result
 }
 
 export const genAgentId = () => {
@@ -30,18 +43,18 @@ export const genUserId = () => {
 }
 
 export const genRandomString = (length: number = 6) => {
-  let result = ''
-  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  let result = ""
+  const characters = "abcdefghijklmnopqrstuvwxyz0123456789"
 
   result = _.times(length, () => {
-    return _.sample(characters) || ''
-  }).join('')
+    return _.sample(characters) || ""
+  }).join("")
 
   return result
 }
 
 export const genChannelName = () => {
-  const prefix = process.env.NEXT_PUBLIC_CHANNEL_PREFIX || 'convoai'
+  const prefix = process.env.NEXT_PUBLIC_CHANNEL_PREFIX || "convoai"
   const randomString = genUUID()
   return `${prefix}-${randomString}`
 }
@@ -64,7 +77,7 @@ export const normalizeFrequencies = (
   return normalizedArray
 }
 
-export const isCN = process.env.NEXT_PUBLIC_LOCALE === 'zh-CN'
+export const isCN = process.env.NEXT_PUBLIC_LOCALE === "zh-CN"
 
 export const calculateTimeLeft = (
   endTimestamp: number,
