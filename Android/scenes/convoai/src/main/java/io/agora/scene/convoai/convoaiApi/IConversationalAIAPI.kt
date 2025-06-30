@@ -491,6 +491,8 @@ interface IConversationalAIAPI {
     fun unsubscribeMessage(channelName: String, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
+     * @technical preview
+     *
      * Send a message to the AI agent.
      * @param agentUserId Agent user ID
      * @param message Message object
