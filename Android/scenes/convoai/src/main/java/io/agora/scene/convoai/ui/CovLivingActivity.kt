@@ -923,6 +923,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
     }
 
+    private val randomMessages = arrayOf(
+        "Hello!",
+        "Hi",
+        "Tell me a joke",
+        "Tell me a story",
+        "Are you ok?",
+        "How are you?"
+    )
     private fun setupView() {
         activityResultLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -1054,7 +1062,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 val chatMessage = ChatMessage(
                     priority = Priority.INTERRUPT,
                     responseInterruptable = true,
-                    text = "tell me a joke!"
+                    text = randomMessages.random()
                 )
                 conversationalAIAPI?.chat(
                     CovAgentManager.agentUID.toString(),
