@@ -1,13 +1,14 @@
 {
   "name": "convoai-v2",
-  "version": "1.4.1",
+  "version": "1.6.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:ssl": "next dev --turbopack --experimental-https",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check": "biome check --write"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -28,7 +29,8 @@
     "@splinetool/react-spline": "^4.0.0",
     "@types/mdx": "^2.0.13",
     "agora-conversational-ai-denoiser": "^1.0.0-beta2",
-    "agora-rtc-sdk-ng": "^4.23.3",
+    "agora-rtc-sdk-ng": "^4.23.4",
+    "agora-rtm": "^2.2.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "copy-to-clipboard": "^3.3.3",
@@ -56,6 +58,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.0.5",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/typography": "^0.5.16",
     "@types/js-cookie": "^3.0.6",
@@ -67,8 +70,6 @@
     "eslint-config-next": "15.1.6",
     "pino-pretty": "^13.0.0",
     "postcss": "^8",
-    "prettier": "^3.4.2",
-    "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }

@@ -124,7 +124,6 @@ bun dev
 | [app/page](./src/app/page.tsx)               | 页面主要内容                       |
 | [components/](./src/components/)             | 页面组件                          |
 | [logger/](./src/lib/logger)                  |日志处理                           |
-| [services/rtc](./src/services/rtc.ts)        | RTC 音视频通信相关实现              |
 | [type/rtc](./src/type/rtc.ts)                |  RTC的类型和枚举  |
 
 ## 📚 三、相关资源
