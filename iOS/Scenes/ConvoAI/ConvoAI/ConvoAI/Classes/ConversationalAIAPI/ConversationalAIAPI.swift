@@ -549,7 +549,7 @@ public enum MessageType: String, CaseIterable {
     /// ```swift
     /// // Set audio best practice parameters before joining channel
     /// api.loadAudioSettings()  // Use default scenario
-    /// 
+    ///
     /// // Then join the channel
     /// rtcEngine.joinChannel(byToken: token, channelId: channelName, info: nil, uid: userId)
     /// ```
@@ -596,6 +596,8 @@ public enum MessageType: String, CaseIterable {
     /// Call this method when you no longer need the ConversationalAI API.
     @objc func destroy()
 }
+
+
 
 
 
