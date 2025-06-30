@@ -38,31 +38,23 @@ export interface IConversationalAIAPIConfig {
 
 /**
  * A class that manages conversational AI interactions through Agora's RTC and RTM services.
- * 一个通过 Agora 的 RTC 和 RTM 服务管理会话 AI 交互的类。
  *
  * Provides functionality to handle real-time communication between users and AI agents,
  * including message processing, state management, and event handling. It integrates with
  * Agora's RTC client for audio streaming and RTM client for messaging.
  *
- * 提供用户与 AI 代理之间实时通信的功能，包括消息处理、状态管理和事件处理。
- * 它集成了用于音频流的 Agora RTC 客户端和用于消息传递的 RTM 客户端。
- *
- * Key features 主要功能：
- * - Singleton instance management 单例实例管理
- * - RTC and RTM event handling RTC 和 RTM 事件处理
- * - Chat history and transcription management 聊天历史和转录管理
- * - Agent state monitoring 代理状态监控
- * - Debug logging 调试日志
+ * Key features
+ * - Singleton instance management
+ * - RTC and RTM event handling
+ * - Chat history and transcription management
+ * - Agent state monitoring
+ * - Debug logging
  *
  * @remarks
  * - Must be initialized with {@link IConversationalAIAPIConfig} before use
- *   使用前必须使用 {@link IConversationalAIAPIConfig} 初始化
  * - Only one instance can exist at a time
- *   同一时间只能存在一个实例
  * - Requires both RTC and RTM engines to be properly configured
- *   需要正确配置 RTC 和 RTM 引擎
  * - Events are emitted for state changes, transcriptions, and errors
- *   会发出状态变化、转录和错误的事件
  *
  * @example
  * ```typescript
@@ -73,12 +65,12 @@ export interface IConversationalAIAPIConfig {
  * });
  * ```
  *
- * @fires {@link EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED} When chat history is updated / 当聊天历史更新时
- * @fires {@link EConversationalAIAPIEvents.AGENT_STATE_CHANGED} When agent state changes / 当代理状态改变时
- * @fires {@link EConversationalAIAPIEvents.AGENT_INTERRUPTED} When agent is interrupted / 当代理被中断时
- * @fires {@link EConversationalAIAPIEvents.AGENT_METRICS} When agent metrics are received / 当收到代理指标时
- * @fires {@link EConversationalAIAPIEvents.AGENT_ERROR} When an error occurs / 当发生错误时
- * @fires {@link EConversationalAIAPIEvents.DEBUG_LOG} When debug logs are generated / 当生成调试日志时
+ * @fires {@link EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED} When chat history is updated
+ * @fires {@link EConversationalAIAPIEvents.AGENT_STATE_CHANGED} When agent state changes
+ * @fires {@link EConversationalAIAPIEvents.AGENT_INTERRUPTED} When agent is interrupted
+ * @fires {@link EConversationalAIAPIEvents.AGENT_METRICS} When agent metrics are received
+ * @fires {@link EConversationalAIAPIEvents.AGENT_ERROR} When an error occurs
+ * @fires {@link EConversationalAIAPIEvents.DEBUG_LOG} When debug logs are generated
  *
  * @since 1.6.0
  */
@@ -123,6 +115,21 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     })
   }
 
+  /**
+   * Gets the singleton instance of ConversationalAIAPI.
+   *
+   * Retrieves the singleton instance of the ConversationalAIAPI class. This method
+   * ensures that only one instance of ConversationalAIAPI exists throughout the
+   * application lifecycle.
+   *
+   * @remarks
+   * - Must call {@link initialize} before using this method
+   * - Throws error if instance is not initialized
+   *
+   * @returns The singleton instance of ConversationalAIAPI
+   * @throws {@link NotFoundError} When ConversationalAIAPI is not initialized
+   * @since 1.6.0
+   */
   public static getInstance() {
     if (!ConversationalAIAPI._instance) {
       throw new NotFoundError("ConversationalAIAPI is not initialized")
@@ -130,7 +137,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     return ConversationalAIAPI._instance
   }
 
-  public getCfg() {
+  protected getCfg() {
     if (!this.rtcEngine || !this.rtmEngine) {
       throw new NotFoundError("ConversationalAIAPI is not initialized")
     }
@@ -143,6 +150,21 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     }
   }
 
+  /**
+   * Initializes the ConversationalAIAPI singleton instance.
+   *
+   * This method sets up the RTC and RTM engines, render mode, and logging options.
+   * It must be called before any other methods of ConversationalAIAPI can be used.
+   *
+   * @remarks
+   * - Only one instance can be initialized at a time
+   * - Throws error if already initialized
+   *
+   * @param cfg - Configuration object for initializing the API
+   * @returns The initialized instance of ConversationalAIAPI
+   * @throws {@link Error} If ConversationalAIAPI is already initialized
+   * @since 1.6.0
+   */
   public static init(cfg: IConversationalAIAPIConfig) {
     ConversationalAIAPI._instance = new ConversationalAIAPI()
     ConversationalAIAPI._instance.rtcEngine = cfg.rtcEngine
@@ -154,6 +176,19 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     return ConversationalAIAPI._instance
   }
 
+  /**
+   * Subscribes to a message channel for real-time updates.
+   *
+   * This method binds the necessary RTC and RTM events, sets the channel,
+   * and starts the CovSubRenderController to handle incoming messages.
+   *
+   * @remarks
+   * - Must call {@link initialize} before using this method
+   * - Throws error if not initialized
+   *
+   * @param channel - The channel to subscribe to for messages
+   * @since 1.6.0
+   */
   public subscribeMessage(channel: string) {
     this.bindRtcEvents()
     this.bindRtmEvents()
@@ -163,6 +198,18 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     this.covSubRenderController.run()
   }
 
+  /**
+   * Unsubscribes from the message channel and cleans up resources.
+   *
+   * This method unbinds the RTC and RTM events, clears the channel,
+   * and cleans up the CovSubRenderController.
+   *
+   * @remarks
+   * - Must call {@link subscribeMessage} before using this method
+   * - Throws error if not initialized
+   *
+   * @since 1.6.0
+   */
   public unsubscribe() {
     this.unbindRtcEvents()
     this.unbindRtmEvents()
@@ -171,6 +218,18 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     this.covSubRenderController.cleanup()
   }
 
+  /**
+   * Destroys the ConversationalAIAPI instance and cleans up resources.
+   *
+   * This method unbinds all RTC and RTM events, clears the channel,
+   * and cleans up the CovSubRenderController.
+   *
+   * @remarks
+   * - Must call {@link unsubscribe} before using this method
+   * - Throws error if not initialized
+   *
+   * @since 1.6.0
+   */
   public destroy() {
     const instance = ConversationalAIAPI.getInstance()
     if (instance) {
@@ -189,6 +248,19 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
   // TODO: Implement chat method
   // public chat() {}
 
+  /**
+   * Sends an interrupt message to the specified agent user.
+   *
+   * This method publishes an interrupt message to the RTM channel of the specified agent user.
+   * It is used to signal that the current interaction should be interrupted.
+   *
+   * @remarks
+   * - Must call {@link subscribeMessage} before using this method
+   * - Throws error if not initialized or if sending fails
+   *
+   * @param agentUserId - The user ID of the agent to interrupt
+   * @since 1.6.0
+   */
   public async interrupt(agentUserId: string) {
     const traceId = genTranceID()
     this.callMessagePrint(
