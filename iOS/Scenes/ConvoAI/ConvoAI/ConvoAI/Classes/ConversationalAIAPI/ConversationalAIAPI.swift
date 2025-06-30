@@ -51,6 +51,7 @@ import AgoraRtmKit
     }
 }
 
+/// @technical preview
 /// Message object for sending content to AI agents
 /// Supports multiple content types that can be combined in a single message:
 /// - Text content for natural language communication
@@ -517,6 +518,7 @@ public enum MessageType: String, CaseIterable {
 /// This protocol defines interfaces for controlling Agent conversation behavior,
 /// including sending messages, interrupting agents, and managing audio settings.
 @objc public protocol ConversationalAIAPI: AnyObject {
+    /// @technical preview
     /// Send a message to the AI Agent for processing
     /// This method sends a message (containing text, images, and/or audio) to the Agent
     /// and indicates the success or failure of the operation through a completion callback.
