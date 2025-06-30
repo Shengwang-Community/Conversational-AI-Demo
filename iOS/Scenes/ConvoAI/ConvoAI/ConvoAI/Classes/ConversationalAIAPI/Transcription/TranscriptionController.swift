@@ -448,7 +448,7 @@ extension TranscriptionDelegate {
 extension TranscriptionController: AgoraAudioFrameDelegate {
     
     public func onPlaybackAudioFrame(beforeMixing frame: AgoraAudioFrame, channelId: String, uid: UInt) -> Bool {
-        audioTimestamp = frame.presentationMs+20
+        audioTimestamp = frame.presentationMs
         return true
     }
     
