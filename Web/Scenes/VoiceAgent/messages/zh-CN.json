@@ -117,7 +117,13 @@
       "firstSpeaking": "请在对话初期大声、清晰地说话，提升智能体对您的声音锁定效果。"
     },
     "startAgentError": "连接失败。",
-    "interrupted": "被打断"
+    "interrupted": "被打断",
+    "loading": "加载中...",
+    "pleaseSepeak": "你可以开始说话",
+    "listening": "正在听...",
+    "muted": "已静音",
+    "interruptAgentTip": "说话或点击按钮打断智能体",
+    "clickAndInterruptAgent": "点击打断智能体"
   },
   "compatibility": {
     "errorTitle": "兼容性检查",

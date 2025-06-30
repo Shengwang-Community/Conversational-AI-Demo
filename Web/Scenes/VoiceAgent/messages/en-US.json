@@ -117,7 +117,13 @@
       "firstSpeaking": "At the beginning of the conversation, please speak loudly and clearly to help the AI agent better lock onto your voice."
     },
     "startAgentError": "Connection failed.",
-    "interrupted": "Interrupted"
+    "interrupted": "Interrupted",
+    "loading": "Loading...",
+    "pleaseSepeak": "You can start speaking",
+    "listening": "Listening...",
+    "muted": "Muted",
+    "interruptAgentTip": "Speak or click button to interrupt agent",
+    "clickAndInterruptAgent": "Click to interrupt agent"
   },
   "compatibility": {
     "errorTitle": "Compatibility Check",
@@ -129,6 +135,7 @@
     "badge": "Dev Mode",
     "endpoint": "Agent Endpoint",
     "unknown": "Unknown",
+    "agentUrl": "Agent URL",
     "title": "Dev Mode",
     "description": "In dev mode, you can debug the Agent",
     "userChatHistory": "User Message History",
