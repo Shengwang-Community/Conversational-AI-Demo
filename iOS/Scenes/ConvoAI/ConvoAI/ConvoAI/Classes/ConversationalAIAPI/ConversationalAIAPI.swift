@@ -440,7 +440,7 @@ public enum MessageType: String, CaseIterable {
     ///   - rtmEngine: RTM client instance
     ///   - renderMode: Transcription rendering mode
     ///   - enableLog: Enable logging flag
-    @objc public init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, renderMode: TranscriptionRenderMode, enableLog: Bool = false) {
+    @objc public init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, renderMode: TranscriptionRenderMode, enableLog: Bool = true) {
         self.rtcEngine = rtcEngine
         self.rtmEngine = rtmEngine
         self.renderMode = renderMode
