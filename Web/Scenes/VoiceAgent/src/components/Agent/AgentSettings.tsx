@@ -688,7 +688,7 @@ export function AgentSettings() {
           asr: {
             ...settings.asr,
             language:
-              (defaultLanguage as EDefaultLanguage) || settings.asr.language,
+              settings.asr.language || (defaultLanguage as EDefaultLanguage),
           },
         })
       }
