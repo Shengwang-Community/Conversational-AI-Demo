@@ -123,7 +123,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
    * application lifecycle.
    *
    * @remarks
-   * - Must call {@link initialize} before using this method
+   * - Must call {@link init} before using this method
    * - Throws error if instance is not initialized
    *
    * @returns The singleton instance of ConversationalAIAPI
@@ -183,7 +183,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
    * and starts the CovSubRenderController to handle incoming messages.
    *
    * @remarks
-   * - Must call {@link initialize} before using this method
+   * - Must call {@link init} before using this method
    * - Throws error if not initialized
    *
    * @param channel - The channel to subscribe to for messages
