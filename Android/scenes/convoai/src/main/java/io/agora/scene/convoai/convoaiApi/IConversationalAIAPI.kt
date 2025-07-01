@@ -349,7 +349,7 @@ enum class TranscriptionStatus {
  * @property rtcEngine RTC engine instance for audio/video communication
  * @property rtmClient RTM client instance for real-time messaging
  * @property renderMode Transcription rendering mode (Word or Text level)
- * @property enableLog Whether to enable logging (default: false)
+ * @property enableLog Whether to enable logging (default: true). When set to true, logs will be written to the RTC SDK log file.
  */
 data class ConversationalAIAPIConfig(
     /** RTC engine instance for audio/video communication */
@@ -358,8 +358,8 @@ data class ConversationalAIAPIConfig(
     val rtmClient: RtmClient,
     /** Transcription rendering mode, default is word-level */
     val renderMode: TranscriptionRenderMode = TranscriptionRenderMode.Word,
-    /** Whether to enable logging, default is false */
-    val enableLog: Boolean = false
+    /** Whether to enable logging, default is true. When true, logs will be written to the RTC SDK log file. */
+    val enableLog: Boolean = true
 )
 
 /**
@@ -491,6 +491,8 @@ interface IConversationalAIAPI {
     fun unsubscribeMessage(channelName: String, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
+     * @technical preview
+     *
      * Send a message to the AI agent.
      * @param agentUserId Agent user ID
      * @param message Message object

@@ -251,7 +251,7 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                 presentationMs: Long
             ): Boolean {
                 // Pass render time to transcription controller
-                mPresentationMs = presentationMs + 20
+                mPresentationMs = presentationMs
                 return false
             }
 
@@ -326,7 +326,15 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                 val interruptEvent = InterruptEvent(turnId, startMs)
                 config.callback?.onAgentInterrupted(agentUserId, interruptEvent)
                 callMessagePrint(TAG, "<<< [onInterrupted] pts:$mPresentationMs $agentUserId $interruptEvent")
-                onAgentMessageReceived(agentUserId, userId, turnId, startMs, text, null, TranscriptionStatus.INTERRUPTED)
+                onAgentMessageReceived(
+                    agentUserId = agentUserId,
+                    userId = userId,
+                    turnId = turnId,
+                    startMs = startMs,
+                    text = text,
+                    words = null,
+                    status = TranscriptionStatus.INTERRUPTED
+                )
                 return
             }
 
@@ -365,7 +373,15 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                     // Parse words array
                     val wordsArray = msg["words"] as? List<Map<String, Any>>
                     val words = parseWords(wordsArray)
-                    onAgentMessageReceived(agentUserId, userId, turnId, startMs, text, words, status)
+                    onAgentMessageReceived(
+                        agentUserId = agentUserId,
+                        userId = userId,
+                        turnId = turnId,
+                        startMs = startMs,
+                        text = text,
+                        words = words,
+                        status = status
+                    )
                 }
             }
         } catch (e: Exception) {
@@ -506,14 +522,17 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
             // Check if there is an existing message that needs to be merged
             if (existingInfo != null) {
                 if (status == TranscriptionStatus.INTERRUPTED) {
-                    // Interrupt all words from the last one before startMs to the end of the word list
+                    // The actual effective timestamp for interruption, using the minimum of startMs and mPresentationMs
+                    val interruptMarkMs = minOf(startMs, mPresentationMs)
+                    callMessagePrint(TAG, "interruptMarkMs:$interruptMarkMs startMs:$startMs mPresentationMs:$mPresentationMs")
+                    // Interrupt all words from the last one before interruptMarkMs to the end of the word list
                     var lastBeforeStartMs: TurnWordInfo? = null
                     val mergedWords = existingInfo.words.toMutableList()
                     mergedWords.forEach { word ->
-                        if (word.startMs <= startMs) {
+                        if (word.startMs <= interruptMarkMs) {
                             lastBeforeStartMs = word
                         }
-                        if (word.startMs >= startMs) {
+                        if (word.startMs >= interruptMarkMs) {
                             word.status = TranscriptionStatus.INTERRUPTED
                         }
                     }
@@ -618,13 +637,10 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
 
         synchronized(agentTurnQueue) {
             // Get all turns that meet display conditions
-            val availableTurns = agentTurnQueue.asSequence()
+            val availableTurns: List<Pair<TurnMessageInfo, List<TurnWordInfo>>> = agentTurnQueue.asSequence()
                 .mapNotNull { turn ->
-                    // Check for interrupt condition
-                    val interruptedWord =
-                        turn.words.find { it.status == TranscriptionStatus.INTERRUPTED && it.startMs <= mPresentationMs }
-                    if (interruptedWord != null) {
-                        val words = turn.words.filter { it.startMs <= interruptedWord.startMs }
+                    val words = turn.words.filter { it.startMs <= mPresentationMs }
+                    if (words.isNotEmpty() && words.last().status == TranscriptionStatus.INTERRUPTED) {
                         val interruptedText = words.joinToString("") { it.word }
                         // create interrupted message
                         val interruptedTranscription = Transcription(
@@ -649,7 +665,6 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                         callMessagePrint(TAG, "Removed interrupted turn:${turn.turnId}")
                         null
                     } else {
-                        val words = turn.words.filter { it.startMs <= mPresentationMs }
                         if (words.isNotEmpty()) turn to words else null
                     }
                 }
@@ -691,8 +706,7 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
             val newTranscription = Transcription(
                 turnId = targetTurn.turnId,
                 userId = targetTurn.userId,
-                text = if (targetIsEnd) targetTurn.text
-                else targetWords.joinToString("") { it.word },
+                text = if (targetIsEnd) targetTurn.text else targetWords.joinToString("") { it.word },
                 status = if (targetIsEnd) TranscriptionStatus.END else TranscriptionStatus.IN_PROGRESS,
                 type = TranscriptionType.AGENT
             )
