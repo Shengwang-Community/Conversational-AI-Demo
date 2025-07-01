@@ -255,7 +255,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
    * It is used to signal that the current interaction should be interrupted.
    *
    * @remarks
-   * - Must call {@link subscribeMessage} before using this method
+   * - Must call {@link init} before using this method
    * - Throws error if not initialized or if sending fails
    *
    * @param agentUserId - The user ID of the agent to interrupt
