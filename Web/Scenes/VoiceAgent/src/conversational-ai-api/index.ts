@@ -49,20 +49,65 @@ export interface IConversationalAIAPIConfig {
  * - Chat history and transcription management
  * - Agent state monitoring
  * - Debug logging
+ * - Event subscription and management through EventHelper
  *
  * @remarks
  * - Must be initialized with {@link IConversationalAIAPIConfig} before use
  * - Only one instance can exist at a time
  * - Requires both RTC and RTM engines to be properly configured
  * - Events are emitted for state changes, transcriptions, and errors
+ * - Extends EventHelper to provide event subscription capabilities
  *
  * @example
+ * Basic initialization and usage:
  * ```typescript
  * const api = ConversationalAIAPI.init({
  *   rtcEngine: rtcClient,
  *   rtmEngine: rtmClient,
  *   renderMode: ESubtitleHelperMode.REALTIME
  * });
+ *
+ * // Subscribe to a channel
+ * api.subscribeMessage('channel-id');
+ * ```
+ *
+ * @example
+ * Event handling with EventHelper methods:
+ * ```typescript
+ * const conversationalAIAPI = ConversationalAIAPI.getInstance();
+ *
+ * // Subscribe to all events using on() method
+ * conversationalAIAPI.on(EConversationalAIAPIEvents.AGENT_STATE_CHANGED, (agentUserId, event) => {
+ *   console.log(`Agent ${agentUserId} state changed to:`, event.state);
+ * });
+ *
+ * conversationalAIAPI.on(EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED, (transcription) => {
+ *   console.log('Transcription updated:', transcription);
+ * });
+ *
+ * conversationalAIAPI.on(EConversationalAIAPIEvents.AGENT_INTERRUPTED, (agentUserId, event) => {
+ *   console.log(`Agent ${agentUserId} interrupted:`, event);
+ * });
+ *
+ * conversationalAIAPI.on(EConversationalAIAPIEvents.AGENT_METRICS, (agentUserId, metrics) => {
+ *   console.log(`Agent ${agentUserId} metrics:`, metrics);
+ * });
+ *
+ * conversationalAIAPI.on(EConversationalAIAPIEvents.AGENT_ERROR, (agentUserId, error) => {
+ *   console.error(`Agent ${agentUserId} error:`, error.message);
+ * });
+ *
+ * conversationalAIAPI.on(EConversationalAIAPIEvents.DEBUG_LOG, (message) => {
+ *   console.debug('Debug log:', message);
+ * });
+ *
+ * // Unsubscribe from events using off() method
+ * conversationalAIAPI.off(EConversationalAIAPIEvents.AGENT_STATE_CHANGED, handleAgentStateChanged);
+ * conversationalAIAPI.off(EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED, handleTranscriptionUpdated);
+ * conversationalAIAPI.off(EConversationalAIAPIEvents.AGENT_INTERRUPTED, handleAgentInterrupted);
+ * conversationalAIAPI.off(EConversationalAIAPIEvents.AGENT_METRICS, handleAgentMetrics);
+ * conversationalAIAPI.off(EConversationalAIAPIEvents.AGENT_ERROR, handleAgentError);
+ * conversationalAIAPI.off(EConversationalAIAPIEvents.DEBUG_LOG, handleDebugLog);
  * ```
  *
  * @fires {@link EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED} When chat history is updated
