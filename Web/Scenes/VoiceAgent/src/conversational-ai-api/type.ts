@@ -360,7 +360,7 @@ export interface IMessageMetrics {
   metric_name: string
   turn_id: number
   latency_ms: number
-  send_ts: number // TODO: check if this is correct
+  send_ts: number
 }
 
 export interface IMessageError {
@@ -369,7 +369,7 @@ export interface IMessageError {
   code: number
   message: string
   turn_id: number
-  timestamp: number // TODO: check if this is correct
+  timestamp: number
 }
 
 export interface IPresenceState
