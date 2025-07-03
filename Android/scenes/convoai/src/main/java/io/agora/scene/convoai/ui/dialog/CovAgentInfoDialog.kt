@@ -1,34 +1,34 @@
-package io.agora.scene.convoai.ui
+package io.agora.scene.convoai.ui.dialog
 
 import android.annotation.SuppressLint
 import android.app.Dialog
-import android.view.Gravity
-import android.view.WindowManager
 import android.content.DialogInterface
 import android.graphics.PorterDuff
 import android.os.Bundle
+import android.view.GestureDetector
+import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import android.view.GestureDetector
-import android.view.MotionEvent
+import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.ui.BaseDialogFragment
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.util.LogUploader
 import io.agora.scene.common.util.copyToClipboard
 import io.agora.scene.common.util.toast.ToastUtil
-import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.convoai.R
-import io.agora.scene.convoai.databinding.CovInfoDialogBinding
-import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.AgentConnectionState
+import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.convoaiApi.ConversationalAIAPI_VERSION
+import io.agora.scene.convoai.databinding.CovInfoDialogBinding
+import io.agora.scene.convoai.iot.manager.CovIotDeviceManager
 import io.agora.scene.convoai.rtc.CovRtcManager
 import kotlin.math.abs
-import io.agora.scene.convoai.iot.manager.CovIotDeviceManager
 
 class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
     private var onDismissCallback: (() -> Unit)? = null
@@ -36,7 +36,7 @@ class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
     private var onIotDeviceClick: (() -> Unit)? = null
     companion object {
         fun newInstance(
-            onDismissCallback: () -> Unit, 
+            onDismissCallback: () -> Unit,
             onLogout: () -> Unit,
             onIotDeviceClick: () -> Unit
         ): CovAgentInfoDialog {
@@ -73,9 +73,9 @@ class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
             }
         }
     }
-    
+
     private var uploadAnimation: Animation? = null
-    
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -99,7 +99,7 @@ class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
             gestureDetector.onTouchEvent(event)
             false
         }
-        
+
         mBinding?.apply {
             mtvAgentId.setOnLongClickListener {
                 copyToClipboard(mtvAgentId.text.toString())
@@ -123,7 +123,7 @@ class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
                     updateUploadingStatus(disable = true, isUploading = true)
                     CovRtcManager.generatePreDumpFile()
                     tvUploader.postDelayed({
-                        LogUploader.uploadLog(CovAgentApiManager.agentId ?: "",CovAgentManager.channelName) { err ->
+                        LogUploader.uploadLog(CovAgentApiManager.agentId ?: "", CovAgentManager.channelName) { err ->
                             if (err == null) {
                                 ToastUtil.show(io.agora.scene.common.R.string.common_upload_time_success)
                             } else {
@@ -251,7 +251,7 @@ class CovAgentInfoDialog : BaseDialogFragment<CovInfoDialogBinding>() {
     }
 
     private fun updateDeviceCount() {
-        val count = CovIotDeviceManager.getInstance(requireContext()).getDeviceCount()
+        val count = CovIotDeviceManager.Companion.getInstance(requireContext()).getDeviceCount()
         mBinding?.tvDeviceCount?.text = getString(R.string.cov_iot_devices_num, count)
     }
 }

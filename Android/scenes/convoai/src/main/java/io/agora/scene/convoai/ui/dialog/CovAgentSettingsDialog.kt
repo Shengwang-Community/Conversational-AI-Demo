@@ -1,4 +1,4 @@
-package io.agora.scene.convoai.ui
+package io.agora.scene.convoai.ui.dialog
 
 import android.content.DialogInterface
 import android.graphics.PorterDuff
@@ -10,26 +10,31 @@ import android.widget.CompoundButton
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.agora.scene.common.R
 import io.agora.scene.common.ui.BaseSheetDialog
+import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.ui.widget.LastItemDividerDecoration
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getDistanceFromScreenEdges
-import io.agora.scene.convoai.R
-import io.agora.scene.convoai.databinding.CovSettingDialogBinding
-import io.agora.scene.convoai.databinding.CovSettingOptionItemBinding
-import io.agora.scene.convoai.constant.CovAgentManager
+import io.agora.scene.common.util.toast.ToastUtil
+import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.constant.AgentConnectionState
+import io.agora.scene.convoai.constant.CovAgentManager
+import io.agora.scene.convoai.databinding.CovAgentSettingDialogBinding
+import io.agora.scene.convoai.databinding.CovSettingOptionItemBinding
+import io.agora.scene.convoai.ui.dialog.CovAvatarSelectorDialog
+import kotlin.collections.indexOf
 
-class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
+class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
 
     private var onDismissCallback: (() -> Unit)? = null
 
     companion object {
         private const val TAG = "AgentSettingsSheetDialog"
 
-        fun newInstance(onDismiss: () -> Unit): CovSettingsDialog {
-            return CovSettingsDialog().apply {
+        fun newInstance(onDismiss: () -> Unit): CovAgentSettingsDialog {
+            return CovAgentSettingsDialog().apply {
                 this.onDismissCallback = onDismiss
             }
         }
@@ -45,8 +50,8 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
     override fun getViewBinding(
         inflater: LayoutInflater,
         container: ViewGroup?
-    ): CovSettingDialogBinding {
-        return CovSettingDialogBinding.inflate(inflater, container, false)
+    ): CovAgentSettingDialogBinding {
+        return CovAgentSettingDialogBinding.inflate(inflater, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -56,7 +61,7 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
             setOnApplyWindowInsets(root)
             rcOptions.adapter = optionsAdapter
             rcOptions.layoutManager = LinearLayoutManager(context)
-            rcOptions.context.getDrawable(io.agora.scene.common.R.drawable.shape_divider_line)?.let {
+            rcOptions.context.getDrawable(R.drawable.shape_divider_line)?.let {
                 rcOptions.addItemDecoration(LastItemDividerDecoration(it))
             }
 
@@ -136,13 +141,13 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
         val context = context ?: return
         if (isIdle) {
             binding?.apply {
-                tvPresetDetail.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_icontext1))
-                tvLanguageDetail.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_icontext1))
+                tvPresetDetail.setTextColor(context.getColor(R.color.ai_icontext1))
+                tvLanguageDetail.setTextColor(context.getColor(R.color.ai_icontext1))
                 ivPresetArrow.setColorFilter(
-                    context.getColor(io.agora.scene.common.R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
+                    context.getColor(R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
                 )
                 ivLanguageArrow.setColorFilter(
-                    context.getColor(io.agora.scene.common.R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
+                    context.getColor(R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
                 )
                 clPreset.isEnabled = true
                 clLanguage.isEnabled = true
@@ -150,21 +155,21 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
                 tvTitleConnectedTips.isVisible = false
 
                 clAvatar.isEnabled = true
-                tvAvatarDetail.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_icontext1))
+                tvAvatarDetail.setTextColor(context.getColor(R.color.ai_icontext1))
                 ivAvatarArrow.setColorFilter(
-                    context.getColor(io.agora.scene.common.R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
+                    context.getColor(R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
                 )
             }
         } else {
             binding?.apply {
-                tvPresetDetail.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_icontext4))
-                tvLanguageDetail.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_icontext4))
+                tvPresetDetail.setTextColor(context.getColor(R.color.ai_icontext4))
+                tvLanguageDetail.setTextColor(context.getColor(R.color.ai_icontext4))
                 ivPresetArrow.setColorFilter(
-                    context.getColor(io.agora.scene.common.R.color.ai_icontext4),
+                    context.getColor(R.color.ai_icontext4),
                     PorterDuff.Mode.SRC_IN
                 )
                 ivLanguageArrow.setColorFilter(
-                    context.getColor(io.agora.scene.common.R.color.ai_icontext4),
+                    context.getColor(R.color.ai_icontext4),
                     PorterDuff.Mode.SRC_IN
                 )
                 clPreset.isEnabled = false
@@ -173,9 +178,9 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
                 tvTitleConnectedTips.isVisible = true
 
                 clAvatar.isEnabled = false
-                tvAvatarDetail.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_icontext4))
+                tvAvatarDetail.setTextColor(context.getColor(R.color.ai_icontext4))
                 ivAvatarArrow.setColorFilter(
-                    context.getColor(io.agora.scene.common.R.color.ai_icontext4), PorterDuff.Mode.SRC_IN
+                    context.getColor(R.color.ai_icontext4), PorterDuff.Mode.SRC_IN
                 )
             }
         }
@@ -206,16 +211,16 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
     /**
      * Show preset change reminder dialog
      */
-    private fun showPresetChangeDialog(presets: List<io.agora.scene.convoai.api.CovAgentPreset>) {
+    private fun showPresetChangeDialog(presets: List<CovAgentPreset>) {
         val activity = activity ?: return
 
-        io.agora.scene.common.ui.CommonDialog.Builder()
-            .setTitle(getString(R.string.cov_preset_change_dialog_title))
-            .setContent(getString(R.string.cov_preset_change_dialog_content))
-            .setNegativeButton(getString(io.agora.scene.common.R.string.common_close)) {
+        CommonDialog.Builder()
+            .setTitle(getString(io.agora.scene.convoai.R.string.cov_preset_change_dialog_title))
+            .setContent(getString(io.agora.scene.convoai.R.string.cov_preset_change_dialog_content))
+            .setNegativeButton(getString(R.string.common_close)) {
                 // User cancelled, no action needed
             }
-            .setPositiveButtonWithReminder(getString(R.string.cov_preset_change_dialog_confirm)) { dontShowAgain ->
+            .setPositiveButtonWithReminder(getString(io.agora.scene.convoai.R.string.cov_preset_change_dialog_confirm)) { dontShowAgain ->
                 // User confirmed switch
                 if (dontShowAgain) {
                     // User checked "Don't show again", save preference
@@ -234,7 +239,7 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
     /**
      * Show preset selection options
      */
-    private fun showPresetSelectionOptions(presets: List<io.agora.scene.convoai.api.CovAgentPreset>) {
+    private fun showPresetSelectionOptions(presets: List<CovAgentPreset>) {
         binding?.apply {
             vOptionsMask.visibility = View.VISIBLE
 
@@ -318,7 +323,7 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
         val currentAvatarEnabled = CovAgentManager.isAvatarEnabled()
         val currentSelectedAvatarId = CovAgentManager.getCurrentAvatarId()
 
-        val avatarSelectorDialog = CovAvatarSelectorDialog.newInstance(
+        val avatarSelectorDialog = CovAvatarSelectorDialog.Companion.newInstance(
             isAvatarEnabled = currentAvatarEnabled,
             currentSelectedAvatarId = currentSelectedAvatarId,
             onDismiss = {
@@ -358,7 +363,7 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
         CovAgentManager.setCurrentAvatarId(null)
 
         // Provide user feedback
-        io.agora.scene.common.util.toast.ToastUtil.show("Avatar closed")
+        ToastUtil.show("Avatar closed")
     }
 
     /**
@@ -370,7 +375,7 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
         CovAgentManager.setCurrentAvatarId(avatar.id)
 
         // Can add Toast message
-        io.agora.scene.common.util.toast.ToastUtil.show("Avatar selected: ${avatar.name}")
+        ToastUtil.show("Avatar selected: ${avatar.name}")
     }
 
     /**
@@ -392,15 +397,15 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
                     // Show avatar image (can load real image here, currently using default icon)
                     ivAvatar.visibility = View.VISIBLE
                     // TODO: Can use Glide or other image loading library to load selectedAvatar.avatarThumbnail
-                    ivAvatar.setImageResource(io.agora.scene.common.R.drawable.default_room_bg)
+                    ivAvatar.setImageResource(R.drawable.default_room_bg)
                 } else {
                     // Can't find corresponding avatar data, show default state
-                    tvAvatarDetail.text = getString(io.agora.scene.common.R.string.common_close)
+                    tvAvatarDetail.text = getString(R.string.common_close)
                     ivAvatar.visibility = View.GONE
                 }
             } else {
                 // Avatar function closed, show closed state
-                tvAvatarDetail.text = getString(io.agora.scene.common.R.string.common_close)
+                tvAvatarDetail.text = getString(R.string.common_close)
                 ivAvatar.visibility = View.GONE
             }
         }

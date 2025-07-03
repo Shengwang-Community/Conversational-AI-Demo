@@ -1,27 +1,23 @@
-package io.agora.scene.convoai.ui
+package io.agora.scene.convoai.ui.dialog
 
-import android.app.Dialog
 import android.content.DialogInterface
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.Window
 import android.view.WindowManager
-import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.agora.scene.common.R
 import io.agora.scene.common.ui.BaseDialogFragment
 import io.agora.scene.common.ui.OnFastClickListener
-import io.agora.scene.common.util.dp
-import io.agora.scene.convoai.R
-import io.agora.scene.convoai.databinding.CovAvatarSelectorDialogBinding
-import io.agora.scene.convoai.databinding.CovAvatarSelectorCloseItemBinding
+import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.databinding.CovAvatarSelectorAvatarItemBinding
+import io.agora.scene.convoai.databinding.CovAvatarSelectorCloseItemBinding
+import io.agora.scene.convoai.databinding.CovAvatarSelectorDialogBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -32,7 +28,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
     private var onDismissCallback: (() -> Unit)? = null
     private var onAvatarSelectedCallback: ((AvatarItem) -> Unit)? = null
-    
+
     private val avatarAdapter = AvatarAdapter()
 
     // Input parameters
@@ -43,7 +39,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
         private const val TAG = "CovAvatarSelectorDialog"
         private const val ARG_AVATAR_ENABLED = "avatar_enabled"
         private const val ARG_SELECTED_AVATAR_ID = "selected_avatar_id"
-        
+
         // ViewType constants for different item types
         private const val VIEW_TYPE_CLOSE = 0
         private const val VIEW_TYPE_AVATAR = 1
@@ -78,7 +74,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
         // Get input parameters
         arguments?.let {
             isAvatarEnabled = it.getBoolean(ARG_AVATAR_ENABLED, false)
@@ -89,12 +85,12 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
             // Set grid layout
             rcAvatarGrid.layoutManager = GridLayoutManager(context, 2)
             rcAvatarGrid.adapter = avatarAdapter
-            
+
             // Set back button click listener
             ivBack.setOnClickListener {
                 dismiss()
             }
-            
+
             // Load avatar data
             loadAvatarData()
         }
@@ -131,22 +127,22 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
     private fun loadAvatarData() {
         // Create avatar list, including "close" option and real avatar data
         val avatarList = mutableListOf<AvatarItem>()
-        
+
         // Add "close" option
         avatarList.add(
             AvatarItem(
                 id = "close",
-                name = getString(io.agora.scene.common.R.string.common_close),
+                name = getString(R.string.common_close),
                 avatarUrl = null,
                 isClose = true,
                 isSelected = !isAvatarEnabled || currentSelectedAvatarId == "close"
             )
         )
-        
+
         // Get avatar data from current preset
-        val currentPreset = io.agora.scene.convoai.constant.CovAgentManager.getPreset()
+        val currentPreset = CovAgentManager.getPreset()
         val avatars = currentPreset?.covAvatars ?: emptyList()
-        
+
         // Add real avatar options
         avatars.forEach { covAvatar ->
             avatarList.add(
@@ -159,7 +155,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
                 )
             )
         }
-        
+
         avatarAdapter.updateAvatars(avatarList) { selectedAvatar ->
             onAvatarSelectedCallback?.invoke(selectedAvatar)
             dismiss()
@@ -213,7 +209,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val avatar = avatars[position]
             val isSelected = position == selectedPosition
-            
+
             when (holder) {
                 is CloseViewHolder -> holder.bind(avatar, isSelected)
                 is AvatarViewHolder -> holder.bind(avatar, isSelected)
@@ -225,10 +221,10 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
         fun updateAvatars(newAvatars: List<AvatarItem>, clickListener: (AvatarItem) -> Unit) {
             this.avatars = newAvatars
             this.onItemClickListener = clickListener
-            
+
             // Find selected position
             selectedPosition = newAvatars.indexOfFirst { it.isSelected }
-            
+
             notifyDataSetChanged()
         }
 
@@ -241,24 +237,24 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
                 binding.apply {
                     // Set selection border visibility
                     vSelectionBorder.visibility = if (isSelected) View.VISIBLE else View.GONE
-                    
+
                     // Set checkbox selection state
                     vCheckbox.isSelected = isSelected
-                    
+
                     // Set close icon selection state
                     ivCloseIcon.isSelected = isSelected
-                    
+
                     // Set click listener
                     root.setOnClickListener(object : OnFastClickListener() {
                         override fun onClickJacking(view: View) {
                             if (selectedPosition != adapterPosition) {
                                 val oldPosition = selectedPosition
                                 selectedPosition = adapterPosition
-                                
+
                                 // Update selection state
                                 notifyItemChanged(oldPosition)
                                 notifyItemChanged(selectedPosition)
-                                
+
                                 // Delay 500ms to show selection effect before callback
                                 lifecycleScope.launch {
                                     delay(500)
@@ -280,33 +276,33 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
                 binding.apply {
                     // Set name
                     tvName.text = avatar.name
-                    
+
                     // Set selection border visibility
                     vSelectionBorder.visibility = if (isSelected) View.VISIBLE else View.GONE
-                    
+
                     // Set checkbox selection state
                     vCheckbox.isSelected = isSelected
-                    
+
                     // Set avatar image
                     // Image loading library like Glide can be used here
                     // Glide.with(context).load(avatar.avatarUrl).into(ivAvatar)
                     // Temporarily use placeholder - different colors to distinguish avatars
                     when (avatar.id) {
-                        "sahara" -> ivAvatar.setImageResource(io.agora.scene.common.R.color.ai_brand_main6)
-                        else -> ivAvatar.setImageResource(io.agora.scene.common.R.color.ai_block2)
+                        "sahara" -> ivAvatar.setImageResource(R.color.ai_brand_main6)
+                        else -> ivAvatar.setImageResource(R.color.ai_block2)
                     }
-                    
+
                     // Set click listener
                     root.setOnClickListener(object : OnFastClickListener() {
                         override fun onClickJacking(view: View) {
                             if (selectedPosition != adapterPosition) {
                                 val oldPosition = selectedPosition
                                 selectedPosition = adapterPosition
-                                
+
                                 // Update selection state
                                 notifyItemChanged(oldPosition)
                                 notifyItemChanged(selectedPosition)
-                                
+
                                 // Delay 500ms to show selection effect before callback
                                 lifecycleScope.launch {
                                     delay(500)
@@ -319,4 +315,4 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
             }
         }
     }
-} 
+}

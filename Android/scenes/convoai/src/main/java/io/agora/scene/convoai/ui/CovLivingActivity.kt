@@ -52,6 +52,8 @@ import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.rtm.CovRtmManager
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfRenderConfig
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfSubRenderController
+import io.agora.scene.convoai.ui.dialog.CovAgentInfoDialog
+import io.agora.scene.convoai.ui.dialog.CovAgentSettingsDialog
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -67,7 +69,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
     // UI related
     private var infoDialog: CovAgentInfoDialog? = null
-    private var settingDialog: CovSettingsDialog? = null
+    private var settingDialog: CovAgentSettingsDialog? = null
     private var mLoginDialog: LoginDialog? = null
     private var mDebugDialog: DebugDialog? = null
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
@@ -604,7 +606,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     private fun showSettingDialog() {
-        settingDialog = CovSettingsDialog.newInstance(
+        settingDialog = CovAgentSettingsDialog.newInstance(
             onDismiss = {
                 settingDialog = null
             })
