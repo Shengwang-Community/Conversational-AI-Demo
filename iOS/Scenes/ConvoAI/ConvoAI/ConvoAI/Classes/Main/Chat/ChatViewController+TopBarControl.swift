@@ -14,10 +14,11 @@ extension ChatViewController {
     
     @objc internal func onClickSettingButton() {
         let settingVC = AgentSettingViewController()
-        settingVC.modalPresentationStyle = .overFullScreen
         settingVC.agentManager = agentManager
         settingVC.rtcManager = rtcManager
-        present(settingVC, animated: false)
+        let navigationController = UINavigationController(rootViewController: settingVC)
+        navigationController.modalPresentationStyle = .overFullScreen
+        present(navigationController, animated: false)
     }
     
     @objc internal func onClickStopSpeakingButton(_ sender: UIButton) {
