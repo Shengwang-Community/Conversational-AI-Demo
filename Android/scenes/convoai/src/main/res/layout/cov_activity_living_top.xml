@@ -2,11 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="@android:color/transparent"
     android:layout_width="match_parent"
-    app:layout_constraintTop_toTopOf="parent"
-    tools:background="@color/ai_fill2"
-    android:layout_height="42dp">
+    android:layout_height="42dp"
+    android:background="@android:color/transparent"
+    app:layout_constraintTop_toTopOf="parent">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cl_top"
@@ -26,7 +25,41 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/ai_icontext1" />
+            app:tint="@color/ai_icontext1"
+            tools:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/btn_add_pic"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/cov_capsule_bg"
+            android:src="@drawable/scene_detail_top_add"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/ai_icontext1"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/tv_cc"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/cov_capsule_bg"
+            android:drawableStart="@drawable/scene_detail_top_captions"
+            android:drawablePadding="4dp"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:text="@string/cov_captions"
+            android:textColor="@color/ai_brand_white10"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@id/btn_add_pic"
+            app:layout_constraintStart_toEndOf="@+id/btn_add_pic"
+            app:layout_constraintTop_toTopOf="@+id/btn_add_pic"
+            tools:visibility="visible" />
 
         <ViewFlipper
             android:id="@+id/viewFlipper"
@@ -35,33 +68,33 @@
             android:inAnimation="@anim/cov_flip_in"
             android:outAnimation="@anim/cov_flip_out"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
             <LinearLayout
                 android:id="@+id/ll_top_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:layout_gravity="center"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <ImageView
                     android:id="@+id/ivTop"
                     android:layout_width="26dp"
                     android:layout_height="26dp"
                     android:layout_marginEnd="8dp"
-                    android:src="@drawable/scene_detail_convo_ai_logo"/>
+                    android:src="@drawable/scene_detail_convo_ai_logo" />
 
                 <TextView
                     android:id="@+id/tvTopTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textStyle="bold"
                     android:text="@string/cov_detail_agent_title"
                     android:textColor="@color/ai_icontext1"
-                    android:textSize="16sp"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -69,9 +102,9 @@
                 android:id="@+id/ll_tips"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:layout_gravity="center"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/tvTips"
@@ -79,9 +112,9 @@
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="@string/common_limit_time"
-                    android:textStyle="bold"
                     android:textColor="@color/ai_icontext1"
-                    android:textSize="16sp"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -89,18 +122,17 @@
                 android:id="@+id/ll_timer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:layout_gravity="center"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/tv_timer"
                     android:layout_width="wrap_content"
                     android:layout_height="30dp"
-                    android:textColor="@color/ai_icontext1"
-                    android:background="@drawable/cov_capsule_bg"
                     android:paddingHorizontal="10dp"
                     android:paddingVertical="5dp"
+                    android:textColor="@color/ai_icontext1"
                     android:textSize="13sp"
                     android:textStyle="bold"
                     tools:text="00:00" />
@@ -124,15 +156,13 @@
             android:id="@+id/btn_net"
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:visibility="gone"
             android:src="@drawable/scene_detail_net_disconnected"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btn_settings"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

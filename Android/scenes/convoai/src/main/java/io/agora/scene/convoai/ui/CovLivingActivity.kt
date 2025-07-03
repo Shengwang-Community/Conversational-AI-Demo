@@ -209,12 +209,17 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     showSettingDialog()
                 }
             }
-
             clTop.setOnInfoClickListener {
                 showInfoDialog()
             }
             clTop.setOnIvTopClickListener {
                 DebugConfigSettings.checkClickDebug()
+            }
+            clTop.setOnAddPicClickListener {
+                ToastUtil.show("Click add pic")
+            }
+            clTop.setOnCCClickListener {
+                viewModel.toggleMessageList()
             }
             clBottomLogged.btnJoinCall.setOnClickListener(object : OnFastClickListener() {
                 override fun onClickJacking(view: View) {
@@ -340,7 +345,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                         DebugConfigSettings.isSessionLimitMode,
                         CovAgentManager.roomExpireTime,
                         onTimerEnd = {
-                           showRoomEndDialog()
+                            showRoomEndDialog()
                         }
                     )
                 }

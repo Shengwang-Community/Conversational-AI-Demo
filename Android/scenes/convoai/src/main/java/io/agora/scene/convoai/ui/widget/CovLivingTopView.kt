@@ -14,6 +14,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import io.agora.scene.convoai.constant.AgentConnectionState
+import android.view.animation.Animation
 
 /**
  * Top bar view for living activity, encapsulating info/settings/net buttons, ViewFlipper switching, and timer logic.
@@ -30,6 +31,8 @@ class CovLivingTopView @JvmOverloads constructor(
     private var onInfoClick: (() -> Unit)? = null
     private var onSettingsClick: (() -> Unit)? = null
     private var onIvTopClick: (() -> Unit)? = null
+    private var onCCClick: (() -> Unit)? = null
+    private var onAddPicClick: (() -> Unit)? = null
 
     private var isTitleAnimRunning = false
     private var connectionState: (() -> AgentConnectionState)? = null
@@ -37,11 +40,31 @@ class CovLivingTopView @JvmOverloads constructor(
     private var countDownJob: Job? = null
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
     private var onTimerEnd: (() -> Unit)? = null
+    private var isLogin: Boolean = false
 
     init {
         binding.btnInfo.setOnClickListener { onInfoClick?.invoke() }
         binding.btnSettings.setOnClickListener { onSettingsClick?.invoke() }
         binding.ivTop.setOnClickListener { onIvTopClick?.invoke() }
+        binding.btnAddPic.setOnClickListener { onAddPicClick?.invoke() }
+        binding.tvCc.setOnClickListener { onCCClick?.invoke() }
+
+        // Set animation listener to show tv_cc only after ll_timer is fully displayed
+        binding.viewFlipper.inAnimation?.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation?) {
+                // Always hide tv_cc at the start of any animation
+                binding.tvCc.visibility = View.GONE
+            }
+            override fun onAnimationEnd(animation: Animation?) {
+                // Only show tv_cc if ll_timer is now fully displayed
+                if (binding.viewFlipper.displayedChild == 2) {
+                    binding.tvCc.visibility = View.VISIBLE
+                } else {
+                    binding.tvCc.visibility = View.GONE
+                }
+            }
+            override fun onAnimationRepeat(animation: Animation?) {}
+        })
     }
 
     /**
@@ -63,6 +86,20 @@ class CovLivingTopView @JvmOverloads constructor(
      */
     fun setOnIvTopClickListener(listener: (() -> Unit)?) {
         onIvTopClick = listener
+    }
+
+    /**
+     * Set callback for addPic click
+     */
+    fun setOnAddPicClickListener(listener: (() -> Unit)?) {
+        onAddPicClick = listener
+    }
+
+    /**
+     * Set callback for cc click
+     */
+    fun setOnCCClickListener(listener: (() -> Unit)?) {
+        onCCClick = listener
     }
 
     /**
@@ -91,12 +128,28 @@ class CovLivingTopView @JvmOverloads constructor(
                 binding.btnNet.visibility = View.VISIBLE
             }
         }
+        // TODO:  
+        // Update btn_info and btn_add_pic visibility together with btnNet
+        val state = connectionState?.invoke() ?: AgentConnectionState.IDLE
+        if (isLogin) {
+            if (state == AgentConnectionState.IDLE) {
+                binding.btnInfo.visibility = View.VISIBLE
+                binding.btnAddPic.visibility = View.GONE
+            } else {
+                binding.btnInfo.visibility = View.GONE
+                binding.btnAddPic.visibility = View.VISIBLE
+            }
+        } else {
+            binding.btnInfo.visibility = View.INVISIBLE
+            binding.btnAddPic.visibility = View.GONE
+        }
     }
 
     /**
      * Update login status, show/hide info and settings buttons.
      */
     fun updateLoginStatus(isLogin: Boolean) {
+        this.isLogin = isLogin
         binding.apply {
             if (isLogin) {
                 btnSettings.visibility = View.VISIBLE
@@ -113,6 +166,7 @@ class CovLivingTopView @JvmOverloads constructor(
      */
     fun setConnectionState(provider: (() -> AgentConnectionState)?) {
         connectionState = provider
+        // No need to update info/add_pic here; handled in updateNetworkStatus
     }
 
     /**
@@ -133,27 +187,48 @@ class CovLivingTopView @JvmOverloads constructor(
             while (binding.viewFlipper.displayedChild != 0) {
                 binding.viewFlipper.showPrevious()
             }
+            updateTvCcVisibility()
             delay(2000)
             if (!isActive || !isTitleAnimRunning) return@launch
             if (connectionState?.invoke() != AgentConnectionState.IDLE) {
                 binding.viewFlipper.showNext() // to ll_tips (index 1)
+                updateTvCcVisibility()
                 delay(5000)
                 if (!isActive || !isTitleAnimRunning) return@launch
                 if (connectionState?.invoke() != AgentConnectionState.IDLE) {
                     binding.viewFlipper.showNext() // to ll_timer (index 2)
+                    updateTvCcVisibility()
                 } else {
                     // Reset to ll_top_title
                     while (binding.viewFlipper.displayedChild != 0) {
                         binding.viewFlipper.showPrevious()
                     }
+                    updateTvCcVisibility()
                 }
             } else {
                 // Reset to ll_top_title
                 while (binding.viewFlipper.displayedChild != 0) {
                     binding.viewFlipper.showPrevious()
                 }
+                updateTvCcVisibility()
             }
         }
+        // No need to update info/add_pic here; handled in updateNetworkStatus
+    }
+
+    /**
+     * Show or hide tv_cc based on ViewFlipper's current child.
+     * (Now handled by AnimationListener, but keep for direct reset situations)
+     */
+    private fun updateTvCcVisibility() {
+        // If not in animation (e.g. reset), ensure tv_cc is only visible when ll_timer is fully shown
+//        if (binding.viewFlipper.inAnimation == null || !binding.viewFlipper.inAnimation.hasStarted() || binding.viewFlipper.inAnimation.hasEnded()) {
+//            if (binding.viewFlipper.displayedChild == 2) {
+//                binding.tvCc.visibility = View.VISIBLE
+//            } else {
+//                binding.tvCc.visibility = View.GONE
+//            }
+//        }
     }
 
     /**
@@ -167,6 +242,7 @@ class CovLivingTopView @JvmOverloads constructor(
         while (binding.viewFlipper.displayedChild != 0) {
             binding.viewFlipper.showPrevious()
         }
+        updateTvCcVisibility()
         binding.tvTimer.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_brand_white10))
     }
 
