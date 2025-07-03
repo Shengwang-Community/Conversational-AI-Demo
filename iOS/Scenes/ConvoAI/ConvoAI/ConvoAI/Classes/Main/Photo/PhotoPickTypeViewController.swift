@@ -1,0 +1,216 @@
+//
+//  PhotoPickTypeViewController.swift
+//  AgoraEntScenarios
+//
+//  Created by HeZhengQing on 2025/07/03.
+//
+
+import UIKit
+import PhotosUI
+import SnapKit
+
+class PhotoPickTypeViewController: UIViewController {
+    private var completion: ((Data?) -> Void)?
+    
+    private let tabView = UIView()
+    private let contentView = UIView()
+    private let closeButton = UIButton(type: .system)
+    private let photoOptionView = UIView()
+    private let photoImageView = UIImageView()
+    private let photoLabel = UILabel()
+    private let cameraOptionView = UIView()
+    private let cameraImageView = UIImageView()
+    private let cameraLabel = UILabel()
+    
+    private let contentViewHeight: CGFloat = 180
+
+    static func show(from presentingVC: UIViewController, completion: @escaping (Data?) -> Void) {
+        let pickVC = PhotoPickTypeViewController()
+        pickVC.completion = completion
+        let nav = UINavigationController(rootViewController: pickVC)
+        nav.modalPresentationStyle = .overCurrentContext
+        presentingVC.present(nav, animated: false)
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        createViews()
+        createConstraints()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        contentView.transform = CGAffineTransform(translationX: 0, y: contentViewHeight)
+        UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseOut]) {
+            self.contentView.transform = .identity
+        }
+    }
+
+    // MARK: - Creation
+    private func createViews() {
+        // Semi-transparent background
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        // Content container with only top corners rounded
+        contentView.backgroundColor = UIColor.themColor(named: "ai_fill2")
+        contentView.layer.cornerRadius = 16
+        contentView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        contentView.layer.masksToBounds = true
+        view.addSubview(contentView)
+        
+        // Divider
+        tabView.backgroundColor = UIColor.themColor(named: "ai_block2")
+        tabView.layer.cornerRadius = 2
+        tabView.layer.masksToBounds = true
+        contentView.addSubview(tabView)
+
+        // Top close button (add to contentView)
+        closeButton.setImage(UIImage.ag_named("ic_agent_setting_close"), for: .normal)
+        closeButton.tintColor = .white
+        closeButton.addTarget(self, action: #selector(closeAction), for: .touchUpInside)
+        contentView.addSubview(closeButton)
+
+        // Photo option
+        photoOptionView.backgroundColor = UIColor.themColor(named: "ai_block2")
+        photoOptionView.layer.cornerRadius = 12
+        photoOptionView.isUserInteractionEnabled = true
+        let tapPhoto = UITapGestureRecognizer(target: self, action: #selector(pickPhoto))
+        photoOptionView.addGestureRecognizer(tapPhoto)
+        contentView.addSubview(photoOptionView)
+
+        photoImageView.image = UIImage.ag_named("ic_photo_type_picture")
+        photoImageView.contentMode = .scaleAspectFit
+        photoOptionView.addSubview(photoImageView)
+
+        photoLabel.text = "照片"
+        photoLabel.textColor = UIColor.themColor(named: "ai_icontext1")
+        photoLabel.font = UIFont.systemFont(ofSize: 12)
+        photoLabel.textAlignment = .center
+        photoOptionView.addSubview(photoLabel)
+
+        // Camera option
+        cameraOptionView.backgroundColor = UIColor.themColor(named: "ai_block2")
+        cameraOptionView.layer.cornerRadius = 12
+        cameraOptionView.isUserInteractionEnabled = true
+        let tapCamera = UITapGestureRecognizer(target: self, action: #selector(takePhoto))
+        cameraOptionView.addGestureRecognizer(tapCamera)
+        contentView.addSubview(cameraOptionView)
+
+        cameraImageView.image = UIImage.ag_named("ic_photo_type_camera")
+        cameraImageView.contentMode = .scaleAspectFit
+        cameraOptionView.addSubview(cameraImageView)
+
+        cameraLabel.text = "拍照"
+        cameraLabel.textColor = UIColor.themColor(named: "ai_icontext1")
+        cameraLabel.font = UIFont.systemFont(ofSize: 12)
+        cameraLabel.textAlignment = .center
+        cameraOptionView.addSubview(cameraLabel)
+    }
+
+    private func createConstraints() {
+        contentView.snp.makeConstraints { make in
+            make.left.right.bottom.equalToSuperview()
+            make.height.equalTo(180)
+        }
+        tabView.snp.makeConstraints { make in
+            make.centerX.equalToSuperview()
+            make.top.equalToSuperview().offset(7)
+            make.height.equalTo(4)
+            make.width.equalTo(34)
+        }
+        closeButton.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(6)
+            make.right.equalToSuperview().offset(-8)
+            make.width.height.equalTo(32)
+        }
+        let buttonWidth = (UIScreen.main.bounds.width - 48) / 2
+        photoOptionView.snp.makeConstraints { make in
+            make.left.equalToSuperview().offset(16)
+            make.width.equalTo(buttonWidth)
+            make.top.equalTo(56)
+            make.bottom.equalTo(-40)
+        }
+        cameraOptionView.snp.makeConstraints { make in
+            make.right.equalToSuperview().offset(-16)
+            make.width.equalTo(buttonWidth)
+            make.top.equalTo(56)
+            make.bottom.equalTo(-40)
+        }
+        
+        // Image and label vertical layout
+        photoImageView.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(12)
+            make.centerX.equalToSuperview()
+            make.width.height.equalTo(32)
+        }
+        photoLabel.snp.makeConstraints { make in
+            make.top.equalTo(photoImageView.snp.bottom).offset(8)
+            make.left.right.equalToSuperview()
+            make.height.equalTo(22)
+        }
+        cameraImageView.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(12)
+            make.centerX.equalToSuperview()
+            make.width.height.equalTo(32)
+        }
+        cameraLabel.snp.makeConstraints { make in
+            make.top.equalTo(cameraImageView.snp.bottom).offset(8)
+            make.left.right.equalToSuperview()
+            make.height.equalTo(22)
+        }
+    }
+
+    @objc private func closeAction() {
+        // 先播放 contentView 的出场动画，动画结束后再 dismiss
+        UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseIn], animations: {
+            self.contentView.transform = CGAffineTransform(translationX: 0, y: self.contentView.bounds.height)
+        }) { _ in
+            self.dismiss(animated: false)
+        }
+    }
+
+    @objc func pickPhoto() {
+        var config = PHPickerConfiguration()
+        config.selectionLimit = 1
+        config.filter = .images
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+
+    @objc func takePhoto() {
+        let takeVC = TakePhotoViewController()
+        takeVC.completion = { [weak self] image in
+            guard let self = self else { return }
+            if let image = image {
+                // push 进入预览页
+                let editVC = PhotoEditViewController()
+                editVC.image = image
+                editVC.completion = { data in
+                    self.completion?(data)
+                    self.dismiss(animated: true)
+                }
+                self.navigationController?.pushViewController(editVC, animated: true)
+            } else {
+                self.completion?(nil)
+                self.dismiss(animated: true)
+            }
+        }
+        navigationController?.pushViewController(takeVC, animated: true)
+    }
+}
+
+extension PhotoPickTypeViewController: PHPickerViewControllerDelegate {
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+        guard let itemProvider = results.first?.itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self) else { return }
+        itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
+            guard let self = self, let image = image as? UIImage else { return }
+            DispatchQueue.main.async {
+                PhotoEditViewController.show(from: self.navigationController ?? self, with: image) { data in
+                    self.completion?(data)
+                    self.dismiss(animated: true)
+                }
+            }
+        }
+    }
+}

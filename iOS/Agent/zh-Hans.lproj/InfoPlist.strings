@@ -11,3 +11,5 @@
 "NSLocationAlwaysAndWhenInUseUsageDescription" = "应用需要使用定位获取 WIFI来连接智能家居设备。";
 "NSLocationAlwaysUsageDescription" = "应用需要使用定位获取 WIFI来连接智能家居设备。";
 "NSBluetoothPeripheralUsageDescription" = "应用需要使用蓝牙来连接智能家居设备。";
+"NSPhotoLibraryUsageDescription" = "应用需要访问您的相册以选择图片。";
+"NSCameraUsageDescription" = "应用需要使用您的相机进行拍照。";

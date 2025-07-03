@@ -11,3 +11,5 @@
 "NSLocationAlwaysAndWhenInUseUsageDescription" = "The app needs to use location to access Wi-Fi for connecting to smart home devices.";
 "NSLocationAlwaysUsageDescription" = "The app needs to use location to access Wi-Fi for connecting to smart home devices.";
 "NSBluetoothPeripheralUsageDescription" = "The app needs to use Bluetooth to connect to smart home devices.";
+"NSPhotoLibraryUsageDescription" = "The app needs to access your photo library to select images.";
+"NSCameraUsageDescription" = "The app needs to use your camera to take photos.";
