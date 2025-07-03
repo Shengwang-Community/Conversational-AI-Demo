@@ -45,6 +45,7 @@
 "conversation.agent.state.listening" = "正在听...";
 "conversation.agent.state.speaking" = "说话或点击打断";
 "conversation.agent.state.muted" = "已静音";
+"conversation.agent.transcription" = "字幕";
 
 "conversation.alert.cancel" = "取消";
 "conversation.alert.confirm" = "确定";
