@@ -81,12 +81,6 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     private var isSelfSubRender = false
     private var selfRenderController: SelfSubRenderController? = null
 
-    // Title animation job
-    private var titleAnimJob: Job? = null
-
-    // Timer related
-    private var countDownJob: Job? = null
-
     override fun getViewBinding(): CovActivityLivingBinding = CovActivityLivingBinding.inflate(layoutInflater)
 
     override fun initView() {
@@ -113,6 +107,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 updateLoginStatus(false)
             }
         }
+
+        mBinding?.clTop?.setConnectionState { viewModel.connectionState.value }
 
         // Observe ViewModel states
         observeViewModelStates()
@@ -169,9 +165,9 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             val statusBarHeight = getStatusBarHeight() ?: 25.dp.toInt()
             CovLogger.d(TAG, "statusBarHeight $statusBarHeight")
-            val layoutParams = clTop.root.layoutParams as ViewGroup.MarginLayoutParams
+            val layoutParams = clTop.layoutParams as ViewGroup.MarginLayoutParams
             layoutParams.topMargin = statusBarHeight
-            clTop.root.layoutParams = layoutParams
+            clTop.layoutParams = layoutParams
             agentStateView.configureStateTexts(
                 silent = getString(R.string.cov_agent_silent),
                 listening = getString(R.string.cov_agent_listening),
@@ -196,31 +192,28 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     force = currentAudioMuted,
                 )
             }
-            clTop.btnSettings.setOnClickListener(object : OnFastClickListener() {
-                override fun onClickJacking(view: View) {
-                    if (CovAgentManager.getPresetList().isNullOrEmpty()) {
-                        lifecycleScope.launch {
-                            val success = viewModel.fetchPresetsAsync()
-                            if (success) {
-                                showSettingDialog()
-                            } else {
-                                ToastUtil.show(getString(R.string.cov_detail_net_state_error))
-                            }
-                        }
-                    } else {
-                        showSettingDialog()
-                    }
-                }
-            })
             clBottomLogged.btnCc.setOnClickListener {
                 viewModel.toggleMessageList()
             }
-            clTop.btnInfo.setOnClickListener(object : OnFastClickListener() {
-                override fun onClickJacking(view: View) {
-                    showInfoDialog()
+            clTop.setOnSettingsClickListener {
+                if (CovAgentManager.getPresetList().isNullOrEmpty()) {
+                    lifecycleScope.launch {
+                        val success = viewModel.fetchPresetsAsync()
+                        if (success) {
+                            showSettingDialog()
+                        } else {
+                            ToastUtil.show(getString(R.string.cov_detail_net_state_error))
+                        }
+                    }
+                } else {
+                    showSettingDialog()
                 }
-            })
-            clTop.ivTop.setOnClickListener {
+            }
+
+            clTop.setOnInfoClickListener {
+                showInfoDialog()
+            }
+            clTop.setOnIvTopClickListener {
                 DebugConfigSettings.checkClickDebug()
             }
             clBottomLogged.btnJoinCall.setOnClickListener(object : OnFastClickListener() {
@@ -244,7 +237,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             })
 
             btnSendMsg.setOnClickListener {
-                viewModel.sendChatMessage()   // TODO: only test
+                viewModel.sendChatMessage()   // For test only
             }
 
             agentStateView.setOnInterruptClickListener {
@@ -273,11 +266,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
                     AgentConnectionState.CONNECTED -> {
                         persistentToast(false, "")
-                        // Only trigger when first connected successfully
-                        if (previousState != AgentConnectionState.CONNECTED) {
-                            showTitleAnim()
-                            enableNotifications()
-                        }
+                        enableNotifications()
                     }
 
                     AgentConnectionState.CONNECTED_INTERRUPT -> {
@@ -305,7 +294,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
         lifecycleScope.launch {  // Observe network quality
             viewModel.networkQuality.collect { quality ->
-                updateNetworkStatus(quality)
+                mBinding?.clTop?.updateNetworkStatus(quality)
             }
         }
         lifecycleScope.launch {   // Observe ball animation state
@@ -336,7 +325,24 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                         gravity = Gravity.BOTTOM,
                         duration = Toast.LENGTH_LONG
                     )
-                    startCountDownTask()
+                    mBinding?.clTop?.showTitleAnim(
+                        DebugConfigSettings.isSessionLimitMode,
+                        CovAgentManager.roomExpireTime,
+                        tipsText = if (DebugConfigSettings.isSessionLimitMode)
+                            getString(
+                                io.agora.scene.common.R.string.common_limit_time,
+                                (CovAgentManager.roomExpireTime / 60).toInt()
+                            )
+                        else
+                            getString(io.agora.scene.common.R.string.common_limit_time_none)
+                    )
+                    mBinding?.clTop?.startCountDownTask(
+                        DebugConfigSettings.isSessionLimitMode,
+                        CovAgentManager.roomExpireTime,
+                        onTimerEnd = {
+                           showRoomEndDialog()
+                        }
+                    )
                 }
             }
         }
@@ -376,47 +382,18 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     private fun onClickEndCall() {
-        stopTitleAnim()
-        stopCountDownTask()
+        mBinding?.clTop?.stopCountDownTask()
+        mBinding?.clTop?.stopTitleAnim()
         viewModel.stopAgentAndLeaveChannel()
         resetSceneState()
         ToastUtil.show(getString(R.string.cov_detail_agent_leave))
-    }
-
-    private fun onTimerTick(timeMs: Long, isCountUp: Boolean) {
-        val hours = (timeMs / 1000 / 60 / 60).toInt()
-        val minutes = (timeMs / 1000 / 60 % 60).toInt()
-        val seconds = (timeMs / 1000 % 60).toInt()
-
-        val timeText = if (hours > 0) {
-            // Display in HH:MM:SS format when exceeding one hour
-            String.format("%02d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            // Display in MM:SS format when less than one hour
-            String.format("%02d:%02d", minutes, seconds)
-        }
-
-        mBinding?.clTop?.tvTimer?.apply {
-            text = timeText
-            if (isCountUp) {
-                setTextColor(getColor(io.agora.scene.common.R.color.ai_brand_white10))
-            } else {
-                if (timeMs <= 20000) {
-                    setTextColor(getColor(io.agora.scene.common.R.color.ai_red6))
-                } else if (timeMs <= 60000) {
-                    setTextColor(getColor(io.agora.scene.common.R.color.ai_green6))
-                } else {
-                    setTextColor(getColor(io.agora.scene.common.R.color.ai_brand_white10))
-                }
-            }
-        }
     }
 
     private fun resetSceneState() {
         mBinding?.apply {
             messageListViewV1.clearMessages()
             messageListViewV2.clearMessages()
-            // Timer visibility is now controlled by timer state in ViewModel
+            // Timer visibility is now controlled by timer state in CovLivingTopView
         }
     }
 
@@ -451,7 +428,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 }
 
                 AgentConnectionState.ERROR -> {
-
+                    // No UI update needed for error state here
                 }
             }
         }
@@ -495,114 +472,6 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 )
             }
         }
-    }
-
-    private fun updateNetworkStatus(value: Int) {
-        mBinding?.apply {
-            when (value) {
-                -1 -> {
-                    clTop.btnNet.visibility = View.GONE
-                }
-
-                Constants.QUALITY_VBAD, Constants.QUALITY_DOWN -> {
-                    val currentState = viewModel.connectionState.value
-                    if (currentState == AgentConnectionState.CONNECTED_INTERRUPT) {
-                        clTop.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_disconnected)
-                    } else {
-                        clTop.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_poor)
-                    }
-                    clTop.btnNet.visibility = View.VISIBLE
-                }
-
-                Constants.QUALITY_POOR, Constants.QUALITY_BAD -> {
-                    clTop.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_okay)
-                    clTop.btnNet.visibility = View.VISIBLE
-                }
-
-                else -> {
-                    clTop.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_good)
-                    clTop.btnNet.visibility = View.VISIBLE
-                }
-            }
-        }
-    }
-
-    private fun showTitleAnim() {
-        titleAnimJob?.cancel()
-        mBinding?.apply {
-            if (DebugConfigSettings.isSessionLimitMode) {
-                clTop.tvTips.text = getString(
-                    io.agora.scene.common.R.string.common_limit_time,
-                    (CovAgentManager.roomExpireTime / 60).toInt()
-                )
-            } else {
-                clTop.tvTips.text = getString(io.agora.scene.common.R.string.common_limit_time_none)
-            }
-            titleAnimJob = lifecycleScope.launch {
-                delay(2000)
-                if (viewModel.connectionState.value != AgentConnectionState.IDLE) {
-                    clTop.viewFlipper.showNext()
-                    delay(5000)
-                    if (viewModel.connectionState.value != AgentConnectionState.IDLE) {
-                        clTop.viewFlipper.showNext()
-                        clTop.tvTimer.visibility = View.VISIBLE
-                    } else {
-                        while (clTop.viewFlipper.displayedChild != 0) {
-                            clTop.viewFlipper.showPrevious()
-                        }
-                        clTop.tvTimer.visibility = View.GONE
-                    }
-                }
-            }
-        }
-    }
-
-    private fun stopTitleAnim() {
-        titleAnimJob?.cancel()
-        titleAnimJob = null
-        mBinding?.apply {
-            while (clTop.viewFlipper.displayedChild != 0) {
-                clTop.viewFlipper.showPrevious()
-            }
-            clTop.tvTimer.visibility = View.GONE
-            mBinding?.clTop?.tvTimer?.setTextColor(getColor(io.agora.scene.common.R.color.ai_brand_white10))
-        }
-    }
-
-    private fun startCountDownTask() {
-        countDownJob?.cancel()
-        countDownJob = lifecycleScope.launch {
-            try {
-                if (DebugConfigSettings.isSessionLimitMode) {
-                    var remainingTime = CovAgentManager.roomExpireTime * 1000L
-                    while (remainingTime > 0 && isActive) {
-                        onTimerTick(remainingTime, false)
-                        delay(1000)
-                        remainingTime -= 1000
-                    }
-                    if (remainingTime <= 0) {
-                        onClickEndCall()
-                        showRoomEndDialog()
-                    }
-                } else {
-                    var elapsedTime = 0L
-                    while (isActive) {
-                        onTimerTick(elapsedTime, true)
-                        delay(1000)
-                        elapsedTime += 1000
-                    }
-                }
-            } catch (e: Exception) {
-                CovLogger.e(TAG, "Timer error: ${e.message}")
-            } finally {
-                countDownJob = null
-            }
-        }
-    }
-
-    private fun stopCountDownTask() {
-        countDownJob?.cancel()
-        countDownJob = null
     }
 
     private fun showSettingDialog() {
@@ -653,17 +522,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
     private fun updateLoginStatus(isLogin: Boolean) {
         mBinding?.apply {
+            clTop.updateLoginStatus(isLogin)
             if (isLogin) {
-                clTop.btnSettings.visibility = View.VISIBLE
-                clTop.btnInfo.visibility = View.VISIBLE
                 clBottomLogged.root.visibility = View.VISIBLE
                 clBottomNotLogged.root.visibility = View.INVISIBLE
                 clBottomNotLogged.tvTyping.stopAnimation()
 
                 initBugly()
             } else {
-                clTop.btnSettings.visibility = View.INVISIBLE
-                clTop.btnInfo.visibility = View.INVISIBLE
                 clBottomLogged.root.visibility = View.INVISIBLE
                 clBottomNotLogged.root.visibility = View.VISIBLE
 
@@ -786,7 +652,6 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
         mDebugDialog?.show(supportFragmentManager, "debug_dialog")
     }
-
 
     private fun showRoomEndDialog() {
         if (isFinishing || isDestroyed) return
@@ -928,7 +793,6 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             try {
                 isReleased = true   // Mark as releasing
                 viewModel.stopAgentAndLeaveChannel()  // Stop agent and leave channel
-                stopCountDownTask() // Stop countdown task
                 // lifecycleScope will be automatically cancelled when activity is destroyed
                 // Release animation resources
                 mCovBallAnim?.let { anim ->

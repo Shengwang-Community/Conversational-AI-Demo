@@ -58,12 +58,11 @@
         android:visibility="gone"
         android:background="@color/ai_mask1"/>
 
-    <include
+    <io.agora.scene.convoai.ui.widget.CovLivingTopView
         android:id="@+id/cl_top"
-        layout="@layout/cov_activity_living_top"
+        app:layout_constraintTop_toTopOf="parent"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="72dp"/>
 
     <io.agora.scene.convoai.ui.widget.SelfMessageListView
         android:id="@+id/messageListViewV1"
