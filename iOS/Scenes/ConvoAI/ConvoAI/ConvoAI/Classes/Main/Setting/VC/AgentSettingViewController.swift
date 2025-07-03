@@ -238,9 +238,20 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
         let table = AgentSelectTableView(items: allPresets.map {$0.displayName}) { index in
             let selected = allPresets[index]
             if selected.displayName == currentPreset.displayName { return }
-            
-            AppContext.preferenceManager()?.updatePreset(selected)
             self.onClickHideTable(nil)
+
+            CommonAlertView.show(
+                in: self.view,
+                title: ResourceManager.L10n.Settings.digitalHumanAlertTitle,
+                content: ResourceManager.L10n.Settings.digitalHumanAlertDescription,
+                cancelTitle: ResourceManager.L10n.Settings.digitalHumanAlertCancel,
+                confirmTitle: ResourceManager.L10n.Settings.digitalHumanAlertConfirm,
+                confirmStyle: .primary,
+                checkboxOption: CommonAlertView.CheckboxOption(text: ResourceManager.L10n.Settings.digitalHumanAlertIgnore, isChecked: false),
+                onConfirm: { isCheckboxChecked in
+                    AppContext.preferenceManager()?.updatePreset(selected)
+                })
+            
         }
         table.setSelectedIndex(currentIndex)
         self.view.addSubview(table)
