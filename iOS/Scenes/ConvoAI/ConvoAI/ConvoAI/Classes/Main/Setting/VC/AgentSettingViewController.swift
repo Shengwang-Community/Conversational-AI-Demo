@@ -10,20 +10,22 @@ import Common
 import SVProgressHUD
 
 class AgentSettingViewController: UIViewController {
-    
-    private let grabberView = UIView()
-    private let titleLabel = UILabel()
-    private let connectTipsLabel = UILabel()
-    private let closeButton = UIButton(type: .system)
-    private let backgroundViewHeight: CGFloat = 360
+    private let backgroundViewHeight: CGFloat = 480
     private var initialCenter: CGPoint = .zero
     private var panGesture: UIPanGestureRecognizer?
-    private var basicSettingItems: [UIView] = []
-    private var advancedSettingItems: [UIView] = []
     weak var agentManager: AgentManager!
+    weak var rtcManager: RTCManager!
     var channelName = ""
     
-    private let topView = UIView()
+    private var currentTabIndex = 1
+    
+    private lazy var tabSelectorView: TabSelectorView = {
+        let view = TabSelectorView()
+        view.layer.cornerRadius = 12
+        view.layer.masksToBounds = true
+        view.delegate = self
+        return view
+    }()
     
     private lazy var scrollView: UIScrollView = {
         let view = UIScrollView()
@@ -37,87 +39,18 @@ class AgentSettingViewController: UIViewController {
         view.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         return view
     }()
-    
-    private lazy var contentView: UIView = {
-        let view = UIView()
+
+    private lazy var channelInfoView: ChannelInfoView = {
+        let view = ChannelInfoView()
+        view.delegate = self
+        view.rtcManager = rtcManager
+        view.isHidden = true
         return view
     }()
     
-    private lazy var basicSettingView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor.themColor(named: "ai_block2")
-        view.layerCornerRadius = 10
-        view.layer.borderWidth = 1.0
-        view.layer.borderColor = UIColor.themColor(named: "ai_line1").cgColor
-        return view
-    }()
-    
-    private lazy var presetItem: AgentSettingTableItemView = {
-        let view = AgentSettingTableItemView(frame: .zero)
-        view.titleLabel.text = ResourceManager.L10n.Settings.preset
-        if let manager = AppContext.preferenceManager() {
-            view.detailLabel.text = manager.preference.preset?.displayName ?? ""
-        }
-        view.button.addTarget(self, action: #selector(onClickPreset(_:)), for: .touchUpInside)
-        return view
-    }()
-    
-    private lazy var languageItem: AgentSettingTableItemView = {
-        let view = AgentSettingTableItemView(frame: .zero)
-        view.titleLabel.text = ResourceManager.L10n.Settings.language
-        if let manager = AppContext.preferenceManager() {
-            if let currentLanguage = manager.preference.language {
-                view.detailLabel.text = currentLanguage.languageName
-            } else {
-                view.detailLabel.text = manager.preference.preset?.defaultLanguageName
-            }
-        }
-        view.button.addTarget(self, action: #selector(onClickLanguage(_:)), for: .touchUpInside)
-        return view
-    }()
-    
-    private lazy var advancedSettingTitle: UILabel = {
-        let label = UILabel()
-        label.text = ResourceManager.L10n.Settings.advanced
-        label.font = UIFont.boldSystemFont(ofSize: 14)
-        label.textColor = UIColor.themColor(named: "ai_icontext3")
-        return label
-    }()
-    
-    private lazy var advancedSettingView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor.themColor(named: "ai_block2")
-        view.layerCornerRadius = 10
-        view.layer.borderWidth = 1.0
-        view.layer.borderColor = UIColor.themColor(named: "ai_line1").cgColor
-        return view
-    }()
-    
-    private lazy var aiVadItem: AgentSettingSwitchItemView = {
-        let view = AgentSettingSwitchItemView(frame: .zero)
-        let string1 = ResourceManager.L10n.Settings.aiVadNormal
-        let string2 = ResourceManager.L10n.Settings.aiVadLight
-        let attributedString = NSMutableAttributedString()
-        let attrString1 = NSAttributedString(string: string1, attributes: [.foregroundColor: UIColor.themColor(named: "ai_icontext1")])
-        attributedString.append(attrString1)
-        let attrString2 = NSAttributedString(string: string2, attributes: [.foregroundColor: UIColor.themColor(named: "ai_brand_lightbrand6"), .font: UIFont.boldSystemFont(ofSize: 14)])
-        attributedString.append(attrString2)
-        view.titleLabel.attributedText = attributedString
-        view.addtarget(self, action: #selector(onClickAiVad(_:)), for: .touchUpInside)
-        if let manager = AppContext.preferenceManager(),
-           let language = manager.preference.preset,
-           let presetType = manager.preference.preset?.presetType
-        {
-            if manager.information.agentState != .unload ||
-                presetType.contains("independent") {
-                view.setEnable(false)
-            } else {
-                view.setEnable(true)
-            }
-            view.setOn(manager.preference.aiVad)
-        }
-        view.bottomLine.isHidden = true
-        view.updateLayout()
+    private lazy var agentSettingsView: AgentSettingsView = {
+        let view = AgentSettingsView()
+        view.delegate = self
         return view
     }()
     
@@ -141,6 +74,8 @@ class AgentSettingViewController: UIViewController {
         createViews()
         createConstrains()
         setupPanGesture()
+        setupTabSelector()
+        initChannelInfoStatus()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -156,6 +91,26 @@ class AgentSettingViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         requestPresetsIfNeed()
+    }
+    
+    private func setupTabSelector() {
+        let tabItems = [
+            TabSelectorView.TabItem(title: ResourceManager.L10n.ChannelInfo.subtitle, iconName: "ic_agent_net_0"),
+            TabSelectorView.TabItem(title: ResourceManager.L10n.Settings.title, iconName: "ic_agent_setting")
+        ]
+        tabSelectorView.configure(with: tabItems, selectedIndex: currentTabIndex)
+    }
+    
+    private func switchToTab(index: Int) {
+        UIView.animate(withDuration: 0.2) {
+            if index == 0 {
+                self.channelInfoView.isHidden = false
+                self.agentSettingsView.isHidden = true
+            } else {
+                self.channelInfoView.isHidden = true
+                self.agentSettingsView.isHidden = false
+            }
+        }
     }
     
     private func registerDelegate() {
@@ -236,11 +191,40 @@ class AgentSettingViewController: UIViewController {
         }
     }
     
-    @objc func onClickClose(_ sender: UIButton) {
+    @objc func onClickHideTable(_ sender: UIButton?) {
+        selectTable?.removeFromSuperview()
+        selectTable = nil
+        selectTableMask.isHidden = true
+    }
+    
+    @objc func handleTapGesture(_: UIGestureRecognizer) {
         animateBackgroundViewOut()
     }
     
-    @objc func onClickPreset(_ sender: UIButton) {
+    private func initChannelInfoStatus() {
+        // Initialize channel info status when view loads
+        channelInfoView.updateStatus()
+    }
+}
+
+// MARK: - TabSelectorViewDelegate
+extension AgentSettingViewController: TabSelectorViewDelegate {
+    func tabSelectorView(_ selectorView: TabSelectorView, didSelectTabAt index: Int) {
+        currentTabIndex = index
+        switchToTab(index: index)
+    }
+}
+
+// MARK: - ChannelInfoViewDelegate
+extension AgentSettingViewController: ChannelInfoViewDelegate {
+    func channelInfoViewDidTapFeedback(_ view: ChannelInfoView) {
+        // Feedback logic is handled inside ChannelInfoView
+    }
+}
+
+// MARK: - AgentSettingsViewDelegate
+extension AgentSettingViewController: AgentSettingsViewDelegate {
+    func agentSettingsViewDidTapPreset(_ view: AgentSettingsView, sender: UIButton) {
         selectTableMask.isHidden = false
         guard let allPresets = AppContext.preferenceManager()?.allPresets() else {
             return
@@ -259,7 +243,7 @@ class AgentSettingViewController: UIViewController {
             self.onClickHideTable(nil)
         }
         table.setSelectedIndex(currentIndex)
-        view.addSubview(table)
+        self.view.addSubview(table)
         selectTable = table
         table.snp.makeConstraints { make in
             make.top.equalTo(sender.snp.centerY)
@@ -269,7 +253,7 @@ class AgentSettingViewController: UIViewController {
         }
     }
     
-    @objc func onClickLanguage(_ sender: UIButton) {
+    func agentSettingsViewDidTapLanguage(_ view: AgentSettingsView, sender: UIButton) {
         print("onClickLanguage")
         selectTableMask.isHidden = false
         guard let currentPreset = AppContext.preferenceManager()?.preference.preset else { return }
@@ -286,7 +270,7 @@ class AgentSettingViewController: UIViewController {
             self.onClickHideTable(nil)
         }
         table.setSelectedIndex(currentIndex)
-        view.addSubview(table)
+        self.view.addSubview(table)
         selectTable = table
         table.snp.makeConstraints { make in
             make.top.equalTo(sender.snp.centerY)
@@ -296,22 +280,16 @@ class AgentSettingViewController: UIViewController {
         }
     }
     
-    @objc func onClickAiVad(_ sender: UISwitch) {
-        let state = sender.isOn
-        AppContext.preferenceManager()?.updateAiVadState(state)
+    func agentSettingsViewDidTapDigitalHuman(_ view: AgentSettingsView, sender: UIButton) {
+        print("onClickDigitalHuman")
+        // TODO: Implement digital human selection logic
     }
     
-    @objc func onClickForceResponse(_ sender: UISwitch) {
-        let state = sender.isOn
-        AppContext.preferenceManager()?.updateForceThresholdState(state)
-    }
-    
-    @objc func onClickHideTable(_ sender: UIButton?) {
-        selectTable?.removeFromSuperview()
-        selectTable = nil
-        selectTableMask.isHidden = true
+    func agentSettingsViewDidToggleAiVad(_ view: AgentSettingsView, isOn: Bool) {
+        AppContext.preferenceManager()?.updateAiVadState(isOn)
     }
 }
+
 // MARK: - Creations
 extension AgentSettingViewController {
     private func createViews() {
@@ -322,41 +300,13 @@ extension AgentSettingViewController {
         
         view.addSubview(backgroundView)
         
-        grabberView.backgroundColor = UIColor(hex: "#404548")
-        grabberView.layerCornerRadius = 1.5
-        
-        titleLabel.text = ResourceManager.L10n.Settings.title
-        titleLabel.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
-        titleLabel.textColor = UIColor.themColor(named: "ai_icontext1")
-        
-        connectTipsLabel.text = ResourceManager.L10n.Settings.tips
-        connectTipsLabel.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
-        connectTipsLabel.textColor = UIColor.themColor(named: "ai_icontext3")
-        
-        closeButton.setImage(UIImage.ag_named("ic_agent_setting_close"), for: .normal)
-        closeButton.tintColor = UIColor.themColor(named: "ai_icontext2")
-        closeButton.addTarget(self, action: #selector(onClickClose(_:)), for: .touchUpInside)
-        [grabberView, titleLabel, connectTipsLabel, closeButton].forEach { topView.addSubview($0) }
-        
-        backgroundView.addSubview(topView)
+        backgroundView.addSubview(tabSelectorView)
         backgroundView.addSubview(scrollView)
-        scrollView.addSubview(contentView)
         
-        basicSettingItems = [presetItem, languageItem]
-        advancedSettingItems = [aiVadItem]
-        
-        contentView.addSubview(basicSettingView)
-        contentView.addSubview(advancedSettingTitle)
-        contentView.addSubview(advancedSettingView)
-        
-        basicSettingItems.forEach { basicSettingView.addSubview($0) }
-        advancedSettingItems.forEach { advancedSettingView.addSubview($0) }
+        scrollView.addSubview(channelInfoView)
+        scrollView.addSubview(agentSettingsView)
         
         view.addSubview(selectTableMask)
-        
-        let agentState = AppContext.preferenceManager()?.information.agentState
-        connectTipsLabel.isHidden = (agentState == .unload)
-//        maskView.isHidden = agentState == .unload
     }
     
     private func createConstrains() {
@@ -364,106 +314,44 @@ extension AgentSettingViewController {
             make.left.right.bottom.equalToSuperview()
             make.height.equalTo(backgroundViewHeight)
         }
-        topView.snp.makeConstraints { make in
-            make.top.left.right.equalToSuperview()
-            make.height.equalTo(56)
+        
+        tabSelectorView.snp.makeConstraints { make in
+            make.top.equalTo(20)
+            make.left.equalTo(18)
+            make.right.equalTo(-18)
+            make.height.equalTo(42)
         }
-        grabberView.snp.makeConstraints { make in
-            make.top.equalTo(8)
-            make.centerX.equalToSuperview()
-            make.width.equalTo(36)
-            make.height.equalTo(3)
-        }
-        titleLabel.snp.makeConstraints { make in
-            make.centerY.equalToSuperview()
-            make.left.equalTo(20)
-        }
-        connectTipsLabel.snp.makeConstraints { make in
-            make.centerY.equalTo(titleLabel)
-            make.left.equalTo(titleLabel.snp.right).offset(5)
-        }
-        closeButton.snp.makeConstraints { make in
-            make.right.equalTo(-5)
-            make.centerY.equalToSuperview()
-            make.size.equalTo(CGSize(width: 48, height: 48))
-        }
+        
         scrollView.snp.makeConstraints { make in
-            make.top.equalTo(topView.snp.bottom)
+            make.top.equalTo(tabSelectorView.snp.bottom)
             make.left.right.bottom.equalToSuperview()
         }
         
-        contentView.snp.makeConstraints { make in
+        channelInfoView.snp.makeConstraints { make in
             make.width.equalTo(self.view)
-            make.left.right.top.bottom.equalToSuperview()
+            make.left.right.bottom.equalToSuperview()
+            make.top.equalToSuperview()
         }
         
-        basicSettingView.snp.makeConstraints { make in
-            make.top.equalTo(10)
-            make.left.equalTo(20)
-            make.right.equalTo(-20)
-        }
-
-        for (index, item) in basicSettingItems.enumerated() {
-            item.snp.makeConstraints { make in
-                make.left.right.equalToSuperview()
-                make.height.equalTo(50)
-                
-                if index == 0 {
-                    make.top.equalToSuperview()
-                } else {
-                    make.top.equalTo(basicSettingItems[index - 1].snp.bottom)
-                }
-                
-                if index == basicSettingItems.count - 1 {
-                    make.bottom.equalToSuperview()
-                }
-            }
-        }
-        
-        advancedSettingTitle.snp.makeConstraints { make in
-            make.top.equalTo(basicSettingView.snp.bottom).offset(32)
-            make.left.equalTo(34)
-        }
-        
-        advancedSettingView.snp.makeConstraints { make in
-            make.top.equalTo(advancedSettingTitle.snp.bottom).offset(8)
-            make.left.equalTo(20)
-            make.right.equalTo(-20)
-            make.bottom.equalToSuperview()
-        }
-
-        for (index, item) in advancedSettingItems.enumerated() {
-            item.snp.makeConstraints { make in
-                make.left.right.equalToSuperview()
-                make.height.equalTo(62)
-                
-                if index == 0 {
-                    make.top.equalTo(0)
-                } else {
-                    make.top.equalTo(advancedSettingItems[index - 1].snp.bottom)
-                }
-                
-                if index == advancedSettingItems.count - 1 {
-                    make.bottom.equalToSuperview().priority(30)
-                } else {
-                    make.bottom.equalToSuperview().priority(20)
-                }
-            }
+        agentSettingsView.snp.makeConstraints { make in
+            make.width.equalTo(self.view)
+            make.left.right.bottom.equalToSuperview()
+            make.top.equalToSuperview()
         }
         
         selectTableMask.snp.makeConstraints { make in
             make.top.left.right.bottom.equalToSuperview()
         }
     }
-    
-    @objc func handleTapGesture(_: UIGestureRecognizer) {
-        animateBackgroundViewOut()
-    }
 }
 
 extension AgentSettingViewController: AgentPreferenceManagerDelegate {
+    func preferenceManager(_ manager: AgentPreferenceManager, networkDidUpdated networkState: NetworkStatus) {
+        
+    }
+    
     func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset) {
-        presetItem.detailLabel.text =  preset.displayName
+        agentSettingsView.updatePreset(preset)
         
         let defaultLanguageCode = preset.defaultLanguageCode
         let supportLanguages = preset.supportLanguages
@@ -476,34 +364,35 @@ extension AgentSettingViewController: AgentPreferenceManagerDelegate {
         if let language = supportLanguages.first(where: { $0.languageCode == resetLanguageCode }) {
             manager.updateLanguage(language)
         }
-        if preset.presetType.contains("independent") {
-            aiVadItem.setEnable(false)
-        } else {
-            aiVadItem.setEnable(true)
-        }
     }
     
     func preferenceManager(_ manager: AgentPreferenceManager, agentStateDidUpdated agentState: ConnectionStatus) {
-        if agentState != .unload {
-            aiVadItem.setEnable(false)
-        } else {
-            if let presetType = manager.preference.preset?.presetType,
-               presetType.contains("independent") {
-                aiVadItem.setEnable(false)
-                AppContext.preferenceManager()?.updateAiVadState(false)
-            } else {
-                aiVadItem.setEnable(true)
-                AppContext.preferenceManager()?.updateAiVadState(false)
-            }
-        }
+        agentSettingsView.updateAgentState(agentState)
+        channelInfoView.updateAgentState(agentState)
+    }
+    
+    func preferenceManager(_ manager: AgentPreferenceManager, roomStateDidUpdated roomState: ConnectionStatus) {
+        channelInfoView.updateRoomState(roomState)
+    }
+    
+    func preferenceManager(_ manager: AgentPreferenceManager, agentIdDidUpdated agentId: String) {
+        channelInfoView.updateAgentId(agentId)
+    }
+    
+    func preferenceManager(_ manager: AgentPreferenceManager, roomIdDidUpdated roomId: String) {
+        channelInfoView.updateRoomId(roomId)
+    }
+    
+    func preferenceManager(_ manager: AgentPreferenceManager, userIdDidUpdated userId: String) {
+        channelInfoView.updateUserId(userId)
     }
     
     func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage) {
-        languageItem.detailLabel.text = language.languageName
+        agentSettingsView.updateLanguage(language)
     }
     
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool) {
-        aiVadItem.setOn(state)
+        agentSettingsView.updateAiVadState(state)
     }
 }
 
@@ -512,3 +401,4 @@ extension AgentSettingViewController: UIGestureRecognizerDelegate {
         return touch.view == view
     }
 }
+

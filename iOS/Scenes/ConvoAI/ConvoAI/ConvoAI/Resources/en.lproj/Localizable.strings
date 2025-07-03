@@ -67,6 +67,7 @@
 "settings.noise.aiVad.highlight" = "Intelligent Interruption Handling";
 "settings.noise.forceResponse" = "Force Response";
 "settings.noise.bhvs" = "Background Human Voice Suppression";
+"settings.digital.human" = "Digital Human";
 
 // Channel Info View
 "channel.info.device.titie" = "My Devices";

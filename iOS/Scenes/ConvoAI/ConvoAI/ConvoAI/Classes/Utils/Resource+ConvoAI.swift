@@ -119,6 +119,8 @@ extension ResourceManager {
             public static let forceResponse = ResourceManager.localizedString("settings.noise.forceResponse")
             public static let agentConnected = ResourceManager.localizedString("settings.agent.connected")
             public static let agentDisconnected = ResourceManager.localizedString("settings.agent.disconnected")
+            public static let digitalHuman = ResourceManager.localizedString("settings.digital.human")
+            public static let digitalHumanClosed = ResourceManager.localizedString("settings.digital.human.closed")
         }
         
         public enum ChannelInfo {

@@ -16,6 +16,7 @@ extension ChatViewController {
         let settingVC = AgentSettingViewController()
         settingVC.modalPresentationStyle = .overFullScreen
         settingVC.agentManager = agentManager
+        settingVC.rtcManager = rtcManager
         present(settingVC, animated: false)
     }
     
