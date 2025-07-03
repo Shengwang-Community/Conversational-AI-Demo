@@ -1,17 +1,15 @@
 package io.agora.scene.convoai.ui.dialog
 
-import android.content.DialogInterface
 import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CompoundButton
-import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.common.R
-import io.agora.scene.common.ui.BaseSheetDialog
+import io.agora.scene.common.ui.BaseFragment
 import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.ui.widget.LastItemDividerDecoration
@@ -21,44 +19,58 @@ import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
-import io.agora.scene.convoai.databinding.CovAgentSettingDialogBinding
+import io.agora.scene.convoai.databinding.CovAgentSettingsFragmentBinding
 import io.agora.scene.convoai.databinding.CovSettingOptionItemBinding
-import io.agora.scene.convoai.ui.dialog.CovAvatarSelectorDialog
 import kotlin.collections.indexOf
 
-class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
-
-    private var onDismissCallback: (() -> Unit)? = null
+/**
+ * Fragment for Agent Settings tab
+ * Displays agent configuration and settings
+ */
+class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>() {
 
     companion object {
-        private const val TAG = "AgentSettingsSheetDialog"
+        private const val TAG = "CovAgentSettingsFragment"
+        private const val ARG_AGENT_STATE = "arg_agent_state"
 
-        fun newInstance(onDismiss: () -> Unit): CovAgentSettingsDialog {
-            return CovAgentSettingsDialog().apply {
-                this.onDismissCallback = onDismiss
-            }
+        fun newInstance(state: AgentConnectionState?): CovAgentSettingsFragment {
+            val fragment = CovAgentSettingsFragment()
+            val args = Bundle()
+            args.putSerializable(ARG_AGENT_STATE, state)
+            fragment.arguments = args
+            return fragment
         }
     }
 
     private val optionsAdapter = OptionsAdapter()
 
-    override fun onDismiss(dialog: DialogInterface) {
-        super.onDismiss(dialog)
-        onDismissCallback?.invoke()
-    }
-
     override fun getViewBinding(
         inflater: LayoutInflater,
         container: ViewGroup?
-    ): CovAgentSettingDialogBinding {
-        return CovAgentSettingDialogBinding.inflate(inflater, container, false)
+    ): CovAgentSettingsFragmentBinding {
+        return CovAgentSettingsFragmentBinding.inflate(inflater, container, false)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        arguments?.let {
+            connectionState = it.getSerializable(ARG_AGENT_STATE) as? AgentConnectionState ?: AgentConnectionState.IDLE
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding?.apply {
-            setOnApplyWindowInsets(root)
+        setupAgentSettings()
+    }
+
+    override fun onHandleOnBackPressed() {
+        // Disable back button handling
+        // Fragment should not handle back press
+    }
+
+    private fun setupAgentSettings() {
+        mBinding?.apply {
             rcOptions.adapter = optionsAdapter
             rcOptions.layoutManager = LinearLayoutManager(context)
             rcOptions.context.getDrawable(R.drawable.shape_divider_line)?.let {
@@ -88,9 +100,6 @@ class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
                     }
                 }
             })
-            btnClose.setOnClickListener {
-                dismiss()
-            }
             clAvatar.setOnClickListener(object : OnFastClickListener() {
                 override fun onClickJacking(view: View) {
                     onClickAvatar()
@@ -102,12 +111,9 @@ class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
         setAiVadBySelectLanguage()
     }
 
-    override fun disableDragging(): Boolean {
-        return true
-    }
 
     private fun updateBaseSettings() {
-        binding?.apply {
+        mBinding?.apply {
             tvPresetDetail.text = CovAgentManager.getPreset()?.display_name
             tvLanguageDetail.text = CovAgentManager.language?.language_name
             // Update avatar settings display
@@ -119,7 +125,7 @@ class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
 
     // The non-English overseas version must disable AiVad.
     private fun setAiVadBySelectLanguage() {
-        binding?.apply {
+        mBinding?.apply {
             if (CovAgentManager.getPreset()?.isIndependent() == true) {
                 CovAgentManager.enableAiVad = false
                 cbAiVad.isChecked = false
@@ -132,15 +138,15 @@ class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
 
     private var connectionState = AgentConnectionState.IDLE
 
-    fun updateConnectStatus(connectionState: AgentConnectionState) {
-        this.connectionState = connectionState
+    fun updateConnectStatus(state: AgentConnectionState) {
+        this.connectionState = state
         updatePageEnable()
     }
 
     private fun updatePageEnable() {
         val context = context ?: return
         if (isIdle) {
-            binding?.apply {
+            mBinding?.apply {
                 tvPresetDetail.setTextColor(context.getColor(R.color.ai_icontext1))
                 tvLanguageDetail.setTextColor(context.getColor(R.color.ai_icontext1))
                 ivPresetArrow.setColorFilter(
@@ -152,7 +158,6 @@ class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
                 clPreset.isEnabled = true
                 clLanguage.isEnabled = true
                 cbAiVad.isEnabled = true
-                tvTitleConnectedTips.isVisible = false
 
                 clAvatar.isEnabled = true
                 tvAvatarDetail.setTextColor(context.getColor(R.color.ai_icontext1))
@@ -161,7 +166,7 @@ class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
                 )
             }
         } else {
-            binding?.apply {
+            mBinding?.apply {
                 tvPresetDetail.setTextColor(context.getColor(R.color.ai_icontext4))
                 tvLanguageDetail.setTextColor(context.getColor(R.color.ai_icontext4))
                 ivPresetArrow.setColorFilter(
@@ -175,7 +180,6 @@ class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
                 clPreset.isEnabled = false
                 clLanguage.isEnabled = false
                 cbAiVad.isEnabled = false
-                tvTitleConnectedTips.isVisible = true
 
                 clAvatar.isEnabled = false
                 tvAvatarDetail.setTextColor(context.getColor(R.color.ai_icontext4))
@@ -240,7 +244,7 @@ class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
      * Show preset selection options
      */
     private fun showPresetSelectionOptions(presets: List<CovAgentPreset>) {
-        binding?.apply {
+        mBinding?.apply {
             vOptionsMask.visibility = View.VISIBLE
 
             // Calculate popup position using getDistanceFromScreenEdges
@@ -277,7 +281,7 @@ class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
     private fun onClickLanguage() {
         val languages = CovAgentManager.getLanguages() ?: return
         if (languages.isEmpty()) return
-        binding?.apply {
+        mBinding?.apply {
             vOptionsMask.visibility = View.VISIBLE
 
             // Calculate popup position using getDistanceFromScreenEdges
@@ -311,7 +315,7 @@ class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
     }
 
     private fun onClickMaskView() {
-        binding?.apply {
+        mBinding?.apply {
             vOptionsMask.visibility = View.INVISIBLE
         }
     }
@@ -382,7 +386,7 @@ class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
      * Update avatar settings display
      */
     private fun updateAvatarSettings() {
-        binding?.apply {
+        mBinding?.apply {
             val isAvatarEnabled = CovAgentManager.isAvatarEnabled()
             val currentAvatarId = CovAgentManager.getCurrentAvatarId()
 
@@ -447,4 +451,4 @@ class CovAgentSettingsDialog : BaseSheetDialog<CovAgentSettingDialogBinding>() {
             }
         }
     }
-}
+} 

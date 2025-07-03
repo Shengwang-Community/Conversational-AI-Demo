@@ -52,8 +52,8 @@ import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.rtm.CovRtmManager
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfRenderConfig
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfSubRenderController
-import io.agora.scene.convoai.ui.dialog.CovAgentInfoDialog
-import io.agora.scene.convoai.ui.dialog.CovAgentSettingsDialog
+import io.agora.scene.convoai.ui.dialog.CovAppInfoDialog
+import io.agora.scene.convoai.ui.dialog.CovAgentTabDialog
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -68,10 +68,11 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     private val mLoginViewModel: LoginViewModel by viewModels()
 
     // UI related
-    private var infoDialog: CovAgentInfoDialog? = null
-    private var settingDialog: CovAgentSettingsDialog? = null
+    private var appInfoDialog: CovAppInfoDialog? = null
     private var mLoginDialog: LoginDialog? = null
     private var mDebugDialog: DebugDialog? = null
+    private var appTabDialog: CovAgentTabDialog? = null
+
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
     private lateinit var mPermissionHelp: PermissionHelp
 
@@ -258,8 +259,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             var previousState: AgentConnectionState? = null
             viewModel.connectionState.collect { state ->
                 updateStateView(state)
-                infoDialog?.updateConnectStatus(state)
-                settingDialog?.updateConnectStatus(state)
+                appTabDialog?.updateConnectStatus(state)
 
                 // Update animation and timer display based on state
                 when (state) {
@@ -606,12 +606,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     private fun showSettingDialog() {
-        settingDialog = CovAgentSettingsDialog.newInstance(
+        appTabDialog = CovAgentTabDialog.newInstance(
+            viewModel.connectionState.value,
             onDismiss = {
-                settingDialog = null
+                appTabDialog = null
             })
-        settingDialog?.updateConnectStatus(viewModel.connectionState.value)
-        settingDialog?.show(supportFragmentManager, "AgentSettingsSheetDialog")
+        appTabDialog?.show(supportFragmentManager, "info_tab_dialog")
     }
 
     private fun setupBallAnimView() {
@@ -687,14 +687,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
     private fun showInfoDialog() {
         if (isFinishing || isDestroyed) return
-        if (infoDialog?.dialog?.isShowing == true) return
-        infoDialog = CovAgentInfoDialog.newInstance(
+        if (appInfoDialog?.dialog?.isShowing == true) return
+        appInfoDialog = CovAppInfoDialog.newInstance(
             onDismissCallback = {
-                infoDialog = null
+                appInfoDialog = null
             },
             onLogout = {
                 showLogoutConfirmDialog {
-                    infoDialog?.dismiss()
+                    appInfoDialog?.dismiss()
                 }
             },
             onIotDeviceClick = {
@@ -712,8 +712,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 }
             }
         )
-        infoDialog?.updateConnectStatus(viewModel.connectionState.value)
-        infoDialog?.show(supportFragmentManager, "info_dialog")
+        appInfoDialog?.show(supportFragmentManager, "info_dialog")
     }
 
     private fun showLoginDialog() {
