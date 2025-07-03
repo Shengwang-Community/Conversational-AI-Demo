@@ -47,13 +47,13 @@ class AgentSettingTableItemView: UIView {
         if state {
             detailLabel.snp.remakeConstraints { make in
                 make.right.equalTo(-16)
-                make.left.equalTo(titleLabel.snp.right).offset(10)
+                make.width.lessThanOrEqualTo(200)
                 make.centerY.equalToSuperview()
             }
         } else {
             detailLabel.snp.remakeConstraints { make in
                 make.right.equalTo(imageView.snp.left).offset(-8)
-                make.left.equalTo(titleLabel.snp.right).offset(10)
+                make.width.lessThanOrEqualTo(200)
                 make.centerY.equalToSuperview()
             }
         }
@@ -116,7 +116,6 @@ extension AgentSettingTableItemView {
     private func createConstrains() {
         titleLabel.snp.makeConstraints { make in
             make.left.equalTo(16)
-            make.right.equalTo(detailLabel.snp.left).offset(-10)
             make.centerY.equalToSuperview()
         }
         imageView.snp.makeConstraints { make in
@@ -125,7 +124,7 @@ extension AgentSettingTableItemView {
         }
         detailLabel.snp.makeConstraints { make in
             make.right.equalTo(imageView.snp.left).offset(-8)
-            make.left.equalTo(titleLabel.snp.right).offset(10)
+            make.width.lessThanOrEqualTo(200)
             make.centerY.equalToSuperview()
         }
         bottomLine.snp.makeConstraints { make in
@@ -250,7 +249,7 @@ extension AgentSettingTextItemView {
         }
         detailLabel.snp.makeConstraints { make in
             make.right.equalTo(-16)
-            make.left.equalTo(titleLabel.snp.right).offset(10)
+            make.width.lessThanOrEqualTo(200)
             make.centerY.equalToSuperview()
         }
         bottomLine.snp.makeConstraints { make in

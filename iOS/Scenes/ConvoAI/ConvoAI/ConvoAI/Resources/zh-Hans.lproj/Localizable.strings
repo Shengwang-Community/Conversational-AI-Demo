@@ -65,6 +65,8 @@
 "settings.noise.aiVad.highlight" = "优雅打断";
 "settings.noise.forceResponse" = "Force Response";
 "settings.noise.bhvs" = "启用 对话人声锁定";
+"settings.digital.human" = "数字人";
+"settings.digital.human.closed" = "关闭";
 
 "channel.info.device.titie" = "我的设备";
 "channel.info.title" = "信息";
