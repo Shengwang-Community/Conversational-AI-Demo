@@ -117,6 +117,7 @@ class CovLivingTopView @JvmOverloads constructor(
 
     /**
      * Show the title animation, replicating the original showTitleAnim logic.
+     * ViewFlipper switches: ll_top_title (0) -> ll_tips (1) -> ll_timer (2)
      */
     fun showTitleAnim(sessionLimitMode: Boolean, roomExpireTime: Long, tipsText: String? = null) {
         stopTitleAnim()
@@ -128,26 +129,29 @@ class CovLivingTopView @JvmOverloads constructor(
         binding.tvTips.text = tips
         isTitleAnimRunning = true
         titleAnimJob = coroutineScope.launch {
+            // Ensure start at ll_top_title (index 0)
+            while (binding.viewFlipper.displayedChild != 0) {
+                binding.viewFlipper.showPrevious()
+            }
             delay(2000)
             if (!isActive || !isTitleAnimRunning) return@launch
             if (connectionState?.invoke() != AgentConnectionState.IDLE) {
-                binding.viewFlipper.showNext()
+                binding.viewFlipper.showNext() // to ll_tips (index 1)
                 delay(5000)
                 if (!isActive || !isTitleAnimRunning) return@launch
                 if (connectionState?.invoke() != AgentConnectionState.IDLE) {
-                    binding.viewFlipper.showNext()
-                    binding.tvTimer.visibility = View.VISIBLE
+                    binding.viewFlipper.showNext() // to ll_timer (index 2)
                 } else {
+                    // Reset to ll_top_title
                     while (binding.viewFlipper.displayedChild != 0) {
                         binding.viewFlipper.showPrevious()
                     }
-                    binding.tvTimer.visibility = View.GONE
                 }
             } else {
+                // Reset to ll_top_title
                 while (binding.viewFlipper.displayedChild != 0) {
                     binding.viewFlipper.showPrevious()
                 }
-                binding.tvTimer.visibility = View.GONE
             }
         }
     }
@@ -159,11 +163,10 @@ class CovLivingTopView @JvmOverloads constructor(
         isTitleAnimRunning = false
         titleAnimJob?.cancel()
         titleAnimJob = null
-        // Reset ViewFlipper to first child
+        // Reset ViewFlipper to first child (ll_top_title)
         while (binding.viewFlipper.displayedChild != 0) {
             binding.viewFlipper.showPrevious()
         }
-        binding.tvTimer.visibility = View.GONE
         binding.tvTimer.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_brand_white10))
     }
 

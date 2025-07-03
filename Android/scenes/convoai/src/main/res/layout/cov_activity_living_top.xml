@@ -5,7 +5,8 @@
     android:background="@android:color/transparent"
     android:layout_width="match_parent"
     app:layout_constraintTop_toTopOf="parent"
-    android:layout_height="72dp">
+    tools:background="@color/ai_fill2"
+    android:layout_height="42dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cl_top"
@@ -39,6 +40,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <LinearLayout
+                android:id="@+id/ll_top_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -64,6 +66,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/ll_tips"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -81,6 +84,29 @@
                     android:textSize="16sp"/>
 
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_timer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="center"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tv_timer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:textColor="@color/ai_icontext1"
+                    android:background="@drawable/cov_capsule_bg"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="5dp"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    tools:text="00:00" />
+            </LinearLayout>
+
+
         </ViewFlipper>
 
         <ImageButton
@@ -106,22 +132,7 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <TextView
-        android:id="@+id/tv_timer"
-        android:layout_width="wrap_content"
-        android:layout_height="30dp"
-        android:textColor="@color/ai_icontext1"
-        android:background="@drawable/cov_capsule_bg"
-        android:paddingHorizontal="10dp"
-        android:paddingVertical="5dp"
-        android:textSize="13sp"
-        android:visibility="gone"
-        android:textStyle="bold"
-        tools:text="00:00"
-        tools:visibility="visible"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cl_top"/>
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
