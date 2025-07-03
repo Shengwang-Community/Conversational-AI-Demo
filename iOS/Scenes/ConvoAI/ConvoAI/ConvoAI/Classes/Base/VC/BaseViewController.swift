@@ -18,12 +18,12 @@ class BaseViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor.themColor(named: "ai_fill1")
+        view.backgroundColor = UIColor.themColor(named: "ai_fill2")
         configCustomNaviBar()
     }
     
     private func configCustomNaviBar() {
-        naviBar.backgroundColor = UIColor.themColor(named: "ai_fill1")
+        naviBar.backgroundColor = UIColor.themColor(named: "ai_fill2")
         view.addSubview(naviBar)
         
         // Hide system navigation bar
@@ -34,8 +34,8 @@ class BaseViewController: UIViewController {
             naviBar.setLeftButtonTarget(
                 self,
                 action: #selector(navigationBackButtonTapped),
-                image: UIImage.ag_named("ic_base_back_icon")
-            )            
+                image: UIImage.ag_named("ic_agora_back")
+            )
         }
     }
     

@@ -281,8 +281,8 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
     }
     
     func agentSettingsViewDidTapDigitalHuman(_ view: AgentSettingsView, sender: UIButton) {
-        print("onClickDigitalHuman")
-        // TODO: Implement digital human selection logic
+        let vc = DigitalHumanViewController()
+        self.navigationController?.pushViewController(vc)
     }
     
     func agentSettingsViewDidToggleAiVad(_ view: AgentSettingsView, isOn: Bool) {
@@ -346,10 +346,6 @@ extension AgentSettingViewController {
 }
 
 extension AgentSettingViewController: AgentPreferenceManagerDelegate {
-    func preferenceManager(_ manager: AgentPreferenceManager, networkDidUpdated networkState: NetworkStatus) {
-        
-    }
-    
     func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset) {
         agentSettingsView.updatePreset(preset)
         
