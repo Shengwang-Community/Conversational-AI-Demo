@@ -8,6 +8,7 @@ data class CovAgentPreset(
     val default_language_code: String,
     val default_language_name: String,
     val support_languages: List<CovAgentLanguage>,
+    val covAvatars: List<CovAvatar>,
     val call_time_limit_second: Long,
 ) {
     fun isIndependent(): Boolean {
@@ -23,3 +24,10 @@ data class CovAgentLanguage(
         return language_code == "en-US"
     }
 }
+
+data class CovAvatar(
+    val id: String,
+    val name: String,
+    val avatarThumbnail: String,
+    val avatarUrl: String,
+)

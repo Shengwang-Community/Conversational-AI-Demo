@@ -51,6 +51,7 @@
     <string name="cov_setting_voice">语音</string>
     <string name="cov_setting_model">模型</string>
     <string name="cov_setting_language">语言</string>
+    <string name="cov_setting_avatar">数字人</string>
     <string name="cov_setting_device">设备</string>
     <string name="cov_setting_advanced_settings">高级设置</string>
     <string name="cov_setting_microphone">麦克风</string>
@@ -88,4 +89,9 @@
     <string name="cov_iot_title">对话式 AI 设备</string>
     <string name="cov_iot_devices_num">%d个设备</string>
     <string name="cov_my_device">我的设备</string>
+
+    <!-- avatar -->
+    <string name="cov_preset_change_dialog_title">更换Preset需重新设置数字人</string>
+    <string name="cov_preset_change_dialog_content">Preset 和数字人的性别相关，更换 Preset 后请重新设置数字人</string>
+    <string name="cov_preset_change_dialog_confirm">确定变更</string>
 </resources>

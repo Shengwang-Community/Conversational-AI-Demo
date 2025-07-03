@@ -15,6 +15,7 @@ import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.ui.widget.LastItemDividerDecoration
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getDistanceFromScreenEdges
+import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovSettingDialogBinding
 import io.agora.scene.convoai.databinding.CovSettingOptionItemBinding
 import io.agora.scene.convoai.constant.CovAgentManager
@@ -75,9 +76,9 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
                 }
             })
             cbAiVad.isChecked = CovAgentManager.enableAiVad
-            cbAiVad.setOnCheckedChangeListener(object : CompoundButton.OnCheckedChangeListener{
+            cbAiVad.setOnCheckedChangeListener(object : CompoundButton.OnCheckedChangeListener {
                 override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
-                    if (buttonView.isPressed){
+                    if (buttonView.isPressed) {
                         CovAgentManager.enableAiVad = isChecked
                     }
                 }
@@ -85,6 +86,11 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
             btnClose.setOnClickListener {
                 dismiss()
             }
+            clAvatar.setOnClickListener(object : OnFastClickListener() {
+                override fun onClickJacking(view: View) {
+                    onClickAvatar()
+                }
+            })
         }
         updatePageEnable()
         updateBaseSettings()
@@ -99,6 +105,8 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
         binding?.apply {
             tvPresetDetail.text = CovAgentManager.getPreset()?.display_name
             tvLanguageDetail.text = CovAgentManager.language?.language_name
+            // Update avatar settings display
+            updateAvatarSettings()
         }
     }
 
@@ -131,17 +139,21 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
                 tvPresetDetail.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_icontext1))
                 tvLanguageDetail.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_icontext1))
                 ivPresetArrow.setColorFilter(
-                    context.getColor(io.agora.scene.common.R.color.ai_icontext1),
-                    PorterDuff.Mode.SRC_IN
+                    context.getColor(io.agora.scene.common.R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
                 )
                 ivLanguageArrow.setColorFilter(
-                    context.getColor(io.agora.scene.common.R.color.ai_icontext1),
-                    PorterDuff.Mode.SRC_IN
+                    context.getColor(io.agora.scene.common.R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
                 )
                 clPreset.isEnabled = true
                 clLanguage.isEnabled = true
                 cbAiVad.isEnabled = true
                 tvTitleConnectedTips.isVisible = false
+
+                clAvatar.isEnabled = true
+                tvAvatarDetail.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_icontext1))
+                ivAvatarArrow.setColorFilter(
+                    context.getColor(io.agora.scene.common.R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
+                )
             }
         } else {
             binding?.apply {
@@ -159,6 +171,12 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
                 clLanguage.isEnabled = false
                 cbAiVad.isEnabled = false
                 tvTitleConnectedTips.isVisible = true
+
+                clAvatar.isEnabled = false
+                tvAvatarDetail.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_icontext4))
+                ivAvatarArrow.setColorFilter(
+                    context.getColor(io.agora.scene.common.R.color.ai_icontext4), PorterDuff.Mode.SRC_IN
+                )
             }
         }
     }
@@ -166,6 +184,57 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
     private fun onClickPreset() {
         val presets = CovAgentManager.getPresetList() ?: return
         if (presets.isEmpty()) return
+        // If avatar was previously checked, show dialog prompt here
+        // Checkbox, default unchecked, no need to prompt next time after checking
+
+        // Check if avatar is enabled
+        if (CovAgentManager.isAvatarEnabled()) {
+            // Check if user selected "Don't show again"
+            if (CovAgentManager.shouldShowPresetChangeReminder()) {
+                // Show reminder dialog
+                showPresetChangeDialog(presets)
+            } else {
+                // User selected "Don't show again", show options directly
+                showPresetSelectionOptions(presets)
+            }
+        } else {
+            // Avatar not enabled, show options directly
+            showPresetSelectionOptions(presets)
+        }
+    }
+
+    /**
+     * Show preset change reminder dialog
+     */
+    private fun showPresetChangeDialog(presets: List<io.agora.scene.convoai.api.CovAgentPreset>) {
+        val activity = activity ?: return
+
+        io.agora.scene.common.ui.CommonDialog.Builder()
+            .setTitle(getString(R.string.cov_preset_change_dialog_title))
+            .setContent(getString(R.string.cov_preset_change_dialog_content))
+            .setNegativeButton(getString(io.agora.scene.common.R.string.common_close)) {
+                // User cancelled, no action needed
+            }
+            .setPositiveButtonWithReminder(getString(R.string.cov_preset_change_dialog_confirm)) { dontShowAgain ->
+                // User confirmed switch
+                if (dontShowAgain) {
+                    // User checked "Don't show again", save preference
+                    CovAgentManager.setShowPresetChangeReminder(false)
+                }
+
+                // Show preset selection options
+                showPresetSelectionOptions(presets)
+            }
+            .showNoMoreReminder() // Show checkbox, default unchecked
+            .hideTopImage()
+            .build()
+            .show(activity.supportFragmentManager, "PresetChangeDialog")
+    }
+
+    /**
+     * Show preset selection options
+     */
+    private fun showPresetSelectionOptions(presets: List<io.agora.scene.convoai.api.CovAgentPreset>) {
         binding?.apply {
             vOptionsMask.visibility = View.VISIBLE
 
@@ -182,18 +251,9 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
             // Ensure maxHeight is at least one item height
             val finalMaxHeight = itemDistances.bottom.coerceAtLeast(itemHeight)
             val finalHeight = (itemHeight * presets.size).coerceIn(itemHeight, finalMaxHeight)
-            
+
             params.height = finalHeight
             cvOptions.layoutParams = params
-            
-            // Enable scrolling if needed
-//            val contentHeight = itemHeight * presets.size
-//            if (contentHeight > finalHeight) {
-//                rcOptions.isVerticalScrollBarEnabled = true
-//                rcOptions.scrollBarStyle = View.SCROLLBARS_INSIDE_OVERLAY
-//            } else {
-//                rcOptions.isVerticalScrollBarEnabled = false
-//            }
 
             // Update options and handle selection
             optionsAdapter.updateOptions(
@@ -228,19 +288,9 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
             // Ensure maxHeight is at least one item height
             val finalMaxHeight = itemDistances.bottom.coerceAtLeast(itemHeight)
             val finalHeight = (itemHeight * languages.size).coerceIn(itemHeight, finalMaxHeight)
-            
+
             params.height = finalHeight
             cvOptions.layoutParams = params
-            
-            // Enable scrolling if needed
-//            val contentHeight = itemHeight * languages.size
-//            if (contentHeight > finalHeight) {
-//                rcOptions.isVerticalScrollBarEnabled = true
-//                rcOptions.scrollBarStyle = View.SCROLLBARS_INSIDE_OVERLAY
-//                rcOptions.layoutManager = LinearLayoutManager(root.context)
-//            } else {
-//                rcOptions.isVerticalScrollBarEnabled = false
-//            }
 
             // Update options and handle selection
             optionsAdapter.updateOptions(
@@ -258,6 +308,101 @@ class CovSettingsDialog : BaseSheetDialog<CovSettingDialogBinding>() {
     private fun onClickMaskView() {
         binding?.apply {
             vOptionsMask.visibility = View.INVISIBLE
+        }
+    }
+
+    private fun onClickAvatar() {
+        val activity = activity ?: return
+
+        // Get current avatar state
+        val currentAvatarEnabled = CovAgentManager.isAvatarEnabled()
+        val currentSelectedAvatarId = CovAgentManager.getCurrentAvatarId()
+
+        val avatarSelectorDialog = CovAvatarSelectorDialog.newInstance(
+            isAvatarEnabled = currentAvatarEnabled,
+            currentSelectedAvatarId = currentSelectedAvatarId,
+            onDismiss = {
+                // Handle dialog closure
+            },
+            onAvatarSelected = { selectedAvatar ->
+                // Handle avatar selection
+                handleAvatarSelection(selectedAvatar)
+            }
+        )
+
+        avatarSelectorDialog.show(activity.supportFragmentManager, "AvatarSelectorDialog")
+    }
+
+    /**
+     * Handle avatar selection result
+     */
+    private fun handleAvatarSelection(selectedAvatar: CovAvatarSelectorDialog.AvatarItem) {
+        if (selectedAvatar.isClose) {
+            // User selected to close avatar
+            handleCloseAvatar()
+        } else {
+            // User selected specific avatar
+            handleEnableAvatar(selectedAvatar)
+        }
+
+        // Refresh settings page display
+        updateAvatarSettings()
+    }
+
+    /**
+     * Handle close avatar
+     */
+    private fun handleCloseAvatar() {
+        // Close avatar function
+        CovAgentManager.setAvatarEnabled(false)
+        CovAgentManager.setCurrentAvatarId(null)
+
+        // Provide user feedback
+        io.agora.scene.common.util.toast.ToastUtil.show("Avatar closed")
+    }
+
+    /**
+     * Handle enable avatar
+     */
+    private fun handleEnableAvatar(avatar: CovAvatarSelectorDialog.AvatarItem) {
+        // Enable avatar and set current selected avatar
+        CovAgentManager.setAvatarEnabled(true)
+        CovAgentManager.setCurrentAvatarId(avatar.id)
+
+        // Can add Toast message
+        io.agora.scene.common.util.toast.ToastUtil.show("Avatar selected: ${avatar.name}")
+    }
+
+    /**
+     * Update avatar settings display
+     */
+    private fun updateAvatarSettings() {
+        binding?.apply {
+            val isAvatarEnabled = CovAgentManager.isAvatarEnabled()
+            val currentAvatarId = CovAgentManager.getCurrentAvatarId()
+
+            if (isAvatarEnabled && currentAvatarId != null) {
+                // Find current selected avatar info
+                val currentPreset = CovAgentManager.getPreset()
+                val selectedAvatar = currentPreset?.covAvatars?.find { it.id == currentAvatarId }
+
+                if (selectedAvatar != null) {
+                    // Show selected avatar name
+                    tvAvatarDetail.text = selectedAvatar.name
+                    // Show avatar image (can load real image here, currently using default icon)
+                    ivAvatar.visibility = View.VISIBLE
+                    // TODO: Can use Glide or other image loading library to load selectedAvatar.avatarThumbnail
+                    ivAvatar.setImageResource(io.agora.scene.common.R.drawable.default_room_bg)
+                } else {
+                    // Can't find corresponding avatar data, show default state
+                    tvAvatarDetail.text = getString(io.agora.scene.common.R.string.common_close)
+                    ivAvatar.visibility = View.GONE
+                }
+            } else {
+                // Avatar function closed, show closed state
+                tvAvatarDetail.text = getString(io.agora.scene.common.R.string.common_close)
+                ivAvatar.visibility = View.GONE
+            }
         }
     }
 

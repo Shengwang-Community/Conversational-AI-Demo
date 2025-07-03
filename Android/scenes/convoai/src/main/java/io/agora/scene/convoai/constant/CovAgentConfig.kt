@@ -26,6 +26,13 @@ object CovAgentManager {
     var enableAiVad = false
     val enableBHVS = true
 
+    // Avatar settings
+    private var avatarEnabled = false
+    private var currentAvatarId: String? = null
+    
+    // Preset change reminder setting, follows app lifecycle
+    private var showPresetChangeReminder = true
+
     // values
     val uid = Random.nextInt(10000, 100000000)
     val agentUID = Random.nextInt(10000, 100000000)
@@ -62,7 +69,35 @@ object CovAgentManager {
         return preset
     }
 
+    // Avatar management methods
+    fun isAvatarEnabled(): Boolean {
+        return avatarEnabled
+    }
+
+    fun getCurrentAvatarId(): String? {
+        return currentAvatarId
+    }
+
+    fun setAvatarEnabled(enabled: Boolean) {
+        avatarEnabled = enabled
+    }
+
+    fun setCurrentAvatarId(avatarId: String?) {
+        currentAvatarId = avatarId
+    }
+
+    // Preset change reminder management methods
+    fun shouldShowPresetChangeReminder(): Boolean {
+        return showPresetChangeReminder
+    }
+
+    fun setShowPresetChangeReminder(show: Boolean) {
+        showPresetChangeReminder = show
+    }
+
     fun resetData() {
         enableAiVad = false
+        avatarEnabled = false
+        currentAvatarId = null
     }
 }

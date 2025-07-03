@@ -447,13 +447,57 @@ class CovLivingViewModel : ViewModel() {
 
     suspend fun fetchPresetsAsync(): Boolean = suspendCoroutine { cont ->
         CovAgentApiManager.fetchPresets { err, presets ->
-            if (err == null) {
-                CovAgentManager.setPresetList(presets)
+            if (err == null && presets != null) {
+                // Add smoke data for avatars
+                val presetsWithAvatars = presets.map { preset ->
+                    preset.copy(
+                        covAvatars = generateSmokeAvatarData()
+                    )
+                }
+                CovAgentManager.setPresetList(presetsWithAvatars)
                 cont.resume(true)
             } else {
                 cont.resume(false)
             }
         }
+    }
+
+    /**
+     * Generate smoke data for avatar testing
+     */
+    private fun generateSmokeAvatarData(): List<io.agora.scene.convoai.api.CovAvatar> {
+        return listOf(
+            io.agora.scene.convoai.api.CovAvatar(
+                id = "sahara",
+                name = "Sahara",
+                avatarThumbnail = "https://example.com/sahara_thumb.jpg",
+                avatarUrl = "https://example.com/sahara.jpg"
+            ),
+            io.agora.scene.convoai.api.CovAvatar(
+                id = "alice",
+                name = "Alice",
+                avatarThumbnail = "https://example.com/alice_thumb.jpg",
+                avatarUrl = "https://example.com/alice.jpg"
+            ),
+            io.agora.scene.convoai.api.CovAvatar(
+                id = "bob",
+                name = "Bob",
+                avatarThumbnail = "https://example.com/bob_thumb.jpg",
+                avatarUrl = "https://example.com/bob.jpg"
+            ),
+            io.agora.scene.convoai.api.CovAvatar(
+                id = "luna",
+                name = "Luna",
+                avatarThumbnail = "https://example.com/luna_thumb.jpg",
+                avatarUrl = "https://example.com/luna.jpg"
+            ),
+            io.agora.scene.convoai.api.CovAvatar(
+                id = "david",
+                name = "David",
+                avatarThumbnail = "https://example.com/david_thumb.jpg",
+                avatarUrl = "https://example.com/david.jpg"
+            )
+        )
     }
 
     suspend fun fetchIotPresetsAsync(): Boolean = suspendCoroutine { cont ->
