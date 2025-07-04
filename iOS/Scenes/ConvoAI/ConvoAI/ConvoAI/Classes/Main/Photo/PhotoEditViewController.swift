@@ -10,7 +10,7 @@ import SnapKit
 
 class PhotoEditViewController: UIViewController {
     var image: UIImage?
-    private var completion: ((Data?) -> Void)?
+    var completion: ((Data?) -> Void)?
 
     private let scrollView = UIScrollView()
     private let imageView = UIImageView()
