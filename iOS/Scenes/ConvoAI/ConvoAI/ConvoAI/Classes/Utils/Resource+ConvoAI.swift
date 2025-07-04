@@ -83,6 +83,7 @@ extension ResourceManager {
             public static let agentStateListening = ResourceManager.localizedString("conversation.agent.state.listening")
             public static let agentStateSpeaking = ResourceManager.localizedString("conversation.agent.state.speaking")
             public static let agentStateMuted = ResourceManager.localizedString("conversation.agent.state.muted")
+            public static let agentTranscription = ResourceManager.localizedString("conversation.agent.transcription")
         }
         
         public enum Setting {
@@ -121,6 +122,11 @@ extension ResourceManager {
             public static let agentDisconnected = ResourceManager.localizedString("settings.agent.disconnected")
             public static let digitalHuman = ResourceManager.localizedString("settings.digital.human")
             public static let digitalHumanClosed = ResourceManager.localizedString("settings.digital.human.closed")
+            public static let digitalHumanAlertTitle = ResourceManager.localizedString("settings.digital.human.alert.title")
+            public static let digitalHumanAlertDescription = ResourceManager.localizedString("settings.digital.human.alert.description")
+            public static let digitalHumanAlertIgnore = ResourceManager.localizedString("settings.digital.human.alert.ignore")
+            public static let digitalHumanAlertCancel = ResourceManager.localizedString("settings.digital.human.alert.cancel")
+            public static let digitalHumanAlertConfirm = ResourceManager.localizedString("settings.digital.human.alert.confirm")
         }
         
         public enum ChannelInfo {

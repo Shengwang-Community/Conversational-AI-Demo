@@ -24,6 +24,13 @@ public class ChatViewController: UIViewController {
         return res
     }()
     
+    internal lazy var digitalHumanContainerView = {
+        let view = UIView()
+        view.backgroundColor = .purple
+        view.isHidden = true
+        return view
+    }()
+    
     internal lazy var sendMessageButton: UIButton = {
         let button = UIButton()
         button.addTarget(self, action: #selector(testChat), for: .touchUpInside)
@@ -60,6 +67,8 @@ public class ChatViewController: UIViewController {
         let view = AgentSettingBar()
         view.infoListButton.addTarget(self, action: #selector(onClickInformationButton), for: .touchUpInside)
         view.settingButton.addTarget(self, action: #selector(onClickSettingButton), for: .touchUpInside)
+        view.addButton.addTarget(self, action: #selector(onClickAddButton), for: .touchUpInside)
+        view.transcriptionButton.addTarget(self, action: #selector(onClickTranscriptionButton(_:)), for: .touchUpInside)
         view.centerTitleButton.addTarget(self, action: #selector(onClickLogo), for: .touchUpInside)
         return view
     }()
@@ -266,6 +275,11 @@ public class ChatViewController: UIViewController {
     
     func addLog(_ txt: String) {
         ConvoAILogger.info("\(tag) \(txt)")
+    }
+    
+    func showTranscription(state: Bool) {
+        messageView.isHidden = state
+        messageMaskView.isHidden = state
     }
 }
 

@@ -23,8 +23,9 @@ extension ChatViewController: AgentControlToolbarDelegate {
         return clickMuteButton(state: selectedState)
     }
     
-    func switchCaptions(selectedState: Bool) {
-        clickCaptionsButton(state: selectedState)
+    func switchPublishVideoStream(state: Bool) {
+        //TODO: open or close publish video stream
+        
     }
 }
 
@@ -75,8 +76,7 @@ extension ChatViewController {
     }
     
     private func clickCaptionsButton(state: Bool) {
-        messageView.isHidden = !state
-        messageMaskView.isHidden = !state
+        showTranscription(state: !state)
     }
     
     private func clickMuteButton(state: Bool) -> Bool{
