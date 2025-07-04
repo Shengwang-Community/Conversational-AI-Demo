@@ -23,6 +23,7 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     private let closeButton = UIButton(type: .system)
     private let bottomBar = UIView()
     private let previewImageView = UIImageView()
+    private let shutterOuterView = UIView()
     private let shutterButton = UIButton(type: .custom)
     private let switchCameraButton = UIButton(type: .custom)
 
@@ -42,7 +43,6 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        // 让相机预览只显示在topBar和bottomBar之间
         if let previewLayer = previewLayer {
             let top = topBar.frame.maxY
             let bottom = bottomBar.frame.minY
@@ -97,6 +97,18 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         guard let data = photo.fileDataRepresentation(), let image = UIImage(data: data) else { return }
         completion?(image)
+    }
+    
+    @objc private func shutterButtonTouchDown() {
+        UIView.animate(withDuration: 0.08, delay: 0, options: [.curveEaseIn], animations: {
+            self.shutterButton.transform = CGAffineTransform(scaleX: 0.76, y: 0.76) // 50/66
+        }, completion: nil)
+    }
+
+    @objc private func shutterButtonTouchUp() {
+        UIView.animate(withDuration: 0.12, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 2, options: [], animations: {
+            self.shutterButton.transform = CGAffineTransform.identity // 回到1倍
+        }, completion: nil)
     }
 }
 
@@ -153,12 +165,20 @@ private extension TakePhotoViewController {
         previewImageView.addGestureRecognizer(tapPreview)
         bottomBar.addSubview(previewImageView)
 
-        // Shutter button
-        shutterButton.backgroundColor = .white
-        shutterButton.layer.cornerRadius = 40
-        shutterButton.layer.borderWidth = 4
-        shutterButton.layer.borderColor = UIColor(red: 0.2, green: 0.4, blue: 1, alpha: 1).cgColor
+        // 先添加外环
+        shutterOuterView.backgroundColor = .clear
+        shutterOuterView.layer.cornerRadius = 38
+        shutterOuterView.layer.borderWidth = 4
+        shutterOuterView.layer.borderColor = UIColor.themColor(named: "ai_brand_white10").cgColor
+        bottomBar.addSubview(shutterOuterView)
+
+        // 再添加按钮
+        shutterButton.backgroundColor = UIColor.themColor(named: "ai_brand_white10")
+        shutterButton.layer.cornerRadius = 33
+        shutterButton.layer.masksToBounds = true
         shutterButton.addTarget(self, action: #selector(takePhotoAction), for: .touchUpInside)
+        shutterButton.addTarget(self, action: #selector(shutterButtonTouchDown), for: .touchDown)
+        shutterButton.addTarget(self, action: #selector(shutterButtonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         bottomBar.addSubview(shutterButton)
 
         // Switch camera button
@@ -189,10 +209,14 @@ private extension TakePhotoViewController {
             make.centerY.equalTo(bottomBar)
             make.width.height.equalTo(52)
         }
-        shutterButton.snp.makeConstraints { make in
+        shutterOuterView.snp.makeConstraints { make in
             make.centerX.equalTo(bottomBar)
             make.centerY.equalTo(bottomBar)
-            make.width.height.equalTo(80)
+            make.width.height.equalTo(76)
+        }
+        shutterButton.snp.makeConstraints { make in
+            make.center.equalTo(shutterOuterView)
+            make.width.height.equalTo(66)
         }
         switchCameraButton.snp.makeConstraints { make in
             make.right.equalTo(bottomBar).offset(-38)

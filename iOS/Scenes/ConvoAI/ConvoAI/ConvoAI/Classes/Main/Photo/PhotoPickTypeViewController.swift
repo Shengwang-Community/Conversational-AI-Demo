@@ -57,9 +57,9 @@ class PhotoPickTypeViewController: UIViewController {
         contentView.layer.masksToBounds = true
         view.addSubview(contentView)
         
-        // Divider
-        tabView.backgroundColor = UIColor.themColor(named: "ai_block2")
-        tabView.layer.cornerRadius = 2
+        // Divider - 优化样式
+        tabView.backgroundColor = UIColor.white.withAlphaComponent(0.3)
+        tabView.layer.cornerRadius = 3
         tabView.layer.masksToBounds = true
         contentView.addSubview(tabView)
 
@@ -104,6 +104,15 @@ class PhotoPickTypeViewController: UIViewController {
         cameraLabel.font = UIFont.systemFont(ofSize: 12)
         cameraLabel.textAlignment = .center
         cameraOptionView.addSubview(cameraLabel)
+        
+        // 添加点击空白处消失的手势
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped(_:)))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+        
+        // 添加下拉拖动消失的手势
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+        contentView.addGestureRecognizer(panGesture)
     }
 
     private func createConstraints() {
@@ -156,6 +165,36 @@ class PhotoPickTypeViewController: UIViewController {
             make.top.equalTo(cameraImageView.snp.bottom).offset(8)
             make.left.right.equalToSuperview()
             make.height.equalTo(22)
+        }
+    }
+
+    // MARK: - Gesture Handlers
+    @objc private func backgroundTapped(_ gesture: UITapGestureRecognizer) {
+        let location = gesture.location(in: view)
+        if !contentView.frame.contains(location) {
+            closeAction()
+        }
+    }
+    
+    @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: contentView)
+        
+        switch gesture.state {
+        case .changed:
+            if translation.y > 0 {
+                contentView.transform = CGAffineTransform(translationX: 0, y: translation.y)
+            }
+        case .ended, .cancelled:
+            let velocity = gesture.velocity(in: contentView)
+            if translation.y > 60 || velocity.y > 500 { // 拖动超过60或速度超过500关闭
+                closeAction()
+            } else {
+                UIView.animate(withDuration: 0.2) {
+                    self.contentView.transform = .identity
+                }
+            }
+        default:
+            break
         }
     }
 
