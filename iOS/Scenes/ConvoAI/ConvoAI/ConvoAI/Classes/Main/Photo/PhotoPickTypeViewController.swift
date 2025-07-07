@@ -8,9 +8,10 @@
 import UIKit
 import PhotosUI
 import SnapKit
+import Common
 
 class PhotoPickTypeViewController: UIViewController {
-    private var completion: ((Data?) -> Void)?
+    private var completion: ((UIImage?) -> Void)?
     
     private let tabView = UIView()
     private let contentView = UIView()
@@ -24,7 +25,7 @@ class PhotoPickTypeViewController: UIViewController {
     
     private let contentViewHeight: CGFloat = 180
 
-    static func show(from presentingVC: UIViewController, completion: @escaping (Data?) -> Void) {
+    static func show(from presentingVC: UIViewController, completion: @escaping (UIImage?) -> Void) {
         let pickVC = PhotoPickTypeViewController()
         pickVC.completion = completion
         let nav = UINavigationController(rootViewController: pickVC)
@@ -40,6 +41,7 @@ class PhotoPickTypeViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        self.navigationController?.setNavigationBarHidden(true, animated: false)
         contentView.transform = CGAffineTransform(translationX: 0, y: contentViewHeight)
         UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseOut]) {
             self.contentView.transform = .identity
@@ -81,7 +83,7 @@ class PhotoPickTypeViewController: UIViewController {
         photoImageView.contentMode = .scaleAspectFit
         photoOptionView.addSubview(photoImageView)
 
-        photoLabel.text = "照片"
+        photoLabel.text = ResourceManager.L10n.Photo.photo
         photoLabel.textColor = UIColor.themColor(named: "ai_icontext1")
         photoLabel.font = UIFont.systemFont(ofSize: 12)
         photoLabel.textAlignment = .center
@@ -99,7 +101,7 @@ class PhotoPickTypeViewController: UIViewController {
         cameraImageView.contentMode = .scaleAspectFit
         cameraOptionView.addSubview(cameraImageView)
 
-        cameraLabel.text = "拍照"
+        cameraLabel.text = ResourceManager.L10n.Photo.camera
         cameraLabel.textColor = UIColor.themColor(named: "ai_icontext1")
         cameraLabel.font = UIFont.systemFont(ofSize: 12)
         cameraLabel.textAlignment = .center
@@ -218,22 +220,7 @@ class PhotoPickTypeViewController: UIViewController {
 
     @objc func takePhoto() {
         let takeVC = TakePhotoViewController()
-        takeVC.completion = { [weak self] image in
-            guard let self = self else { return }
-            if let image = image {
-                // push 进入预览页
-                let editVC = PhotoEditViewController()
-                editVC.image = image
-                editVC.completion = { data in
-                    self.completion?(data)
-                    self.dismiss(animated: true)
-                }
-                self.navigationController?.pushViewController(editVC, animated: true)
-            } else {
-                self.completion?(nil)
-                self.dismiss(animated: true)
-            }
-        }
+        takeVC.completion = completion
         navigationController?.pushViewController(takeVC, animated: true)
     }
 }
@@ -245,10 +232,10 @@ extension PhotoPickTypeViewController: PHPickerViewControllerDelegate {
         itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
             guard let self = self, let image = image as? UIImage else { return }
             DispatchQueue.main.async {
-                PhotoEditViewController.show(from: self.navigationController ?? self, with: image) { data in
-                    self.completion?(data)
-                    self.dismiss(animated: true)
-                }
+                let editVC = PhotoEditViewController()
+                editVC.image = image
+                editVC.completion = self.completion
+                self.navigationController?.pushViewController(editVC, animated: true)
             }
         }
     }

@@ -7,10 +7,11 @@
 
 import UIKit
 import SnapKit
+import Common
 
 class PhotoEditViewController: UIViewController {
     var image: UIImage?
-    var completion: ((Data?) -> Void)?
+    var completion: ((UIImage?) -> Void)?
 
     private let scrollView = UIScrollView()
     private let imageView = UIImageView()
@@ -18,21 +19,21 @@ class PhotoEditViewController: UIViewController {
     private let rotateButton = UIButton(type: .custom)
     private let doneButton = UIButton(type: .system)
     private var currentRotation: CGFloat = 0
-
-    // 展示入口类方法
-    static func show(from presentingVC: UIViewController, with image: UIImage, completion: @escaping (Data?) -> Void) {
-        let editVC = PhotoEditViewController()
-        editVC.image = image
-        editVC.completion = completion
-        presentingVC.present(editVC, animated: true)
-    }
-
+    
+    private let topBar = UIView()
+    private let bottomBar = UIView()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
         createViews()
         createConstraints()
         setupZoom()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.navigationController?.setNavigationBarHidden(true, animated: false)
     }
 
     private func setupZoom() {
@@ -52,20 +53,17 @@ class PhotoEditViewController: UIViewController {
     }
 
     @objc func doneAction() {
-        // 完成编辑后的处理
         let rotatedImage = imageView.image?.rotate(radians: currentRotation)
-        let imageData = rotatedImage?.jpegData(compressionQuality: 0.9)
-        completion?(imageData)
+        completion?(rotatedImage)
         dismiss(animated: true)
     }
 
     @objc func backAction() {
-        completion?(nil)
-        dismiss(animated: true)
+        navigationController?.popViewController(animated: true)
     }
 
     @objc func rotateAction() {
-        currentRotation += .pi/2
+        currentRotation -= .pi/2
         UIView.animate(withDuration: 0.25) {
             self.imageView.transform = CGAffineTransform(rotationAngle: self.currentRotation)
         }
@@ -123,52 +121,75 @@ extension PhotoEditViewController {
         imageView.image = image
         imageView.isUserInteractionEnabled = true
         scrollView.addSubview(imageView)
+        
+        topBar.backgroundColor = UIColor.themColor(named: "ai_brand_black10")
+        view.addSubview(topBar)
+        
+        bottomBar.backgroundColor = UIColor.themColor(named: "ai_brand_black10")
+        view.addSubview(bottomBar)
 
         // Close button
-        closeButton.setImage(UIImage.ag_named("ic_close"), for: .normal)
-        closeButton.tintColor = .white
+        closeButton.setImage(UIImage.ag_named("ic_agent_setting_close"), for: .normal)
+        closeButton.tintColor = UIColor.themColor(named: "ai_brand_white10")
         closeButton.addTarget(self, action: #selector(backAction), for: .touchUpInside)
-        view.addSubview(closeButton)
+        topBar.addSubview(closeButton)
 
         // Rotate button
         rotateButton.setImage(UIImage.ag_named("ic_photo_preivew_rotate"), for: .normal)
-        rotateButton.tintColor = .white
+        rotateButton.tintColor = UIColor.themColor(named: "ai_brand_white10")
+        rotateButton.backgroundColor = UIColor.themColor(named: "ai_brand_white1")
         rotateButton.addTarget(self, action: #selector(rotateAction), for: .touchUpInside)
-        view.addSubview(rotateButton)
+        rotateButton.layer.cornerRadius = 8
+        rotateButton.layer.masksToBounds = true
+        bottomBar.addSubview(rotateButton)
 
         // Done button
-        doneButton.setTitle("完成", for: .normal)
-        doneButton.setTitleColor(.white, for: .normal)
-        doneButton.backgroundColor = .white.withAlphaComponent(0.1)
+        doneButton.setTitle(ResourceManager.L10n.Photo.done, for: .normal)
+        doneButton.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+        doneButton.setTitleColor(UIColor.themColor(named: "ai_brand_black10"), for: .normal)
+        doneButton.backgroundColor = UIColor.themColor(named: "ai_brand_white10")
         doneButton.layer.cornerRadius = 8
+        doneButton.layer.masksToBounds = true
         doneButton.addTarget(self, action: #selector(doneAction), for: .touchUpInside)
-        view.addSubview(doneButton)
+        bottomBar.addSubview(doneButton)
     }
 
     private func createConstraints() {
-        scrollView.snp.makeConstraints { make in
-            make.left.right.top.bottom.equalToSuperview()
+        topBar.snp.makeConstraints { make in
+            make.top.left.right.equalToSuperview()
+            make.height.equalTo(66)
         }
+        
+        bottomBar.snp.makeConstraints { make in
+            make.left.right.bottom.equalToSuperview()
+            make.height.equalTo(170)
+        }
+        
+        scrollView.snp.makeConstraints { make in
+            make.top.equalTo(topBar.snp.bottom)
+            make.bottom.equalTo(bottomBar.snp.top)
+            make.left.right.equalToSuperview()
+        }
+        
         imageView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
-            make.width.equalTo(scrollView)
-            make.height.equalTo(scrollView)
+            make.center.equalToSuperview()
+            make.width.height.equalTo(scrollView)
         }
         closeButton.snp.makeConstraints { make in
-            make.top.equalTo(view.safeAreaLayoutGuide.snp.top).offset(8)
             make.left.equalToSuperview().offset(16)
+            make.centerY.equalToSuperview()
             make.width.height.equalTo(32)
         }
         rotateButton.snp.makeConstraints { make in
-            make.left.equalToSuperview().offset(32)
-            make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-32)
+            make.left.equalToSuperview().offset(38)
+            make.centerY.equalToSuperview()
             make.width.height.equalTo(48)
         }
         doneButton.snp.makeConstraints { make in
-            make.right.equalToSuperview().offset(-32)
-            make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-32)
-            make.width.equalTo(72)
-            make.height.equalTo(40)
+            make.right.equalToSuperview().offset(-38)
+            make.centerY.equalToSuperview()
+            make.width.equalTo(78)
+            make.height.equalTo(36)
         }
     }
 }

@@ -69,6 +69,8 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
 
     @objc func takePhotoAction() {
+        shutterButton.isEnabled = false
+        
         let settings = AVCapturePhotoSettings()
         photoOutput?.capturePhoto(with: settings, delegate: self)
     }
@@ -78,7 +80,6 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
 
     @objc func switchCamera() {
-        // 切换前置/后置摄像头
         captureSession?.stopRunning()
         previewLayer?.removeFromSuperlayer()
         currentCameraPosition = (currentCameraPosition == .back) ? .front : .back
@@ -95,8 +96,12 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
 
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        shutterButton.isEnabled = true
         guard let data = photo.fileDataRepresentation(), let image = UIImage(data: data) else { return }
-        completion?(image)
+        let editVC = PhotoEditViewController()
+        editVC.image = image
+        editVC.completion = completion
+        navigationController?.pushViewController(editVC, animated: true)
     }
     
     @objc private func shutterButtonTouchDown() {
@@ -107,7 +112,7 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 
     @objc private func shutterButtonTouchUp() {
         UIView.animate(withDuration: 0.12, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 2, options: [], animations: {
-            self.shutterButton.transform = CGAffineTransform.identity // 回到1倍
+            self.shutterButton.transform = CGAffineTransform.identity 
         }, completion: nil)
     }
 }
@@ -119,7 +124,10 @@ extension TakePhotoViewController: PHPickerViewControllerDelegate {
         itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
             guard let self = self, let image = image as? UIImage else { return }
             DispatchQueue.main.async {
-                self.completion?(image)
+                let editVC = PhotoEditViewController()
+                editVC.image = image
+                editVC.completion = self.completion
+                self.navigationController?.pushViewController(editVC, animated: true)
             }
         }
     }
@@ -165,14 +173,12 @@ private extension TakePhotoViewController {
         previewImageView.addGestureRecognizer(tapPreview)
         bottomBar.addSubview(previewImageView)
 
-        // 先添加外环
         shutterOuterView.backgroundColor = .clear
         shutterOuterView.layer.cornerRadius = 38
         shutterOuterView.layer.borderWidth = 4
         shutterOuterView.layer.borderColor = UIColor.themColor(named: "ai_brand_white10").cgColor
         bottomBar.addSubview(shutterOuterView)
 
-        // 再添加按钮
         shutterButton.backgroundColor = UIColor.themColor(named: "ai_brand_white10")
         shutterButton.layer.cornerRadius = 33
         shutterButton.layer.masksToBounds = true

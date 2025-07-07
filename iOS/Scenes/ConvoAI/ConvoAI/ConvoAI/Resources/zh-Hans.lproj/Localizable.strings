@@ -128,3 +128,7 @@
 
 "iot.info.title" = "对话式 AI 设备";
 "iot.info.device" = "%@个设备";
+
+"photo.type.photo" = "照片";
+"photo.type.camera" = "拍照";
+"photo.edit.done" = "完成";

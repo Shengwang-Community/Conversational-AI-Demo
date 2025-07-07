@@ -179,7 +179,11 @@ extension ResourceManager {
             public static let title = ResourceManager.localizedString("iot.info.title")
             public static let device = ResourceManager.localizedString("iot.info.device")
         }
+        
+        public enum Photo {
+            public static let photo = ResourceManager.localizedString("photo.type.photo")
+            public static let camera = ResourceManager.localizedString("photo.type.camera")
+            public static let done = ResourceManager.localizedString("photo.edit.done")
+        }
     }
 }
-
-

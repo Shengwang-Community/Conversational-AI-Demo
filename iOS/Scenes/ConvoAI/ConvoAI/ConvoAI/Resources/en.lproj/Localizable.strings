@@ -125,3 +125,7 @@
 
 "iot.info.title" = "Conversational AI Device";
 "iot.info.device" = "%@ Devices";
+
+"photo.type.photo" = "Photo";
+"photo.type.camera" = "Camera";
+"photo.edit.done" = "Done";
