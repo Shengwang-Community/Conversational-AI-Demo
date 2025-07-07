@@ -11,7 +11,7 @@ import Common
 extension ChatViewController {
     internal func setupViews() {
         view.backgroundColor = .black
-        [animateContentView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, agentStateView, topBar, welcomeMessageView, bottomBar, annotationView, devModeButton, sendMessageButton].forEach { view.addSubview($0) }
+        [digitalHumanContainerView, animateContentView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, agentStateView, topBar, welcomeMessageView, bottomBar, annotationView, devModeButton, sendMessageButton].forEach { view.addSubview($0) }
     }
     
     internal func setupConstraints() {
@@ -19,6 +19,9 @@ extension ChatViewController {
             make.top.equalTo(view.safeAreaLayoutGuide.snp.top).offset(5)
             make.left.right.equalToSuperview()
             make.height.equalTo(48)
+        }
+        digitalHumanContainerView.snp.makeConstraints { make in
+            make.left.right.top.bottom.equalTo(0)
         }
         
         animateContentView.snp.makeConstraints { make in

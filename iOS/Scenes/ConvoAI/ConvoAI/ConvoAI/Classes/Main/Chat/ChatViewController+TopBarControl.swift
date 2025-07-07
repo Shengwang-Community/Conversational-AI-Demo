@@ -21,6 +21,17 @@ extension ChatViewController {
         present(navigationController, animated: false)
     }
     
+    @objc internal func onClickAddButton() {
+        // TODO: Implement add button functionality
+        print("Add button clicked")
+    }
+    
+    @objc internal func onClickTranscriptionButton(_ sender: UIButton) {
+        sender.isSelected = !sender.isSelected
+        
+        showTranscription(state: !sender.isSelected)
+    }
+    
     @objc internal func onClickStopSpeakingButton(_ sender: UIButton) {
         convoAIAPI.interrupt(agentUserId: "\(agentUid)") { error in
             
