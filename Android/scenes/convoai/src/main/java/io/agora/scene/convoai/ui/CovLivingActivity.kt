@@ -6,6 +6,7 @@ import android.graphics.PorterDuff
 import android.os.Build
 import android.provider.Settings
 import android.view.Gravity
+import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -17,6 +18,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import io.agora.rtc2.Constants
+import io.agora.rtc2.video.VideoCanvas
 import io.agora.scene.common.constant.AgentScenes
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
@@ -33,6 +35,7 @@ import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.ui.SSOWebViewActivity
 import io.agora.scene.common.ui.TermsActivity
 import io.agora.scene.common.ui.vm.LoginViewModel
+import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.common.util.PermissionHelp
 import io.agora.scene.common.util.copyToClipboard
 import io.agora.scene.common.util.dp
@@ -192,8 +195,17 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     force = currentAudioMuted,
                 )
             }
-            clBottomLogged.btnCc.setOnClickListener {
-                viewModel.toggleMessageList()
+            clBottomLogged.btnCamera.setOnClickListener {
+                // TODO: video stream
+                val currentVideoMuted = viewModel.isLocalVideoMuted.value
+                checkCameraPermission(
+                    granted = {
+                        if (it) {
+                            viewModel.toggleCamera()
+                        }
+                    },
+                    force = currentVideoMuted,
+                )
             }
             clTop.setOnSettingsClickListener {
                 if (CovAgentManager.getPresetList().isNullOrEmpty()) {
@@ -292,6 +304,11 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 mBinding?.agentStateView?.setMuted(isMuted)
             }
         }
+        lifecycleScope.launch {    // Observe camera state
+            viewModel.isLocalVideoMuted.collect { isMuted ->
+                updateCameraView(isMuted)
+            }
+        }
         lifecycleScope.launch {  // Observe message list display state
             viewModel.isShowMessageList.collect { isShow ->
                 updateMessageList(isShow)
@@ -317,6 +334,11 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         lifecycleScope.launch {  // Observe user RTC join state
             viewModel.isUserJoinedRtc.collect { joined ->
                 if (joined) {
+                    if (CovAgentManager.isEnableAvatar()) {
+                        CovRtcManager.muteRemoteAudio(true, CovAgentManager.agentUID)
+                    } else {
+                        CovRtcManager.muteRemoteAudio(false, CovAgentManager.agentUID)
+                    }
                     enableNotifications()
                 }
             }
@@ -348,6 +370,55 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                             showRoomEndDialog()
                         }
                     )
+                }
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.isAvatarJoinedRtc.collect { joined ->
+                mBinding?.apply {
+                    if (joined) {
+                        val remoteTextureView = TextureView(this@CovLivingActivity)
+                        val canvas =
+                            VideoCanvas(remoteTextureView, Constants.RENDER_MODE_HIDDEN, CovAgentManager.avatarUID)
+                        flAvatarContainer.removeAllViews()
+                        flAvatarContainer.addView(remoteTextureView)
+                        CovRtcManager.setupRemoteVideo(canvas)
+                    } else {
+                        CovRtcManager.setupRemoteVideo(
+                            VideoCanvas(null, Constants.RENDER_MODE_HIDDEN, CovAgentManager.avatarUID)
+                        )
+                        flAvatarContainer.removeAllViews()
+                        avatarImageView.isVisible = true
+                    }
+                }
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.avatarFirstRemoteVideoFrame.collect { firstVideoFrame ->
+                mBinding?.apply {
+                    if (firstVideoFrame) {
+                        avatarImageView.isVisible = false
+                    }
+                }
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.avatar.collect { avatar ->
+                mBinding?.apply {
+                    if (avatar == null) {
+                        clAnimationContent.isVisible = true
+                        clAvatarContent.isVisible = false
+                    } else {
+                        clAnimationContent.isVisible = false
+                        clAvatarContent.isVisible = true
+                        avatarImageView.isVisible = true
+                        GlideImageLoader.load(
+                            avatarImageView,
+                            avatar.avatar_url,
+                            R.drawable.cov_default_avatar,
+                            R.drawable.cov_default_avatar
+                        )
+                    }
                 }
             }
         }
@@ -453,6 +524,16 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
     }
 
+    private fun updateCameraView(isLocalVideoMuted: Boolean) {
+        mBinding?.apply {
+            if (isLocalVideoMuted) {
+                clBottomLogged.btnCamera.setImageResource(io.agora.scene.common.R.drawable.scene_detail_camera_off)
+            } else {
+                clBottomLogged.btnCamera.setImageResource(io.agora.scene.common.R.drawable.scene_detail_camera_on)
+            }
+        }
+    }
+
     private fun updateMessageList(isShowMessageList: Boolean) {
         mBinding?.apply {
             if (isShowMessageList) {
@@ -462,9 +543,9 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 } else {
                     messageListViewV2.visibility = View.VISIBLE
                 }
-                clBottomLogged.btnCc.setColorFilter(
-                    getColor(io.agora.scene.common.R.color.ai_brand_lightbrand6), PorterDuff.Mode.SRC_IN
-                )
+//                clBottomLogged.btnCc.setColorFilter(
+//                    getColor(io.agora.scene.common.R.color.ai_brand_lightbrand6), PorterDuff.Mode.SRC_IN
+//                )
             } else {
                 viewMessageMask.visibility = View.GONE
                 if (isSelfSubRender) {
@@ -472,9 +553,9 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 } else {
                     messageListViewV2.visibility = View.INVISIBLE
                 }
-                clBottomLogged.btnCc.setColorFilter(
-                    getColor(io.agora.scene.common.R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
-                )
+//                clBottomLogged.btnCc.setColorFilter(
+//                    getColor(io.agora.scene.common.R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
+//                )
             }
         }
     }
@@ -699,16 +780,20 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 mPermissionHelp.checkMicPerm(
                     granted = { granted.invoke(true) },
                     unGranted = {
-                        showPermissionDialog {
-                            if (it) {
-                                mPermissionHelp.launchAppSettingForMic(
-                                    granted = { granted.invoke(true) },
-                                    unGranted = { granted.invoke(false) }
-                                )
-                            } else {
-                                granted.invoke(false)
+                        showPermissionDialog(
+                            getString(R.string.cov_permission_required),
+                            getString(R.string.cov_mic_permission_required_content),
+                            onResult = {
+                                if (it) {
+                                    mPermissionHelp.launchAppSettingForMic(
+                                        granted = { granted.invoke(true) },
+                                        unGranted = { granted.invoke(false) }
+                                    )
+                                } else {
+                                    granted.invoke(false)
+                                }
                             }
-                        }
+                        )
                     }
                 )
             }
@@ -717,11 +802,41 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
     }
 
-    private fun showPermissionDialog(onResult: (Boolean) -> Unit) {
+    private fun checkCameraPermission(granted: (Boolean) -> Unit, force: Boolean) {
+        if (force) {
+            if (mPermissionHelp.hasCameraPerm()) {
+                granted.invoke(true)
+            } else {
+                mPermissionHelp.checkCameraPerm(
+                    granted = { granted.invoke(true) },
+                    unGranted = {
+                        showPermissionDialog(
+                            getString(R.string.cov_permission_required),
+                            getString(R.string.cov_camera_permission_required_content),
+                            onResult = {
+                                if (it) {
+                                    mPermissionHelp.launchAppSettingForCamera(
+                                        granted = { granted.invoke(true) },
+                                        unGranted = { granted.invoke(false) }
+                                    )
+                                } else {
+                                    granted.invoke(false)
+                                }
+                            }
+                        )
+                    }
+                )
+            }
+        } else {
+            granted.invoke(true)
+        }
+    }
+
+    private fun showPermissionDialog(title: String, content: String, onResult: (Boolean) -> Unit) {
         if (isFinishing || isDestroyed) return
         CommonDialog.Builder()
-            .setTitle(getString(R.string.cov_permission_required))
-            .setContent(getString(R.string.cov_mic_permission_required_content))
+            .setTitle(title)
+            .setContent(content)
             .setPositiveButton(getString(R.string.cov_retry)) {
                 onResult.invoke(true)
             }

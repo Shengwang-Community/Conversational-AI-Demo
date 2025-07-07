@@ -79,6 +79,7 @@
 
     <string name="cov_permission_required">需要权限</string>
     <string name="cov_mic_permission_required_content">语音聊天需要麦克风权限。请授予权限以继续。</string>
+    <string name="cov_camera_permission_required_content">视频流需要相机权限。请授予权限以继续。</string>
     <string name="cov_notifications_enable_tip">请打开通知权限，防止后台录音中断。</string>
     <string name="cov_setting">设置</string>
     <string name="cov_retry">重试</string>

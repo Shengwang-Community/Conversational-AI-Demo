@@ -9,6 +9,7 @@ import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngine
 import io.agora.rtc2.RtcEngineConfig
 import io.agora.rtc2.RtcEngineEx
+import io.agora.rtc2.video.VideoCanvas
 import io.agora.scene.common.AgentApp
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.convoai.CovLogger
@@ -31,6 +32,7 @@ object CovRtcManager {
         config.mEventHandler = rtcCallback
         try {
             rtcEngine = (RtcEngine.create(config) as RtcEngineEx).apply {
+                enableVideo()
                 // load extension provider for AI-QoS
                 loadExtensionProvider("ai_echo_cancellation_extension")
                 loadExtensionProvider("ai_noise_suppression_extension")
@@ -70,7 +72,7 @@ object CovRtcManager {
         options.publishMicrophoneTrack = true
         options.publishCameraTrack = false
         options.autoSubscribeAudio = true
-        options.autoSubscribeVideo = false
+        options.autoSubscribeVideo = true
         val ret = rtcEngine?.joinChannel(rtcToken, channelName, uid, options)
         CovLogger.d(TAG, "Joining RTC channel: $channelName, uid: $uid")
         if (ret == ERR_OK) {
@@ -80,7 +82,7 @@ object CovRtcManager {
         }
     }
 
-    fun setParameter(parameter:String){
+    fun setParameter(parameter: String) {
         CovLogger.d(TAG, "setParameter $parameter")
         rtcEngine?.setParameters(parameter)
     }
@@ -98,6 +100,21 @@ object CovRtcManager {
     // open or close microphone
     fun muteLocalAudio(mute: Boolean) {
         rtcEngine?.adjustRecordingSignalVolume(if (mute) 0 else 100)
+    }
+
+    // open or close camera
+    fun muteLocalVideo(mute: Boolean) {
+        rtcEngine?.muteLocalVideoStream(mute)
+    }
+
+    // mute remote uid audio
+    fun muteRemoteAudio(mute: Boolean, rtcUid: Int) {
+        rtcEngine?.muteRemoteAudioStream(rtcUid, mute)
+    }
+
+    // setup remote video
+    fun setupRemoteVideo(videoCanvas: VideoCanvas){
+        rtcEngine?.setupRemoteVideo(videoCanvas)
     }
 
     fun onAudioDump(enable: Boolean) {

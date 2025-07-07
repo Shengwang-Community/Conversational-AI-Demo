@@ -14,12 +14,17 @@ import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.common.R
 import io.agora.scene.common.ui.BaseDialogFragment
 import io.agora.scene.common.ui.OnFastClickListener
+import io.agora.scene.convoai.api.CovAvatar
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.databinding.CovAvatarSelectorAvatarItemBinding
 import io.agora.scene.convoai.databinding.CovAvatarSelectorCloseItemBinding
 import io.agora.scene.convoai.databinding.CovAvatarSelectorDialogBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.Serializable
+import kotlinx.parcelize.Parcelize
+import android.os.Parcelable
+import io.agora.scene.common.util.GlideImageLoader
 
 /**
  * Avatar selector dialog - full screen display
@@ -32,28 +37,24 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
     private val avatarAdapter = AvatarAdapter()
 
     // Input parameters
-    private var isAvatarEnabled: Boolean = false
-    private var currentSelectedAvatarId: String? = null
+    private var currentAvatar: CovAvatar? = null
 
     companion object {
         private const val TAG = "CovAvatarSelectorDialog"
-        private const val ARG_AVATAR_ENABLED = "avatar_enabled"
-        private const val ARG_SELECTED_AVATAR_ID = "selected_avatar_id"
+        private const val ARG_AVATAR = "arg_avatar"
 
         // ViewType constants for different item types
         private const val VIEW_TYPE_CLOSE = 0
         private const val VIEW_TYPE_AVATAR = 1
 
         fun newInstance(
-            isAvatarEnabled: Boolean = false,
-            currentSelectedAvatarId: String? = null,
+            currentAvatar: CovAvatar? = null,
             onDismiss: (() -> Unit)? = null,
             onAvatarSelected: ((AvatarItem) -> Unit)? = null
         ): CovAvatarSelectorDialog {
             return CovAvatarSelectorDialog().apply {
                 arguments = Bundle().apply {
-                    putBoolean(ARG_AVATAR_ENABLED, isAvatarEnabled)
-                    putString(ARG_SELECTED_AVATAR_ID, currentSelectedAvatarId)
+                    putParcelable(ARG_AVATAR, currentAvatar)
                 }
                 this.onDismissCallback = onDismiss
                 this.onAvatarSelectedCallback = onAvatarSelected
@@ -77,8 +78,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
         // Get input parameters
         arguments?.let {
-            isAvatarEnabled = it.getBoolean(ARG_AVATAR_ENABLED, false)
-            currentSelectedAvatarId = it.getString(ARG_SELECTED_AVATAR_ID)
+            currentAvatar = it.getParcelable(ARG_AVATAR) as? CovAvatar
         }
 
         mBinding?.apply {
@@ -131,27 +131,23 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
         // Add "close" option
         avatarList.add(
             AvatarItem(
-                id = "close",
-                name = getString(R.string.common_close),
-                avatarUrl = null,
+                covAvatar = null,
                 isClose = true,
-                isSelected = !isAvatarEnabled || currentSelectedAvatarId == "close"
+                isSelected = currentAvatar == null
             )
         )
 
         // Get avatar data from current preset
         val currentPreset = CovAgentManager.getPreset()
-        val avatars = currentPreset?.covAvatars ?: emptyList()
+        val avatars = currentPreset?.avatar_ids ?: emptyList()
 
         // Add real avatar options
         avatars.forEach { covAvatar ->
             avatarList.add(
                 AvatarItem(
-                    id = covAvatar.id,
-                    name = covAvatar.name,
-                    avatarUrl = covAvatar.avatarUrl,
+                    covAvatar = covAvatar,
                     isClose = false,
-                    isSelected = currentSelectedAvatarId == covAvatar.id
+                    isSelected = currentAvatar?.avatar_id == covAvatar.avatar_id
                 )
             )
         }
@@ -166,11 +162,9 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
      * Avatar data model
      */
     data class AvatarItem(
-        val id: String,
-        val name: String,
-        val avatarUrl: String?,
+        val covAvatar: CovAvatar? = null,
+        val isSelected: Boolean = false,
         val isClose: Boolean = false,
-        val isSelected: Boolean = false
     )
 
     /**
@@ -274,23 +268,19 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
             fun bind(avatar: AvatarItem, isSelected: Boolean) {
                 binding.apply {
-                    // Set name
-                    tvName.text = avatar.name
+                    val covAvatar = avatar.covAvatar
+                    tvName.text = covAvatar?.avatar_name?:""
 
-                    // Set selection border visibility
                     vSelectionBorder.visibility = if (isSelected) View.VISIBLE else View.GONE
 
-                    // Set checkbox selection state
                     vCheckbox.isSelected = isSelected
 
-                    // Set avatar image
-                    // Image loading library like Glide can be used here
-                    // Glide.with(context).load(avatar.avatarUrl).into(ivAvatar)
-                    // Temporarily use placeholder - different colors to distinguish avatars
-                    when (avatar.id) {
-                        "sahara" -> ivAvatar.setImageResource(R.color.ai_brand_main6)
-                        else -> ivAvatar.setImageResource(R.color.ai_block2)
-                    }
+                    GlideImageLoader.load(
+                        ivAvatar,
+                        covAvatar?.avatar_url,
+                        io.agora.scene.convoai.R.drawable.cov_default_avatar,
+                        io.agora.scene.convoai.R.drawable.cov_default_avatar
+                    )
 
                     // Set click listener
                     root.setOnClickListener(object : OnFastClickListener() {

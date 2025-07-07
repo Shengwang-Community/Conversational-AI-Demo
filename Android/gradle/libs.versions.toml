@@ -27,6 +27,7 @@ xlog = "1.11.1"
 undercouch = "4.1.2"
 bugly="4.1.9.3"
 multidex="2.0.0"
+glide = "4.16.0"
 
 [libraries]
 junit = { module = "junit:junit", version.ref = "junit" }
@@ -52,6 +53,8 @@ mmkv = { module = "com.tencent:mmkv", version.ref = "mmkv" }
 xlog = { module = "com.elvishew:xlog", version.ref = "xlog" }
 bugly = { module = "com.tencent.bugly:crashreport", version.ref = "bugly" }
 multidex = { module = "androidx.multidex:multidex", version.ref = "multidex" }
+glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
+glide-compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glide" }
 
 commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
 # rtc
@@ -61,6 +64,6 @@ agora-rtm = { module = "io.agora:agora-rtm", version.ref = "agora-rtm" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-parcelize = { id = "kotlin-parcelize" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 undercouch-download = { id = "de.undercouch.download", version.ref = "undercouch" }
-

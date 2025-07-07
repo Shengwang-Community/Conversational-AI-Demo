@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CompoundButton
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.common.R
@@ -13,15 +14,19 @@ import io.agora.scene.common.ui.BaseFragment
 import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.ui.widget.LastItemDividerDecoration
+import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getDistanceFromScreenEdges
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.api.CovAgentPreset
+import io.agora.scene.convoai.api.CovAvatar
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.databinding.CovAgentSettingsFragmentBinding
 import io.agora.scene.convoai.databinding.CovSettingOptionItemBinding
+import io.agora.scene.convoai.ui.dialog.CovAvatarSelectorDialog.AvatarItem
 import kotlin.collections.indexOf
+import io.agora.scene.convoai.ui.CovLivingViewModel
 
 /**
  * Fragment for Agent Settings tab
@@ -43,6 +48,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
     }
 
     private val optionsAdapter = OptionsAdapter()
+    private val livingViewModel: CovLivingViewModel by activityViewModels()
 
     override fun getViewBinding(
         inflater: LayoutInflater,
@@ -109,6 +115,8 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         updatePageEnable()
         updateBaseSettings()
         setAiVadBySelectLanguage()
+        // Update avatar settings display
+        updateAvatarSettings()
     }
 
 
@@ -116,8 +124,6 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         mBinding?.apply {
             tvPresetDetail.text = CovAgentManager.getPreset()?.display_name
             tvLanguageDetail.text = CovAgentManager.language?.language_name
-            // Update avatar settings display
-            updateAvatarSettings()
         }
     }
 
@@ -193,29 +199,13 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
     private fun onClickPreset() {
         val presets = CovAgentManager.getPresetList() ?: return
         if (presets.isEmpty()) return
-        // If avatar was previously checked, show dialog prompt here
-        // Checkbox, default unchecked, no need to prompt next time after checking
-
-        // Check if avatar is enabled
-        if (CovAgentManager.isAvatarEnabled()) {
-            // Check if user selected "Don't show again"
-            if (CovAgentManager.shouldShowPresetChangeReminder()) {
-                // Show reminder dialog
-                showPresetChangeDialog(presets)
-            } else {
-                // User selected "Don't show again", show options directly
-                showPresetSelectionOptions(presets)
-            }
-        } else {
-            // Avatar not enabled, show options directly
-            showPresetSelectionOptions(presets)
-        }
+        showPresetSelectionOptions(presets)
     }
 
     /**
      * Show preset change reminder dialog
      */
-    private fun showPresetChangeDialog(presets: List<CovAgentPreset>) {
+    private fun showPresetChangeDialog(preset: CovAgentPreset) {
         val activity = activity ?: return
 
         CommonDialog.Builder()
@@ -230,9 +220,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                     // User checked "Don't show again", save preference
                     CovAgentManager.setShowPresetChangeReminder(false)
                 }
-
-                // Show preset selection options
-                showPresetSelectionOptions(presets)
+                updatePreset(preset)
             }
             .showNoMoreReminder() // Show checkbox, default unchecked
             .hideTopImage()
@@ -270,12 +258,35 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                 presets.indexOf(CovAgentManager.getPreset())
             ) { index ->
                 val preset = presets[index]
-                CovAgentManager.setPreset(preset)
-                updateBaseSettings()
-                setAiVadBySelectLanguage()
-                vOptionsMask.visibility = View.INVISIBLE
+                if (preset== CovAgentManager.getPreset()){
+                    return@updateOptions
+                }
+
+                if (CovAgentManager.avatar != null) {
+                    // Check if user selected "Don't show again"
+                    if (CovAgentManager.shouldShowPresetChangeReminder()) {
+                        // Show reminder dialog
+                        showPresetChangeDialog(preset)
+                    } else {
+                        // User selected "Don't show again", show options directly
+                        updatePreset(preset)
+                    }
+                } else {
+                   updatePreset(preset)
+                }
             }
         }
+    }
+
+    private fun updatePreset(preset: CovAgentPreset){
+        CovAgentManager.setPreset(preset)
+        CovAgentManager.avatar = null
+        livingViewModel.setAvatar(null)
+        updateBaseSettings()
+        setAiVadBySelectLanguage()
+        mBinding?.vOptionsMask?.visibility = View.INVISIBLE
+        // Update avatar settings display
+        updateAvatarSettings()
     }
 
     private fun onClickLanguage() {
@@ -321,15 +332,14 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
     }
 
     private fun onClickAvatar() {
+        if (CovAgentManager.getAvatars().isNullOrEmpty()) {
+            ToastUtil.show("No avatars available!")
+            return
+        }
         val activity = activity ?: return
 
-        // Get current avatar state
-        val currentAvatarEnabled = CovAgentManager.isAvatarEnabled()
-        val currentSelectedAvatarId = CovAgentManager.getCurrentAvatarId()
-
-        val avatarSelectorDialog = CovAvatarSelectorDialog.Companion.newInstance(
-            isAvatarEnabled = currentAvatarEnabled,
-            currentSelectedAvatarId = currentSelectedAvatarId,
+        val avatarSelectorDialog = CovAvatarSelectorDialog.newInstance(
+            currentAvatar = CovAgentManager.avatar,
             onDismiss = {
                 // Handle dialog closure
             },
@@ -345,41 +355,16 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
     /**
      * Handle avatar selection result
      */
-    private fun handleAvatarSelection(selectedAvatar: CovAvatarSelectorDialog.AvatarItem) {
+    private fun handleAvatarSelection(selectedAvatar: AvatarItem) {
+        val avatar = if (selectedAvatar.isClose) null else selectedAvatar.covAvatar
+        CovAgentManager.avatar = avatar
+        livingViewModel.setAvatar(avatar)
         if (selectedAvatar.isClose) {
-            // User selected to close avatar
-            handleCloseAvatar()
+            ToastUtil.show("Avatar closed")
         } else {
-            // User selected specific avatar
-            handleEnableAvatar(selectedAvatar)
+            ToastUtil.show("Avatar selected: ${selectedAvatar.covAvatar?.avatar_name}")
         }
-
-        // Refresh settings page display
         updateAvatarSettings()
-    }
-
-    /**
-     * Handle close avatar
-     */
-    private fun handleCloseAvatar() {
-        // Close avatar function
-        CovAgentManager.setAvatarEnabled(false)
-        CovAgentManager.setCurrentAvatarId(null)
-
-        // Provide user feedback
-        ToastUtil.show("Avatar closed")
-    }
-
-    /**
-     * Handle enable avatar
-     */
-    private fun handleEnableAvatar(avatar: CovAvatarSelectorDialog.AvatarItem) {
-        // Enable avatar and set current selected avatar
-        CovAgentManager.setAvatarEnabled(true)
-        CovAgentManager.setCurrentAvatarId(avatar.id)
-
-        // Can add Toast message
-        ToastUtil.show("Avatar selected: ${avatar.name}")
     }
 
     /**
@@ -387,26 +372,19 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
      */
     private fun updateAvatarSettings() {
         mBinding?.apply {
-            val isAvatarEnabled = CovAgentManager.isAvatarEnabled()
-            val currentAvatarId = CovAgentManager.getCurrentAvatarId()
-
-            if (isAvatarEnabled && currentAvatarId != null) {
-                // Find current selected avatar info
-                val currentPreset = CovAgentManager.getPreset()
-                val selectedAvatar = currentPreset?.covAvatars?.find { it.id == currentAvatarId }
-
-                if (selectedAvatar != null) {
-                    // Show selected avatar name
-                    tvAvatarDetail.text = selectedAvatar.name
-                    // Show avatar image (can load real image here, currently using default icon)
-                    ivAvatar.visibility = View.VISIBLE
-                    // TODO: Can use Glide or other image loading library to load selectedAvatar.avatarThumbnail
-                    ivAvatar.setImageResource(R.drawable.default_room_bg)
-                } else {
-                    // Can't find corresponding avatar data, show default state
-                    tvAvatarDetail.text = getString(R.string.common_close)
-                    ivAvatar.visibility = View.GONE
-                }
+            val selectedAvatar = CovAgentManager.avatar
+            if (selectedAvatar != null) {
+                // Show selected avatar name
+                tvAvatarDetail.text = selectedAvatar.avatar_name
+                // Show avatar image (can load real image here, currently using default icon)
+                ivAvatar.visibility = View.VISIBLE
+                // Load avatar image with Glide
+                GlideImageLoader.load(
+                    ivAvatar,
+                    selectedAvatar.avatar_url,
+                    io.agora.scene.convoai.R.drawable.cov_default_avatar,
+                    io.agora.scene.convoai.R.drawable.cov_default_avatar
+                )
             } else {
                 // Avatar function closed, show closed state
                 tvAvatarDetail.text = getString(R.string.common_close)

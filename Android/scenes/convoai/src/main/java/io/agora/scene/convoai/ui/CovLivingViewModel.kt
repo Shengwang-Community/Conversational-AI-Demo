@@ -32,6 +32,7 @@ import org.json.JSONObject
 import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import io.agora.scene.convoai.api.CovAvatar
 
 /**
  * view model
@@ -46,6 +47,9 @@ class CovLivingViewModel : ViewModel() {
 
     private val _isLocalAudioMuted = MutableStateFlow(false)
     val isLocalAudioMuted: StateFlow<Boolean> = _isLocalAudioMuted.asStateFlow()
+
+    private val _isLocalVideoMuted = MutableStateFlow(true)
+    val isLocalVideoMuted: StateFlow<Boolean> = _isLocalVideoMuted.asStateFlow()
 
     private val _isShowMessageList = MutableStateFlow(false)
     val isShowMessageList: StateFlow<Boolean> = _isShowMessageList.asStateFlow()
@@ -69,6 +73,19 @@ class CovLivingViewModel : ViewModel() {
     // Transcription state
     private val _transcriptionUpdate = MutableStateFlow<Transcription?>(null)
     val transcriptionUpdate: StateFlow<Transcription?> = _transcriptionUpdate.asStateFlow()
+
+    private val _isAvatarJoinedRtc = MutableStateFlow(false)
+    val isAvatarJoinedRtc: StateFlow<Boolean> = _isAvatarJoinedRtc.asStateFlow()
+
+    private val _avatarFirstRemoteVideoFrame = MutableStateFlow(false)
+    val avatarFirstRemoteVideoFrame: StateFlow<Boolean> = _avatarFirstRemoteVideoFrame.asStateFlow()
+
+    private val _avatar = MutableStateFlow<CovAvatar?>(null)
+    val avatar: StateFlow<CovAvatar?> = _avatar.asStateFlow()
+
+    fun setAvatar(avatar: CovAvatar?) {
+        _avatar.value = avatar
+    }
 
     // Business states
     private var integratedToken: String? = null
@@ -234,6 +251,13 @@ class CovLivingViewModel : ViewModel() {
         CovRtcManager.muteLocalAudio(muted)
     }
 
+    // Toggle camera state
+    fun toggleCamera() {
+        val newMutedState = !_isLocalVideoMuted.value
+        _isLocalVideoMuted.value = newMutedState
+        CovRtcManager.muteLocalVideo(newMutedState)
+    }
+
     // Toggle message list display
     fun toggleMessageList() {
         _isShowMessageList.value = !_isShowMessageList.value
@@ -299,23 +323,30 @@ class CovLivingViewModel : ViewModel() {
                     CovLogger.d(TAG, "RTC Leave channel")
                     _networkQuality.value = -1
                     _isUserJoinedRtc.value = false
+                    _isAgentJoinedRtc.value = false
+                    _isAvatarJoinedRtc.value = false
                 }
             }
 
             override fun onUserJoined(uid: Int, elapsed: Int) {
-                if (uid == CovAgentManager.agentUID) {
-                    viewModelScope.launch(Dispatchers.Main) {
+                viewModelScope.launch(Dispatchers.Main) {
+                    if (uid == CovAgentManager.agentUID) {
+                        CovLogger.d(TAG, "RTC onUserJoined agentUid:$uid")
                         _connectionState.value = AgentConnectionState.CONNECTED
                         _ballAnimState.value = BallAnimState.LISTENING
                         _isAgentJoinedRtc.value = true
                         startPingTask()
+                    } else if (uid == CovAgentManager.avatarUID) {
+                        CovLogger.d(TAG, "RTC onUserJoined avatarUid:$uid")
+                        _isAvatarJoinedRtc.value = true
                     }
                 }
             }
 
             override fun onUserOffline(uid: Int, reason: Int) {
-                if (uid == CovAgentManager.agentUID) {
-                    viewModelScope.launch(Dispatchers.Main) {
+                viewModelScope.launch(Dispatchers.Main) {
+                    if (uid == CovAgentManager.agentUID) {
+                        CovLogger.d(TAG, "RTC onUserOffline agentUid:$uid")
                         _ballAnimState.value = BallAnimState.STATIC
                         _isAgentJoinedRtc.value = false
                         if (reason == Constants.USER_OFFLINE_QUIT) {
@@ -323,6 +354,18 @@ class CovLivingViewModel : ViewModel() {
                         } else {
                             _connectionState.value = AgentConnectionState.ERROR
                         }
+                    } else if (uid == CovAgentManager.avatarUID) {
+                        CovLogger.d(TAG, "RTC onUserOffline avatarUid:$uid")
+                        _isAvatarJoinedRtc.value = false
+                    }
+                }
+            }
+
+            override fun onFirstRemoteVideoFrame(uid: Int, width: Int, height: Int, elapsed: Int) {
+                viewModelScope.launch(Dispatchers.Main) {
+                    if (uid == CovAgentManager.avatarUID) {
+                        CovLogger.d(TAG, "RTC onFirstRemoteVideoFrame avatarUid:$uid")
+                        _avatarFirstRemoteVideoFrame.value = true
                     }
                 }
             }
@@ -448,56 +491,12 @@ class CovLivingViewModel : ViewModel() {
     suspend fun fetchPresetsAsync(): Boolean = suspendCoroutine { cont ->
         CovAgentApiManager.fetchPresets { err, presets ->
             if (err == null && presets != null) {
-                // Add smoke data for avatars
-                val presetsWithAvatars = presets.map { preset ->
-                    preset.copy(
-                        covAvatars = generateSmokeAvatarData()
-                    )
-                }
-                CovAgentManager.setPresetList(presetsWithAvatars)
+                CovAgentManager.setPresetList(presets)
                 cont.resume(true)
             } else {
                 cont.resume(false)
             }
         }
-    }
-
-    /**
-     * Generate smoke data for avatar testing
-     */
-    private fun generateSmokeAvatarData(): List<io.agora.scene.convoai.api.CovAvatar> {
-        return listOf(
-            io.agora.scene.convoai.api.CovAvatar(
-                id = "sahara",
-                name = "Sahara",
-                avatarThumbnail = "https://example.com/sahara_thumb.jpg",
-                avatarUrl = "https://example.com/sahara.jpg"
-            ),
-            io.agora.scene.convoai.api.CovAvatar(
-                id = "alice",
-                name = "Alice",
-                avatarThumbnail = "https://example.com/alice_thumb.jpg",
-                avatarUrl = "https://example.com/alice.jpg"
-            ),
-            io.agora.scene.convoai.api.CovAvatar(
-                id = "bob",
-                name = "Bob",
-                avatarThumbnail = "https://example.com/bob_thumb.jpg",
-                avatarUrl = "https://example.com/bob.jpg"
-            ),
-            io.agora.scene.convoai.api.CovAvatar(
-                id = "luna",
-                name = "Luna",
-                avatarThumbnail = "https://example.com/luna_thumb.jpg",
-                avatarUrl = "https://example.com/luna.jpg"
-            ),
-            io.agora.scene.convoai.api.CovAvatar(
-                id = "david",
-                name = "David",
-                avatarThumbnail = "https://example.com/david_thumb.jpg",
-                avatarUrl = "https://example.com/david.jpg"
-            )
-        )
     }
 
     suspend fun fetchIotPresetsAsync(): Boolean = suspendCoroutine { cont ->
@@ -607,6 +606,7 @@ class CovLivingViewModel : ViewModel() {
         _networkQuality.value = -1
         _isUserJoinedRtc.value = false
         _isAgentJoinedRtc.value = false
+        _isAvatarJoinedRtc.value = false
         _transcriptionUpdate.value = null
     }
 
@@ -672,6 +672,7 @@ class CovLivingViewModel : ViewModel() {
                         io.agora.scene.common.BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() }
                     },
                 ),
+                "avatar" to buildAvatarMap(),
                 "vad" to mapOf(
                     "interrupt_duration_ms" to null,
                     "prefix_padding_ms" to null,
@@ -688,7 +689,7 @@ class CovLivingViewModel : ViewModel() {
                     "audio_scenario" to null,
                     "transcript" to mapOf(
                         "enable" to true,
-                        "enable_words" to true,
+                        "enable_words" to !CovAgentManager.isEnableAvatar(),
                         "protocol_version" to "v2",
                         "redundant" to null,
                     ),
@@ -701,6 +702,38 @@ class CovLivingViewModel : ViewModel() {
                 )
             )
         )
+    }
+
+    private fun buildAvatarMap(): Map<String, Any?>? {
+        var avatarMap: Map<String, Any?>? = null
+        if (io.agora.scene.common.BuildConfig.AVATAR_VENDOR.isNotEmpty()) {
+            avatarMap = mapOf(
+                "enable" to true,
+                "vendor" to io.agora.scene.common.BuildConfig.AVATAR_VENDOR.takeIf { it.isNotEmpty() },
+                "params" to try {
+                    io.agora.scene.common.BuildConfig.AVATAR_PARAMS.takeIf { it.isNotEmpty() }?.let {
+                        JSONObject(it)
+                    }
+                } catch (e: Exception) {
+                    CovLogger.e(TAG, "Failed to parse AVATAR params as JSON: ${e.message}")
+                    io.agora.scene.common.BuildConfig.AVATAR_PARAMS.takeIf { it.isNotEmpty() }
+                },
+            )
+        } else {
+            val avatar = CovAgentManager.avatar
+            avatarMap = if (avatar != null) {
+                mapOf(
+                    "enable" to true,
+                    "params" to mapOf(
+                        "agora_uid" to CovAgentManager.avatarUID.toString(),
+                        "avatar_id" to avatar.avatar_id
+                    )
+                )
+            } else {
+                null
+            }
+        }
+        return avatarMap
     }
 
     override fun onCleared() {
