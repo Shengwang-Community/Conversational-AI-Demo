@@ -315,6 +315,11 @@ class CovLivingViewModel : ViewModel() {
                     CovLogger.d(TAG, "RTC Join channel success: $uid")
                     _networkQuality.value = 1
                     _isUserJoinedRtc.value = true
+                    if (CovAgentManager.isEnableAvatar()) {
+                        CovRtcManager.muteRemoteAudio(true, CovAgentManager.agentUID)
+                    } else {
+                        CovRtcManager.muteRemoteAudio(false, CovAgentManager.agentUID)
+                    }
                 }
             }
 
@@ -332,13 +337,30 @@ class CovLivingViewModel : ViewModel() {
                 viewModelScope.launch(Dispatchers.Main) {
                     if (uid == CovAgentManager.agentUID) {
                         CovLogger.d(TAG, "RTC onUserJoined agentUid:$uid")
-                        _connectionState.value = AgentConnectionState.CONNECTED
-                        _ballAnimState.value = BallAnimState.LISTENING
                         _isAgentJoinedRtc.value = true
-                        startPingTask()
                     } else if (uid == CovAgentManager.avatarUID) {
                         CovLogger.d(TAG, "RTC onUserJoined avatarUid:$uid")
                         _isAvatarJoinedRtc.value = true
+                    }
+                    checkAndSetConnected()
+                }
+            }
+
+            private fun checkAndSetConnected() {
+                val enableAvatar = CovAgentManager.isEnableAvatar()
+                if (enableAvatar) {
+                    if (_isAgentJoinedRtc.value && _isAvatarJoinedRtc.value) {
+                        _connectionState.value = AgentConnectionState.CONNECTED
+                        _ballAnimState.value = BallAnimState.LISTENING
+                        CovLogger.d(TAG, "RTC checkAndSetConnected")
+                        startPingTask()
+                    }
+                } else {
+                    if (_isAgentJoinedRtc.value) {
+                        _connectionState.value = AgentConnectionState.CONNECTED
+                        _ballAnimState.value = BallAnimState.LISTENING
+                        CovLogger.d(TAG, "RTC checkAndSetConnected")
+                        startPingTask()
                     }
                 }
             }
@@ -347,16 +369,37 @@ class CovLivingViewModel : ViewModel() {
                 viewModelScope.launch(Dispatchers.Main) {
                     if (uid == CovAgentManager.agentUID) {
                         CovLogger.d(TAG, "RTC onUserOffline agentUid:$uid")
-                        _ballAnimState.value = BallAnimState.STATIC
                         _isAgentJoinedRtc.value = false
-                        if (reason == Constants.USER_OFFLINE_QUIT) {
-                            _connectionState.value = AgentConnectionState.IDLE
-                        } else {
-                            _connectionState.value = AgentConnectionState.ERROR
-                        }
                     } else if (uid == CovAgentManager.avatarUID) {
                         CovLogger.d(TAG, "RTC onUserOffline avatarUid:$uid")
                         _isAvatarJoinedRtc.value = false
+                    }
+                    checkAndSetDisconnected(reason)
+                }
+            }
+
+            private fun checkAndSetDisconnected(reason: Int) {
+                val enableAvatar = CovAgentManager.isEnableAvatar()
+                if (enableAvatar) {
+                    // Only set to IDLE/ERROR if both agent and avatar are offline
+                    if (!_isAgentJoinedRtc.value && !_isAvatarJoinedRtc.value) {
+                        _ballAnimState.value = BallAnimState.STATIC
+                        _connectionState.value = if (reason == Constants.USER_OFFLINE_QUIT) {
+                            AgentConnectionState.IDLE
+                        } else {
+                            AgentConnectionState.ERROR
+                        }
+                        CovLogger.d(TAG, "RTC checkAndSetDisconnected")
+                    }
+                } else {
+                    if (!_isAgentJoinedRtc.value) {
+                        _ballAnimState.value = BallAnimState.STATIC
+                        _connectionState.value = if (reason == Constants.USER_OFFLINE_QUIT) {
+                            AgentConnectionState.IDLE
+                        } else {
+                            AgentConnectionState.ERROR
+                        }
+                        CovLogger.d(TAG, "RTC checkAndSetDisconnected")
                     }
                 }
             }

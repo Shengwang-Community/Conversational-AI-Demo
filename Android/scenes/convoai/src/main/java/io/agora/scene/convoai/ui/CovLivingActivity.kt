@@ -83,6 +83,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     private var mCovBallAnim: CovBallAnim? = null
     private var isSelfSubRender = false
     private var selfRenderController: SelfSubRenderController? = null
+    private var hasShownTitleAnim = false
 
     override fun getViewBinding(): CovActivityLivingBinding = CovActivityLivingBinding.inflate(layoutInflater)
 
@@ -283,7 +284,33 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
                     AgentConnectionState.CONNECTED -> {
                         persistentToast(false, "")
-                        enableNotifications()
+                        if (!hasShownTitleAnim) {
+                            hasShownTitleAnim = true
+                            ToastUtil.show(R.string.cov_detail_join_call_succeed)
+                            ToastUtil.showByPosition(
+                                R.string.cov_detail_join_call_tips,
+                                gravity = Gravity.BOTTOM,
+                                duration = Toast.LENGTH_LONG
+                            )
+                            mBinding?.clTop?.showTitleAnim(
+                                DebugConfigSettings.isSessionLimitMode,
+                                CovAgentManager.roomExpireTime,
+                                tipsText = if (DebugConfigSettings.isSessionLimitMode)
+                                    getString(
+                                        io.agora.scene.common.R.string.common_limit_time,
+                                        (CovAgentManager.roomExpireTime / 60).toInt()
+                                    )
+                                else
+                                    getString(io.agora.scene.common.R.string.common_limit_time_none)
+                            )
+                            mBinding?.clTop?.startCountDownTask(
+                                DebugConfigSettings.isSessionLimitMode,
+                                CovAgentManager.roomExpireTime,
+                                onTimerEnd = {
+                                    showRoomEndDialog()
+                                }
+                            )
+                        }
                     }
 
                     AgentConnectionState.CONNECTED_INTERRUPT -> {
@@ -334,43 +361,13 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         lifecycleScope.launch {  // Observe user RTC join state
             viewModel.isUserJoinedRtc.collect { joined ->
                 if (joined) {
-                    if (CovAgentManager.isEnableAvatar()) {
-                        CovRtcManager.muteRemoteAudio(true, CovAgentManager.agentUID)
-                    } else {
-                        CovRtcManager.muteRemoteAudio(false, CovAgentManager.agentUID)
-                    }
                     enableNotifications()
                 }
             }
         }
         lifecycleScope.launch {   // Observe agent RTC join state
             viewModel.isAgentJoinedRtc.collect { joined ->
-                if (joined) {
-                    ToastUtil.show(R.string.cov_detail_join_call_succeed)
-                    ToastUtil.showByPosition(
-                        R.string.cov_detail_join_call_tips,
-                        gravity = Gravity.BOTTOM,
-                        duration = Toast.LENGTH_LONG
-                    )
-                    mBinding?.clTop?.showTitleAnim(
-                        DebugConfigSettings.isSessionLimitMode,
-                        CovAgentManager.roomExpireTime,
-                        tipsText = if (DebugConfigSettings.isSessionLimitMode)
-                            getString(
-                                io.agora.scene.common.R.string.common_limit_time,
-                                (CovAgentManager.roomExpireTime / 60).toInt()
-                            )
-                        else
-                            getString(io.agora.scene.common.R.string.common_limit_time_none)
-                    )
-                    mBinding?.clTop?.startCountDownTask(
-                        DebugConfigSettings.isSessionLimitMode,
-                        CovAgentManager.roomExpireTime,
-                        onTimerEnd = {
-                            showRoomEndDialog()
-                        }
-                    )
-                }
+                // TODO:
             }
         }
         lifecycleScope.launch {
@@ -408,6 +405,9 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     if (avatar == null) {
                         clAnimationContent.isVisible = true
                         clAvatarContent.isVisible = false
+
+                        videoView.isVisible = true
+                        setupBallAnimView()
                     } else {
                         clAnimationContent.isVisible = false
                         clAvatarContent.isVisible = true
@@ -418,6 +418,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                             R.drawable.cov_default_avatar,
                             R.drawable.cov_default_avatar
                         )
+                        videoView.isVisible = false
+
+                        mCovBallAnim?.let {
+                            it.release()
+                            mCovBallAnim = null
+                        }
                     }
                 }
             }
@@ -434,6 +440,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     private fun onClickStartAgent() {
+        hasShownTitleAnim = false
         // Set render mode
         isSelfSubRender = CovAgentManager.getPreset()?.isIndependent() == true
 
