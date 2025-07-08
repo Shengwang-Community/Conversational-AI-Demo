@@ -48,12 +48,14 @@ object CovRtcManager {
     // create media player
     fun createMediaPlayer(): IMediaPlayer {
         try {
-            mediaPlayer = rtcEngine?.createMediaPlayer()!!
+            mediaPlayer = rtcEngine?.createMediaPlayer()
         } catch (e: Exception) {
             CovLogger.e(TAG, "createMediaPlayer error: $e")
         }
         return mediaPlayer!!
     }
+
+    private val channelOptions = ChannelMediaOptions()
 
     // join rtc channel
     fun joinChannel(rtcToken: String, channelName: String, uid: Int) {
@@ -67,13 +69,14 @@ object CovRtcManager {
         rtcEngine?.setParameters("{\"che.audio.enable.predump\":{\"enable\":\"true\",\"duration\":\"60\"}}")
 
         // join rtc channel
-        val options = ChannelMediaOptions()
-        options.clientRoleType = CLIENT_ROLE_BROADCASTER
-        options.publishMicrophoneTrack = true
-        options.publishCameraTrack = false
-        options.autoSubscribeAudio = true
-        options.autoSubscribeVideo = true
-        val ret = rtcEngine?.joinChannel(rtcToken, channelName, uid, options)
+        channelOptions.apply {
+            clientRoleType = CLIENT_ROLE_BROADCASTER
+            publishMicrophoneTrack = true
+            publishCameraTrack = false
+            autoSubscribeAudio = true
+            autoSubscribeVideo = true
+        }
+        val ret = rtcEngine?.joinChannel(rtcToken, channelName, uid, channelOptions)
         CovLogger.d(TAG, "Joining RTC channel: $channelName, uid: $uid")
         if (ret == ERR_OK) {
             CovLogger.d(TAG, "Join RTC room success")
@@ -112,9 +115,25 @@ object CovRtcManager {
         rtcEngine?.muteRemoteAudioStream(rtcUid, mute)
     }
 
+    // setup local video
+    fun setupLocalVideo(videoCanvas: VideoCanvas) {
+        rtcEngine?.setupLocalVideo(videoCanvas)
+    }
+
     // setup remote video
-    fun setupRemoteVideo(videoCanvas: VideoCanvas){
+    fun setupRemoteVideo(videoCanvas: VideoCanvas) {
         rtcEngine?.setupRemoteVideo(videoCanvas)
+    }
+
+    // publish camera track
+    fun publishCameraTrack(publish: Boolean) {
+        channelOptions.publishCameraTrack = publish
+        rtcEngine?.updateChannelMediaOptions(channelOptions)
+    }
+
+    // switch camera
+    fun switchCamera() {
+        rtcEngine?.switchCamera()
     }
 
     fun onAudioDump(enable: Boolean) {

@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="42dp"
     android:background="@android:color/transparent"
-    app:layout_constraintTop_toTopOf="parent">
+    app:layout_constraintTop_toTopOf="parent"
+    tools:background="@color/ai_fill2">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cl_top"
@@ -40,13 +41,27 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:tint="@color/ai_icontext1"
+            tools:visibility="invisible" />
+
+        <ImageButton
+            android:id="@+id/btn_switch_camera"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/cov_capsule_bg"
+            android:src="@drawable/scene_detail_switch_camera"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/ai_icontext1"
             tools:visibility="visible" />
 
         <TextView
             android:id="@+id/tv_cc"
             android:layout_width="wrap_content"
             android:layout_height="32dp"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="50dp"
             android:background="@drawable/cov_capsule_bg"
             android:drawableStart="@drawable/scene_detail_top_captions"
             android:drawablePadding="4dp"
@@ -56,9 +71,9 @@
             android:textColor="@color/ai_brand_white10"
             android:textSize="12sp"
             android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="@id/btn_add_pic"
-            app:layout_constraintStart_toEndOf="@+id/btn_add_pic"
-            app:layout_constraintTop_toTopOf="@+id/btn_add_pic"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             tools:visibility="visible" />
 
         <ViewFlipper

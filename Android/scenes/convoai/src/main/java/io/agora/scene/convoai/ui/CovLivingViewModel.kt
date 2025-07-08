@@ -33,6 +33,8 @@ import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import io.agora.scene.convoai.api.CovAvatar
+import org.json.JSONArray
+import java.util.Arrays
 
 /**
  * view model
@@ -48,8 +50,8 @@ class CovLivingViewModel : ViewModel() {
     private val _isLocalAudioMuted = MutableStateFlow(false)
     val isLocalAudioMuted: StateFlow<Boolean> = _isLocalAudioMuted.asStateFlow()
 
-    private val _isLocalVideoMuted = MutableStateFlow(true)
-    val isLocalVideoMuted: StateFlow<Boolean> = _isLocalVideoMuted.asStateFlow()
+    private val _isPublishVideo = MutableStateFlow(false)
+    val isPublishVideo: StateFlow<Boolean> = _isPublishVideo.asStateFlow()
 
     private val _isShowMessageList = MutableStateFlow(false)
     val isShowMessageList: StateFlow<Boolean> = _isShowMessageList.asStateFlow()
@@ -253,15 +255,21 @@ class CovLivingViewModel : ViewModel() {
 
     // Toggle camera state
     fun toggleCamera() {
-        val newMutedState = !_isLocalVideoMuted.value
-        _isLocalVideoMuted.value = newMutedState
-        CovRtcManager.muteLocalVideo(newMutedState)
+        val newPublishState = !_isPublishVideo.value
+        _isPublishVideo.value = newPublishState
+        CovRtcManager.publishCameraTrack(newPublishState)
     }
 
     // Toggle message list display
     fun toggleMessageList() {
         _isShowMessageList.value = !_isShowMessageList.value
     }
+
+    // Switch camera
+    fun switchCamera() {
+        CovRtcManager.switchCamera()
+    }
+
 
     // Send chat message (for debugging)
     fun sendChatMessage(message: String? = null) {
@@ -330,6 +338,8 @@ class CovLivingViewModel : ViewModel() {
                     _isUserJoinedRtc.value = false
                     _isAgentJoinedRtc.value = false
                     _isAvatarJoinedRtc.value = false
+                    _isLocalAudioMuted.value = false
+                    _isPublishVideo.value = false
                 }
             }
 
@@ -645,6 +655,7 @@ class CovLivingViewModel : ViewModel() {
     private fun resetState() {
         _isShowMessageList.value = false
         _isLocalAudioMuted.value = false
+        _isPublishVideo.value = false
         _ballAnimState.value = BallAnimState.STATIC
         _networkQuality.value = -1
         _isUserJoinedRtc.value = false
@@ -700,7 +711,7 @@ class CovLivingViewModel : ViewModel() {
                     "style" to null,
                     "max_history" to null,
                     "ignore_empty" to null,
-                    "input_modalities" to null,
+                    "input_modalities" to listOf("text", "image"),
                     "output_modalities" to null,
                     "failure_message" to null,
                 ),

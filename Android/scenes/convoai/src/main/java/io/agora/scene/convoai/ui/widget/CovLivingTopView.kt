@@ -3,7 +3,6 @@ package io.agora.scene.convoai.ui.widget
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import io.agora.rtc2.Constants
 import io.agora.scene.convoai.databinding.CovActivityLivingTopBinding
@@ -15,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import io.agora.scene.convoai.constant.AgentConnectionState
 import android.view.animation.Animation
+import androidx.core.view.isVisible
 
 /**
  * Top bar view for living activity, encapsulating info/settings/net buttons, ViewFlipper switching, and timer logic.
@@ -33,6 +33,7 @@ class CovLivingTopView @JvmOverloads constructor(
     private var onIvTopClick: (() -> Unit)? = null
     private var onCCClick: (() -> Unit)? = null
     private var onAddPicClick: (() -> Unit)? = null
+    private var onSwitchCameraClick: (() -> Unit)? = null
 
     private var isTitleAnimRunning = false
     private var connectionState: (() -> AgentConnectionState)? = null
@@ -41,6 +42,7 @@ class CovLivingTopView @JvmOverloads constructor(
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
     private var onTimerEnd: (() -> Unit)? = null
     private var isLogin: Boolean = false
+    private var isPublishCamera: Boolean = false
 
     init {
         binding.btnInfo.setOnClickListener { onInfoClick?.invoke() }
@@ -48,21 +50,24 @@ class CovLivingTopView @JvmOverloads constructor(
         binding.ivTop.setOnClickListener { onIvTopClick?.invoke() }
         binding.btnAddPic.setOnClickListener { onAddPicClick?.invoke() }
         binding.tvCc.setOnClickListener { onCCClick?.invoke() }
+        binding.btnSwitchCamera.setOnClickListener { onSwitchCameraClick?.invoke() }
 
         // Set animation listener to show tv_cc only after ll_timer is fully displayed
         binding.viewFlipper.inAnimation?.setAnimationListener(object : Animation.AnimationListener {
             override fun onAnimationStart(animation: Animation?) {
                 // Always hide tv_cc at the start of any animation
-                binding.tvCc.visibility = View.GONE
+                binding.tvCc.isVisible = false
             }
+
             override fun onAnimationEnd(animation: Animation?) {
                 // Only show tv_cc if ll_timer is now fully displayed
                 if (binding.viewFlipper.displayedChild == 2) {
-                    binding.tvCc.visibility = View.VISIBLE
+                    binding.tvCc.isVisible = true
                 } else {
-                    binding.tvCc.visibility = View.GONE
+                    binding.tvCc.isVisible = false
                 }
             }
+
             override fun onAnimationRepeat(animation: Animation?) {}
         })
     }
@@ -103,13 +108,28 @@ class CovLivingTopView @JvmOverloads constructor(
     }
 
     /**
+     * Set callback for switch camera click
+     */
+    fun setOnSwitchCameraClickListener(listener: (() -> Unit)?) {
+        onSwitchCameraClick = listener
+    }
+
+    /**
+     * Set publish camera status
+     */
+    fun updatePublishCameraStatus(publishCamera: Boolean) {
+        isPublishCamera = publishCamera
+    }
+
+    /**
      * Update network status icon and visibility based on quality value.
      */
     fun updateNetworkStatus(value: Int) {
         when (value) {
             -1 -> {
-                binding.btnNet.visibility = View.GONE
+                binding.btnNet.isVisible = false
             }
+
             Constants.QUALITY_VBAD, Constants.QUALITY_DOWN -> {
                 val currentState = connectionState?.invoke() ?: AgentConnectionState.IDLE
                 if (currentState == AgentConnectionState.CONNECTED_INTERRUPT) {
@@ -117,15 +137,17 @@ class CovLivingTopView @JvmOverloads constructor(
                 } else {
                     binding.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_poor)
                 }
-                binding.btnNet.visibility = View.VISIBLE
+                binding.btnNet.isVisible = true
             }
+
             Constants.QUALITY_POOR, Constants.QUALITY_BAD -> {
                 binding.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_okay)
-                binding.btnNet.visibility = View.VISIBLE
+                binding.btnNet.isVisible = true
             }
+
             else -> {
                 binding.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_good)
-                binding.btnNet.visibility = View.VISIBLE
+                binding.btnNet.isVisible = true
             }
         }
         // TODO:  
@@ -133,15 +155,24 @@ class CovLivingTopView @JvmOverloads constructor(
         val state = connectionState?.invoke() ?: AgentConnectionState.IDLE
         if (isLogin) {
             if (state == AgentConnectionState.IDLE) {
-                binding.btnInfo.visibility = View.VISIBLE
-                binding.btnAddPic.visibility = View.GONE
+                binding.btnInfo.isVisible = true
+                binding.btnAddPic.isVisible = false
+                binding.btnSwitchCamera.isVisible = false
+                binding.tvCc.isVisible = false
             } else {
-                binding.btnInfo.visibility = View.GONE
-                binding.btnAddPic.visibility = View.VISIBLE
+                binding.btnInfo.isVisible = false
+                if (isPublishCamera) {
+                    binding.btnSwitchCamera.isVisible = true
+                    binding.btnAddPic.isVisible = false
+                } else {
+                    binding.btnSwitchCamera.isVisible = false
+                    binding.btnAddPic.isVisible = true
+                }
             }
         } else {
-            binding.btnInfo.visibility = View.INVISIBLE
-            binding.btnAddPic.visibility = View.GONE
+            binding.btnInfo.isVisible = false
+            binding.btnAddPic.isVisible = false
+            binding.btnSwitchCamera.isVisible = false
         }
     }
 
@@ -152,11 +183,13 @@ class CovLivingTopView @JvmOverloads constructor(
         this.isLogin = isLogin
         binding.apply {
             if (isLogin) {
-                btnSettings.visibility = View.VISIBLE
-                btnInfo.visibility = View.VISIBLE
+                btnSettings.isVisible = true
+                btnInfo.isVisible = true
             } else {
-                btnSettings.visibility = View.INVISIBLE
-                btnInfo.visibility = View.INVISIBLE
+                btnSettings.isVisible = false
+                btnInfo.isVisible = false
+                binding.btnAddPic.isVisible = false
+                binding.btnSwitchCamera.isVisible = false
             }
         }
     }
