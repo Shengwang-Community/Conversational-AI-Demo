@@ -9,10 +9,12 @@ import UIKit
 import Common
 
 public class ChatViewController: UIViewController {
-    internal var remoteIsJoined = false
+    internal var agentIsJoined = false
+    internal var avatarIsJoined = false
     internal var channelName = ""
     internal var token = ""
     internal var agentUid = 0
+    internal var avatarUid = 0
     internal var remoteAgentId = ""
     internal let uid = "\(RtcEnum.getUid())"
     internal var convoAIAPI: ConversationalAIAPI!

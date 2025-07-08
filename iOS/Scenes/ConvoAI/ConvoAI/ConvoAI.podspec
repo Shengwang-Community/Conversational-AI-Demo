@@ -50,5 +50,6 @@ TODO: Add long description of the pod here.
   s.dependency 'BLEManager'
   s.dependency 'IoT'
   s.dependency 'AgoraRtm'
+  s.dependency 'AlamofireImage'
 
 end

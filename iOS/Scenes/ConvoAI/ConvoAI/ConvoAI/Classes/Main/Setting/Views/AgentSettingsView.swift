@@ -58,9 +58,15 @@ class AgentSettingsView: UIView {
     private lazy var digitalHumanItem: AgentSettingTableItemView = {
         let view = AgentSettingTableItemView(frame: .zero)
         view.titleLabel.text = ResourceManager.L10n.Settings.digitalHuman
-        view.detailLabel.text = ResourceManager.L10n.Settings.digitalHumanClosed
         view.button.addTarget(self, action: #selector(onClickDigitalHuman(_:)), for: .touchUpInside)
         view.bottomLine.isHidden = true
+        if let manager = AppContext.preferenceManager() {
+            if let currentAvatar = manager.preference.avatar {
+                view.detailLabel.text = currentAvatar.avatarName
+            } else {
+                view.detailLabel.text = ResourceManager.L10n.Settings.digitalHumanClosed
+            }
+        }
         
         // Add avatar image
         let avatarImageView = UIImageView()
@@ -246,6 +252,14 @@ class AgentSettingsView: UIView {
     
     func updateAiVadState(_ state: Bool) {
         aiVadItem.setOn(state)
+    }
+    
+    func updateAvatar(_ avatar: Avatar?) {
+        if let avatar = avatar {
+            digitalHumanItem.detailLabel.text = avatar.avatarName
+        } else {
+            digitalHumanItem.detailLabel.text = ResourceManager.L10n.Settings.digitalHumanClosed
+        }
     }
     
     func updateAgentState(_ agentState: ConnectionStatus) {

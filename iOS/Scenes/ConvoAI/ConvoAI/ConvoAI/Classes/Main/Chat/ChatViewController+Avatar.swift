@@ -6,16 +6,25 @@
 //
 
 import Foundation
+import AgoraRtcKit
 import Common
 
 extension ChatViewController {
-    internal func openDigitalHuman() {
+    internal func startAvatar() {
         digitalHumanContainerView.isHidden = false
         animateContentView.isHidden = true
+        
+        startRenderRemoteVideoStream(renderView: digitalHumanContainerView)
     }
     
-    internal func closeDigitalHuman() {
+    internal func stopAvatar() {
         digitalHumanContainerView.isHidden = true
         animateContentView.isHidden = false
+        
+        stopRenderRemoteViewStream()
+    }
+    
+    internal func avatarIsSelected() -> Bool {
+        return AppContext.preferenceManager()?.preference.avatar != nil
     }
 }

@@ -7,6 +7,7 @@
 
 import UIKit
 import Common
+import AlamofireImage
 
 class DigitalHumanCell: UICollectionViewCell {
     static let identifier = "DigitalHumanCell"
@@ -156,10 +157,9 @@ class DigitalHumanCell: UICollectionViewCell {
         self.digitalHuman = digitalHuman
         
         // Set name
-        nameLabel.text = digitalHuman.name
-        
+        nameLabel.text = digitalHuman.avatar.avatarName
         // Configure avatar or disabled state
-        if digitalHuman.id == "close" {
+        if digitalHuman.avatar.avatarId == "close" {
             // Close option - show disabled icon with dark background
             avatarImageView.image = nil
             avatarImageView.backgroundColor = UIColor.systemGray4
@@ -169,7 +169,11 @@ class DigitalHumanCell: UICollectionViewCell {
             // Normal digital human - show avatar
             avatarImageView.backgroundColor = UIColor.clear
             closeStackView.isHidden = true
-            avatarImageView.image = UIImage.ag_named(digitalHuman.avatarImage)
+            if let url = URL(string: digitalHuman.avatar.avatarUrl) {
+                avatarImageView.af.setImage(withURL: url)
+            } else {
+                avatarImageView.image = nil
+            }
             nameBackgroundView.isHidden = false
         }
         
@@ -184,7 +188,7 @@ class DigitalHumanCell: UICollectionViewCell {
             // Selected state
             containerButton.layer.borderColor = UIColor.themColor(named: "ai_brand_main6").cgColor
             selectionIndicatorView.image = UIImage.ag_named("ic_digital_human_circle_s")
-            if digitalHuman.id == "close" {
+            if digitalHuman.avatar.avatarId == "close" {
                 disabledIconView.image = UIImage.ag_named("ic_digital_human_close_s")
                 closeTitle.textColor = UIColor.themColor(named: "ai_brand_main6")
             }

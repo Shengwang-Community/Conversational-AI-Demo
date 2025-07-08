@@ -63,29 +63,55 @@ extension ChatViewController: AgoraRtcEngineDelegate {
     }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, didJoinedOfUid uid: UInt, elapsed: Int) {
-        annotationView.dismiss()
-        remoteIsJoined = true
-        timerCoordinator.stopJoinChannelTimer()
-        timerCoordinator.startUsageDurationLimitTimer()
         addLog("[RTC Call Back] didJoinedOfUid uid: \(uid)")
-        AppContext.preferenceManager()?.updateAgentState(.connected)
-        if !isSelfSubRender {
-            agentStateView.isHidden = false
+        let avatarState = avatarIsSelected()
+        if uid == agentUid {
+            agentIsJoined = true
+            addLog("agent did joined: \(uid)")
         }
-        SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.agentJoined)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.userSpeakToast)
+        if uid == avatarUid {
+            avatarIsJoined = true
+            addLog("avatar did joined: \(uid)")
+        }
+        
+        var remoteIsJoined = agentIsJoined
+        if avatarState {
+            remoteIsJoined = agentIsJoined && avatarIsJoined
+        }
+        
+        if remoteIsJoined {
+            annotationView.dismiss()
+            timerCoordinator.stopJoinChannelTimer()
+            timerCoordinator.startUsageDurationLimitTimer()
+            AppContext.preferenceManager()?.updateAgentState(.connected)
+            if !isSelfSubRender {
+                agentStateView.isHidden = false
+            }
+            SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.agentJoined)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.userSpeakToast)
+            }
+        } else {
+            addLog("avatar state: \(avatarState)")
         }
     }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, didOfflineOfUid uid: UInt, reason: AgoraUserOfflineReason) {
         addLog("[RTC Call Back] didOfflineOfUid uid: \(uid)")
+        if uid == agentUid {
+            agentIsJoined = false
+        }
+        
+        if uid == avatarUid {
+            avatarIsJoined = false
+        }
+        
         animateView.updateAgentState(.idle)
         AppContext.preferenceManager()?.updateAgentState(.disconnected)
         showErrorToast(text: ResourceManager.L10n.Conversation.agentLeave)
         agentStateView.isHidden = true
-        remoteIsJoined = false
     }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, tokenPrivilegeWillExpire token: String) {
@@ -143,6 +169,41 @@ extension ChatViewController: AgoraRtcEngineDelegate {
 }
 
 extension ChatViewController {
+    internal func muteRemoteUser(uid: UInt, muted: Bool) {
+        let rtcEngine = rtcManager.getRtcEntine()
+        rtcEngine.muteRemoteAudioStream(uid, mute: muted)
+    }
+    
+    internal func enableVideo() {
+        let rtcEngine = rtcManager.getRtcEntine()
+        rtcEngine.enableVideo()
+    }
+    
+    internal func disableVideo() {
+        let rtcEngine = rtcManager.getRtcEntine()
+        rtcEngine.disableVideo()
+    }
+    
+    internal func startRenderRemoteVideoStream(renderView: UIView) {
+        let rtcEngine = rtcManager.getRtcEntine()
+        let videoCanvas = AgoraRtcVideoCanvas()
+        videoCanvas.uid = UInt(avatarUid)
+        // the view to be binded
+        videoCanvas.view = renderView
+        videoCanvas.renderMode = .hidden
+        rtcEngine.setupRemoteVideo(videoCanvas)
+    }
+    
+    internal func stopRenderRemoteViewStream() {
+        let rtcEngine = rtcManager.getRtcEntine()
+        let videoCanvas = AgoraRtcVideoCanvas()
+        videoCanvas.uid = UInt(avatarUid)
+        // the view to be binded
+        videoCanvas.view = nil
+        videoCanvas.renderMode = .hidden
+        rtcEngine.setupRemoteVideo(videoCanvas)
+    }
+    
     internal func showErrorToast(text: String) {
         annotationView.showToast(text: text)
     }
