@@ -35,6 +35,7 @@ import io.agora.scene.common.ui.SSOWebViewActivity
 import io.agora.scene.common.ui.TermsActivity
 import io.agora.scene.common.ui.vm.LoginState
 import io.agora.scene.common.ui.vm.LoginViewModel
+import io.agora.scene.common.ui.widget.TextureVideoViewOutlineProvider
 import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.common.util.PermissionHelp
 import io.agora.scene.common.util.copyToClipboard
@@ -360,13 +361,16 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 updateCameraView(isPublish)
                 visionContainer?.apply {
                     if (isPublish) {
-                        val localTextureView = TextureView(this@CovLivingActivity)
+                        isVisible = true
+                        val localTextureView = TextureView(this@CovLivingActivity).apply {
+                            outlineProvider = TextureVideoViewOutlineProvider(12.dp)
+                            setClipToOutline(true)
+                        }
                         val canvas = VideoCanvas(localTextureView)
                         canvasContainer.removeAllViews()
                         canvasContainer.addView(localTextureView)
                         CovRtcManager.setupLocalVideo(canvas)
                         ivPreview.isVisible = false
-                        isVisible = true
                     } else {
                         CovRtcManager.setupLocalVideo(VideoCanvas(null))
                         canvasContainer.removeAllViews()
@@ -414,6 +418,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             viewModel.isAvatarJoinedRtc.collect { joined ->
                 avatarContainer?.apply {
                     if (joined) {
+                        isVisible = true
                         val remoteTextureView = TextureView(this@CovLivingActivity)
                         val canvas =
                             VideoCanvas(remoteTextureView, Constants.RENDER_MODE_HIDDEN, CovAgentManager.avatarUID)
@@ -426,6 +431,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                         )
                         canvasContainer.removeAllViews()
                         ivPreview.isVisible = true
+                        isVisible = false
                     }
                 }
             }
@@ -489,13 +495,13 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     // TODO:  
     private val avatarContainer: CovDraggableView?
         get() {
-            return mBinding?.vDragWindow1
+            return mBinding?.vDragBigWindow
         }
 
     // TODO:  
     private val visionContainer: CovDraggableView?
         get() {
-            return mBinding?.vDragWindow2
+            return mBinding?.vDragSmall
         }
 
     private fun onClickStartAgent() {
@@ -605,22 +611,16 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     private fun updateMessageList(isShowMessageList: Boolean) {
         mBinding?.apply {
             if (isShowMessageList) {
-                viewMessageMask.isVisible = true
-                layoutMessage.bringToFront()
+                layoutMessage.isVisible = true
                 if (isSelfSubRender) {
                     messageListViewV1.isVisible = true
+                    messageListViewV2.isVisible = false
                 } else {
                     messageListViewV2.isVisible = true
+                    messageListViewV1.isVisible = false
                 }
             } else {
-                viewMessageMask.isVisible = false
-                if (isSelfSubRender) {
-                    messageListViewV1.isVisible = false
-                } else {
-                    messageListViewV2.isVisible = false
-                }
-                vDragWindow1.bringToFront()
-                vDragWindow2.bringToFront()
+                layoutMessage.isVisible = false
             }
         }
     }
