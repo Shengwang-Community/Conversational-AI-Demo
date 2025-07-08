@@ -24,7 +24,6 @@ extension ChatViewController: AgentControlToolbarDelegate {
     }
     
     func switchPublishVideoStream(state: Bool) {
-        //TODO: open or close publish video stream
         
     }
 }
@@ -37,6 +36,7 @@ extension ChatViewController {
         }
         stopLoading()
         stopAgent()
+        stopAvatar()
     }
     
     private func clickTheStartButton() async {

@@ -51,8 +51,12 @@ extension ChatViewController: AgentTimerCoordinatorDelegate {
             timerCoordinator.stopJoinChannelTimer()
             return
         }
-        
-        if self.remoteIsJoined {
+        let avatarState = avatarIsSelected()
+        var remoteIsJoined = self.agentIsJoined
+        if avatarState {
+            remoteIsJoined = agentIsJoined && avatarIsJoined
+        }
+        if remoteIsJoined {
             timerCoordinator.stopJoinChannelTimer()
             self.addLog("agent is joined in 10 seconds")
             return

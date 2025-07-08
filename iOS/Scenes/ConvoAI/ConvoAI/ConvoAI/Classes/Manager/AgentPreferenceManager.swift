@@ -12,6 +12,7 @@ import Common
 protocol AgentPreferenceManagerDelegate: AnyObject {
     func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset)
     func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage)
+    func preferenceManager(_ manager: AgentPreferenceManager, avatarDidUpdated avatar: Avatar?)
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool)
     func preferenceManager(_ manager: AgentPreferenceManager, bhvsStateDidUpdated state: Bool)
     func preferenceManager(_ manager: AgentPreferenceManager, loginStateDidUpdated state: Bool)
@@ -36,6 +37,7 @@ protocol AgentPreferenceManagerProtocol {
     // Preference Updates
     func updatePreset(_ preset: AgentPreset)
     func updateLanguage(_ language: SupportLanguage)
+    func updateAvatar(_ avatar: Avatar?)
 
     func updateAiVadState(_ state: Bool)
     func updateForceThresholdState(_ state: Bool)
@@ -53,6 +55,8 @@ protocol AgentPreferenceManagerProtocol {
     func resetAgentInformation()
     func allPresets() -> [AgentPreset]?
     func setPresets(presets: [AgentPreset])
+    
+    func setAvatar(_ avatar: Avatar?)
 }
 
 class AgentPreferenceManager: AgentPreferenceManagerProtocol {
@@ -80,6 +84,11 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
     func updateLanguage(_ language: SupportLanguage) {
         preference.language = language
         notifyDelegates { $0.preferenceManager(self, languageDidUpdated: language) }
+    }
+    
+    func updateAvatar(_ avatar: Avatar?) {
+        preference.avatar = avatar
+        notifyDelegates { $0.preferenceManager(self, avatarDidUpdated: avatar) }
     }
     
     func updateAiVadState(_ state: Bool) {
@@ -167,6 +176,17 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
         }
         
         self.updateLanguage(language)
+        
+        guard let avatar = preset.avatarIds.first else {
+            return
+        }
+        
+        self.updateAvatar(avatar)
+    }
+    
+    func setAvatar(_ avatar: Avatar?) {
+        preference.avatar = avatar
+        notifyDelegates { $0.preferenceManager(self, avatarDidUpdated: avatar) }
     }
     
     // MARK: - Private Methods
@@ -251,6 +271,7 @@ enum NetworkStatus: String {
 class AgentPreference {
     var preset: AgentPreset?
     var language: SupportLanguage?
+    var avatar: Avatar?
     var aiVad = false
     var bhvs = true
 }
@@ -268,6 +289,7 @@ class AgentInfomation {
 extension AgentPreferenceManagerDelegate {
     func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset) {}
     func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage) {}
+    func preferenceManager(_ manager: AgentPreferenceManager, avatarDidUpdated avatar: Avatar?) {}
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool) {}
     func preferenceManager(_ manager: AgentPreferenceManager, bhvsStateDidUpdated state: Bool) {}
     func preferenceManager(_ manager: AgentPreferenceManager, loginStateDidUpdated state: Bool) {}

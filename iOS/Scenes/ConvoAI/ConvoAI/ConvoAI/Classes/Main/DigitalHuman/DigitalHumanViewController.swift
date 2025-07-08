@@ -11,19 +11,9 @@ import UIKit
 
 // MARK: - Data Model
 struct DigitalHuman {
-    let id: String
-    let name: String
-    let avatarImage: String
+    let avatar: Avatar
     let isAvailable: Bool
     var isSelected: Bool
-    
-    static let closeOption = DigitalHuman(
-        id: "close",
-        name: ResourceManager.L10n.Settings.digitalHumanClosed,
-        avatarImage: "",
-        isAvailable: true,
-        isSelected: false
-    )
 }
 
 class DigitalHumanViewController: BaseViewController {
@@ -46,49 +36,40 @@ class DigitalHumanViewController: BaseViewController {
     }()
     
     // MARK: - Mock Data
-    private var digitalHumans: [DigitalHuman] = [
-        DigitalHuman.closeOption,
-        DigitalHuman(
-            id: "shahala",
-            name: "沙哈拉",
-            avatarImage: "avatar_shahala",
-            isAvailable: true,
-            isSelected: true
-        ),
-        DigitalHuman(
-            id: "xiaoli",
-            name: "小丽",
-            avatarImage: "avatar_xiaoli",
-            isAvailable: true,
-            isSelected: false
-        ),
-        DigitalHuman(
-            id: "david",
-            name: "David",
-            avatarImage: "avatar_david",
-            isAvailable: true,
-            isSelected: false
-        ),
-        DigitalHuman(
-            id: "anna",
-            name: "Anna",
-            avatarImage: "avatar_anna",
-            isAvailable: true,
-            isSelected: false
-        ),
-        DigitalHuman(
-            id: "mike",
-            name: "Mike",
-            avatarImage: "avatar_mike",
-            isAvailable: true,
-            isSelected: false
-        )
-    ]
+    private var digitalHumans: [DigitalHuman] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        loadData()
         setupUI()
         setupConstraints()
+    }
+    
+    private func loadData() {
+        guard let avatarIds = AppContext.preferenceManager()?.preference.preset?.avatarIds else {
+            return
+        }
+        
+        var selectedTag = false
+        if let currentAvatar = AppContext.preferenceManager()?.preference.avatar {
+            let avatars = avatarIds.map { avatar in
+                let isSelected = avatar.avatarId == currentAvatar.avatarId
+                if isSelected {
+                    selectedTag = true
+                }
+                
+                return DigitalHuman(avatar: avatar, isAvailable: true, isSelected: isSelected)
+            }
+            digitalHumans = avatars
+        } else {
+            let avatars = avatarIds.map { avatar in
+                return DigitalHuman(avatar: avatar, isAvailable: true, isSelected: false)
+            }
+            digitalHumans = avatars
+        }
+        
+        let closeCard = DigitalHuman(avatar: Avatar(avatarId: "close", avatarName: "", avatarUrl: ""), isAvailable: true, isSelected: !selectedTag)
+        digitalHumans.insert(closeCard, at: 0)
     }
     
     private func setupUI() {
@@ -145,13 +126,14 @@ extension DigitalHumanViewController {
     private func handleDigitalHumanSelection(_ selectedDigitalHuman: DigitalHuman) {
         // Update selection state
         for i in 0..<digitalHumans.count {
-            digitalHumans[i].isSelected = (digitalHumans[i].id == selectedDigitalHuman.id)
+            digitalHumans[i].isSelected = (digitalHumans[i].avatar.avatarId == selectedDigitalHuman.avatar.avatarId)
         }
         
         // Reload collection view to update UI
         collectionView.reloadData()
         
-        // TODO: Save selection to preferences
-        print("Selected digital human: \(selectedDigitalHuman.name)")
+        print("Selected digital human: \(selectedDigitalHuman.avatar.avatarName)")
+        
+        AppContext.preferenceManager()?.updateAvatar(selectedDigitalHuman.avatar)
     }
 }
