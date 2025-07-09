@@ -9,6 +9,8 @@ import UIKit
 import PhotosUI
 import SnapKit
 import Common
+import Photos
+import AVFoundation
 
 class PhotoPickTypeViewController: UIViewController {
     private var completion: ((UIImage?) -> Void)?
@@ -25,7 +27,7 @@ class PhotoPickTypeViewController: UIViewController {
     
     private let contentViewHeight: CGFloat = 180
 
-    static func show(from presentingVC: UIViewController, completion: @escaping (UIImage?) -> Void) {
+    static func start(from presentingVC: UIViewController, completion: @escaping (UIImage?) -> Void) {
         let pickVC = PhotoPickTypeViewController()
         pickVC.completion = completion
         let nav = UINavigationController(rootViewController: pickVC)
@@ -201,7 +203,6 @@ class PhotoPickTypeViewController: UIViewController {
     }
 
     @objc private func closeAction() {
-        // 先播放 contentView 的出场动画，动画结束后再 dismiss
         UIView.animate(withDuration: 0.18, delay: 0, options: [.curveEaseIn], animations: {
             self.contentView.transform = CGAffineTransform(translationX: 0, y: self.contentView.bounds.height)
         }) { _ in
@@ -210,18 +211,101 @@ class PhotoPickTypeViewController: UIViewController {
     }
 
     @objc func pickPhoto() {
-        var config = PHPickerConfiguration()
-        config.selectionLimit = 1
-        config.filter = .images
-        let picker = PHPickerViewController(configuration: config)
-        picker.delegate = self
-        present(picker, animated: true)
+        checkPhotoLibraryPermission { [weak self] granted in
+            guard let self = self else { return }
+            if granted {
+                var config = PHPickerConfiguration()
+                config.selectionLimit = 1
+                config.filter = .images
+                let picker = PHPickerViewController(configuration: config)
+                picker.delegate = self
+                self.present(picker, animated: true)
+            } else {
+                self.showPermissionAlert(for: .photoLibrary)
+            }
+        }
     }
 
     @objc func takePhoto() {
-        let takeVC = TakePhotoViewController()
-        takeVC.completion = completion
-        navigationController?.pushViewController(takeVC, animated: true)
+        checkCameraPermission { [weak self] granted in
+            guard let self = self else { return }
+            if granted {
+                let takeVC = TakePhotoViewController()
+                takeVC.completion = self.completion
+                self.navigationController?.pushViewController(takeVC, animated: true)
+            } else {
+                self.showPermissionAlert(for: .camera)
+            }
+        }
+    }
+    
+    // MARK: - Permission Methods
+    
+    private func checkPhotoLibraryPermission(completion: @escaping (Bool) -> Void) {
+        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        switch status {
+        case .authorized, .limited:
+            completion(true)
+        case .notDetermined:
+            PHPhotoLibrary.requestAuthorization(for: .readWrite) { newStatus in
+                DispatchQueue.main.async {
+                    completion(newStatus == .authorized || newStatus == .limited)
+                }
+            }
+        case .denied, .restricted:
+            completion(false)
+        @unknown default:
+            completion(false)
+        }
+    }
+    
+    private func checkCameraPermission(completion: @escaping (Bool) -> Void) {
+        let status = AVCaptureDevice.authorizationStatus(for: .video)
+        switch status {
+        case .authorized:
+            completion(true)
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    completion(granted)
+                }
+            }
+        case .denied, .restricted:
+            completion(false)
+        @unknown default:
+            completion(false)
+        }
+    }
+    
+    private enum PermissionType {
+        case photoLibrary
+        case camera
+    }
+    
+    private func showPermissionAlert(for type: PermissionType) {
+        let title: String
+        let message: String
+        
+        switch type {
+        case .photoLibrary:
+            title = "Photo Access Permission"
+            message = "We need access to your photo library to select images. Please enable photo access permission in Settings."
+        case .camera:
+            title = "Camera Access Permission"
+            message = "We need access to your camera to take photos. Please enable camera access permission in Settings."
+        }
+        
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        alert.addAction(UIAlertAction(title: "Settings", style: .default) { _ in
+            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsURL)
+            }
+        })
+        
+        present(alert, animated: true)
     }
 }
 
@@ -230,13 +314,64 @@ extension PhotoPickTypeViewController: PHPickerViewControllerDelegate {
         picker.dismiss(animated: true)
         guard let itemProvider = results.first?.itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self) else { return }
         itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
-            guard let self = self, let image = image as? UIImage else { return }
+            guard let self = self, let originalImage = image as? UIImage else { return }
             DispatchQueue.main.async {
+                // Adjust image size to meet validation requirements
+                let processedImage = self.resizeImageIfNeeded(originalImage)
+                
+                // Validate photo against requirements
+                let validationResult = PhotoValidator.validatePhoto(processedImage)
+                
+                if !validationResult.isValid {
+                    // Display error message for failed validation
+                    let alert = UIAlertController(title: "Image Validation Failed", message: validationResult.errorMessage, preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(alert, animated: true)
+                    return
+                }
+                
+                // If validation passes, navigate to edit screen
                 let editVC = PhotoEditViewController()
-                editVC.image = image
+                editVC.image = processedImage
                 editVC.completion = self.completion
                 self.navigationController?.pushViewController(editVC, animated: true)
             }
         }
+    }
+    
+    /**
+     * If needed, adjust image size to meet validation requirements
+     */
+    private func resizeImageIfNeeded(_ image: UIImage) -> UIImage {
+        let maxDimension: CGFloat = 2048  // Keep consistent with PhotoValidator
+        let originalSize = image.size
+        
+        // If image size is already acceptable, return directly
+        if originalSize.width <= maxDimension && originalSize.height <= maxDimension {
+            print("[PhotoPickTypeViewController] Image size is acceptable: \(originalSize.width)x\(originalSize.height)")
+            return image
+        }
+        
+        // Calculate new size, maintaining aspect ratio
+        let aspectRatio = originalSize.width / originalSize.height
+        var newSize: CGSize
+        
+        if originalSize.width > originalSize.height {
+            // Width is larger, use width as reference
+            newSize = CGSize(width: maxDimension, height: maxDimension / aspectRatio)
+        } else {
+            // Height is larger, use height as reference
+            newSize = CGSize(width: maxDimension * aspectRatio, height: maxDimension)
+        }
+        
+        print("[PhotoPickTypeViewController] Resizing image from \(originalSize.width)x\(originalSize.height) to \(newSize.width)x\(newSize.height)")
+        
+        // Create graphics context and draw the adjusted image
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: CGRect(origin: .zero, size: newSize))
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return resizedImage ?? image
     }
 }

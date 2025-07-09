@@ -2,6 +2,7 @@ package io.agora.scene.convoai.ui
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.graphics.PorterDuff
 import android.os.Build
 import android.provider.Settings
@@ -61,13 +62,13 @@ import io.agora.scene.convoai.convoaiApi.*
 import io.agora.scene.convoai.databinding.CovActivityLivingBinding
 import io.agora.scene.convoai.iot.api.CovIotApiManager
 import io.agora.scene.convoai.iot.manager.CovIotPresetManager
-import io.agora.scene.convoai.iot.ui.CovIotDeviceListActivity
 import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.rtm.CovRtmManager
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfRenderConfig
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfSubRenderController
 import io.agora.scene.convoai.convoaiApi.Transcription
 import io.agora.scene.convoai.rtm.IRtmManagerListener
+import io.agora.scene.convoai.ui.photo.PhotoNavigationActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -181,6 +182,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
     private lateinit var mPermissionHelp: PermissionHelp
+    
+
 
     private val mLoginViewModel: LoginViewModel by viewModels()
 
@@ -1002,32 +1005,15 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
             clTop.btnInfo.setOnClickListener(object : OnFastClickListener() {
                 override fun onClickJacking(view: View) {
-                    infoDialog = CovAgentInfoDialog.newInstance(
-                        onDismissCallback = {
-                            infoDialog = null
-                        },
-                        onLogout = {
-                            showLogoutConfirmDialog {
-                                infoDialog?.dismiss()
-                            }
-                        },
-                        onIotDeviceClick = {
-                            if (CovIotPresetManager.getPresetList().isNullOrEmpty()) {
-                                coroutineScope.launch {
-                                    val success = fetchIotPresetsAsync()
-                                    if (success) {
-                                        CovIotDeviceListActivity.startActivity(this@CovLivingActivity)
-                                    } else {
-                                        ToastUtil.show(getString(io.agora.scene.convoai.iot.R.string.cov_detail_net_state_error))
-                                    }
-                                }
-                            } else {
-                                CovIotDeviceListActivity.startActivity(this@CovLivingActivity)
-                            }
+                    // Start iOS NavigationController style photo flow
+                    PhotoNavigationActivity.start(this@CovLivingActivity) { bitmap ->
+                        if (bitmap != null) {
+                            ToastUtil.show("Photo processing completed")
+                            // TODO: Handle the final photo result
+                        } else {
+                            // User cancelled the operation
                         }
-                    )
-                    infoDialog?.updateConnectStatus(connectionState)
-                    infoDialog?.show(supportFragmentManager, "InfoDialog")
+                    }
                 }
             })
             clTop.ivTop.setOnClickListener {

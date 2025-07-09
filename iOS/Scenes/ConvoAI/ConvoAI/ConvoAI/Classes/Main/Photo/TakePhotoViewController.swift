@@ -52,12 +52,16 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 
     private func setupCamera() {
         let session = AVCaptureSession()
-        session.sessionPreset = .photo
+        // Use high preset for better quality (typically 1920×1080)
+        session.sessionPreset = .high
+        
         guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: currentCameraPosition),
               let input = try? AVCaptureDeviceInput(device: device) else { return }
         if session.canAddInput(input) { session.addInput(input) }
+        
         let output = AVCapturePhotoOutput()
         if session.canAddOutput(output) { session.addOutput(output) }
+        
         let preview = AVCaptureVideoPreviewLayer(session: session)
         preview.frame = view.bounds
         preview.videoGravity = .resizeAspectFill
@@ -65,13 +69,22 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         self.captureSession = session
         self.previewLayer = preview
         self.photoOutput = output
-        session.startRunning()
+        
+        // Start camera session on background thread to avoid blocking UI
+        DispatchQueue.global(qos: .userInitiated).async {
+            session.startRunning()
+        }
     }
 
     @objc func takePhotoAction() {
         shutterButton.isEnabled = false
-        
         let settings = AVCapturePhotoSettings()
+        // Set balanced quality for optimal file size and image quality
+        settings.photoQualityPrioritization = .balanced
+        
+        if #available(iOS 11.0, *) {
+            settings.isHighResolutionPhotoEnabled = false
+        }
         photoOutput?.capturePhoto(with: settings, delegate: self)
     }
 
@@ -80,10 +93,15 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     }
 
     @objc func switchCamera() {
-        captureSession?.stopRunning()
-        previewLayer?.removeFromSuperlayer()
-        currentCameraPosition = (currentCameraPosition == .back) ? .front : .back
-        setupCamera()
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.captureSession?.stopRunning()
+            
+            DispatchQueue.main.async {
+                self?.previewLayer?.removeFromSuperlayer()
+                self?.currentCameraPosition = (self?.currentCameraPosition == .back) ? .front : .back
+                self?.setupCamera()
+            }
+        }
     }
 
     @objc func openPhotoPicker() {
@@ -97,9 +115,25 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         shutterButton.isEnabled = true
-        guard let data = photo.fileDataRepresentation(), let image = UIImage(data: data) else { return }
+        guard let data = photo.fileDataRepresentation(), let originalImage = UIImage(data: data) else { return }
+        
+        // Adjust image size to meet validation requirements
+        let processedImage = resizeImageIfNeeded(originalImage)
+        
+        // Validate photo against requirements
+        let validationResult = PhotoValidator.validatePhoto(processedImage)
+        
+        if !validationResult.isValid {
+            // Display error message for failed validation
+            let alert = UIAlertController(title: "Image Validation Failed", message: validationResult.errorMessage, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(alert, animated: true)
+            return
+        }
+        
+        // If validation passes, navigate to edit screen
         let editVC = PhotoEditViewController()
-        editVC.image = image
+        editVC.image = processedImage
         editVC.completion = completion
         navigationController?.pushViewController(editVC, animated: true)
     }
@@ -122,10 +156,26 @@ extension TakePhotoViewController: PHPickerViewControllerDelegate {
         picker.dismiss(animated: true)
         guard let itemProvider = results.first?.itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self) else { return }
         itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
-            guard let self = self, let image = image as? UIImage else { return }
+            guard let self = self, let originalImage = image as? UIImage else { return }
             DispatchQueue.main.async {
+                // Note: Images selected from the photo library do not need cropping as they are not taken from the camera preview
+                // Directly adjust image size to meet validation requirements
+                let processedImage = self.resizeImageIfNeeded(originalImage)
+                
+                // Validate photo against requirements
+                let validationResult = PhotoValidator.validatePhoto(processedImage)
+                
+                if !validationResult.isValid {
+                    // Display error message for failed validation
+                    let alert = UIAlertController(title: "Image Validation Failed", message: validationResult.errorMessage, preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(alert, animated: true)
+                    return
+                }
+                
+                // If validation passes, navigate to edit screen
                 let editVC = PhotoEditViewController()
-                editVC.image = image
+                editVC.image = processedImage
                 editVC.completion = self.completion
                 self.navigationController?.pushViewController(editVC, animated: true)
             }
@@ -134,6 +184,46 @@ extension TakePhotoViewController: PHPickerViewControllerDelegate {
 }
 
 private extension TakePhotoViewController {
+    
+    // TODO: Preview and capture consistency - manual adjustment to be implemented later
+    // You can add cropping logic here to ensure the captured result is exactly the same as the preview
+    
+    /**
+     * If needed, adjust image size to meet validation requirements
+     */
+    func resizeImageIfNeeded(_ image: UIImage) -> UIImage {
+        let maxDimension: CGFloat = 2048  // Keep consistent with PhotoValidator
+        let originalSize = image.size
+        
+        // If image size is already acceptable, return directly
+        if originalSize.width <= maxDimension && originalSize.height <= maxDimension {
+            print("[TakePhotoViewController] Image size is acceptable: \(originalSize.width)x\(originalSize.height)")
+            return image
+        }
+        
+        // Calculate new size, maintaining aspect ratio
+        let aspectRatio = originalSize.width / originalSize.height
+        var newSize: CGSize
+        
+        if originalSize.width > originalSize.height {
+            // Width is larger, use width as reference
+            newSize = CGSize(width: maxDimension, height: maxDimension / aspectRatio)
+        } else {
+            // Height is larger, use height as reference
+            newSize = CGSize(width: maxDimension * aspectRatio, height: maxDimension)
+        }
+        
+        print("[TakePhotoViewController] Resizing image from \(originalSize.width)x\(originalSize.height) to \(newSize.width)x\(newSize.height)")
+        
+        // Create graphics context and draw the adjusted image
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: CGRect(origin: .zero, size: newSize))
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return resizedImage ?? image
+    }
+    
     func fetchLatestPhotoThumbnail() {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
