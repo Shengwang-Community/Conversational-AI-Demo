@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="18dp"
+    android:background="@drawable/bottom_dialog_bg"
+    android:layout_gravity="bottom"
+    android:paddingBottom="50dp">
+
+    <!-- Header with tabs -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:layout_marginTop="18dp">
+
+        <!-- Custom Tab Layout -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:background="@drawable/cov_tab_container_bg"
+            android:padding="2dp">
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabLayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                app:tabIndicator="@android:color/transparent"
+                app:tabGravity="fill"
+                app:tabMode="fixed"
+                app:tabRippleColor="@android:color/transparent"
+                app:tabSelectedTextColor="@color/ai_brand_white10"
+                app:tabTextColor="@color/ai_icontext2" />
+
+        </FrameLayout>
+
+    </FrameLayout>
+
+    <!-- Content ViewPager -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/vpContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout> 
