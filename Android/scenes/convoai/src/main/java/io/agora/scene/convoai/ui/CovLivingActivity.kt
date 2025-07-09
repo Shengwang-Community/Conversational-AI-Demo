@@ -2,7 +2,6 @@ package io.agora.scene.convoai.ui
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.PorterDuff
 import android.os.Build
 import android.provider.Settings
 import android.view.Gravity
@@ -58,7 +57,6 @@ import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfRenderConfig
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfSubRenderController
 import io.agora.scene.convoai.ui.dialog.CovAppInfoDialog
 import io.agora.scene.convoai.ui.dialog.CovAgentTabDialog
-import io.agora.scene.convoai.ui.widget.CovDraggableView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -100,8 +98,6 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
         // v1 Subtitle Rendering Controller
         selfRenderController = SelfSubRenderController(SelfRenderConfig(rtcEngine, mBinding?.messageListViewV1))
-
-        mBinding?.clTop?.setConnectionState { viewModel.connectionState.value }
 
         // Observe ViewModel states
         observeViewModelStates()
@@ -252,6 +248,13 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             agentStateView.setOnInterruptClickListener {
                 viewModel.interruptAgent()
             }
+
+            vDragSmallWindow.setOnViewClick {
+                // Hide transcription when small window is clicked while transcription is visible
+                if (viewModel.isShowMessageList.value) {
+                    viewModel.toggleMessageList()
+                }
+            }
         }
     }
 
@@ -295,6 +298,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             viewModel.connectionState.collect { state ->
                 updateStateView(state)
                 appTabDialog?.updateConnectStatus(state)
+                mBinding?.clTop?.updateAgentState(state)
 
                 // Update animation and timer display based on state
                 when (state) {
@@ -358,31 +362,20 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
         lifecycleScope.launch {    // Observe camera state
             viewModel.isPublishVideo.collect { isPublish ->
+                CovLogger.d(TAG, "publish video $isPublish")
                 updateCameraView(isPublish)
-                visionContainer?.apply {
-                    if (isPublish) {
-                        isVisible = true
-                        val localTextureView = TextureView(this@CovLivingActivity).apply {
-                            outlineProvider = TextureVideoViewOutlineProvider(12.dp)
-                            setClipToOutline(true)
-                        }
-                        val canvas = VideoCanvas(localTextureView)
-                        canvasContainer.removeAllViews()
-                        canvasContainer.addView(localTextureView)
-                        CovRtcManager.setupLocalVideo(canvas)
-                        ivPreview.isVisible = false
-                    } else {
-                        CovRtcManager.setupLocalVideo(VideoCanvas(null))
-                        canvasContainer.removeAllViews()
-                        ivPreview.isVisible = true
-                        isVisible = false
-                    }
+                if (isPublish) {
+                    CovRtcManager.setupLocalVideo(VideoCanvas(localVisionView))
+                } else {
+                    CovRtcManager.setupLocalVideo(VideoCanvas(null))
                 }
+                updateWindowContent()
             }
         }
         lifecycleScope.launch {  // Observe message list display state
             viewModel.isShowMessageList.collect { isShow ->
                 updateMessageList(isShow)
+                updateWindowContent()
             }
         }
         lifecycleScope.launch {  // Observe network quality
@@ -416,32 +409,24 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
         lifecycleScope.launch {
             viewModel.isAvatarJoinedRtc.collect { joined ->
-                avatarContainer?.apply {
+                mBinding?.apply {
                     if (joined) {
-                        isVisible = true
-                        val remoteTextureView = TextureView(this@CovLivingActivity)
-                        val canvas =
-                            VideoCanvas(remoteTextureView, Constants.RENDER_MODE_HIDDEN, CovAgentManager.avatarUID)
-                        canvasContainer.removeAllViews()
-                        canvasContainer.addView(remoteTextureView)
-                        CovRtcManager.setupRemoteVideo(canvas)
+                        CovRtcManager.setupRemoteVideo(
+                            VideoCanvas(remoteAvatarView, Constants.RENDER_MODE_HIDDEN, CovAgentManager.avatarUID)
+                        )
                     } else {
                         CovRtcManager.setupRemoteVideo(
                             VideoCanvas(null, Constants.RENDER_MODE_HIDDEN, CovAgentManager.avatarUID)
                         )
-                        canvasContainer.removeAllViews()
-                        ivPreview.isVisible = true
-                        isVisible = false
                     }
                 }
+                updateWindowContent()
             }
         }
         lifecycleScope.launch {
             viewModel.avatarFirstRemoteVideoFrame.collect { firstVideoFrame ->
-                mBinding?.apply {
-                    if (firstVideoFrame) {
-                        avatarContainer?.ivPreview?.isVisible = false
-                    }
+                if (firstVideoFrame) {
+                    mBinding?.ivAvatarPreview?.isVisible = false
                 }
             }
         }
@@ -450,7 +435,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 if (avatar == null) {
                     mBinding?.apply {
                         clAnimationContent.isVisible = true
-                        avatarContainer?.isVisible = false
+                        vDragBigWindow.isVisible = false
 
                         videoView.isVisible = true
                         setupBallAnimView()
@@ -459,16 +444,14 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 } else {
                     mBinding?.apply {
                         clAnimationContent.isVisible = false
-                        avatarContainer?.let {
-                            it.isVisible = true
-                            it.ivPreview.isVisible = true
-                            GlideImageLoader.load(
-                                it.ivPreview,
-                                avatar.avatar_url,
-                                R.drawable.cov_default_avatar,
-                                R.drawable.cov_default_avatar
-                            )
-                        }
+                        vDragBigWindow.isVisible = true
+                        ivAvatarPreview.isVisible = true
+                        GlideImageLoader.load(
+                            ivAvatarPreview,
+                            avatar.avatar_url,
+                            R.drawable.cov_default_avatar,
+                            R.drawable.cov_default_avatar
+                        )
 
                         videoView.isVisible = false
 
@@ -477,7 +460,6 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                             mCovBallAnim = null
                         }
                     }
-
                 }
             }
         }
@@ -492,17 +474,80 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
     }
 
-    // TODO:  
-    private val avatarContainer: CovDraggableView?
-        get() {
-            return mBinding?.vDragBigWindow
+    // vision video view
+    private val localVisionView by lazy {
+        TextureView(this@CovLivingActivity).apply {
+            outlineProvider = TextureVideoViewOutlineProvider(12.dp)
+            setClipToOutline(true)
         }
+    }
 
-    // TODO:  
-    private val visionContainer: CovDraggableView?
-        get() {
-            return mBinding?.vDragSmall
+    // avatar video view
+    private val remoteAvatarView by lazy {
+        TextureView(this@CovLivingActivity).apply {
+            outlineProvider = TextureVideoViewOutlineProvider(12.dp)
+            setClipToOutline(true)
         }
+    }
+
+    /**
+     * Update the content of vDragBigWindow and vDragSmallWindow according to the current state.
+     * Only one instance of localVisionView and remoteAvatarView is created and reused.
+     */
+    private fun updateWindowContent() {
+        val showAvatar = viewModel.isAvatarJoinedRtc.value
+        val showVideo = viewModel.isPublishVideo.value
+        val showTranscription = viewModel.isShowMessageList.value
+        mBinding?.apply {
+            vDragBigWindow.container.removeAllViews()
+            vDragSmallWindow.container.removeAllViews()
+
+            if (showTranscription) { // Transcription mode
+                if (showAvatar && showVideo) {
+                    // Avatar in big window, video stream in small window
+                    vDragBigWindow.isVisible = true
+                    vDragSmallWindow.isVisible = true
+                    vDragBigWindow.container.addView(remoteAvatarView)
+                    vDragSmallWindow.container.addView(localVisionView)
+                } else if (showAvatar) {
+                    // Only avatar
+                    vDragBigWindow.isVisible = true
+                    vDragSmallWindow.isVisible = false
+                    vDragBigWindow.container.addView(remoteAvatarView)
+                } else if (showVideo) {
+                    // Only video stream
+                    vDragSmallWindow.isVisible = true
+                    vDragBigWindow.isVisible = false
+                    vDragSmallWindow.container.addView(localVisionView)
+                } else {
+                    vDragBigWindow.isVisible = false
+                    vDragSmallWindow.isVisible = false
+                }
+            } else {
+                // Non-transcription mode
+                if (showAvatar && showVideo) {
+                    vDragBigWindow.isVisible = true
+                    vDragSmallWindow.isVisible = true
+                    // Video stream in big window, avatar in small window
+                    vDragBigWindow.container.addView(localVisionView)
+                    vDragSmallWindow.container.addView(remoteAvatarView)
+                } else if (showAvatar) {
+                    // Only avatar
+                    vDragBigWindow.isVisible = true
+                    vDragSmallWindow.isVisible = false
+                    vDragBigWindow.container.addView(remoteAvatarView)
+                } else if (showVideo) {
+                    // Only video stream
+                    vDragBigWindow.isVisible = true
+                    vDragSmallWindow.isVisible = false
+                    vDragBigWindow.container.addView(localVisionView)
+                } else {
+                    vDragBigWindow.isVisible = false
+                    vDragSmallWindow.isVisible = false
+                }
+            }
+        }
+    }
 
     private fun onClickStartAgent() {
         hasShownTitleAnim = false

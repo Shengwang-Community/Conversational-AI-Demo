@@ -8,7 +8,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.ImageView
 import io.agora.scene.convoai.databinding.CovDraggableViewBinding
 
 class CovDraggableView @JvmOverloads constructor(
@@ -37,13 +36,8 @@ class CovDraggableView @JvmOverloads constructor(
         binding.llContainer.clipToOutline = small
     }
 
-    val canvasContainer: ViewGroup
+    val container: ViewGroup
         get() = binding.llContainer
-
-    val ivPreview: ImageView
-        get() {
-            return binding.ivPreview
-        }
 
     fun setOnViewClick(action: (() -> Unit)?) {
         onViewClick = action

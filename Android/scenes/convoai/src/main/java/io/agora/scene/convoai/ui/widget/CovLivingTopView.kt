@@ -36,7 +36,7 @@ class CovLivingTopView @JvmOverloads constructor(
     private var onSwitchCameraClick: (() -> Unit)? = null
 
     private var isTitleAnimRunning = false
-    private var connectionState: (() -> AgentConnectionState)? = null
+    private var connectionState: AgentConnectionState = AgentConnectionState.IDLE
     private var titleAnimJob: Job? = null
     private var countDownJob: Job? = null
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
@@ -119,6 +119,15 @@ class CovLivingTopView @JvmOverloads constructor(
      */
     fun updatePublishCameraStatus(publishCamera: Boolean) {
         isPublishCamera = publishCamera
+        updateViewVisible()
+    }
+
+    /**
+     * Set agent connect state
+     */
+    fun updateAgentState(state: AgentConnectionState) {
+        connectionState = state
+        updateViewVisible()
     }
 
     /**
@@ -131,8 +140,7 @@ class CovLivingTopView @JvmOverloads constructor(
             }
 
             Constants.QUALITY_VBAD, Constants.QUALITY_DOWN -> {
-                val currentState = connectionState?.invoke() ?: AgentConnectionState.IDLE
-                if (currentState == AgentConnectionState.CONNECTED_INTERRUPT) {
+                if (connectionState == AgentConnectionState.CONNECTED_INTERRUPT) {
                     binding.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_disconnected)
                 } else {
                     binding.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_poor)
@@ -150,11 +158,11 @@ class CovLivingTopView @JvmOverloads constructor(
                 binding.btnNet.isVisible = true
             }
         }
-        // TODO:  
-        // Update btn_info and btn_add_pic visibility together with btnNet
-        val state = connectionState?.invoke() ?: AgentConnectionState.IDLE
+    }
+
+    private fun updateViewVisible() {
         if (isLogin) {
-            if (state == AgentConnectionState.IDLE) {
+            if (connectionState == AgentConnectionState.IDLE) {
                 binding.btnInfo.isVisible = true
                 binding.btnAddPic.isVisible = false
                 binding.btnSwitchCamera.isVisible = false
@@ -176,6 +184,7 @@ class CovLivingTopView @JvmOverloads constructor(
         }
     }
 
+
     /**
      * Update login status, show/hide info and settings buttons.
      */
@@ -192,14 +201,6 @@ class CovLivingTopView @JvmOverloads constructor(
                 binding.btnSwitchCamera.isVisible = false
             }
         }
-    }
-
-    /**
-     * Set a provider for connectionState, used for animation/timer logic.
-     */
-    fun setConnectionState(provider: (() -> AgentConnectionState)?) {
-        connectionState = provider
-        // No need to update info/add_pic here; handled in updateNetworkStatus
     }
 
     /**
@@ -223,12 +224,12 @@ class CovLivingTopView @JvmOverloads constructor(
             updateTvCcVisibility()
             delay(2000)
             if (!isActive || !isTitleAnimRunning) return@launch
-            if (connectionState?.invoke() != AgentConnectionState.IDLE) {
+            if (connectionState!= AgentConnectionState.IDLE) {
                 binding.viewFlipper.showNext() // to ll_tips (index 1)
                 updateTvCcVisibility()
                 delay(5000)
                 if (!isActive || !isTitleAnimRunning) return@launch
-                if (connectionState?.invoke() != AgentConnectionState.IDLE) {
+                if (connectionState != AgentConnectionState.IDLE) {
                     binding.viewFlipper.showNext() // to ll_timer (index 2)
                     updateTvCcVisibility()
                 } else {
