@@ -12,7 +12,8 @@ data class CovAgentPreset(
     val default_language_name: String,
     val support_languages: List<CovAgentLanguage>,
     val call_time_limit_second: Long,
-    val avatar_ids: List<CovAvatar>
+    val call_time_limit_avatar_second: Long,
+    val avatar_ids_by_lang: Map<String, List<CovAvatar>>? = null
 ) {
     fun isIndependent(): Boolean {
         return preset_type.startsWith("independent")
@@ -22,8 +23,9 @@ data class CovAgentPreset(
         return preset_type == "standard"
     }
 
-    fun isStandardAvatar(): Boolean {
-        return preset_type == "standard_avatar"
+    fun getAvatarsForLang(lang: String?): List<CovAvatar> {
+        if (lang == null) return emptyList()
+        return avatar_ids_by_lang?.get(lang) ?: emptyList()
     }
 }
 

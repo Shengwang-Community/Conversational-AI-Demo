@@ -132,8 +132,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
         )
 
         // Get avatar data from current preset
-        val currentPreset = CovAgentManager.getPreset()
-        val avatars = currentPreset?.avatar_ids ?: emptyList()
+        val avatars = CovAgentManager.getAvatars()
 
         // Add real avatar options
         avatars.forEach { covAvatar ->
