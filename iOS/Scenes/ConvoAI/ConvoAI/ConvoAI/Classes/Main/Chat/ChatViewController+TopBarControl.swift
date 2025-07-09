@@ -9,10 +9,6 @@ import Foundation
 
 extension ChatViewController {
     @objc internal func onClickInformationButton() {
-        PhotoPickTypeViewController.start(from: self) { data in
-            print("data: \(data)")
-        }
-        return
         AgentInformationViewController.show(in: self, rtcManager: rtcManager)
     }
     
@@ -26,8 +22,9 @@ extension ChatViewController {
     }
     
     @objc internal func onClickAddButton() {
-        // TODO: Implement add button functionality
-        print("Add button clicked")
+        PhotoPickTypeViewController.start(from: self) { data in
+            print("data: \(data)")
+        }
     }
     
     @objc internal func onClickTranscriptionButton(_ sender: UIButton) {
