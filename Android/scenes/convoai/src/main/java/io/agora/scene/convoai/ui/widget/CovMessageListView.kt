@@ -8,9 +8,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.ImageView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.agora.scene.common.util.dp
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.convoaiApi.Transcription
 import io.agora.scene.convoai.convoaiApi.TranscriptionStatus
@@ -148,24 +150,28 @@ class CovMessageListView @JvmOverloads constructor(
      * Handle received subtitle messages - fix scrolling issues
      */
     private fun handleMessage(transcription: Transcription) {
-        val isNewMessage = messageAdapter.getMessageByTurnId(transcription.turnId, transcription.type == TranscriptionType.USER) == null
+        val isNewMessage = messageAdapter.getMessageByTurnId(
+            transcription.turnId,
+            transcription.type == TranscriptionType.USER
+        ) == null
 
         // Handle existing message updates
-        messageAdapter.getMessageByTurnId(transcription.turnId, transcription.type == TranscriptionType.USER)?.let { existingMessage ->
-            existingMessage.apply {
-                content = transcription.text
-                status = transcription.status
-            }
-            messageAdapter.updateMessage(existingMessage)
+        messageAdapter.getMessageByTurnId(transcription.turnId, transcription.type == TranscriptionType.USER)
+            ?.let { existingMessage ->
+                existingMessage.apply {
+                    content = transcription.text
+                    status = transcription.status
+                }
+                messageAdapter.updateMessage(existingMessage)
 
-            // Decide whether to scroll based on message position
-            // 1. For last message, handle scrolling logic
-            val index = messageAdapter.getMessageIndex(existingMessage)
-            if (index == messageAdapter.itemCount - 1 && autoScrollToBottom) {
-                scheduleScrollToBottom()
+                // Decide whether to scroll based on message position
+                // 1. For last message, handle scrolling logic
+                val index = messageAdapter.getMessageIndex(existingMessage)
+                if (index == messageAdapter.itemCount - 1 && autoScrollToBottom) {
+                    scheduleScrollToBottom()
+                }
+                return
             }
-            return
-        }
 
         // Create new message
         val newMessage = Message(
@@ -263,13 +269,29 @@ class CovMessageListView @JvmOverloads constructor(
     }
 
     /**
-     * Message data class
+     * Message type enum
+     */
+    enum class MessageType {
+        TEXT, IMAGE
+    }
+
+    /**
+     * Upload status enum for image messages
+     */
+    enum class UploadStatus {
+        NONE, UPLOADING, SUCCESS, FAILED
+    }
+
+    /**
+     * Message data class (content is text or image path/url)
      */
     data class Message(
         val isMe: Boolean,
         val turnId: Long,
-        var content: String,
-        var status: TranscriptionStatus
+        var content: String, // For text: text content; for image: local path or url
+        var status: TranscriptionStatus? = null, // Only for text messages, null for image
+        val type: MessageType = MessageType.TEXT,
+        var uploadStatus: UploadStatus = UploadStatus.NONE // For image
     )
 
     /**
@@ -285,38 +307,112 @@ class CovMessageListView @JvmOverloads constructor(
             abstract fun bind(message: Message)
         }
 
+        // ViewHolder for user text message
         inner class UserMessageViewHolder(private val binding: CovMessageMineItemBinding) :
             MessageViewHolder(binding.root) {
             override fun bind(message: Message) {
-                binding.tvMessageContent.text = message.content
+                if (message.type == MessageType.TEXT) {
+                    binding.tvMessageContent.isVisible = true
+                    binding.layoutImageMessage.isVisible = false
+                    binding.tvMessageContent.text = message.content
+                } else if (message.type == MessageType.IMAGE) {
+                    binding.tvMessageContent.isVisible =false
+                    binding.layoutImageMessage.isVisible =true
+                    // Load image
+                    val imageView = binding.ivImageMessage
+                    val progressBar = binding.progressUpload
+                    val errorIcon = binding.ivUploadError
+                    // Set image size according to rules
+                    setImageViewSize(imageView, message)
+                    // Loading state
+                    when (message.uploadStatus) {
+                        UploadStatus.UPLOADING -> {
+                            progressBar.isVisible = true
+                            errorIcon.isVisible = false
+                        }
+
+                        UploadStatus.FAILED -> {
+                            progressBar.isVisible = false
+                            errorIcon.isVisible = true
+                        }
+
+                        else -> {
+                            progressBar.isVisible = false
+                            errorIcon.isVisible = false
+                        }
+                    }
+                    // Load image (local or remote)
+                    val imgPath = message.content
+                    io.agora.scene.common.util.GlideImageLoader.load(imageView, imgPath)
+                    // Error icon click for retry
+                    errorIcon.setOnClickListener {
+                        onImageErrorClickListener?.invoke(message)
+                    }
+                    // Image click for preview
+                    imageView.setOnClickListener {
+                        if (message.uploadStatus == UploadStatus.SUCCESS) {
+                            onImagePreviewClickListener?.invoke(message)
+                        }
+                    }
+                }
             }
         }
 
+        // ViewHolder for agent text message
         inner class AgentMessageViewHolder(private val binding: CovMessageAgentItemBinding) :
             MessageViewHolder(binding.root) {
             override fun bind(message: Message) {
-                binding.tvMessageTitle.text = agentName
-                binding.tvMessageContent.text = message.content
-                binding.layoutMessageInterrupt.isVisible = message.status == TranscriptionStatus.INTERRUPTED
+                if (message.type == MessageType.TEXT) {
+                    binding.tvMessageTitle.text = agentName
+                    binding.tvMessageContent.isVisible = true
+                    binding.layoutImageMessage.isVisible = false
+                    binding.tvMessageContent.text = message.content
+                    binding.layoutMessageInterrupt.isVisible = message.status == TranscriptionStatus.INTERRUPTED
+                } else if (message.type == MessageType.IMAGE) {
+                    binding.tvMessageContent.isVisible = false
+                    binding.layoutImageMessage.isVisible = true
+                    val imageView = binding.ivImageMessage
+                    val progressBar = binding.progressUpload
+                    val errorIcon = binding.ivUploadError
+                    setImageViewSize(imageView, message)
+                    when (message.uploadStatus) {
+                        UploadStatus.UPLOADING -> {
+                            progressBar.isVisible = true
+                            errorIcon.isVisible = false
+                        }
+
+                        UploadStatus.FAILED -> {
+                            progressBar.isVisible = false
+                            errorIcon.isVisible = true
+                        }
+
+                        else -> {
+                            progressBar.isVisible = false
+                            errorIcon.isVisible = false
+                        }
+                    }
+                    val imgPath = message.content
+                    io.agora.scene.common.util.GlideImageLoader.load(imageView, imgPath)
+                    errorIcon.setOnClickListener {
+                        onImageErrorClickListener?.invoke(message)
+                    }
+                    imageView.setOnClickListener {
+                        if (message.uploadStatus == UploadStatus.SUCCESS) {
+                            onImagePreviewClickListener?.invoke(message)
+                        }
+                    }
+                }
             }
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
             return if (viewType == 0) {
                 UserMessageViewHolder(
-                    CovMessageMineItemBinding.inflate(
-                        LayoutInflater.from(parent.context),
-                        parent,
-                        false
-                    )
+                    CovMessageMineItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
                 )
             } else {
                 AgentMessageViewHolder(
-                    CovMessageAgentItemBinding.inflate(
-                        LayoutInflater.from(parent.context),
-                        parent,
-                        false
-                    )
+                    CovMessageAgentItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
                 )
             }
         }
@@ -396,7 +492,8 @@ class CovMessageListView @JvmOverloads constructor(
                 // Only handle scrolling for significantly grown messages at the end
                 if (newContentLength > oldContentLength + 50 &&
                     index == messages.size - 1 &&
-                    autoScrollToBottom) {
+                    autoScrollToBottom
+                ) {
 
                     // Use more reliable scrolling method to avoid flickering
                     binding.rvMessages.post {
@@ -422,6 +519,59 @@ class CovMessageListView @JvmOverloads constructor(
         fun getMessageAt(position: Int): Message {
             return messages[position]
         }
+
+        // Set image view size according to rules
+        private fun setImageViewSize(imageView: ImageView, message: Message) {
+            // Get screen width
+            val metrics = imageView.context.resources.displayMetrics
+            val maxWidth = (metrics.widthPixels * 0.6f).toInt()
+            val minSize = 120.dp.toInt()
+
+            // Use Glide to get image size asynchronously if needed
+            val imgPath = message.content
+            if (imgPath.isNullOrEmpty()) {
+                val params = imageView.layoutParams
+                params.width = minSize
+                params.height = minSize
+                imageView.layoutParams = params
+                return
+            }
+            // Use Glide to get image size
+            io.agora.scene.common.util.GlideImageLoader.load(imageView, imgPath)
+            imageView.post {
+                val drawable = imageView.drawable
+                if (drawable != null) {
+                    val w = drawable.intrinsicWidth
+                    val h = drawable.intrinsicHeight
+                    var targetW = minSize
+                    var targetH = minSize
+                    if (w > h) {
+                        // Wide image
+                        targetW = maxWidth
+                        targetH = (h * (maxWidth.toFloat() / w)).toInt().coerceAtLeast(minSize)
+                    } else {
+                        // Tall image
+                        targetH = maxWidth
+                        targetW = (w * (maxWidth.toFloat() / h)).toInt().coerceAtLeast(minSize)
+                    }
+                    val params = imageView.layoutParams
+                    params.width = targetW
+                    params.height = targetH
+                    imageView.layoutParams = params
+                } else {
+                    val params = imageView.layoutParams
+                    params.width = minSize
+                    params.height = minSize
+                    imageView.layoutParams = params
+                }
+            }
+        }
+
+        // Image error click callback
+        var onImageErrorClickListener: ((Message) -> Unit)? = null
+
+        // Image preview click callback
+        var onImagePreviewClickListener: ((Message) -> Unit)? = null
     }
 
     fun onTranscriptionUpdated(transcription: Transcription) {

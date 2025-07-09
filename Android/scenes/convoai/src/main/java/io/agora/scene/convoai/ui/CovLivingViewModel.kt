@@ -79,9 +79,6 @@ class CovLivingViewModel : ViewModel() {
     private val _isAvatarJoinedRtc = MutableStateFlow(false)
     val isAvatarJoinedRtc: StateFlow<Boolean> = _isAvatarJoinedRtc.asStateFlow()
 
-    private val _avatarFirstRemoteVideoFrame = MutableStateFlow(false)
-    val avatarFirstRemoteVideoFrame: StateFlow<Boolean> = _avatarFirstRemoteVideoFrame.asStateFlow()
-
     private val _avatar = MutableStateFlow<CovAvatar?>(null)
     val avatar: StateFlow<CovAvatar?> = _avatar.asStateFlow()
 
@@ -418,7 +415,6 @@ class CovLivingViewModel : ViewModel() {
                 viewModelScope.launch(Dispatchers.Main) {
                     if (uid == CovAgentManager.avatarUID) {
                         CovLogger.d(TAG, "RTC onFirstRemoteVideoFrame avatarUid:$uid")
-                        _avatarFirstRemoteVideoFrame.value = true
                     }
                 }
             }

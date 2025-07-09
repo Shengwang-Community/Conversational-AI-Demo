@@ -332,7 +332,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
     }
 
     private fun onClickAvatar() {
-        if (CovAgentManager.getAvatars().isNullOrEmpty()) {
+        if (CovAgentManager.getPreset()?.isStandardAvatar() != true) {
             ToastUtil.show("No avatars available!")
             return
         }

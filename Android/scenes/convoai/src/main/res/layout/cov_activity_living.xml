@@ -50,17 +50,19 @@
             app:layout_constraintHeight_percent="0.6" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <ImageView
+        android:id="@+id/iv_avatar_preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:visibility="visible"
+        android:background="@color/ai_fill2"
+        android:visibility="gone" />
+
     <io.agora.scene.convoai.ui.widget.CovDraggableView
         android:id="@+id/vDragBigWindow"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"/>
-
-    <ImageView
-        android:id="@+id/iv_avatar_preview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layout_message"

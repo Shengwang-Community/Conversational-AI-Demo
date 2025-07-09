@@ -424,19 +424,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
         }
         lifecycleScope.launch {
-            viewModel.avatarFirstRemoteVideoFrame.collect { firstVideoFrame ->
-                if (firstVideoFrame) {
-                    mBinding?.ivAvatarPreview?.isVisible = false
-                }
-            }
-        }
-        lifecycleScope.launch {
             viewModel.avatar.collect { avatar ->
                 if (avatar == null) {
                     mBinding?.apply {
                         clAnimationContent.isVisible = true
                         vDragBigWindow.isVisible = false
-
+                        ivAvatarPreview.isVisible = false
                         videoView.isVisible = true
                         setupBallAnimView()
                     }

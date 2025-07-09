@@ -94,4 +94,5 @@ dependencies {
     api libs.agora.rtm
     api libs.glide
     annotationProcessor libs.glide.compiler
+    api libs.photoview
 }

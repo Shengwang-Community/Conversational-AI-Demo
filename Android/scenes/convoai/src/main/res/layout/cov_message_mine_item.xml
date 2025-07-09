@@ -42,4 +42,44 @@
         android:paddingHorizontal="16dp"
         android:paddingVertical="12dp"
         tools:text="Content" />
+
+    <!-- Add image message layout below text message layout -->
+    <!-- Image message item for user (hidden by default, shown for image messages) -->
+    <FrameLayout
+        android:id="@+id/layout_image_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="8dp"
+        tools:visibility="visible"
+        android:layout_marginEnd="20dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/iv_image_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="120dp"
+            android:minHeight="120dp"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop"
+            android:background="@drawable/message_mine_item_border" />
+
+        <!-- ProgressBar for uploading -->
+        <ProgressBar
+            android:id="@+id/progress_upload"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <!-- Error icon for upload failed -->
+        <ImageView
+            android:id="@+id/iv_upload_error"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:src="@drawable/scene_details_upload_error"
+            android:visibility="gone" />
+    </FrameLayout>
 </LinearLayout>

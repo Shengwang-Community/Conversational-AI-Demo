@@ -10,6 +10,7 @@ lifecycleProcess = "2.8.4"
 material = "1.10.0"
 activity = "1.8.0"
 constraintlayout = "2.1.4"
+photoview = "2.3.0"
 viewbinding = "8.7.3"
 navigation = "2.6.0"
 splashscreen = "1.0.1"
@@ -43,6 +44,7 @@ androidx-viewbinding = { module = "androidx.databinding:viewbinding", version.re
 androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycleProcess" }
 navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigation" }
 navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigation" }
+photoview = { module = "com.github.chrisbanes:PhotoView", version.ref = "photoview" }
 splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "splashscreen" }
 okhttp-core = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }

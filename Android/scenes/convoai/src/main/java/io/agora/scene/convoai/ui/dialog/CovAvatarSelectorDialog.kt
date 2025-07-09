@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.ui.dialog
 
+import android.app.Dialog
 import android.content.DialogInterface
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -25,6 +26,7 @@ import java.io.Serializable
 import kotlinx.parcelize.Parcelize
 import android.os.Parcelable
 import io.agora.scene.common.util.GlideImageLoader
+import androidx.core.graphics.drawable.toDrawable
 
 /**
  * Avatar selector dialog - full screen display
@@ -101,7 +103,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
         // Set full screen display
         dialog?.window?.apply {
             setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setBackgroundDrawableResource(android.R.color.transparent)
 
             // Set full screen flags
             decorView.systemUiVisibility = (
