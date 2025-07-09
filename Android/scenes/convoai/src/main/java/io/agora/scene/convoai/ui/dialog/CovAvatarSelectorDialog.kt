@@ -1,9 +1,6 @@
 package io.agora.scene.convoai.ui.dialog
 
-import android.app.Dialog
 import android.content.DialogInterface
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,7 +9,6 @@ import android.view.WindowManager
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import io.agora.scene.common.R
 import io.agora.scene.common.ui.BaseDialogFragment
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.convoai.api.CovAvatar
@@ -22,11 +18,7 @@ import io.agora.scene.convoai.databinding.CovAvatarSelectorCloseItemBinding
 import io.agora.scene.convoai.databinding.CovAvatarSelectorDialogBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.Serializable
-import kotlinx.parcelize.Parcelize
-import android.os.Parcelable
 import io.agora.scene.common.util.GlideImageLoader
-import androidx.core.graphics.drawable.toDrawable
 
 /**
  * Avatar selector dialog - full screen display

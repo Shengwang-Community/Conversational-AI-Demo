@@ -92,27 +92,20 @@ object CovRtcManager {
 
     // leave rtc channel
     fun leaveChannel() {
+        CovLogger.d(TAG,"leaveChannel")
         rtcEngine?.leaveChannel()
     }
 
     // renew rtc token
     fun renewRtcToken(value: String) {
+        CovLogger.d(TAG,"renewRtcToken")
         rtcEngine?.renewToken(value)
     }
 
     // open or close microphone
     fun muteLocalAudio(mute: Boolean) {
+        CovLogger.d(TAG,"muteLocalAudio $mute")
         rtcEngine?.adjustRecordingSignalVolume(if (mute) 0 else 100)
-    }
-
-    // open or close camera
-    fun muteLocalVideo(mute: Boolean) {
-        rtcEngine?.muteLocalVideoStream(mute)
-    }
-
-    // mute remote uid audio
-    fun muteRemoteAudio(mute: Boolean, rtcUid: Int) {
-        rtcEngine?.muteRemoteAudioStream(rtcUid, mute)
     }
 
     // setup local video
@@ -127,12 +120,14 @@ object CovRtcManager {
 
     // publish camera track
     fun publishCameraTrack(publish: Boolean) {
+        CovLogger.d(TAG,"publishCameraTrack $publish")
         channelOptions.publishCameraTrack = publish
         rtcEngine?.updateChannelMediaOptions(channelOptions)
     }
 
     // switch camera
     fun switchCamera() {
+        CovLogger.d(TAG,"switchCamera")
         rtcEngine?.switchCamera()
     }
 

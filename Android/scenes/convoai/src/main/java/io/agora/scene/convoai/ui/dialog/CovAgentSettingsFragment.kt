@@ -19,7 +19,6 @@ import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getDistanceFromScreenEdges
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.api.CovAgentPreset
-import io.agora.scene.convoai.api.CovAvatar
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.databinding.CovAgentSettingsFragmentBinding
@@ -359,11 +358,6 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         val avatar = if (selectedAvatar.isClose) null else selectedAvatar.covAvatar
         CovAgentManager.avatar = avatar
         livingViewModel.setAvatar(avatar)
-        if (selectedAvatar.isClose) {
-            ToastUtil.show("Avatar closed")
-        } else {
-            ToastUtil.show("Avatar selected: ${selectedAvatar.covAvatar?.avatar_name}")
-        }
         updateAvatarSettings()
     }
 

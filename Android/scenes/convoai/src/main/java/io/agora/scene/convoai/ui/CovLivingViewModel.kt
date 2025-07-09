@@ -33,8 +33,6 @@ import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import io.agora.scene.convoai.api.CovAvatar
-import org.json.JSONArray
-import java.util.Arrays
 
 /**
  * view model
@@ -320,11 +318,6 @@ class CovLivingViewModel : ViewModel() {
                     CovLogger.d(TAG, "RTC Join channel success: $uid")
                     _networkQuality.value = 1
                     _isUserJoinedRtc.value = true
-                    if (CovAgentManager.isEnableAvatar()) {
-                        CovRtcManager.muteRemoteAudio(true, CovAgentManager.agentUID)
-                    } else {
-                        CovRtcManager.muteRemoteAudio(false, CovAgentManager.agentUID)
-                    }
                 }
             }
 

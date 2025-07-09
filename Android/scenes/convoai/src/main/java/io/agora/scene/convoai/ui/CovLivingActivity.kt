@@ -48,6 +48,7 @@ import io.agora.scene.convoai.animation.CovBallAnimCallback
 import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
+import io.agora.scene.convoai.convoaiApi.AgentState
 import io.agora.scene.convoai.databinding.CovActivityLivingBinding
 import io.agora.scene.convoai.iot.manager.CovIotPresetManager
 import io.agora.scene.convoai.iot.ui.CovIotDeviceListActivity
@@ -392,6 +393,11 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             viewModel.agentState.collect { agentState ->
                 agentState?.let {
                     mBinding?.agentStateView?.updateAgentState(it)
+                    if (agentState == AgentState.SPEAKING) {
+                        mBinding?.agentSpeakingIndicator?.startAnimation()
+                    }else{
+                        mBinding?.agentSpeakingIndicator?.stopAnimation()
+                    }
                 }
             }
         }
@@ -539,6 +545,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     vDragSmallWindow.isVisible = false
                 }
             }
+
+            agentSpeakingIndicator.isVisible = !showAvatar && showVideo && !showTranscription
         }
     }
 
