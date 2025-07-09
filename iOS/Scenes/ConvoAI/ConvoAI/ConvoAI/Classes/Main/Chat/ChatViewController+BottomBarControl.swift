@@ -24,9 +24,17 @@ extension ChatViewController: AgentControlToolbarDelegate {
     }
     
     func switchPublishVideoStream(state: Bool) {
-        //TODO: open or close publish video stream
+        if state {
+            windowState.showVideo = true
+            startRenderLocalVideoStream(renderView: localVideoView)
+        } else {
+            windowState.showVideo = false
+            stopRenderLocalVideoStream()
+        }
         
+        updateWindowContent()
     }
+    
 }
 
 extension ChatViewController {

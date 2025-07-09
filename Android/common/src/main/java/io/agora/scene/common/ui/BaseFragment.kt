@@ -72,7 +72,7 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
     /**
      * Initialize the view.
      */
-    protected abstract fun initView()
+    open fun initView(){}
 
     protected fun setOnApplyWindowInsets(view: View) {
         ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->

@@ -75,7 +75,7 @@ class CovBallAnim constructor(
             val source = MediaPlayerSource().apply {
                 url = getVideoSrc(AgentConstant.VIDEO_START_NAME)
             }
-
+            Log.d(TAG, "setupView $mediaPlayerObserver")
             openWithMediaSource(source)
         }
     }
@@ -314,7 +314,8 @@ class CovBallAnim constructor(
     fun release() {
         CovLogger.d(TAG, "called release")
         rtcMediaPlayer.let {
-            CovLogger.d(TAG, "called release rtcMediaPlayer: $it")
+            it.unRegisterPlayerObserver(mediaPlayerObserver)
+            CovLogger.d(TAG, "called release rtcMediaPlayer: $it $mediaPlayerObserver")
             it.stop()
             it.destroy()
         }

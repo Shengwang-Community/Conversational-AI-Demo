@@ -33,7 +33,7 @@ extension ChatViewController {
     @objc internal func onClickTranscriptionButton(_ sender: UIButton) {
         sender.isSelected = !sender.isSelected
         
-        showTranscription(state: !sender.isSelected)
+        showTranscription(state: sender.isSelected)
     }
     
     @objc internal func onClickStopSpeakingButton(_ sender: UIButton) {

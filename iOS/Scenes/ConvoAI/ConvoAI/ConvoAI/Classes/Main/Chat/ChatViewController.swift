@@ -9,25 +9,50 @@ import UIKit
 import Common
 
 public class ChatViewController: UIViewController {
-    internal var remoteIsJoined = false
+    internal var agentIsJoined = false
+    internal var avatarIsJoined = false
     internal var channelName = ""
     internal var token = ""
     internal var agentUid = 0
+    internal var avatarUid = 0
     internal var remoteAgentId = ""
     internal let uid = "\(RtcEnum.getUid())"
     internal var convoAIAPI: ConversationalAIAPI!
     internal let tag = "ChatViewController"
     internal var isSelfSubRender = false
     internal var isDenoise = true
+    internal var windowState = ChatWindowState()
+    
     internal lazy var enableMetric: Bool = {
         let res = DeveloperConfig.shared.metrics
         return res
     }()
     
-    internal lazy var digitalHumanContainerView = {
+    internal lazy var fullSizeContainerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .purple
-        view.isHidden = true
+        return view
+    }()
+    
+    internal lazy var smallSizeContainerView: UIView = {
+        let view = UIView()
+        let button = UIButton()
+        view.addSubview(button)
+        
+        button.snp.makeConstraints { make in
+            make.edges.equalTo(UIEdgeInsets.zero)
+        }
+        
+        button.addTarget(self, action: #selector(smallWindowClicked), for: .touchUpInside)
+        return view
+    }()
+    
+    internal lazy var localVideoView: UIView = {
+        let view = UIView()
+        return view
+    }()
+    
+    internal lazy var remoteAvatarView: AvatarView = {
+        let view = AvatarView()
         return view
     }()
     
@@ -278,8 +303,22 @@ public class ChatViewController: UIViewController {
     }
     
     func showTranscription(state: Bool) {
-        messageView.isHidden = state
-        messageMaskView.isHidden = state
+        messageView.isHidden = !state
+        messageMaskView.isHidden = !state
+        windowState.showTranscription = state
+        updateWindowContent()
+    }
+    
+    func resetPreference() {
+        AppContext.preferenceManager()?.resetAgentInformation()
+    }
+    
+    @objc func smallWindowClicked() {
+        if !windowState.showTranscription {
+            return
+        }
+        
+        showTranscription(state: false)
     }
 }
 

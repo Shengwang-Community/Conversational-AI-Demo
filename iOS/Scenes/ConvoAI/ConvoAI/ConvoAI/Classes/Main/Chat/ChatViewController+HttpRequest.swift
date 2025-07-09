@@ -28,8 +28,6 @@ extension ChatViewController {
     
     private func getConvoaiBodyMap() -> [String: Any?] {
         return [
-            //1.5.1-12-g18f3d9c7
-//            "graph_id": "1.5.1-115-g582c71f4",
             "graph_id": DeveloperConfig.shared.graphId,
             "name": nil,
             "preset": DeveloperConfig.shared.convoaiServerConfig,
@@ -59,7 +57,10 @@ extension ChatViewController {
                     "style": nil,
                     "max_history": nil,
                     "ignore_empty": nil,
-                    "input_modalities": nil,
+                    "input_modalities": [
+                        "text",
+                        "image"
+                    ],
                     "output_modalities": nil,
                     "failure_message": nil
                 ],
@@ -73,6 +74,12 @@ extension ChatViewController {
                     "prefix_padding_ms": nil,
                     "silence_duration_ms": nil,
                     "threshold": nil
+                ],
+                "avatar": [
+                    "params": [
+                        "agora_uid": "\(avatarUid)",
+                        "avatar_id": AppContext.preferenceManager()?.preference.avatar?.avatarId
+                    ]
                 ],
                 "parameters": [
                     "data_channel": "rtm",
@@ -159,6 +166,10 @@ extension ChatViewController {
     
     internal func fetchTokenIfNeeded() async throws {
         return try await withCheckedThrowingContinuation { continuation in
+            if !self.token.isEmpty {
+                continuation.resume()
+                return
+            }
             NetworkManager.shared.generateToken(
                 channelName: "",
                 uid: uid,
@@ -192,14 +203,25 @@ extension ChatViewController {
             channelName = "agent_\(UUID().uuidString.prefix(8))"
         }
         agentUid = AppContext.agentUid
-        remoteIsJoined = false
+        avatarUid = AppContext.avatarUid
+        agentIsJoined = false
+        avatarIsJoined = false
         
-        convoAIAPI.subscribeMessage(channelName: channelName) { err in
-            
+        convoAIAPI.subscribeMessage(channelName: channelName) { [weak self] err in
+            if let error = err {
+                self?.addLog("[subscribeMessage] <<<< error: \(error.message)")
+            }
         }
+        
         let parameters = getStartAgentParameters()
         isSelfSubRender = (AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true)
 
+        if let _ = AppContext.preferenceManager()?.preference.avatar {
+            addLog("will start avatar, avatar id: \(avatarUid)")
+            muteRemoteUser(uid: UInt(agentUid), muted: true)
+            startShowAvatar()
+        }
+        
         agentManager.startAgent(parameters: parameters, channelName: channelName) { [weak self] error, channelName, remoteAgentId, targetServer in
             guard let self = self else { return }
             if self.channelName != channelName {
@@ -252,15 +274,8 @@ extension ChatViewController {
         }
         stopAgentRequest()
         leaveChannel()
-        setupMuteState(state: false)
-        animateView.updateAgentState(.idle)
-        messageView.clearMessages()
-        messageView.isHidden = true
-        messageMaskView.isHidden = true
-        bottomBar.resetState()
-        timerCoordinator.stopAllTimer()
-        AppContext.preferenceManager()?.resetAgentInformation()
-        agentStateView.isHidden = true
+        resetUIDisplay()
+        resetPreference()
     }
     
     internal func handleStartError() {
