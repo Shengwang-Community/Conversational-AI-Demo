@@ -24,8 +24,17 @@ extension ChatViewController: AgentControlToolbarDelegate {
     }
     
     func switchPublishVideoStream(state: Bool) {
+        if state {
+            windowState.showVideo = true
+            startRenderLocalVideoStream(renderView: localVideoView)
+        } else {
+            windowState.showVideo = false
+            stopRenderLocalVideoStream()
+        }
         
+        updateWindowContent()
     }
+    
 }
 
 extension ChatViewController {
@@ -36,7 +45,6 @@ extension ChatViewController {
         }
         stopLoading()
         stopAgent()
-        stopAvatar()
     }
     
     private func clickTheStartButton() async {

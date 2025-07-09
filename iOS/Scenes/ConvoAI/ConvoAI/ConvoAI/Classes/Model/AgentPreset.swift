@@ -41,7 +41,7 @@ struct AgentPreset: Codable {
     let defaultLanguageName: String
     let callTimeLimitSecond: Int
     let supportLanguages: [SupportLanguage]
-    let avatarIds: [Avatar]
+    let avatarIds: [Avatar]?
     
     enum CodingKeys: String, CodingKey {
         case name

@@ -177,7 +177,7 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
         
         self.updateLanguage(language)
         
-        guard let avatar = preset.avatarIds.first else {
+        guard let avatar = preset.avatarIds?.first else {
             return
         }
         

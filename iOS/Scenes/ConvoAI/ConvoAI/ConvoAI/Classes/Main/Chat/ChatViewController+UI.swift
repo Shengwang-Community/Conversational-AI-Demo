@@ -8,10 +8,24 @@
 import Foundation
 import Common
 
+class ChatWindowState {
+    var showTranscription = false
+    var showAvatar = false
+    var showVideo = false
+    
+    func reset() {
+        showTranscription = false
+        showAvatar = false
+        showVideo = false
+    }
+}
+
 extension ChatViewController {
     internal func setupViews() {
         view.backgroundColor = .black
-        [digitalHumanContainerView, animateContentView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, agentStateView, topBar, welcomeMessageView, bottomBar, annotationView, devModeButton, sendMessageButton].forEach { view.addSubview($0) }
+        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, topBar, welcomeMessageView, bottomBar, annotationView, devModeButton, sendMessageButton].forEach { view.addSubview($0) }
+        [localVideoView].forEach { fullSizeContainerView.addSubview($0) }
+        [remoteAvatarView].forEach { smallSizeContainerView.addSubview($0) }
     }
     
     internal func setupConstraints() {
@@ -20,11 +34,16 @@ extension ChatViewController {
             make.left.right.equalToSuperview()
             make.height.equalTo(48)
         }
-        digitalHumanContainerView.snp.makeConstraints { make in
+        
+        animateContentView.snp.makeConstraints { make in
             make.left.right.top.bottom.equalTo(0)
         }
         
-        animateContentView.snp.makeConstraints { make in
+        fullSizeContainerView.snp.makeConstraints { make in
+            make.left.right.top.bottom.equalTo(0)
+        }
+        
+        localVideoView.snp.makeConstraints { make in
             make.left.right.top.bottom.equalTo(0)
         }
         
@@ -48,6 +67,17 @@ extension ChatViewController {
             make.top.equalTo(topBar.snp.bottom).offset(22)
             make.left.right.equalTo(0)
             make.bottom.equalTo(agentStateView.snp.top)
+        }
+        
+        smallSizeContainerView.snp.makeConstraints { make in
+            make.top.equalTo(215)
+            make.right.equalTo(-10)
+            make.width.equalTo(90)
+            make.height.equalTo(130)
+        }
+        
+        remoteAvatarView.snp.makeConstraints { make in
+            make.left.right.top.bottom.equalTo(0)
         }
         
         annotationView.snp.makeConstraints { make in
@@ -83,6 +113,8 @@ extension ChatViewController {
             make.centerX.equalTo(view)
             make.centerY.equalTo(view)
         }
+        
+        updateWindowContent()
     }
     
     internal func didLayoutSubviews() {
@@ -120,5 +152,90 @@ extension ChatViewController {
         let isLogin = UserCenter.shared.isLogin()
         welcomeMessageView.isHidden = isLogin
         topBar.updateButtonVisible(isLogin)
+    }
+        
+    func resetUIDisplay() {
+        setupMuteState(state: false)
+        windowState.reset()
+        animateView.updateAgentState(.idle)
+        messageView.clearMessages()
+        messageView.isHidden = true
+        messageMaskView.isHidden = true
+        bottomBar.resetState()
+        timerCoordinator.stopAllTimer()
+        agentStateView.isHidden = true
+        updateWindowContent()
+    }
+    
+    func updateWindowContent() {
+        let showAvatar = windowState.showAvatar
+        let showVideo = windowState.showVideo
+        let showTranscription = windowState.showTranscription
+        fullSizeContainerView.removeSubviews()
+        smallSizeContainerView.removeSubviews()
+        if showTranscription {
+            if showAvatar, showVideo {
+                fullSizeContainerView.isHidden = false
+                smallSizeContainerView.isHidden = false
+                fullSizeContainerView.addSubview(remoteAvatarView)
+                smallSizeContainerView.addSubview(localVideoView)
+                localVideoView.snp.makeConstraints { make in
+                    make.edges.equalTo(UIEdgeInsets.zero)
+                }
+                
+                remoteAvatarView.snp.makeConstraints { make in
+                    make.edges.equalTo(UIEdgeInsets.zero)
+                }
+            } else if showAvatar {
+                fullSizeContainerView.isHidden = false
+                smallSizeContainerView.isHidden = true
+                
+                fullSizeContainerView.addSubview(remoteAvatarView)
+                remoteAvatarView.snp.makeConstraints { make in
+                    make.edges.equalTo(UIEdgeInsets.zero)
+                }
+            } else if showVideo {
+                fullSizeContainerView.isHidden = true
+                smallSizeContainerView.isHidden = false
+                smallSizeContainerView.addSubview(localVideoView)
+                localVideoView.snp.makeConstraints { make in
+                    make.edges.equalTo(UIEdgeInsets.zero)
+                }
+            } else {
+                fullSizeContainerView.isHidden = true
+                smallSizeContainerView.isHidden = true
+            }
+        } else {
+            if showAvatar, showVideo {
+                fullSizeContainerView.isHidden = false
+                smallSizeContainerView.isHidden = false
+                fullSizeContainerView.addSubview(localVideoView)
+                smallSizeContainerView.addSubview(remoteAvatarView)
+                localVideoView.snp.makeConstraints { make in
+                    make.edges.equalTo(UIEdgeInsets.zero)
+                }
+                
+                remoteAvatarView.snp.makeConstraints { make in
+                    make.edges.equalTo(UIEdgeInsets.zero)
+                }
+            } else if showAvatar {
+                fullSizeContainerView.isHidden = false
+                smallSizeContainerView.isHidden = true
+                fullSizeContainerView.addSubview(remoteAvatarView)
+                remoteAvatarView.snp.makeConstraints { make in
+                    make.edges.equalTo(UIEdgeInsets.zero)
+                }
+            } else if showVideo {
+                fullSizeContainerView.isHidden = false
+                smallSizeContainerView.isHidden = true
+                fullSizeContainerView.addSubview(localVideoView)
+                localVideoView.snp.makeConstraints { make in
+                    make.edges.equalTo(UIEdgeInsets.zero)
+                }
+            } else {
+                fullSizeContainerView.isHidden = true
+                smallSizeContainerView.isHidden = true
+            }
+        }
     }
 }

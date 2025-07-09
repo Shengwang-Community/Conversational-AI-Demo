@@ -219,7 +219,7 @@ extension ChatViewController {
         if let _ = AppContext.preferenceManager()?.preference.avatar {
             addLog("will start avatar, avatar id: \(avatarUid)")
             muteRemoteUser(uid: UInt(agentUid), muted: true)
-            startAvatar()
+            startShowAvatar()
         }
         
         agentManager.startAgent(parameters: parameters, channelName: channelName) { [weak self] error, channelName, remoteAgentId, targetServer in
@@ -274,15 +274,8 @@ extension ChatViewController {
         }
         stopAgentRequest()
         leaveChannel()
-        setupMuteState(state: false)
-        animateView.updateAgentState(.idle)
-        messageView.clearMessages()
-        messageView.isHidden = true
-        messageMaskView.isHidden = true
-        bottomBar.resetState()
-        timerCoordinator.stopAllTimer()
-        AppContext.preferenceManager()?.resetAgentInformation()
-        agentStateView.isHidden = true
+        resetUIDisplay()
+        resetPreference()
     }
     
     internal func handleStartError() {

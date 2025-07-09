@@ -48,7 +48,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
             dismissErrorToast()
         } else if reason == .reasonLeaveChannel {
             dismissErrorToast()
-            AppContext.preferenceManager()?.resetAgentInformation()
+            resetPreference()
         }
         
         if state == .failed {
@@ -174,14 +174,34 @@ extension ChatViewController {
         rtcEngine.muteRemoteAudioStream(uid, mute: muted)
     }
     
-    internal func enableVideo() {
+    internal func startRenderLocalVideoStream(renderView: UIView) {
         let rtcEngine = rtcManager.getRtcEntine()
-        rtcEngine.enableVideo()
+        let mediaOptions = AgoraRtcChannelMediaOptions()
+        mediaOptions.publishCameraTrack = true
+        rtcEngine.updateChannel(with: mediaOptions)
+        
+        let videoCanvas = AgoraRtcVideoCanvas()
+        videoCanvas.uid = 0
+        // the view to be binded
+        videoCanvas.view = renderView
+        videoCanvas.renderMode = .hidden
+        rtcEngine.setupLocalVideo(videoCanvas)
+        // you have to call startPreview to see local video
+        rtcEngine.startPreview()
     }
     
-    internal func disableVideo() {
+    internal func stopRenderLocalVideoStream() {
         let rtcEngine = rtcManager.getRtcEntine()
-        rtcEngine.disableVideo()
+        let mediaOptions = AgoraRtcChannelMediaOptions()
+        mediaOptions.publishCameraTrack = false
+        rtcEngine.updateChannel(with: mediaOptions)
+        
+        let videoCanvas = AgoraRtcVideoCanvas()
+        videoCanvas.uid = 0
+        // the view to be binded
+        videoCanvas.view = nil
+        videoCanvas.renderMode = .hidden
+        rtcEngine.setupLocalVideo(videoCanvas)
     }
     
     internal func startRenderRemoteVideoStream(renderView: UIView) {
