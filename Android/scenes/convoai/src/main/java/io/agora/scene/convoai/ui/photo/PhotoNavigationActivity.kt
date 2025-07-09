@@ -5,13 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
+import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.convoai.R
+import io.agora.scene.convoai.databinding.CovPhotoNavigationActivityBinding
 
-class PhotoNavigationActivity : AppCompatActivity() {
+class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>() {
     
     private var completion: ((Bitmap?) -> Unit)? = null
     
@@ -33,17 +31,15 @@ class PhotoNavigationActivity : AppCompatActivity() {
             }
         }
     }
-    
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.cov_photo_navigation_activity)
-        
+
+    override fun getViewBinding(): CovPhotoNavigationActivityBinding = 
+        CovPhotoNavigationActivityBinding.inflate(layoutInflater)
+
+    override fun initView() {
         val callbackId = intent.getStringExtra(EXTRA_CALLBACK_ID)
         completion = callbackId?.let { callbacks[it] }
         
-        if (savedInstanceState == null) {
-            showPhotoPickType()
-        }
+        showPhotoPickType()
     }
     
     override fun onDestroy() {
@@ -92,43 +88,30 @@ class PhotoNavigationActivity : AppCompatActivity() {
     }
 
     fun handleGallerySelection(uri: Uri) {
-        // 验证照片是否符合要求
-        val validationResult = PhotoValidator.validatePhoto(this, uri)
-        
-        if (!validationResult.isValid) {
-            // 显示验证失败的错误信息
-            android.widget.Toast.makeText(this, validationResult.errorMessage, android.widget.Toast.LENGTH_LONG).show()
-            return
-        }
-        
-        // 验证通过，继续处理照片
-        handleValidatedGallerySelection(uri)
+        // Process photo using PhotoProcessor
+        Thread {
+            try {
+                val processedBitmap = PhotoProcessor.processPhoto(this, uri)
+                
+                runOnUiThread {
+                    if (processedBitmap != null) {
+                        // Successfully processed, proceed to edit page
+                        pushPhotoEdit(processedBitmap)
+                    } else {
+                        // Format not supported or processing failed
+                        android.widget.Toast.makeText(this, "只支持格式为JPG、PNG、WEBP、JPEG的图片", android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    android.widget.Toast.makeText(this, "图片处理失败: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
     }
     
-    /**
-     * 处理已验证的照片选择（内部使用）
-     */
-    private fun handleValidatedGallerySelection(uri: Uri) {
-        convertUriToBitmap(uri) { bitmap ->
-            if (bitmap != null) {
-                pushPhotoEdit(bitmap)
-            } else {
-                android.widget.Toast.makeText(this, "Failed to load selected image", android.widget.Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
     private fun pushPhotoEdit(bitmap: Bitmap) {
-        // 在进入编辑界面前验证图片
-        val validationResult = PhotoValidator.validatePhoto(bitmap)
-        
-        if (!validationResult.isValid) {
-            // 验证失败，显示错误信息
-            android.widget.Toast.makeText(this, validationResult.errorMessage, android.widget.Toast.LENGTH_LONG).show()
-            return
-        }
-        
-        // 验证通过，进入编辑界面
+        // Bitmap should already be processed and ready for editing
         val fragment = PhotoEditFragment.newInstance(bitmap) { editedBitmap ->
             completeFlow(editedBitmap)
         }

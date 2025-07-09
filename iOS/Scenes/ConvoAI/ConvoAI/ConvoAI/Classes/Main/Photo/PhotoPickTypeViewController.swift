@@ -316,62 +316,22 @@ extension PhotoPickTypeViewController: PHPickerViewControllerDelegate {
         itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
             guard let self = self, let originalImage = image as? UIImage else { return }
             DispatchQueue.main.async {
-                // Adjust image size to meet validation requirements
-                let processedImage = self.resizeImageIfNeeded(originalImage)
+                // Use PhotoProcessor to process the image
+                let processedImage = PhotoProcessor.processPhoto(originalImage)
                 
-                // Validate photo against requirements
-                let validationResult = PhotoValidator.validatePhoto(processedImage)
-                
-                if !validationResult.isValid {
-                    // Display error message for failed validation
-                    let alert = UIAlertController(title: "Image Validation Failed", message: validationResult.errorMessage, preferredStyle: .alert)
+                if let processedImage = processedImage {
+                    // If processing succeeds, navigate to edit screen
+                    let editVC = PhotoEditViewController()
+                    editVC.image = processedImage
+                    editVC.completion = self.completion
+                    self.navigationController?.pushViewController(editVC, animated: true)
+                } else {
+                    // Display error message for failed processing (in English)
+                    let alert = UIAlertController(title: "Image Processing Failed", message: "Only JPG, PNG, WEBP, and JPEG formats are supported.", preferredStyle: .alert)
                     alert.addAction(UIAlertAction(title: "OK", style: .default))
                     self.present(alert, animated: true)
-                    return
                 }
-                
-                // If validation passes, navigate to edit screen
-                let editVC = PhotoEditViewController()
-                editVC.image = processedImage
-                editVC.completion = self.completion
-                self.navigationController?.pushViewController(editVC, animated: true)
             }
         }
-    }
-    
-    /**
-     * If needed, adjust image size to meet validation requirements
-     */
-    private func resizeImageIfNeeded(_ image: UIImage) -> UIImage {
-        let maxDimension: CGFloat = 2048  // Keep consistent with PhotoValidator
-        let originalSize = image.size
-        
-        // If image size is already acceptable, return directly
-        if originalSize.width <= maxDimension && originalSize.height <= maxDimension {
-            print("[PhotoPickTypeViewController] Image size is acceptable: \(originalSize.width)x\(originalSize.height)")
-            return image
-        }
-        
-        // Calculate new size, maintaining aspect ratio
-        let aspectRatio = originalSize.width / originalSize.height
-        var newSize: CGSize
-        
-        if originalSize.width > originalSize.height {
-            // Width is larger, use width as reference
-            newSize = CGSize(width: maxDimension, height: maxDimension / aspectRatio)
-        } else {
-            // Height is larger, use height as reference
-            newSize = CGSize(width: maxDimension * aspectRatio, height: maxDimension)
-        }
-        
-        print("[PhotoPickTypeViewController] Resizing image from \(originalSize.width)x\(originalSize.height) to \(newSize.width)x\(newSize.height)")
-        
-        // Create graphics context and draw the adjusted image
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-        image.draw(in: CGRect(origin: .zero, size: newSize))
-        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        return resizedImage ?? image
     }
 }

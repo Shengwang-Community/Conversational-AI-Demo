@@ -8,6 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import io.agora.scene.common.util.toast.ToastUtil
+import io.agora.scene.common.util.getStatusBarHeight
+import io.agora.scene.common.util.dp
 import io.agora.scene.convoai.databinding.CovPhotoEditFragmentBinding
 
 class PhotoEditFragment : Fragment() {
@@ -65,6 +67,12 @@ class PhotoEditFragment : Fragment() {
     }
     
     private fun setupViews() {
+        // Adapt status bar height to prevent close button being obscured by notch screens
+        val statusBarHeight = requireContext().getStatusBarHeight() ?: 25.dp.toInt()
+        val layoutParams = binding.topBar.layoutParams as ViewGroup.MarginLayoutParams
+        layoutParams.topMargin = statusBarHeight
+        binding.topBar.layoutParams = layoutParams
+        
         binding.btnClose.setOnClickListener {
             parentFragmentManager.popBackStack()
         }

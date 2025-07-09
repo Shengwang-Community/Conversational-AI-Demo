@@ -85,7 +85,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="相册"
+                        android:text="Gallery"
                         android:textColor="@color/ai_icontext1"
                         android:textSize="12sp"
                         android:textAlignment="center" />
@@ -123,7 +123,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="拍照"
+                        android:text="Camera"
                         android:textColor="@color/ai_icontext1"
                         android:textSize="12sp"
                         android:textAlignment="center" />
