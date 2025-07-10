@@ -57,4 +57,6 @@
     <color name="ai_block1_50">#80acacef</color>
     <color name="ai_disable1">#595959</color>
     <color name="ai_brand_black3">#40000000</color>
+    <color name="ai_brand_black4">#66000000</color>
+    <color name="ai_brand_black5">#7f000000</color>
 </resources>

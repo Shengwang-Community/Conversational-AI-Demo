@@ -318,6 +318,11 @@ class CovLivingViewModel : ViewModel() {
                     CovLogger.d(TAG, "RTC Join channel success: $uid")
                     _networkQuality.value = 1
                     _isUserJoinedRtc.value = true
+                    if (CovAgentManager.isEnableAvatar()) {
+                        CovRtcManager.muteRemoteAudio(CovAgentManager.agentUID, true)
+                    } else {
+                        CovRtcManager.muteRemoteAudio(CovAgentManager.agentUID, false)
+                    }
                 }
             }
 
@@ -504,6 +509,10 @@ class CovLivingViewModel : ViewModel() {
             when (errorCode) {
                 CovAgentApiManager.ERROR_RESOURCE_LIMIT_EXCEEDED -> ToastUtil.show(
                     R.string.cov_detail_start_agent_limit_error,
+                    Toast.LENGTH_LONG
+                )
+                CovAgentApiManager.ERROR_AVATAR_LIMIT -> ToastUtil.show(
+                    R.string.cov_detail_start_agent_avatar_limit_error,
                     Toast.LENGTH_LONG
                 )
 
@@ -700,7 +709,7 @@ class CovLivingViewModel : ViewModel() {
                     "style" to null,
                     "max_history" to null,
                     "ignore_empty" to null,
-                    "input_modalities" to listOf("text", "image"),
+//                    "input_modalities" to listOf("text", "image"),
                     "output_modalities" to null,
                     "failure_message" to null,
                 ),
@@ -767,6 +776,7 @@ class CovLivingViewModel : ViewModel() {
             avatarMap = if (avatar != null) {
                 mapOf(
                     "enable" to true,
+                    "vendor" to avatar.vendor,
                     "params" to mapOf(
                         "agora_uid" to CovAgentManager.avatarUID.toString(),
                         "avatar_id" to avatar.avatar_id

@@ -20,10 +20,13 @@ import io.agora.scene.convoai.convoaiApi.TranscriptionType
 import io.agora.scene.convoai.databinding.CovMessageAgentItemBinding
 import io.agora.scene.convoai.databinding.CovMessageListViewBinding
 import io.agora.scene.convoai.databinding.CovMessageMineItemBinding
+import java.util.UUID
 
 /**
- * Message list view for displaying conversation messages
- * Optimized scrolling behavior for streaming content updates
+ * CovMessageListView is a custom view for displaying a conversation message list.
+ * It supports both text and image messages, handles local image uploads (with temporary localId),
+ * and replaces local image messages with server-confirmed messages (with turnId) after upload.
+ * Provides methods for adding, updating, and replacing local image messages, as well as updating upload status.
  */
 class CovMessageListView @JvmOverloads constructor(
     context: Context,
@@ -150,77 +153,17 @@ class CovMessageListView @JvmOverloads constructor(
      * Handle received subtitle messages - fix scrolling issues
      */
     private fun handleMessage(transcription: Transcription) {
-        val isNewMessage = messageAdapter.getMessageByTurnId(
-            transcription.turnId,
-            transcription.type == TranscriptionType.USER
-        ) == null
-
-        // Handle existing message updates
-        messageAdapter.getMessageByTurnId(transcription.turnId, transcription.type == TranscriptionType.USER)
-            ?.let { existingMessage ->
-                existingMessage.apply {
-                    content = transcription.text
-                    status = transcription.status
-                }
-                messageAdapter.updateMessage(existingMessage)
-
-                // Decide whether to scroll based on message position
-                // 1. For last message, handle scrolling logic
-                val index = messageAdapter.getMessageIndex(existingMessage)
-                if (index == messageAdapter.itemCount - 1 && autoScrollToBottom) {
-                    scheduleScrollToBottom()
-                }
-                return
-            }
-
-        // Create new message
+        val isUser = transcription.type == TranscriptionType.USER
         val newMessage = Message(
-            isMe = transcription.type == TranscriptionType.USER,
+            isMe = isUser,
             turnId = transcription.turnId,
             content = transcription.text,
             status = transcription.status
         )
-
-        // Unified message insertion position logic based on turnId and isMe
-        var insertPosition = -1
-        for (i in 0 until messageAdapter.itemCount) {
-            val message = messageAdapter.getMessageAt(i)
-
-            // Case 1: Insert before a message with greater turnId
-            if (message.turnId > newMessage.turnId) {
-                insertPosition = i
-                break
-            }
-
-            // Case 2: For same turnId, ensure user messages come before agent messages
-            if (message.turnId == newMessage.turnId) {
-                // If this is an agent message and we're inserting a user message, insert here
-                if (!message.isMe && newMessage.isMe) {
-                    insertPosition = i
-                    break
-                }
-
-                // If both are agent messages or both are user messages, continue to next message
-                // (this allows multiple user messages with same turnId to maintain their order)
-                // (and multiple agent messages with same turnId to maintain their order)
-                if (message.isMe == newMessage.isMe) {
-                    continue
-                }
-
-                // If this is a user message and we're inserting an agent message,
-                // continue to find the position after all user messages with this turnId
-            }
-        }
-
-        if (insertPosition != -1) {
-            // Found proper position
-            messageAdapter.insertMessage(insertPosition, newMessage)
-        } else {
-            // No proper position found, append to the end
-            messageAdapter.addMessage(newMessage)
-        }
-
-        // Handle scrolling logic in one place
+        messageAdapter.addOrUpdateMessage(newMessage)
+        // Determine if this is a new message (just inserted)
+        val isNewMessage =
+            messageAdapter.getAllMessages().count { it.turnId == transcription.turnId && it.isMe == isUser } == 1
         handleScrollAfterUpdate(isNewMessage)
     }
 
@@ -253,7 +196,7 @@ class CovMessageListView @JvmOverloads constructor(
     private fun showVisualCueForNewMessage() {
         if (!autoScrollToBottom) {
             binding.cvToBottom.apply {
-                if (visibility == VISIBLE) {
+                if (isVisible) {
                     // Create "bounce" effect to indicate new message
                     animate().scaleX(1.2f).scaleY(1.2f).setDuration(150).withEndAction {
                         animate().scaleX(1f).scaleY(1f).setDuration(150)
@@ -291,7 +234,8 @@ class CovMessageListView @JvmOverloads constructor(
         var content: String, // For text: text content; for image: local path or url
         var status: TranscriptionStatus? = null, // Only for text messages, null for image
         val type: MessageType = MessageType.TEXT,
-        var uploadStatus: UploadStatus = UploadStatus.NONE // For image
+        var uploadStatus: UploadStatus = UploadStatus.NONE, // For image
+        val localId: String? = null // Unique local ID for local image messages
     )
 
     /**
@@ -316,8 +260,8 @@ class CovMessageListView @JvmOverloads constructor(
                     binding.layoutImageMessage.isVisible = false
                     binding.tvMessageContent.text = message.content
                 } else if (message.type == MessageType.IMAGE) {
-                    binding.tvMessageContent.isVisible =false
-                    binding.layoutImageMessage.isVisible =true
+                    binding.tvMessageContent.isVisible = false
+                    binding.layoutImageMessage.isVisible = true
                     // Load image
                     val imageView = binding.ivImageMessage
                     val progressBar = binding.progressUpload
@@ -428,19 +372,55 @@ class CovMessageListView @JvmOverloads constructor(
         }
 
         /**
-         * Add message to end
+         * Add a local image message (without turnId) to the end of the list.
+         * The message will have turnId = -1 and a unique localId.
+         * @param message The local image message to add.
          */
-        fun addMessage(message: Message) {
+        fun addLocalImageMessage(message: Message) {
             messages.add(message)
             notifyItemInserted(messages.size - 1)
         }
 
         /**
-         * Insert message at specified position
+         * Replace a local image message (by localId) with the server message (with turnId).
+         * After replacement, the list is sorted by turnId and user/agent order.
+         * @param serverMessage The message from server (with turnId).
+         * @param localId The localId of the local image message to replace.
          */
-        fun insertMessage(index: Int, message: Message) {
-            messages.add(index, message)
-            notifyItemInserted(index)
+        fun replaceLocalWithServerImageMessage(serverMessage: Message, localId: String) {
+            val idx = messages.indexOfFirst { it.localId == localId }
+            if (idx != -1) {
+                messages[idx] = serverMessage
+                messages.sortWith(compareBy<Message> { it.turnId }.thenBy { if (it.isMe) 0 else 1 })
+                notifyDataSetChanged()
+            } else {
+                // Fallback: just add as normal
+                addOrUpdateMessage(serverMessage)
+            }
+        }
+
+        /**
+         * Add or update a message in the list (only for messages with valid turnId).
+         * Ensures uniqueness by (turnId + isMe):
+         *   - If a message with the same turnId and isMe exists, update its content and status.
+         *   - Otherwise, insert the new message.
+         * After insertion, the list is sorted by:
+         *   - turnId ascending
+         *   - For the same turnId, user messages (isMe == true) come before agent messages (isMe == false)
+         * Notifies the adapter of changes accordingly.
+         * @param message The message to add or update.
+         */
+        fun addOrUpdateMessage(message: Message) {
+            if (message.turnId < 0) return // Only handle messages with valid turnId
+            val existIndex = messages.indexOfFirst { it.turnId == message.turnId && it.isMe == message.isMe }
+            if (existIndex != -1) {
+                messages[existIndex] = message
+                notifyItemChanged(existIndex)
+            } else {
+                messages.add(message)
+                messages.sortWith(compareBy<Message> { it.turnId }.thenBy { if (it.isMe) 0 else 1 })
+                notifyDataSetChanged()
+            }
         }
 
         /**
@@ -460,52 +440,6 @@ class CovMessageListView @JvmOverloads constructor(
         }
 
         /**
-         * Find message by turnId and sender
-         */
-        fun getMessageByTurnId(turnId: Long, isMe: Boolean): Message? {
-            return messages.lastOrNull { it.turnId == turnId && it.isMe == isMe }
-        }
-
-        /**
-         * Get message index in list
-         */
-        fun getMessageIndex(message: Message): Int {
-            return messages.indexOfFirst {
-                it.turnId == message.turnId && it.isMe == message.isMe
-            }
-        }
-
-        /**
-         * Update existing message - stable implementation
-         */
-        fun updateMessage(message: Message) {
-            val index = getMessageIndex(message)
-            if (index != -1) {
-                // Record old content length to decide whether to scroll
-                val oldContentLength = messages[index].content.length
-                val newContentLength = message.content.length
-
-                // Update message
-                messages[index] = message
-                notifyItemChanged(index)
-
-                // Only handle scrolling for significantly grown messages at the end
-                if (newContentLength > oldContentLength + 50 &&
-                    index == messages.size - 1 &&
-                    autoScrollToBottom
-                ) {
-
-                    // Use more reliable scrolling method to avoid flickering
-                    binding.rvMessages.post {
-                        scrollToBottom()
-                    }
-                }
-            } else {
-                addMessage(message)
-            }
-        }
-
-        /**
          * Update agent name
          */
         fun updateAgentName(name: String) {
@@ -514,10 +448,17 @@ class CovMessageListView @JvmOverloads constructor(
         }
 
         /**
-         * Get message at specific position
+         * Update upload status for a local image message by localId.
+         * Updates the uploadStatus field and refreshes the item in the adapter.
+         * @param localId The localId of the image message.
+         * @param status The new upload status.
          */
-        fun getMessageAt(position: Int): Message {
-            return messages[position]
+        fun updateLocalImageUploadStatus(localId: String, status: UploadStatus) {
+            val idx = messages.indexOfFirst { it.localId == localId }
+            if (idx != -1) {
+                messages[idx].uploadStatus = status
+                notifyItemChanged(idx)
+            }
         }
 
         // Set image view size according to rules
@@ -574,12 +515,56 @@ class CovMessageListView @JvmOverloads constructor(
         var onImagePreviewClickListener: ((Message) -> Unit)? = null
     }
 
+    /**
+     * Called when a new transcription is received or updated.
+     * Handles both user and agent messages, and triggers scroll logic if needed.
+     * @param transcription The incoming transcription data.
+     */
     fun onTranscriptionUpdated(transcription: Transcription) {
         // Transcription for other users
         if (transcription.type == TranscriptionType.USER && transcription.userId != CovAgentManager.uid.toString()) {
             return
         }
         handleMessage(transcription)
+    }
+
+    /**
+     * Add a local image message to the message list.
+     * Generates a unique localId for the message, sets upload status to UPLOADING,
+     * and inserts it at the end of the list. Used before the image is uploaded to the server.
+     * @param localImagePath The local file path of the image to be uploaded.
+     */
+    fun addLocalImageMessage(localImagePath: String) {
+        val localId = UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+        val localMsg = Message(
+            isMe = true,
+            turnId = -1L,
+            content = localImagePath,
+            type = MessageType.IMAGE,
+            uploadStatus = UploadStatus.UPLOADING,
+            localId = localId
+        )
+        messageAdapter.addLocalImageMessage(localMsg)
+    }
+
+    /**
+     * Update the upload status of a local image message by its localId.
+     * Used to reflect upload progress, failure, or success in the UI.
+     * @param localId The unique localId of the image message.
+     * @param status The new upload status (UPLOADING, FAILED, SUCCESS).
+     */
+    fun updateLocalImageUploadStatus(localId: String, status: UploadStatus) {
+        messageAdapter.updateLocalImageUploadStatus(localId, status)
+    }
+
+    /**
+     * Replace a local image message (identified by localId) with the server-confirmed message (with turnId).
+     * This is called after the image is successfully uploaded and the server returns the official message.
+     * @param serverMessage The message from the server, containing a valid turnId and other info.
+     * @param localId The localId of the local image message to be replaced.
+     */
+    fun replaceLocalWithServerImageMessage(serverMessage: Message, localId: String) {
+        messageAdapter.replaceLocalWithServerImageMessage(serverMessage, localId)
     }
 
     // Schedule scrolling to bottom with debouncing
