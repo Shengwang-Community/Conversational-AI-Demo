@@ -63,9 +63,17 @@ extension ChatViewController {
     internal func loginRTM() async throws {
         return try await withCheckedThrowingContinuation { continuation in
             if !self.token.isEmpty {
-                continuation.resume()
+                self.rtmManager.login(token: token, completion: {err in
+                    if let error = err {
+                        continuation.resume(throwing: error)
+                        return
+                    }
+                    
+                    continuation.resume()
+                })
                 return
             }
+            
             NetworkManager.shared.generateToken(
                 channelName: "",
                 uid: uid,

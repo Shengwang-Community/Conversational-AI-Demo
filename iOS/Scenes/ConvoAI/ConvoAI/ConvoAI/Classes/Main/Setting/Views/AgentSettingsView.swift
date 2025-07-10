@@ -57,6 +57,14 @@ class AgentSettingsView: UIView {
     
     private lazy var avatarImageView: UIImageView = {
         let imageView = UIImageView()
+        if let state = AppContext.preferenceManager()?.information.agentState, state != .unload {
+            let view = UIView()
+            view.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+            imageView.addSubview(view)
+            view.snp.makeConstraints { make in
+                make.edges.equalTo(UIEdgeInsets.zero)
+            }
+        }
         return imageView
     }()
     
@@ -80,7 +88,6 @@ class AgentSettingsView: UIView {
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.layer.cornerRadius = 10
         avatarImageView.layer.masksToBounds = true
-        
         view.addSubview(avatarImageView)
         avatarImageView.snp.makeConstraints { make in
             make.centerY.equalToSuperview()

@@ -93,7 +93,7 @@ extension ChatViewController {
                     "audio_scenario": nil,
                     "transcript": [
                         "enable": true,
-                        "enable_words": true,
+                        "enable_words": AppContext.preferenceManager()?.preference.avatar == nil,
                         "protocol_version": "v2",
 //                        "redundant": nil,
                     ],
@@ -243,15 +243,18 @@ extension ChatViewController {
                 self.timerCoordinator.startJoinChannelTimer()
                 return
             }
-            if (error.code == 1412) {
+            if error.code == 1412 {
                 SVProgressHUD.showError(withStatus: ResourceManager.L10n.Error.resouceLimit)
+            } else if error.code == 1700 {
+                SVProgressHUD.showError(withStatus: ResourceManager.L10n.Error.avatarLimit)
             } else {
                 SVProgressHUD.showError(withStatus: ResourceManager.L10n.Error.joinError)
-                self.stopLoading()
-                self.stopAgent()
-                
-                addLog("start agent failed : \(error.message)")
             }
+            
+            self.stopLoading()
+            self.stopAgent()
+            
+            addLog("start agent failed : \(error.message)")
         }
     }
     
