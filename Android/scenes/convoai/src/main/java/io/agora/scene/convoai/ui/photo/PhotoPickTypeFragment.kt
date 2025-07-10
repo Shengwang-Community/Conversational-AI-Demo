@@ -4,15 +4,19 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.util.toast.ToastUtil
+import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovPhotoPickTypeFragmentBinding
 
 class PhotoPickTypeFragment : Fragment() {
@@ -23,6 +27,13 @@ class PhotoPickTypeFragment : Fragment() {
     private var onPickPhoto: (() -> Unit)? = null
     private var onTakePhoto: (() -> Unit)? = null
     private var onCancel: (() -> Unit)? = null
+    
+    // Permission types for different scenarios
+    private enum class PermissionType {
+        STORAGE_GALLERY,
+        CAMERA,
+        STORAGE_CAMERA
+    }
     
     private val galleryLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -40,7 +51,7 @@ class PhotoPickTypeFragment : Fragment() {
         if (isGranted) {
             openGallery()
         } else {
-            ToastUtil.show("Gallery access permission is required to select photos. Please enable permission in settings.")
+            showPermissionDialog(PermissionType.STORAGE_GALLERY)
         }
     }
     
@@ -48,10 +59,16 @@ class PhotoPickTypeFragment : Fragment() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            onTakePhoto?.invoke()
+            checkStoragePermissionForCamera()
         } else {
-            ToastUtil.show("Camera access permission is required to take photos. Please enable permission in settings.")
+            showPermissionDialog(PermissionType.CAMERA)
         }
+    }
+    
+    private val storageForCameraLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        onTakePhoto?.invoke()
     }
     
     companion object {
@@ -132,6 +149,9 @@ class PhotoPickTypeFragment : Fragment() {
             .start()
     }
     
+    /**
+     * Handle pick photo button click with complete permission checking
+     */
     private fun handlePickPhotoClick() {
         if (checkStoragePermission()) {
             openGallery()
@@ -140,16 +160,33 @@ class PhotoPickTypeFragment : Fragment() {
         }
     }
     
+    /**
+     * Handle take photo button click with complete permission checking
+     */
     private fun handleTakePhotoClick() {
         if (checkCameraPermission()) {
-            onTakePhoto?.invoke()
+            checkStoragePermissionForCamera()
         } else {
             requestCameraPermission()
         }
     }
     
+    /**
+     * Check storage permission for camera preview functionality
+     */
+    private fun checkStoragePermissionForCamera() {
+        if (checkStoragePermission()) {
+            onTakePhoto?.invoke()
+        } else {
+            showPermissionDialog(PermissionType.STORAGE_CAMERA)
+        }
+    }
+    
+    /**
+     * Check storage permission (Android version adaptive)
+     */
     private fun checkStoragePermission(): Boolean {
-        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.READ_MEDIA_IMAGES
@@ -162,6 +199,9 @@ class PhotoPickTypeFragment : Fragment() {
         }
     }
     
+    /**
+     * Check camera permission
+     */
     private fun checkCameraPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             requireContext(),
@@ -169,8 +209,11 @@ class PhotoPickTypeFragment : Fragment() {
         ) == PackageManager.PERMISSION_GRANTED
     }
     
+    /**
+     * Request storage permission for gallery access
+     */
     private fun requestStoragePermission() {
-        val permission = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_IMAGES
         } else {
             Manifest.permission.READ_EXTERNAL_STORAGE
@@ -178,8 +221,23 @@ class PhotoPickTypeFragment : Fragment() {
         storagePermissionLauncher.launch(permission)
     }
     
+    /**
+     * Request camera permission
+     */
     private fun requestCameraPermission() {
         cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+    
+    /**
+     * Request storage permission for camera preview
+     */
+    private fun requestStoragePermissionForCamera() {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+        storageForCameraLauncher.launch(permission)
     }
     
     private fun openGallery() {
@@ -202,8 +260,80 @@ class PhotoPickTypeFragment : Fragment() {
         }
     }
     
+    /**
+     * Show permission dialog with appropriate content
+     */
+    private fun showPermissionDialog(permissionType: PermissionType) {
+        if (activity?.isFinishing == true || activity?.isDestroyed == true) return
+        
+        val (title, content, positiveAction) = when (permissionType) {
+            PermissionType.STORAGE_GALLERY -> Triple(
+                getString(R.string.cov_permission_required),
+                getString(R.string.cov_photo_permission_storage_gallery),
+                { launchAppSettingsForStorage() }
+            )
+            PermissionType.CAMERA -> Triple(
+                getString(R.string.cov_permission_required),
+                getString(R.string.cov_photo_permission_camera),
+                { launchAppSettingsForCamera() }
+            )
+            PermissionType.STORAGE_CAMERA -> Triple(
+                getString(R.string.cov_permission_required),
+                getString(R.string.cov_photo_permission_storage_camera),
+                { requestStoragePermissionForCamera() }
+            )
+        }
+        
+        val builder = CommonDialog.Builder()
+            .setTitle(title)
+            .setContent(content)
+            .hideTopImage()
+            .setCancelable(false)
+        
+        when (permissionType) {
+            PermissionType.STORAGE_CAMERA -> {
+                builder.setPositiveButton(getString(R.string.cov_photo_permission_enable), onClick = { positiveAction.invoke() })
+                    .setNegativeButton(getString(R.string.cov_photo_permission_skip)) { onTakePhoto?.invoke() }
+            }
+            else -> {
+                builder.setPositiveButton(getString(R.string.cov_photo_permission_go_settings), onClick = { positiveAction.invoke() })
+                    .setNegativeButton(getString(R.string.cov_photo_permission_cancel)) {  }
+            }
+        }
+        
+        builder.build().show(parentFragmentManager, "permission_dialog")
+    }
+    
+    /**
+     * Launch app settings for storage permission
+     */
+    private fun launchAppSettingsForStorage() {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:${requireContext().packageName}")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            ToastUtil.show("Unable to open settings")
+        }
+    }
+    
+    /**
+     * Launch app settings for camera permission
+     */
+    private fun launchAppSettingsForCamera() {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:${requireContext().packageName}")
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            ToastUtil.show("Unable to open settings")
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
-} 
+}

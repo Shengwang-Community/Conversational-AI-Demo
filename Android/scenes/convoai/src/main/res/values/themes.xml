@@ -12,8 +12,8 @@
         <item name="android:windowExitAnimation">@anim/slide_out_left</item>
     </style>
 
-    <!-- Transparent AppCompat theme for PhotoNavigationActivity -->
-    <style name="TransparentAppCompatTheme" parent="Theme.AppCompat.NoActionBar">
+    <!-- Transparent Material Components theme for PhotoNavigationActivity -->
+    <style name="TransparentAppCompatTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowAnimationStyle">@null</item>

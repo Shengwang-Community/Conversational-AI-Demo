@@ -11,6 +11,7 @@ import SnapKit
 import Common
 import Photos
 import SVProgressHUD
+import AVFoundation
 
 class PhotoPickTypeViewController: UIViewController {
     private var completion: ((PhotoResult?) -> Void)?
@@ -85,7 +86,7 @@ class PhotoPickTypeViewController: UIViewController {
         photoImageView.contentMode = .scaleAspectFit
         photoOptionView.addSubview(photoImageView)
 
-        photoLabel.text = ResourceManager.L10n.Photo.photo
+        photoLabel.text = ResourceManager.L10n.Photo.typePhoto
         photoLabel.textColor = UIColor.themColor(named: "ai_icontext1")
         photoLabel.font = UIFont.systemFont(ofSize: 12)
         photoLabel.textAlignment = .center
@@ -103,7 +104,7 @@ class PhotoPickTypeViewController: UIViewController {
         cameraImageView.contentMode = .scaleAspectFit
         cameraOptionView.addSubview(cameraImageView)
 
-        cameraLabel.text = ResourceManager.L10n.Photo.camera
+        cameraLabel.text = ResourceManager.L10n.Photo.typeCamera
         cameraLabel.textColor = UIColor.themColor(named: "ai_icontext1")
         cameraLabel.font = UIFont.systemFont(ofSize: 12)
         cameraLabel.textAlignment = .center
@@ -230,13 +231,33 @@ class PhotoPickTypeViewController: UIViewController {
         checkCameraPermission { [weak self] granted in
             guard let self = self else { return }
             if granted {
-                let takeVC = TakePhotoViewController()
-                takeVC.completion = self.completion
-                self.navigationController?.pushViewController(takeVC, animated: true)
+                self.checkPhotoPreviewPermission()
             } else {
                 self.showPermissionAlert(for: .camera)
             }
         }
+    }
+    
+    /// Check photo permission for camera preview functionality
+    private func checkPhotoPreviewPermission() {
+        checkPhotoLibraryPermission { [weak self] granted in
+            guard let self = self else { return }
+            if granted {
+                // Both permissions granted, proceed to camera
+                self.proceedToCamera()
+            } else {
+                // Camera permission granted but photo library denied
+                // Show optional permission dialog
+                self.showPermissionAlert(for: .photoPreview)
+            }
+        }
+    }
+    
+    /// Proceed to camera screen
+    private func proceedToCamera() {
+        let takeVC = TakePhotoViewController()
+        takeVC.completion = self.completion
+        self.navigationController?.pushViewController(takeVC, animated: true)
     }
     
     // MARK: - Permission Methods
@@ -278,34 +299,66 @@ class PhotoPickTypeViewController: UIViewController {
     }
     
     private enum PermissionType {
-        case photoLibrary
-        case camera
+        case photoLibrary      // Photo library permission for selecting photos
+        case camera           // Camera permission for taking photos  
+        case photoPreview     // Photo library permission for camera preview (optional)
     }
     
     private func showPermissionAlert(for type: PermissionType) {
         let title: String
         let message: String
+        var showSkipOption = false
         
         switch type {
         case .photoLibrary:
-            title = "Photo Access Permission"
-            message = "We need access to your photo library to select images. Please enable photo access permission in Settings."
+            title = ResourceManager.L10n.Photo.permissionPhotoTitle
+            message = ResourceManager.L10n.Photo.permissionPhotoMessage
         case .camera:
-            title = "Camera Access Permission"
-            message = "We need access to your camera to take photos. Please enable camera access permission in Settings."
+            title = ResourceManager.L10n.Photo.permissionCameraTitle
+            message = ResourceManager.L10n.Photo.permissionCameraMessage
+        case .photoPreview:
+            title = ResourceManager.L10n.Photo.permissionPhotoPreviewTitle
+            message = ResourceManager.L10n.Photo.permissionPhotoPreviewMessage
+            showSkipOption = true
         }
         
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        // Cancel action
+        alert.addAction(UIAlertAction(title: ResourceManager.L10n.Photo.permissionCancel, style: .cancel))
         
-        alert.addAction(UIAlertAction(title: "Settings", style: .default) { _ in
-            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                UIApplication.shared.open(settingsURL)
-            }
-        })
+        if showSkipOption {
+            // For photo preview permission, show skip option
+            alert.addAction(UIAlertAction(title: ResourceManager.L10n.Photo.permissionSkip, style: .default) { [weak self] _ in
+                // Skip photo permission and proceed to camera
+                self?.proceedToCamera()
+            })
+            
+            // Enable permission action
+            alert.addAction(UIAlertAction(title: ResourceManager.L10n.Photo.permissionEnable, style: .default) { [weak self] _ in
+                self?.requestPhotoLibraryPermission()
+            })
+        } else {
+            // For required permissions, show settings action
+            alert.addAction(UIAlertAction(title: ResourceManager.L10n.Photo.permissionSettings, style: .default) { _ in
+                if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(settingsURL)
+                }
+            })
+        }
         
         present(alert, animated: true)
+    }
+    
+    /// Request photo library permission for preview functionality
+    private func requestPhotoLibraryPermission() {
+        PHPhotoLibrary.requestAuthorization(for: .readWrite) { [weak self] status in
+            DispatchQueue.main.async {
+                // Regardless of permission result, proceed to camera
+                // User has made their choice about photo preview
+                self?.proceedToCamera()
+            }
+        }
     }
 }
 

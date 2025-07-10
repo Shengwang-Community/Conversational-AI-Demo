@@ -183,10 +183,24 @@ extension ResourceManager {
         }
         
         public enum Photo {
-            public static let photo = ResourceManager.localizedString("photo.type.photo")
-            public static let camera = ResourceManager.localizedString("photo.type.camera")
-            public static let done = ResourceManager.localizedString("photo.edit.done")
+            public static let typePhoto = ResourceManager.localizedString("photo.type.photo")
+            public static let typeCamera = ResourceManager.localizedString("photo.type.camera")
+            public static let editDone = ResourceManager.localizedString("photo.edit.done")
             public static let formatTips = ResourceManager.localizedString("photo.format.tips")
+            
+            public static let permissionCancel = ResourceManager.localizedString("photo.permission.cancel")
+            public static let permissionSettings = ResourceManager.localizedString("photo.permission.settings")
+            public static let permissionSkip = ResourceManager.localizedString("photo.permission.skip")
+            public static let permissionEnable = ResourceManager.localizedString("photo.permission.enable")
+            
+            public static let permissionPhotoTitle = ResourceManager.localizedString("photo.permission.photo.title")
+            public static let permissionPhotoMessage = ResourceManager.localizedString("photo.permission.photo.message")
+            
+            public static let permissionPhotoPreviewTitle = ResourceManager.localizedString("photo.permission.photo.preview.title")
+            public static let permissionPhotoPreviewMessage = ResourceManager.localizedString("photo.permission.photo.preview.message")
+            
+            public static let permissionCameraTitle = ResourceManager.localizedString("photo.permission.camera.title")
+            public static let permissionCameraMessage = ResourceManager.localizedString("photo.permission.camera.message")
         }
     }
 }

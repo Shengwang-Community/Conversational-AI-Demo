@@ -130,3 +130,15 @@
 "photo.type.camera" = "Camera";
 "photo.edit.done" = "Done";
 "photo.format.tips" = "Only JPG, PNG, WEBP, and JPEG image formats are supported.";
+
+// Photo permissions
+"photo.permission.photo.title" = "Photo Access Permission";
+"photo.permission.photo.message" = "We need access to your photo library to select images. Please enable photo access permission in Settings.";
+"photo.permission.camera.title" = "Camera Access Permission";
+"photo.permission.camera.message" = "We need access to your camera to take photos. Please enable camera access permission in Settings.";
+"photo.permission.photo.preview.title" = "Photo Access Permission";
+"photo.permission.photo.preview.message" = "Photo access permission allows preview of recent photos on the camera page. You can choose to skip this permission.";
+"photo.permission.cancel" = "Cancel";
+"photo.permission.settings" = "Settings";
+"photo.permission.skip" = "Skip";
+"photo.permission.enable" = "Enable Permission";

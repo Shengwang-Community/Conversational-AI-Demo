@@ -104,5 +104,12 @@
     <string name="cov_photo_type_photo">照片</string>
     <string name="cov_photo_type_camera">拍照</string>
     <string name="cov_photo_edit_done">完成</string>
+    <string name="cov_photo_permission_storage_gallery">访问相册权限用于选择照片。请在设置中开启权限。</string>
+    <string name="cov_photo_permission_camera">相机权限用于拍摄照片。请在设置中开启权限。</string>
+    <string name="cov_photo_permission_storage_camera">访问相册权限可以在拍照页面显示最新照片预览。您可以选择跳过此权限。</string>
+    <string name="cov_photo_permission_skip">跳过</string>
+    <string name="cov_photo_permission_enable">开启权限</string>
+    <string name="cov_photo_permission_go_settings">去设置</string>
+    <string name="cov_photo_permission_cancel">取消</string>
 
 </resources>

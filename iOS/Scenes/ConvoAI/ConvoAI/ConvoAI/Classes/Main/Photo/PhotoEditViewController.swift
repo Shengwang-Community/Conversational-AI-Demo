@@ -209,7 +209,7 @@ extension PhotoEditViewController {
         bottomBar.addSubview(rotateButton)
 
         // Done button
-        doneButton.setTitle(ResourceManager.L10n.Photo.done, for: .normal)
+        doneButton.setTitle(ResourceManager.L10n.Photo.editDone, for: .normal)
         doneButton.titleLabel?.font = UIFont.systemFont(ofSize: 14)
         doneButton.setTitleColor(UIColor.themColor(named: "ai_brand_black10"), for: .normal)
         doneButton.backgroundColor = UIColor.themColor(named: "ai_brand_white10")
