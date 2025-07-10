@@ -231,24 +231,16 @@ class PhotoPickTypeViewController: UIViewController {
         checkCameraPermission { [weak self] granted in
             guard let self = self else { return }
             if granted {
-                self.checkPhotoPreviewPermission()
+                self.checkPhotoLibraryPermission { [weak self] granted in
+                    guard let self = self else { return }
+                    if granted {
+                        self.proceedToCamera()
+                    } else {
+                        self.showPermissionAlert(for: .photoLibrary)
+                    }
+                }
             } else {
                 self.showPermissionAlert(for: .camera)
-            }
-        }
-    }
-    
-    /// Check photo permission for camera preview functionality
-    private func checkPhotoPreviewPermission() {
-        checkPhotoLibraryPermission { [weak self] granted in
-            guard let self = self else { return }
-            if granted {
-                // Both permissions granted, proceed to camera
-                self.proceedToCamera()
-            } else {
-                // Camera permission granted but photo library denied
-                // Show optional permission dialog
-                self.showPermissionAlert(for: .photoPreview)
             }
         }
     }
@@ -301,13 +293,11 @@ class PhotoPickTypeViewController: UIViewController {
     private enum PermissionType {
         case photoLibrary      // Photo library permission for selecting photos
         case camera           // Camera permission for taking photos  
-        case photoPreview     // Photo library permission for camera preview (optional)
     }
     
     private func showPermissionAlert(for type: PermissionType) {
         let title: String
         let message: String
-        var showSkipOption = false
         
         switch type {
         case .photoLibrary:
@@ -316,10 +306,6 @@ class PhotoPickTypeViewController: UIViewController {
         case .camera:
             title = ResourceManager.L10n.Photo.permissionCameraTitle
             message = ResourceManager.L10n.Photo.permissionCameraMessage
-        case .photoPreview:
-            title = ResourceManager.L10n.Photo.permissionPhotoPreviewTitle
-            message = ResourceManager.L10n.Photo.permissionPhotoPreviewMessage
-            showSkipOption = true
         }
         
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
@@ -327,39 +313,16 @@ class PhotoPickTypeViewController: UIViewController {
         // Cancel action
         alert.addAction(UIAlertAction(title: ResourceManager.L10n.Photo.permissionCancel, style: .cancel))
         
-        if showSkipOption {
-            // For photo preview permission, show skip option
-            alert.addAction(UIAlertAction(title: ResourceManager.L10n.Photo.permissionSkip, style: .default) { [weak self] _ in
-                // Skip photo permission and proceed to camera
-                self?.proceedToCamera()
-            })
-            
-            // Enable permission action
-            alert.addAction(UIAlertAction(title: ResourceManager.L10n.Photo.permissionEnable, style: .default) { [weak self] _ in
-                self?.requestPhotoLibraryPermission()
-            })
-        } else {
-            // For required permissions, show settings action
-            alert.addAction(UIAlertAction(title: ResourceManager.L10n.Photo.permissionSettings, style: .default) { _ in
-                if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                    UIApplication.shared.open(settingsURL)
-                }
-            })
-        }
+        // Settings action
+        alert.addAction(UIAlertAction(title: ResourceManager.L10n.Photo.permissionSettings, style: .default) { _ in
+            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsURL)
+            }
+        })
         
         present(alert, animated: true)
     }
-    
-    /// Request photo library permission for preview functionality
-    private func requestPhotoLibraryPermission() {
-        PHPhotoLibrary.requestAuthorization(for: .readWrite) { [weak self] status in
-            DispatchQueue.main.async {
-                // Regardless of permission result, proceed to camera
-                // User has made their choice about photo preview
-                self?.proceedToCamera()
-            }
-        }
-    }
+
 }
 
 extension PhotoPickTypeViewController: PHPickerViewControllerDelegate {

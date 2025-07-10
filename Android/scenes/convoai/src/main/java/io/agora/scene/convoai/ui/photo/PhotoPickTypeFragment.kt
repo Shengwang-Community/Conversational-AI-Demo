@@ -68,7 +68,11 @@ class PhotoPickTypeFragment : Fragment() {
     private val storageForCameraLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        onTakePhoto?.invoke()
+        if (isGranted) {
+            onTakePhoto?.invoke()
+        } else {
+            showPermissionDialog(PermissionType.STORAGE_CAMERA)
+        }
     }
     
     companion object {
@@ -172,13 +176,13 @@ class PhotoPickTypeFragment : Fragment() {
     }
     
     /**
-     * Check storage permission for camera preview functionality
+     * Check storage permission for camera functionality
      */
     private fun checkStoragePermissionForCamera() {
         if (checkStoragePermission()) {
             onTakePhoto?.invoke()
         } else {
-            showPermissionDialog(PermissionType.STORAGE_CAMERA)
+            requestStoragePermissionForCamera()
         }
     }
     
@@ -280,7 +284,7 @@ class PhotoPickTypeFragment : Fragment() {
             PermissionType.STORAGE_CAMERA -> Triple(
                 getString(R.string.cov_permission_required),
                 getString(R.string.cov_photo_permission_storage_camera),
-                { requestStoragePermissionForCamera() }
+                { launchAppSettingsForStorage() }
             )
         }
         
@@ -289,17 +293,8 @@ class PhotoPickTypeFragment : Fragment() {
             .setContent(content)
             .hideTopImage()
             .setCancelable(false)
-        
-        when (permissionType) {
-            PermissionType.STORAGE_CAMERA -> {
-                builder.setPositiveButton(getString(R.string.cov_photo_permission_enable), onClick = { positiveAction.invoke() })
-                    .setNegativeButton(getString(R.string.cov_photo_permission_skip)) { onTakePhoto?.invoke() }
-            }
-            else -> {
-                builder.setPositiveButton(getString(R.string.cov_photo_permission_go_settings), onClick = { positiveAction.invoke() })
-                    .setNegativeButton(getString(R.string.cov_photo_permission_cancel)) {  }
-            }
-        }
+            .setPositiveButton(getString(R.string.cov_photo_permission_go_settings), onClick = { positiveAction.invoke() })
+            .setNegativeButton(getString(R.string.cov_photo_permission_cancel)) {  }
         
         builder.build().show(parentFragmentManager, "permission_dialog")
     }
