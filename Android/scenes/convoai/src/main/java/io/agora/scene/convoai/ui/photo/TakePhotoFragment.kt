@@ -235,14 +235,14 @@ class TakePhotoFragment : Fragment() {
                                 if (processedBitmap != null) {
                                     onPhotoTaken?.invoke(processedBitmap)
                                 } else {
-                                    ToastUtil.show("只支持格式为JPG、PNG、WEBP、JPEG的图片")
+                                    ToastUtil.show("Only JPG, PNG, WEBP, and JPEG images are supported")
                                 }
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "Error processing captured image", e)
                             withContext(Dispatchers.Main) {
                                 binding.shutterButton.isEnabled = true
-                                ToastUtil.show("图片处理失败: ${e.message}")
+                                ToastUtil.show("Image processing failed: ${e.message}")
                             }
                         } finally {
                             image.close()

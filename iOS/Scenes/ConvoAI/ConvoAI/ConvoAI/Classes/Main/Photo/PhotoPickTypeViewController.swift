@@ -13,7 +13,7 @@ import Photos
 import AVFoundation
 
 class PhotoPickTypeViewController: UIViewController {
-    private var completion: ((UIImage?) -> Void)?
+    private var completion: ((PhotoResult?) -> Void)?
     
     private let tabView = UIView()
     private let contentView = UIView()
@@ -27,7 +27,7 @@ class PhotoPickTypeViewController: UIViewController {
     
     private let contentViewHeight: CGFloat = 180
 
-    static func start(from presentingVC: UIViewController, completion: @escaping (UIImage?) -> Void) {
+    static func start(from presentingVC: UIViewController, completion: @escaping (PhotoResult?) -> Void) {
         let pickVC = PhotoPickTypeViewController()
         pickVC.completion = completion
         let nav = UINavigationController(rootViewController: pickVC)
@@ -61,7 +61,7 @@ class PhotoPickTypeViewController: UIViewController {
         contentView.layer.masksToBounds = true
         view.addSubview(contentView)
         
-        // Divider - 优化样式
+        // Divider - optimized styling
         tabView.backgroundColor = UIColor.white.withAlphaComponent(0.3)
         tabView.layer.cornerRadius = 3
         tabView.layer.masksToBounds = true
@@ -109,12 +109,12 @@ class PhotoPickTypeViewController: UIViewController {
         cameraLabel.textAlignment = .center
         cameraOptionView.addSubview(cameraLabel)
         
-        // 添加点击空白处消失的手势
+        // Add tap gesture to dismiss when tapping background
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped(_:)))
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
         
-        // 添加下拉拖动消失的手势
+        // Add pan gesture to dismiss when dragging down
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
         contentView.addGestureRecognizer(panGesture)
     }
@@ -190,7 +190,7 @@ class PhotoPickTypeViewController: UIViewController {
             }
         case .ended, .cancelled:
             let velocity = gesture.velocity(in: contentView)
-            if translation.y > 60 || velocity.y > 500 { // 拖动超过60或速度超过500关闭
+            if translation.y > 60 || velocity.y > 500 { // Close if dragged more than 60 or velocity exceeds 500
                 closeAction()
             } else {
                 UIView.animate(withDuration: 0.2) {

@@ -16,7 +16,7 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var photoOutput: AVCapturePhotoOutput?
     private var currentCameraPosition: AVCaptureDevice.Position = .back
-    var completion: ((UIImage?) -> Void)?
+    var completion: ((PhotoResult?) -> Void)?
 
     // UI
     private let topBar = UIView()

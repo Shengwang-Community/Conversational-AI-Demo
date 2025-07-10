@@ -5,20 +5,24 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Environment
 import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovPhotoNavigationActivityBinding
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 
 class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>() {
     
-    private var completion: ((Bitmap?) -> Unit)? = null
+    private var completion: ((PhotoResult?) -> Unit)? = null
     
     companion object {
         private const val EXTRA_CALLBACK_ID = "callback_id"
         private const val REQUEST_GALLERY = 1001
-        private val callbacks = mutableMapOf<String, (Bitmap?) -> Unit>()
+        private val callbacks = mutableMapOf<String, (PhotoResult?) -> Unit>()
         
-        fun start(context: Context, completion: (Bitmap?) -> Unit) {
+        fun start(context: Context, completion: (PhotoResult?) -> Unit) {
             val callbackId = System.currentTimeMillis().toString()
             callbacks[callbackId] = completion
             
@@ -99,12 +103,12 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
                         pushPhotoEdit(processedBitmap)
                     } else {
                         // Format not supported or processing failed
-                        android.widget.Toast.makeText(this, "只支持格式为JPG、PNG、WEBP、JPEG的图片", android.widget.Toast.LENGTH_LONG).show()
+                        android.widget.Toast.makeText(this, "Only JPG, PNG, WEBP, and JPEG images are supported", android.widget.Toast.LENGTH_LONG).show()
                     }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    android.widget.Toast.makeText(this, "图片处理失败: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                    android.widget.Toast.makeText(this, "Failed to process image: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
                 }
             }
         }.start()
@@ -131,15 +135,73 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
     }
     
     private fun completeFlow(bitmap: Bitmap?) {
-        completion?.invoke(bitmap)
-        finish()
-        overridePendingTransition(0, 0)
+        if (bitmap != null) {
+            // Save file and generate result in background thread
+            Thread {
+                try {
+                    val photoResult = saveBitmapAndCreateResult(bitmap)
+                    runOnUiThread {
+                        completion?.invoke(photoResult)
+                        finish()
+                        overridePendingTransition(0, 0)
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        android.widget.Toast.makeText(this, "Failed to save photo: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                        completion?.invoke(null)
+                        finish()
+                        overridePendingTransition(0, 0)
+                    }
+                }
+            }.start()
+        } else {
+            completion?.invoke(null)
+            finish()
+            overridePendingTransition(0, 0)
+        }
     }
     
     private fun dismissFlow() {
         completion?.invoke(null)
         finish()
         overridePendingTransition(0, 0)
+    }
+    
+    /**
+     * Get app-specific photo output directory
+     */
+    private fun getPhotoOutputDirectory(): File {
+        val picturesDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File(picturesDir, "edited_photos").apply {
+            if (!exists()) mkdirs()
+        }
+    }
+    
+    /**
+     * Generate unique photo file name
+     */
+    private fun generatePhotoFileName(): String {
+        return "photo_${System.currentTimeMillis()}.jpg"
+    }
+    
+    /**
+     * Save Bitmap to file and create PhotoResult object
+     */
+    private fun saveBitmapAndCreateResult(bitmap: Bitmap): PhotoResult {
+        val photoFile = File(getPhotoOutputDirectory(), generatePhotoFileName())
+        
+        // Save bitmap to file
+        FileOutputStream(photoFile).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+        }
+        
+        // Create and return PhotoResult object
+        return PhotoResult(
+            bitmap = bitmap,
+            filePath = photoFile.absolutePath,
+            fileUri = Uri.fromFile(photoFile),
+            file = photoFile
+        )
     }
 
     @Deprecated("Deprecated in Java")
