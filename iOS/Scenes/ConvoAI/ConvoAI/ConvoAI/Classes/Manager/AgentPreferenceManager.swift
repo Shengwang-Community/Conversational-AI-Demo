@@ -12,6 +12,7 @@ import Common
 protocol AgentPreferenceManagerDelegate: AnyObject {
     func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset)
     func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage)
+    func preferenceManager(_ manager: AgentPreferenceManager, avatarDidUpdated avatar: Avatar?)
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool)
     func preferenceManager(_ manager: AgentPreferenceManager, bhvsStateDidUpdated state: Bool)
     func preferenceManager(_ manager: AgentPreferenceManager, loginStateDidUpdated state: Bool)
@@ -36,6 +37,7 @@ protocol AgentPreferenceManagerProtocol {
     // Preference Updates
     func updatePreset(_ preset: AgentPreset)
     func updateLanguage(_ language: SupportLanguage)
+    func updateAvatar(_ avatar: Avatar?)
 
     func updateAiVadState(_ state: Bool)
     func updateForceThresholdState(_ state: Bool)
@@ -53,6 +55,14 @@ protocol AgentPreferenceManagerProtocol {
     func resetAgentInformation()
     func allPresets() -> [AgentPreset]?
     func setPresets(presets: [AgentPreset])
+    
+    func setAvatar(_ avatar: Avatar?)
+    
+    // Alert ignore related methods
+    func setPresetAlertIgnored(_ ignored: Bool)
+    func isPresetAlertIgnored() -> Bool
+    func setLanguageAlertIgnored(_ ignored: Bool)
+    func isLanguageAlertIgnored() -> Bool
 }
 
 class AgentPreferenceManager: AgentPreferenceManagerProtocol {
@@ -61,6 +71,10 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
     private var presets: [AgentPreset]?
     
     private var delegates = NSHashTable<AnyObject>.weakObjects()
+    
+    // UserDefaults keys for alert ignore states
+    private let kPresetAlertIgnoredKey = "preset_alert_ignored"
+    private let kLanguageAlertIgnoredKey = "language_alert_ignored"
     
     // MARK: - Delegate Management
     func addDelegate(_ delegate: AgentPreferenceManagerDelegate) {
@@ -80,6 +94,11 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
     func updateLanguage(_ language: SupportLanguage) {
         preference.language = language
         notifyDelegates { $0.preferenceManager(self, languageDidUpdated: language) }
+    }
+    
+    func updateAvatar(_ avatar: Avatar?) {
+        preference.avatar = avatar
+        notifyDelegates { $0.preferenceManager(self, avatarDidUpdated: avatar) }
     }
     
     func updateAiVadState(_ state: Bool) {
@@ -169,6 +188,30 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
         self.updateLanguage(language)
     }
     
+    func setAvatar(_ avatar: Avatar?) {
+        preference.avatar = avatar
+        notifyDelegates { $0.preferenceManager(self, avatarDidUpdated: avatar) }
+    }
+    
+    // MARK: - Alert ignore related methods
+    func setPresetAlertIgnored(_ ignored: Bool) {
+        UserDefaults.standard.set(ignored, forKey: kPresetAlertIgnoredKey)
+        UserDefaults.standard.synchronize()
+    }
+    
+    func isPresetAlertIgnored() -> Bool {
+        return UserDefaults.standard.bool(forKey: kPresetAlertIgnoredKey)
+    }
+    
+    func setLanguageAlertIgnored(_ ignored: Bool) {
+        UserDefaults.standard.set(ignored, forKey: kLanguageAlertIgnoredKey)
+        UserDefaults.standard.synchronize()
+    }
+    
+    func isLanguageAlertIgnored() -> Bool {
+        return UserDefaults.standard.bool(forKey: kLanguageAlertIgnoredKey)
+    }
+    
     // MARK: - Private Methods
     private func notifyDelegates(_ notification: (AgentPreferenceManagerDelegate) -> Void) {
         for delegate in delegates.allObjects {
@@ -251,6 +294,7 @@ enum NetworkStatus: String {
 class AgentPreference {
     var preset: AgentPreset?
     var language: SupportLanguage?
+    var avatar: Avatar?
     var aiVad = false
     var bhvs = true
 }
@@ -268,6 +312,7 @@ class AgentInfomation {
 extension AgentPreferenceManagerDelegate {
     func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset) {}
     func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage) {}
+    func preferenceManager(_ manager: AgentPreferenceManager, avatarDidUpdated avatar: Avatar?) {}
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool) {}
     func preferenceManager(_ manager: AgentPreferenceManager, bhvsStateDidUpdated state: Bool) {}
     func preferenceManager(_ manager: AgentPreferenceManager, loginStateDidUpdated state: Bool) {}

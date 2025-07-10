@@ -5,6 +5,7 @@ target 'Agent-cn' do
   # Comment the next line if you don't want to use dynamic frameworks
   use_frameworks!
   
+  pod 'AlamofireImage', '~> 4.3'
   pod 'SSZipArchive'
   pod 'SwiftyBeaver', '1.9.5'
   pod 'ZSwiftBaseLib', '0.1.6.2'

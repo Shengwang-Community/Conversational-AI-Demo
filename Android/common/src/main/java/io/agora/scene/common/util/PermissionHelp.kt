@@ -131,10 +131,23 @@ class PermissionHelp constructor(val activity: ComponentActivity) {
         appSettingLauncher.launch(Manifest.permission.RECORD_AUDIO)
     }
 
+    fun launchAppSettingForCamera(granted: () -> Unit, unGranted: () -> Unit) {
+        this.granted = granted
+        this.unGranted = unGranted
+        appSettingLauncher.launch(Manifest.permission.CAMERA)
+    }
+
     fun hasMicPerm(): Boolean {
         return ContextCompat.checkSelfPermission(
             activity,
             Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun hasCameraPerm(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            activity,
+            Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
     }
 }

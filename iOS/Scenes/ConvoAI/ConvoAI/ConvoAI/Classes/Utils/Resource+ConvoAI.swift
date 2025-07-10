@@ -83,6 +83,7 @@ extension ResourceManager {
             public static let agentStateListening = ResourceManager.localizedString("conversation.agent.state.listening")
             public static let agentStateSpeaking = ResourceManager.localizedString("conversation.agent.state.speaking")
             public static let agentStateMuted = ResourceManager.localizedString("conversation.agent.state.muted")
+            public static let agentTranscription = ResourceManager.localizedString("conversation.agent.transcription")
         }
         
         public enum Setting {
@@ -119,6 +120,15 @@ extension ResourceManager {
             public static let forceResponse = ResourceManager.localizedString("settings.noise.forceResponse")
             public static let agentConnected = ResourceManager.localizedString("settings.agent.connected")
             public static let agentDisconnected = ResourceManager.localizedString("settings.agent.disconnected")
+            public static let digitalHuman = ResourceManager.localizedString("settings.digital.human")
+            public static let digitalHumanClosed = ResourceManager.localizedString("settings.digital.human.closed")
+            public static let digitalHumanPresetAlertTitle = ResourceManager.localizedString("settings.digital.human.preset.alert.title")
+            public static let digitalHumanPresetAlertDescription = ResourceManager.localizedString("settings.digital.human.preset.alert.description")
+            public static let digitalHumanLanguageAlertTitle = ResourceManager.localizedString("settings.digital.human.language.alert.title")
+            public static let digitalHumanLanguageAlertDescription = ResourceManager.localizedString("settings.digital.human.language.alert.description")
+            public static let digitalHumanAlertIgnore = ResourceManager.localizedString("settings.digital.human.alert.ignore")
+            public static let digitalHumanAlertCancel = ResourceManager.localizedString("settings.digital.human.alert.cancel")
+            public static let digitalHumanAlertConfirm = ResourceManager.localizedString("settings.digital.human.alert.confirm")
         }
         
         public enum ChannelInfo {
@@ -171,7 +181,11 @@ extension ResourceManager {
             public static let title = ResourceManager.localizedString("iot.info.title")
             public static let device = ResourceManager.localizedString("iot.info.device")
         }
+        
+        public enum Photo {
+            public static let photo = ResourceManager.localizedString("photo.type.photo")
+            public static let camera = ResourceManager.localizedString("photo.type.camera")
+            public static let done = ResourceManager.localizedString("photo.edit.done")
+        }
     }
 }
-
-

@@ -4,16 +4,22 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
+import android.webkit.CookieManager
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.viewbinding.ViewBinding
+import com.tencent.bugly.crashreport.CrashReport
+import io.agora.scene.common.BuildConfig
+import io.agora.scene.common.constant.AgentConstant
+import io.agora.scene.common.util.CommonLogger
 import io.agora.scene.common.util.LocaleManager
 
 abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
@@ -66,6 +72,26 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
+    }
+
+    fun cleanCookie() {
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.removeAllCookies { success ->
+            if (success) {
+                CommonLogger.d("cleanCookie", "Cookies successfully removed")
+            } else {
+                CommonLogger.d("cleanCookie", "Failed to remove cookies")
+            }
+        }
+        cookieManager.flush()
+    }
+
+    private var isBuglyInit = false
+    fun initBugly() {
+        if (isBuglyInit) return
+        CrashReport.initCrashReport(this, AgentConstant.BUGLT_KEY, BuildConfig.DEBUG)
+        CommonLogger.d("Bugly", "bugly init")
+        isBuglyInit = true
     }
 
     /**

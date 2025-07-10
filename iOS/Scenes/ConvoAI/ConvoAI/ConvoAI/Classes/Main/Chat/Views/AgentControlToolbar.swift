@@ -17,7 +17,7 @@ protocol AgentControlToolbarDelegate: AnyObject {
     func hangUp()
     func getStart() async
     func mute(selectedState: Bool) -> Bool
-    func switchCaptions(selectedState: Bool)
+    func switchPublishVideoStream(state: Bool)
 }
 
 class AgentControlToolbar: UIView {
@@ -110,17 +110,17 @@ class AgentControlToolbar: UIView {
         return progressView
     }()
     
-    lazy var captionsButton: UIButton = {
+    lazy var videoButton: UIButton = {
         let button = UIButton(type: .custom)
-        button.addTarget(self, action: #selector(switchCaptionsAction(_ :)), for: .touchUpInside)
+        button.addTarget(self, action: #selector(videoButtonAction(_ :)), for: .touchUpInside)
         button.titleLabel?.textAlignment = .center
         button.layerCornerRadius = buttonWidth / 2.0
         button.clipsToBounds = true
-        button.setImage(UIImage.ag_named("ic_captions_icon_cn")?.withRenderingMode(.alwaysTemplate), for: .normal)
+        button.setImage(UIImage.ag_named("ic_video_disable_icon"), for: .normal)
+        button.setImage(UIImage.ag_named("ic_video_enable_icon"), for: .selected)
         if let color = UIColor(hex: 0x333333) {
             button.setBackgroundImage(UIImage(color: color, size: CGSize(width: 1, height: 1)), for: .normal)
         }
-        button.tintColor = UIColor.themColor(named: "ai_icontext1")
         button.setBackgroundColor(color: UIColor.themColor(named: "ai_block1"), forState: .normal)
 
         return button
@@ -150,21 +150,21 @@ class AgentControlToolbar: UIView {
     
     func resetState() {
         startButton.isEnabled = true
-        captionsButton.isEnabled = true
+        videoButton.isEnabled = true
         muteButton.isEnabled = true
         closeButton.isEnabled = true
 
-        captionsButton.isSelected = false
+        videoButton.isSelected = false
         muteButton.isSelected = false
-        captionsButton.isSelected = false
-        setTintColor(state: captionsButton.isSelected)
+        videoButton.isSelected = false
+        setTintColor(state: videoButton.isSelected)
     }
     
     func setEnable(enable: Bool) {
         if style == .startButton {
             startButton.isEnabled = enable
         } else {
-            captionsButton.isEnabled = enable
+            videoButton.isEnabled = enable
             muteButton.isEnabled = enable
             closeButton.isEnabled = enable
         }
@@ -191,7 +191,7 @@ class AgentControlToolbar: UIView {
     
     private func setupViews() {
         addSubview(buttonControlContentView)
-        [captionsButton, muteButton, micProgressView, closeButton].forEach { button in
+        [videoButton, muteButton, micProgressView, closeButton].forEach { button in
             buttonControlContentView.addSubview(button)
         }
 
@@ -241,7 +241,7 @@ class AgentControlToolbar: UIView {
             make.width.equalTo(buttonWidth)
             make.height.equalTo(buttonHeight)
         }
-        captionsButton.snp.makeConstraints { make in
+        videoButton.snp.makeConstraints { make in
             make.right.equalTo(buttonControlContentView).offset(-34)
             make.centerY.equalTo(buttonControlContentView)
             make.width.equalTo(buttonWidth)
@@ -305,15 +305,14 @@ class AgentControlToolbar: UIView {
         sender.isSelected = result
         micProgressView.isHidden = sender.isSelected
     }
-
-    @objc private func switchCaptionsAction(_ sender: UIButton) {
+    
+    @objc func videoButtonAction(_ sender: UIButton) {
         sender.isSelected = !sender.isSelected
-        setTintColor(state: sender.isSelected)
-        delegate?.switchCaptions(selectedState: sender.isSelected)
+        self.delegate?.switchPublishVideoStream(state: sender.isSelected)
     }
     
     private func setTintColor(state: Bool) {
-        captionsButton.tintColor = state ? UIColor.themColor(named: "ai_brand_lightbrand6") : UIColor.themColor(named: "ai_icontext1")
+        videoButton.tintColor = state ? UIColor.themColor(named: "ai_brand_lightbrand6") : UIColor.themColor(named: "ai_icontext1")
     }
     
     override func layoutSubviews() {

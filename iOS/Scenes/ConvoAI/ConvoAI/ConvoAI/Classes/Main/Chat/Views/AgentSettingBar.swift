@@ -29,6 +29,55 @@ class AgentSettingBar: UIView {
         return button
     }()
     
+    let addButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.setImage(UIImage.ag_named("ic_agent_add_icon"), for: .normal)
+        button.isHidden = true
+        button.layer.cornerRadius = 16
+        button.backgroundColor = UIColor.themColor(named: "ai_block1")
+        return button
+    }()
+    
+    let transcriptionButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.isHidden = true
+        button.layer.cornerRadius = 16
+        button.backgroundColor = UIColor.themColor(named: "ai_block1")
+        
+        // Create icon image view
+        let iconImageView = UIImageView()
+        iconImageView.image = UIImage.ag_named("ic_agent_transcription_icon")
+        iconImageView.contentMode = .scaleAspectFit
+        
+        // Create title label
+        let titleLabel = UILabel()
+        titleLabel.text = ResourceManager.L10n.Conversation.agentTranscription
+        titleLabel.textColor = UIColor.themColor(named: "ai_icontext1")
+        titleLabel.font = .systemFont(ofSize: 12)
+        titleLabel.textAlignment = .center
+        
+        // Create horizontal stack view
+        let stackView = UIStackView(arrangedSubviews: [iconImageView, titleLabel])
+        stackView.axis = .horizontal
+        stackView.spacing = 4
+        stackView.alignment = .center
+        stackView.distribution = .fill
+        stackView.isUserInteractionEnabled = false
+        
+        button.addSubview(stackView)
+        stackView.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+            make.leading.greaterThanOrEqualToSuperview().offset(8)
+            make.trailing.lessThanOrEqualToSuperview().offset(-8)
+        }
+        
+        iconImageView.snp.makeConstraints { make in
+            make.width.height.equalTo(16)
+        }
+        
+        return button
+    }()
+    
     private let titleContentView = {
        let view = UIView()
         view.clipsToBounds = true
@@ -106,6 +155,13 @@ class AgentSettingBar: UIView {
     
     public func stop() {
         countDownLabel.isHidden = true
+        centerTitleView.isHidden = false
+        
+        // Update button visibility - show setting button, hide add and subtitle buttons
+        infoListButton.isHidden = false
+        addButton.isHidden = true
+        transcriptionButton.isHidden = true
+        
         showTipsTimer?.invalidate()
         showTipsTimer = nil
         if isShowTips == true {
@@ -114,6 +170,10 @@ class AgentSettingBar: UIView {
     }
     
     public func showTips(seconds: Int = 10 * 60) {
+        // Update button visibility in timer callback - hide setting button, show add and subtitle buttons
+        infoListButton.isHidden = true
+        addButton.isHidden = false
+        
         if seconds == 0 {
             isLimited = false
             centerTipsLabel.text = ResourceManager.L10n.Join.tipsNoLimit
@@ -130,6 +190,8 @@ class AgentSettingBar: UIView {
             self?.showTipsTimer?.invalidate()
             self?.showTipsTimer = nil
             self?.countDownLabel.isHidden = false
+            self?.centerTitleView.isHidden = true
+            self?.transcriptionButton.isHidden = false
         }
     }
     
@@ -190,29 +252,21 @@ class AgentSettingBar: UIView {
         }
         isAnimationInprogerss = true
         self.layer.removeAllAnimations()
-        self.centerTipsLabel.snp.remakeConstraints { make in
-            make.centerX.equalToSuperview()
-            make.height.equalToSuperview()
-            make.bottom.equalTo(self.snp.top)
-        }
+        
         self.centerTitleView.snp.remakeConstraints { make in
             make.centerX.equalToSuperview()
             make.height.equalToSuperview()
             make.bottom.equalToSuperview()
         }
-        UIView.animate(withDuration: 1.0) {
-            self.layoutIfNeeded()
-        } completion: { _ in
-            self.centerTipsLabel.snp.remakeConstraints { make in
-                make.centerX.equalToSuperview()
-                make.height.equalToSuperview()
-                make.top.equalTo(self.snp.bottom)
-            }
-            self.layoutIfNeeded()
-            self.isAnimationInprogerss = false
-            if self.isShowTips == true {
-                self.showTips()
-            }
+        self.centerTipsLabel.snp.remakeConstraints { make in
+            make.centerX.equalToSuperview()
+            make.height.equalToSuperview()
+            make.top.equalTo(self.snp.bottom)
+        }
+        
+        self.isAnimationInprogerss = false
+        if self.isShowTips == true {
+            self.showTips()
         }
     }
     
@@ -252,7 +306,7 @@ class AgentSettingBar: UIView {
     }
     
     private func setupViews() {
-        [titleContentView, infoListButton, netStateView, settingButton, countDownLabel].forEach { addSubview($0) }
+        [titleContentView, infoListButton, netStateView, settingButton, addButton, transcriptionButton, countDownLabel].forEach { addSubview($0) }
         [centerTipsLabel, centerTitleView, centerTitleButton].forEach { titleContentView.addSubview($0) }
         [netTrackView, netRenderView].forEach { netStateView.addSubview($0) }
         
@@ -303,6 +357,16 @@ class AgentSettingBar: UIView {
             make.width.height.equalTo(42)
             make.centerY.equalToSuperview()
         }
+        addButton.snp.makeConstraints { make in
+            make.left.equalTo(16)
+            make.width.height.equalTo(32)
+            make.centerY.equalToSuperview()
+        }
+        transcriptionButton.snp.makeConstraints { make in
+            make.left.equalTo(addButton.snp.right).offset(9)
+            make.height.equalTo(32)
+            make.centerY.equalToSuperview()
+        }
         netStateView.snp.remakeConstraints { make in
             make.right.equalTo(settingButton.snp.left)
             make.width.height.equalTo(42)
@@ -317,10 +381,9 @@ class AgentSettingBar: UIView {
             make.width.height.equalTo(22)
         }
         countDownLabel.snp.makeConstraints { make in
-            make.centerX.equalToSuperview()
             make.width.equalTo(49)
             make.height.equalTo(22)
-            make.top.equalTo(self.snp.bottom)
+            make.center.equalToSuperview()
         }
     }
 }

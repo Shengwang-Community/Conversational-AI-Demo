@@ -1,5 +1,8 @@
 package io.agora.scene.convoai.api
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
 data class CovAgentPreset(
     val index: Int,
     val name: String,
@@ -9,9 +12,20 @@ data class CovAgentPreset(
     val default_language_name: String,
     val support_languages: List<CovAgentLanguage>,
     val call_time_limit_second: Long,
+    val call_time_limit_avatar_second: Long,
+    val avatar_ids_by_lang: Map<String, List<CovAvatar>>? = null
 ) {
     fun isIndependent(): Boolean {
         return preset_type.startsWith("independent")
+    }
+
+    fun isStandard(): Boolean {
+        return preset_type == "standard"
+    }
+
+    fun getAvatarsForLang(lang: String?): List<CovAvatar> {
+        if (lang == null) return emptyList()
+        return avatar_ids_by_lang?.get(lang) ?: emptyList()
     }
 }
 
@@ -23,3 +37,10 @@ data class CovAgentLanguage(
         return language_code == "en-US"
     }
 }
+
+@Parcelize
+data class CovAvatar(
+    val avatar_id: String,
+    val avatar_name: String,
+    val avatar_url: String
+) : Parcelable

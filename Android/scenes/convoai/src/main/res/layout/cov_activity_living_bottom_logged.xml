@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="72dp"
     android:layout_gravity="bottom"
+    tools:background="@color/ai_fill2"
     android:background="@android:color/transparent">
 
     <LinearLayout
@@ -62,7 +63,7 @@
             android:layout_weight="1" />
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/cv_cc"
+            android:id="@+id/cv_camera"
             android:layout_width="72dp"
             android:layout_height="72dp"
             android:backgroundTint="@android:color/transparent"
@@ -70,11 +71,11 @@
             app:cardElevation="0dp">
 
             <ImageButton
-                android:id="@+id/btn_cc"
+                android:id="@+id/btn_camera"
                 android:layout_width="72dp"
                 android:layout_height="72dp"
                 android:background="@drawable/btn_bg_block1_selector"
-                android:src="@drawable/scene_detail_captions"
+                android:src="@drawable/scene_detail_camera_off"
                 app:tint="@color/ai_icontext1" />
         </androidx.cardview.widget.CardView>
     </LinearLayout>
@@ -101,5 +102,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintWidth_percent="0.84" />
+        app:layout_constraintWidth_percent="0.84"
+        tools:visibility="gone"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

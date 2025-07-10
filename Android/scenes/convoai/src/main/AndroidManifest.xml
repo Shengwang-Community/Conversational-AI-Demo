@@ -9,6 +9,13 @@
         android:screenOrientation="portrait"
         android:launchMode="singleTask"
         android:exported="false" />
+        
+    
+        <activity 
+            android:name=".ui.photo.PhotoNavigationActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/TransparentAppCompatTheme"
+            android:exported="false" />
 
         <service
             android:name=".ui.CovLocalRecordingService"
