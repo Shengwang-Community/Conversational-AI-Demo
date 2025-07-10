@@ -62,7 +62,7 @@ class PhotoView @JvmOverloads constructor(
     fun rotateImage() {
         scaleAnimator?.cancel()
         
-        val newRotation = (currentRotation + 90f) % 360f
+        val newRotation = (currentRotation - 90f) % 360f
         currentRotation = newRotation
         
         val drawable = drawable ?: return

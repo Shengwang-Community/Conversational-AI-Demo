@@ -16,7 +16,7 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var photoOutput: AVCapturePhotoOutput?
     private var currentCameraPosition: AVCaptureDevice.Position = .back
-    var completion: ((UIImage?) -> Void)?
+    var completion: ((PhotoResult?) -> Void)?
 
     // UI
     private let topBar = UIView()
@@ -117,25 +117,81 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         shutterButton.isEnabled = true
         guard let data = photo.fileDataRepresentation(), let originalImage = UIImage(data: data) else { return }
         
-        // Adjust image size to meet validation requirements
-        let processedImage = resizeImageIfNeeded(originalImage)
+        // Crop image to match preview layer aspect ratio
+        let croppedImage = cropImageToPreviewAspectRatio(originalImage)
         
-        // Validate photo against requirements
-        let validationResult = PhotoValidator.validatePhoto(processedImage)
+        // Use PhotoProcessor to process the cropped image
+        let processedImage = PhotoProcessor.processPhoto(croppedImage)
         
-        if !validationResult.isValid {
-            // Display error message for failed validation
-            let alert = UIAlertController(title: "Image Validation Failed", message: validationResult.errorMessage, preferredStyle: .alert)
+        if let processedImage = processedImage {
+            // If processing succeeds, navigate to edit screen
+            let editVC = PhotoEditViewController()
+            editVC.image = processedImage
+            editVC.completion = completion
+            navigationController?.pushViewController(editVC, animated: true)
+        } else {
+            // Display error message for failed processing
+            let alert = UIAlertController(title: "Photo Processing Failed", message: "Only JPG, PNG, WEBP, and JPEG formats are supported.", preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             self.present(alert, animated: true)
-            return
+        }
+    }
+    
+    // MARK: - Image Cropping
+    private func cropImageToPreviewAspectRatio(_ image: UIImage) -> UIImage {
+        guard let previewLayer = previewLayer else { 
+            print("⚠️ No preview layer found, returning original image")
+            return image 
         }
         
-        // If validation passes, navigate to edit screen
-        let editVC = PhotoEditViewController()
-        editVC.image = processedImage
-        editVC.completion = completion
-        navigationController?.pushViewController(editVC, animated: true)
+        // First, normalize the image orientation to avoid coordinate confusion
+        let normalizedImage = normalizeImageOrientation(image)
+        let imageSize = normalizedImage.size
+        
+        // Get preview layer bounds and calculate aspect ratio
+        let previewBounds = previewLayer.bounds
+        let previewAspectRatio = previewBounds.width / previewBounds.height
+        let imageAspectRatio = imageSize.width / imageSize.height
+        
+        // Calculate visible area based on .resizeAspectFill behavior
+        let cropRect: CGRect
+        
+        if imageAspectRatio > previewAspectRatio {
+            // Image is wider than preview
+            // Image height fills the preview, width is cropped
+            let visibleWidth = imageSize.height * previewAspectRatio
+            let cropX = (imageSize.width - visibleWidth) / 2
+            cropRect = CGRect(x: cropX, y: 0, width: visibleWidth, height: imageSize.height)
+        } else {
+            // Image is taller than or equal to preview  
+            // Image width fills the preview, height is cropped
+            let visibleHeight = imageSize.width / previewAspectRatio
+            let cropY = (imageSize.height - visibleHeight) / 2
+            cropRect = CGRect(x: 0, y: cropY, width: imageSize.width, height: visibleHeight)
+        }        
+        // Perform the actual cropping
+        guard let cgImage = normalizedImage.cgImage?.cropping(to: cropRect) else { 
+            print("❌ Failed to crop image")
+            return normalizedImage 
+        }
+        
+        let croppedImage = UIImage(cgImage: cgImage, scale: normalizedImage.scale, orientation: .up)
+        
+        return croppedImage
+    }
+    
+    // Normalize image orientation to avoid coordinate system confusion
+    private func normalizeImageOrientation(_ image: UIImage) -> UIImage {
+        if image.imageOrientation == .up {
+            return image
+        }
+        
+        UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
+        image.draw(in: CGRect(origin: .zero, size: image.size))
+        let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return normalizedImage ?? image
     }
     
     @objc private func shutterButtonTouchDown() {
@@ -158,71 +214,30 @@ extension TakePhotoViewController: PHPickerViewControllerDelegate {
         itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
             guard let self = self, let originalImage = image as? UIImage else { return }
             DispatchQueue.main.async {
-                // Note: Images selected from the photo library do not need cropping as they are not taken from the camera preview
-                // Directly adjust image size to meet validation requirements
-                let processedImage = self.resizeImageIfNeeded(originalImage)
+                // Use PhotoProcessor to process the image
+                let processedImage = PhotoProcessor.processPhoto(originalImage)
                 
-                // Validate photo against requirements
-                let validationResult = PhotoValidator.validatePhoto(processedImage)
-                
-                if !validationResult.isValid {
-                    // Display error message for failed validation
-                    let alert = UIAlertController(title: "Image Validation Failed", message: validationResult.errorMessage, preferredStyle: .alert)
+                if let processedImage = processedImage {
+                    // If processing succeeds, navigate to edit screen
+                    let editVC = PhotoEditViewController()
+                    editVC.image = processedImage
+                    editVC.completion = self.completion
+                    self.navigationController?.pushViewController(editVC, animated: true)
+                } else {
+                    // Display error message for failed processing
+                    let alert = UIAlertController(title: "Photo Processing Failed", message: "Only JPG, PNG, WEBP, and JPEG formats are supported.", preferredStyle: .alert)
                     alert.addAction(UIAlertAction(title: "OK", style: .default))
                     self.present(alert, animated: true)
-                    return
                 }
-                
-                // If validation passes, navigate to edit screen
-                let editVC = PhotoEditViewController()
-                editVC.image = processedImage
-                editVC.completion = self.completion
-                self.navigationController?.pushViewController(editVC, animated: true)
             }
         }
     }
 }
 
-private extension TakePhotoViewController {
+extension TakePhotoViewController {
     
     // TODO: Preview and capture consistency - manual adjustment to be implemented later
     // You can add cropping logic here to ensure the captured result is exactly the same as the preview
-    
-    /**
-     * If needed, adjust image size to meet validation requirements
-     */
-    func resizeImageIfNeeded(_ image: UIImage) -> UIImage {
-        let maxDimension: CGFloat = 2048  // Keep consistent with PhotoValidator
-        let originalSize = image.size
-        
-        // If image size is already acceptable, return directly
-        if originalSize.width <= maxDimension && originalSize.height <= maxDimension {
-            print("[TakePhotoViewController] Image size is acceptable: \(originalSize.width)x\(originalSize.height)")
-            return image
-        }
-        
-        // Calculate new size, maintaining aspect ratio
-        let aspectRatio = originalSize.width / originalSize.height
-        var newSize: CGSize
-        
-        if originalSize.width > originalSize.height {
-            // Width is larger, use width as reference
-            newSize = CGSize(width: maxDimension, height: maxDimension / aspectRatio)
-        } else {
-            // Height is larger, use height as reference
-            newSize = CGSize(width: maxDimension * aspectRatio, height: maxDimension)
-        }
-        
-        print("[TakePhotoViewController] Resizing image from \(originalSize.width)x\(originalSize.height) to \(newSize.width)x\(newSize.height)")
-        
-        // Create graphics context and draw the adjusted image
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-        image.draw(in: CGRect(origin: .zero, size: newSize))
-        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        return resizedImage ?? image
-    }
     
     func fetchLatestPhotoThumbnail() {
         let fetchOptions = PHFetchOptions()
@@ -238,7 +253,7 @@ private extension TakePhotoViewController {
 }
 
 // MARK: - Creation
-private extension TakePhotoViewController {
+extension TakePhotoViewController {
     private func createViews() {
         // Top bar
         topBar.backgroundColor = UIColor.themColor(named: "ai_brand_black10")

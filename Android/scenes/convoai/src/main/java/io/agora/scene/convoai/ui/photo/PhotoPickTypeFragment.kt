@@ -40,7 +40,7 @@ class PhotoPickTypeFragment : Fragment() {
         if (isGranted) {
             openGallery()
         } else {
-            ToastUtil.show("需要访问相册权限来选择图片，请在设置中开启权限")
+            ToastUtil.show("Gallery access permission is required to select photos. Please enable permission in settings.")
         }
     }
     
@@ -50,7 +50,7 @@ class PhotoPickTypeFragment : Fragment() {
         if (isGranted) {
             onTakePhoto?.invoke()
         } else {
-            ToastUtil.show("需要访问相机权限来拍摄照片，请在设置中开启权限")
+            ToastUtil.show("Camera access permission is required to take photos. Please enable permission in settings.")
         }
     }
     

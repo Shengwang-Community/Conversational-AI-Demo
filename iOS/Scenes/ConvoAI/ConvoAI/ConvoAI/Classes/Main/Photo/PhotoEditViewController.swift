@@ -11,14 +11,13 @@ import Common
 
 class PhotoEditViewController: UIViewController {
     var image: UIImage?
-    var completion: ((UIImage?) -> Void)?
+    var completion: ((PhotoResult?) -> Void)?
 
     private let scrollView = UIScrollView()
     private let imageView = UIImageView()
     private let closeButton = UIButton(type: .system)
     private let rotateButton = UIButton(type: .custom)
     private let doneButton = UIButton(type: .system)
-    private var currentRotation: CGFloat = 0
     
     private let topBar = UIView()
     private let bottomBar = UIView()
@@ -53,9 +52,71 @@ class PhotoEditViewController: UIViewController {
     }
 
     @objc func doneAction() {
-        let rotatedImage = imageView.image?.rotate(radians: currentRotation)
-        completion?(rotatedImage)
-        dismiss(animated: true)
+        guard let finalImage = imageView.image else {
+            completion?(nil)
+            dismiss(animated: true)
+            return
+        }
+        
+        // Save image and generate result in background thread
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            do {
+                let photoResult = try self?.saveImageAndCreateResult(finalImage)
+                DispatchQueue.main.async {
+                    self?.completion?(photoResult)
+                    self?.dismiss(animated: true)
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    print("Failed to save photo: \(error.localizedDescription)")
+                    self?.completion?(nil)
+                    self?.dismiss(animated: true)
+                }
+            }
+        }
+    }
+    
+    /**
+     * Get app-specific photo output directory
+     */
+    private func getPhotoOutputDirectory() -> URL {
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let photosDirectory = documentsPath.appendingPathComponent("edited_photos")
+        
+        // Create directory if it doesn't exist
+        try? FileManager.default.createDirectory(at: photosDirectory, withIntermediateDirectories: true)
+        
+        return photosDirectory
+    }
+    
+    /**
+     * Generate unique photo file name
+     */
+    private func generatePhotoFileName() -> String {
+        return "photo_\(Int(Date().timeIntervalSince1970 * 1000)).jpg"
+    }
+    
+    /**
+     * Save UIImage to file and create PhotoResult object
+     */
+    private func saveImageAndCreateResult(_ image: UIImage) throws -> PhotoResult {
+        let photoDirectory = getPhotoOutputDirectory()
+        let fileName = generatePhotoFileName()
+        let fileURL = photoDirectory.appendingPathComponent(fileName)
+        
+        // Convert UIImage to JPEG data and save
+        guard let imageData = image.jpegData(compressionQuality: 0.9) else {
+            throw NSError(domain: "PhotoEditError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unable to convert image data"])
+        }
+        
+        try imageData.write(to: fileURL)
+        
+        // Create and return PhotoResult object
+        return PhotoResult(
+            image: image,
+            filePath: fileURL.path,
+            fileURL: fileURL
+        )
     }
 
     @objc func backAction() {
@@ -63,10 +124,10 @@ class PhotoEditViewController: UIViewController {
     }
 
     @objc func rotateAction() {
-        currentRotation -= .pi/2
-        UIView.animate(withDuration: 0.25) {
-            self.imageView.transform = CGAffineTransform(rotationAngle: self.currentRotation)
-        }
+        guard let currentImage = imageView.image else { return }
+        guard let rotatedImage = currentImage.rotateCounterclockwise() else { return }
+        scrollView.setZoomScale(1.0, animated: false)
+        self.imageView.image = rotatedImage
     }
 }
 
@@ -102,6 +163,10 @@ private extension UIImage {
         let rotatedImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         return rotatedImage
+    }
+    
+    func rotateCounterclockwise() -> UIImage? {
+        return rotate(radians: -.pi/2)
     }
 }
 

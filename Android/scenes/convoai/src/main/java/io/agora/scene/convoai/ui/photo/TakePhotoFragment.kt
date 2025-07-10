@@ -16,6 +16,8 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import io.agora.scene.common.util.toast.ToastUtil
+import io.agora.scene.common.util.getStatusBarHeight
+import io.agora.scene.common.util.dp
 import io.agora.scene.convoai.databinding.CovTakePhotoFragmentBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -93,6 +95,12 @@ class TakePhotoFragment : Fragment() {
     }
     
     private fun setupViews() {
+        // Adapt status bar height to prevent close button being obscured by notch screens
+        val statusBarHeight = requireContext().getStatusBarHeight() ?: 25.dp.toInt()
+        val layoutParams = binding.topBar.layoutParams as ViewGroup.MarginLayoutParams
+        layoutParams.topMargin = statusBarHeight
+        binding.topBar.layoutParams = layoutParams
+        
         binding.btnClose.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
@@ -153,7 +161,7 @@ class TakePhotoFragment : Fragment() {
         cameraProviderFuture.addListener({
             cameraProvider = cameraProviderFuture.get()
             
-            // 设置预览参数，使用较小分辨率
+            // Set preview parameters with smaller resolution
             preview = Preview.Builder()
                 .setTargetRotation(binding.previewView.display.rotation)
                 .build()
@@ -212,19 +220,23 @@ class TakePhotoFragment : Fragment() {
                         try {
                             val bitmap = imageProxyToBitmap(image)
                             
-                            // 应用相机翻转
+                            // Apply camera flip if front camera
                             val flippedBitmap = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
-                                flipBitmap(bitmap)
+                                PhotoProcessor.flipBitmap(bitmap)
                             } else {
                                 bitmap
                             }
                             
-                            // 最终安全检查：确保图片符合5MB限制
-                            val finalBitmap = ensureSizeCompliance(flippedBitmap)
+                            // Use PhotoProcessor to process the image
+                            val processedBitmap = PhotoProcessor.processPhoto(flippedBitmap)
                             
                             withContext(Dispatchers.Main) {
                                 binding.shutterButton.isEnabled = true
-                                onPhotoTaken?.invoke(finalBitmap)
+                                if (processedBitmap != null) {
+                                    onPhotoTaken?.invoke(processedBitmap)
+                                } else {
+                                    ToastUtil.show("Only JPG, PNG, WEBP, and JPEG images are supported")
+                                }
                             }
                         } catch (e: Exception) {
                             Log.e(TAG, "Error processing captured image", e)
@@ -251,24 +263,10 @@ class TakePhotoFragment : Fragment() {
         Log.d(TAG, "Image rotation degrees: $rotationDegrees")
         
         return if (rotationDegrees != 0) {
-            rotateBitmap(bitmap, rotationDegrees.toFloat())
+            PhotoProcessor.rotateBitmap(bitmap, rotationDegrees.toFloat())
         } else {
             bitmap
         }
-    }
-    
-    private fun rotateBitmap(bitmap: Bitmap, degrees: Float): Bitmap {
-        val matrix = Matrix().apply {
-            postRotate(degrees)
-        }
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-    }
-    
-    private fun flipBitmap(bitmap: Bitmap): Bitmap {
-        val matrix = Matrix().apply {
-            postScale(-1f, 1f, bitmap.width / 2f, bitmap.height / 2f)
-        }
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
     
     private fun switchCamera() {
@@ -420,62 +418,5 @@ class TakePhotoFragment : Fragment() {
                 Log.e(TAG, "Error in gallery preview fallback", e)
             }
         }
-    }
-    
-    /**
-     * 最终安全检查：确保图片文件大小符合5MB限制
-     * 如果估算大小超过限制，会逐步缩小尺寸直到符合要求
-     */
-    private fun ensureSizeCompliance(bitmap: Bitmap): Bitmap {
-        val maxFileSize = 5 * 1024 * 1024L // 5MB
-        var currentBitmap = bitmap
-        
-        // 估算当前大小（按JPEG压缩后的大小估算）
-        var estimatedSize = estimateJpegSize(currentBitmap, 50) // 使用50%质量估算
-        
-        Log.d(TAG, "Original bitmap: ${bitmap.width}x${bitmap.height}, estimated JPEG size: ${estimatedSize / 1024}KB")
-        
-        // 如果大小超限，逐步缩小
-        var scaleFactor = 1.0f
-        while (estimatedSize > maxFileSize && scaleFactor > 0.1f) {
-            scaleFactor *= 0.8f // 每次缩小到80%
-            val newWidth = (bitmap.width * scaleFactor).toInt()
-            val newHeight = (bitmap.height * scaleFactor).toInt()
-            
-            if (newWidth > 0 && newHeight > 0) {
-                currentBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
-                estimatedSize = estimateJpegSize(currentBitmap, 50)
-                Log.d(TAG, "Scaled to: ${currentBitmap.width}x${currentBitmap.height}, estimated size: ${estimatedSize / 1024}KB")
-            } else {
-                break
-            }
-        }
-        
-        Log.i(TAG, "Final bitmap: ${currentBitmap.width}x${currentBitmap.height}, estimated JPEG size: ${estimatedSize / 1024}KB")
-        return currentBitmap
-    }
-    
-    /**
-     * 估算JPEG压缩后的文件大小
-     */
-    private fun estimateJpegSize(bitmap: Bitmap, quality: Int): Long {
-        // 根据质量和像素数估算JPEG文件大小
-        val pixels = bitmap.width * bitmap.height.toLong()
-        val baseSize = pixels * 3 // RGB基础大小
-        
-        val compressionRatio = when {
-            quality >= 90 -> 0.1f
-            quality >= 80 -> 0.08f
-            quality >= 70 -> 0.06f
-            quality >= 60 -> 0.05f
-            quality >= 50 -> 0.04f
-            quality >= 40 -> 0.03f
-            quality >= 30 -> 0.025f
-            quality >= 20 -> 0.02f
-            quality >= 10 -> 0.015f
-            else -> 0.01f
-        }
-        
-        return (baseSize * compressionRatio).toLong()
     }
 } 

@@ -18,8 +18,6 @@ object CovAgentManager {
 
     private val TAG = "CovAgentManager"
 
-    private const val DEFAULT_ROOM_EXPIRE_TIME = 600L
-
     // Settings
     private var presetList: List<CovAgentPreset>? = null
     private var preset: CovAgentPreset? = null
@@ -39,8 +37,14 @@ object CovAgentManager {
     var channelName: String = ""
 
     // room expire time sec
-    var roomExpireTime = DEFAULT_ROOM_EXPIRE_TIME
-        private set
+    var roomExpireTime = 600L
+        get(){
+            return if (isEnableAvatar()){
+                preset?.call_time_limit_avatar_second ?: 300L
+            }else{
+                preset?.call_time_limit_second ?: 600L
+            }
+    }
 
     fun setPresetList(l: List<CovAgentPreset>) {
         presetList = l.filter { it.preset_type != "custom" }
@@ -58,7 +62,6 @@ object CovAgentManager {
         } else {
             p?.support_languages?.firstOrNull()
         }
-        roomExpireTime = preset?.call_time_limit_second ?: DEFAULT_ROOM_EXPIRE_TIME
     }
 
     fun getLanguages(): List<CovAgentLanguage>? {
@@ -69,8 +72,8 @@ object CovAgentManager {
         return preset
     }
 
-    fun getAvatars(): List<CovAvatar>? {
-        return preset?.avatar_ids
+    fun getAvatars(): List<CovAvatar> {
+        return preset?.getAvatarsForLang(language?.language_code) ?: emptyList()
     }
 
     fun isEnableAvatar(): Boolean {

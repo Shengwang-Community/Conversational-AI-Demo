@@ -94,6 +94,8 @@
     <!-- avatar -->
     <string name="cov_preset_change_dialog_title">更换Preset需重新设置数字人</string>
     <string name="cov_preset_change_dialog_content">Preset 和数字人的性别相关，更换 Preset 后请重新设置数字人</string>
+    <string name="cov_language_change_dialog_title">更换Language需重新设置数字人</string>
+    <string name="cov_language_change_dialog_content">Language 和数字人的性别相关，更换 Language 后请重新设置数字人</string>
     <string name="cov_preset_change_dialog_confirm">确定变更</string>
     <string name="cov_captions">字幕</string>
 </resources>
