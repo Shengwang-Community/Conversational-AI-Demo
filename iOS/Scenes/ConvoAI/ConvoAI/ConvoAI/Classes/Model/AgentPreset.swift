@@ -8,11 +8,13 @@
 import Foundation
 
 struct Avatar: Codable {
+    let vendor: String?
     let avatarId: String
     let avatarName: String
     let avatarUrl: String
     
     enum CodingKeys: String, CodingKey {
+        case vendor = "vendor"
         case avatarId = "avatar_id"
         case avatarName = "avatar_name"
         case avatarUrl = "avatar_url"

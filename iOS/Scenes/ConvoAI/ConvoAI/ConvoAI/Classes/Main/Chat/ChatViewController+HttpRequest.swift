@@ -77,7 +77,7 @@ extension ChatViewController {
                 ],
                 "avatar": [
                     "enable": AppContext.preferenceManager()?.preference.avatar != nil,
-                    "vendor": "",
+                    "vendor": AppContext.preferenceManager()?.preference.avatar?.vendor ?? "",
                     "params": [
                         "agora_uid": "\(avatarUid)",
                         "avatar_id": AppContext.preferenceManager()?.preference.avatar?.avatarId

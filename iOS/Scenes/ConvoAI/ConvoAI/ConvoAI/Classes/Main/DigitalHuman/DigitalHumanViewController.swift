@@ -76,7 +76,7 @@ class DigitalHumanViewController: BaseViewController {
             digitalHumans = avatars
         }
         
-        let closeCard = DigitalHuman(avatar: Avatar(avatarId: "close", avatarName: "", avatarUrl: ""), isAvailable: true, isSelected: !selectedTag)
+        let closeCard = DigitalHuman(avatar: Avatar(vendor: "", avatarId: "close", avatarName: "", avatarUrl: ""), isAvailable: true, isSelected: !selectedTag)
         digitalHumans.insert(closeCard, at: 0)
     }
     
