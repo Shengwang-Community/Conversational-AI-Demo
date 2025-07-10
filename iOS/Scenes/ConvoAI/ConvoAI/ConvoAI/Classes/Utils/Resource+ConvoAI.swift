@@ -95,6 +95,7 @@ extension ResourceManager {
             public static let roomError = ResourceManager.localizedString("error.room.error")
             public static let joinError = ResourceManager.localizedString("error.join.error")
             public static let resouceLimit = ResourceManager.localizedString("error.join.error.resource.limit")
+            public static let avatarLimit = ResourceManager.localizedString("error.join.error.avatar.limit")
             public static let networkDisconnected = ResourceManager.localizedString("error.network.disconnect")
             public static let microphonePermissionTitle = ResourceManager.localizedString("error.microphone.permission.alert.title")
             public static let microphonePermissionDescription = ResourceManager.localizedString("error.microphone.permission.alert.description")
