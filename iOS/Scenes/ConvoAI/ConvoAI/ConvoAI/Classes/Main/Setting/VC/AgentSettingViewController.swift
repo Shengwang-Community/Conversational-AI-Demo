@@ -240,18 +240,27 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
             if selected.displayName == currentPreset.displayName { return }
             self.onClickHideTable(nil)
 
-            CommonAlertView.show(
-                in: self.view,
-                title: ResourceManager.L10n.Settings.digitalHumanAlertTitle,
-                content: ResourceManager.L10n.Settings.digitalHumanAlertDescription,
-                cancelTitle: ResourceManager.L10n.Settings.digitalHumanAlertCancel,
-                confirmTitle: ResourceManager.L10n.Settings.digitalHumanAlertConfirm,
-                confirmStyle: .primary,
-                checkboxOption: CommonAlertView.CheckboxOption(text: ResourceManager.L10n.Settings.digitalHumanAlertIgnore, isChecked: false),
-                onConfirm: { isCheckboxChecked in
-                    AppContext.preferenceManager()?.updatePreset(selected)
-                })
-            
+            // Check if alert is already ignored
+            if AppContext.preferenceManager()?.isPresetAlertIgnored() == true {
+                // If ignored, update preset directly
+                AppContext.preferenceManager()?.updatePreset(selected)
+            } else {
+                // Show confirmation alert
+                CommonAlertView.show(
+                    in: self.view,
+                    title: ResourceManager.L10n.Settings.digitalHumanPresetAlertTitle,
+                    content: ResourceManager.L10n.Settings.digitalHumanPresetAlertDescription,
+                    cancelTitle: ResourceManager.L10n.Settings.digitalHumanAlertCancel,
+                    confirmTitle: ResourceManager.L10n.Settings.digitalHumanAlertConfirm,
+                    confirmStyle: .primary,
+                    checkboxOption: CommonAlertView.CheckboxOption(text: ResourceManager.L10n.Settings.digitalHumanAlertIgnore, isChecked: false),
+                    onConfirm: { isCheckboxChecked in
+                        if isCheckboxChecked {
+                            AppContext.preferenceManager()?.setPresetAlertIgnored(true)
+                        }
+                        AppContext.preferenceManager()?.updatePreset(selected)
+                    })
+            }
         }
         table.setSelectedIndex(currentIndex)
         self.view.addSubview(table)
@@ -276,9 +285,29 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
         let table = AgentSelectTableView(items: allLanguages.map { $0.languageName }) { index in
             let selected = allLanguages[index]
             if currentLanguage.languageCode == selected.languageCode { return }
-            
-            AppContext.preferenceManager()?.updateLanguage(selected)
             self.onClickHideTable(nil)
+
+            // Check if alert is already ignored
+            if AppContext.preferenceManager()?.isLanguageAlertIgnored() == true {
+                // If ignored, update language directly
+                AppContext.preferenceManager()?.updateLanguage(selected)
+            } else {
+                // Show confirmation alert
+                CommonAlertView.show(
+                    in: self.view,
+                    title: ResourceManager.L10n.Settings.digitalHumanLanguageAlertTitle,
+                    content: ResourceManager.L10n.Settings.digitalHumanLanguageAlertDescription,
+                    cancelTitle: ResourceManager.L10n.Settings.digitalHumanAlertCancel,
+                    confirmTitle: ResourceManager.L10n.Settings.digitalHumanAlertConfirm,
+                    confirmStyle: .primary,
+                    checkboxOption: CommonAlertView.CheckboxOption(text: ResourceManager.L10n.Settings.digitalHumanAlertIgnore, isChecked: false),
+                    onConfirm: { isCheckboxChecked in
+                        if isCheckboxChecked {
+                            AppContext.preferenceManager()?.setLanguageAlertIgnored(true)
+                        }
+                        AppContext.preferenceManager()?.updateLanguage(selected)
+                    })
+            }
         }
         table.setSelectedIndex(currentIndex)
         self.view.addSubview(table)

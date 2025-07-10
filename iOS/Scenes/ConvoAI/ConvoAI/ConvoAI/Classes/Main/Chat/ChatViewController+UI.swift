@@ -177,6 +177,8 @@ extension ChatViewController {
             if showAvatar, showVideo {
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = false
+                upperBackgroundView.isHidden = true
+                lowerBackgroundView.isHidden = true
                 fullSizeContainerView.addSubview(remoteAvatarView)
                 smallSizeContainerView.addSubview(localVideoView)
                 localVideoView.snp.makeConstraints { make in
@@ -189,7 +191,8 @@ extension ChatViewController {
             } else if showAvatar {
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = true
-                
+                upperBackgroundView.isHidden = true
+                lowerBackgroundView.isHidden = true
                 fullSizeContainerView.addSubview(remoteAvatarView)
                 remoteAvatarView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
@@ -197,6 +200,8 @@ extension ChatViewController {
             } else if showVideo {
                 fullSizeContainerView.isHidden = true
                 smallSizeContainerView.isHidden = false
+                upperBackgroundView.isHidden = true
+                lowerBackgroundView.isHidden = true
                 smallSizeContainerView.addSubview(localVideoView)
                 localVideoView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
@@ -204,11 +209,15 @@ extension ChatViewController {
             } else {
                 fullSizeContainerView.isHidden = true
                 smallSizeContainerView.isHidden = true
+                upperBackgroundView.isHidden = false
+                lowerBackgroundView.isHidden = false
             }
         } else {
             if showAvatar, showVideo {
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = false
+                upperBackgroundView.isHidden = true
+                lowerBackgroundView.isHidden = true
                 fullSizeContainerView.addSubview(localVideoView)
                 smallSizeContainerView.addSubview(remoteAvatarView)
                 localVideoView.snp.makeConstraints { make in
@@ -221,6 +230,8 @@ extension ChatViewController {
             } else if showAvatar {
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = true
+                upperBackgroundView.isHidden = true
+                lowerBackgroundView.isHidden = true
                 fullSizeContainerView.addSubview(remoteAvatarView)
                 remoteAvatarView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
@@ -228,6 +239,8 @@ extension ChatViewController {
             } else if showVideo {
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = true
+                upperBackgroundView.isHidden = true
+                lowerBackgroundView.isHidden = true
                 fullSizeContainerView.addSubview(localVideoView)
                 localVideoView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
@@ -235,6 +248,8 @@ extension ChatViewController {
             } else {
                 fullSizeContainerView.isHidden = true
                 smallSizeContainerView.isHidden = true
+                upperBackgroundView.isHidden = false
+                lowerBackgroundView.isHidden = false
             }
         }
     }

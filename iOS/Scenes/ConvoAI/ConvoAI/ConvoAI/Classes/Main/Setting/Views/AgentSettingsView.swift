@@ -55,6 +55,11 @@ class AgentSettingsView: UIView {
         return view
     }()
     
+    private lazy var avatarImageView: UIImageView = {
+        let imageView = UIImageView()
+        return imageView
+    }()
+    
     private lazy var digitalHumanItem: AgentSettingTableItemView = {
         let view = AgentSettingTableItemView(frame: .zero)
         view.titleLabel.text = ResourceManager.L10n.Settings.digitalHuman
@@ -69,12 +74,12 @@ class AgentSettingsView: UIView {
         }
         
         // Add avatar image
-        let avatarImageView = UIImageView()
-        avatarImageView.image = UIImage.ag_named("avatar_shahala")
+        if let avatar = AppContext.preferenceManager()?.preference.avatar, let url = URL(string: avatar.avatarUrl) {
+            avatarImageView.af.setImage(withURL: url)
+        }
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.layer.cornerRadius = 10
         avatarImageView.layer.masksToBounds = true
-        avatarImageView.backgroundColor = UIColor.themColor(named: "ai_fill3")
         
         view.addSubview(avatarImageView)
         avatarImageView.snp.makeConstraints { make in
@@ -83,7 +88,6 @@ class AgentSettingsView: UIView {
             make.width.height.equalTo(32)
         }
 
-        avatarImageView.isHidden = true
         return view
     }()
     
@@ -257,8 +261,14 @@ class AgentSettingsView: UIView {
     func updateAvatar(_ avatar: Avatar?) {
         if let avatar = avatar {
             digitalHumanItem.detailLabel.text = avatar.avatarName
+            if let url = URL(string: avatar.avatarUrl) {
+                avatarImageView.af.setImage(withURL: url)
+            } else {
+                avatarImageView.image = nil
+            }
         } else {
             digitalHumanItem.detailLabel.text = ResourceManager.L10n.Settings.digitalHumanClosed
+            avatarImageView.image = nil
         }
     }
     

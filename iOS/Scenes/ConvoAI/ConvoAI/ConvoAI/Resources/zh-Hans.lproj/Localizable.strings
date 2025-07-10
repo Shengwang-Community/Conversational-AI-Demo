@@ -68,8 +68,10 @@
 "settings.noise.bhvs" = "启用 对话人声锁定";
 "settings.digital.human" = "数字人";
 "settings.digital.human.closed" = "关闭";
-"settings.digital.human.alert.title" = "更换Preset需重新设置数字人";
-"settings.digital.human.alert.description" = "Preset 和数字人的性别相关，更换 Preset 后请重新设置数字人";
+"settings.digital.human.preset.alert.title" = "更换Preset需重新设置数字人";
+"settings.digital.human.preset.alert.description" = "Preset 和数字人的性别相关，更换 Preset 后请重新设置数字人";
+"settings.digital.human.language.alert.title" = "更换Language需重新设置数字人";
+"settings.digital.human.language.alert.description" = "Language 和数字人的性别相关，更换 Language 后请重新设置数字人";
 "settings.digital.human.alert.ignore" = "不再提示";
 "settings.digital.human.alert.cancel" = "取消";
 "settings.digital.human.alert.confirm" = "确定变更";
