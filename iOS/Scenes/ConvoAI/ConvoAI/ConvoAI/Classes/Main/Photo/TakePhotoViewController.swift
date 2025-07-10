@@ -10,6 +10,8 @@ import AVFoundation
 import PhotosUI
 import Photos
 import SnapKit
+import SVProgressHUD
+import Common
 
 class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     private var captureSession: AVCaptureSession?
@@ -131,9 +133,7 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             navigationController?.pushViewController(editVC, animated: true)
         } else {
             // Display error message for failed processing
-            let alert = UIAlertController(title: "Photo Processing Failed", message: "Only JPG, PNG, WEBP, and JPEG formats are supported.", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            self.present(alert, animated: true)
+            SVProgressHUD.showError(withStatus: ResourceManager.L10n.Photo.formatTips)
         }
     }
     
@@ -225,9 +225,7 @@ extension TakePhotoViewController: PHPickerViewControllerDelegate {
                     self.navigationController?.pushViewController(editVC, animated: true)
                 } else {
                     // Display error message for failed processing
-                    let alert = UIAlertController(title: "Photo Processing Failed", message: "Only JPG, PNG, WEBP, and JPEG formats are supported.", preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .default))
-                    self.present(alert, animated: true)
+                    SVProgressHUD.showError(withStatus: ResourceManager.L10n.Photo.formatTips)
                 }
             }
         }

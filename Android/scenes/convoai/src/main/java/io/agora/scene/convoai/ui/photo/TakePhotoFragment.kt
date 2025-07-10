@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
@@ -18,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.dp
+import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovTakePhotoFragmentBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -235,7 +235,7 @@ class TakePhotoFragment : Fragment() {
                                 if (processedBitmap != null) {
                                     onPhotoTaken?.invoke(processedBitmap)
                                 } else {
-                                    ToastUtil.show("Only JPG, PNG, WEBP, and JPEG images are supported")
+                                    ToastUtil.show(getString(R.string.cov_photo_format_tips))
                                 }
                             }
                         } catch (e: Exception) {

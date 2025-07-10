@@ -129,3 +129,4 @@
 "photo.type.photo" = "Photo";
 "photo.type.camera" = "Camera";
 "photo.edit.done" = "Done";
+"photo.format.tips" = "Only JPG, PNG, WEBP, and JPEG image formats are supported.";

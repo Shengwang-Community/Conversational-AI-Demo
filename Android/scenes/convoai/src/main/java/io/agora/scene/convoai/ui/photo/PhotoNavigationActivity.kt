@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Environment
 import io.agora.scene.common.ui.BaseActivity
+import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovPhotoNavigationActivityBinding
 import java.io.File
@@ -103,12 +104,12 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
                         pushPhotoEdit(processedBitmap)
                     } else {
                         // Format not supported or processing failed
-                        android.widget.Toast.makeText(this, "Only JPG, PNG, WEBP, and JPEG images are supported", android.widget.Toast.LENGTH_LONG).show()
+                        ToastUtil.show(getString(R.string.cov_photo_format_tips))
                     }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    android.widget.Toast.makeText(this, "Failed to process image: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                    ToastUtil.show("Failed to process image: ${e.message}")
                 }
             }
         }.start()
@@ -147,7 +148,7 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
                     }
                 } catch (e: Exception) {
                     runOnUiThread {
-                        android.widget.Toast.makeText(this, "Failed to save photo: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                        ToastUtil.show("Failed to save photo: ${e.message}")
                         completion?.invoke(null)
                         finish()
                         overridePendingTransition(0, 0)

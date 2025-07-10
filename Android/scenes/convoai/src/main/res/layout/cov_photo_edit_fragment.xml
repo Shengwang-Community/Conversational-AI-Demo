@@ -71,7 +71,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@android:color/transparent"
-                android:text="Done"
+                android:text="@string/cov_photo_edit_done"
                 android:textColor="@color/ai_brand_black10"
                 android:textSize="14sp" />
         </androidx.cardview.widget.CardView>
