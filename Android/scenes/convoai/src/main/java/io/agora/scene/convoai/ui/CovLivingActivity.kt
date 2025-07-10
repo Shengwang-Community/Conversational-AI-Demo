@@ -58,6 +58,7 @@ import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfRenderConfig
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfSubRenderController
 import io.agora.scene.convoai.ui.dialog.CovAppInfoDialog
 import io.agora.scene.convoai.ui.dialog.CovAgentTabDialog
+import io.agora.scene.convoai.ui.photo.PhotoNavigationActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -215,6 +216,9 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
             clTop.setOnAddPicClickListener {
                 ToastUtil.show("Click add pic")
+                PhotoNavigationActivity.start(this@CovLivingActivity) {
+                    CovLogger.d(TAG,"$it")
+                }
             }
             clTop.setOnCCClickListener {
                 viewModel.toggleMessageList()

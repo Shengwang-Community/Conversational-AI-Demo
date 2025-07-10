@@ -18,6 +18,7 @@ import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getDistanceFromScreenEdges
 import io.agora.scene.common.util.toast.ToastUtil
+import io.agora.scene.convoai.api.CovAgentLanguage
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
@@ -94,7 +95,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
             })
             vOptionsMask.setOnClickListener(object : OnFastClickListener() {
                 override fun onClickJacking(view: View) {
-                    onClickMaskView()
+                    mBinding?.vOptionsMask?.visibility = View.INVISIBLE
                 }
             })
             cbAiVad.isChecked = CovAgentManager.enableAiVad
@@ -257,7 +258,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                 presets.indexOf(CovAgentManager.getPreset())
             ) { index ->
                 val preset = presets[index]
-                if (preset== CovAgentManager.getPreset()){
+                if (preset == CovAgentManager.getPreset()) {
                     return@updateOptions
                 }
 
@@ -271,13 +272,13 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                         updatePreset(preset)
                     }
                 } else {
-                   updatePreset(preset)
+                    updatePreset(preset)
                 }
             }
         }
     }
 
-    private fun updatePreset(preset: CovAgentPreset){
+    private fun updatePreset(preset: CovAgentPreset) {
         CovAgentManager.setPreset(preset)
         CovAgentManager.avatar = null
         livingViewModel.setAvatar(null)
@@ -316,22 +317,68 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                 languages.map { it.language_name }.toTypedArray(),
                 languages.indexOf(CovAgentManager.language)
             ) { index ->
-                CovAgentManager.language = languages[index]
-                updateBaseSettings()
-                setAiVadBySelectLanguage()
-                vOptionsMask.visibility = View.INVISIBLE
+                val language = languages[index]
+                if (language == CovAgentManager.language) {
+                    return@updateOptions
+                }
+
+                if (CovAgentManager.avatar != null) {
+                    // Check if user selected "Don't show again"
+                    if (CovAgentManager.shouldShowPresetChangeReminder()) {
+                        // Show reminder dialog
+                        showLanguageChangeDialog(language)
+                    } else {
+                        // User selected "Don't show again", show options directly
+                        updateLanguage(language)
+                    }
+                } else {
+                    updateLanguage(language)
+                }
             }
         }
     }
 
-    private fun onClickMaskView() {
-        mBinding?.apply {
-            vOptionsMask.visibility = View.INVISIBLE
-        }
+
+    /**
+     * Show language change reminder dialog
+     */
+    private fun showLanguageChangeDialog(language: CovAgentLanguage) {
+        val activity = activity ?: return
+
+        CommonDialog.Builder()
+            .setTitle(getString(io.agora.scene.convoai.R.string.cov_language_change_dialog_title))
+            .setContent(getString(io.agora.scene.convoai.R.string.cov_language_change_dialog_content))
+            .setNegativeButton(getString(R.string.common_close)) {
+                // User cancelled, no action needed
+            }
+            .setPositiveButtonWithReminder(getString(io.agora.scene.convoai.R.string.cov_preset_change_dialog_confirm)) { dontShowAgain ->
+                // User confirmed switch
+                if (dontShowAgain) {
+                    // User checked "Don't show again", save preference
+                    CovAgentManager.setShowPresetChangeReminder(false)
+                }
+                updateLanguage(language)
+            }
+            .showNoMoreReminder() // Show checkbox, default unchecked
+            .hideTopImage()
+            .build()
+            .show(activity.supportFragmentManager, "LanguageChangeDialog")
+    }
+
+    private fun updateLanguage(language: CovAgentLanguage) {
+        CovAgentManager.language = language
+        CovAgentManager.avatar = null
+        livingViewModel.setAvatar(null)
+        updateBaseSettings()
+        setAiVadBySelectLanguage()
+        mBinding?.vOptionsMask?.visibility = View.INVISIBLE
+
+        // Update avatar settings display
+        updateAvatarSettings()
     }
 
     private fun onClickAvatar() {
-        if (CovAgentManager.getPreset()?.isStandardAvatar() != true) {
+        if (CovAgentManager.getAvatars().isEmpty()) {
             ToastUtil.show("No avatars available!")
             return
         }
