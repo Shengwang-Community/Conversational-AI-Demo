@@ -57,6 +57,12 @@ protocol AgentPreferenceManagerProtocol {
     func setPresets(presets: [AgentPreset])
     
     func setAvatar(_ avatar: Avatar?)
+    
+    // Alert ignore related methods
+    func setPresetAlertIgnored(_ ignored: Bool)
+    func isPresetAlertIgnored() -> Bool
+    func setLanguageAlertIgnored(_ ignored: Bool)
+    func isLanguageAlertIgnored() -> Bool
 }
 
 class AgentPreferenceManager: AgentPreferenceManagerProtocol {
@@ -65,6 +71,10 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
     private var presets: [AgentPreset]?
     
     private var delegates = NSHashTable<AnyObject>.weakObjects()
+    
+    // UserDefaults keys for alert ignore states
+    private let kPresetAlertIgnoredKey = "preset_alert_ignored"
+    private let kLanguageAlertIgnoredKey = "language_alert_ignored"
     
     // MARK: - Delegate Management
     func addDelegate(_ delegate: AgentPreferenceManagerDelegate) {
@@ -176,17 +186,30 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
         }
         
         self.updateLanguage(language)
-        
-        guard let avatar = preset.avatarIds?.first else {
-            return
-        }
-        
-        self.updateAvatar(avatar)
     }
     
     func setAvatar(_ avatar: Avatar?) {
         preference.avatar = avatar
         notifyDelegates { $0.preferenceManager(self, avatarDidUpdated: avatar) }
+    }
+    
+    // MARK: - Alert ignore related methods
+    func setPresetAlertIgnored(_ ignored: Bool) {
+        UserDefaults.standard.set(ignored, forKey: kPresetAlertIgnoredKey)
+        UserDefaults.standard.synchronize()
+    }
+    
+    func isPresetAlertIgnored() -> Bool {
+        return UserDefaults.standard.bool(forKey: kPresetAlertIgnoredKey)
+    }
+    
+    func setLanguageAlertIgnored(_ ignored: Bool) {
+        UserDefaults.standard.set(ignored, forKey: kLanguageAlertIgnoredKey)
+        UserDefaults.standard.synchronize()
+    }
+    
+    func isLanguageAlertIgnored() -> Bool {
+        return UserDefaults.standard.bool(forKey: kLanguageAlertIgnoredKey)
     }
     
     // MARK: - Private Methods

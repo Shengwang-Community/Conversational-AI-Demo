@@ -46,13 +46,21 @@ class DigitalHumanViewController: BaseViewController {
     }
     
     private func loadData() {
-        guard let avatarIds = AppContext.preferenceManager()?.preference.preset?.avatarIds else {
+        guard let language = AppContext.preferenceManager()?.preference.language else {
+            return
+        }
+        
+        guard let avatarIdsByLang = AppContext.preferenceManager()?.preference.preset?.avatarIdsByLang else {
+            return
+        }
+        
+        guard let visibleAvatars = avatarIdsByLang[language.languageCode] else {
             return
         }
         
         var selectedTag = false
         if let currentAvatar = AppContext.preferenceManager()?.preference.avatar {
-            let avatars = avatarIds.map { avatar in
+            let avatars = visibleAvatars.map { avatar in
                 let isSelected = avatar.avatarId == currentAvatar.avatarId
                 if isSelected {
                     selectedTag = true
@@ -62,7 +70,7 @@ class DigitalHumanViewController: BaseViewController {
             }
             digitalHumans = avatars
         } else {
-            let avatars = avatarIds.map { avatar in
+            let avatars = visibleAvatars.map { avatar in
                 return DigitalHuman(avatar: avatar, isAvailable: true, isSelected: false)
             }
             digitalHumans = avatars

@@ -67,6 +67,9 @@ extension ChatViewController: AgoraRtcEngineDelegate {
         let avatarState = avatarIsSelected()
         if uid == agentUid {
             agentIsJoined = true
+            if avatarState {
+                muteRemoteUser(uid: UInt(agentUid), muted: true)
+            }
             addLog("agent did joined: \(uid)")
         }
         

@@ -76,6 +76,8 @@ extension ChatViewController {
                     "threshold": nil
                 ],
                 "avatar": [
+                    "enable": AppContext.preferenceManager()?.preference.avatar != nil,
+                    "vendor": "",
                     "params": [
                         "agora_uid": "\(avatarUid)",
                         "avatar_id": AppContext.preferenceManager()?.preference.avatar?.avatarId
@@ -218,7 +220,6 @@ extension ChatViewController {
 
         if let _ = AppContext.preferenceManager()?.preference.avatar {
             addLog("will start avatar, avatar id: \(avatarUid)")
-            muteRemoteUser(uid: UInt(agentUid), muted: true)
             startShowAvatar()
         }
         
