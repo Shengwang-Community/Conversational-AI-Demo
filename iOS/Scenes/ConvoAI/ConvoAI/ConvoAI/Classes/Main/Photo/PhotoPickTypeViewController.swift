@@ -10,7 +10,7 @@ import PhotosUI
 import SnapKit
 import Common
 import Photos
-import AVFoundation
+import SVProgressHUD
 
 class PhotoPickTypeViewController: UIViewController {
     private var completion: ((PhotoResult?) -> Void)?
@@ -326,10 +326,7 @@ extension PhotoPickTypeViewController: PHPickerViewControllerDelegate {
                     editVC.completion = self.completion
                     self.navigationController?.pushViewController(editVC, animated: true)
                 } else {
-                    // Display error message for failed processing (in English)
-                    let alert = UIAlertController(title: "Image Processing Failed", message: "Only JPG, PNG, WEBP, and JPEG formats are supported.", preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .default))
-                    self.present(alert, animated: true)
+                    SVProgressHUD.showError(withStatus: ResourceManager.L10n.Photo.formatTips)
                 }
             }
         }

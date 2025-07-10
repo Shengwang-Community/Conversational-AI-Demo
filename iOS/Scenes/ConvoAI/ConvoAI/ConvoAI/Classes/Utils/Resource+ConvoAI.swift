@@ -187,6 +187,7 @@ extension ResourceManager {
             public static let photo = ResourceManager.localizedString("photo.type.photo")
             public static let camera = ResourceManager.localizedString("photo.type.camera")
             public static let done = ResourceManager.localizedString("photo.edit.done")
+            public static let formatTips = ResourceManager.localizedString("photo.format.tips")
         }
     }
 }

@@ -85,7 +85,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Gallery"
+                        android:text="@string/cov_photo_type_photo"
                         android:textColor="@color/ai_icontext1"
                         android:textSize="12sp"
                         android:textAlignment="center" />
@@ -123,7 +123,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Camera"
+                        android:text="@string/cov_photo_type_camera"
                         android:textColor="@color/ai_icontext1"
                         android:textSize="12sp"
                         android:textAlignment="center" />

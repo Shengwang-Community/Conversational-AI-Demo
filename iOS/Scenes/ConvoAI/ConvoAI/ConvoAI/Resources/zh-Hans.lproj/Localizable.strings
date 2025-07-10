@@ -134,3 +134,4 @@
 "photo.type.photo" = "照片";
 "photo.type.camera" = "拍照";
 "photo.edit.done" = "完成";
+"photo.format.tips" = "仅支持 JPG、PNG、WEBP 和 JPEG 格式的图片。";
