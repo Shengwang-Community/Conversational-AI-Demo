@@ -452,7 +452,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                         GlideImageLoader.load(
                             ivAvatarPreview,
                             avatar.avatar_url,
-                            R.drawable.cov_default_avatar,
+                            null,
                             R.drawable.cov_default_avatar
                         )
 

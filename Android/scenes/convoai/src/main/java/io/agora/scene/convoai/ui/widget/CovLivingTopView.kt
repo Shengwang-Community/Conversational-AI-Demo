@@ -56,15 +56,15 @@ class CovLivingTopView @JvmOverloads constructor(
         binding.viewFlipper.inAnimation?.setAnimationListener(object : Animation.AnimationListener {
             override fun onAnimationStart(animation: Animation?) {
                 // Always hide tv_cc at the start of any animation
-                binding.tvCc.isVisible = false
+                binding.cvCc.isVisible = false
             }
 
             override fun onAnimationEnd(animation: Animation?) {
                 // Only show tv_cc if ll_timer is now fully displayed
                 if (binding.viewFlipper.displayedChild == 2) {
-                    binding.tvCc.isVisible = true
+                    binding.cvCc.isVisible = true
                 } else {
-                    binding.tvCc.isVisible = false
+                    binding.cvCc.isVisible = false
                 }
             }
 
@@ -164,23 +164,23 @@ class CovLivingTopView @JvmOverloads constructor(
         if (isLogin) {
             if (connectionState == AgentConnectionState.IDLE) {
                 binding.btnInfo.isVisible = true
-                binding.btnAddPic.isVisible = false
-                binding.btnSwitchCamera.isVisible = false
-                binding.tvCc.isVisible = false
+                binding.cvAddPic.isVisible = false
+                binding.cvSwitchCamera.isVisible = false
+                binding.cvCc.isVisible = false
             } else {
                 binding.btnInfo.isVisible = false
                 if (isPublishCamera) {
-                    binding.btnSwitchCamera.isVisible = true
-                    binding.btnAddPic.isVisible = false
+                    binding.cvSwitchCamera.isVisible = true
+                    binding.cvAddPic.isVisible = false
                 } else {
-                    binding.btnSwitchCamera.isVisible = false
-                    binding.btnAddPic.isVisible = true
+                    binding.cvSwitchCamera.isVisible = false
+                    binding.cvAddPic.isVisible = true
                 }
             }
         } else {
             binding.btnInfo.isVisible = false
-            binding.btnAddPic.isVisible = false
-            binding.btnSwitchCamera.isVisible = false
+            binding.cvAddPic.isVisible = false
+            binding.cvSwitchCamera.isVisible = false
         }
     }
 
@@ -197,8 +197,8 @@ class CovLivingTopView @JvmOverloads constructor(
             } else {
                 btnSettings.isVisible = false
                 btnInfo.isVisible = false
-                binding.btnAddPic.isVisible = false
-                binding.btnSwitchCamera.isVisible = false
+                cvAddPic.isVisible = false
+                cvSwitchCamera.isVisible = false
             }
         }
     }

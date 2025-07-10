@@ -40,9 +40,13 @@ object CovAgentManager {
     var roomExpireTime = 600L
         get(){
             return if (isEnableAvatar()){
-                preset?.call_time_limit_avatar_second ?: 300L
+                // If call_time_limit_avatar_second is null or <= 0, use 300L as default
+                val limit = preset?.call_time_limit_avatar_second ?: 0L
+                if (limit > 0) limit else 300L
             }else{
-                preset?.call_time_limit_second ?: 600L
+                // If call_time_limit_second is null or <= 0, use 300L as default
+                val limit = preset?.call_time_limit_second ?: 0L
+                if (limit > 0) limit else 600L
             }
     }
 

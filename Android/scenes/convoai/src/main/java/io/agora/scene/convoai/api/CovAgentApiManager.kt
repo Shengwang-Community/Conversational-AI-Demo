@@ -27,6 +27,7 @@ object CovAgentApiManager {
     private const val TAG = "CovServerManager"
 
     const val ERROR_RESOURCE_LIMIT_EXCEEDED = 1412
+    const val ERROR_AVATAR_LIMIT = 1700
 
     private val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 

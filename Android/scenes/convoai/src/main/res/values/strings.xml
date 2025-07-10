@@ -23,6 +23,7 @@
     <string name="cov_detail_update_token_error">获取 Token 失败</string>
     <string name="cov_detail_llm_error">LLM 异常</string>
     <string name="cov_detail_tts_error">TTS 异常</string>
+    <string name="cov_detail_start_agent_avatar_limit_error">所有数字人正忙，请稍后重试</string>
 
     <string name="cov_info_dialog_title">信息</string>
     <string name="cov_channel_info_title">频道信息</string>

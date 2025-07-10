@@ -4,7 +4,7 @@ import io.agora.rtc2.Constants
 import io.agora.rtc2.RtcEngine
 import io.agora.rtm.RtmClient
 
-const val ConversationalAIAPI_VERSION = "1.8.0"
+const val ConversationalAIAPI_VERSION = "1.7.0"
 
 /*
  * This file defines the core interfaces, data structures, and error system for the Conversational AI API.
