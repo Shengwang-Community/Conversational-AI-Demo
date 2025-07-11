@@ -217,7 +217,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             clTop.setOnAddPicClickListener {
                 ToastUtil.show("Click add pic")
                 PhotoNavigationActivity.start(this@CovLivingActivity) {
-                    CovLogger.d(TAG,"$it")
+                    CovLogger.d(TAG, "$it")
                 }
             }
             clTop.setOnCCClickListener {
@@ -399,7 +399,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     mBinding?.agentStateView?.updateAgentState(it)
                     if (agentState == AgentState.SPEAKING) {
                         mBinding?.agentSpeakingIndicator?.startAnimation()
-                    }else{
+                    } else {
                         mBinding?.agentSpeakingIndicator?.stopAnimation()
                     }
                 }
@@ -551,6 +551,17 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
 
             agentSpeakingIndicator.isVisible = !showAvatar && showVideo && !showTranscription
+            val isLight = vDragBigWindow.isVisible && !showTranscription
+            clTop.updateLightBackground(isLight)
+
+            if (isLight) {
+                clBottomLogged.btnEndCall.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_brand_black4_selector)
+                clBottomLogged.btnCamera.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_brand_black4_selector)
+            } else {
+                clBottomLogged.btnEndCall.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_block1_selector)
+                clBottomLogged.btnCamera.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_block1_selector)
+            }
+            updateMicrophoneView(viewModel.isLocalAudioMuted.value)
         }
     }
 
@@ -642,7 +653,13 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 )
             } else {
                 clBottomLogged.btnMic.setImageResource(io.agora.scene.common.R.drawable.agent_user_speaker)
-                clBottomLogged.btnMic.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_block1_selector)
+
+                val isLight = vDragBigWindow.isVisible && !viewModel.isShowMessageList.value
+                if (isLight) {
+                    clBottomLogged.btnMic.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_brand_black4_selector)
+                } else {
+                    clBottomLogged.btnMic.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_block1_selector)
+                }
             }
         }
     }

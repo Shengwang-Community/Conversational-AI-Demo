@@ -15,6 +15,7 @@ import kotlinx.coroutines.delay
 import io.agora.scene.convoai.constant.AgentConnectionState
 import android.view.animation.Animation
 import androidx.core.view.isVisible
+import io.agora.scene.common.R
 
 /**
  * Top bar view for living activity, encapsulating info/settings/net buttons, ViewFlipper switching, and timer logic.
@@ -131,6 +132,23 @@ class CovLivingTopView @JvmOverloads constructor(
     }
 
     /**
+     * update light background
+     */
+    fun updateLightBackground(light: Boolean) {
+        binding.apply {
+            if (light) {
+                btnSwitchCamera.setBackgroundResource(R.drawable.btn_bg_brand_black3_selector)
+                btnAddPic.setBackgroundResource(R.drawable.btn_bg_brand_black3_selector)
+                tvCc.setBackgroundResource(R.drawable.btn_bg_brand_black3_selector)
+            } else {
+                btnSwitchCamera.setBackgroundResource(R.drawable.btn_bg_block1_selector)
+                btnAddPic.setBackgroundResource(R.drawable.btn_bg_block1_selector)
+                tvCc.setBackgroundResource(R.drawable.btn_bg_block1_selector)
+            }
+        }
+    }
+
+    /**
      * Update network status icon and visibility based on quality value.
      */
     fun updateNetworkStatus(value: Int) {
@@ -141,20 +159,20 @@ class CovLivingTopView @JvmOverloads constructor(
 
             Constants.QUALITY_VBAD, Constants.QUALITY_DOWN -> {
                 if (connectionState == AgentConnectionState.CONNECTED_INTERRUPT) {
-                    binding.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_disconnected)
+                    binding.btnNet.setImageResource(R.drawable.scene_detail_net_disconnected)
                 } else {
-                    binding.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_poor)
+                    binding.btnNet.setImageResource(R.drawable.scene_detail_net_poor)
                 }
                 binding.btnNet.isVisible = true
             }
 
             Constants.QUALITY_POOR, Constants.QUALITY_BAD -> {
-                binding.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_okay)
+                binding.btnNet.setImageResource(R.drawable.scene_detail_net_okay)
                 binding.btnNet.isVisible = true
             }
 
             else -> {
-                binding.btnNet.setImageResource(io.agora.scene.common.R.drawable.scene_detail_net_good)
+                binding.btnNet.setImageResource(R.drawable.scene_detail_net_good)
                 binding.btnNet.isVisible = true
             }
         }
@@ -224,7 +242,7 @@ class CovLivingTopView @JvmOverloads constructor(
             updateTvCcVisibility()
             delay(2000)
             if (!isActive || !isTitleAnimRunning) return@launch
-            if (connectionState!= AgentConnectionState.IDLE) {
+            if (connectionState != AgentConnectionState.IDLE) {
                 binding.viewFlipper.showNext() // to ll_tips (index 1)
                 updateTvCcVisibility()
                 delay(5000)
@@ -277,7 +295,7 @@ class CovLivingTopView @JvmOverloads constructor(
             binding.viewFlipper.showPrevious()
         }
         updateTvCcVisibility()
-        binding.tvTimer.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_brand_white10))
+        binding.tvTimer.setTextColor(context.getColor(R.color.ai_brand_white10))
     }
 
     /**
@@ -338,12 +356,12 @@ class CovLivingTopView @JvmOverloads constructor(
         }
         binding.tvTimer.text = timeText
         if (isCountUp) {
-            binding.tvTimer.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_brand_white10))
+            binding.tvTimer.setTextColor(context.getColor(R.color.ai_brand_white10))
         } else {
             when {
-                timeMs <= 20000 -> binding.tvTimer.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_red6))
-                timeMs <= 60000 -> binding.tvTimer.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_green6))
-                else -> binding.tvTimer.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_brand_white10))
+                timeMs <= 20000 -> binding.tvTimer.setTextColor(context.getColor(R.color.ai_red6))
+                timeMs <= 60000 -> binding.tvTimer.setTextColor(context.getColor(R.color.ai_green6))
+                else -> binding.tvTimer.setTextColor(context.getColor(R.color.ai_brand_white10))
             }
         }
     }
