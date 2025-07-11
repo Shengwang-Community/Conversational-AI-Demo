@@ -56,6 +56,7 @@
         android:layout_height="match_parent"
         tools:visibility="visible"
         android:background="@color/ai_fill2"
+        android:scaleType="centerCrop"
         android:visibility="gone" />
 
     <io.agora.scene.convoai.ui.widget.CovDraggableView
