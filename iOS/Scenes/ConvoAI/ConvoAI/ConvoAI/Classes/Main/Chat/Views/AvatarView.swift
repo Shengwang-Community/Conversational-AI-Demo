@@ -11,7 +11,7 @@ class AvatarView: UIView {
     lazy var backgroundImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage.ag_named("ic_avatar_place_holder_icon")
-        imageView.contentMode = .scaleAspectFit
+        imageView.contentMode = .scaleAspectFill
         return imageView
     }()
     
