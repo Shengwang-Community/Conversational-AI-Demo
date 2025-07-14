@@ -249,7 +249,17 @@ extension ConversationalAIAPIImpl {
             }
         }
     }
-    
+
+    private func notifyDelegatesImageInfo(agentUserId: String, imageInfo: ImageMessageInfo) {
+        callMessagePrint(msg: "<<< [onMessageInfoUpdated], agentUserId: \(agentUserId), imageInfo: \(imageInfo)")
+
+        DispatchQueue.main.async {
+            for delegate in self.delegates.allObjects {
+                delegate.onMessageInfoUpdated(agentUserId: agentUserId, imageInfo: imageInfo)
+            }
+        }
+    }
+
     private func notifyDelegatesError(agentUserId: String, error: ModuleError) {
         callMessagePrint(msg: "<<< [onAgentError], agentUserId: \(agentUserId), error: \(error)")
 
@@ -326,13 +336,27 @@ extension ConversationalAIAPIImpl {
         switch messageType {
         case .metrics:
             handleMetricsMessage(uid: uid, msg: msg)
-            
         case .error:
             handleErrorMessage(uid: uid, msg: msg)
-            
-            break
+        case .imageInfo:
+            handleImageInfoMessage(uid: uid, msg: msg)
         default:
             break
+        }
+    }
+    
+    private func handleImageInfoMessage(uid: String, msg: [String: Any]) {
+        guard let messageString = msg["message"] as? String,
+              let messageData = messageString.data(using: .utf8) else {
+            ConvoAILogger.error("Failed to parse message string from image info message")
+            return
+        }
+        
+        do {
+            let imageInfo = try JSONDecoder().decode(ImageMessageInfo.self, from: messageData)
+            notifyDelegatesImageInfo(agentUserId: uid, imageInfo: imageInfo)
+        } catch {
+            notifyDelegatesDebugLog("Failed to decode ImageMessageInfo: \(error)")
         }
     }
     

@@ -9,6 +9,10 @@ import Foundation
 
 // MARK: - ConversationalAIAPIEventHandler
 extension ChatViewController: ConversationalAIAPIEventHandler {
+    public func onMessageInfoUpdated(agentUserId: String, imageInfo: ImageMessageInfo) {
+        
+    }
+    
     public func onAgentStateChanged(agentUserId: String, event: StateChangeEvent) {
         agentStateView.setState(event.state)
     }

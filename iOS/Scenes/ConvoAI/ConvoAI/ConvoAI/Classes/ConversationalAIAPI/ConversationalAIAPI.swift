@@ -293,6 +293,8 @@ public enum MessageType: String, CaseIterable {
     case interrupt = "message.interrupt"
     /// State message type
     case state = "message.state"
+    /// Image info message type
+    case imageInfo = "message.info"
     /// Unknown message type
     case unknown = "unknown"
     
@@ -421,6 +423,65 @@ public enum MessageType: String, CaseIterable {
     }
 }
 
+/// Image message information model
+/// Contains metadata about images used in conversation messages
+/// Used for tracking image properties, source information, and user statistics
+@objc public class ImageMessageInfo: NSObject, Codable {
+    /// Unique identifier for the image
+    @objc public let uuid: String
+    /// Image width in pixels
+    @objc public let width: Int
+    /// Image height in pixels
+    @objc public let height: Int
+    /// Image file size in bytes
+    @objc public let sizeBytes: Int64
+    /// Source type of the image (e.g., "url")
+    @objc public let sourceType: String
+    /// Source value (e.g., image URL)
+    @objc public let sourceValue: String
+    /// Upload timestamp in milliseconds
+    @objc public let uploadTime: Int64
+    /// Total number of user images
+    @objc public let totalUserImages: Int
+    
+    /// Initialize an image message info object
+    /// - Parameters:
+    ///   - uuid: Unique identifier
+    ///   - width: Image width
+    ///   - height: Image height
+    ///   - sizeBytes: File size in bytes
+    ///   - sourceType: Source type
+    ///   - sourceValue: Source value
+    ///   - uploadTime: Upload timestamp
+    ///   - totalUserImages: Total user images count
+    @objc public init(uuid: String, width: Int, height: Int, sizeBytes: Int64, sourceType: String, sourceValue: String, uploadTime: Int64, totalUserImages: Int) {
+        self.uuid = uuid
+        self.width = width
+        self.height = height
+        self.sizeBytes = sizeBytes
+        self.sourceType = sourceType
+        self.sourceValue = sourceValue
+        self.uploadTime = uploadTime
+        self.totalUserImages = totalUserImages
+        super.init()
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case uuid
+        case width
+        case height
+        case sizeBytes = "size_bytes"
+        case sourceType = "source_type"
+        case sourceValue = "source_value"
+        case uploadTime = "upload_time"
+        case totalUserImages = "total_user_images"
+    }
+    
+    public override var description: String {
+        return "ImageMessageInfo(uuid: \(uuid), width: \(width), height: \(height), sizeBytes: \(sizeBytes), sourceType: \(sourceType), sourceValue: \(sourceValue), uploadTime: \(uploadTime), totalUserImages: \(totalUserImages))"
+    }
+}
+
 /// ConversationalAI API configuration
 /// Contains the necessary configuration parameters to initialize the Conversational AI API.
 /// This configuration includes RTC engine for audio communication, RTM client for messaging,
@@ -512,6 +573,14 @@ public enum MessageType: String, CaseIterable {
     ///   - agentUserId: Agent RTM user ID
     ///   - transcription: Transcription data containing text content, status, and metadata
     @objc func onTranscriptionUpdated(agentUserId: String, transcription: Transcription)
+    
+    /// Called when image message information is updated
+    /// This method provides image metadata when images are processed in the conversation
+    ///
+    /// - Parameters:
+    ///   - agentUserId: Agent RTM user ID
+    ///   - imageInfo: Image message information containing metadata and properties
+    @objc func onMessageInfoUpdated(agentUserId: String, imageInfo: ImageMessageInfo)
 }
 
 /// ConversationalAI API control protocol

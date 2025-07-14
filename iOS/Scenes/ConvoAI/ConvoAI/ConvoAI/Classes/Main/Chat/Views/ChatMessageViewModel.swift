@@ -9,6 +9,7 @@ import Foundation
 
 class Message {
     var content: String = ""
+    var imageUrl: String = ""
     var isMine: Bool = false
     var isFinal: Bool = false
     var isInterrupted: Bool = false
