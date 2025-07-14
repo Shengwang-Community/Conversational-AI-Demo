@@ -74,6 +74,14 @@ class CovLivingViewModel : ViewModel() {
     private val _transcriptionUpdate = MutableStateFlow<Transcription?>(null)
     val transcriptionUpdate: StateFlow<Transcription?> = _transcriptionUpdate.asStateFlow()
 
+    // Image info
+    private val _imageInfoUpdate = MutableStateFlow<ImageInfo?>(null)
+    val imageInfoUpdate: StateFlow<ImageInfo?> = _imageInfoUpdate.asStateFlow()
+
+    // Module error
+    private val _moduleError = MutableStateFlow<ModuleError?>(null)
+    val moduleError: StateFlow<ModuleError?> = _moduleError.asStateFlow()
+
     private val _isAvatarJoinedRtc = MutableStateFlow(false)
     val isAvatarJoinedRtc: StateFlow<Boolean> = _isAvatarJoinedRtc.asStateFlow()
 
@@ -122,11 +130,16 @@ class CovLivingViewModel : ViewModel() {
 
         override fun onAgentError(agentUserId: String, error: ModuleError) {
             // Handle agent error
+            _moduleError.value = error
         }
 
         override fun onTranscriptionUpdated(agentUserId: String, transcription: Transcription) {
             // Update transcription state to notify Activity
             _transcriptionUpdate.value = transcription
+        }
+
+        override fun onImageUpload(agentUserId: String, image: ImageInfo) {
+            _imageInfoUpdate.value = image
         }
 
         override fun onDebugLog(log: String) {
@@ -291,6 +304,24 @@ class CovLivingViewModel : ViewModel() {
         }
     }
 
+    // Send image message
+    fun sendImageMessage(uuid: String, imageUrl: String) {
+        if (_connectionState.value != AgentConnectionState.CONNECTED) {
+            ToastUtil.show("Please connect to agent first")
+            return
+        }
+        val imageMessage = ImageMessage(
+            uuid = uuid,
+            imageUrl = imageUrl,
+        )
+
+        conversationalAIAPI?.uploadImage(
+            CovAgentManager.agentUID.toString(),
+            imageMessage
+        ) { error ->
+        }
+    }
+
     // Interrupt Agent
     fun interruptAgent() {
         if (_connectionState.value != AgentConnectionState.CONNECTED) return
@@ -318,11 +349,6 @@ class CovLivingViewModel : ViewModel() {
                     CovLogger.d(TAG, "RTC Join channel success: $uid")
                     _networkQuality.value = 1
                     _isUserJoinedRtc.value = true
-                    if (CovAgentManager.isEnableAvatar()) {
-                        CovRtcManager.muteRemoteAudio(CovAgentManager.agentUID, true)
-                    } else {
-                        CovRtcManager.muteRemoteAudio(CovAgentManager.agentUID, false)
-                    }
                 }
             }
 
@@ -511,6 +537,7 @@ class CovLivingViewModel : ViewModel() {
                     R.string.cov_detail_start_agent_limit_error,
                     Toast.LENGTH_LONG
                 )
+
                 CovAgentApiManager.ERROR_AVATAR_LIMIT -> ToastUtil.show(
                     R.string.cov_detail_start_agent_avatar_limit_error,
                     Toast.LENGTH_LONG
@@ -660,6 +687,8 @@ class CovLivingViewModel : ViewModel() {
         _isAgentJoinedRtc.value = false
         _isAvatarJoinedRtc.value = false
         _transcriptionUpdate.value = null
+        _imageInfoUpdate.value = null
+        _moduleError.value = null
     }
 
     private fun getConvoaiBodyMap(channel: String, dataChannel: String = "rtm"): Map<String, Any?> {
@@ -709,7 +738,7 @@ class CovLivingViewModel : ViewModel() {
                     "style" to null,
                     "max_history" to null,
                     "ignore_empty" to null,
-//                    "input_modalities" to listOf("text", "image"),
+                    "input_modalities" to listOf("text", "image"),
                     "output_modalities" to null,
                     "failure_message" to null,
                 ),
@@ -745,6 +774,7 @@ class CovLivingViewModel : ViewModel() {
                         "protocol_version" to "v2",
                         "redundant" to null,
                     ),
+                    //"enable_dump" to true,
                     "sc" to mapOf(
                         "sessCtrlStartSniffWordGapInMs" to null,
                         "sessCtrlTimeOutInMs" to null,

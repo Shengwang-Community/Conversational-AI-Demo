@@ -3,6 +3,7 @@ package io.agora.scene.convoai.convoaiApi
 import io.agora.rtc2.Constants
 import io.agora.rtc2.RtcEngine
 import io.agora.rtm.RtmClient
+import io.agora.scene.common.net.UploadImage
 
 const val ConversationalAIAPI_VERSION = "1.7.0"
 
@@ -34,10 +35,12 @@ enum class Priority {
      * High priority - Immediately interrupt the current interaction and process this message. Suitable for urgent or time-sensitive content.
      */
     INTERRUPT,
+
     /**
      * Medium priority - Queued for processing after the current interaction completes. Suitable for follow-up questions.
      */
     APPEND,
+
     /**
      * Low priority - Only processed when the agent is idle. Will be discarded during ongoing interactions. Suitable for optional content.
      */
@@ -87,6 +90,47 @@ data class ChatMessage(
 )
 
 /**
+ * Data class representing an uploaded image for conversational AI API.
+ *
+ * @property uuid Unique identifier for the image (required).
+ * @property imageUrl URL of the image (optional, mutually exclusive with imageBase64).
+ * @property imageBase64 Base64-encoded image data (optional, mutually exclusive with imageUrl).
+ *
+ * Only one of imageUrl or imageBase64 should be provided.
+ */
+data class ImageMessage(
+    /**
+     * Unique identifier for the image (required).
+     */
+    val uuid: String,
+    /**
+     * URL of the image (optional, mutually exclusive with imageBase64).
+     */
+    val imageUrl: String? = null,
+    /**
+     * Base64-encoded image data (optional, mutually exclusive with imageUrl).
+     */
+    val imageBase64: String? = null
+)
+
+data class ImageInfo(
+    val uuid: String,
+    val width: Int,
+    val height: Int,
+    val sizeBytes: Long,
+    val sourceType: String,
+    val sourceValue: String,
+    val uploadTime: Long,
+    val totalUserImages: Int
+)
+
+data class ImageUploadError(
+    val uuid: String,
+    val code: Int,
+    val message: String
+)
+
+/**
  * Agent State Enum
  *
  * Represents the current state of the AI agent.
@@ -100,12 +144,16 @@ data class ChatMessage(
 enum class AgentState(val value: String) {
     /** Agent is silent */
     SILENT("silent"),
+
     /** Agent is listening */
     LISTENING("listening"),
+
     /** Agent is processing/thinking */
     THINKING("thinking"),
+
     /** Agent is speaking */
     SPEAKING("speaking"),
+
     /** Unknown state */
     UNKNOWN("unknown");
 
@@ -170,10 +218,15 @@ data class InterruptEvent(
 enum class ModuleType(val value: String) {
     /** LLM inference latency */
     LLM("llm"),
+
     /** MLLM inference latency */
     MLLM("mllm"),
+
     /** Text-to-speech synthesis latency */
     TTS("tts"),
+
+    Context("context"),
+
     /** Unknown type */
     UNKNOWN("unknown");
 
@@ -231,7 +284,11 @@ data class ModuleError(
     /** Error description message providing detailed error explanation */
     val message: String,
     /** Error occurrence timestamp (milliseconds since epoch, i.e., since January 1, 1970 UTC) */
-    val timestamp: Long
+    val timestamp: Long,
+    /** Optional: turnId for the image (used for image upload errors) */
+    val turnId: Long? = null,
+    /** Optional: Unique identifier for the image (used for image upload errors) */
+    val uuid: String? = null,
 )
 
 /**
@@ -249,14 +306,22 @@ data class ModuleError(
 enum class MessageType(val value: String) {
     /** AI assistant transcription message */
     ASSISTANT("assistant.transcription"),
+
     /** User transcription message */
     USER("user.transcription"),
+
     /** Error message */
     ERROR("message.error"),
+
     /** Performance metrics message */
     METRICS("message.metrics"),
+
     /** Interrupt message */
     INTERRUPT("message.interrupt"),
+
+    /** Image message */
+    IMAGE("message.info"),
+
     /** Unknown type */
     UNKNOWN("unknown");
 
@@ -281,6 +346,7 @@ enum class MessageType(val value: String) {
 enum class TranscriptionRenderMode {
     /** Word-by-word transcription rendering */
     Word,
+
     /** Full text transcription rendering */
     Text
 }
@@ -293,8 +359,9 @@ enum class TranscriptionRenderMode {
  * @property text The actual transcription text content
  * @property status Current status of the transcription
  * @property type Transcription type (AGENT/USER)
+ * @property sendMs Transcription sendMs
  */
-data class Transcription(
+data class Transcription constructor(
     /** Unique identifier for the conversation turn */
     val turnId: Long,
     /** User identifier associated with this transcription */
@@ -304,7 +371,9 @@ data class Transcription(
     /** Current status of the transcription */
     var status: TranscriptionStatus,
     /** Transcription type (AGENT/USER) */
-    var type: TranscriptionType
+    var type: TranscriptionType,
+    /** Transcription start ms */
+    var startMs: Long,
 )
 
 /**
@@ -316,6 +385,7 @@ data class Transcription(
 enum class TranscriptionType {
     /** AI assistant transcription */
     AGENT,
+
     /** User transcription */
     USER
 }
@@ -331,10 +401,13 @@ enum class TranscriptionType {
 enum class TranscriptionStatus {
     /** Transcription is still being generated or spoken */
     IN_PROGRESS,
+
     /** Transcription has completed normally */
     END,
+
     /** Transcription was interrupted before completion */
     INTERRUPTED,
+
     /** Unknown status */
     UNKNOWN
 }
@@ -373,8 +446,10 @@ data class ConversationalAIAPIConfig(
 sealed class ConversationalAIAPIError : Exception() {
     /** RTM layer error */
     data class RtmError(val code: Int, val msg: String) : ConversationalAIAPIError()
+
     /** RTC layer error */
     data class RtcError(val code: Int, val msg: String) : ConversationalAIAPIError()
+
     /** Unknown error */
     data class UnknownError(val msg: String) : ConversationalAIAPIError()
 
@@ -435,6 +510,14 @@ interface IConversationalAIAPIEventHandler {
      * @param error AI error
      */
     fun onAgentError(agentUserId: String, error: ModuleError)
+
+
+    /**
+     * Called when image upload
+     * @param agentUserId Agent User ID
+     * @param image image info
+     */
+    fun onImageUpload(agentUserId: String, image: ImageInfo)
 
     /**
      * Called when transcription content is updated.
@@ -501,6 +584,15 @@ interface IConversationalAIAPI {
     fun chat(agentUserId: String, message: ChatMessage, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
+     * Uploads an image message to the specified agent user.
+     *
+     * @param agentUserId The user ID of the agent to receive the image message.
+     * @param message The image message to upload, containing image URL or base64 data.
+     * @param completion Callback invoked when the upload completes or fails. Returns an error if failed, or null if successful.
+     */
+    fun uploadImage(agentUserId: String, message: ImageMessage, completion: (error: ConversationalAIAPIError?) -> Unit)
+
+    /**
      * Interrupt the AI agent's speaking.
      * @param agentUserId Agent user ID
      * @param completion Callback, error is null on success, non-null on failure
@@ -508,7 +600,7 @@ interface IConversationalAIAPI {
     fun interrupt(agentUserId: String, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
-     * Set audio parameters for optimal AI conversation performance. 
+     * Set audio parameters for optimal AI conversation performance.
      *
      * WARNING: This method MUST be called BEFORE rtcEngine.joinChannel().
      * If you do not call loadAudioSettings before joining the RTC channel, the audio quality for AI conversation may be suboptimal or incorrect.

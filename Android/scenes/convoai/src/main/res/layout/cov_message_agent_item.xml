@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:background="@color/ai_fill1"
-    android:paddingVertical="12dp">
+    android:paddingVertical="12dp"
+    tools:background="@color/ai_fill1">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -34,66 +35,70 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
-        android:textSize="16sp"
         android:maxLines="999"
-        android:textColor="@color/ai_icontext1" />
+        android:textColor="@color/ai_icontext1"
+        android:textSize="16sp" />
 
     <!-- Add image message layout below text message layout -->
     <!-- Image message item for agent (hidden by default, shown for image messages) -->
-    <FrameLayout
+    <LinearLayout
         android:id="@+id/layout_image_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        tools:visibility="visible"
         android:layout_marginStart="20dp"
-        android:visibility="gone">
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        tools:visibility="visible">
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/iv_image_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:adjustViewBounds="true"
+            android:background="@drawable/agent_bg_interrupt"
             android:minWidth="120dp"
             android:minHeight="120dp"
-            android:adjustViewBounds="true"
             android:scaleType="centerCrop"
-            android:background="@drawable/agent_bg_interrupt" />
+            app:shapeAppearance="@style/CommonCustomShape" />
 
         <!-- ProgressBar for uploading -->
         <ProgressBar
             android:id="@+id/progress_upload"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:layout_gravity="center"
-            android:visibility="gone" />
+            android:visibility="gone"
+            tools:visibility="visible" />
 
         <!-- Error icon for upload failed -->
         <ImageView
             android:id="@+id/iv_upload_error"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:layout_gravity="center"
             android:src="@drawable/scene_details_upload_error"
-            android:visibility="gone" />
-    </FrameLayout>
+            android:visibility="gone"
+            tools:visibility="visible" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/layout_message_interrupt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginTop="8dp"
+        android:background="@drawable/agent_bg_interrupt"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingVertical="3dp"
         android:paddingStart="3dp"
         android:paddingEnd="6dp"
-        android:paddingVertical="3dp"
-        android:visibility="gone"
-        android:background="@drawable/agent_bg_interrupt"
-        android:gravity="center_vertical">
+        android:visibility="gone">
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ai_icon_interrupt"/>
+            android:src="@drawable/ai_icon_interrupt" />
 
         <TextView
             android:layout_width="wrap_content"
