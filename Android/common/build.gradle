@@ -31,6 +31,8 @@ android {
         buildConfigField("String", "LLM_SYSTEM_MESSAGES", "\"${project.properties["LLM_SYSTEM_MESSAGES"].toString().replace('"', '\\"')}\"")
         buildConfigField("String", "TTS_VENDOR", "\"${project.getProperty("TTS_VENDOR")}\"")
         buildConfigField "String", "TTS_PARAMS", "\"${project.properties['TTS_PARAMS'].toString().replace('"', '\\"')}\""
+        buildConfigField("String", "AVATAR_VENDOR", "\"${project.getProperty("AVATAR_VENDOR")}\"")
+        buildConfigField "String", "AVATAR_PARAMS", "\"${project.properties['AVATAR_PARAMS'].toString().replace('"', '\\"')}\""
     }
 
     buildTypes {
@@ -90,4 +92,7 @@ dependencies {
         }
     }
     api libs.agora.rtm
+    api libs.glide
+    annotationProcessor libs.glide.compiler
+    api libs.photoview
 }

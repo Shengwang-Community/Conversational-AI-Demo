@@ -74,8 +74,10 @@ class AgentManager: AgentAPI {
                 presets.removeAll(where: { $0.presetType == "custom" })
                 completion(nil, presets)
             } catch {
-                let error = ConvoAIError.serverError(code: -1, message: "data error")
-                completion(error, nil)
+                ConvoAILogger.error("JSON decode error: \(error)")
+                ConvoAILogger.error("Raw data: \(data)")
+                let decodeError = ConvoAIError.serverError(code: -1, message: "JSON decode error: \(error.localizedDescription)")
+                completion(decodeError, nil)
             }
         } failure: { msg in
             let error = ConvoAIError.serverError(code: -1, message: msg)

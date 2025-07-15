@@ -83,6 +83,7 @@ extension ResourceManager {
             public static let agentStateListening = ResourceManager.localizedString("conversation.agent.state.listening")
             public static let agentStateSpeaking = ResourceManager.localizedString("conversation.agent.state.speaking")
             public static let agentStateMuted = ResourceManager.localizedString("conversation.agent.state.muted")
+            public static let agentTranscription = ResourceManager.localizedString("conversation.agent.transcription")
         }
         
         public enum Setting {
@@ -94,6 +95,7 @@ extension ResourceManager {
             public static let roomError = ResourceManager.localizedString("error.room.error")
             public static let joinError = ResourceManager.localizedString("error.join.error")
             public static let resouceLimit = ResourceManager.localizedString("error.join.error.resource.limit")
+            public static let avatarLimit = ResourceManager.localizedString("error.join.error.avatar.limit")
             public static let networkDisconnected = ResourceManager.localizedString("error.network.disconnect")
             public static let microphonePermissionTitle = ResourceManager.localizedString("error.microphone.permission.alert.title")
             public static let microphonePermissionDescription = ResourceManager.localizedString("error.microphone.permission.alert.description")
@@ -119,6 +121,15 @@ extension ResourceManager {
             public static let forceResponse = ResourceManager.localizedString("settings.noise.forceResponse")
             public static let agentConnected = ResourceManager.localizedString("settings.agent.connected")
             public static let agentDisconnected = ResourceManager.localizedString("settings.agent.disconnected")
+            public static let digitalHuman = ResourceManager.localizedString("settings.digital.human")
+            public static let digitalHumanClosed = ResourceManager.localizedString("settings.digital.human.closed")
+            public static let digitalHumanPresetAlertTitle = ResourceManager.localizedString("settings.digital.human.preset.alert.title")
+            public static let digitalHumanPresetAlertDescription = ResourceManager.localizedString("settings.digital.human.preset.alert.description")
+            public static let digitalHumanLanguageAlertTitle = ResourceManager.localizedString("settings.digital.human.language.alert.title")
+            public static let digitalHumanLanguageAlertDescription = ResourceManager.localizedString("settings.digital.human.language.alert.description")
+            public static let digitalHumanAlertIgnore = ResourceManager.localizedString("settings.digital.human.alert.ignore")
+            public static let digitalHumanAlertCancel = ResourceManager.localizedString("settings.digital.human.alert.cancel")
+            public static let digitalHumanAlertConfirm = ResourceManager.localizedString("settings.digital.human.alert.confirm")
         }
         
         public enum ChannelInfo {
@@ -171,7 +182,26 @@ extension ResourceManager {
             public static let title = ResourceManager.localizedString("iot.info.title")
             public static let device = ResourceManager.localizedString("iot.info.device")
         }
+        
+        public enum Photo {
+            public static let typePhoto = ResourceManager.localizedString("photo.type.photo")
+            public static let typeCamera = ResourceManager.localizedString("photo.type.camera")
+            public static let editDone = ResourceManager.localizedString("photo.edit.done")
+            public static let formatTips = ResourceManager.localizedString("photo.format.tips")
+            
+            public static let permissionCancel = ResourceManager.localizedString("photo.permission.cancel")
+            public static let permissionSettings = ResourceManager.localizedString("photo.permission.settings")
+            public static let permissionSkip = ResourceManager.localizedString("photo.permission.skip")
+            public static let permissionEnable = ResourceManager.localizedString("photo.permission.enable")
+            
+            public static let permissionPhotoTitle = ResourceManager.localizedString("photo.permission.photo.title")
+            public static let permissionPhotoMessage = ResourceManager.localizedString("photo.permission.photo.message")
+            
+            public static let permissionPhotoPreviewTitle = ResourceManager.localizedString("photo.permission.photo.preview.title")
+            public static let permissionPhotoPreviewMessage = ResourceManager.localizedString("photo.permission.photo.preview.message")
+            
+            public static let permissionCameraTitle = ResourceManager.localizedString("photo.permission.camera.title")
+            public static let permissionCameraMessage = ResourceManager.localizedString("photo.permission.camera.message")
+        }
     }
 }
-
-

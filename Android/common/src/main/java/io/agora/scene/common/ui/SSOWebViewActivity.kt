@@ -17,6 +17,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.core.view.isVisible
+import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig.toolBoxUrl
 import io.agora.scene.common.databinding.CommonActivitySsoBinding
 import io.agora.scene.common.util.CommonLogger
@@ -176,9 +177,7 @@ class SSOWebViewActivity : BaseActivity<CommonActivitySsoBinding>() {
                     // Add a delay before clearing cookies and reloading
                     mainHandler.postDelayed({
                         // Clear cookies and reload to allow re-login
-                        val cookieManager = CookieManager.getInstance()
-                        cookieManager.removeAllCookies(null)
-                        cookieManager.flush()
+                        cleanCookie()
                         mBinding?.webView?.loadUrl(ssoUrl)
                     }, 1500) // 1.5-second delay
                 }

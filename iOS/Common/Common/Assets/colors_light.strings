@@ -38,7 +38,7 @@
 "ai_brand_black8" = "#cc000000";
 "ai_erricontext6" = "#fff5655c";
 "ai_fill3" = "#ffffffff";
-"ai_fill4" = "#ffffffff";
+"ai_fill4" = "#fffdfdfd";
 "ai_icontext_inverse2" = "#ffffffff";
 "ai_fill5" = "#ffffffff";
 "ai_brand_white1" = "#26ffffff";
@@ -50,3 +50,7 @@
 "ai_brand_lightpurple" = "#4cb9cdff";
 "ai_click_app" = "#ffececf3";
 "ai_brand_white2" = "#33ffffff";
+"ai_toast" = "#d82e2e2e";
+"ai_btn2" = "#fff7f7f7";
+"ai_brand_black4" = "#66000000";
+"ai_brand_black5" = "#7f000000";

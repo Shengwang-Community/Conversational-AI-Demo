@@ -15,7 +15,7 @@
 "ai_click" = "#cc84878e";
 "ai_line2" = "#e5555b69";
 "ai_block2" = "#f9404045";
-"ai_block1" = "#28ababe8";
+"ai_block1" = "#b23e3e5a";
 "ai_block4_chat" = "#ff444449";
 "ai_icontext4" = "#4cffffff";
 "ai_red6" = "#ffe6544b";
@@ -50,3 +50,7 @@
 "ai_brand_lightpurple" = "#66b9ceff";
 "ai_click_app" = "#ff30343d";
 "ai_brand_white2" = "#33ffffff";
+"ai_toast" = "#f2ffffff";
+"ai_btn2" = "#ff555b69";
+"ai_brand_black4" = "#66000000";
+"ai_brand_black5" = "#7f000000";

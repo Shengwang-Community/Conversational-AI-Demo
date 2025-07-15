@@ -23,6 +23,7 @@
     <string name="cov_detail_update_token_error">获取 Token 失败</string>
     <string name="cov_detail_llm_error">LLM 异常</string>
     <string name="cov_detail_tts_error">TTS 异常</string>
+    <string name="cov_detail_start_agent_avatar_limit_error">所有数字人正忙，请稍后重试</string>
 
     <string name="cov_info_dialog_title">信息</string>
     <string name="cov_channel_info_title">频道信息</string>
@@ -51,6 +52,7 @@
     <string name="cov_setting_voice">语音</string>
     <string name="cov_setting_model">模型</string>
     <string name="cov_setting_language">语言</string>
+    <string name="cov_setting_avatar">数字人</string>
     <string name="cov_setting_device">设备</string>
     <string name="cov_setting_advanced_settings">高级设置</string>
     <string name="cov_setting_microphone">麦克风</string>
@@ -78,6 +80,7 @@
 
     <string name="cov_permission_required">需要权限</string>
     <string name="cov_mic_permission_required_content">语音聊天需要麦克风权限。请授予权限以继续。</string>
+    <string name="cov_camera_permission_required_content">视频流需要相机权限。请授予权限以继续。</string>
     <string name="cov_notifications_enable_tip">请打开通知权限，防止后台录音中断。</string>
     <string name="cov_setting">设置</string>
     <string name="cov_retry">重试</string>
@@ -88,4 +91,26 @@
     <string name="cov_iot_title">对话式 AI 设备</string>
     <string name="cov_iot_devices_num">%d个设备</string>
     <string name="cov_my_device">我的设备</string>
+
+    <!-- avatar -->
+    <string name="cov_preset_change_dialog_title">更换Preset需重新设置数字人</string>
+    <string name="cov_preset_change_dialog_content">Preset 和数字人的性别相关，更换 Preset 后请重新设置数字人</string>
+    <string name="cov_language_change_dialog_title">更换Language需重新设置数字人</string>
+    <string name="cov_language_change_dialog_content">Language 和数字人的性别相关，更换 Language 后请重新设置数字人</string>
+    <string name="cov_preset_change_dialog_confirm">确定变更</string>
+    <string name="cov_captions">字幕</string>
+
+    <!-- photo -->
+    <string name="cov_photo_format_tips">仅支持 JPG、PNG、WEBP 和 JPEG 格式的图片。</string>
+    <string name="cov_photo_type_photo">照片</string>
+    <string name="cov_photo_type_camera">拍照</string>
+    <string name="cov_photo_edit_done">完成</string>
+    <string name="cov_photo_permission_storage_gallery">访问相册权限用于选择照片。请在设置中开启权限。</string>
+    <string name="cov_photo_permission_camera">相机权限用于拍摄照片。请在设置中开启权限。</string>
+    <string name="cov_photo_permission_storage_camera">访问相册权限可以在拍照页面显示最新照片预览。您可以选择跳过此权限。</string>
+    <string name="cov_photo_permission_skip">跳过</string>
+    <string name="cov_photo_permission_enable">开启权限</string>
+    <string name="cov_photo_permission_go_settings">去设置</string>
+    <string name="cov_photo_permission_cancel">取消</string>
+
 </resources>

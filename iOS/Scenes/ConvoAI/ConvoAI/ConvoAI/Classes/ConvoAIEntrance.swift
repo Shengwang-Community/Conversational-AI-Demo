@@ -52,6 +52,10 @@ extension AppContext {
         return Int(arc4random_uniform(90000000))
     }
     
+    static var avatarUid: Int {
+        return Int(arc4random_uniform(90000000))
+    }
+    
     static var uid: Int {
         return Int(arc4random_uniform(90000000))
     }
