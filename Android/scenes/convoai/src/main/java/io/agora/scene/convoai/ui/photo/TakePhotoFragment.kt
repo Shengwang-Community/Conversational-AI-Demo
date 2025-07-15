@@ -161,6 +161,9 @@ class TakePhotoFragment : Fragment() {
         cameraProviderFuture.addListener({
             cameraProvider = cameraProviderFuture.get()
             
+            // Set PreviewView scale type to match iOS resizeAspectFill behavior
+            binding.previewView.scaleType = androidx.camera.view.PreviewView.ScaleType.FILL_CENTER
+            
             // Set preview parameters with smaller resolution
             preview = Preview.Builder()
                 .setTargetRotation(binding.previewView.display.rotation)
@@ -227,8 +230,11 @@ class TakePhotoFragment : Fragment() {
                                 bitmap
                             }
                             
-                            // Use PhotoProcessor to process the image
-                            val processedBitmap = PhotoProcessor.processPhoto(flippedBitmap)
+                            // Crop image to match preview aspect ratio (similar to iOS implementation)
+                            val croppedBitmap = cropImageToPreviewAspectRatio(flippedBitmap)
+                            
+                            // Use PhotoProcessor to process the cropped image
+                            val processedBitmap = PhotoProcessor.processPhoto(croppedBitmap)
                             
                             withContext(Dispatchers.Main) {
                                 binding.shutterButton.isEnabled = true
@@ -417,6 +423,76 @@ class TakePhotoFragment : Fragment() {
             } catch (e: Exception) {
                 Log.e(TAG, "Error in gallery preview fallback", e)
             }
+        }
+    }
+    
+    /**
+     * Crop image to match preview aspect ratio (similar to iOS implementation)
+     * This ensures captured result matches what user sees in preview
+     */
+    private fun cropImageToPreviewAspectRatio(bitmap: Bitmap): Bitmap {
+        // Get preview view actual display dimensions
+        val previewView = binding.previewView
+        val previewWidth = previewView.width.toFloat()
+        val previewHeight = previewView.height.toFloat()
+        
+        if (previewWidth <= 0 || previewHeight <= 0) {
+            Log.w(TAG, "Invalid preview dimensions, returning original image")
+            return bitmap
+        }
+        
+        // Calculate preview aspect ratio
+        val previewAspectRatio = previewWidth / previewHeight
+        
+        // Get image dimensions
+        val imageWidth = bitmap.width.toFloat()
+        val imageHeight = bitmap.height.toFloat()
+        val imageAspectRatio = imageWidth / imageHeight
+        
+        Log.d(TAG, "Preview ratio: $previewAspectRatio, Image ratio: $imageAspectRatio")
+        Log.d(TAG, "Preview size: ${previewWidth}x${previewHeight}, Image size: ${imageWidth}x${imageHeight}")
+        
+        // Calculate crop area based on resizeAspectFill behavior
+        // This mimics the PreviewView's FILL_CENTER scale type
+        val cropRect = if (imageAspectRatio > previewAspectRatio) {
+            // Image is wider than preview ratio
+            // Keep full height, crop width from center
+            val visibleWidth = imageHeight * previewAspectRatio
+            val cropX = ((imageWidth - visibleWidth) / 2).toInt()
+            android.graphics.Rect(cropX, 0, (cropX + visibleWidth).toInt(), imageHeight.toInt())
+        } else {
+            // Image is taller than or equal to preview ratio  
+            // Keep full width, crop height from center
+            val visibleHeight = imageWidth / previewAspectRatio
+            val cropY = ((imageHeight - visibleHeight) / 2).toInt()
+            android.graphics.Rect(0, cropY, imageWidth.toInt(), (cropY + visibleHeight).toInt())
+        }
+        
+        Log.d(TAG, "Crop rect: ${cropRect.left}, ${cropRect.top}, ${cropRect.right}, ${cropRect.bottom}")
+        
+        // Validate crop rect
+        if (cropRect.left < 0 || cropRect.top < 0 || 
+            cropRect.right > imageWidth || cropRect.bottom > imageHeight ||
+            cropRect.width() <= 0 || cropRect.height() <= 0) {
+            Log.w(TAG, "Invalid crop rect, returning original image")
+            return bitmap
+        }
+        
+        // Perform the actual cropping
+        return try {
+            val croppedBitmap = Bitmap.createBitmap(
+                bitmap, 
+                cropRect.left, 
+                cropRect.top, 
+                cropRect.width(), 
+                cropRect.height()
+            )
+            
+            Log.d(TAG, "Successfully cropped image from ${imageWidth}x${imageHeight} to ${croppedBitmap.width}x${croppedBitmap.height}")
+            croppedBitmap
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to crop image", e)
+            bitmap
         }
     }
 } 

@@ -49,6 +49,9 @@ import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.convoaiApi.AgentState
+import io.agora.scene.convoai.convoaiApi.ImageInfo
+import io.agora.scene.convoai.convoaiApi.ModuleType
+import io.agora.scene.convoai.convoaiApi.PictureError
 import io.agora.scene.convoai.databinding.CovActivityLivingBinding
 import io.agora.scene.convoai.iot.manager.CovIotPresetManager
 import io.agora.scene.convoai.iot.ui.CovIotDeviceListActivity
@@ -58,9 +61,13 @@ import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfRenderConfig
 import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfSubRenderController
 import io.agora.scene.convoai.ui.dialog.CovAppInfoDialog
 import io.agora.scene.convoai.ui.dialog.CovAgentTabDialog
+import io.agora.scene.convoai.ui.dialog.CovImagePreviewDialog
 import io.agora.scene.convoai.ui.photo.PhotoNavigationActivity
+import io.agora.scene.convoai.ui.widget.CovMessageListView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
+import java.util.UUID
 
 class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
@@ -184,6 +191,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 )
             }
             clBottomLogged.btnCamera.setOnClickListener {
+                if (!viewModel.isVisionSupported.value){
+                    CovLogger.d(TAG, "click add pic: This preset does not support vision-related features.")
+                    ToastUtil.show(R.string.cov_preset_not_support_vision, Toast.LENGTH_LONG)
+                    return@setOnClickListener
+                }
+
                 val isPublishVideo = viewModel.isPublishVideo.value
                 checkCameraPermission(
                     granted = {
@@ -215,9 +228,16 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 DebugConfigSettings.checkClickDebug()
             }
             clTop.setOnAddPicClickListener {
-                ToastUtil.show("Click add pic")
+                if (!viewModel.isVisionSupported.value){
+                    CovLogger.d(TAG, "click add pic: This preset does not support vision-related features.")
+                    ToastUtil.show(R.string.cov_preset_not_support_vision, Toast.LENGTH_LONG)
+                    return@setOnAddPicClickListener
+                }
                 PhotoNavigationActivity.start(this@CovLivingActivity) {
-                    CovLogger.d(TAG, "$it")
+                    CovLogger.d(TAG, "select image callback:$it")
+                    it?.file?.let { file ->
+                        startUploadImage(file)
+                    }
                 }
             }
             clTop.setOnCCClickListener {
@@ -258,6 +278,18 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 // Hide transcription when small window is clicked while transcription is visible
                 if (viewModel.isShowMessageList.value) {
                     viewModel.toggleMessageList()
+                }
+            }
+
+            messageListViewV2.onImagePreviewClickListener = { message ->
+                if (message.uploadStatus == CovMessageListView.UploadStatus.SUCCESS) {
+                    showPreviewDialog(message.content)
+                }
+            }
+
+            messageListViewV2.onImageErrorClickListener = { message ->
+                message.localId?.let {
+                    replayUploadImage(it, File(message.content))
                 }
             }
         }
@@ -468,10 +500,49 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
         lifecycleScope.launch {  // Observe transcription updates
             viewModel.transcriptionUpdate.collect { transcription ->
+                if (isSelfSubRender) return@collect
                 transcription?.let {
-                    if (!isSelfSubRender) {
-                        mBinding?.messageListViewV2?.onTranscriptionUpdated(it)
+                    mBinding?.messageListViewV2?.onTranscriptionUpdated(it)
+                }
+            }
+        }
+        lifecycleScope.launch {  // Observe message receipt updates
+            viewModel.messageReceiptUpdate.collect { messageInfo ->
+                if (isSelfSubRender) return@collect
+                messageInfo?.media?.let { media ->
+                    when (media) {
+                        is ImageInfo -> {
+                            val serverMsg = CovMessageListView.Message.createSuccess(
+                                uuid = media.uuid,
+                                turnId = messageInfo.turnId
+                            )
+                            mBinding?.messageListViewV2?.replaceLocalWithServerImageMessage(serverMsg)
+                        }
                     }
+                }
+            }
+        }
+        lifecycleScope.launch {  // Observe image updates
+            viewModel.moduleError.collect { moduleError ->
+                if (isSelfSubRender) return@collect
+                moduleError?.resourceError?.let { resourceError ->
+                    when (resourceError) {
+                        is  PictureError-> {
+                            val serverMsg = CovMessageListView.Message.createFail(
+                                uuid = resourceError.uuid,
+                                turnId = moduleError.turnId ?: -1L
+                            )
+                            mBinding?.messageListViewV2?.replaceLocalWithServerImageMessage(serverMsg)
+                        }
+                    }
+                }
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.isVisionSupported.collect { supported ->
+                mBinding?.apply {
+                    clTop.btnAddPic.alpha = if (supported) 1.0f else 0.7f
+                    clBottomLogged.btnCamera.alpha = if (supported) 1.0f else 0.7f
                 }
             }
         }
@@ -760,6 +831,64 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
     }
 
+    private fun startUploadImage(file: File) {
+        val requestId = UUID.randomUUID().toString().replace("-", "").substring(0, 16)
+        // 1. Add a local image message to the UI to indicate the image is being uploaded
+        mBinding?.messageListViewV2?.addLocalImageMessage(requestId, file.absolutePath)
+
+        mLoginViewModel.uploadImage(
+            token = SSOUserManager.getToken(),
+            requestId = requestId,
+            channelName = CovAgentManager.channelName,
+            imageFile = file,
+            onResult = { result ->
+                result.onSuccess { uploadImage ->
+                    // 2. On successful upload, send the image message (with CDN URL) via IConversationalAIAPI.
+                    //    The UI will be updated when the server confirms the message delivery.
+                    viewModel.sendImageMessage(requestId, uploadImage.img_url, completion = { error ->
+                        if (error != null) {
+                            val message = CovMessageListView.Message.createFail(uuid = requestId)
+                            mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
+                        }
+                    })
+                }.onFailure {
+                    // 3. On upload failure, update the local image message status to FAILED for retry UI
+                    val message = CovMessageListView.Message.createFail(uuid = requestId)
+                    mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
+                }
+            }
+        )
+    }
+
+    private fun replayUploadImage(requestId: String, file: File) {
+        val message = CovMessageListView.Message.createLoading(uuid = requestId)
+        // 1. Add a local image message to the UI to indicate the image is being uploaded
+        mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
+
+        mLoginViewModel.uploadImage(
+            token = SSOUserManager.getToken(),
+            requestId = requestId,
+            channelName = CovAgentManager.channelName,
+            imageFile = file,
+            onResult = { result ->
+                result.onSuccess { uploadImage ->
+                    // 2. On successful upload, send the image message (with CDN URL) via IConversationalAIAPI.
+                    //    The UI will be updated when the server confirms the message delivery.
+                    viewModel.sendImageMessage(requestId, uploadImage.img_url, completion = { error ->
+                        if (error != null) {
+                            val message = CovMessageListView.Message.createFail(uuid = requestId)
+                            mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
+                        }
+                    })
+                }.onFailure {
+                    // 3. On upload failure, update the local image message status to FAILED for retry UI
+                    val message = CovMessageListView.Message.createFail(uuid = requestId)
+                    mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
+                }
+            }
+        )
+    }
+
     private fun showInfoDialog() {
         if (isFinishing || isDestroyed) return
         if (appInfoDialog?.dialog?.isShowing == true) return
@@ -997,6 +1126,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             .setCancelable(false)
             .build()
             .show(supportFragmentManager, "permission_dialog")
+    }
+
+    private fun showPreviewDialog(imagePath: String) {
+        if (isFinishing || isDestroyed) return
+        CovImagePreviewDialog.newInstance(imagePath)
+            .show(supportFragmentManager, "preview_image__dialog")
     }
 
     private fun startRecordingService() {

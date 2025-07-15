@@ -114,18 +114,17 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
 
         private fun dealMessageWithMap(publisherId: String, msg: Map<String, Any>) {
             val transcriptionObj = msg["object"] as? String ?: return
-            val moduleType = MessageType.fromValue(transcriptionObj)
-            when (moduleType) {
+            val objectType = MessageType.fromValue(transcriptionObj)
+            when (objectType) {
                 /**
                  * {object=message.metrics, module=tts, metric_name=ttfb, turn_id=4, latency_ms=182, data_type=message, message_id=2d7de2a2, send_ts=1749630519485}
                  */
                 MessageType.METRICS -> {
-                    val module = msg["module"] as? String ?: ""
-                    val type = ModuleType.fromValue(module)
+                    val moduleType = ModuleType.fromValue(msg["module"] as? String ?: "")
                     val metricName = msg["metric_name"] as? String ?: "unknown"
                     val value = (msg["latency_ms"] as? Number)?.toDouble() ?: 0.0
                     val sendTs = (msg["send_ts"] as? Number)?.toLong() ?: 0L
-                    val metrics = Metric(type, metricName, value, sendTs)
+                    val metrics = Metric(moduleType, metricName, value, sendTs)
 
                     val agentUserId = publisherId
                     callMessagePrint(TAG, "<<< [onAgentMetrics] $agentUserId $metrics")
@@ -134,20 +133,91 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                     }
                 }
                 /**
-                 * {'object': 'message.error', 'module': 'tts', 'message': 'invalid params, this model does not support emotion setting', 'turn_id': 1, 'code': 2013, 'data_type': 'message', 'message_id': 'a55a73ae', 'send_ts': 1749712640599}
+                 * {
+                 *   "object": "message.error",
+                 *   "module": "context",
+                 *   "message": "{\"resource_type\":\"picture\",\"uuid\":\"img_123\",\"success\":false,\"error\":{\"code\":101,\"message\":\"Image size exceeds limit\"}}",
+                 *   "turn_id": 0,
+                 *   "code": 101
+                 * }
                  */
                 MessageType.ERROR -> {
-                    val module = msg["module"] as? String ?: ""
-                    val type = ModuleType.fromValue(module)
-                    val message = msg["message"] as? String ?: "Unknown error"
+                    val moduleType = ModuleType.fromValue(msg["module"] as? String ?: "")
                     val code = (msg["code"] as? Number)?.toInt() ?: -1
+                    val message = msg["message"] as? String ?: "Unknown error"
                     val sendTs = (msg["send_ts"] as? Number)?.toLong() ?: 0L
-                    val aiError = ModuleError(type, code, message, sendTs)
+                    var turnId = (msg["turn_id"] as? Number)?.toLong()
+
+                    val aiError = ModuleError(moduleType, code, message, sendTs, turnId)
+
+                    val resourceType = ResourceType.fromValue(msg["resource_type"] as? String ?: "")
+                    if (resourceType == ResourceType.PICTURE) {
+                        val imageError = try {
+                            val json = JSONObject(message)
+                            val uuid = json.optString("uuid")
+                            val success = json.optBoolean("success", true)
+                            val errorObj = json.optJSONObject("error")
+                            val errorCode = errorObj?.optInt("code")
+                            val errorMessage = errorObj?.optString("message")
+                            PictureError(
+                                uuid = uuid,
+                                success = success,
+                                errorCode = errorCode,
+                                errorMessage = errorMessage
+                            )
+                        } catch (e: Exception) {
+                            callMessagePrint(TAG, "$objectType [!] resourceType:$resourceType ${e.message}")
+                            null
+                        }
+                        aiError.resourceError = imageError
+                    }
 
                     val agentUserId = publisherId
                     callMessagePrint(TAG, "<<< [onAgentError] $agentUserId $aiError")
                     conversationalAIHandlerHelper.notifyEventHandlers {
                         it.onAgentError(agentUserId, aiError)
+                    }
+                }
+
+                /**
+                 * {
+                 *   "object": "message.info",
+                 *   "module": "context",
+                 *   "message": "{\"resource_type\":\"picture\",\"uuid\":\"img_123\",\"width\":1920,\"height\":1080,\"size_bytes\":245760,\"source_type\":\"url\",\"source_value\":\"https://example.com/image.jpg\",\"upload_time\":1640995200000,\"total_user_images\":3}"
+                 *   "turn_id": 0
+                 * }
+                 */
+                MessageType.MESSAGE_RECEIPT -> {
+                    val moduleType = ModuleType.fromValue(msg["module"] as? String ?: "")
+                    val turnId = (msg["turn_id"] as? Number)?.toLong() ?: -1L
+                    val message = msg["message"] as? String ?: "Unknown error"
+                    val receipt = MessageReceipt(moduleType, turnId)
+
+                    val resourceType = ResourceType.fromValue(msg["resource_type"] as? String ?: "")
+                    if (resourceType == ResourceType.PICTURE) {
+                        val imageInfo = try {
+                            val json = JSONObject(message)
+                            ImageInfo(
+                                uuid = json.optString("uuid"),
+                                width = json.optInt("width"),
+                                height = json.optInt("height"),
+                                sizeBytes = json.optLong("size_bytes"),
+                                sourceType = json.optString("source_type"),
+                                sourceValue = json.optString("source_value"),
+                                uploadTime = json.optLong("upload_time"),
+                                totalUserImages = json.optInt("total_user_images"),
+                            )
+                        } catch (e: Exception) {
+                            callMessagePrint(TAG, "$objectType [!] resourceType:$resourceType ${e.message}")
+                            null
+                        }
+                        receipt.media = imageInfo
+                    }
+
+                    val agentUserId = publisherId
+                    callMessagePrint(TAG, "<<< [onMessageReceiptUpdated] $agentUserId $receipt")
+                    conversationalAIHandlerHelper.notifyEventHandlers {
+                        it.onMessageReceiptUpdated(agentUserId, receipt)
                     }
                 }
 
@@ -318,6 +388,56 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
             val options = PublishOptions().apply {
                 setChannelType(RtmConstants.RtmChannelType.USER)   // Set to user channel type for point-to-point messages
                 customType = MessageType.USER.value     // Custom message type
+            }
+
+            callMessagePrint(TAG, "[traceId:$traceId] rtm publish $jsonMessage")
+            // Send RTM point-to-point message
+            config.rtmClient.publish(
+                agentUserId, jsonMessage, options,
+                object : ResultCallback<Void> {
+                    override fun onSuccess(responseInfo: Void?) {
+                        callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onSuccess")
+                        runOnMainThread {
+                            completion.invoke(null)
+                        }
+                    }
+
+                    override fun onFailure(errorInfo: ErrorInfo) {
+                        callMessagePrint(TAG, "<<< [traceId:$traceId] rtm publish onFailure ${errorInfo?.str()}")
+                        runOnMainThread {
+                            val errorCode = RtmConstants.RtmErrorCode.getValue(errorInfo.errorCode)
+                            completion.invoke(ConversationalAIAPIError.RtmError(errorCode, errorInfo.errorReason))
+                        }
+                    }
+                })
+        } catch (e: Exception) {
+            callMessagePrint(TAG, "[traceId:$traceId] [!] ${e.message}")
+            runOnMainThread {
+                completion.invoke(ConversationalAIAPIError.UnknownError("Message serialization failed: ${e.message}"))
+            }
+        }
+    }
+
+    override fun sendImage(
+        agentUserId: String,
+        uuid: String,
+        imageUrl: String,
+        completion: (ConversationalAIAPIError?) -> Unit
+    ) {
+        val traceId = uuid
+        callMessagePrint(TAG, ">>> [traceId:$traceId] [sendImage] $agentUserId $uuid $imageUrl")
+        val receipt = mutableMapOf<String, Any>().apply {
+            put("uuid", uuid)
+            put("image_url", imageUrl)
+        }
+        try {
+            // Convert the actual upload payload to JSON string for sending
+            val jsonMessage = JSONObject(receipt as Map<*, *>?).toString()
+
+            // Set publish options
+            val options = PublishOptions().apply {
+                setChannelType(RtmConstants.RtmChannelType.USER)   // Set to user channel type for point-to-point messages
+                customType = "image.upload"     // Custom message type
             }
 
             callMessagePrint(TAG, "[traceId:$traceId] rtm publish $jsonMessage")

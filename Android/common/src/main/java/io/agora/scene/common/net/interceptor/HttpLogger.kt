@@ -210,11 +210,7 @@ class HttpLogger : Interceptor {
     private fun shouldLogResultOnly(request: Request): Boolean {
         val path = request.url.encodedPath.lowercase()
         if (SENSITIVE_PATH_KEYWORDS.any { keyword -> path.contains(keyword) }) {
-            request.body?.let { body ->
-                if (body.contentLength() > 1024 * 1024) {
-                    return true
-                }
-            }
+            return true
         }
         
         request.body?.contentType()?.let { contentType ->

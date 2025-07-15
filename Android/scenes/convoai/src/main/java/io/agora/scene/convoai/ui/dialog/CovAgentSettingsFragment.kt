@@ -280,6 +280,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
 
     private fun updatePreset(preset: CovAgentPreset) {
         CovAgentManager.setPreset(preset)
+        livingViewModel.setAgentPreset(CovAgentManager.getPreset())
         CovAgentManager.avatar = null
         livingViewModel.setAvatar(null)
         updateBaseSettings()
