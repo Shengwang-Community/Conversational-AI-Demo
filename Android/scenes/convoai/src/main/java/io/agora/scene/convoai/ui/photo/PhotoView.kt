@@ -89,7 +89,7 @@ class PhotoView @JvmOverloads constructor(
         
         val scaleX = viewWidth / rotatedDimensions.first
         val scaleY = viewHeight / rotatedDimensions.second
-        baseScale = min(scaleX, scaleY) * 0.9f
+        baseScale = min(scaleX, scaleY)
         
         minScale = baseScale * 0.5f
         maxScale = baseScale * 5f
