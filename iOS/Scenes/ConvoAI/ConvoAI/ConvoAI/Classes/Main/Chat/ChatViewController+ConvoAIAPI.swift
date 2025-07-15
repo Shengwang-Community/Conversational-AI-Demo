@@ -6,11 +6,68 @@
 //
 
 import Foundation
+import Common
+
+// MARK: - Image Upload Error Models
+struct ImageUploadError: Codable {
+    let code: Int
+    let message: String
+}
+
+struct ImageUploadErrorResponse: Codable {
+    let uuid: String
+    let success: Bool
+    let error: ImageUploadError?
+}
 
 // MARK: - ConversationalAIAPIEventHandler
-extension ChatViewController: ConversationalAIAPIEventHandler {
-    public func onMessageInfoUpdated(agentUserId: String, imageInfo: ImageMessageInfo) {
+extension ChatViewController {
+    internal func sendImage(image: UIImage, isResend: Bool = false, uuid: String) {
+        // Convert UIImage to Data
+        addLog(">>>>[sendImage]")
+        guard let imageData = image.jpegData(compressionQuality: 1) else {
+            addLog(">>>>[jpegData] Failed to convert image to data")
+            return
+        }
+                
+        // Add image message to UI first
+        if !isResend {
+            self.messageView.viewModel.addImageMessage(uuid: uuid, image: image)
+        }
         
+        // Upload image
+        NetworkManager.shared.uploadImage(
+            requestId: uuid,
+            channelName: channelName,
+            imageData: imageData
+        ) { [weak self] imageUrl in
+            guard let self = self else { return }
+            // Upload success
+            self.addLog("<<<<<[uploadImage] Image upload successful, url: \(imageUrl ?? "nil")， uuid: \(uuid)")
+            
+            self.convoAIAPI.sendImage(agentUserId: "\(agentUid)", imageUrl: imageUrl ?? "", uuid: uuid, completion: {[weak self] error in
+                if let error = error {
+                    self?.addLog("<<<<<[sendImage] send image failed, error: \(error.message)")
+                } else {
+                    self?.addLog("<<<<<[sendImage] send image success")
+                }
+            })
+        } failure: { [weak self] error in
+            // Upload failed
+            self?.addLog("<<<<<[uploadImage] Image upload failed: \(error)")
+            // Update UI to show error state
+            DispatchQueue.main.async {
+                self?.messageView.viewModel.updateImageMessage(uuid: uuid, state: .failed)
+            }
+        }
+    }
+}
+
+extension ChatViewController: ConversationalAIAPIEventHandler {
+    public func onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt) {
+        let uuid = messageReceipt.message.uuid
+        
+        self.messageView.viewModel.updateImageMessage(uuid: uuid, state: .success)
     }
     
     public func onAgentStateChanged(agentUserId: String, event: StateChangeEvent) {
@@ -26,6 +83,27 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     }
     
     public func onAgentError(agentUserId: String, error: ModuleError) {
+        if error.type == .context {
+            // Parse image upload error from error.message
+            if let messageData = error.message.data(using: .utf8) {
+                do {
+                    let errorResponse = try JSONDecoder().decode(ImageUploadErrorResponse.self, from: messageData)
+                    if !errorResponse.success {
+                        let errorMessage = errorResponse.error?.message ?? "Unknown error"
+                        let errorCode = errorResponse.error?.code ?? 0
+                        
+                        addLog("<<< [ImageUploadError] Image upload failed: \(errorMessage) (code: \(errorCode))")
+                        
+                        // Update UI to show error state
+                        DispatchQueue.main.async { [weak self] in
+                            self?.messageView.viewModel.updateImageMessage(uuid: errorResponse.uuid, state: .failed)
+                        }
+                    }
+                } catch {
+                    addLog("<<< [onAgentError] Failed to parse error message JSON: \(error)")
+                }
+            }
+        }
         addLog("<<< [onAgentError] error: \(error)")
     }
     

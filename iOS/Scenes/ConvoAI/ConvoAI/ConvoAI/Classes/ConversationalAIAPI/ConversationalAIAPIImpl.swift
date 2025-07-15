@@ -92,7 +92,57 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
             completion(covoAiError)
         }
     }
-    
+
+    @objc public func sendImage(agentUserId: String, imageUrl: String, uuid: String, completion: @escaping (ConversationalAIAPIError?) -> Void) {
+        let traceId = uuid
+        let userId = agentUserId
+        callMessagePrint(msg: ">>> [traceId:\(traceId)] [sendImage] \(userId), \(imageUrl)")
+        
+        guard let rtmEngine = self.config.rtmEngine else {
+            callMessagePrint(msg: "[traceId:\(traceId)] !!! rtmEngine is nil")
+            return
+        }
+        
+        let publishOptions = AgoraRtmPublishOptions()
+        publishOptions.channelType = .user
+        publishOptions.customType = "image.upload"
+
+        let message: [String : Any] = [
+            "uuid": uuid,
+            "image_url": imageUrl,
+        ]
+
+        do {
+            let data = try JSONSerialization.data(withJSONObject: message)
+            guard let stringData = String(data: data, encoding: .utf8) else {
+                let covoAiError = ConversationalAIAPIError(type: .unknown, code: -1, message: "String conversion failed")
+                callMessagePrint(msg: "[traceId:\(traceId)] \(covoAiError.message)")
+                completion(covoAiError)
+                return
+            }
+
+            callMessagePrint(msg: "[traceId:\(traceId)] rtm publish \(stringData)")
+            rtmEngine.publish(channelName: userId, message: stringData, option: publishOptions, completion: { [weak self] res, error in
+                if let errorInfo = error {
+                    let covoAiError = ConversationalAIAPIError(type: .rtmError, code: errorInfo.code, message: errorInfo.reason)
+                    self?.callMessagePrint(msg: "[traceId:\(traceId)] rtm publish error: \(covoAiError.message)")
+                    completion(covoAiError)
+                } else if let _ = res {
+                    self?.callMessagePrint(msg: "[traceId:\(traceId)] rtm publish success")
+                    completion(nil)
+                } else {
+                    let covoAiError = ConversationalAIAPIError(type: .rtmError, code: -1, message: "unknow error")
+                    self?.callMessagePrint(msg: "[traceId:\(traceId)] rtm publish error: \(covoAiError.message)")
+                    completion(covoAiError)
+                }
+            })
+        } catch {
+            let covoAiError = ConversationalAIAPIError(type: .unknown, code: -1, message: "json serialization error")
+            callMessagePrint(msg: "[traceId:\(traceId)] JSON Serialization Error: \(covoAiError.message)")
+            completion(covoAiError)
+        }
+    }
+
     @objc public func interrupt(agentUserId: String, completion: @escaping (ConversationalAIAPIError?) -> Void) {
         guard let rtmEngine = self.config.rtmEngine else {
             return
@@ -250,12 +300,12 @@ extension ConversationalAIAPIImpl {
         }
     }
 
-    private func notifyDelegatesImageInfo(agentUserId: String, imageInfo: ImageMessageInfo) {
-        callMessagePrint(msg: "<<< [onMessageInfoUpdated], agentUserId: \(agentUserId), imageInfo: \(imageInfo)")
+    private func notifyDelegatesMessageReceipt(agentUserId: String, messageReceipt: MessageReceipt) {
+        callMessagePrint(msg: "<<< [onMessageReceiptUpdated], agentUserId: \(agentUserId), messageReceipt: \(messageReceipt)")
 
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onMessageInfoUpdated(agentUserId: agentUserId, imageInfo: imageInfo)
+                delegate.onMessageReceiptUpdated(agentUserId: agentUserId, messageReceipt: messageReceipt)
             }
         }
     }
@@ -279,11 +329,7 @@ extension ConversationalAIAPIImpl {
     }
     
     private func notifyDelegatesDebugLog(_ log: String) {
-        DispatchQueue.main.async {
-            for delegate in self.delegates.allObjects {
-//                delegate.onDebugLog(log)
-            }
-        }
+        callMessagePrint(msg: log)
     }
     
     private func setAudioConfigParameters(routing: AgoraAudioOutputRouting) {
@@ -347,16 +393,20 @@ extension ConversationalAIAPIImpl {
     
     private func handleImageInfoMessage(uid: String, msg: [String: Any]) {
         guard let messageString = msg["message"] as? String,
-              let messageData = messageString.data(using: .utf8) else {
+              let messageData = messageString.data(using: .utf8),
+              let module = msg["module"] as? String,
+              let turnId = msg["turn_id"] as? Int else {
             ConvoAILogger.error("Failed to parse message string from image info message")
             return
         }
         
         do {
-            let imageInfo = try JSONDecoder().decode(ImageMessageInfo.self, from: messageData)
-            notifyDelegatesImageInfo(agentUserId: uid, imageInfo: imageInfo)
+            let imageInfo = try JSONDecoder().decode(ImageInfo.self, from: messageData)
+            let moduleType = ModuleType.fromValue(module)
+            let messageReceipt = MessageReceipt(type: moduleType, message: imageInfo, turnId: turnId)
+            notifyDelegatesMessageReceipt(agentUserId: uid, messageReceipt: messageReceipt)
         } catch {
-            notifyDelegatesDebugLog("Failed to decode ImageMessageInfo: \(error)")
+            notifyDelegatesDebugLog("Failed to decode ImageInfo: \(error)")
         }
     }
     
@@ -377,7 +427,7 @@ extension ConversationalAIAPIImpl {
     }
     
     private func handleErrorMessage(uid: String, msg: [String: Any]) {
-        let errorTypeStr = msg["error_type"] as? String ?? ""
+        let errorTypeStr = msg["module"] as? String ?? ""
         let venderType = ModuleType.fromValue(errorTypeStr)
         
         if venderType == .unknown && !errorTypeStr.isEmpty {
@@ -397,7 +447,6 @@ extension ConversationalAIAPIImpl {
         if config.enableLog {
             writeLogToRTCSDK(log: log)
         }
-        notifyDelegatesDebugLog(log)
     }
     
     func writeLogToRTCSDK(log: String) {

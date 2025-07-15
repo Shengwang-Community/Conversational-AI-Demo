@@ -173,15 +173,17 @@ import AgoraRtmKit
 
 /// Performance metric module type enumeration
 /// Represents different types of AI modules for performance monitoring
-@objc public enum ModuleType: Int {
+@objc public enum ModuleType: Int, Codable {
     /// Large Language Model inference
     case llm = 0
     /// Multimodal Large Language Model inference
     case mllm = 1
     /// Text-to-speech synthesis
     case tts = 2
+    /// Context module
+    case context = 3
     /// Unknown module type
-    case unknown = 3
+    case unknown = 4
     
     /// Create ModuleType from string value
     /// - Parameter value: String representation of module type
@@ -194,6 +196,8 @@ import AgoraRtmKit
             return .mllm
         case "tts":
             return .tts
+        case "context":
+            return .context
         default:
             return .unknown
         }
@@ -209,6 +213,8 @@ import AgoraRtmKit
             return "mllm"
         case .tts:
             return "tts"
+        case .context:
+            return "context"
         default:
             return "unknown"
         }
@@ -423,10 +429,32 @@ public enum MessageType: String, CaseIterable {
     }
 }
 
+@objc public class MessageReceipt: NSObject, Codable {
+    @objc public let type: ModuleType 
+    @objc public let message: ImageInfo
+    @objc public let turnId: Int
+    @objc init(type: ModuleType, message: ImageInfo, turnId: Int) {
+        self.type = type
+        self.message = message
+        self.turnId = turnId
+        super.init()
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case type = "module"
+        case message
+        case turnId = "turn_id"
+    }
+    
+    public override var description: String {
+        return "MessageReceipt(type: \(type), message: \(message))"
+    }
+}
+
 /// Image message information model
 /// Contains metadata about images used in conversation messages
 /// Used for tracking image properties, source information, and user statistics
-@objc public class ImageMessageInfo: NSObject, Codable {
+@objc public class ImageInfo: NSObject, Codable {
     /// Unique identifier for the image
     @objc public let uuid: String
     /// Image width in pixels
@@ -579,8 +607,8 @@ public enum MessageType: String, CaseIterable {
     ///
     /// - Parameters:
     ///   - agentUserId: Agent RTM user ID
-    ///   - imageInfo: Image message information containing metadata and properties
-    @objc func onMessageInfoUpdated(agentUserId: String, imageInfo: ImageMessageInfo)
+    ///   - messageReceipt: Message receipt containing type, module, and image information
+    @objc func onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt)
 }
 
 /// ConversationalAI API control protocol
@@ -599,6 +627,18 @@ public enum MessageType: String, CaseIterable {
     ///                 Returns nil on success, ConversationalAIAPIError on failure
     @objc func chat(agentUserId: String, message: ChatMessage, completion: @escaping (ConversationalAIAPIError?) -> Void)
      
+    /// @technical preview
+    /// Send an image to the AI Agent for processing
+    /// This method sends an image to the Agent for processing.
+    ///
+    /// - Parameters:
+    ///   - agentUserId: Agent RTM user ID, must be globally unique
+    ///   - imageUrl: Image URL to send
+    ///   - uuid: Unique identifier for the image
+    ///   - completion: Callback function called when the operation completes.
+    ///                 Returns nil on success, ConversationalAIAPIError on failure
+    @objc func sendImage(agentUserId: String, imageUrl: String, uuid: String, completion: @escaping (ConversationalAIAPIError?) -> Void)
+    
     /// Interrupt the AI Agent's current speech or processing
     /// Use this method to interrupt the currently speaking or processing Agent.
     ///
@@ -608,6 +648,8 @@ public enum MessageType: String, CaseIterable {
     /// - Note: If error has a value, it indicates message sending failed.
     ///   If error is nil, it indicates message sending succeeded, but doesn't guarantee Agent interruption success
     @objc func interrupt(agentUserId: String, completion: @escaping (ConversationalAIAPIError?) -> Void)
+    
+    
      
     /// Set audio best practice parameters for optimal performance
     /// Configure audio parameters required for optimal performance in AI conversations
