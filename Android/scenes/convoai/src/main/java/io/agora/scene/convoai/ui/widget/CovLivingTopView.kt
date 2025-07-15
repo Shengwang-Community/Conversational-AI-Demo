@@ -248,7 +248,7 @@ class CovLivingTopView @JvmOverloads constructor(
             if (connectionState != AgentConnectionState.IDLE) {
                 binding.viewFlipper.showNext() // to ll_tips (index 1)
                 updateTvCcVisibility()
-                delay(5000)
+                delay(3000)
                 if (!isActive || !isTitleAnimRunning) return@launch
                 if (connectionState != AgentConnectionState.IDLE) {
                     binding.viewFlipper.showNext() // to ll_timer (index 2)
