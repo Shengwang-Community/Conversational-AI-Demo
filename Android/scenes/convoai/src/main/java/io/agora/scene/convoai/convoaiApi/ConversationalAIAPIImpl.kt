@@ -150,24 +150,20 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                     val message = msg["message"] as? String ?: "Unknown error"
                     val code = (msg["code"] as? Number)?.toInt() ?: -1
                     val sendTs = (msg["send_ts"] as? Number)?.toLong() ?: 0L
+                    var turnId = (msg["turn_id"] as? Number)?.toLong()
 
                     var uuid: String? = null
-
-                    var turnId: Long? = null
-
                     if (type == ModuleType.Context) {
                         // Try to parse image upload error and extract uuid
                         try {
                             val json = JSONObject(message)
-                            val success = json.optBoolean("success", true)
-                            if (!success && json.has("error")) {
+                            if (json.has("error")) {
                                 uuid = json.optString("uuid")
                             }
-                        } catch (_: Exception) {
+                        } catch (e: Exception) {
+                            callMessagePrint(TAG, "<<< [onAgentError][!] ${e.message}")
                         }
-                        turnId = (msg["turn_id"] as? Number)?.toLong()
                     }
-
 
                     val aiError = ModuleError(type, code, message, sendTs, turnId, uuid)
                     val agentUserId = publisherId
@@ -179,15 +175,18 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                 }
 
                 /**
-                 * {
-                 *   "object": "message.info",
-                 *   "module": "context",
-                 *   "message": "{\"uuid\":\"img_123\",\"width\":1920,\"height\":1080,\"size_bytes\":245760,\"source_type\":\"url\",\"source_value\":\"https://example.com/image.jpg\",\"upload_time\":1640995200000,\"total_user_images\":3}"
-                 * }
+                 * {object=message.info,
+                 * module=context,
+                 * message={"uuid": "52eb23090d724ca7", "width": 960, "height": 1280, "size_bytes": 21165, "source_type": "url", "source_value": "https://xxx.jpg", "upload_time": 1752545245341, "total_user_images": 1},
+                 * turn_id=1,
+                 * data_type=message,
+                 * message_id=2451a78c,
+                 * send_ts=1752545245748}
                  */
-                MessageType.IMAGE -> {
+                MessageType.MESSAGE_RECEIPT -> {
                     val module = msg["module"] as? String ?: ""
                     val type = ModuleType.fromValue(module)
+                    val turnId = (msg["turn_id"] as? Number)?.toLong() ?: -1L
                     val message = msg["message"] as? String ?: "Unknown error"
 
                     val imageInfo = try {
@@ -200,18 +199,19 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                             sourceType = json.optString("source_type"),
                             sourceValue = json.optString("source_value"),
                             uploadTime = json.optLong("upload_time"),
-                            totalUserImages = json.optInt("total_user_images")
+                            totalUserImages = json.optInt("total_user_images"),
                         )
                     } catch (e: Exception) {
+                        callMessagePrint(TAG, "MessageType.IMAGE [!]  ${e.message}")
                         null
                     }
 
                     val agentUserId = publisherId
-                    // Print uuid for debugging
-                    callMessagePrint(TAG, "<<< [onImageUpload] $agentUserId uuid=${imageInfo?.uuid}")
+                    callMessagePrint(TAG, "<<< [onImageUpload] $agentUserId $imageInfo")
                     imageInfo?.let { image ->
+                        val receipt = MessageReceipt(type, turnId, image)
                         conversationalAIHandlerHelper.notifyEventHandlers {
-                            it.onImageUpload(agentUserId, image)
+                            it.onMessageReceiptUpdated(agentUserId, receipt)
                         }
                     }
                 }
@@ -413,31 +413,17 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
         }
     }
 
-    override fun uploadImage(
+    override fun sendImage(
         agentUserId: String,
-        message: ImageMessage,
+        uuid: String,
+        imageUrl: String,
         completion: (ConversationalAIAPIError?) -> Unit
     ) {
-        val traceId = message.uuid
-        // Build a log-friendly map for printing, omitting the full base64 string to avoid log bloat
-        val logReceipt = mutableMapOf<String, Any>().apply {
-            put("uuid", message.uuid)
-            message.imageUrl?.let { put("image_url", it) }
-            message.imageBase64?.let {
-                val base64 = it
-                val preview = if (base64.length > 20) {
-                    "${base64.take(10)}...${base64.takeLast(10)}"
-                } else base64
-                put("image_base64", "[base64] length=${base64.length}, preview=$preview")
-            }
-        }
-        // Print logReceipt for debugging, never print the full base64 string
-        callMessagePrint(TAG, ">>> [traceId:$traceId] [uploadImage] $agentUserId $logReceipt")
-        // Build the actual upload payload with the full base64 data (do not use logReceipt for upload!)
+        val traceId =uuid
+        callMessagePrint(TAG, ">>> [traceId:$traceId] [chat] $agentUserId $uuid $imageUrl")
         val receipt = mutableMapOf<String, Any>().apply {
-            put("uuid", message.uuid)
-            message.imageUrl?.let { put("image_url", it) }
-            message.imageBase64?.let { put("image_base64", it) }
+            put("uuid", uuid)
+            put("image_url", imageUrl)
         }
         try {
             // Convert the actual upload payload to JSON string for sending
@@ -449,7 +435,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                 customType = "image.upload"     // Custom message type
             }
 
-            callMessagePrint(TAG, "[traceId:$traceId] rtm publish option:$options")
+            callMessagePrint(TAG, "[traceId:$traceId] rtm publish $jsonMessage")
             // Send RTM point-to-point message
             config.rtmClient.publish(
                 agentUserId, jsonMessage, options,

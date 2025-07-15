@@ -74,9 +74,9 @@ class CovLivingViewModel : ViewModel() {
     private val _transcriptionUpdate = MutableStateFlow<Transcription?>(null)
     val transcriptionUpdate: StateFlow<Transcription?> = _transcriptionUpdate.asStateFlow()
 
-    // Image info
-    private val _imageInfoUpdate = MutableStateFlow<ImageInfo?>(null)
-    val imageInfoUpdate: StateFlow<ImageInfo?> = _imageInfoUpdate.asStateFlow()
+    // Message receipt
+    private val _messageReceiptUpdate = MutableStateFlow<MessageReceipt?>(null)
+    val messageReceiptUpdate: StateFlow<MessageReceipt?> = _messageReceiptUpdate.asStateFlow()
 
     // Module error
     private val _moduleError = MutableStateFlow<ModuleError?>(null)
@@ -138,8 +138,8 @@ class CovLivingViewModel : ViewModel() {
             _transcriptionUpdate.value = transcription
         }
 
-        override fun onImageUpload(agentUserId: String, image: ImageInfo) {
-            _imageInfoUpdate.value = image
+        override fun onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt) {
+            _messageReceiptUpdate.value = messageReceipt
         }
 
         override fun onDebugLog(log: String) {
@@ -278,6 +278,14 @@ class CovLivingViewModel : ViewModel() {
         CovRtcManager.switchCamera()
     }
 
+    private val randomMessages = arrayOf(
+        "Hello!",
+        "Hi",
+        "Tell me a joke",
+        "Tell me a story",
+        "Are you ok?",
+        "How are you?"
+    )
 
     // Send chat message (for debugging)
     fun sendChatMessage(message: String? = null) {
@@ -289,7 +297,7 @@ class CovLivingViewModel : ViewModel() {
         val chatMessage = ChatMessage(
             priority = Priority.INTERRUPT,
             responseInterruptable = true,
-            text = message
+            text = message ?: randomMessages.random()
         )
 
         conversationalAIAPI?.chat(
@@ -305,21 +313,12 @@ class CovLivingViewModel : ViewModel() {
     }
 
     // Send image message
-    fun sendImageMessage(uuid: String, imageUrl: String) {
+    fun sendImageMessage(uuid: String, imageUrl: String, completion: (error: ConversationalAIAPIError?) -> Unit) {
         if (_connectionState.value != AgentConnectionState.CONNECTED) {
             ToastUtil.show("Please connect to agent first")
             return
         }
-        val imageMessage = ImageMessage(
-            uuid = uuid,
-            imageUrl = imageUrl,
-        )
-
-        conversationalAIAPI?.uploadImage(
-            CovAgentManager.agentUID.toString(),
-            imageMessage
-        ) { error ->
-        }
+        conversationalAIAPI?.sendImage(CovAgentManager.agentUID.toString(), uuid, imageUrl, completion)
     }
 
     // Interrupt Agent
@@ -687,7 +686,7 @@ class CovLivingViewModel : ViewModel() {
         _isAgentJoinedRtc.value = false
         _isAvatarJoinedRtc.value = false
         _transcriptionUpdate.value = null
-        _imageInfoUpdate.value = null
+        _messageReceiptUpdate.value = null
         _moduleError.value = null
     }
 

@@ -346,8 +346,7 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                         userId = userId,
                         text = text,
                         status = if (isFinal) TranscriptionStatus.END else TranscriptionStatus.IN_PROGRESS,
-                        type = TranscriptionType.USER,
-                        startMs = startMs
+                        type = TranscriptionType.USER
                     )
                     // Local user messages are directly callbacked out
                     callMessagePrint(
@@ -483,7 +482,6 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                 text = text,
                 status = status,
                 type = TranscriptionType.AGENT,
-                startMs = startMs
             )
             // Agent text mode messages are directly callback out
             callMessagePrint(TAG_UI, "<<< [Text Mode] pts:$mPresentationMs $agentUserId $transcription")
@@ -651,7 +649,6 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                             text = interruptedText,
                             status = TranscriptionStatus.INTERRUPTED,
                             type = TranscriptionType.AGENT,
-                            startMs = turn.startMs
                         )
                         val agentUserId = turn.agentUserId
                         callMessagePrint(
@@ -712,7 +709,6 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                 text = if (targetIsEnd) targetTurn.text else targetWords.joinToString("") { it.word },
                 status = if (targetIsEnd) TranscriptionStatus.END else TranscriptionStatus.IN_PROGRESS,
                 type = TranscriptionType.AGENT,
-                startMs = targetTurn.startMs
             )
             if (targetIsEnd) {
                 callMessagePrint(TAG_UI, "<<< [end] pts:$mPresentationMs $agentUserId $newTranscription")
