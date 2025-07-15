@@ -51,6 +51,7 @@ import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.convoaiApi.AgentState
 import io.agora.scene.convoai.convoaiApi.ImageInfo
 import io.agora.scene.convoai.convoaiApi.ModuleType
+import io.agora.scene.convoai.convoaiApi.PictureError
 import io.agora.scene.convoai.databinding.CovActivityLivingBinding
 import io.agora.scene.convoai.iot.manager.CovIotPresetManager
 import io.agora.scene.convoai.iot.ui.CovIotDeviceListActivity
@@ -190,6 +191,12 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 )
             }
             clBottomLogged.btnCamera.setOnClickListener {
+                if (!viewModel.isVisionSupported.value){
+                    CovLogger.d(TAG, "click add pic: This preset does not support vision-related features.")
+                    ToastUtil.show(R.string.cov_preset_not_support_vision, Toast.LENGTH_LONG)
+                    return@setOnClickListener
+                }
+
                 val isPublishVideo = viewModel.isPublishVideo.value
                 checkCameraPermission(
                     granted = {
@@ -221,6 +228,11 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 DebugConfigSettings.checkClickDebug()
             }
             clTop.setOnAddPicClickListener {
+                if (!viewModel.isVisionSupported.value){
+                    CovLogger.d(TAG, "click add pic: This preset does not support vision-related features.")
+                    ToastUtil.show(R.string.cov_preset_not_support_vision, Toast.LENGTH_LONG)
+                    return@setOnAddPicClickListener
+                }
                 PhotoNavigationActivity.start(this@CovLivingActivity) {
                     CovLogger.d(TAG, "select image callback:$it")
                     it?.file?.let { file ->
@@ -511,16 +523,26 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
         }
         lifecycleScope.launch {  // Observe image updates
-            viewModel.moduleError.collect { error ->
+            viewModel.moduleError.collect { moduleError ->
                 if (isSelfSubRender) return@collect
-                error?.let {
-                    if (error.type == ModuleType.Context && error.uuid != null) {
-                        val message = CovMessageListView.Message.createFail(
-                            uuid = error.uuid,
-                            turnId = error.turnId ?: -1L,
-                        )
-                        mBinding?.messageListViewV2?.replaceLocalWithServerImageMessage(message)
+                moduleError?.resourceError?.let { resourceError ->
+                    when (resourceError) {
+                        is  PictureError-> {
+                            val serverMsg = CovMessageListView.Message.createFail(
+                                uuid = resourceError.uuid,
+                                turnId = moduleError.turnId ?: -1L
+                            )
+                            mBinding?.messageListViewV2?.replaceLocalWithServerImageMessage(serverMsg)
+                        }
                     }
+                }
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.isVisionSupported.collect { supported ->
+                mBinding?.apply {
+                    clTop.btnAddPic.alpha = if (supported) 1.0f else 0.7f
+                    clBottomLogged.btnCamera.alpha = if (supported) 1.0f else 0.7f
                 }
             }
         }

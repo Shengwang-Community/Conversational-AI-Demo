@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import io.agora.scene.convoai.constant.AgentConnectionState
 import android.view.animation.Animation
+import android.widget.ImageButton
 import androidx.core.view.isVisible
 import io.agora.scene.common.R
 
@@ -72,6 +73,8 @@ class CovLivingTopView @JvmOverloads constructor(
             override fun onAnimationRepeat(animation: Animation?) {}
         })
     }
+
+    val btnAddPic: ImageButton get() = binding.btnAddPic
 
     /**
      * Set callback for info button click.

@@ -13,7 +13,8 @@ data class CovAgentPreset(
     val support_languages: List<CovAgentLanguage>,
     val call_time_limit_second: Long,
     val call_time_limit_avatar_second: Long,
-    val avatar_ids_by_lang: Map<String, List<CovAvatar>>? = null
+    val avatar_ids_by_lang: Map<String, List<CovAvatar>>? = null,
+    val is_support_vision: Boolean
 ) {
     fun isIndependent(): Boolean {
         return preset_type.startsWith("independent")

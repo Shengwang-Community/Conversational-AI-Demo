@@ -88,30 +88,6 @@ data class ChatMessage(
     val audioUrl: String? = null
 )
 
-/**
- * Data class representing an uploaded image for conversational AI API.
- *
- * @property uuid Unique identifier for the image (required).
- * @property imageUrl URL of the image (optional, mutually exclusive with imageBase64).
- * @property imageBase64 Base64-encoded image data (optional, mutually exclusive with imageUrl).
- *
- * Only one of imageUrl or imageBase64 should be provided.
- */
-data class ImageMessage(
-    /**
-     * Unique identifier for the image (required).
-     */
-    val uuid: String,
-    /**
-     * URL of the image (optional, mutually exclusive with imageBase64).
-     */
-    val imageUrl: String? = null,
-    /**
-     * Base64-encoded image data (optional, mutually exclusive with imageUrl).
-     */
-    val imageBase64: String? = null
-)
-
 // Base class for all media information types
 sealed class MediaInfo
 
@@ -146,7 +122,7 @@ data class ImageInfo(
 data class MessageReceipt(
     val type: ModuleType,
     val turnId: Long,
-    val media: MediaInfo?
+    var media: MediaInfo? = null
 )
 
 /**
@@ -261,6 +237,21 @@ enum class ModuleType(val value: String) {
     }
 }
 
+enum class ResourceType(val value: String) {
+    /** picture */
+    PICTURE("picture"),
+
+    /** Unknown type */
+    UNKNOWN("unknown");
+
+    companion object {
+
+        fun fromValue(value: String): ResourceType {
+            return ResourceType.entries.find { it.value == value } ?: UNKNOWN
+        }
+    }
+}
+
 /**
  * Performance metrics data class.
  *
@@ -307,8 +298,29 @@ data class ModuleError(
     /** Optional: turnId for the image (used for image upload errors) */
     val turnId: Long? = null,
     /** Optional: Unique identifier for the image (used for image upload errors) */
-    val uuid: String? = null,
+    var resourceError: ResourceError? = null,
 )
+
+/**
+ * Sealed base class for resource error types.
+ * Extend this class to represent specific resource errors (e.g., picture, audio, etc.).
+ */
+sealed class ResourceError
+
+/**
+ * Picture error data class, extends ResourceError.
+ * Used to represent errors related to image resources.
+ * @property uuid Unique identifier for the image
+ * @property success Whether the operation was successful
+ * @property errorCode Error code if the operation failed
+ * @property errorMessage Error message if the operation failed
+ */
+data class PictureError(
+    val uuid: String,
+    val success: Boolean,
+    val errorCode: Int?,
+    val errorMessage: String?
+) : ResourceError()
 
 /**
  * Message type enum
@@ -605,7 +617,12 @@ interface IConversationalAIAPI {
      * @param imageUrl URL of the uploaded image
      * @param completion Callback invoked when the upload completes or fails. Returns an error if failed, or null if successful.
      */
-    fun sendImage(agentUserId: String, uuid: String, imageUrl: String, completion: (error: ConversationalAIAPIError?) -> Unit)
+    fun sendImage(
+        agentUserId: String,
+        uuid: String,
+        imageUrl: String,
+        completion: (error: ConversationalAIAPIError?) -> Unit
+    )
 
     /**
      * Interrupt the AI agent's speaking.
