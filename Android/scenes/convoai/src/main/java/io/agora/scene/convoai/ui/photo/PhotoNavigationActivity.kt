@@ -73,6 +73,12 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
         }
         
         supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.slide_in_right,
+                R.anim.slide_out_left,
+                R.anim.slide_in_left,
+                R.anim.slide_out_right
+            )
             .replace(R.id.fragment_container, fragment, "take_photo")
             .addToBackStack("take_photo")
             .commit()
@@ -117,6 +123,12 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
         
         runOnUiThread {
             supportFragmentManager.beginTransaction()
+                .setCustomAnimations(
+                    R.anim.slide_in_right,
+                    R.anim.slide_out_left,
+                    R.anim.slide_in_left,
+                    R.anim.slide_out_right
+                )
                 .replace(R.id.fragment_container, fragment, "photo_edit")
                 .addToBackStack("photo_edit") 
                 .commitAllowingStateLoss()
