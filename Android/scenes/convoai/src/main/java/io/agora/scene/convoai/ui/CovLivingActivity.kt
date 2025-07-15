@@ -49,6 +49,7 @@ import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.convoaiApi.AgentState
+import io.agora.scene.convoai.convoaiApi.ImageInfo
 import io.agora.scene.convoai.convoaiApi.ModuleType
 import io.agora.scene.convoai.databinding.CovActivityLivingBinding
 import io.agora.scene.convoai.iot.manager.CovIotPresetManager
@@ -493,20 +494,19 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 }
             }
         }
-        lifecycleScope.launch {  // Observe image updates
-            viewModel.imageInfoUpdate.collect { image ->
+        lifecycleScope.launch {  // Observe message receipt updates
+            viewModel.messageReceiptUpdate.collect { messageInfo ->
                 if (isSelfSubRender) return@collect
-                image?.let {
-                    val serverMsg = CovMessageListView.Message(
-                        isMe = true,
-                        turnId = -1L, // Use current time as a placeholder for turnId
-                        content = image.sourceValue, // Server image URL
-                        type = CovMessageListView.MessageType.IMAGE,
-                        uploadStatus = CovMessageListView.UploadStatus.SUCCESS,
-                        localId = image.uuid,
-                        startMs = image.uploadTime
-                    )
-                    mBinding?.messageListViewV2?.replaceLocalWithServerImageMessage(serverMsg)
+                messageInfo?.media?.let { media ->
+                    when (media) {
+                        is ImageInfo -> {
+                            val serverMsg = CovMessageListView.Message.createSuccess(
+                                uuid = media.uuid,
+                                turnId = messageInfo.turnId
+                            )
+                            mBinding?.messageListViewV2?.replaceLocalWithServerImageMessage(serverMsg)
+                        }
+                    }
                 }
             }
         }
@@ -515,9 +515,11 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 if (isSelfSubRender) return@collect
                 error?.let {
                     if (error.type == ModuleType.Context && error.uuid != null) {
-                        mBinding?.messageListViewV2?.updateLocalImageUploadStatus(
-                            error.uuid, CovMessageListView.UploadStatus.FAILED
+                        val message = CovMessageListView.Message.createFail(
+                            uuid = error.uuid,
+                            turnId = error.turnId ?: -1L,
                         )
+                        mBinding?.messageListViewV2?.replaceLocalWithServerImageMessage(message)
                     }
                 }
             }
@@ -821,21 +823,25 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 result.onSuccess { uploadImage ->
                     // 2. On successful upload, send the image message (with CDN URL) via IConversationalAIAPI.
                     //    The UI will be updated when the server confirms the message delivery.
-                    viewModel.sendImageMessage(requestId, uploadImage.img_url)
+                    viewModel.sendImageMessage(requestId, uploadImage.img_url, completion = { error ->
+                        if (error != null) {
+                            val message = CovMessageListView.Message.createFail(uuid = requestId)
+                            mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
+                        }
+                    })
                 }.onFailure {
                     // 3. On upload failure, update the local image message status to FAILED for retry UI
-                    mBinding?.messageListViewV2?.updateLocalImageUploadStatus(
-                        requestId, CovMessageListView.UploadStatus.FAILED
-                    )
+                    val message = CovMessageListView.Message.createFail(uuid = requestId)
+                    mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
                 }
             }
         )
     }
 
     private fun replayUploadImage(requestId: String, file: File) {
-
+        val message = CovMessageListView.Message.createLoading(uuid = requestId)
         // 1. Add a local image message to the UI to indicate the image is being uploaded
-        mBinding?.messageListViewV2?.updateLocalImageUploadStatus(requestId, CovMessageListView.UploadStatus.UPLOADING)
+        mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
 
         mLoginViewModel.uploadImage(
             token = SSOUserManager.getToken(),
@@ -846,12 +852,16 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 result.onSuccess { uploadImage ->
                     // 2. On successful upload, send the image message (with CDN URL) via IConversationalAIAPI.
                     //    The UI will be updated when the server confirms the message delivery.
-                    viewModel.sendImageMessage(requestId, uploadImage.img_url)
+                    viewModel.sendImageMessage(requestId, uploadImage.img_url, completion = { error ->
+                        if (error != null) {
+                            val message = CovMessageListView.Message.createFail(uuid = requestId)
+                            mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
+                        }
+                    })
                 }.onFailure {
                     // 3. On upload failure, update the local image message status to FAILED for retry UI
-                    mBinding?.messageListViewV2?.updateLocalImageUploadStatus(
-                        requestId, CovMessageListView.UploadStatus.FAILED
-                    )
+                    val message = CovMessageListView.Message.createFail(uuid = requestId)
+                    mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
                 }
             }
         )
