@@ -46,6 +46,7 @@
 "conversation.agent.state.speaking" = "说话或点击打断";
 "conversation.agent.state.muted" = "已静音";
 "conversation.agent.transcription" = "字幕";
+"conversation.vision.unsupport.message" = "当前 Preset 不支持视觉理解相关功能，请点击右上角设置按钮切换其他 Preset 体验！";
 
 "conversation.alert.cancel" = "取消";
 "conversation.alert.confirm" = "确定";

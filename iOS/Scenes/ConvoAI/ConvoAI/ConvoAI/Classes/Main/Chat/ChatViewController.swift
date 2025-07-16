@@ -50,6 +50,11 @@ public class ChatViewController: UIViewController {
         return view
     }()
     
+    internal lazy var volumeAnimateView: VolumeAnimateView = {
+        let view = VolumeAnimateView()
+        return view
+    }()
+    
     internal lazy var sendMessageButton: UIButton = {
         let button = UIButton()
         button.addTarget(self, action: #selector(testChat), for: .touchUpInside)
@@ -223,10 +228,12 @@ public class ChatViewController: UIViewController {
     
     private func registerDelegate() {
         AppContext.loginManager()?.addDelegate(self)
+        AppContext.preferenceManager()?.addDelegate(self)
     }
     
     private func deregisterDelegate() {
         AppContext.loginManager()?.removeDelegate(self)
+        AppContext.preferenceManager()?.removeDelegate(self)
     }
     
     private func preloadData() {

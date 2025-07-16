@@ -49,14 +49,20 @@ class DigitalHumanViewController: BaseViewController {
     
     private func loadData() {
         guard let language = AppContext.preferenceManager()?.preference.language else {
+            let closeCard = DigitalHuman(avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "", thumbImageUrl: "", bgImageUrl: ""), isAvailable: true, isSelected: true)
+            digitalHumans.insert(closeCard, at: 0)
             return
         }
         
         guard let avatarIdsByLang = AppContext.preferenceManager()?.preference.preset?.avatarIdsByLang else {
+            let closeCard = DigitalHuman(avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "", thumbImageUrl: "", bgImageUrl: ""), isAvailable: true, isSelected: true)
+            digitalHumans.insert(closeCard, at: 0)
             return
         }
         
         guard let visibleAvatars = avatarIdsByLang[language.languageCode] else {
+            let closeCard = DigitalHuman(avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "", thumbImageUrl: "", bgImageUrl: ""), isAvailable: true, isSelected: true)
+            digitalHumans.insert(closeCard, at: 0)
             return
         }
         
@@ -78,7 +84,7 @@ class DigitalHumanViewController: BaseViewController {
             digitalHumans = avatars
         }
         
-        let closeCard = DigitalHuman(avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "", avatarUrl: ""), isAvailable: true, isSelected: !selectedTag)
+        let closeCard = DigitalHuman(avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "", thumbImageUrl: "", bgImageUrl: ""), isAvailable: true, isSelected: !selectedTag)
         digitalHumans.insert(closeCard, at: 0)
     }
     

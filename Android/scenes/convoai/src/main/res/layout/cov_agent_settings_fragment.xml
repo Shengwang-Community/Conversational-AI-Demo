@@ -143,6 +143,7 @@
                     android:text="@string/cov_setting_avatar"
                     android:textColor="@color/ai_icontext1"
                     android:textSize="14sp"
+                    android:maxLines="1"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -165,17 +166,21 @@
                     android:text="@string/common_close"
                     android:textColor="@color/ai_icontext1"
                     android:textSize="14sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:gravity="end"
+                    app:layout_constraintWidth_max="120dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/iv_avatar_arrow"
                     app:layout_constraintTop_toTopOf="parent"
-                    tools:text="xxxx" />
+                    tools:text="xxx" />
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/iv_avatar"
                     android:layout_width="32dp"
                     android:layout_height="32dp"
                     android:layout_marginEnd="14dp"
-                    android:visibility="gone"
+                    android:visibility="visible"
                     android:scaleType="centerCrop"
                     android:background="@color/ai_brand_white10"
                     app:layout_constraintBottom_toBottomOf="parent"

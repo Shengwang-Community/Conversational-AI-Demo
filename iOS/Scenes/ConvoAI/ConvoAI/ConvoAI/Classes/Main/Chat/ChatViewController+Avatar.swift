@@ -13,11 +13,14 @@ import AlamofireImage
 extension ChatViewController {
     internal func startShowAvatar() {
         windowState.showAvatar = true
-        if let avatar = AppContext.preferenceManager()?.preference.avatar, let url = URL(string: avatar.avatarUrl) {
+        if let avatar = AppContext.preferenceManager()?.preference.avatar, let url = URL(string: avatar.bgImageUrl) {
             remoteAvatarView.backgroundImageView.af.setImage(withURL: url)
         }
-        startRenderRemoteVideoStream(renderView: remoteAvatarView.renderView)
         updateWindowContent()
+    }
+    
+    internal func startRenderRemoteVideoStream() {
+        startRenderRemoteVideoStream(renderView: remoteAvatarView.renderView)
     }
     
     internal func stopShowAvatar() {

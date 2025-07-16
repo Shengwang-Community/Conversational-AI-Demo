@@ -106,9 +106,7 @@ class AgentSettingBar: UIView {
         label.text = "00:00"
         label.font = .systemFont(ofSize: 12)
         label.textAlignment = .center
-        label.layerCornerRadius = 11
         label.isHidden = true
-        label.backgroundColor = UIColor.white.withAlphaComponent(0.15)
         label.textColor = UIColor.themColor(named: "ai_brand_white10")
         return label
     }()
@@ -274,6 +272,16 @@ class AgentSettingBar: UIView {
         if self.isShowTips == true {
             self.showTips()
         }
+    }
+    
+    func setButtonColorTheme(showLight: Bool) {
+        var color = UIColor.themColor(named: "ai_block1")
+        if showLight {
+            color = UIColor.themColor(named: "ai_brand_black4")
+        }
+        
+        addButton.backgroundColor = color
+        transcriptionButton.backgroundColor = color
     }
     
     private func updateNetWorkView() {

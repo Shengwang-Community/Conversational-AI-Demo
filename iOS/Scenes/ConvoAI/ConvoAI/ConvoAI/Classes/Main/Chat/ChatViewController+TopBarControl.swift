@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import Common
+import SVProgressHUD
 
 extension ChatViewController {
     @objc internal func onClickInformationButton() {
@@ -33,6 +35,15 @@ extension ChatViewController {
     }
     
     @objc internal func onClickAddButton() {
+        guard let preset = AppContext.preferenceManager()?.preference.preset else {
+            return
+        }
+        
+        if !preset.isSupportVision {
+            SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.visionUnsupportMessage)
+            return
+        }
+        
         PhotoPickTypeViewController.start(from: self) { [weak self] data in
             guard let self = self else { return }
             guard let image = data?.image else {

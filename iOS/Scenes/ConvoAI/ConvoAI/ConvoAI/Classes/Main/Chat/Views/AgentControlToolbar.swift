@@ -142,11 +142,19 @@ class AgentControlToolbar: UIView {
     }
     
     func loadData() {
+        updateVideoButtonColor()
+    }
+    
+    func updateVideoButtonColor() {
         guard let preset = AppContext.preferenceManager()?.preference.preset else {
             return
         }
         
-        videoButton.isEnabled = preset.isSupportVision
+        if !preset.isSupportVision {
+            videoButton.alpha = 0.5
+        } else {
+            videoButton.alpha = 1
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -312,9 +320,9 @@ class AgentControlToolbar: UIView {
         }
     }
     
-    func setButtonColorTheme(isShowAvatar: Bool, isShowVideo: Bool) {
+    func setButtonColorTheme(showLight: Bool) {
         var color = UIColor.themColor(named: "ai_block1")
-        if isShowAvatar || isShowVideo {
+        if showLight {
             color = UIColor.themColor(named: "ai_brand_black4")
         }
         
@@ -368,6 +376,6 @@ class AgentControlToolbar: UIView {
 
 extension AgentControlToolbar: AgentPreferenceManagerDelegate {
     func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset) {
-        videoButton.isEnabled = preset.isSupportVision
+        updateVideoButtonColor()
     }
 }

@@ -483,7 +483,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                         ivAvatarPreview.isVisible = true
                         GlideImageLoader.load(
                             ivAvatarPreview,
-                            avatar.avatar_url,
+                            avatar.bg_img_url,
                             null,
                             R.drawable.cov_default_avatar
                         )
@@ -787,6 +787,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
     private fun setupBallAnimView() {
         val binding = mBinding ?: return
+        if (isReleased) return
         val rtcMediaPlayer = CovRtcManager.createMediaPlayer()
         mCovBallAnim = CovBallAnim(this, rtcMediaPlayer, binding.videoView, object : CovBallAnimCallback {
             override fun onError(error: Exception) {
@@ -1188,6 +1189,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
             try {
                 isReleased = true   // Mark as releasing
+                viewModel.setAvatar(null)
                 viewModel.stopAgentAndLeaveChannel()  // Stop agent and leave channel
                 // lifecycleScope will be automatically cancelled when activity is destroyed
                 // Release animation resources
