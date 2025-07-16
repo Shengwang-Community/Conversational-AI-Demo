@@ -204,7 +204,7 @@ extension PhotoEditViewController {
         rotateButton.tintColor = UIColor.themColor(named: "ai_brand_white10")
         rotateButton.backgroundColor = UIColor.themColor(named: "ai_brand_white1")
         rotateButton.addTarget(self, action: #selector(rotateAction), for: .touchUpInside)
-        rotateButton.layer.cornerRadius = 8
+        rotateButton.layer.cornerRadius = 12
         rotateButton.layer.masksToBounds = true
         bottomBar.addSubview(rotateButton)
 
@@ -213,7 +213,7 @@ extension PhotoEditViewController {
         doneButton.titleLabel?.font = UIFont.systemFont(ofSize: 14)
         doneButton.setTitleColor(UIColor.themColor(named: "ai_brand_black10"), for: .normal)
         doneButton.backgroundColor = UIColor.themColor(named: "ai_brand_white10")
-        doneButton.layer.cornerRadius = 8
+        doneButton.layer.cornerRadius = 10
         doneButton.layer.masksToBounds = true
         doneButton.addTarget(self, action: #selector(doneAction), for: .touchUpInside)
         bottomBar.addSubview(doneButton)

@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.ui.photo
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -205,9 +206,9 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
         )
     }
 
+    @SuppressLint("MissingSuperCall")
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        super.onBackPressed()
         val fragmentManager = supportFragmentManager
         
         if (fragmentManager.backStackEntryCount > 0) {

@@ -44,7 +44,7 @@
             android:layout_height="52dp"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="38dp"
-            app:cardCornerRadius="8dp"
+            app:cardCornerRadius="12dp"
             app:cardBackgroundColor="@color/ai_brand_white1"
             app:cardElevation="0dp">
 
@@ -62,7 +62,7 @@
             android:layout_height="36dp"
             android:layout_gravity="center_vertical|end"
             android:layout_marginEnd="38dp"
-            app:cardCornerRadius="8dp"
+            app:cardCornerRadius="10dp"
             app:cardElevation="0dp"
             app:cardBackgroundColor="@color/ai_brand_white10">
 
