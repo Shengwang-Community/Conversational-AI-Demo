@@ -44,5 +44,6 @@ data class CovAvatar(
     val vendor: String,
     val avatar_id: String,
     val avatar_name: String,
-    val avatar_url: String
+    val thumb_img_url: String,
+    val bg_img_url: String,
 ) : Parcelable
