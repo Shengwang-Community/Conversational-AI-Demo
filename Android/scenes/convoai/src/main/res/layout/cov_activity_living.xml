@@ -59,11 +59,16 @@
         android:visibility="gone"
         tools:visibility="visible" />
 
-    <io.agora.scene.convoai.ui.widget.CovDraggableView
-        android:id="@+id/vDragBigWindow"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
+        android:layout_height="match_parent">
+
+        <io.agora.scene.convoai.ui.widget.CovDraggableView
+            android:id="@+id/vDragBigWindow"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layout_message"

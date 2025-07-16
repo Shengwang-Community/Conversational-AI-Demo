@@ -26,20 +26,20 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class TakePhotoFragment : Fragment() {
-    
+
     private var _binding: CovTakePhotoFragmentBinding? = null
     private val binding get() = _binding!!
-    
+
     private var onPhotoTaken: ((Bitmap?) -> Unit)? = null
-    
+
     private var cameraProvider: ProcessCameraProvider? = null
     private var preview: Preview? = null
     private var imageCapture: ImageCapture? = null
     private var camera: Camera? = null
     private var cameraExecutor: ExecutorService? = null
-    
+
     private var lensFacing: Int = CameraSelector.LENS_FACING_BACK
-    
+
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -50,7 +50,7 @@ class TakePhotoFragment : Fragment() {
             parentFragmentManager.popBackStack()
         }
     }
-    
+
     private val storagePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -60,17 +60,17 @@ class TakePhotoFragment : Fragment() {
             Log.d(TAG, "Storage permission denied - gallery preview disabled")
         }
     }
-    
+
     companion object {
         private const val TAG = "TakePhotoFragment"
-        
+
         fun newInstance(onPhotoTaken: (Bitmap?) -> Unit): TakePhotoFragment {
             return TakePhotoFragment().apply {
                 this.onPhotoTaken = onPhotoTaken
             }
         }
     }
-    
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -79,7 +79,7 @@ class TakePhotoFragment : Fragment() {
         _binding = CovTakePhotoFragmentBinding.inflate(inflater, container, false)
         return binding.root
     }
-    
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupViews()
@@ -87,36 +87,36 @@ class TakePhotoFragment : Fragment() {
         checkCameraPermissionAndInit()
         loadGalleryPreview()
     }
-    
+
     override fun onDestroyView() {
         super.onDestroyView()
         cameraExecutor?.shutdown()
         _binding = null
     }
-    
+
     private fun setupViews() {
         // Adapt status bar height to prevent close button being obscured by notch screens
-        val statusBarHeight = requireContext().getStatusBarHeight() ?: 25.dp.toInt()
+        val statusBarHeight = context?.getStatusBarHeight() ?: 25.dp.toInt()
         val layoutParams = binding.topBar.layoutParams as ViewGroup.MarginLayoutParams
         layoutParams.topMargin = statusBarHeight
         binding.topBar.layoutParams = layoutParams
-        
+
         binding.btnClose.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
-        
+
         binding.shutterButton.setOnClickListener {
             takePhoto()
         }
-        
+
         binding.btnSwitchCamera.setOnClickListener {
             switchCamera()
         }
-        
+
         binding.previewImage.setOnClickListener {
             openGallery()
         }
-        
+
         binding.shutterButton.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -139,7 +139,7 @@ class TakePhotoFragment : Fragment() {
             false
         }
     }
-    
+
     private fun checkCameraPermissionAndInit() {
         if (allPermissionsGranted()) {
             startCamera()
@@ -147,23 +147,27 @@ class TakePhotoFragment : Fragment() {
             requestCameraPermission()
         }
     }
-    
-    private fun allPermissionsGranted() = ContextCompat.checkSelfPermission(
-        requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-    
+
+    private fun allPermissionsGranted(): Boolean {
+        val ctx = context ?: return false
+        return ContextCompat.checkSelfPermission(
+            ctx, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    }
+
     private fun requestCameraPermission() {
         cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
     }
-    
+
     private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
-        
+        val ctx = context ?: return
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+
         cameraProviderFuture.addListener({
             cameraProvider = cameraProviderFuture.get()
-            
+
             // Set PreviewView scale type to match iOS resizeAspectFill behavior
             binding.previewView.scaleType = androidx.camera.view.PreviewView.ScaleType.FILL_CENTER
-            
+
             // Set preview parameters with smaller resolution
             preview = Preview.Builder()
                 .setTargetRotation(binding.previewView.display.rotation)
@@ -171,42 +175,42 @@ class TakePhotoFragment : Fragment() {
                 .also {
                     it.setSurfaceProvider(binding.previewView.surfaceProvider)
                 }
-            
+
             imageCapture = ImageCapture.Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
                 .setTargetRotation(binding.previewView.display.rotation)
                 .setTargetResolution(android.util.Size(960, 1280))
                 .setJpegQuality(50)
                 .build()
-            
+
             val cameraSelector = CameraSelector.Builder()
                 .requireLensFacing(lensFacing)
                 .build()
-            
+
             try {
                 cameraProvider?.unbindAll()
-                
+
                 camera = cameraProvider?.bindToLifecycle(
                     this, cameraSelector, preview, imageCapture
                 )
-                
+
                 Log.d(TAG, "Camera started successfully")
-                
+
             } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
                 ToastUtil.show("Camera failed to start: ${exc.message}")
             }
-        }, ContextCompat.getMainExecutor(requireContext()))
+        }, ContextCompat.getMainExecutor(ctx))
     }
-    
+
     private fun takePhoto() {
         val imageCapture = imageCapture ?: run {
             ToastUtil.show("Camera not ready")
             return
         }
-        
+
         binding.shutterButton.isEnabled = false
-        
+
         imageCapture.takePicture(
             cameraExecutor!!,
             object : ImageCapture.OnImageCapturedCallback() {
@@ -217,25 +221,25 @@ class TakePhotoFragment : Fragment() {
                         ToastUtil.show("Photo capture failed, please retry")
                     }
                 }
-                
+
                 override fun onCaptureSuccess(image: ImageProxy) {
                     lifecycleScope.launch(Dispatchers.IO) {
                         try {
                             val bitmap = imageProxyToBitmap(image)
-                            
+
                             // Apply camera flip if front camera
                             val flippedBitmap = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
                                 PhotoProcessor.flipBitmap(bitmap)
                             } else {
                                 bitmap
                             }
-                            
+
                             // Crop image to match preview aspect ratio (similar to iOS implementation)
                             val croppedBitmap = cropImageToPreviewAspectRatio(flippedBitmap)
-                            
+
                             // Use PhotoProcessor to process the cropped image
                             val processedBitmap = PhotoProcessor.processPhoto(croppedBitmap)
-                            
+
                             withContext(Dispatchers.Main) {
                                 binding.shutterButton.isEnabled = true
                                 if (processedBitmap != null) {
@@ -258,51 +262,52 @@ class TakePhotoFragment : Fragment() {
             }
         )
     }
-    
+
     private fun imageProxyToBitmap(image: ImageProxy): Bitmap {
         val buffer = image.planes[0].buffer
         val bytes = ByteArray(buffer.remaining())
         buffer.get(bytes)
         val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-        
+
         val rotationDegrees = image.imageInfo.rotationDegrees
         Log.d(TAG, "Image rotation degrees: $rotationDegrees")
-        
+
         return if (rotationDegrees != 0) {
             PhotoProcessor.rotateBitmap(bitmap, rotationDegrees.toFloat())
         } else {
             bitmap
         }
     }
-    
+
     private fun switchCamera() {
         lensFacing = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
             CameraSelector.LENS_FACING_BACK
         } else {
             CameraSelector.LENS_FACING_FRONT
         }
-        
+
         startCamera()
     }
-    
+
     private fun openGallery() {
         (activity as? PhotoNavigationActivity)?.openGallery()
     }
-    
+
     private fun hasStoragePermission(): Boolean {
+        val ctx = context ?: return false
         return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
-                requireContext(),
+                ctx,
                 Manifest.permission.READ_MEDIA_IMAGES
             ) == PackageManager.PERMISSION_GRANTED
         } else {
             ContextCompat.checkSelfPermission(
-                requireContext(),
+                ctx,
                 Manifest.permission.READ_EXTERNAL_STORAGE
             ) == PackageManager.PERMISSION_GRANTED
         }
     }
-    
+
     private fun requestStoragePermission() {
         val permission = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_IMAGES
@@ -311,13 +316,14 @@ class TakePhotoFragment : Fragment() {
         }
         storagePermissionLauncher.launch(permission)
     }
-    
+
     private fun loadGalleryPreview() {
         if (!hasStoragePermission()) {
             requestStoragePermission()
             return
         }
-        
+
+        val ctx = context ?: return
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val projection = arrayOf(
@@ -325,19 +331,19 @@ class TakePhotoFragment : Fragment() {
                     MediaStore.Images.Media.DISPLAY_NAME,
                     MediaStore.Images.Media.DATE_MODIFIED
                 )
-                
+
                 val sortOrder = "${MediaStore.Images.Media.DATE_MODIFIED} DESC"
                 val selection = "${MediaStore.Images.Media.MIME_TYPE} IN (?, ?, ?)"
                 val selectionArgs = arrayOf("image/jpeg", "image/png", "image/jpg")
-                
-                val cursor = requireContext().contentResolver.query(
+
+                val cursor = ctx.contentResolver.query(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     projection,
                     selection,
                     selectionArgs,
                     sortOrder
                 )
-                
+
                 cursor?.use {
                     if (it.moveToFirst()) {
                         val imageId = it.getLong(it.getColumnIndexOrThrow(MediaStore.Images.Media._ID))
@@ -345,22 +351,22 @@ class TakePhotoFragment : Fragment() {
                             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                             imageId
                         )
-                        
+
                         val thumbnail = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                            requireContext().contentResolver.loadThumbnail(
+                            ctx.contentResolver.loadThumbnail(
                                 imageUri,
                                 android.util.Size(200, 200),
                                 null
                             )
                         } else {
                             MediaStore.Images.Thumbnails.getThumbnail(
-                                requireContext().contentResolver,
+                                ctx.contentResolver,
                                 imageId,
                                 MediaStore.Images.Thumbnails.MINI_KIND,
                                 null
                             )
                         }
-                        
+
                         withContext(Dispatchers.Main) {
                             if (thumbnail != null && _binding != null) {
                                 binding.previewImage.setImageBitmap(thumbnail)
@@ -379,28 +385,29 @@ class TakePhotoFragment : Fragment() {
             }
         }
     }
-    
+
     private fun loadGalleryPreviewFallback() {
         if (!hasStoragePermission()) {
             Log.d(TAG, "No storage permission for fallback gallery preview")
             return
         }
-        
+
+        val ctx = context ?: return
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val projection = arrayOf(
                     MediaStore.Images.Media._ID,
                     MediaStore.Images.Media.DATA
                 )
-                
-                val cursor = requireContext().contentResolver.query(
+
+                val cursor = ctx.contentResolver.query(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     projection,
                     null,
                     null,
                     "${MediaStore.Images.Media.DATE_MODIFIED} DESC LIMIT 1"
                 )
-                
+
                 cursor?.use {
                     if (it.moveToFirst()) {
                         val imagePath = it.getString(it.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))
@@ -410,7 +417,7 @@ class TakePhotoFragment : Fragment() {
                                 inJustDecodeBounds = false
                             }
                             val bitmap = BitmapFactory.decodeFile(imagePath, options)
-                            
+
                             withContext(Dispatchers.Main) {
                                 if (bitmap != null && _binding != null) {
                                     binding.previewImage.setImageBitmap(bitmap)
@@ -425,7 +432,7 @@ class TakePhotoFragment : Fragment() {
             }
         }
     }
-    
+
     /**
      * Crop image to match preview aspect ratio (similar to iOS implementation)
      * This ensures captured result matches what user sees in preview
@@ -435,23 +442,23 @@ class TakePhotoFragment : Fragment() {
         val previewView = binding.previewView
         val previewWidth = previewView.width.toFloat()
         val previewHeight = previewView.height.toFloat()
-        
+
         if (previewWidth <= 0 || previewHeight <= 0) {
             Log.w(TAG, "Invalid preview dimensions, returning original image")
             return bitmap
         }
-        
+
         // Calculate preview aspect ratio
         val previewAspectRatio = previewWidth / previewHeight
-        
+
         // Get image dimensions
         val imageWidth = bitmap.width.toFloat()
         val imageHeight = bitmap.height.toFloat()
         val imageAspectRatio = imageWidth / imageHeight
-        
+
         Log.d(TAG, "Preview ratio: $previewAspectRatio, Image ratio: $imageAspectRatio")
         Log.d(TAG, "Preview size: ${previewWidth}x${previewHeight}, Image size: ${imageWidth}x${imageHeight}")
-        
+
         // Calculate crop area based on resizeAspectFill behavior
         // This mimics the PreviewView's FILL_CENTER scale type
         val cropRect = if (imageAspectRatio > previewAspectRatio) {
@@ -461,33 +468,33 @@ class TakePhotoFragment : Fragment() {
             val cropX = ((imageWidth - visibleWidth) / 2).toInt()
             android.graphics.Rect(cropX, 0, (cropX + visibleWidth).toInt(), imageHeight.toInt())
         } else {
-            // Image is taller than or equal to preview ratio  
+            // Image is taller than or equal to preview ratio
             // Keep full width, crop height from center
             val visibleHeight = imageWidth / previewAspectRatio
             val cropY = ((imageHeight - visibleHeight) / 2).toInt()
             android.graphics.Rect(0, cropY, imageWidth.toInt(), (cropY + visibleHeight).toInt())
         }
-        
+
         Log.d(TAG, "Crop rect: ${cropRect.left}, ${cropRect.top}, ${cropRect.right}, ${cropRect.bottom}")
-        
+
         // Validate crop rect
-        if (cropRect.left < 0 || cropRect.top < 0 || 
+        if (cropRect.left < 0 || cropRect.top < 0 ||
             cropRect.right > imageWidth || cropRect.bottom > imageHeight ||
             cropRect.width() <= 0 || cropRect.height() <= 0) {
             Log.w(TAG, "Invalid crop rect, returning original image")
             return bitmap
         }
-        
+
         // Perform the actual cropping
         return try {
             val croppedBitmap = Bitmap.createBitmap(
-                bitmap, 
-                cropRect.left, 
-                cropRect.top, 
-                cropRect.width(), 
+                bitmap,
+                cropRect.left,
+                cropRect.top,
+                cropRect.width(),
                 cropRect.height()
             )
-            
+
             Log.d(TAG, "Successfully cropped image from ${imageWidth}x${imageHeight} to ${croppedBitmap.width}x${croppedBitmap.height}")
             croppedBitmap
         } catch (e: Exception) {

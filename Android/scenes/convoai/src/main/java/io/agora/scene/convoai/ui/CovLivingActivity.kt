@@ -560,11 +560,81 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
     }
 
+    private var lastBigWindowContent: View? = null
+    private var lastSmallWindowContent: View? = null
+
+    private fun updateWindowContent() {
+        val showAvatar = viewModel.isAvatarJoinedRtc.value
+        val showVideo = viewModel.isPublishVideo.value
+        val showTranscription = viewModel.isShowMessageList.value
+        mBinding?.apply {
+            var newBigContent: View? = null
+            var newSmallContent: View? = null
+
+            if (showTranscription) {
+                if (showAvatar && showVideo) {
+                    newBigContent = remoteAvatarView
+                    newSmallContent = localVisionView
+                } else if (showAvatar) {
+                    newBigContent = remoteAvatarView
+                } else if (showVideo) {
+                    newSmallContent = localVisionView
+                }
+            } else {
+                if (showAvatar && showVideo) {
+                    newBigContent = localVisionView
+                    newSmallContent = remoteAvatarView
+                } else if (showAvatar) {
+                    newBigContent = remoteAvatarView
+                } else if (showVideo) {
+                    newBigContent = localVisionView
+                }
+            }
+
+            // Only update big window if content changed
+            if (lastBigWindowContent != newBigContent) {
+                vDragBigWindow.container.removeAllViews()
+                newBigContent?.let {
+                    val parent = it.parent as? ViewGroup
+                    parent?.removeView(it)
+                    vDragBigWindow.container.addView(it)
+                }
+                lastBigWindowContent = newBigContent
+            }
+            // Only update small window if content changed
+            if (lastSmallWindowContent != newSmallContent) {
+                vDragSmallWindow.container.removeAllViews()
+                newSmallContent?.let {
+                    val parent = it.parent as? ViewGroup
+                    parent?.removeView(it)
+                    vDragSmallWindow.container.addView(it)
+                }
+                lastSmallWindowContent = newSmallContent
+            }
+
+            vDragBigWindow.isVisible = newBigContent != null
+            vDragSmallWindow.isVisible = newSmallContent != null
+
+            agentSpeakingIndicator.isVisible = !showAvatar && showVideo && !showTranscription
+            val isLight = vDragBigWindow.isVisible && !showTranscription
+            clTop.updateLightBackground(isLight)
+
+            if (isLight) {
+                clBottomLogged.btnEndCall.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_brand_black4_selector)
+                clBottomLogged.btnCamera.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_brand_black4_selector)
+            } else {
+                clBottomLogged.btnEndCall.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_block1_selector)
+                clBottomLogged.btnCamera.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_block1_selector)
+            }
+            updateMicrophoneView(viewModel.isLocalAudioMuted.value)
+        }
+    }
+
     /**
      * Update the content of vDragBigWindow and vDragSmallWindow according to the current state.
      * Only one instance of localVisionView and remoteAvatarView is created and reused.
      */
-    private fun updateWindowContent() {
+    private fun updateWindowContent1() {
         val showAvatar = viewModel.isAvatarJoinedRtc.value
         val showVideo = viewModel.isPublishVideo.value
         val showTranscription = viewModel.isShowMessageList.value
