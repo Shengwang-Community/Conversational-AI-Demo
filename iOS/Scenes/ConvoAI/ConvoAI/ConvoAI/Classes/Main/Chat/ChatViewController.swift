@@ -35,14 +35,8 @@ public class ChatViewController: UIViewController {
     
     internal lazy var smallSizeContainerView: UIView = {
         let view = UIView()
-        let button = UIButton()
-        view.addSubview(button)
-        
-        button.snp.makeConstraints { make in
-            make.edges.equalTo(UIEdgeInsets.zero)
-        }
-        
-        button.addTarget(self, action: #selector(smallWindowClicked), for: .touchUpInside)
+        view.layer.cornerRadius = 12
+        view.layer.masksToBounds = true
         return view
     }()
     
@@ -151,6 +145,7 @@ public class ChatViewController: UIViewController {
     internal lazy var messageView: ChatView = {
         let view = ChatView()
         view.isHidden = true
+        view.delegate = self
         return view
     }()
 
@@ -312,14 +307,7 @@ public class ChatViewController: UIViewController {
     func resetPreference() {
         AppContext.preferenceManager()?.resetAgentInformation()
     }
-    
-    @objc func smallWindowClicked() {
-        if !windowState.showTranscription {
-            return
-        }
-        
-        showTranscription(state: false)
-    }
+
 }
 
 

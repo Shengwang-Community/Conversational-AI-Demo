@@ -41,6 +41,7 @@ struct AgentPreset: Codable {
     let presetType: String
     let defaultLanguageCode: String
     let defaultLanguageName: String
+    let isSupportVision: Bool
     let callTimeLimitSecond: Int
     let callTimeLimitAvatarSecond: Int
     let supportLanguages: [SupportLanguage]
@@ -52,6 +53,7 @@ struct AgentPreset: Codable {
         case presetType = "preset_type"
         case defaultLanguageCode = "default_language_code"
         case defaultLanguageName = "default_language_name"
+        case isSupportVision = "is_support_vision"
         case callTimeLimitSecond = "call_time_limit_second"
         case callTimeLimitAvatarSecond = "call_time_limit_avatar_second"
         case supportLanguages = "support_languages"

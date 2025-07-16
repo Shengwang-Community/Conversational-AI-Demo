@@ -138,14 +138,35 @@ class AgentControlToolbar: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        
+        registerDelegate()
         setupViews()
         setupConstraints()
+        loadData()
         style = .startButton
+    }
+    
+    func loadData() {
+        guard let preset = AppContext.preferenceManager()?.preference.preset else {
+            return
+        }
+        
+        videoButton.isEnabled = preset.isSupportVision
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    func registerDelegate() {
+        AppContext.preferenceManager()?.addDelegate(self)
+    }
+    
+    func deregisterDelegate() {
+        AppContext.preferenceManager()?.removeDelegate(self)
+    }
+    
+    deinit {
+        deregisterDelegate()
     }
     
     func resetState() {
@@ -335,5 +356,11 @@ class AgentControlToolbar: UIView {
             self.setNeedsLayout()
             self.layoutIfNeeded()
         }
+    }
+}
+
+extension AgentControlToolbar: AgentPreferenceManagerDelegate {
+    func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset) {
+        videoButton.isEnabled = preset.isSupportVision
     }
 }

@@ -173,6 +173,7 @@ extension ChatViewController {
         let showTranscription = windowState.showTranscription
         fullSizeContainerView.removeSubviews()
         smallSizeContainerView.removeSubviews()
+        animateContentView.isHidden = true
         if showTranscription {
             if showAvatar, showVideo {
                 fullSizeContainerView.isHidden = false
@@ -211,6 +212,7 @@ extension ChatViewController {
                 smallSizeContainerView.isHidden = true
                 upperBackgroundView.isHidden = false
                 lowerBackgroundView.isHidden = false
+                animateContentView.isHidden = false
             }
         } else {
             if showAvatar, showVideo {
@@ -250,7 +252,31 @@ extension ChatViewController {
                 smallSizeContainerView.isHidden = true
                 upperBackgroundView.isHidden = false
                 lowerBackgroundView.isHidden = false
+                animateContentView.isHidden = false
             }
         }
+        
+        let button = UIButton()
+        smallSizeContainerView.addSubview(button)
+        
+        button.snp.makeConstraints { make in
+            make.edges.equalTo(UIEdgeInsets.zero)
+        }
+        
+        button.addTarget(self, action: #selector(smallWindowClicked), for: .touchUpInside)
+    }
+    
+    @objc func smallWindowClicked() {
+        if !windowState.showTranscription {
+            return
+        }
+        
+        showTranscription(state: false)
+    }
+}
+
+extension ChatViewController: ChatViewDelegate {
+    func resendImage(image: UIImage, uuid: String) {
+        sendImage(image: image, uuid: uuid)
     }
 }

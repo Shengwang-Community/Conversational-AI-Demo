@@ -22,8 +22,15 @@ extension ChatViewController {
     }
     
     @objc internal func onClickAddButton() {
-        PhotoPickTypeViewController.start(from: self) { data in
-            print("data: \(data)")
+        PhotoPickTypeViewController.start(from: self) { [weak self] data in
+            guard let self = self else { return }
+            guard let image = data?.image else {
+                addLog("<<<<< PhotoPickTypeViewController image is nil")
+                return
+            }
+            
+            let uuid = UUID().uuidString
+            self.sendImage(image: image, uuid: uuid)
         }
     }
     
