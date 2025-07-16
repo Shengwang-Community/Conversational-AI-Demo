@@ -79,6 +79,74 @@ public class NetworkManager:NSObject {
         }
     }
     
+    /// Upload image
+    /// - Parameters:
+    ///   - requestId: request ID for tracking
+    ///   - channelName: channel name
+    ///   - imageData: image data to upload
+    ///   - success: success callback
+    ///   - failure: failure callback
+    public func uploadImage(requestId: String,
+                           channelName: String,
+                           imageData: Data,
+                           success: SuccessClosure?,
+                           failure: FailClosure?) {
+        let url = "\(AppContext.shared.baseServerUrl)/v1/convoai/upload/image"
+        let parameters = [
+            "request_id": requestId,
+            "src": "ios",
+            "app_id": AppContext.shared.appId,
+            "channel_name": channelName
+        ]
+        
+        DispatchQueue.global().async {
+            self.uploadRequest(urlString: url,
+                              parameters: parameters,
+                              imageData: imageData,
+                              success: success,
+                              failure: failure)
+        }
+    }
+    
+    public typealias ImageUploadSuccessClosure = (String?) -> Void
+    
+    /// Upload image with URL extraction
+    /// - Parameters:
+    ///   - requestId: request ID for tracking
+    ///   - channelName: channel name
+    ///   - imageData: image data to upload
+    ///   - success: success callback with extracted image URL
+    ///   - failure: failure callback
+    public func uploadImage(requestId: String,
+                           channelName: String,
+                           imageData: Data,
+                           success: @escaping ImageUploadSuccessClosure,
+                           failure: FailClosure?) {
+        let url = "\(AppContext.shared.baseServerUrl)/v1/convoai/upload/image"
+        let parameters = [
+            "request_id": requestId,
+            "src": "ios",
+            "app_id": AppContext.shared.appId,
+            "channel_name": channelName
+        ]
+        
+        DispatchQueue.global().async {
+            self.uploadRequest(urlString: url,
+                              parameters: parameters,
+                              imageData: imageData,
+                              success: { response in
+                                  // Extract img_url from response
+                                  var imageUrl: String? = nil
+                                  if let data = response["data"] as? [String: Any],
+                                     let imgUrl = data["img_url"] as? String {
+                                      imageUrl = imgUrl
+                                  }
+                                  success(imageUrl)
+                              },
+                              failure: failure)
+        }
+    }
+    
     public func getRequest(urlString: String, params: [String: Any]?, success: SuccessClosure?, failure: FailClosure?) {
         DispatchQueue.global().async {
             self.request(urlString: urlString, params: params, method: .GET, success: success, failure: failure)
@@ -89,6 +157,66 @@ public class NetworkManager:NSObject {
         DispatchQueue.global().async {
             self.request(urlString: urlString, params: params, method: .POST, success: success, failure: failure)
         }
+    }
+
+    private func uploadRequest(urlString: String,
+                              parameters: [String: String],
+                              imageData: Data,
+                              success: SuccessClosure?,
+                              failure: FailClosure?) {
+        guard let url = URL(string: urlString) else {
+            failure?("Invalid URL")
+            return
+        }
+        
+        // Create multipart form data
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        // Set headers with auth token
+        let token = UserCenter.user?.token ?? ""
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        // Create multipart body
+        var body = Data()
+        
+        // Add text parameters
+        for (key, value) in parameters {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(value)\r\n".data(using: .utf8)!)
+        }
+        
+        // Add image data
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"image\"; filename=\"image.jpg\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\r\n".data(using: .utf8)!)
+        
+        // Close boundary
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        
+        request.httpBody = body
+        
+        #if DEBUG
+        let curl = request.cURL(pretty: false)
+        debugPrint("upload curl == \(curl)")
+        #endif
+        
+        // Use existing sessionConfig with longer timeout for uploads
+        let config = sessionConfig
+        config.timeoutIntervalForRequest = 60 // Longer timeout for uploads
+        config.timeoutIntervalForResource = 60
+        let session = URLSession(configuration: config)
+        
+        session.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                self.checkResponse(response: response, data: data, success: success, failure: failure)
+            }
+        }.resume()
     }
 
     private func request(urlString: String,
@@ -125,12 +253,18 @@ public class NetworkManager:NSObject {
         
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
+        
+        let token = UserCenter.user?.token ?? ""
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        
         if method == .POST {
             request.httpBody = try? JSONSerialization.data(withJSONObject: params ?? [],
-                                                           options: .sortedKeys) // convertParams(params: params).data(using: .utf8)
+                                                           options: .sortedKeys)
         }
-        let curl = request.cURL(pretty: false)
+        
         #if DEBUG
+        let curl = request.cURL(pretty: false)
         debugPrint("curl == \(curl)")
         #endif
         return request
@@ -175,12 +309,21 @@ public extension URLRequest {
 
         if let httpHeaders = allHTTPHeaderFields, httpHeaders.keys.count > 0 {
             for (key, value) in httpHeaders {
+                if key.lowercased() == "content-type" && value.lowercased().contains("multipart/form-data") {
+                    header += (pretty ? "--header " : "-H ") + "\'\(key): \(value)\' \(newLine)"
+                    data = "--data '@image_data'"
+                    continue
+                }
                 header += (pretty ? "--header " : "-H ") + "\'\(key): \(value)\' \(newLine)"
             }
         }
 
-        if let bodyData = httpBody, let bodyString = String(data: bodyData, encoding: .utf8), !bodyString.isEmpty {
-            data = "--data '\(bodyString)'"
+        if data.isEmpty, let bodyData = httpBody {
+            if let bodyString = String(data: bodyData, encoding: .utf8), !bodyString.isEmpty {
+                data = "--data '\(bodyString)'"
+            } else {
+                data = "--data '@binary_data'"
+            }
         }
 
         cURL += method + url + header + data

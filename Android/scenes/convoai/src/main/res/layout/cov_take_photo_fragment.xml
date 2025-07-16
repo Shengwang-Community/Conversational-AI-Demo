@@ -34,7 +34,7 @@
     <LinearLayout
         android:id="@+id/bottom_bar"
         android:layout_width="match_parent"
-        android:layout_height="120dp"
+        android:layout_height="170dp"
         android:background="@color/ai_brand_black10"
         android:orientation="horizontal"
         android:gravity="center_vertical"

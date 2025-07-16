@@ -17,6 +17,7 @@ extension ChatViewController: AgentControlToolbarDelegate {
     
     func getStart() async {
         await clickTheStartButton()
+        updateWindowContent()
     }
     
     func mute(selectedState: Bool) -> Bool{
@@ -24,6 +25,15 @@ extension ChatViewController: AgentControlToolbarDelegate {
     }
     
     func switchPublishVideoStream(state: Bool) {
+        guard let preset = AppContext.preferenceManager()?.preference.preset else {
+            return
+        }
+        
+        if !preset.isSupportVision {
+            SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.visionUnsupportMessage)
+            return
+        }
+        
         if state {
             windowState.showVideo = true
             startRenderLocalVideoStream(renderView: localVideoView)

@@ -12,6 +12,7 @@ import android.widget.ImageView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.util.dp
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.convoaiApi.Transcription
@@ -47,6 +48,20 @@ class CovMessageListView @JvmOverloads constructor(
 
     // Runnable for scrolling to bottom
     private val scrollRunnable = Runnable { scrollToBottom() }
+
+    // Image error click callback
+    /**
+     * Callback invoked when the user clicks the error icon on an image message.
+     * Typically used to trigger a retry of the image upload.
+     */
+    var onImageErrorClickListener: ((Message) -> Unit)? = null
+
+    // Image preview click callback
+    /**
+     * Callback invoked when the user clicks on an image message.
+     * Typically used to preview the image in full screen.
+     */
+    var onImagePreviewClickListener: ((Message) -> Unit)? = null
 
     init {
         setupRecyclerView()
@@ -158,7 +173,8 @@ class CovMessageListView @JvmOverloads constructor(
             isMe = isUser,
             turnId = transcription.turnId,
             content = transcription.text,
-            status = transcription.status
+            status = transcription.status,
+            localTurn = transcription.turnId
         )
         messageAdapter.addOrUpdateMessage(newMessage)
         // Determine if this is a new message (just inserted)
@@ -228,14 +244,15 @@ class CovMessageListView @JvmOverloads constructor(
     /**
      * Message data class (content is text or image path/url)
      */
-    data class Message(
+    data class Message constructor(
         val isMe: Boolean,
         val turnId: Long,
-        var content: String, // For text: text content; for image: local path or url
+        var content: String, // For text: text content; for image: local path
         var status: TranscriptionStatus? = null, // Only for text messages, null for image
         val type: MessageType = MessageType.TEXT,
+        val uuid: String? = null, // Unique local ID for local image messages
+        val localTurn: Long = 0L,
         var uploadStatus: UploadStatus = UploadStatus.NONE, // For image
-        val localId: String? = null // Unique local ID for local image messages
     )
 
     /**
@@ -294,9 +311,7 @@ class CovMessageListView @JvmOverloads constructor(
                     }
                     // Image click for preview
                     imageView.setOnClickListener {
-                        if (message.uploadStatus == UploadStatus.SUCCESS) {
-                            onImagePreviewClickListener?.invoke(message)
-                        }
+                        onImagePreviewClickListener?.invoke(message)
                     }
                 }
             }
@@ -341,9 +356,7 @@ class CovMessageListView @JvmOverloads constructor(
                         onImageErrorClickListener?.invoke(message)
                     }
                     imageView.setOnClickListener {
-                        if (message.uploadStatus == UploadStatus.SUCCESS) {
-                            onImagePreviewClickListener?.invoke(message)
-                        }
+                        onImagePreviewClickListener?.invoke(message)
                     }
                 }
             }
@@ -379,23 +392,17 @@ class CovMessageListView @JvmOverloads constructor(
         fun addLocalImageMessage(message: Message) {
             messages.add(message)
             notifyItemInserted(messages.size - 1)
+            handleScrollAfterUpdate(true)
         }
 
-        /**
-         * Replace a local image message (by localId) with the server message (with turnId).
-         * After replacement, the list is sorted by turnId and user/agent order.
-         * @param serverMessage The message from server (with turnId).
-         * @param localId The localId of the local image message to replace.
-         */
-        fun replaceLocalWithServerImageMessage(serverMessage: Message, localId: String) {
-            val idx = messages.indexOfFirst { it.localId == localId }
+        fun updateLocalImageMessage(uuid: String,status:UploadStatus){
+            val idx = messages.indexOfFirst { it.uuid == uuid }
             if (idx != -1) {
-                messages[idx] = serverMessage
-                messages.sortWith(compareBy<Message> { it.turnId }.thenBy { if (it.isMe) 0 else 1 })
-                notifyDataSetChanged()
-            } else {
-                // Fallback: just add as normal
-                addOrUpdateMessage(serverMessage)
+                val message = messages[idx].copy().apply {
+                    uploadStatus = status
+                }
+                messages[idx] = message
+                notifyItemChanged(idx)
             }
         }
 
@@ -411,14 +418,31 @@ class CovMessageListView @JvmOverloads constructor(
          * @param message The message to add or update.
          */
         fun addOrUpdateMessage(message: Message) {
-            if (message.turnId < 0) return // Only handle messages with valid turnId
             val existIndex = messages.indexOfFirst { it.turnId == message.turnId && it.isMe == message.isMe }
             if (existIndex != -1) {
                 messages[existIndex] = message
                 notifyItemChanged(existIndex)
             } else {
                 messages.add(message)
-                messages.sortWith(compareBy<Message> { it.turnId }.thenBy { if (it.isMe) 0 else 1 })
+                // Sorting rules:
+                // 1. Sort by localTurn ascending
+                // 2. For the same localTurn, server messages (turnId >= 0) come before local messages (turnId < 0)
+                // 3. For server messages: user messages (isMe==true) come before agent messages (isMe==false)
+                // 4. For local messages: smaller absolute value of turnId comes first (-1, -2, -3...)
+                messages.sortWith(
+                    compareBy<Message> { it.localTurn }
+                        .thenByDescending { if (it.turnId >= 0) 1 else 0 } // Server messages first
+                        .thenBy {
+                            if (it.turnId >= 0) {
+                                if (it.isMe) 0 else 1 // For server: user first
+                            } else {
+                                0 // For local messages, isMe is not considered
+                            }
+                        }
+                        .thenBy {
+                            if (it.turnId < 0) it.turnId else 0 // For local: -1, -2, -3... ascending
+                        }
+                )
                 notifyDataSetChanged()
             }
         }
@@ -447,20 +471,6 @@ class CovMessageListView @JvmOverloads constructor(
             notifyDataSetChanged()
         }
 
-        /**
-         * Update upload status for a local image message by localId.
-         * Updates the uploadStatus field and refreshes the item in the adapter.
-         * @param localId The localId of the image message.
-         * @param status The new upload status.
-         */
-        fun updateLocalImageUploadStatus(localId: String, status: UploadStatus) {
-            val idx = messages.indexOfFirst { it.localId == localId }
-            if (idx != -1) {
-                messages[idx].uploadStatus = status
-                notifyItemChanged(idx)
-            }
-        }
-
         // Set image view size according to rules
         private fun setImageViewSize(imageView: ImageView, message: Message) {
             // Get screen width
@@ -468,51 +478,33 @@ class CovMessageListView @JvmOverloads constructor(
             val maxWidth = (metrics.widthPixels * 0.6f).toInt()
             val minSize = 120.dp.toInt()
 
-            // Use Glide to get image size asynchronously if needed
             val imgPath = message.content
-            if (imgPath.isNullOrEmpty()) {
+            if (imgPath.isEmpty()) {
                 val params = imageView.layoutParams
                 params.width = minSize
                 params.height = minSize
                 imageView.layoutParams = params
                 return
             }
-            // Use Glide to get image size
-            io.agora.scene.common.util.GlideImageLoader.load(imageView, imgPath)
-            imageView.post {
-                val drawable = imageView.drawable
-                if (drawable != null) {
-                    val w = drawable.intrinsicWidth
-                    val h = drawable.intrinsicHeight
-                    var targetW = minSize
-                    var targetH = minSize
-                    if (w > h) {
-                        // Wide image
-                        targetW = maxWidth
-                        targetH = (h * (maxWidth.toFloat() / w)).toInt().coerceAtLeast(minSize)
-                    } else {
-                        // Tall image
-                        targetH = maxWidth
-                        targetW = (w * (maxWidth.toFloat() / h)).toInt().coerceAtLeast(minSize)
-                    }
-                    val params = imageView.layoutParams
-                    params.width = targetW
-                    params.height = targetH
-                    imageView.layoutParams = params
+            // Use GlideImageLoader with callback to get real size
+            io.agora.scene.common.util.GlideImageLoader.loadWithSizeCallback(imageView, imgPath, { bitmap, w, h ->
+                var targetW = minSize
+                var targetH = minSize
+                if (w > h) {
+                    // Wide image
+                    targetW = maxWidth
+                    targetH = (h * (maxWidth.toFloat() / w)).toInt().coerceAtLeast(minSize)
                 } else {
-                    val params = imageView.layoutParams
-                    params.width = minSize
-                    params.height = minSize
-                    imageView.layoutParams = params
+                    // Tall image
+                    targetH = maxWidth
+                    targetW = (w * (maxWidth.toFloat() / h)).toInt().coerceAtLeast(minSize)
                 }
-            }
+                val params = imageView.layoutParams
+                params.width = targetW
+                params.height = targetH
+                imageView.layoutParams = params
+            })
         }
-
-        // Image error click callback
-        var onImageErrorClickListener: ((Message) -> Unit)? = null
-
-        // Image preview click callback
-        var onImagePreviewClickListener: ((Message) -> Unit)? = null
     }
 
     /**
@@ -534,43 +526,27 @@ class CovMessageListView @JvmOverloads constructor(
      * and inserts it at the end of the list. Used before the image is uploaded to the server.
      * @param localImagePath The local file path of the image to be uploaded.
      */
-    fun addLocalImageMessage(localImagePath: String) {
-        val localId = UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+    fun addLocalImageMessage(uuid: String, localImagePath: String) {
+
+        // The latest text turnId.
+        val lastTextTurnId = messageAdapter.getAllMessages().findLast { it.type == MessageType.TEXT }?.turnId ?: 0L
+        // The latest image turnId.
+        val lastImageTurnId = messageAdapter.getAllMessages().findLast { it.type == MessageType.IMAGE }?.turnId ?: 0L
+
         val localMsg = Message(
             isMe = true,
-            turnId = -1L,
+            turnId = lastImageTurnId - 1,
             content = localImagePath,
             type = MessageType.IMAGE,
             uploadStatus = UploadStatus.UPLOADING,
-            localId = localId
+            uuid = uuid,
+            localTurn = lastTextTurnId,
         )
         messageAdapter.addLocalImageMessage(localMsg)
     }
 
-    /**
-     * Update the upload status of a local image message by its localId.
-     * Used to reflect upload progress, failure, or success in the UI.
-     * @param localId The unique localId of the image message.
-     * @param status The new upload status (UPLOADING, FAILED, SUCCESS).
-     */
-    fun updateLocalImageUploadStatus(localId: String, status: UploadStatus) {
-        messageAdapter.updateLocalImageUploadStatus(localId, status)
-    }
-
-    /**
-     * Replace a local image message (identified by localId) with the server-confirmed message (with turnId).
-     * This is called after the image is successfully uploaded and the server returns the official message.
-     * @param serverMessage The message from the server, containing a valid turnId and other info.
-     * @param localId The localId of the local image message to be replaced.
-     */
-    fun replaceLocalWithServerImageMessage(serverMessage: Message, localId: String) {
-        messageAdapter.replaceLocalWithServerImageMessage(serverMessage, localId)
-    }
-
-    // Schedule scrolling to bottom with debouncing
-    private fun scheduleScrollToBottom(delayMs: Long = 100) {
-        scrollHandler.removeCallbacks(scrollRunnable)
-        scrollHandler.postDelayed(scrollRunnable, delayMs)
+    fun updateLocalImageMessage(uuid: String,uploadStatus:UploadStatus){
+        messageAdapter.updateLocalImageMessage(uuid,uploadStatus)
     }
 
     /**

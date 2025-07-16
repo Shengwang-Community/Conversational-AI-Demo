@@ -44,7 +44,7 @@ class DigitalHumanCell: UICollectionViewCell {
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         label.textColor = UIColor.white
         label.textAlignment = .left
-        label.numberOfLines = 0
+        label.numberOfLines = 1
         label.isUserInteractionEnabled = false
         return label
     }()
@@ -55,34 +55,6 @@ class DigitalHumanCell: UICollectionViewCell {
         imageView.contentMode = .scaleAspectFit
         imageView.isUserInteractionEnabled = false
         return imageView
-    }()
-    
-    private lazy var disabledIconView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage.ag_named("ic_digital_human_close")
-        imageView.contentMode = .scaleAspectFit
-        imageView.isUserInteractionEnabled = false
-        return imageView
-    }()
-    
-    private lazy var closeTitle: UILabel = {
-        let label = UILabel()
-        label.text = ResourceManager.L10n.Settings.digitalHumanClosed
-        label.textColor = UIColor.themColor(named: "ai_icontext1")
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textAlignment = .center
-        label.isUserInteractionEnabled = false
-        return label
-    }()
-    
-    private lazy var closeStackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [disabledIconView, closeTitle])
-        stackView.axis = .vertical
-        stackView.alignment = .center
-        stackView.spacing = 14
-        stackView.isHidden = true
-        stackView.isUserInteractionEnabled = false
-        return stackView
     }()
     
     // MARK: - Properties
@@ -105,7 +77,6 @@ class DigitalHumanCell: UICollectionViewCell {
     private func setupUI() {
         contentView.addSubview(containerButton)
         containerButton.addSubview(avatarImageView)
-        containerButton.addSubview(closeStackView)
         containerButton.addSubview(nameBackgroundView)
         nameBackgroundView.addSubview(nameLabel)
         nameBackgroundView.addSubview(selectionIndicatorView)
@@ -118,14 +89,6 @@ class DigitalHumanCell: UICollectionViewCell {
         
         avatarImageView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
-        }
-        
-        closeStackView.snp.makeConstraints { make in
-            make.center.equalToSuperview()
-        }
-        
-        disabledIconView.snp.makeConstraints { make in
-            make.width.height.equalTo(32)
         }
                 
         nameBackgroundView.snp.makeConstraints { make in
@@ -158,23 +121,12 @@ class DigitalHumanCell: UICollectionViewCell {
         
         // Set name
         nameLabel.text = digitalHuman.avatar.avatarName
-        // Configure avatar or disabled state
-        if digitalHuman.avatar.avatarId == "close" {
-            // Close option - show disabled icon with dark background
-            avatarImageView.image = nil
-            avatarImageView.backgroundColor = UIColor.systemGray4
-            closeStackView.isHidden = false
-            nameBackgroundView.isHidden = true
+        
+        // Load avatar image
+        if let url = URL(string: digitalHuman.avatar.thumbImageUrl) {
+            avatarImageView.af.setImage(withURL: url)
         } else {
-            // Normal digital human - show avatar
-            avatarImageView.backgroundColor = UIColor.clear
-            closeStackView.isHidden = true
-            if let url = URL(string: digitalHuman.avatar.avatarUrl) {
-                avatarImageView.af.setImage(withURL: url)
-            } else {
-                avatarImageView.image = nil
-            }
-            nameBackgroundView.isHidden = false
+            avatarImageView.image = nil
         }
         
         // Update selection state
@@ -188,14 +140,8 @@ class DigitalHumanCell: UICollectionViewCell {
             // Selected state
             containerButton.layer.borderColor = UIColor.themColor(named: "ai_brand_main6").cgColor
             selectionIndicatorView.image = UIImage.ag_named("ic_digital_human_circle_s")
-            if digitalHuman.avatar.avatarId == "close" {
-                disabledIconView.image = UIImage.ag_named("ic_digital_human_close_s")
-                closeTitle.textColor = UIColor.themColor(named: "ai_brand_main6")
-            }
         } else {
             // Unselected state
-            disabledIconView.image = UIImage.ag_named("ic_digital_human_close")
-            closeTitle.textColor = UIColor.themColor(named: "ai_icontext1")
             containerButton.layer.borderColor = UIColor.clear.cgColor
             selectionIndicatorView.image = UIImage.ag_named("ic_digital_human_circle")
         }

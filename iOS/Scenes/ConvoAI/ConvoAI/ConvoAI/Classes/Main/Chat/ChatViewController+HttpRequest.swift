@@ -220,7 +220,7 @@ extension ChatViewController {
 
         if let _ = AppContext.preferenceManager()?.preference.avatar {
             addLog("will start avatar, avatar id: \(avatarUid)")
-            startShowAvatar()
+            startRenderRemoteVideoStream()
         }
         
         agentManager.startAgent(parameters: parameters, channelName: channelName) { [weak self] error, channelName, remoteAgentId, targetServer in

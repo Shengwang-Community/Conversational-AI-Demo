@@ -34,10 +34,12 @@ enum class Priority {
      * High priority - Immediately interrupt the current interaction and process this message. Suitable for urgent or time-sensitive content.
      */
     INTERRUPT,
+
     /**
      * Medium priority - Queued for processing after the current interaction completes. Suitable for follow-up questions.
      */
     APPEND,
+
     /**
      * Low priority - Only processed when the agent is idle. Will be discarded during ongoing interactions. Suitable for optional content.
      */
@@ -86,6 +88,43 @@ data class ChatMessage(
     val audioUrl: String? = null
 )
 
+// Base class for all media information types
+sealed class MediaInfo
+
+/**
+ * Image information data class, extends MediaInfo
+ * @property uuid Unique identifier for the image
+ * @property width Image width in pixels
+ * @property height Image height in pixels
+ * @property sizeBytes Image file size in bytes
+ * @property sourceType Source type of the image (e.g., local, remote)
+ * @property sourceValue Source value (e.g., file path or URL)
+ * @property uploadTime Upload timestamp in milliseconds
+ * @property totalUserImages Total number of user images
+ */
+data class ImageInfo(
+    val uuid: String,
+    val width: Int,
+    val height: Int,
+    val sizeBytes: Long,
+    val sourceType: String,
+    val sourceValue: String,
+    val uploadTime: Long,
+    val totalUserImages: Int,
+) : MediaInfo()
+
+/**
+ * Message receipt data class, supports multiple media types via MediaInfo
+ * @property type The module type (e.g., text, image, audio)
+ * @property turnId The turn ID of the message
+ * @property media The media information, can be ImageInfo, AudioInfo, etc.
+ */
+data class MessageReceipt(
+    val type: ModuleType,
+    val turnId: Long,
+    var media: MediaInfo? = null
+)
+
 /**
  * Agent State Enum
  *
@@ -100,12 +139,16 @@ data class ChatMessage(
 enum class AgentState(val value: String) {
     /** Agent is silent */
     SILENT("silent"),
+
     /** Agent is listening */
     LISTENING("listening"),
+
     /** Agent is processing/thinking */
     THINKING("thinking"),
+
     /** Agent is speaking */
     SPEAKING("speaking"),
+
     /** Unknown state */
     UNKNOWN("unknown");
 
@@ -170,10 +213,15 @@ data class InterruptEvent(
 enum class ModuleType(val value: String) {
     /** LLM inference latency */
     LLM("llm"),
+
     /** MLLM inference latency */
     MLLM("mllm"),
+
     /** Text-to-speech synthesis latency */
     TTS("tts"),
+
+    Context("context"),
+
     /** Unknown type */
     UNKNOWN("unknown");
 
@@ -185,6 +233,21 @@ enum class ModuleType(val value: String) {
          */
         fun fromValue(value: String): ModuleType {
             return ModuleType.entries.find { it.value == value } ?: UNKNOWN
+        }
+    }
+}
+
+enum class ResourceType(val value: String) {
+    /** picture */
+    PICTURE("picture"),
+
+    /** Unknown type */
+    UNKNOWN("unknown");
+
+    companion object {
+
+        fun fromValue(value: String): ResourceType {
+            return ResourceType.entries.find { it.value == value } ?: UNKNOWN
         }
     }
 }
@@ -231,8 +294,33 @@ data class ModuleError(
     /** Error description message providing detailed error explanation */
     val message: String,
     /** Error occurrence timestamp (milliseconds since epoch, i.e., since January 1, 1970 UTC) */
-    val timestamp: Long
+    val timestamp: Long,
+    /** Optional: turnId for the image (used for image upload errors) */
+    val turnId: Long? = null,
+    /** Optional: Unique identifier for the image (used for image upload errors) */
+    var resourceError: ResourceError? = null,
 )
+
+/**
+ * Sealed base class for resource error types.
+ * Extend this class to represent specific resource errors (e.g., picture, audio, etc.).
+ */
+sealed class ResourceError
+
+/**
+ * Picture error data class, extends ResourceError.
+ * Used to represent errors related to image resources.
+ * @property uuid Unique identifier for the image
+ * @property success Whether the operation was successful
+ * @property errorCode Error code if the operation failed
+ * @property errorMessage Error message if the operation failed
+ */
+data class PictureError(
+    val uuid: String,
+    val success: Boolean,
+    val errorCode: Int?,
+    val errorMessage: String?
+) : ResourceError()
 
 /**
  * Message type enum
@@ -249,14 +337,22 @@ data class ModuleError(
 enum class MessageType(val value: String) {
     /** AI assistant transcription message */
     ASSISTANT("assistant.transcription"),
+
     /** User transcription message */
     USER("user.transcription"),
+
     /** Error message */
     ERROR("message.error"),
+
     /** Performance metrics message */
     METRICS("message.metrics"),
+
     /** Interrupt message */
     INTERRUPT("message.interrupt"),
+
+    /** Message receipt*/
+    MESSAGE_RECEIPT("message.info"),
+
     /** Unknown type */
     UNKNOWN("unknown");
 
@@ -281,6 +377,7 @@ enum class MessageType(val value: String) {
 enum class TranscriptionRenderMode {
     /** Word-by-word transcription rendering */
     Word,
+
     /** Full text transcription rendering */
     Text
 }
@@ -294,7 +391,7 @@ enum class TranscriptionRenderMode {
  * @property status Current status of the transcription
  * @property type Transcription type (AGENT/USER)
  */
-data class Transcription(
+data class Transcription constructor(
     /** Unique identifier for the conversation turn */
     val turnId: Long,
     /** User identifier associated with this transcription */
@@ -304,7 +401,7 @@ data class Transcription(
     /** Current status of the transcription */
     var status: TranscriptionStatus,
     /** Transcription type (AGENT/USER) */
-    var type: TranscriptionType
+    var type: TranscriptionType,
 )
 
 /**
@@ -316,6 +413,7 @@ data class Transcription(
 enum class TranscriptionType {
     /** AI assistant transcription */
     AGENT,
+
     /** User transcription */
     USER
 }
@@ -331,10 +429,13 @@ enum class TranscriptionType {
 enum class TranscriptionStatus {
     /** Transcription is still being generated or spoken */
     IN_PROGRESS,
+
     /** Transcription has completed normally */
     END,
+
     /** Transcription was interrupted before completion */
     INTERRUPTED,
+
     /** Unknown status */
     UNKNOWN
 }
@@ -373,8 +474,10 @@ data class ConversationalAIAPIConfig(
 sealed class ConversationalAIAPIError : Exception() {
     /** RTM layer error */
     data class RtmError(val code: Int, val msg: String) : ConversationalAIAPIError()
+
     /** RTC layer error */
     data class RtcError(val code: Int, val msg: String) : ConversationalAIAPIError()
+
     /** Unknown error */
     data class UnknownError(val msg: String) : ConversationalAIAPIError()
 
@@ -435,6 +538,13 @@ interface IConversationalAIAPIEventHandler {
      * @param error AI error
      */
     fun onAgentError(agentUserId: String, error: ModuleError)
+
+    /**
+     * Called when message receipt is updated
+     * @param agentUserId Agent User ID
+     * @param receipt message receipt info
+     */
+    fun onMessageReceiptUpdated(agentUserId: String, receipt: MessageReceipt)
 
     /**
      * Called when transcription content is updated.
@@ -501,6 +611,20 @@ interface IConversationalAIAPI {
     fun chat(agentUserId: String, message: ChatMessage, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
+     * Send an image message to the agent.
+     * @param agentUserId Agent User ID
+     * @param uuid Unique identifier for the image
+     * @param imageUrl URL of the uploaded image
+     * @param completion Callback invoked when the upload completes or fails. Returns an error if failed, or null if successful.
+     */
+    fun sendImage(
+        agentUserId: String,
+        uuid: String,
+        imageUrl: String,
+        completion: (error: ConversationalAIAPIError?) -> Unit
+    )
+
+    /**
      * Interrupt the AI agent's speaking.
      * @param agentUserId Agent user ID
      * @param completion Callback, error is null on success, non-null on failure
@@ -508,7 +632,7 @@ interface IConversationalAIAPI {
     fun interrupt(agentUserId: String, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
-     * Set audio parameters for optimal AI conversation performance. 
+     * Set audio parameters for optimal AI conversation performance.
      *
      * WARNING: This method MUST be called BEFORE rtcEngine.joinChannel().
      * If you do not call loadAudioSettings before joining the RTC channel, the audio quality for AI conversation may be suboptimal or incorrect.

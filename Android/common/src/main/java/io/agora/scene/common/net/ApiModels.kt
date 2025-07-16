@@ -27,3 +27,7 @@ data class SSOUserInfo constructor(
     val companyName: String = "",
     val companyCountry: String = "",
 ) : BaseResponse<SSOUserInfo>()
+
+data class UploadImage constructor(
+    val img_url: String
+) : BaseResponse<UploadImage>()

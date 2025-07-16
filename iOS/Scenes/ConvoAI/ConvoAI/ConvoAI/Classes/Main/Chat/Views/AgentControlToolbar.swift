@@ -81,7 +81,6 @@ class AgentControlToolbar: UIView {
         button.clipsToBounds = true
         button.setImage(UIImage.ag_named("ic_agent_close"), for: .normal)
         button.setBackgroundColor(color: UIColor.themColor(named: "ai_block1"), forState: .normal)
-        
         return button
     }()
     
@@ -118,9 +117,6 @@ class AgentControlToolbar: UIView {
         button.clipsToBounds = true
         button.setImage(UIImage.ag_named("ic_video_disable_icon"), for: .normal)
         button.setImage(UIImage.ag_named("ic_video_enable_icon"), for: .selected)
-        if let color = UIColor(hex: 0x333333) {
-            button.setBackgroundImage(UIImage(color: color, size: CGSize(width: 1, height: 1)), for: .normal)
-        }
         button.setBackgroundColor(color: UIColor.themColor(named: "ai_block1"), forState: .normal)
 
         return button
@@ -138,14 +134,43 @@ class AgentControlToolbar: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        
+        registerDelegate()
         setupViews()
         setupConstraints()
+        loadData()
         style = .startButton
+    }
+    
+    func loadData() {
+        updateVideoButtonColor()
+    }
+    
+    func updateVideoButtonColor() {
+        guard let preset = AppContext.preferenceManager()?.preference.preset else {
+            return
+        }
+        
+        if !preset.isSupportVision {
+            videoButton.alpha = 0.5
+        } else {
+            videoButton.alpha = 1
+        }
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    func registerDelegate() {
+        AppContext.preferenceManager()?.addDelegate(self)
+    }
+    
+    func deregisterDelegate() {
+        AppContext.preferenceManager()?.removeDelegate(self)
+    }
+    
+    deinit {
+        deregisterDelegate()
     }
     
     func resetState() {
@@ -295,6 +320,17 @@ class AgentControlToolbar: UIView {
         }
     }
     
+    func setButtonColorTheme(showLight: Bool) {
+        var color = UIColor.themColor(named: "ai_block1")
+        if showLight {
+            color = UIColor.themColor(named: "ai_brand_black4")
+        }
+        
+        muteButton.setBackgroundColor(color: color, forState: .normal)
+        closeButton.setBackgroundColor(color: color, forState: .normal)
+        videoButton.setBackgroundColor(color: color, forState: .normal)
+    }
+    
     @objc private func hangUpAction() {
         resetState()
         delegate?.hangUp()
@@ -335,5 +371,11 @@ class AgentControlToolbar: UIView {
             self.setNeedsLayout()
             self.layoutIfNeeded()
         }
+    }
+}
+
+extension AgentControlToolbar: AgentPreferenceManagerDelegate {
+    func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset) {
+        updateVideoButtonColor()
     }
 }

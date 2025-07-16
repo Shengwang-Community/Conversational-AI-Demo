@@ -90,6 +90,15 @@ class CovDraggableView @JvmOverloads constructor(
                         val currentTime = System.currentTimeMillis()
                         if (currentTime - touchDownTime < clickInterval) {
                             onViewClick?.invoke()
+                        }else{
+                            val parent = parent as ViewGroup
+                            val params = layoutParams as FrameLayout.LayoutParams
+                            // Keep current top position, but clamp to parent bounds
+                            params.topMargin = top.coerceIn(0, parent.height - height)
+                            // Stick to the right edge
+                            params.leftMargin = parent.width - width
+                            layoutParams = params
+                            requestLayout()
                         }
                         return true
                     }
