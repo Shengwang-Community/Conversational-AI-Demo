@@ -169,6 +169,9 @@ fi
 if [[ "${toolbox_url}" == *"staging"* ]]; then
   echo "Using staging environment APP_ID (staging)"
   APP_ID_VAR=${APP_ID_STAGING}
+elif [[ "${toolbox_url}" == *"dev"* ]]; then
+  echo "Using dev environment APP_ID (dev)"
+  APP_ID_VAR=${APP_ID_DEV}
 else
   echo "Using production environment APP_ID (prod)"
   APP_ID_VAR=${APP_ID_PROD}

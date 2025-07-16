@@ -52,6 +52,9 @@
                 android:textColor="@color/white"
                 android:textSize="13sp"
                 android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:gravity="end"
                 tools:text="Bob" />
 
             <View

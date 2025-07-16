@@ -33,6 +33,8 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
     // Input parameters
     private var currentAvatar: CovAvatar? = null
 
+    private var selectedAvatar: AvatarItem? = null
+
     companion object {
         private const val TAG = "CovAvatarSelectorDialog"
         private const val ARG_AVATAR = "arg_avatar"
@@ -69,7 +71,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        isCancelable = false
         // Get input parameters
         arguments?.let {
             currentAvatar = it.getParcelable(ARG_AVATAR) as? CovAvatar
@@ -82,6 +84,11 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
             // Set back button click listener
             ivBack.setOnClickListener {
+                selectedAvatar?.let { selected->
+                    if (selected.covAvatar?.avatar_id!=currentAvatar?.avatar_id){
+                        onAvatarSelectedCallback?.invoke(selected)
+                    }
+                }
                 dismiss()
             }
 
@@ -145,9 +152,8 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
             )
         }
 
-        avatarAdapter.updateAvatars(avatarList) { selectedAvatar ->
-            onAvatarSelectedCallback?.invoke(selectedAvatar)
-            dismiss()
+        avatarAdapter.updateAvatars(avatarList) { avatar ->
+            selectedAvatar = avatar
         }
     }
 
@@ -241,12 +247,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
                                 // Update selection state
                                 notifyItemChanged(oldPosition)
                                 notifyItemChanged(selectedPosition)
-
-                                // Delay 500ms to show selection effect before callback
-                                lifecycleScope.launch {
-                                    delay(500)
-                                    onItemClickListener?.invoke(avatar)
-                                }
+                                onItemClickListener?.invoke(avatar)
                             }
                         }
                     })
@@ -270,7 +271,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
                     GlideImageLoader.load(
                         ivAvatar,
-                        covAvatar?.avatar_url,
+                        covAvatar?.thumb_img_url,
                         null,
                         io.agora.scene.convoai.R.drawable.cov_default_avatar
                     )
