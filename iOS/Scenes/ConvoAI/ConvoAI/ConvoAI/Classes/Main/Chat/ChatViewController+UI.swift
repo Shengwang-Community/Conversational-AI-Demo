@@ -15,7 +15,11 @@ class ChatWindowState {
     
     func reset() {
         showTranscription = false
-        showAvatar = false
+        if let _ = AppContext.preferenceManager()?.preference.avatar {
+            showAvatar = true
+        } else {
+            showAvatar = false
+        }
         showVideo = false
     }
 }
@@ -23,7 +27,7 @@ class ChatWindowState {
 extension ChatViewController {
     internal func setupViews() {
         view.backgroundColor = .black
-        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, topBar, welcomeMessageView, bottomBar, annotationView, devModeButton, sendMessageButton].forEach { view.addSubview($0) }
+        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, topBar, welcomeMessageView, bottomBar, volumeAnimateView, annotationView, devModeButton, sendMessageButton].forEach { view.addSubview($0) }
         [localVideoView].forEach { fullSizeContainerView.addSubview($0) }
         [remoteAvatarView].forEach { smallSizeContainerView.addSubview($0) }
     }
@@ -33,6 +37,11 @@ extension ChatViewController {
             make.top.equalTo(view.safeAreaLayoutGuide.snp.top).offset(5)
             make.left.right.equalToSuperview()
             make.height.equalTo(48)
+        }
+        
+        volumeAnimateView.snp.makeConstraints { make in
+            make.top.equalTo(topBar.snp.bottom).offset(0)
+            make.centerX.equalToSuperview()
         }
         
         animateContentView.snp.makeConstraints { make in
@@ -176,6 +185,7 @@ extension ChatViewController {
         animateContentView.isHidden = true
         if showTranscription {
             if showAvatar, showVideo {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = false
                 upperBackgroundView.isHidden = true
@@ -190,6 +200,7 @@ extension ChatViewController {
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
             } else if showAvatar {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = true
                 upperBackgroundView.isHidden = true
@@ -199,6 +210,7 @@ extension ChatViewController {
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
             } else if showVideo {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = true
                 smallSizeContainerView.isHidden = false
                 upperBackgroundView.isHidden = true
@@ -208,6 +220,7 @@ extension ChatViewController {
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
             } else {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = true
                 smallSizeContainerView.isHidden = true
                 upperBackgroundView.isHidden = false
@@ -216,6 +229,7 @@ extension ChatViewController {
             }
         } else {
             if showAvatar, showVideo {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = false
                 upperBackgroundView.isHidden = true
@@ -230,6 +244,7 @@ extension ChatViewController {
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
             } else if showAvatar {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = true
                 upperBackgroundView.isHidden = true
@@ -244,10 +259,12 @@ extension ChatViewController {
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
                 fullSizeContainerView.addSubview(localVideoView)
+                volumeAnimateView.isHidden = false
                 localVideoView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
             } else {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = true
                 smallSizeContainerView.isHidden = true
                 upperBackgroundView.isHidden = false
@@ -264,6 +281,9 @@ extension ChatViewController {
         }
         
         button.addTarget(self, action: #selector(smallWindowClicked), for: .touchUpInside)
+        let isLight = !fullSizeContainerView.isHidden && !showTranscription
+        bottomBar.setButtonColorTheme(showLight: isLight)
+        topBar.setButtonColorTheme(showLight: isLight)
     }
     
     @objc func smallWindowClicked() {

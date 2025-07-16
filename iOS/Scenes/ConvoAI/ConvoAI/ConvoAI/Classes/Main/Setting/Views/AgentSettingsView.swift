@@ -83,7 +83,7 @@ class AgentSettingsView: UIView {
         }
         
         // Add avatar image
-        if let avatar = AppContext.preferenceManager()?.preference.avatar, let url = URL(string: avatar.avatarUrl) {
+        if let avatar = AppContext.preferenceManager()?.preference.avatar, let url = URL(string: avatar.thumbImageUrl) {
             avatarImageView.af.setImage(withURL: url)
         }
         avatarImageView.contentMode = .scaleAspectFill
@@ -274,7 +274,7 @@ class AgentSettingsView: UIView {
     func updateAvatar(_ avatar: Avatar?) {
         if let avatar = avatar {
             digitalHumanItem.detailLabel.text = avatar.avatarName
-            if let url = URL(string: avatar.avatarUrl) {
+            if let url = URL(string: avatar.thumbImageUrl) {
                 avatarImageView.af.setImage(withURL: url)
             } else {
                 avatarImageView.image = nil

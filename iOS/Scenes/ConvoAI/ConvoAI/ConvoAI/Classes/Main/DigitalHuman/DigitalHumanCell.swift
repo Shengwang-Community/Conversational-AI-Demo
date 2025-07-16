@@ -123,7 +123,7 @@ class DigitalHumanCell: UICollectionViewCell {
         nameLabel.text = digitalHuman.avatar.avatarName
         
         // Load avatar image
-        if let url = URL(string: digitalHuman.avatar.avatarUrl) {
+        if let url = URL(string: digitalHuman.avatar.thumbImageUrl) {
             avatarImageView.af.setImage(withURL: url)
         } else {
             avatarImageView.image = nil
