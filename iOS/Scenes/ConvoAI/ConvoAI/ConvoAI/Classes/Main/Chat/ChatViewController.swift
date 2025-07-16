@@ -86,6 +86,7 @@ public class ChatViewController: UIViewController {
         let view = AgentSettingBar()
         view.infoListButton.addTarget(self, action: #selector(onClickInformationButton), for: .touchUpInside)
         view.settingButton.addTarget(self, action: #selector(onClickSettingButton), for: .touchUpInside)
+        view.wifiInfoButton.addTarget(self, action: #selector(onClickWifiInfoButton), for: .touchUpInside)
         view.addButton.addTarget(self, action: #selector(onClickAddButton), for: .touchUpInside)
         view.transcriptionButton.addTarget(self, action: #selector(onClickTranscriptionButton(_:)), for: .touchUpInside)
         view.centerTitleButton.addTarget(self, action: #selector(onClickLogo), for: .touchUpInside)

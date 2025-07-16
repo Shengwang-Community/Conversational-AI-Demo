@@ -57,7 +57,8 @@ class AgentSettingsView: UIView {
     
     private lazy var avatarImageView: UIImageView = {
         let imageView = UIImageView()
-        if let state = AppContext.preferenceManager()?.information.agentState, state != .unload {
+        if let state = AppContext.preferenceManager()?.information.agentState, state != .unload,
+           let _ = AppContext.preferenceManager()?.preference.avatar {
             let view = UIView()
             view.backgroundColor = UIColor.black.withAlphaComponent(0.3)
             imageView.addSubview(view)
@@ -157,6 +158,11 @@ class AgentSettingsView: UIView {
         super.init(frame: frame)
         setupViews()
         setupConstraints()
+        loadData()
+    }
+    
+    func loadData() {
+        updateAvatar(AppContext.preferenceManager()?.preference.avatar)
     }
     
     required init?(coder: NSCoder) {

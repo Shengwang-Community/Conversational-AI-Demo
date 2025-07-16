@@ -18,7 +18,7 @@ class ImagePreviewViewController: UIViewController {
     init(image: UIImage) {
         self.scrollView = UIScrollView()
         self.imageView = UIImageView(image: image)
-        self.closeButton = UIButton(type: .system)
+        self.closeButton = UIButton(type: .custom)
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -50,9 +50,7 @@ class ImagePreviewViewController: UIViewController {
         
         // Setup close button
         closeButton.setImage(UIImage.ag_named("ic_preview_close_icon"), for: .normal)
-        closeButton.tintColor = .white
-        closeButton.backgroundColor = UIColor.black.withAlphaComponent(0.6)
-        closeButton.layer.cornerRadius = 22
+        closeButton.layer.cornerRadius = 16
         closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
         
         view.addSubview(scrollView)
@@ -74,7 +72,7 @@ class ImagePreviewViewController: UIViewController {
         closeButton.snp.makeConstraints { make in
             make.top.equalTo(view.safeAreaLayoutGuide).offset(16)
             make.left.equalToSuperview().offset(16)
-            make.size.equalTo(CGSize(width: 44, height: 44))
+            make.size.equalTo(CGSize(width: 32, height: 32))
         }
     }
     

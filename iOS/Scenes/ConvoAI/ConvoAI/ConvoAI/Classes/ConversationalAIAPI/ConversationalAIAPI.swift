@@ -429,11 +429,23 @@ public enum MessageType: String, CaseIterable {
     }
 }
 
+/// Message receipt model
+/// Used for tracking message processing status and metadata
+/// Contains type, image information, and turn ID
 @objc public class MessageReceipt: NSObject, Codable {
+    /// Message type    
     @objc public let type: ModuleType 
+    /// Image information 
     @objc public let message: ImageInfo
+    /// Conversation turn ID, used to identify specific conversation rounds
     @objc public let turnId: Int
-    @objc init(type: ModuleType, message: ImageInfo, turnId: Int) {
+
+    /// Initialize a message receipt object
+    /// - Parameters:
+    ///   - type: Message type
+    ///   - message: Image information
+    ///   - turnId: Turn ID
+    @objc public init(type: ModuleType, message: ImageInfo, turnId: Int) {
         self.type = type
         self.message = message
         self.turnId = turnId

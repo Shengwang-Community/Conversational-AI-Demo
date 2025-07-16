@@ -17,7 +17,9 @@ class AgentSettingViewController: UIViewController {
     weak var rtcManager: RTCManager!
     var channelName = ""
     
-    private var currentTabIndex = 1
+    var currentTabIndex = 1
+    
+    // MARK: - Public Methods
     
     private lazy var tabSelectorView: TabSelectorView = {
         let view = TabSelectorView()
@@ -95,10 +97,11 @@ class AgentSettingViewController: UIViewController {
     
     private func setupTabSelector() {
         let tabItems = [
-            TabSelectorView.TabItem(title: ResourceManager.L10n.ChannelInfo.subtitle, iconName: "ic_agent_net_0"),
+            TabSelectorView.TabItem(title: ResourceManager.L10n.ChannelInfo.subtitle, iconName: "ic_wifi_setting_icon"),
             TabSelectorView.TabItem(title: ResourceManager.L10n.Settings.title, iconName: "ic_agent_setting")
         ]
         tabSelectorView.configure(with: tabItems, selectedIndex: currentTabIndex)
+        switchToTab(index: currentTabIndex)
     }
     
     private func switchToTab(index: Int) {

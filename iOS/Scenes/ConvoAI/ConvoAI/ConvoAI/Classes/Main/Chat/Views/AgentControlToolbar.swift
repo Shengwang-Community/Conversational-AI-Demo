@@ -81,7 +81,6 @@ class AgentControlToolbar: UIView {
         button.clipsToBounds = true
         button.setImage(UIImage.ag_named("ic_agent_close"), for: .normal)
         button.setBackgroundColor(color: UIColor.themColor(named: "ai_block1"), forState: .normal)
-        
         return button
     }()
     
@@ -118,9 +117,6 @@ class AgentControlToolbar: UIView {
         button.clipsToBounds = true
         button.setImage(UIImage.ag_named("ic_video_disable_icon"), for: .normal)
         button.setImage(UIImage.ag_named("ic_video_enable_icon"), for: .selected)
-        if let color = UIColor(hex: 0x333333) {
-            button.setBackgroundImage(UIImage(color: color, size: CGSize(width: 1, height: 1)), for: .normal)
-        }
         button.setBackgroundColor(color: UIColor.themColor(named: "ai_block1"), forState: .normal)
 
         return button
@@ -314,6 +310,17 @@ class AgentControlToolbar: UIView {
         Task {
             await delegate?.getStart()
         }
+    }
+    
+    func setButtonColorTheme(isShowAvatar: Bool, isShowVideo: Bool) {
+        var color = UIColor.themColor(named: "ai_block1")
+        if isShowAvatar || isShowVideo {
+            color = UIColor.themColor(named: "ai_brand_black4")
+        }
+        
+        muteButton.setBackgroundColor(color: color, forState: .normal)
+        closeButton.setBackgroundColor(color: color, forState: .normal)
+        videoButton.setBackgroundColor(color: color, forState: .normal)
     }
     
     @objc private func hangUpAction() {

@@ -17,6 +17,7 @@ extension ChatViewController: AgentControlToolbarDelegate {
     
     func getStart() async {
         await clickTheStartButton()
+        bottomBar.setButtonColorTheme(isShowAvatar: windowState.showAvatar, isShowVideo: false)
     }
     
     func mute(selectedState: Bool) -> Bool{
@@ -27,9 +28,11 @@ extension ChatViewController: AgentControlToolbarDelegate {
         if state {
             windowState.showVideo = true
             startRenderLocalVideoStream(renderView: localVideoView)
+            bottomBar.setButtonColorTheme(isShowAvatar: false, isShowVideo: windowState.showVideo)
         } else {
             windowState.showVideo = false
             stopRenderLocalVideoStream()
+            bottomBar.setButtonColorTheme(isShowAvatar: false, isShowVideo: windowState.showVideo)
         }
         
         updateWindowContent()

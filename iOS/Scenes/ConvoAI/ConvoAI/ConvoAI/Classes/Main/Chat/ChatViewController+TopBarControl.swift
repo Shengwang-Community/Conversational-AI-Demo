@@ -12,10 +12,21 @@ extension ChatViewController {
         AgentInformationViewController.show(in: self, rtcManager: rtcManager)
     }
     
+    @objc internal func onClickWifiInfoButton() {
+        let settingVC = AgentSettingViewController()
+        settingVC.agentManager = agentManager
+        settingVC.rtcManager = rtcManager
+        settingVC.currentTabIndex = 0
+        let navigationController = UINavigationController(rootViewController: settingVC)
+        navigationController.modalPresentationStyle = .overFullScreen
+        present(navigationController, animated: false)
+    }
+    
     @objc internal func onClickSettingButton() {
         let settingVC = AgentSettingViewController()
         settingVC.agentManager = agentManager
         settingVC.rtcManager = rtcManager
+        settingVC.currentTabIndex = 1
         let navigationController = UINavigationController(rootViewController: settingVC)
         navigationController.modalPresentationStyle = .overFullScreen
         present(navigationController, animated: false)

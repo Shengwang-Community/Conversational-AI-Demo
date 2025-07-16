@@ -11,6 +11,7 @@ import UIKit
 
 // MARK: - Data Model
 struct DigitalHuman {
+    static let closeTag = "close"
     let avatar: Avatar
     let isAvailable: Bool
     var isSelected: Bool
@@ -32,6 +33,7 @@ class DigitalHumanViewController: BaseViewController {
         collectionView.delegate = self
         collectionView.dataSource = self
         collectionView.register(DigitalHumanCell.self, forCellWithReuseIdentifier: DigitalHumanCell.identifier)
+        collectionView.register(DigitalHumanCloseCell.self, forCellWithReuseIdentifier: DigitalHumanCloseCell.identifier)
         return collectionView
     }()
     
@@ -76,7 +78,7 @@ class DigitalHumanViewController: BaseViewController {
             digitalHumans = avatars
         }
         
-        let closeCard = DigitalHuman(avatar: Avatar(vendor: "", avatarId: "close", avatarName: "", avatarUrl: ""), isAvailable: true, isSelected: !selectedTag)
+        let closeCard = DigitalHuman(avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "", avatarUrl: ""), isAvailable: true, isSelected: !selectedTag)
         digitalHumans.insert(closeCard, at: 0)
     }
     
@@ -100,17 +102,31 @@ extension DigitalHumanViewController: UICollectionViewDataSource {
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: DigitalHumanCell.identifier, for: indexPath) as! DigitalHumanCell
-        
         let digitalHuman = digitalHumans[indexPath.item]
-        cell.configure(with: digitalHuman)
         
-        // Handle selection callback
-        cell.onSelectionChanged = { [weak self] selectedDigitalHuman in
-            self?.handleDigitalHumanSelection(selectedDigitalHuman)
+        if digitalHuman.avatar.avatarId == DigitalHuman.closeTag {
+            // Use DigitalHumanCloseCell for close option
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: DigitalHumanCloseCell.identifier, for: indexPath) as! DigitalHumanCloseCell
+            cell.configure(with: digitalHuman)
+            
+            // Handle selection callback
+            cell.onSelectionChanged = { [weak self] selectedDigitalHuman in
+                self?.handleDigitalHumanSelection(selectedDigitalHuman)
+            }
+            
+            return cell
+        } else {
+            // Use DigitalHumanCell for normal digital humans
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: DigitalHumanCell.identifier, for: indexPath) as! DigitalHumanCell
+            cell.configure(with: digitalHuman)
+            
+            // Handle selection callback
+            cell.onSelectionChanged = { [weak self] selectedDigitalHuman in
+                self?.handleDigitalHumanSelection(selectedDigitalHuman)
+            }
+            
+            return cell
         }
-        
-        return cell
     }
 }
 
@@ -140,8 +156,11 @@ extension DigitalHumanViewController {
         // Reload collection view to update UI
         collectionView.reloadData()
         
-        print("Selected digital human: \(selectedDigitalHuman.avatar.avatarName)")
-        
-        AppContext.preferenceManager()?.updateAvatar(selectedDigitalHuman.avatar)
+        print("Selected digital human: \(selectedDigitalHuman.avatar.avatarName), avatar id: \(selectedDigitalHuman.avatar.avatarId)")
+        if selectedDigitalHuman.avatar.avatarId == DigitalHuman.closeTag {
+            AppContext.preferenceManager()?.updateAvatar(nil)
+        } else {
+            AppContext.preferenceManager()?.updateAvatar(selectedDigitalHuman.avatar)
+        }
     }
 }

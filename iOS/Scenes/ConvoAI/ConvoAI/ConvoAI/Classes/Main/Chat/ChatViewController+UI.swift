@@ -277,6 +277,6 @@ extension ChatViewController {
 
 extension ChatViewController: ChatViewDelegate {
     func resendImage(image: UIImage, uuid: String) {
-        sendImage(image: image, uuid: uuid)
+        sendImage(image: image, isResend: true, uuid: uuid)
     }
 }
