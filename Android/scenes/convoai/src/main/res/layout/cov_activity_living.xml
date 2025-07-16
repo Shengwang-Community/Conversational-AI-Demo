@@ -54,16 +54,16 @@
         android:id="@+id/iv_avatar_preview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:visibility="visible"
         android:background="@color/ai_fill2"
         android:scaleType="centerCrop"
-        android:visibility="gone" />
+        android:visibility="gone"
+        tools:visibility="visible" />
 
     <io.agora.scene.convoai.ui.widget.CovDraggableView
         android:id="@+id/vDragBigWindow"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone"/>
+        android:visibility="gone" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layout_message"
@@ -76,7 +76,7 @@
             android:id="@+id/viewMessageMask"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/ai_mask1"/>
+            android:background="@color/ai_mask1" />
 
         <io.agora.scene.convoai.ui.widget.SelfMessageListView
             android:id="@+id/messageListViewV1"
@@ -183,11 +183,11 @@
         android:id="@+id/agent_speaking_indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/cl_top"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         android:visibility="gone"
-        tools:visibility="visible"/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cl_top"
+        tools:visibility="visible" />
 
     <include
         android:id="@+id/cl_bottom_not_logged"
@@ -200,14 +200,18 @@
         app:layout_constraintBottom_toBottomOf="parent"
         tools:visibility="gone" />
 
-    <io.agora.scene.convoai.ui.widget.CovDraggableView
-        android:id="@+id/vDragSmallWindow"
-        android:layout_width="90dp"
-        android:layout_height="130dp"
-        android:layout_gravity="end"
-        android:layout_marginTop="200dp"
-        android:layout_marginEnd="10dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <io.agora.scene.convoai.ui.widget.CovDraggableView
+            android:id="@+id/vDragSmallWindow"
+            android:layout_width="90dp"
+            android:layout_height="130dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="200dp"
+            android:layout_marginEnd="10dp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+    </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

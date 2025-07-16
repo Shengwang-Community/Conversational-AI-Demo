@@ -212,18 +212,10 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 )
             }
             clTop.setOnSettingsClickListener {
-                if (CovAgentManager.getPresetList().isNullOrEmpty()) {
-                    lifecycleScope.launch {
-                        val success = viewModel.fetchPresetsAsync()
-                        if (success) {
-                            showSettingDialog()
-                        } else {
-                            ToastUtil.show(getString(R.string.cov_detail_net_state_error))
-                        }
-                    }
-                } else {
-                    showSettingDialog()
-                }
+                showSettingDialogWithPresetCheck(1) // Agent Settings tab
+            }
+            clTop.setOnWifiClickListener {
+                showSettingDialogWithPresetCheck(0) // Channel Info tab
             }
             clTop.setOnInfoClickListener {
                 showInfoDialog()
@@ -767,9 +759,26 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         }
     }
 
-    private fun showSettingDialog() {
+
+    private fun showSettingDialogWithPresetCheck(initialTab: Int) {
+        if (CovAgentManager.getPresetList().isNullOrEmpty()) {
+            lifecycleScope.launch {
+                val success = viewModel.fetchPresetsAsync()
+                if (success) {
+                    showSettingDialog(initialTab)
+                } else {
+                    ToastUtil.show(getString(R.string.cov_detail_net_state_error))
+                }
+            }
+        } else {
+            showSettingDialog(initialTab)
+        }
+    }
+
+    private fun showSettingDialog(initialTab: Int = 1) {
         appTabDialog = CovAgentTabDialog.newInstance(
             viewModel.connectionState.value,
+            initialTab,
             onDismiss = {
                 appTabDialog = null
             })
