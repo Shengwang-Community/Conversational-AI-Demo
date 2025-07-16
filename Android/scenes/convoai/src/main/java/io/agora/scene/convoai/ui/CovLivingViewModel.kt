@@ -332,7 +332,7 @@ class CovLivingViewModel : ViewModel() {
             ToastUtil.show("Please connect to agent first")
             return
         }
-        conversationalAIAPI?.sendImage(CovAgentManager.agentUID.toString(), uuid, "", completion)
+        conversationalAIAPI?.sendImage(CovAgentManager.agentUID.toString(), uuid, imageUrl, completion)
     }
 
     // Interrupt Agent

@@ -25,6 +25,7 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
 
     private var onDismissCallback: (() -> Unit)? = null
     private var agentState: AgentConnectionState? = null
+    private var initialTab: Int = TAB_AGENT_SETTINGS
 
     companion object {
         private const val TAG = "CovInfoTabDialog"
@@ -33,10 +34,15 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
         private const val TAB_CHANNEL_INFO = 0
         private const val TAB_AGENT_SETTINGS = 1
 
-        fun newInstance(agentState: AgentConnectionState?, onDismiss: (() -> Unit)? = null): CovAgentTabDialog {
+        fun newInstance(
+            agentState: AgentConnectionState?,
+            initialTab: Int = TAB_AGENT_SETTINGS,
+            onDismiss: (() -> Unit)? = null
+        ): CovAgentTabDialog {
             return CovAgentTabDialog().apply {
                 this.onDismissCallback = onDismiss
                 this.agentState = agentState
+                this.initialTab = initialTab
             }
         }
     }
@@ -111,8 +117,10 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
             })
 
             // Set default selected tab to Agent Settings (as shown in design)
-            tabLayout.getTabAt(TAB_AGENT_SETTINGS)?.select()
-            vpContent.currentItem = TAB_AGENT_SETTINGS
+            tabLayout.post {
+                tabLayout.getTabAt(initialTab)?.select()
+                vpContent.setCurrentItem(initialTab, false)
+            }
         }
     }
 
@@ -180,8 +188,18 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
                     if (isSelected) {
                         // Selected state: blue rounded background, white text and icon
                         tabView.setBackgroundResource(R.drawable.cov_tab_bg_selected)
-                        textView.setTextColor(ContextCompat.getColor(context, io.agora.scene.common.R.color.ai_brand_white10))
-                        iconView.setColorFilter(ContextCompat.getColor(context, io.agora.scene.common.R.color.ai_brand_white10))
+                        textView.setTextColor(
+                            ContextCompat.getColor(
+                                context,
+                                io.agora.scene.common.R.color.ai_brand_white10
+                            )
+                        )
+                        iconView.setColorFilter(
+                            ContextCompat.getColor(
+                                context,
+                                io.agora.scene.common.R.color.ai_brand_white10
+                            )
+                        )
                     } else {
                         // Unselected state: transparent rounded background, semi-transparent white text and icon
                         tabView.setBackgroundResource(R.drawable.cov_tab_bg_unselected)

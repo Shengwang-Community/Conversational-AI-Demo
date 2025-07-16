@@ -150,26 +150,21 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
 
                     val aiError = ModuleError(moduleType, code, message, sendTs, turnId)
 
-                    val resourceType = ResourceType.fromValue(msg["resource_type"] as? String ?: "")
-                    if (resourceType == ResourceType.PICTURE) {
-                        val imageError = try {
-                            val json = JSONObject(message)
-                            val uuid = json.optString("uuid")
-                            val success = json.optBoolean("success", true)
+                    try {
+                        val json = JSONObject(message)
+                        val resourceType = ResourceType.fromValue(json.optString("resource_type"))
+                        if (resourceType == ResourceType.PICTURE) {
                             val errorObj = json.optJSONObject("error")
-                            val errorCode = errorObj?.optInt("code")
-                            val errorMessage = errorObj?.optString("message")
-                            PictureError(
-                                uuid = uuid,
-                                success = success,
-                                errorCode = errorCode,
-                                errorMessage = errorMessage
+                            val imageError = PictureError(
+                                uuid = json.optString("uuid"),
+                                success = json.optBoolean("success", true),
+                                errorCode = errorObj?.optInt("code"),
+                                errorMessage = errorObj?.optString("message")
                             )
-                        } catch (e: Exception) {
-                            callMessagePrint(TAG, "$objectType [!] resourceType:$resourceType ${e.message}")
-                            null
+                            aiError.resourceError = imageError
                         }
-                        aiError.resourceError = imageError
+                    } catch (e: Exception) {
+                        callMessagePrint(TAG, "$objectType ${e.message}")
                     }
 
                     val agentUserId = publisherId
@@ -193,11 +188,11 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                     val message = msg["message"] as? String ?: "Unknown error"
                     val receipt = MessageReceipt(moduleType, turnId)
 
-                    val resourceType = ResourceType.fromValue(msg["resource_type"] as? String ?: "")
-                    if (resourceType == ResourceType.PICTURE) {
-                        val imageInfo = try {
-                            val json = JSONObject(message)
-                            ImageInfo(
+                    try {
+                        val json = JSONObject(message)
+                        val resourceType = ResourceType.fromValue(json.optString("resource_type"))
+                        if (resourceType == ResourceType.PICTURE) {
+                            val imageInfo = ImageInfo(
                                 uuid = json.optString("uuid"),
                                 width = json.optInt("width"),
                                 height = json.optInt("height"),
@@ -207,11 +202,10 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                                 uploadTime = json.optLong("upload_time"),
                                 totalUserImages = json.optInt("total_user_images"),
                             )
-                        } catch (e: Exception) {
-                            callMessagePrint(TAG, "$objectType [!] resourceType:$resourceType ${e.message}")
-                            null
+                            receipt.media = imageInfo
                         }
-                        receipt.media = imageInfo
+                    } catch (e: Exception) {
+                        callMessagePrint(TAG, "$objectType ${e.message}")
                     }
 
                     val agentUserId = publisherId
