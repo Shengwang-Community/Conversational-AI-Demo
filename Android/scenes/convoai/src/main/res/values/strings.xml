@@ -100,6 +100,10 @@
     <string name="cov_preset_change_dialog_confirm">确定变更</string>
     <string name="cov_captions">字幕</string>
 
+    <!-- vision -->
+    <string name="cov_preset_not_support_vision">当前 Preset 不支持视觉理解相关功能，请点击右上角设置按钮切换其他 Preset 体验！</string>
+    <string name="cov_vision_connect_and_try_again">请连接后重试！</string>
+
     <!-- photo -->
     <string name="cov_photo_format_tips">仅支持 JPG、PNG、WEBP 和 JPEG 格式的图片。</string>
     <string name="cov_photo_type_photo">照片</string>

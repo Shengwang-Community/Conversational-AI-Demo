@@ -22,6 +22,7 @@ import io.agora.scene.common.net.TokenGeneratorType
 import io.agora.scene.common.util.toast.ToastUtil
 import android.widget.Toast
 import io.agora.scene.convoai.R
+import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.iot.api.CovIotApiManager
 import io.agora.scene.convoai.iot.manager.CovIotPresetManager
 import kotlinx.coroutines.*
@@ -33,6 +34,9 @@ import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import io.agora.scene.convoai.api.CovAvatar
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 /**
  * view model
@@ -91,6 +95,16 @@ class CovLivingViewModel : ViewModel() {
     fun setAvatar(avatar: CovAvatar?) {
         _avatar.value = avatar
     }
+
+    private val _agentPreset = MutableStateFlow<CovAgentPreset?>(null)
+    val agentPreset: StateFlow<CovAgentPreset?> = _agentPreset.asStateFlow()
+
+    fun setAgentPreset(preset: CovAgentPreset?) {
+        _agentPreset.value = preset
+    }
+
+    val isVisionSupported: StateFlow<Boolean> = agentPreset.map { it?.is_support_vision == true }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     // Business states
     private var integratedToken: String? = null
@@ -567,8 +581,9 @@ class CovLivingViewModel : ViewModel() {
 
     suspend fun fetchPresetsAsync(): Boolean = suspendCoroutine { cont ->
         CovAgentApiManager.fetchPresets { err, presets ->
-            if (err == null && presets != null) {
+            if (err == null) {
                 CovAgentManager.setPresetList(presets)
+                setAgentPreset(CovAgentManager.getPreset())
                 cont.resume(true)
             } else {
                 cont.resume(false)

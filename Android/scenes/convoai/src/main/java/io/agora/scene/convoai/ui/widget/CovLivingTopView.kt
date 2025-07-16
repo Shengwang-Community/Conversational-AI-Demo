@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import io.agora.scene.convoai.constant.AgentConnectionState
 import android.view.animation.Animation
+import android.widget.ImageButton
 import androidx.core.view.isVisible
 import io.agora.scene.common.R
 
@@ -72,6 +73,8 @@ class CovLivingTopView @JvmOverloads constructor(
             override fun onAnimationRepeat(animation: Animation?) {}
         })
     }
+
+    val btnAddPic: ImageButton get() = binding.btnAddPic
 
     /**
      * Set callback for info button click.
@@ -245,7 +248,7 @@ class CovLivingTopView @JvmOverloads constructor(
             if (connectionState != AgentConnectionState.IDLE) {
                 binding.viewFlipper.showNext() // to ll_tips (index 1)
                 updateTvCcVisibility()
-                delay(5000)
+                delay(3000)
                 if (!isActive || !isTitleAnimRunning) return@launch
                 if (connectionState != AgentConnectionState.IDLE) {
                     binding.viewFlipper.showNext() // to ll_timer (index 2)

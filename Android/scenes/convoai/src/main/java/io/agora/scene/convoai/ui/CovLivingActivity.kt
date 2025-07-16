@@ -51,6 +51,7 @@ import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.convoaiApi.AgentState
 import io.agora.scene.convoai.convoaiApi.ImageInfo
 import io.agora.scene.convoai.convoaiApi.ModuleType
+import io.agora.scene.convoai.convoaiApi.PictureError
 import io.agora.scene.convoai.databinding.CovActivityLivingBinding
 import io.agora.scene.convoai.iot.manager.CovIotPresetManager
 import io.agora.scene.convoai.iot.ui.CovIotDeviceListActivity
@@ -190,6 +191,16 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 )
             }
             clBottomLogged.btnCamera.setOnClickListener {
+                if (!viewModel.isVisionSupported.value) {
+                    CovLogger.d(TAG, "click add pic: This preset does not support vision-related features.")
+                    ToastUtil.show(R.string.cov_preset_not_support_vision, Toast.LENGTH_LONG)
+                    return@setOnClickListener
+                }
+                if (viewModel.connectionState.value!=AgentConnectionState.CONNECTED){
+                    ToastUtil.show(R.string.cov_vision_connect_and_try_again, Toast.LENGTH_LONG)
+                    return@setOnClickListener
+                }
+
                 val isPublishVideo = viewModel.isPublishVideo.value
                 checkCameraPermission(
                     granted = {
@@ -221,6 +232,15 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 DebugConfigSettings.checkClickDebug()
             }
             clTop.setOnAddPicClickListener {
+                if (!viewModel.isVisionSupported.value) {
+                    CovLogger.d(TAG, "click add pic: This preset does not support vision-related features.")
+                    ToastUtil.show(R.string.cov_preset_not_support_vision, Toast.LENGTH_LONG)
+                    return@setOnAddPicClickListener
+                }
+                if (viewModel.connectionState.value!=AgentConnectionState.CONNECTED){
+                    ToastUtil.show(R.string.cov_vision_connect_and_try_again, Toast.LENGTH_LONG)
+                    return@setOnAddPicClickListener
+                }
                 PhotoNavigationActivity.start(this@CovLivingActivity) {
                     CovLogger.d(TAG, "select image callback:$it")
                     it?.file?.let { file ->
@@ -276,8 +296,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
 
             messageListViewV2.onImageErrorClickListener = { message ->
-                message.localId?.let {
-                    replayUploadImage(it, File(message.content))
+                message.uuid?.let { uuid->
+                    replayUploadImage(uuid, File(message.content))
                 }
             }
         }
@@ -500,27 +520,33 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 messageInfo?.media?.let { media ->
                     when (media) {
                         is ImageInfo -> {
-                            val serverMsg = CovMessageListView.Message.createSuccess(
-                                uuid = media.uuid,
-                                turnId = messageInfo.turnId
+                            mBinding?.messageListViewV2?.updateLocalImageMessage(
+                                media.uuid, CovMessageListView.UploadStatus.SUCCESS
                             )
-                            mBinding?.messageListViewV2?.replaceLocalWithServerImageMessage(serverMsg)
                         }
                     }
                 }
             }
         }
         lifecycleScope.launch {  // Observe image updates
-            viewModel.moduleError.collect { error ->
+            viewModel.moduleError.collect { moduleError ->
                 if (isSelfSubRender) return@collect
-                error?.let {
-                    if (error.type == ModuleType.Context && error.uuid != null) {
-                        val message = CovMessageListView.Message.createFail(
-                            uuid = error.uuid,
-                            turnId = error.turnId ?: -1L,
-                        )
-                        mBinding?.messageListViewV2?.replaceLocalWithServerImageMessage(message)
+                moduleError?.resourceError?.let { resourceError ->
+                    when (resourceError) {
+                        is PictureError -> {
+                            mBinding?.messageListViewV2?.updateLocalImageMessage(
+                                resourceError.uuid, CovMessageListView.UploadStatus.FAILED
+                            )
+                        }
                     }
+                }
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.isVisionSupported.collect { supported ->
+                mBinding?.apply {
+                    clTop.btnAddPic.alpha = if (supported) 1.0f else 0.5f
+                    clBottomLogged.btnCamera.alpha = if (supported) 1.0f else 0.5f
                 }
             }
         }
@@ -825,23 +851,26 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     //    The UI will be updated when the server confirms the message delivery.
                     viewModel.sendImageMessage(requestId, uploadImage.img_url, completion = { error ->
                         if (error != null) {
-                            val message = CovMessageListView.Message.createFail(uuid = requestId)
-                            mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
+                            mBinding?.messageListViewV2?.updateLocalImageMessage(
+                                requestId, CovMessageListView.UploadStatus.FAILED
+                            )
                         }
                     })
                 }.onFailure {
                     // 3. On upload failure, update the local image message status to FAILED for retry UI
-                    val message = CovMessageListView.Message.createFail(uuid = requestId)
-                    mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
+                    mBinding?.messageListViewV2?.updateLocalImageMessage(
+                        requestId, CovMessageListView.UploadStatus.FAILED
+                    )
                 }
             }
         )
     }
 
     private fun replayUploadImage(requestId: String, file: File) {
-        val message = CovMessageListView.Message.createLoading(uuid = requestId)
         // 1. Add a local image message to the UI to indicate the image is being uploaded
-        mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
+        mBinding?.messageListViewV2?.updateLocalImageMessage(
+            requestId, CovMessageListView.UploadStatus.UPLOADING
+        )
 
         mLoginViewModel.uploadImage(
             token = SSOUserManager.getToken(),
@@ -854,14 +883,16 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     //    The UI will be updated when the server confirms the message delivery.
                     viewModel.sendImageMessage(requestId, uploadImage.img_url, completion = { error ->
                         if (error != null) {
-                            val message = CovMessageListView.Message.createFail(uuid = requestId)
-                            mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
+                            mBinding?.messageListViewV2?.updateLocalImageMessage(
+                                requestId, CovMessageListView.UploadStatus.FAILED
+                            )
                         }
                     })
                 }.onFailure {
                     // 3. On upload failure, update the local image message status to FAILED for retry UI
-                    val message = CovMessageListView.Message.createFail(uuid = requestId)
-                    mBinding?.messageListViewV2?.replaceLocalWithUploadImageMessage(message)
+                    mBinding?.messageListViewV2?.updateLocalImageMessage(
+                        requestId, CovMessageListView.UploadStatus.FAILED
+                    )
                 }
             }
         )
