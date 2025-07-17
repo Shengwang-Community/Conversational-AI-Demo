@@ -72,10 +72,14 @@ class CovImagePreviewDialog : BaseDialogFragment<CovImagePreviewDialogBinding>()
                 dismissAllowingStateLoss()
             }
             photoView.setOnOutsidePhotoTapListener {
-
+                dismissAllowingStateLoss()
             }
             photoView.setOnPhotoTapListener { _, _, _ ->
-
+                dismissAllowingStateLoss()
+            }
+            photoView.setOnSingleFlingListener { _, _, _, _ ->
+                dismissAllowingStateLoss()
+                return@setOnSingleFlingListener true
             }
         }
     }
