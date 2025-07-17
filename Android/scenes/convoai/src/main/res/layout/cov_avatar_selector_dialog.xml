@@ -14,7 +14,7 @@
         android:gravity="center"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
-        android:paddingBottom="16dp">
+        android:paddingBottom="12dp">
 
         <ImageView
             android:id="@+id/ivBack"
@@ -26,7 +26,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/white" />
+            app:tint="@color/ai_icontext1" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -47,9 +47,9 @@
         android:id="@+id/rcAvatarGrid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="32dp"
+        android:layout_marginHorizontal="12dp"
         android:clipToPadding="false"
+        android:layout_marginBottom="32dp"
         tools:itemCount="6"
         tools:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         tools:listitem="@layout/cov_avatar_selector_avatar_item"
