@@ -6,13 +6,11 @@ import java.io.File
 
 /**
  * Photo processing result object
- * @param bitmap Final bitmap object, can be used directly for display or processing
  * @param filePath Absolute file path, suitable for upload operations
  * @param fileUri File URI, suitable for Intent passing
  * @param file File object, suitable for file operations
  */
 data class PhotoResult(
-    val bitmap: Bitmap,
     val filePath: String,
     val fileUri: Uri,
     val file: File
