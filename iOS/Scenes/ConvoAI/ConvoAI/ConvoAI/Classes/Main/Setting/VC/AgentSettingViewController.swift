@@ -248,21 +248,26 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
                 // If ignored, update preset directly
                 AppContext.preferenceManager()?.updatePreset(selected)
             } else {
-                // Show confirmation alert
-                CommonAlertView.show(
-                    in: self.view,
-                    title: ResourceManager.L10n.Settings.digitalHumanPresetAlertTitle,
-                    content: ResourceManager.L10n.Settings.digitalHumanPresetAlertDescription,
-                    cancelTitle: ResourceManager.L10n.Settings.digitalHumanAlertCancel,
-                    confirmTitle: ResourceManager.L10n.Settings.digitalHumanAlertConfirm,
-                    confirmStyle: .primary,
-                    checkboxOption: CommonAlertView.CheckboxOption(text: ResourceManager.L10n.Settings.digitalHumanAlertIgnore, isChecked: false),
-                    onConfirm: { isCheckboxChecked in
-                        if isCheckboxChecked {
-                            AppContext.preferenceManager()?.setPresetAlertIgnored(true)
-                        }
-                        AppContext.preferenceManager()?.updatePreset(selected)
-                    })
+                if let _ = AppContext.preferenceManager()?.preference.avatar {
+                    // Show confirmation alert
+                    CommonAlertView.show(
+                        in: self.view,
+                        title: ResourceManager.L10n.Settings.digitalHumanPresetAlertTitle,
+                        content: ResourceManager.L10n.Settings.digitalHumanPresetAlertDescription,
+                        cancelTitle: ResourceManager.L10n.Settings.digitalHumanAlertCancel,
+                        confirmTitle: ResourceManager.L10n.Settings.digitalHumanAlertConfirm,
+                        confirmStyle: .primary,
+                        checkboxOption: CommonAlertView.CheckboxOption(text: ResourceManager.L10n.Settings.digitalHumanAlertIgnore, isChecked: false),
+                        onConfirm: { isCheckboxChecked in
+                            if isCheckboxChecked {
+                                AppContext.preferenceManager()?.setPresetAlertIgnored(true)
+                            }
+                            AppContext.preferenceManager()?.updatePreset(selected)
+                        })
+                } else {
+                    AppContext.preferenceManager()?.updatePreset(selected)
+                }
+                
             }
         }
         table.setSelectedIndex(currentIndex)
@@ -295,21 +300,25 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
                 // If ignored, update language directly
                 AppContext.preferenceManager()?.updateLanguage(selected)
             } else {
-                // Show confirmation alert
-                CommonAlertView.show(
-                    in: self.view,
-                    title: ResourceManager.L10n.Settings.digitalHumanLanguageAlertTitle,
-                    content: ResourceManager.L10n.Settings.digitalHumanLanguageAlertDescription,
-                    cancelTitle: ResourceManager.L10n.Settings.digitalHumanAlertCancel,
-                    confirmTitle: ResourceManager.L10n.Settings.digitalHumanAlertConfirm,
-                    confirmStyle: .primary,
-                    checkboxOption: CommonAlertView.CheckboxOption(text: ResourceManager.L10n.Settings.digitalHumanAlertIgnore, isChecked: false),
-                    onConfirm: { isCheckboxChecked in
-                        if isCheckboxChecked {
-                            AppContext.preferenceManager()?.setLanguageAlertIgnored(true)
-                        }
-                        AppContext.preferenceManager()?.updateLanguage(selected)
-                    })
+                if let _ = AppContext.preferenceManager()?.preference.avatar {
+                    // Show confirmation alert
+                    CommonAlertView.show(
+                        in: self.view,
+                        title: ResourceManager.L10n.Settings.digitalHumanLanguageAlertTitle,
+                        content: ResourceManager.L10n.Settings.digitalHumanLanguageAlertDescription,
+                        cancelTitle: ResourceManager.L10n.Settings.digitalHumanAlertCancel,
+                        confirmTitle: ResourceManager.L10n.Settings.digitalHumanAlertConfirm,
+                        confirmStyle: .primary,
+                        checkboxOption: CommonAlertView.CheckboxOption(text: ResourceManager.L10n.Settings.digitalHumanAlertIgnore, isChecked: false),
+                        onConfirm: { isCheckboxChecked in
+                            if isCheckboxChecked {
+                                AppContext.preferenceManager()?.setLanguageAlertIgnored(true)
+                            }
+                            AppContext.preferenceManager()?.updateLanguage(selected)
+                        })
+                } else {
+                    AppContext.preferenceManager()?.updateLanguage(selected)
+                }
             }
         }
         table.setSelectedIndex(currentIndex)
@@ -434,6 +443,7 @@ extension AgentSettingViewController: AgentPreferenceManagerDelegate {
     
     func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage) {
         agentSettingsView.updateLanguage(language)
+        manager.updateAvatar(nil)
     }
     
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool) {
@@ -446,4 +456,5 @@ extension AgentSettingViewController: UIGestureRecognizerDelegate {
         return touch.view == view
     }
 }
+
 
