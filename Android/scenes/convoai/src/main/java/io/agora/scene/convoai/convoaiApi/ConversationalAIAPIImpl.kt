@@ -149,24 +149,6 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                     var turnId = (msg["turn_id"] as? Number)?.toLong()
 
                     val aiError = ModuleError(moduleType, code, message, sendTs, turnId)
-
-                    try {
-                        val json = JSONObject(message)
-                        val resourceType = ResourceType.fromValue(json.optString("resource_type"))
-                        if (resourceType == ResourceType.PICTURE) {
-                            val errorObj = json.optJSONObject("error")
-                            val imageError = PictureError(
-                                uuid = json.optString("uuid"),
-                                success = json.optBoolean("success", true),
-                                errorCode = errorObj?.optInt("code"),
-                                errorMessage = errorObj?.optString("message")
-                            )
-                            aiError.resourceError = imageError
-                        }
-                    } catch (e: Exception) {
-                        callMessagePrint(TAG, "$objectType ${e.message}")
-                    }
-
                     val agentUserId = publisherId
                     callMessagePrint(TAG, "<<< [onAgentError] $agentUserId $aiError")
                     conversationalAIHandlerHelper.notifyEventHandlers {
@@ -186,27 +168,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                     val moduleType = ModuleType.fromValue(msg["module"] as? String ?: "")
                     val turnId = (msg["turn_id"] as? Number)?.toLong() ?: -1L
                     val message = msg["message"] as? String ?: "Unknown error"
-                    val receipt = MessageReceipt(moduleType, turnId)
-
-                    try {
-                        val json = JSONObject(message)
-                        val resourceType = ResourceType.fromValue(json.optString("resource_type"))
-                        if (resourceType == ResourceType.PICTURE) {
-                            val imageInfo = ImageInfo(
-                                uuid = json.optString("uuid"),
-                                width = json.optInt("width"),
-                                height = json.optInt("height"),
-                                sizeBytes = json.optLong("size_bytes"),
-                                sourceType = json.optString("source_type"),
-                                sourceValue = json.optString("source_value"),
-                                uploadTime = json.optLong("upload_time"),
-                                totalUserImages = json.optInt("total_user_images"),
-                            )
-                            receipt.media = imageInfo
-                        }
-                    } catch (e: Exception) {
-                        callMessagePrint(TAG, "$objectType ${e.message}")
-                    }
+                    val receipt = MessageReceipt(moduleType, turnId, message)
 
                     val agentUserId = publisherId
                     callMessagePrint(TAG, "<<< [onMessageReceiptUpdated] $agentUserId $receipt")

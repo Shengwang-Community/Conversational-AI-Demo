@@ -49,9 +49,6 @@ import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.convoaiApi.AgentState
-import io.agora.scene.convoai.convoaiApi.ImageInfo
-import io.agora.scene.convoai.convoaiApi.ModuleType
-import io.agora.scene.convoai.convoaiApi.PictureError
 import io.agora.scene.convoai.databinding.CovActivityLivingBinding
 import io.agora.scene.convoai.iot.manager.CovIotPresetManager
 import io.agora.scene.convoai.iot.ui.CovIotDeviceListActivity
@@ -196,7 +193,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     ToastUtil.show(R.string.cov_preset_not_support_vision, Toast.LENGTH_LONG)
                     return@setOnClickListener
                 }
-                if (viewModel.connectionState.value!=AgentConnectionState.CONNECTED){
+                if (viewModel.connectionState.value != AgentConnectionState.CONNECTED) {
                     ToastUtil.show(R.string.cov_vision_connect_and_try_again, Toast.LENGTH_LONG)
                     return@setOnClickListener
                 }
@@ -229,7 +226,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     ToastUtil.show(R.string.cov_preset_not_support_vision, Toast.LENGTH_LONG)
                     return@setOnAddPicClickListener
                 }
-                if (viewModel.connectionState.value!=AgentConnectionState.CONNECTED){
+                if (viewModel.connectionState.value != AgentConnectionState.CONNECTED) {
                     ToastUtil.show(R.string.cov_vision_connect_and_try_again, Toast.LENGTH_LONG)
                     return@setOnAddPicClickListener
                 }
@@ -288,7 +285,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
 
             messageListViewV2.onImageErrorClickListener = { message ->
-                message.uuid?.let { uuid->
+                message.uuid?.let { uuid ->
                     replayUploadImage(uuid, File(message.content))
                 }
             }
@@ -507,29 +504,33 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
         }
         lifecycleScope.launch {  // Observe message receipt updates
-            viewModel.messageReceiptUpdate.collect { messageInfo ->
+            viewModel.mediaInfoUpdate.collect { messageInfo ->
                 if (isSelfSubRender) return@collect
-                messageInfo?.media?.let { media ->
-                    when (media) {
-                        is ImageInfo -> {
+                    when (messageInfo) {
+                        is PictureInfo -> {
                             mBinding?.messageListViewV2?.updateLocalImageMessage(
-                                media.uuid, CovMessageListView.UploadStatus.SUCCESS
+                                messageInfo.uuid, CovMessageListView.UploadStatus.SUCCESS
                             )
                         }
+
+                        null -> {
+                            // nothing
+                        }
                     }
-                }
             }
         }
         lifecycleScope.launch {  // Observe image updates
-            viewModel.moduleError.collect { moduleError ->
+            viewModel.resourceError.collect { resourceError ->
                 if (isSelfSubRender) return@collect
-                moduleError?.resourceError?.let { resourceError ->
-                    when (resourceError) {
-                        is PictureError -> {
-                            mBinding?.messageListViewV2?.updateLocalImageMessage(
-                                resourceError.uuid, CovMessageListView.UploadStatus.FAILED
-                            )
-                        }
+                when (resourceError) {
+                    is PictureError -> {
+                        mBinding?.messageListViewV2?.updateLocalImageMessage(
+                            resourceError.uuid, CovMessageListView.UploadStatus.FAILED
+                        )
+                    }
+
+                    null -> {
+                        // nothing
                     }
                 }
             }
