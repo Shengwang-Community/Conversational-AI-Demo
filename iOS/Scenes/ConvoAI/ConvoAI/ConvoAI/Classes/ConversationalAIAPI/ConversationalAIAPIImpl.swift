@@ -393,21 +393,15 @@ extension ConversationalAIAPIImpl {
     
     private func handleImageInfoMessage(uid: String, msg: [String: Any]) {
         guard let messageString = msg["message"] as? String,
-              let messageData = messageString.data(using: .utf8),
               let module = msg["module"] as? String,
               let turnId = msg["turn_id"] as? Int else {
             ConvoAILogger.error("Failed to parse message string from image info message")
             return
         }
         
-        do {
-            let imageInfo = try JSONDecoder().decode(ImageInfo.self, from: messageData)
-            let moduleType = ModuleType.fromValue(module)
-            let messageReceipt = MessageReceipt(type: moduleType, message: imageInfo, turnId: turnId)
-            notifyDelegatesMessageReceipt(agentUserId: uid, messageReceipt: messageReceipt)
-        } catch {
-            notifyDelegatesDebugLog("Failed to decode ImageInfo: \(error)")
-        }
+        let moduleType = ModuleType.fromValue(module)
+        let messageReceipt = MessageReceipt(type: moduleType, message: messageString, turnId: turnId)
+        notifyDelegatesMessageReceipt(agentUserId: uid, messageReceipt: messageReceipt)
     }
     
     private func handleMetricsMessage(uid: String, msg: [String: Any]) {

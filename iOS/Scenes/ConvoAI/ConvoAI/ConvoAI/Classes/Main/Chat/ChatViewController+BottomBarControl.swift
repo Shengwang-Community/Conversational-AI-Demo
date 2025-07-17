@@ -37,9 +37,11 @@ extension ChatViewController: AgentControlToolbarDelegate {
         if state {
             windowState.showVideo = true
             startRenderLocalVideoStream(renderView: localVideoView)
+            topBar.openCamera(isOpen: true)
         } else {
             windowState.showVideo = false
             stopRenderLocalVideoStream()
+            topBar.openCamera(isOpen: false)
         }
         
         updateWindowContent()

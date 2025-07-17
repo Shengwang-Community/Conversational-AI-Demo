@@ -78,13 +78,13 @@ class CovLivingViewModel : ViewModel() {
     private val _transcriptionUpdate = MutableStateFlow<Transcription?>(null)
     val transcriptionUpdate: StateFlow<Transcription?> = _transcriptionUpdate.asStateFlow()
 
-    // Message receipt
-    private val _messageReceiptUpdate = MutableStateFlow<MessageReceipt?>(null)
-    val messageReceiptUpdate: StateFlow<MessageReceipt?> = _messageReceiptUpdate.asStateFlow()
+    // Media info
+    private val _mediaInfoUpdate = MutableStateFlow<MediaInfo?>(null)
+    val mediaInfoUpdate: StateFlow<MediaInfo?> = _mediaInfoUpdate.asStateFlow()
 
-    // Module error
-    private val _moduleError = MutableStateFlow<ModuleError?>(null)
-    val moduleError: StateFlow<ModuleError?> = _moduleError.asStateFlow()
+    // Resource error
+    private val _resourceError = MutableStateFlow<ResourceError?>(null)
+    val resourceError: StateFlow<ResourceError?> = _resourceError.asStateFlow()
 
     private val _isAvatarJoinedRtc = MutableStateFlow(false)
     val isAvatarJoinedRtc: StateFlow<Boolean> = _isAvatarJoinedRtc.asStateFlow()
@@ -144,7 +144,22 @@ class CovLivingViewModel : ViewModel() {
 
         override fun onAgentError(agentUserId: String, error: ModuleError) {
             // Handle agent error
-            _moduleError.value = error
+            try {
+                val json = JSONObject(error.message)
+                val resourceType = ResourceType.fromValue(json.optString("resource_type"))
+                if (resourceType == ResourceType.PICTURE) {
+                    val errorObj = json.optJSONObject("error")
+                    val pictureError = PictureError(
+                        uuid = json.optString("uuid"),
+                        success = json.optBoolean("success", true),
+                        errorCode = errorObj?.optInt("code"),
+                        errorMessage = errorObj?.optString("message")
+                    )
+                    _resourceError.value = pictureError
+                }
+            } catch (e: Exception) {
+                CovLogger.d(TAG, "onAgentError ${e.message}")
+            }
         }
 
         override fun onTranscriptionUpdated(agentUserId: String, transcription: Transcription) {
@@ -153,7 +168,26 @@ class CovLivingViewModel : ViewModel() {
         }
 
         override fun onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt) {
-            _messageReceiptUpdate.value = messageReceipt
+            // Handle message receipt
+            try {
+                val json = JSONObject(messageReceipt.message)
+                val resourceType = ResourceType.fromValue(json.optString("resource_type"))
+                if (resourceType == ResourceType.PICTURE) {
+                    val pictureInfo = PictureInfo(
+                        uuid = json.optString("uuid"),
+                        width = json.optInt("width"),
+                        height = json.optInt("height"),
+                        sizeBytes = json.optLong("size_bytes"),
+                        sourceType = json.optString("source_type"),
+                        sourceValue = json.optString("source_value"),
+                        uploadTime = json.optLong("upload_time"),
+                        totalUserImages = json.optInt("total_user_images"),
+                    )
+                    _mediaInfoUpdate.value = pictureInfo
+                }
+            } catch (e: Exception) {
+                CovLogger.d(TAG, "onMessageReceiptUpdated ${e.message}")
+            }
         }
 
         override fun onDebugLog(log: String) {
@@ -298,7 +332,8 @@ class CovLivingViewModel : ViewModel() {
         "Tell me a joke",
         "Tell me a story",
         "Are you ok?",
-        "How are you?"
+        "How are you?",
+        "What can you see on this picture?"
     )
 
     // Send chat message (for debugging)
@@ -331,6 +366,10 @@ class CovLivingViewModel : ViewModel() {
         if (_connectionState.value != AgentConnectionState.CONNECTED) {
             ToastUtil.show("Please connect to agent first")
             return
+        }
+        val resourceError = _resourceError.value
+        if ((resourceError is PictureError) && resourceError.uuid == uuid) {
+            _resourceError.value = null
         }
         conversationalAIAPI?.sendImage(CovAgentManager.agentUID.toString(), uuid, imageUrl, completion)
     }
@@ -701,8 +740,8 @@ class CovLivingViewModel : ViewModel() {
         _isAgentJoinedRtc.value = false
         _isAvatarJoinedRtc.value = false
         _transcriptionUpdate.value = null
-        _messageReceiptUpdate.value = null
-        _moduleError.value = null
+        _mediaInfoUpdate.value = null
+        _resourceError.value = null
     }
 
     private fun getConvoaiBodyMap(channel: String, dataChannel: String = "rtm"): Map<String, Any?> {

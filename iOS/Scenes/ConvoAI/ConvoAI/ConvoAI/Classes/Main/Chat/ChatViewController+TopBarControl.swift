@@ -34,6 +34,12 @@ extension ChatViewController {
         present(navigationController, animated: false)
     }
     
+    @objc internal func clickCameraButton() {
+        let engine = rtcManager.getRtcEntine()
+        
+        engine.switchCamera()
+    }
+    
     @objc internal func onClickAddButton() {
         guard let preset = AppContext.preferenceManager()?.preference.preset else {
             return

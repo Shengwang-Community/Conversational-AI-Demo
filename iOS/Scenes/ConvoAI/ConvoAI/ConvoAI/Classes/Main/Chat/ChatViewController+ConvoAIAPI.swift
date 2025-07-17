@@ -20,6 +20,10 @@ struct ImageUploadErrorResponse: Codable {
     let error: ImageUploadError?
 }
 
+struct PictureInfo: Codable {
+    let uuid: String
+}
+
 // MARK: - ConversationalAIAPIEventHandler
 extension ChatViewController {
     internal func sendImage(image: UIImage, isResend: Bool = false, uuid: String) {
@@ -65,9 +69,24 @@ extension ChatViewController {
 
 extension ChatViewController: ConversationalAIAPIEventHandler {
     public func onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt) {
-        let uuid = messageReceipt.message.uuid
+        if messageReceipt.type == .context {
+            guard let messageData = messageReceipt.message.data(using: .utf8) else {
+                return
+            }
+            
+            do {
+                let imageInfo = try JSONDecoder().decode(PictureInfo.self, from: messageData)
+                let uuid = imageInfo.uuid
+                addLog("<<<<<onMessageReceiptUpdated: uuid: \(uuid)")
+                self.messageView.viewModel.updateImageMessage(uuid: uuid, state: .success)
+            } catch {
+                addLog("Failed to decode PictureInfo: \(error)")
+            }
+
+          ConvoAILogger.error("Failed to parse message string from image info message")
+          return
+      }
         
-        self.messageView.viewModel.updateImageMessage(uuid: uuid, state: .success)
     }
     
     public func onAgentStateChanged(agentUserId: String, event: StateChangeEvent) {
