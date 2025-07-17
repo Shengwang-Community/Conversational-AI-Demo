@@ -18,7 +18,7 @@ class AgentSettingBar: UIView {
         button.tintColor = UIColor.themColor(named: "ai_icontext1")
         return button
     }()
-        
+    
     let netStateView = UIView()
     
     let wifiInfoButton: UIButton = {
@@ -32,6 +32,15 @@ class AgentSettingBar: UIView {
     let settingButton: UIButton = {
         let button = UIButton(type: .custom)
         button.setImage(UIImage.ag_named("ic_agent_setting"), for: .normal)
+        return button
+    }()
+    
+    let cameraButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.setImage(UIImage.ag_named("ic_camera_switch_icon"), for: .normal)
+        button.isHidden = true
+        button.layer.cornerRadius = 16
+        button.backgroundColor = UIColor.themColor(named: "ai_block1")
         return button
     }()
     
@@ -145,6 +154,16 @@ class AgentSettingBar: UIView {
         }
     }
     
+    func openCamera(isOpen: Bool) {
+        if isOpen {
+            addButton.isHidden = true
+            cameraButton.isHidden = false
+        } else {
+            addButton.isHidden = false
+            cameraButton.isHidden = true
+        }
+    }
+    
     public func updateButtonVisible(_ visible: Bool) {
         if (visible) {
             infoListButton.isHidden = false
@@ -164,6 +183,7 @@ class AgentSettingBar: UIView {
         // Update button visibility - show setting button, hide add and subtitle buttons
         infoListButton.isHidden = false
         addButton.isHidden = true
+        cameraButton.isHidden = true
         transcriptionButton.isHidden = true
         
         showTipsTimer?.invalidate()
@@ -320,7 +340,7 @@ class AgentSettingBar: UIView {
     }
     
     private func setupViews() {
-        [titleContentView, infoListButton, netStateView, settingButton, addButton, transcriptionButton, countDownLabel].forEach { addSubview($0) }
+        [titleContentView, infoListButton, netStateView, settingButton, addButton, cameraButton, transcriptionButton, countDownLabel].forEach { addSubview($0) }
         [centerTipsLabel, centerTitleView, centerTitleButton].forEach { titleContentView.addSubview($0) }
         [netTrackView, netRenderView, wifiInfoButton].forEach { netStateView.addSubview($0) }
         
@@ -372,6 +392,11 @@ class AgentSettingBar: UIView {
             make.centerY.equalToSuperview()
         }
         addButton.snp.makeConstraints { make in
+            make.left.equalTo(16)
+            make.width.height.equalTo(32)
+            make.centerY.equalToSuperview()
+        }
+        cameraButton.snp.makeConstraints { make in
             make.left.equalTo(16)
             make.width.height.equalTo(32)
             make.centerY.equalToSuperview()

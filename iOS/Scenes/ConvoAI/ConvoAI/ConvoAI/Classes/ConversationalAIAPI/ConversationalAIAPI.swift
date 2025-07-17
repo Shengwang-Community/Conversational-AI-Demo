@@ -436,7 +436,7 @@ public enum MessageType: String, CaseIterable {
     /// Message type    
     @objc public let type: ModuleType 
     /// Image information 
-    @objc public let message: ImageInfo
+    @objc public let message: String
     /// Conversation turn ID, used to identify specific conversation rounds
     @objc public let turnId: Int
 
@@ -445,7 +445,7 @@ public enum MessageType: String, CaseIterable {
     ///   - type: Message type
     ///   - message: Image information
     ///   - turnId: Turn ID
-    @objc public init(type: ModuleType, message: ImageInfo, turnId: Int) {
+    @objc public init(type: ModuleType, message: String, turnId: Int) {
         self.type = type
         self.message = message
         self.turnId = turnId
@@ -460,65 +460,6 @@ public enum MessageType: String, CaseIterable {
     
     public override var description: String {
         return "MessageReceipt(type: \(type), message: \(message))"
-    }
-}
-
-/// Image message information model
-/// Contains metadata about images used in conversation messages
-/// Used for tracking image properties, source information, and user statistics
-@objc public class ImageInfo: NSObject, Codable {
-    /// Unique identifier for the image
-    @objc public let uuid: String
-    /// Image width in pixels
-    @objc public let width: Int
-    /// Image height in pixels
-    @objc public let height: Int
-    /// Image file size in bytes
-    @objc public let sizeBytes: Int64
-    /// Source type of the image (e.g., "url")
-    @objc public let sourceType: String
-    /// Source value (e.g., image URL)
-    @objc public let sourceValue: String
-    /// Upload timestamp in milliseconds
-    @objc public let uploadTime: Int64
-    /// Total number of user images
-    @objc public let totalUserImages: Int
-    
-    /// Initialize an image message info object
-    /// - Parameters:
-    ///   - uuid: Unique identifier
-    ///   - width: Image width
-    ///   - height: Image height
-    ///   - sizeBytes: File size in bytes
-    ///   - sourceType: Source type
-    ///   - sourceValue: Source value
-    ///   - uploadTime: Upload timestamp
-    ///   - totalUserImages: Total user images count
-    @objc public init(uuid: String, width: Int, height: Int, sizeBytes: Int64, sourceType: String, sourceValue: String, uploadTime: Int64, totalUserImages: Int) {
-        self.uuid = uuid
-        self.width = width
-        self.height = height
-        self.sizeBytes = sizeBytes
-        self.sourceType = sourceType
-        self.sourceValue = sourceValue
-        self.uploadTime = uploadTime
-        self.totalUserImages = totalUserImages
-        super.init()
-    }
-    
-    enum CodingKeys: String, CodingKey {
-        case uuid
-        case width
-        case height
-        case sizeBytes = "size_bytes"
-        case sourceType = "source_type"
-        case sourceValue = "source_value"
-        case uploadTime = "upload_time"
-        case totalUserImages = "total_user_images"
-    }
-    
-    public override var description: String {
-        return "ImageMessageInfo(uuid: \(uuid), width: \(width), height: \(height), sizeBytes: \(sizeBytes), sourceType: \(sourceType), sourceValue: \(sourceValue), uploadTime: \(uploadTime), totalUserImages: \(totalUserImages))"
     }
 }
 
