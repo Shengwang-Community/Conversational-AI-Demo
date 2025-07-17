@@ -1,67 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="180dp"
-    android:layout_margin="4dp"
-    android:checkable="true"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="0dp"
-    app:strokeColor="@color/ai_line2"
-    app:strokeWidth="0.5dp">
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp">
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:checkable="true"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="2dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="14:15"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Avatar image -->
-        <ImageView
-            android:id="@+id/ivAvatar"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:src="@color/ai_block2" />
-
-        <!-- Blue border for selected state -->
-        <View
-            android:id="@+id/vSelectionBorder"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/cov_avatar_selection_border"
-            android:visibility="gone" />
-
-        <!-- Bottom name bar -->
-        <LinearLayout
-            android:id="@+id/llNameBar"
-            android:layout_width="match_parent"
-            android:layout_height="36dp"
-            android:layout_gravity="bottom"
-            android:layout_marginHorizontal="3dp"
-            android:layout_marginBottom="3dp"
-            android:background="@drawable/cov_avatar_name_bar_bg"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="8dp">
-
-            <TextView
-                android:id="@+id/tvName"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="@color/white"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:gravity="end"
-                tools:text="Bob" />
-
+            android:layout_height="match_parent">
+            <!-- Avatar image -->
+            <ImageView
+                android:id="@+id/ivAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@color/ai_block2" />
+            <!-- Blue border for selected state -->
             <View
-                android:id="@+id/vCheckbox"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:background="@drawable/cov_avatar_checkbox_selector" />
-        </LinearLayout>
-    </FrameLayout>
-</com.google.android.material.card.MaterialCardView> 
+                android:id="@+id/vSelectionBorder"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/cov_avatar_selection_border"
+                android:visibility="gone" />
+            <!-- Bottom name bar -->
+            <LinearLayout
+                android:id="@+id/llNameBar"
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:layout_gravity="bottom"
+                android:layout_marginHorizontal="3dp"
+                android:layout_marginBottom="3dp"
+                android:background="@drawable/cov_avatar_name_bar_bg"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="8dp">
+
+                <TextView
+                    android:id="@+id/tvName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:gravity="start"
+                    android:maxLines="1"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    tools:text="Bob" />
+
+                <View
+                    android:id="@+id/vCheckbox"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/cov_avatar_checkbox_selector" />
+            </LinearLayout>
+        </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

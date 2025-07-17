@@ -237,8 +237,14 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
                     // Set close icon selection state
                     ivCloseIcon.isSelected = isSelected
 
+                    if (isSelected){
+                        tvCloseText.setTextColor(root.context.getColor(io.agora.scene.common.R.color.ai_brand_main6))
+                    }else{
+                        tvCloseText.setTextColor(root.context.getColor(io.agora.scene.common.R.color.ai_icontext1))
+                    }
+
                     // Set click listener
-                    root.setOnClickListener(object : OnFastClickListener() {
+                    card.setOnClickListener(object : OnFastClickListener() {
                         override fun onClickJacking(view: View) {
                             if (selectedPosition != adapterPosition) {
                                 val oldPosition = selectedPosition
@@ -277,7 +283,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
                     )
 
                     // Set click listener
-                    root.setOnClickListener(object : OnFastClickListener() {
+                    card.setOnClickListener(object : OnFastClickListener() {
                         override fun onClickJacking(view: View) {
                             if (selectedPosition != adapterPosition) {
                                 val oldPosition = selectedPosition

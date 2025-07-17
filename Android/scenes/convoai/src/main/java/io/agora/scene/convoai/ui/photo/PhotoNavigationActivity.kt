@@ -13,7 +13,6 @@ import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovPhotoNavigationActivityBinding
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
 
 class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>() {
     
@@ -199,7 +198,6 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
         
         // Create and return PhotoResult object
         return PhotoResult(
-            bitmap = bitmap,
             filePath = photoFile.absolutePath,
             fileUri = Uri.fromFile(photoFile),
             file = photoFile
@@ -229,18 +227,6 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
                     handleGallerySelection(imageUri)
                 }
             }
-        }
-    }
-    
-    private fun convertUriToBitmap(uri: Uri, callback: (Bitmap?) -> Unit) {
-        try {
-            val inputStream = contentResolver.openInputStream(uri)
-            val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
-            inputStream?.close()
-            callback(bitmap)
-        } catch (e: Exception) {
-            android.util.Log.e("PhotoNavigationActivity", "Error converting URI to bitmap", e)
-            callback(null)
         }
     }
 } 

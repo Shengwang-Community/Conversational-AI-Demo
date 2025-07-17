@@ -182,7 +182,6 @@ extension ChatViewController {
         let showTranscription = windowState.showTranscription
         fullSizeContainerView.removeSubviews()
         smallSizeContainerView.removeSubviews()
-        animateContentView.isHidden = true
         if showTranscription {
             if showAvatar, showVideo {
                 volumeAnimateView.isHidden = true
@@ -190,6 +189,7 @@ extension ChatViewController {
                 smallSizeContainerView.isHidden = false
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
+                animateContentView.isHidden = false
                 fullSizeContainerView.addSubview(remoteAvatarView)
                 smallSizeContainerView.addSubview(localVideoView)
                 localVideoView.snp.makeConstraints { make in
@@ -205,6 +205,7 @@ extension ChatViewController {
                 smallSizeContainerView.isHidden = true
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
+                animateContentView.isHidden = true
                 fullSizeContainerView.addSubview(remoteAvatarView)
                 remoteAvatarView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
@@ -215,6 +216,7 @@ extension ChatViewController {
                 smallSizeContainerView.isHidden = false
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
+                animateContentView.isHidden = false
                 smallSizeContainerView.addSubview(localVideoView)
                 localVideoView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
@@ -234,6 +236,7 @@ extension ChatViewController {
                 smallSizeContainerView.isHidden = false
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
+                animateContentView.isHidden = false
                 fullSizeContainerView.addSubview(localVideoView)
                 smallSizeContainerView.addSubview(remoteAvatarView)
                 localVideoView.snp.makeConstraints { make in
@@ -249,6 +252,7 @@ extension ChatViewController {
                 smallSizeContainerView.isHidden = true
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
+                animateContentView.isHidden = true
                 fullSizeContainerView.addSubview(remoteAvatarView)
                 remoteAvatarView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
@@ -260,6 +264,7 @@ extension ChatViewController {
                 lowerBackgroundView.isHidden = true
                 fullSizeContainerView.addSubview(localVideoView)
                 volumeAnimateView.isHidden = false
+                animateContentView.isHidden = false
                 localVideoView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
