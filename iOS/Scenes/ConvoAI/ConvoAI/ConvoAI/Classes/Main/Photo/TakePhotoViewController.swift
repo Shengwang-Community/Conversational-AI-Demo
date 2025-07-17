@@ -19,7 +19,7 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     private var photoOutput: AVCapturePhotoOutput?
     private var currentCameraPosition: AVCaptureDevice.Position = .back
     var completion: ((PhotoResult?) -> Void)?
-
+    
     // UI
     private let topBar = UIView()
     private let closeButton = UIButton(type: .system)
@@ -28,7 +28,7 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     private let shutterOuterView = UIView()
     private let shutterButton = UIButton(type: .custom)
     private let switchCameraButton = UIButton(type: .custom)
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
@@ -37,7 +37,7 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         createConstraints()
         fetchLatestPhotoThumbnail()
     }
-
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.navigationController?.setNavigationBarHidden(true, animated: false)
@@ -51,7 +51,7 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             previewLayer.frame = CGRect(x: 0, y: top, width: view.bounds.width, height: bottom - top)
         }
     }
-
+    
     private func setupCamera() {
         let session = AVCaptureSession()
         // Use high preset for better quality (typically 1920×1080)
@@ -77,7 +77,7 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             session.startRunning()
         }
     }
-
+    
     @objc func takePhotoAction() {
         shutterButton.isEnabled = false
         let settings = AVCapturePhotoSettings()
@@ -89,11 +89,11 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         }
         photoOutput?.capturePhoto(with: settings, delegate: self)
     }
-
+    
     @objc func closeAction() {
         dismiss(animated: true)
     }
-
+    
     @objc func switchCamera() {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             self?.captureSession?.stopRunning()
@@ -105,7 +105,7 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             }
         }
     }
-
+    
     @objc func openPhotoPicker() {
         var config = PHPickerConfiguration()
         config.selectionLimit = 1
@@ -114,7 +114,7 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
         picker.delegate = self
         present(picker, animated: true)
     }
-
+    
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         shutterButton.isEnabled = true
         guard let data = photo.fileDataRepresentation(), let originalImage = UIImage(data: data) else { return }
@@ -139,9 +139,9 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
     
     // MARK: - Image Cropping
     private func cropImageToPreviewAspectRatio(_ image: UIImage) -> UIImage {
-        guard let previewLayer = previewLayer else { 
+        guard let previewLayer = previewLayer else {
             print("⚠️ No preview layer found, returning original image")
-            return image 
+            return image
         }
         
         // First, normalize the image orientation to avoid coordinate confusion
@@ -163,16 +163,16 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             let cropX = (imageSize.width - visibleWidth) / 2
             cropRect = CGRect(x: cropX, y: 0, width: visibleWidth, height: imageSize.height)
         } else {
-            // Image is taller than or equal to preview  
+            // Image is taller than or equal to preview
             // Image width fills the preview, height is cropped
             let visibleHeight = imageSize.width / previewAspectRatio
             let cropY = (imageSize.height - visibleHeight) / 2
             cropRect = CGRect(x: 0, y: cropY, width: imageSize.width, height: visibleHeight)
-        }        
+        }
         // Perform the actual cropping
-        guard let cgImage = normalizedImage.cgImage?.cropping(to: cropRect) else { 
+        guard let cgImage = normalizedImage.cgImage?.cropping(to: cropRect) else {
             print("❌ Failed to crop image")
-            return normalizedImage 
+            return normalizedImage
         }
         
         let croppedImage = UIImage(cgImage: cgImage, scale: normalizedImage.scale, orientation: .up)
@@ -199,10 +199,10 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
             self.shutterButton.transform = CGAffineTransform(scaleX: 0.76, y: 0.76) // 50/66
         }, completion: nil)
     }
-
+    
     @objc private func shutterButtonTouchUp() {
         UIView.animate(withDuration: 0.12, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 2, options: [], animations: {
-            self.shutterButton.transform = CGAffineTransform.identity 
+            self.shutterButton.transform = CGAffineTransform.identity
         }, completion: nil)
     }
 }
@@ -210,7 +210,23 @@ class TakePhotoViewController: UIViewController, AVCapturePhotoCaptureDelegate {
 extension TakePhotoViewController: PHPickerViewControllerDelegate {
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
         picker.dismiss(animated: true)
-        guard let itemProvider = results.first?.itemProvider, itemProvider.canLoadObject(ofClass: UIImage.self) else { return }
+        guard let itemProvider = results.first?.itemProvider else { return }
+        let supportedUTTypes: [String] = [
+            "public.jpeg",           // image/jpeg, image/jpg
+            "public.png",            // image/png
+            "org.webmproject.webp"   // image/webp
+        ]
+        let isSupported = itemProvider.registeredTypeIdentifiers.contains { id in
+            print("pick photo type id: \(id)")
+            return supportedUTTypes.contains(id)
+        }
+        if !isSupported {
+            DispatchQueue.main.async {
+                SVProgressHUD.showError(withStatus: ResourceManager.L10n.Photo.formatTips)
+            }
+            return
+        }
+        guard itemProvider.canLoadObject(ofClass: UIImage.self) else { return }
         itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
             guard let self = self, let originalImage = image as? UIImage else { return }
             DispatchQueue.main.async {
@@ -224,7 +240,6 @@ extension TakePhotoViewController: PHPickerViewControllerDelegate {
                     editVC.completion = self.completion
                     self.navigationController?.pushViewController(editVC, animated: true)
                 } else {
-                    // Display error message for failed processing
                     SVProgressHUD.showError(withStatus: ResourceManager.L10n.Photo.formatTips)
                 }
             }
@@ -256,17 +271,17 @@ extension TakePhotoViewController {
         // Top bar
         topBar.backgroundColor = UIColor.themColor(named: "ai_brand_black10")
         view.addSubview(topBar)
-
+        
         // Top close button
         closeButton.setImage(UIImage.ag_named("ic_agent_setting_close"), for: .normal)
         closeButton.tintColor = .white
         closeButton.addTarget(self, action: #selector(closeAction), for: .touchUpInside)
         topBar.addSubview(closeButton)
-
+        
         // Bottom bar
         bottomBar.backgroundColor = UIColor.themColor(named: "ai_brand_black10")
         view.addSubview(bottomBar)
-
+        
         // Preview image
         previewImageView.contentMode = .scaleAspectFill
         previewImageView.layer.cornerRadius = 12
@@ -275,13 +290,13 @@ extension TakePhotoViewController {
         let tapPreview = UITapGestureRecognizer(target: self, action: #selector(openPhotoPicker))
         previewImageView.addGestureRecognizer(tapPreview)
         bottomBar.addSubview(previewImageView)
-
+        
         shutterOuterView.backgroundColor = .clear
         shutterOuterView.layer.cornerRadius = 38
         shutterOuterView.layer.borderWidth = 4
         shutterOuterView.layer.borderColor = UIColor.themColor(named: "ai_brand_white10").cgColor
         bottomBar.addSubview(shutterOuterView)
-
+        
         shutterButton.backgroundColor = UIColor.themColor(named: "ai_brand_white10")
         shutterButton.layer.cornerRadius = 33
         shutterButton.layer.masksToBounds = true
@@ -289,7 +304,7 @@ extension TakePhotoViewController {
         shutterButton.addTarget(self, action: #selector(shutterButtonTouchDown), for: .touchDown)
         shutterButton.addTarget(self, action: #selector(shutterButtonTouchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
         bottomBar.addSubview(shutterButton)
-
+        
         // Switch camera button
         switchCameraButton.backgroundColor = UIColor.themColor(named: "ai_brand_white1")
         switchCameraButton.layer.cornerRadius = 26
@@ -298,7 +313,7 @@ extension TakePhotoViewController {
         switchCameraButton.addTarget(self, action: #selector(switchCamera), for: .touchUpInside)
         bottomBar.addSubview(switchCameraButton)
     }
-
+    
     private func createConstraints() {
         topBar.snp.makeConstraints { make in
             make.top.left.right.equalToSuperview()
