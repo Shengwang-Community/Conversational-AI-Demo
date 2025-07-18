@@ -132,6 +132,7 @@ paths = [
     '''iOS/.*\.strings''',
     '''iOS/.*\.lproj/.*''',
     '''iOS/.cursor/rules/.*''',
+    '''.*\.md''',
     '''.*\.strings$''',
     '''.*\.strings''',
     '''.*\/zh-Hans\.lproj\/.*''',
