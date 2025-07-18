@@ -87,7 +87,8 @@
         android:layout_marginBottom="6dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintWidth_percent="0.84"
-        app:rippleColor="#1AFFFFFF" />
+        app:rippleColor="#1AFFFFFF"
+        android:letterSpacing="0.0"/>
 
     <TextView
         android:id="@+id/tvCheckTips"
@@ -125,13 +126,12 @@
 
         <TextView
             android:id="@+id/tv_terms_rich_text"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/common_acceept"
-            android:breakStrategy="high_quality"
+            android:breakStrategy="simple"
+            android:letterSpacing="0.0"
             android:hyphenationFrequency="none"
-            android:justificationMode="inter_word"
             android:textColor="@color/ai_icontext1"
             android:textSize="14sp"
             android:lineSpacingExtra="2dp"/>
