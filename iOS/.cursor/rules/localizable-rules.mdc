@@ -1,0 +1,169 @@
+---
+description: iOS ConvoAI 项目多语言开发规范 - 自动应用于所有相关开发任务
+globs:
+  - "**/*.swift"
+  - "**/*.strings"
+  - "Scenes/ConvoAI/**/*"
+alwaysApply: true
+---
+
+# iOS ConvoAI 项目开发规则
+
+## 多语言支持开发规范
+
+### 1. 多语言字符串添加规则
+
+当需要添加新的多语言字符串时，请遵循以下步骤：
+
+#### 步骤1：在 Localizable.strings 文件中添加字符串
+文件路径：`Scenes/ConvoAI/ConvoAI/ConvoAI/Resources/zh-Hans.lproj/Localizable.strings`
+
+格式规范：
+```
+"模块.功能.具体描述" = "中文文本";
+```
+
+示例：
+```
+"chat.message.send.button" = "发送";
+"settings.camera.permission.title" = "相机权限";
+"error.network.timeout" = "网络超时";
+```
+
+#### 步骤2：在 Resource+ConvoAI.swift 中添加对应的静态属性
+文件路径：`Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Utils/Resource+ConvoAI.swift`
+
+格式规范：
+1. 根据功能模块在对应的 enum 中添加静态属性
+2. 如果没有对应模块，创建新的 enum
+3. 使用驼峰命名法
+4. 属性名要清晰描述用途
+
+示例：
+```swift
+public enum Chat {
+    public static let sendButton = ResourceManager.localizedString("chat.message.send.button")
+    public static let messageLoading = ResourceManager.localizedString("chat.message.loading")
+}
+
+public enum Settings {
+    public static let cameraPermissionTitle = ResourceManager.localizedString("settings.camera.permission.title")
+    public static let cameraPermissionMessage = ResourceManager.localizedString("settings.camera.permission.message")
+}
+```
+
+### 2. 现有模块分类
+
+基于现有代码，已定义的模块包括：
+- `Main` - 主页面相关
+- `Login` - 登录相关  
+- `Join` - 加入对话相关
+- `Conversation` - 对话页面相关
+- `Settings` - 设置页面相关
+- `Error` - 错误信息相关
+- `ChannelInfo` - 频道信息相关
+- `DevMode` - 开发者模式相关
+- `Photo` - 图片/相机相关
+- `Iot` - IoT设备相关
+
+### 3. 代码生成 Prompt 模板
+
+#### 为新功能添加多语言支持的完整 Prompt：
+
+```
+请为 [功能名称] 添加多语言支持，需要以下文本：
+[列出需要的文本内容]
+
+请按照以下规范操作：
+
+1. 在 `Scenes/ConvoAI/ConvoAI/ConvoAI/Resources/zh-Hans.lproj/Localizable.strings` 文件中添加对应的字符串：
+   - 使用格式："{模块}.{功能}.{描述}" = "中文文本";
+   - 保持现有文件的结构和顺序
+   - 如果是新模块，请在文件末尾添加新的分组
+
+2. 在 `Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Utils/Resource+ConvoAI.swift` 文件中添加对应的静态属性：
+   - 如果是现有模块，在对应的 enum 中添加新属性
+   - 如果是新模块，创建新的 enum
+   - 使用驼峰命名法
+   - 格式：public static let propertyName = ResourceManager.localizedString("key")
+
+3. 确保键名和属性名的一致性和可读性
+
+示例格式：
+Localizable.strings:
+"chat.input.placeholder" = "请输入消息...";
+
+Resource+ConvoAI.swift:
+public enum Chat {
+    public static let inputPlaceholder = ResourceManager.localizedString("chat.input.placeholder")
+}
+```
+
+### 4. 使用规范
+
+在代码中使用多语言字符串时：
+- 统一使用 `ResourceManager.L10n.模块.属性名` 的方式
+- 不要直接使用 `NSLocalizedString`
+- 不要硬编码中文字符串
+
+正确示例：
+```swift
+label.text = ResourceManager.L10n.Conversation.messageYou
+button.setTitle(ResourceManager.L10n.Photo.editDone, for: .normal)
+```
+
+错误示例：
+```swift
+label.text = "你"  // ❌ 硬编码中文
+label.text = NSLocalizedString("conversation.message.you", comment: "")  // ❌ 直接使用 NSLocalizedString
+```
+
+### 5. 特殊情况处理
+
+#### 带参数的字符串
+对于包含格式化参数的字符串：
+
+Localizable.strings:
+```
+"join.start.tips" = "本次体验对话限制%d分钟";
+```
+
+使用时：
+```swift
+let text = String(format: ResourceManager.L10n.Join.tips, timeLimit)
+```
+
+#### 权限相关字符串
+权限请求相关的字符串应该包含：
+- title：权限标题
+- message：权限说明
+- 操作按钮：取消、设置、跳过等
+
+示例：
+```
+"photo.permission.camera.title" = "相机访问权限";
+"photo.permission.camera.message" = "相机权限用于拍摄照片。请在设置中开启权限。";
+"photo.permission.cancel" = "取消";
+"photo.permission.settings" = "去设置";
+```
+
+### 6. 日常使用指南
+
+#### 开发新功能时的工作流程：
+1. 先用硬编码字符串快速开发功能
+2. 功能完成后，告诉AI："请为这个功能添加多语言支持"
+3. AI会自动按照规范重构代码
+
+#### 常用AI指令：
+- "请检查当前文件中所有不符合多语言规范的地方"
+- "这段代码不符合多语言规范，请帮我修复"
+- "请为[功能名]添加多语言支持"
+
+#### 批量处理：
+```
+请为以下功能添加多语言支持：
+- 视频通话开始按钮："开始视频"
+- 视频通话结束按钮："结束视频" 
+- 摄像头权限标题："摄像头权限"
+- 摄像头权限说明："需要摄像头权限来进行视频通话"
+```
