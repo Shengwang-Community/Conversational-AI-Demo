@@ -63,6 +63,7 @@
        override fun onAgentInterrupted(agentUserId: String, event: InterruptEvent) { /* ... */ }
        override fun onAgentMetrics(agentUserId: String, metric: Metric) { /* ... */ }
        override fun onAgentError(agentUserId: String, error: ModuleError) { /* ... */ }
+       override fun onMessageReceiptUpdated(agentUserId: String, receipt: MessageReceipt) { /* ... */ }
        override fun onTranscriptionUpdated(agentUserId: String, transcription: Transcription) { /* ... */ }
        override fun onDebugLog(log: String) { /* ... */ }
    })
@@ -86,17 +87,132 @@
    rtcEngine.joinChannel(token, channelName, null, userId)
    ```
 
-6. **（可选）打断 agent**
+6. **（可选）发送图片消息**
+
+   ```kotlin
+   val uuid = "unique-image-id-123" // 生成唯一的图片标识符
+   val imageUrl = "https://example.com/image.jpg" // 图片的 HTTP/HTTPS URL
+   
+   api.sendImage("agentUserId", uuid, imageUrl) { error ->
+       if (error != null) {
+           // 处理发送错误
+           Log.e("ImageSend", "Failed to send image: ${error.errorMessage}")
+       } else {
+           // 发送请求成功，等待回执确认
+           Log.d("ImageSend", "Image send request successful")
+       }
+   }
+   ```
+
+7. **（可选）打断 agent**
 
    ```kotlin
    api.interrupt("agentId") { error -> /* ... */ }
    ```
 
-7. **销毁 API 实例**
+8. **销毁 API 实例**
 
    ```kotlin
    api.destroy()
    ```
+
+---
+
+## 发送图片消息
+
+### 发送图片
+
+使用 `sendImage` 接口发送图片消息给 AI agent：
+
+```kotlin
+val uuid = "unique-image-id-123" // 生成唯一的图片标识符
+val imageUrl = "https://example.com/image.jpg" // 图片的 HTTP/HTTPS URL
+
+api.sendImage("agentUserId", uuid, imageUrl) { error ->
+    if (error != null) {
+        // 处理发送错误
+        Log.e("ImageSend", "Failed to send image: ${error.errorMessage}")
+    } else {
+        // 发送请求成功，等待回执确认
+        Log.d("ImageSend", "Image send request successful")
+    }
+}
+```
+
+### 处理图片发送状态
+
+图片发送的实际成功或失败状态通过以下两个回调来确认：
+
+#### 1. 图片发送成功 - onMessageReceiptUpdated
+
+当收到 `onMessageReceiptUpdated` 回调时，需要按以下步骤解析来确认图片发送状态：
+
+**重要：必须先检查 `receipt.type` 是否为 `ModuleType.Context`，然后再检查 `resource_type`**
+
+```kotlin
+override fun onMessageReceiptUpdated(agentUserId: String, receipt: MessageReceipt) {
+    // 第一步：检查消息类型是否为 Context
+    if (receipt.type == ModuleType.Context) {
+        try {
+            // 第二步：解析 receipt.message 为 JSON 对象
+            val jsonObject = JSONObject(receipt.message)
+            
+            // 第三步：检查 resource_type 是否为 picture
+            if (jsonObject.has("resource_type") && 
+                jsonObject.getString("resource_type") == "picture") {
+                
+                // 第四步：检查是否包含 uuid 字段
+                if (jsonObject.has("uuid")) {
+                    val receivedUuid = jsonObject.getString("uuid")
+                    
+                    // 如果 uuid 匹配，说明此图片发送成功
+                    if (receivedUuid == "your-sent-uuid") {
+                        Log.d("ImageSend", "Image sent successfully: $receivedUuid")
+                        // 更新 UI 显示发送成功状态
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("ImageSend", "Failed to parse message receipt: ${e.message}")
+        }
+    }
+}
+```
+
+#### 2. 图片发送失败 - onAgentError
+
+当收到 `onAgentError` 回调且 `error.type` 为 `ModuleType.Context` 时，需要解析 `error.message` 来确认图片发送失败：
+
+```kotlin
+override fun onAgentError(agentUserId: String, error: ModuleError) {
+    // 检查是否为 Context 类型的错误
+    if (error.type == ModuleType.Context) {
+        try {
+            // 解析 error.message 为 JSON 对象
+            val jsonObject = JSONObject(error.message)
+            
+            // 检查 resource_type 是否为 picture
+            if (jsonObject.has("resource_type") && 
+                jsonObject.getString("resource_type") == "picture") {
+                
+                // 检查是否包含 uuid 字段
+                if (jsonObject.has("uuid")) {
+                    val failedUuid = jsonObject.getString("uuid")
+                    
+                    // 如果 uuid 匹配，说明此图片发送失败
+                    if (failedUuid == "your-sent-uuid") {
+                        Log.e("ImageSend", "Image send failed: $failedUuid")
+                        // 更新 UI 显示发送失败状态
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("ImageSend", "Failed to parse error message: ${e.message}")
+        }
+    }
+}
+```
+
 ---
 
 ## 注意事项
@@ -110,6 +226,17 @@
 
 - **所有事件回调均在主线程执行。**
   可直接在回调中安全更新 UI。
+
+- **图片发送状态确认：**
+  - `sendImage` 接口的 completion 回调仅表示发送请求是否成功，不代表图片实际发送状态
+  - 实际发送成功通过 `onMessageReceiptUpdated` 回调确认
+  - 实际发送失败通过 `onAgentError` 回调确认
+  - 需要解析回调中的 JSON 消息来获取具体的 uuid 和状态信息
+
+- **图片消息解析步骤：**
+  - **成功回调**：必须先检查 `receipt.type == ModuleType.Context`，然后检查 `resource_type == "picture"`
+  - **失败回调**：必须先检查 `error.type == ModuleType.Context`，然后检查 `resource_type == "picture"`
+  - 只有满足以上条件后，才能通过 `uuid` 字段确认具体图片的发送状态
 
 ---
 

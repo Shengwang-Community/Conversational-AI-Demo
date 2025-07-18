@@ -144,21 +144,23 @@ class CovLivingViewModel : ViewModel() {
 
         override fun onAgentError(agentUserId: String, error: ModuleError) {
             // Handle agent error
-            try {
-                val json = JSONObject(error.message)
-                val resourceType = ResourceType.fromValue(json.optString("resource_type"))
-                if (resourceType == ResourceType.PICTURE) {
-                    val errorObj = json.optJSONObject("error")
-                    val pictureError = PictureError(
-                        uuid = json.optString("uuid"),
-                        success = json.optBoolean("success", true),
-                        errorCode = errorObj?.optInt("code"),
-                        errorMessage = errorObj?.optString("message")
-                    )
-                    _resourceError.value = pictureError
+            if (error.type == ModuleType.Context) {
+                try {
+                    val json = JSONObject(error.message)
+                    val resourceType = ResourceType.fromValue(json.optString("resource_type"))
+                    if (resourceType == ResourceType.PICTURE) {
+                        val errorObj = json.optJSONObject("error")
+                        val pictureError = PictureError(
+                            uuid = json.optString("uuid"),
+                            success = json.optBoolean("success", true),
+                            errorCode = errorObj?.optInt("code"),
+                            errorMessage = errorObj?.optString("message")
+                        )
+                        _resourceError.value = pictureError
+                    }
+                } catch (e: Exception) {
+                    CovLogger.d(TAG, "onAgentError ${e.message}")
                 }
-            } catch (e: Exception) {
-                CovLogger.d(TAG, "onAgentError ${e.message}")
             }
         }
 
@@ -169,24 +171,26 @@ class CovLivingViewModel : ViewModel() {
 
         override fun onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt) {
             // Handle message receipt
-            try {
-                val json = JSONObject(messageReceipt.message)
-                val resourceType = ResourceType.fromValue(json.optString("resource_type"))
-                if (resourceType == ResourceType.PICTURE) {
-                    val pictureInfo = PictureInfo(
-                        uuid = json.optString("uuid"),
-                        width = json.optInt("width"),
-                        height = json.optInt("height"),
-                        sizeBytes = json.optLong("size_bytes"),
-                        sourceType = json.optString("source_type"),
-                        sourceValue = json.optString("source_value"),
-                        uploadTime = json.optLong("upload_time"),
-                        totalUserImages = json.optInt("total_user_images"),
-                    )
-                    _mediaInfoUpdate.value = pictureInfo
+            if (messageReceipt.type == ModuleType.Context) {
+                try {
+                    val json = JSONObject(messageReceipt.message)
+                    val resourceType = ResourceType.fromValue(json.optString("resource_type"))
+                    if (resourceType == ResourceType.PICTURE) {
+                        val pictureInfo = PictureInfo(
+                            uuid = json.optString("uuid"),
+                            width = json.optInt("width"),
+                            height = json.optInt("height"),
+                            sizeBytes = json.optLong("size_bytes"),
+                            sourceType = json.optString("source_type"),
+                            sourceValue = json.optString("source_value"),
+                            uploadTime = json.optLong("upload_time"),
+                            totalUserImages = json.optInt("total_user_images"),
+                        )
+                        _mediaInfoUpdate.value = pictureInfo
+                    }
+                } catch (e: Exception) {
+                    CovLogger.d(TAG, "onMessageReceiptUpdated ${e.message}")
                 }
-            } catch (e: Exception) {
-                CovLogger.d(TAG, "onMessageReceiptUpdated ${e.message}")
             }
         }
 

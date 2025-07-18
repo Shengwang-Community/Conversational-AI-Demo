@@ -34,9 +34,16 @@ public class ChatViewController: UIViewController {
     }()
     
     internal lazy var smallSizeContainerView: UIView = {
-        let view = UIView()
+        return UIView()
+    }()
+    
+    internal lazy var miniView: AgentDraggableView = {
+        let view = AgentDraggableView()
         view.layer.cornerRadius = 12
         view.layer.masksToBounds = true
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(smallWindowClicked))
+        view.addGestureRecognizer(tapGesture)
+        view.isUserInteractionEnabled = true
         return view
     }()
     

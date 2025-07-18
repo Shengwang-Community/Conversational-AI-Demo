@@ -28,8 +28,9 @@ extension ChatViewController {
     internal func setupViews() {
         view.backgroundColor = .black
         [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, topBar, welcomeMessageView, bottomBar, volumeAnimateView, annotationView, devModeButton, sendMessageButton].forEach { view.addSubview($0) }
+        [miniView].forEach { smallSizeContainerView.addSubview($0) }
+        [remoteAvatarView].forEach { miniView.addSubview($0) }
         [localVideoView].forEach { fullSizeContainerView.addSubview($0) }
-        [remoteAvatarView].forEach { smallSizeContainerView.addSubview($0) }
     }
     
     internal func setupConstraints() {
@@ -79,6 +80,10 @@ extension ChatViewController {
         }
         
         smallSizeContainerView.snp.makeConstraints { make in
+            make.left.right.top.bottom.equalTo(0)
+        }
+        
+        miniView.snp.makeConstraints { make in
             make.top.equalTo(215)
             make.right.equalTo(-10)
             make.width.equalTo(90)
@@ -181,7 +186,7 @@ extension ChatViewController {
         let showVideo = windowState.showVideo
         let showTranscription = windowState.showTranscription
         fullSizeContainerView.removeSubviews()
-        smallSizeContainerView.removeSubviews()
+        miniView.removeSubviews()
         if showTranscription {
             if showAvatar, showVideo {
                 volumeAnimateView.isHidden = true
@@ -191,7 +196,7 @@ extension ChatViewController {
                 lowerBackgroundView.isHidden = true
                 animateContentView.isHidden = false
                 fullSizeContainerView.addSubview(remoteAvatarView)
-                smallSizeContainerView.addSubview(localVideoView)
+                miniView.addSubview(localVideoView)
                 localVideoView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
@@ -217,7 +222,7 @@ extension ChatViewController {
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
                 animateContentView.isHidden = false
-                smallSizeContainerView.addSubview(localVideoView)
+                miniView.addSubview(localVideoView)
                 localVideoView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
@@ -238,7 +243,7 @@ extension ChatViewController {
                 lowerBackgroundView.isHidden = true
                 animateContentView.isHidden = false
                 fullSizeContainerView.addSubview(localVideoView)
-                smallSizeContainerView.addSubview(remoteAvatarView)
+                miniView.addSubview(remoteAvatarView)
                 localVideoView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
@@ -277,15 +282,6 @@ extension ChatViewController {
                 animateContentView.isHidden = false
             }
         }
-        
-        let button = UIButton()
-        smallSizeContainerView.addSubview(button)
-        
-        button.snp.makeConstraints { make in
-            make.edges.equalTo(UIEdgeInsets.zero)
-        }
-        
-        button.addTarget(self, action: #selector(smallWindowClicked), for: .touchUpInside)
         let isLight = !fullSizeContainerView.isHidden && !showTranscription
         bottomBar.setButtonColorTheme(showLight: isLight)
         topBar.setButtonColorTheme(showLight: isLight)
