@@ -147,7 +147,7 @@ public func onMessageReceiptUpdated(agentUserId: String, messageReceipt: Message
       
   }
 ```
-1. **图片发送失败 - onAgentError**
+2. **图片发送失败 - onAgentError**
 ```swift
 struct ImageUploadError: Codable {
     let code: Int
