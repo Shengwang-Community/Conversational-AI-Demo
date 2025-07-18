@@ -103,6 +103,88 @@
    ```
 ---
 
+## 发送图片消息
+- **发送图片**
+使用 sendImage 接口发送图片消息给 AI agent：
+```swift
+let uuid = UUID().uuidString
+let imageUrl = "https://example.com/image.jpg"
+self.convoAIAPI.sendImage(agentUserId: "agentUserId", imageUrl: imageUrl, uuid: uuid, completion: {[weak self] error in
+    if let error = error {
+        print("send image failed, error: \(error.message)")
+    } else {
+        print("send image success")
+    }
+})
+```
+##处理图片发送状态
+图片发送的实际成功或失败状态通过以下两个回调来确认：
+1. **图片发送成功 - onMessageReceiptUpdated**
+当收到 onMessageReceiptUpdated 回调时，需要按以下步骤解析来确认图片发送状态：
+```swift
+struct PictureInfo: Codable {
+    let uuid: String
+}
+
+public func onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt) {
+      if messageReceipt.type == .context {
+          guard let messageData = messageReceipt.message.data(using: .utf8) else {
+              return
+          }
+          
+          do {
+              let imageInfo = try JSONDecoder().decode(PictureInfo.self, from: messageData)
+              let uuid = imageInfo.uuid
+              //更新UI
+              self.messageView.viewModel.updateImageMessage(uuid: uuid, state: .success)
+          } catch {
+              print("Failed to decode PictureInfo: \(error)")
+          }
+
+        print("Failed to parse message string from image info message")
+        return
+    }
+      
+  }
+```
+2. **图片发送失败 - onAgentError**
+```swift
+struct ImageUploadError: Codable {
+    let code: Int
+    let message: String
+}
+
+struct ImageUploadErrorResponse: Codable {
+    let uuid: String
+    let success: Bool
+    let error: ImageUploadError?
+}
+
+public func onAgentError(agentUserId: String, error: ModuleError) {
+    if error.type == .context {
+        if let messageData = error.message.data(using: .utf8) {
+            do {
+                let errorResponse = try JSONDecoder().decode(ImageUploadErrorResponse.self, from: messageData)
+                if !errorResponse.success {
+                    let errorMessage = errorResponse.error?.message ?? "Unknown error"
+                    let errorCode = errorResponse.error?.code ?? 0
+                    
+                    print("Image upload failed: \(errorMessage) (code: \(errorCode))")
+                    
+                    // 更新UI
+                    DispatchQueue.main.async { [weak self] in
+                        self?.messageView.viewModel.updateImageMessage(uuid: errorResponse.uuid, state: .failed)
+                    }
+                }
+            } catch {
+                print("<<< [onAgentError] Failed to parse error message JSON: \(error)")
+            }
+        }
+    }
+    addLog("<<< [onAgentError] error: \(error)")
+}
+```
+
 ## 注意事项
 - **订阅频道消息**
  在开始会话调用：

@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import java.io.File
 import io.agora.scene.common.net.UploadImage
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -26,7 +25,7 @@ sealed class LoginState {
     object LoggedOut : LoginState()
 }
 
-class LoginViewModel : ViewModel() {
+class UserViewModel : ViewModel() {
 
     private fun getApiService() = ApiManager.getService(ApiManagerService::class.java)
 
@@ -64,8 +63,6 @@ class LoginViewModel : ViewModel() {
      * Uploads an image to the server using multipart/form-data.
      * @param token Authorization token
      * @param requestId Request ID
-     * @param src Source platform
-     * @param appId App ID
      * @param channelName Channel name
      * @param imageFile Image file to upload
      * @param onResult Callback for upload result
