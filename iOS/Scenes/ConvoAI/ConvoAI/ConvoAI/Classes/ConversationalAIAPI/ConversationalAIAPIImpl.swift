@@ -41,106 +41,20 @@ import AgoraRtmKit
 
 extension ConversationalAIAPIImpl: ConversationalAIAPI {
     @objc public func chat(agentUserId: String, message: ChatMessage, completion: @escaping (ConversationalAIAPIError?) -> Void) {
-        let traceId = UUID().uuidString.prefix(8)
-        let userId = agentUserId
-        
-        callMessagePrint(msg: ">>> [traceId:\(traceId)] [chat] \(userId), \(message)")
-        guard let rtmEngine = self.config.rtmEngine else {
-            callMessagePrint(msg: "[traceId:\(traceId)] !!! rtmEngine is nil")
-            return
-        }
-        
-        let publishOptions = AgoraRtmPublishOptions()
-        publishOptions.channelType = .user
-        publishOptions.customType = MessageType.user.rawValue
-        let messageData: [String : Any] = [
-            "priority": message.priority.stringValue,
-            "interruptable": message.responseInterruptable,
-            "message": message.text ?? "",
-            "image_url": message.imageUrl ?? "",
-            "audio": message.audioUrl ?? ""
-        ]
-
-        do {
-            let data = try JSONSerialization.data(withJSONObject: messageData)
-            guard let stringData = String(data: data, encoding: .utf8) else {
-                let covoAiError = ConversationalAIAPIError(type: .unknown, code: -1, message: "String conversion failed")
-                callMessagePrint(msg: "[traceId:\(traceId)] \(covoAiError.message)")
-                completion(covoAiError)
+        if message.messageType == .text {
+            guard let textMessage = message as? TextMessage else {
+                completion(ConversationalAIAPIError(type: .unknown, code: -1, message: "Invalid message type"))
                 return
             }
-
-            print("\(stringData)")
-            callMessagePrint(msg: "[traceId:\(traceId)] rtm publish \(stringData)")
-            rtmEngine.publish(channelName: userId, message: stringData, option: publishOptions, completion: { [weak self] res, error in
-                if let errorInfo = error {
-                    let covoAiError = ConversationalAIAPIError(type: .rtmError, code: errorInfo.code, message: errorInfo.reason)
-                    self?.callMessagePrint(msg: "<<< [traceId:\(traceId)] rtm publish error: \(covoAiError)")
-                    completion(covoAiError)
-                } else if let _ = res {
-                    self?.callMessagePrint(msg: "<<< [traceId:\(traceId)] rtm publish success")
-                    completion(nil)
-                } else {
-                    let covoAiError = ConversationalAIAPIError(type: .rtmError, code: -1, message: "unknow error")
-                    self?.callMessagePrint(msg: "<<< [traceId:\(traceId)] rtm publish error: \(covoAiError)")
-                    completion(covoAiError)
-                }
-            })
-        } catch {
-            let covoAiError = ConversationalAIAPIError(type: .unknown, code: -1, message: "json serialization error")
-            callMessagePrint(msg: "[traceId:\(traceId)] JSON Serialization Error: \(covoAiError.message)")
-            completion(covoAiError)
-        }
-    }
-    
-    @objc public func show(agentUserId: String, message: ImageMessage, completion: @escaping (ConversationalAIAPIError?) -> Void) {
-        let traceId = message.uuid
-        let userId = agentUserId
-        callMessagePrint(msg: ">>> [traceId:\(traceId)] [sendImage] \(userId), url: \(message.url ?? ""), base64: \(message.base64 ?? "")")
-        
-        guard let rtmEngine = self.config.rtmEngine else {
-            callMessagePrint(msg: "[traceId:\(traceId)] !!! rtmEngine is nil")
-            return
-        }
-        
-        let publishOptions = AgoraRtmPublishOptions()
-        publishOptions.channelType = .user
-        publishOptions.customType = "image.upload"
-
-        let message: [String : Any] = [
-            "uuid": message.uuid,
-            "image_url": message.url ?? "",
-            "image_base64": message.base64 ?? ""
-        ]
-
-        do {
-            let data = try JSONSerialization.data(withJSONObject: message)
-            guard let stringData = String(data: data, encoding: .utf8) else {
-                let covoAiError = ConversationalAIAPIError(type: .unknown, code: -1, message: "String conversion failed")
-                callMessagePrint(msg: "[traceId:\(traceId)] \(covoAiError.message)")
-                completion(covoAiError)
+            
+            chat(agentUserId: agentUserId, message: textMessage, completion: completion)
+        } else if message.messageType == .image {
+            guard let imageMessage = message as? ImageMessage else {
+                completion(ConversationalAIAPIError(type: .unknown, code: -1, message: "Invalid message type"))
                 return
             }
-
-            callMessagePrint(msg: "[traceId:\(traceId)] rtm publish \(stringData)")
-            rtmEngine.publish(channelName: userId, message: stringData, option: publishOptions, completion: { [weak self] res, error in
-                if let errorInfo = error {
-                    let covoAiError = ConversationalAIAPIError(type: .rtmError, code: errorInfo.code, message: errorInfo.reason)
-                    self?.callMessagePrint(msg: "[traceId:\(traceId)] rtm publish error: \(covoAiError.message)")
-                    completion(covoAiError)
-                } else if let _ = res {
-                    self?.callMessagePrint(msg: "[traceId:\(traceId)] rtm publish success")
-                    completion(nil)
-                } else {
-                    let covoAiError = ConversationalAIAPIError(type: .rtmError, code: -1, message: "unknow error")
-                    self?.callMessagePrint(msg: "[traceId:\(traceId)] rtm publish error: \(covoAiError.message)")
-                    completion(covoAiError)
-                }
-            })
-        } catch {
-            let covoAiError = ConversationalAIAPIError(type: .unknown, code: -1, message: "json serialization error")
-            callMessagePrint(msg: "[traceId:\(traceId)] JSON Serialization Error: \(covoAiError.message)")
-            completion(covoAiError)
+            
+            chat(agentUserId: agentUserId, message: imageMessage, completion: completion)
         }
     }
 
@@ -273,6 +187,108 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
 }
 
 extension ConversationalAIAPIImpl {
+    private func chat(agentUserId: String, message: TextMessage, completion: @escaping (ConversationalAIAPIError?) -> Void) {
+        let traceId = UUID().uuidString.prefix(8)
+        let userId = agentUserId
+        
+        callMessagePrint(msg: ">>> [traceId:\(traceId)] [chat] \(userId), \(message)")
+        guard let rtmEngine = self.config.rtmEngine else {
+            callMessagePrint(msg: "[traceId:\(traceId)] !!! rtmEngine is nil")
+            return
+        }
+        
+        let publishOptions = AgoraRtmPublishOptions()
+        publishOptions.channelType = .user
+        publishOptions.customType = MessageType.user.rawValue
+        let messageData: [String : Any] = [
+            "priority": message.priority.stringValue,
+            "interruptable": message.responseInterruptable,
+            "message": message.text ?? "",
+        ]
+
+        do {
+            let data = try JSONSerialization.data(withJSONObject: messageData)
+            guard let stringData = String(data: data, encoding: .utf8) else {
+                let covoAiError = ConversationalAIAPIError(type: .unknown, code: -1, message: "String conversion failed")
+                callMessagePrint(msg: "[traceId:\(traceId)] \(covoAiError.message)")
+                completion(covoAiError)
+                return
+            }
+
+            print("\(stringData)")
+            callMessagePrint(msg: "[traceId:\(traceId)] rtm publish \(stringData)")
+            rtmEngine.publish(channelName: userId, message: stringData, option: publishOptions, completion: { [weak self] res, error in
+                if let errorInfo = error {
+                    let covoAiError = ConversationalAIAPIError(type: .rtmError, code: errorInfo.code, message: errorInfo.reason)
+                    self?.callMessagePrint(msg: "<<< [traceId:\(traceId)] rtm publish error: \(covoAiError)")
+                    completion(covoAiError)
+                } else if let _ = res {
+                    self?.callMessagePrint(msg: "<<< [traceId:\(traceId)] rtm publish success")
+                    completion(nil)
+                } else {
+                    let covoAiError = ConversationalAIAPIError(type: .rtmError, code: -1, message: "unknow error")
+                    self?.callMessagePrint(msg: "<<< [traceId:\(traceId)] rtm publish error: \(covoAiError)")
+                    completion(covoAiError)
+                }
+            })
+        } catch {
+            let covoAiError = ConversationalAIAPIError(type: .unknown, code: -1, message: "json serialization error")
+            callMessagePrint(msg: "[traceId:\(traceId)] JSON Serialization Error: \(covoAiError.message)")
+            completion(covoAiError)
+        }
+    }
+    
+    private func chat(agentUserId: String, message: ImageMessage, completion: @escaping (ConversationalAIAPIError?) -> Void) {
+        let traceId = message.uuid
+        let userId = agentUserId
+        callMessagePrint(msg: ">>> [traceId:\(traceId)] [sendImage] \(userId), url: \(message.url ?? ""), base64: \(message.base64 ?? "")")
+        
+        guard let rtmEngine = self.config.rtmEngine else {
+            callMessagePrint(msg: "[traceId:\(traceId)] !!! rtmEngine is nil")
+            return
+        }
+        
+        let publishOptions = AgoraRtmPublishOptions()
+        publishOptions.channelType = .user
+        publishOptions.customType = "image.upload"
+
+        let message: [String : Any] = [
+            "uuid": message.uuid,
+            "image_url": message.url ?? "",
+            "image_base64": message.base64 ?? ""
+        ]
+
+        do {
+            let data = try JSONSerialization.data(withJSONObject: message)
+            guard let stringData = String(data: data, encoding: .utf8) else {
+                let covoAiError = ConversationalAIAPIError(type: .unknown, code: -1, message: "String conversion failed")
+                callMessagePrint(msg: "[traceId:\(traceId)] \(covoAiError.message)")
+                completion(covoAiError)
+                return
+            }
+
+            callMessagePrint(msg: "[traceId:\(traceId)] rtm publish \(stringData)")
+            rtmEngine.publish(channelName: userId, message: stringData, option: publishOptions, completion: { [weak self] res, error in
+                if let errorInfo = error {
+                    let covoAiError = ConversationalAIAPIError(type: .rtmError, code: errorInfo.code, message: errorInfo.reason)
+                    self?.callMessagePrint(msg: "[traceId:\(traceId)] rtm publish error: \(covoAiError.message)")
+                    completion(covoAiError)
+                } else if let _ = res {
+                    self?.callMessagePrint(msg: "[traceId:\(traceId)] rtm publish success")
+                    completion(nil)
+                } else {
+                    let covoAiError = ConversationalAIAPIError(type: .rtmError, code: -1, message: "unknow error")
+                    self?.callMessagePrint(msg: "[traceId:\(traceId)] rtm publish error: \(covoAiError.message)")
+                    completion(covoAiError)
+                }
+            })
+        } catch {
+            let covoAiError = ConversationalAIAPIError(type: .unknown, code: -1, message: "json serialization error")
+            callMessagePrint(msg: "[traceId:\(traceId)] JSON Serialization Error: \(covoAiError.message)")
+            completion(covoAiError)
+        }
+    }
+    
     private func notifyDelegatesStateChange(agentUserId: String, event: StateChangeEvent) {
         callMessagePrint(msg: "<<< [onAgentStateChanged] agentUserId:\(agentUserId), event:\(event)")
         DispatchQueue.main.async {

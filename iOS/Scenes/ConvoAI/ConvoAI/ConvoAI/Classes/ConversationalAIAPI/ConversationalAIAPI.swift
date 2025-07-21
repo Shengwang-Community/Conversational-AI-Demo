@@ -51,42 +51,47 @@ import AgoraRtmKit
     }
 }
 
-/// @technical preview
+/// Message type enumeration
+/// Used to distinguish different types of messages in the conversation system
+@objc public enum ChatMessageType: Int {
+    /// Text message type
+    case text = 0
+    /// Image message type
+    case image = 1
+}
+
+/// Chat message protocol
+/// Used to define the common interface for different types of chat messages
+@objc public protocol ChatMessage {
+    /// Message type
+    var messageType: ChatMessageType { get }
+}
+
+/// @technical preview  
 /// Message object for sending content to AI agents
 /// Supports multiple content types that can be combined in a single message:
 /// - Text content for natural language communication
-/// - Image URLs for visual context (JPEG, PNG formats recommended)
-/// - Audio URLs for voice input (WAV, MP3 formats recommended)
-///
 /// Usage examples:
-/// - Text only: ChatMessage(text: "tell me a joke")
-/// - Text with image: ChatMessage(text: "What's in this image?", imageUrl: "https://example.com/image.jpg")
-/// - Audio only: ChatMessage(audioUrl: "https://example.com/audio.wav")
-@objc public class ChatMessage: NSObject {
+/// - Text only: TextMessage(text: "tell me a joke")
+@objc public class TextMessage: NSObject, ChatMessage {
+    /// Message type
+    @objc public let messageType: ChatMessageType = .text
     /// Message processing priority (default: INTERRUPT)
     @objc public let priority: Priority
     /// responseInterruptable Whether this message can be interrupted by higher priority messages (default: true)
     @objc public let responseInterruptable: Bool
     /// Text content of the message (optional)
     @objc public let text: String?
-    /// HTTP/HTTPS URL pointing to an image file (optional)
-    @objc public let imageUrl: String?
-    /// HTTP/HTTPS URL pointing to an audio file (optional)
-    @objc public let audioUrl: String?
     
     /// Initialize a chat message
     /// - Parameters:
     ///   - priority: Message processing priority
     ///   - interruptable: Whether this message can be interrupted
     ///   - text: Text content
-    ///   - imageUrl: Image URL
-    ///   - audioUrl: Audio URL
-    @objc public init(priority: Priority = .interrupt, interruptable: Bool = true, text: String? = "", imageUrl: String? = "", audioUrl: String? = "") {
+    @objc public init(priority: Priority = .interrupt, interruptable: Bool = true, text: String? = "") {
         self.priority = priority
         self.responseInterruptable = interruptable
         self.text = text
-        self.imageUrl = imageUrl
-        self.audioUrl = audioUrl
         super.init()
     }
 }
@@ -466,7 +471,9 @@ public enum MessageType: String, CaseIterable {
 /// Image message model
 /// Used for sending image information to the AI Agent
 /// Contains image UUID, URL, and base64 data
-@objc public class ImageMessage: NSObject, Codable {
+@objc public class ImageMessage: NSObject, ChatMessage {
+    /// Message type
+    @objc public let messageType: ChatMessageType = .image
     /// Image uuid, The agent will use this uuid to identify the image.
     @objc public let uuid: String
     /// Image url, The agent will use this url to download the image and to identify the image.
@@ -592,25 +599,15 @@ public enum MessageType: String, CaseIterable {
 @objc public protocol ConversationalAIAPI: AnyObject {
     /// @technical preview
     /// Send a message to the AI Agent for processing
-    /// This method sends a message (containing text, images, and/or audio) to the Agent
+    /// This method sends a message (containing text, images) to the Agent
     /// and indicates the success or failure of the operation through a completion callback.
     ///
     /// - Parameters:
     ///   - agentUserId: Agent RTM user ID, must be globally unique
-    ///   - message: Message object containing text, image URL, audio URL, and priority settings
+    ///   - message: Message object containing text, image URL, and priority settings
     ///   - completion: Callback function called when the operation completes.
     ///                 Returns nil on success, ConversationalAIAPIError on failure
     @objc func chat(agentUserId: String, message: ChatMessage, completion: @escaping (ConversationalAIAPIError?) -> Void)
-     
-    /// Look at the image and describe it
-    /// This method sends an image to the Agent for processing.
-    ///
-    /// - Parameters:
-    ///   - agentUserId: Agent RTM user ID, must be globally unique
-    ///   - imageMessage: Image message containing url, uuid, and base64
-    ///   - completion: Callback function called when the operation completes.
-    ///                 Returns nil on success, ConversationalAIAPIError on failure
-    @objc func show(agentUserId: String, message: ImageMessage, completion: @escaping (ConversationalAIAPIError?) -> Void)
     
     /// Interrupt the AI Agent's current speech or processing
     /// Use this method to interrupt the currently speaking or processing Agent.

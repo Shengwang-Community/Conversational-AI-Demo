@@ -48,7 +48,7 @@ extension ChatViewController: RTMManagerDelegate {
     }
     
     @objc func testChat() {
-        let message = ChatMessage(text: "tell me a joke？", imageUrl: nil, audioUrl: nil)
+        let message = TextMessage(text: "tell me a joke？")
         convoAIAPI.chat(agentUserId: "\(agentUid)", message: message) { error in
             
         }
