@@ -15,7 +15,8 @@ const val ConversationalAIAPI_VERSION = "1.7.0"
  * val api = ConversationalAIAPI(config)
  * api.addHandler(object : IConversationalAIAPIEventHandler { ... })
  * api.subscribeMessage("channelName") { ... }
- * api.chat("agentUserId", ChatMessage(priority = Priority.INTERRUPT,responseInterruptable = true,text = "Hello!")) { ... }
+ * api.chat("agentUserId", TextMessage(priority = Priority.INTERRUPT, responseInterruptable = true, text = "Hello!")) { ... }
+ * api.chat("agentUserId", ImageMessage(uuid = "img_123", imageUrl = "https://example.com/image.jpg")) { ... }
  * // ...
  * api.destroy()
  */
@@ -47,25 +48,33 @@ enum class Priority {
 }
 
 /**
- * Message object for sending content to AI agents.
+ * Base sealed class for all message types sent to AI agents.
  *
- * Supports multiple content types that can be combined in a single message:
- * - Text content for natural language communication
- * - Image URLs for visual context (JPEG, PNG formats recommended)
- * - Audio URLs for voice input (WAV, MP3 formats recommended)
+ * This sealed class hierarchy provides type-safe message handling for different content types.
+ * Each message type contains only the fields relevant to its specific functionality.
  *
  * Usage examples:
- * - Text only: ChatMessage(text = "Hello, how are you?")
- * - Text with image: ChatMessage(text = "What's in this image?", imageUrl = "https://...")
- * - Priority control: ChatMessage(text = "Urgent message", priority = Priority.INTERRUPT)
- *
- * @property priority Message processing priority (default: INTERRUPT)
- * @property responseInterruptable Whether this message's response can be interrupted by higher priority messages (default: true)
- * @property text Text content of the message (optional)
- * @property imageUrl HTTP/HTTPS URL pointing to an image file (optional)
- * @property audioUrl HTTP/HTTPS URL pointing to an audio file (optional)
+ * - Text message: TextMessage(text = "Hello, how are you?", priority = Priority.INTERRUPT)
+ * - Image message: ImageMessage(uuid = "img_123", imageUrl = "https://...")
  */
-data class ChatMessage(
+sealed class ChatMessage
+
+/**
+ * Text message for sending natural language content to AI agents.
+ *
+ * Text messages support priority control and interruptable response settings,
+ * allowing fine-grained control over how the AI processes and responds to text input.
+ *
+ * Usage examples:
+ * - Basic text: TextMessage(text = "Hello, how are you?")
+ * - High priority: TextMessage(text = "Urgent message", priority = Priority.INTERRUPT)
+ * - Non-interruptable: TextMessage(text = "Important question", responseInterruptable = false)
+ *
+ * @property priority Message processing priority (default: null, uses system default)
+ * @property responseInterruptable Whether this message's response can be interrupted by higher priority messages (default: null, uses system default)
+ * @property text Text content of the message (required)
+ */
+data class TextMessage(
     /**
      * Message processing priority. Default is INTERRUPT.
      */
@@ -78,15 +87,33 @@ data class ChatMessage(
      * Text content of the message. Optional.
      */
     val text: String? = null,
-    /**
-     * Image URL (HTTP/HTTPS, JPEG/PNG recommended). Optional.
-     */
+) : ChatMessage()
+
+/**
+ * Image message for sending visual content to AI agents.
+ *
+ * Supports two image formats:
+ * - imageUrl: HTTP/HTTPS URL pointing to an image file (recommended for large images)
+ * - imageBase64: Base64 encoded image data (use with caution for large images)
+ *
+ * IMPORTANT: When using imageBase64, ensure the total message size (including JSON structure)
+ * is less than 32KB as per RTM Message Channel limitations. For larger images, use imageUrl instead.
+ *
+ * Reference: https://doc.shengwang.cn/doc/rtm2/android/user-guide/message/send-message
+ *
+ * Usage examples:
+ * - URL image: ImageMessage(uuid = "img_123", imageUrl = "https://example.com/image.jpg")
+ * - Base64 image: ImageMessage(uuid = "img_456", imageBase64 = "data:image/jpeg;base64,...")
+ *
+ * @property uuid Unique identifier for the image message (required)
+ * @property imageUrl HTTP/HTTPS URL pointing to an image file (optional, mutually exclusive with imageBase64)
+ * @property imageBase64 Base64 encoded image data (optional, mutually exclusive with imageUrl, limited to 32KB total message size)
+ */
+data class ImageMessage(
+    val uuid: String,
     val imageUrl: String? = null,
-    /**
-     * Audio URL (HTTP/HTTPS, WAV/MP3 recommended). Optional.
-     */
-    val audioUrl: String? = null
-)
+    val imageBase64: String? = null,
+) : ChatMessage()
 
 /**
  * Message receipt data class, supports multiple media types via MediaInfo
@@ -538,28 +565,18 @@ interface IConversationalAIAPI {
     fun unsubscribeMessage(channelName: String, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
-     * @technical preview
      *
      * Send a message to the AI agent.
+     * 
+     * Supports different message types through the ChatMessage sealed class hierarchy:
+     * - TextMessage: For natural language communication with priority control
+     * - ImageMessage: For visual content processing (atomic operation)
+     * 
      * @param agentUserId Agent user ID
-     * @param message Message object
+     * @param message Message object (TextMessage or ImageMessage)
      * @param completion Callback, error is null on success, non-null on failure
      */
     fun chat(agentUserId: String, message: ChatMessage, completion: (error: ConversationalAIAPIError?) -> Unit)
-
-    /**
-     * Send an image message to the agent.
-     * @param agentUserId Agent User ID
-     * @param uuid Unique identifier for the image
-     * @param imageUrl URL of the uploaded image
-     * @param completion Callback invoked when the upload completes or fails. Returns an error if failed, or null if successful.
-     */
-    fun sendImage(
-        agentUserId: String,
-        uuid: String,
-        imageUrl: String,
-        completion: (error: ConversationalAIAPIError?) -> Unit
-    )
 
     /**
      * Interrupt the AI agent's speaking.

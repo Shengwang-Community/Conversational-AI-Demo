@@ -87,19 +87,39 @@
    rtcEngine.joinChannel(token, channelName, null, userId)
    ```
 
-6. **（可选）发送图片消息**
+6. **（可选 发送消息给 AI agent**
 
+   **发送文本消息：**
+   ```kotlin
+   // 基本文本消息
+   api.chat("agentUserId", TextMessage(text = "Hello, how are you?")) { error ->
+       if (error != null) {
+           Log.e("Chat", "Failed to send text: ${error.errorMessage}")
+       }
+   }
+   
+   // 带优先级控制的文本消息
+   api.chat("agentUserId", TextMessage(
+       text = "Urgent question!",
+       priority = Priority.INTERRUPT,
+       responseInterruptable = true
+   )) { error ->
+       if (error != null) {
+           Log.e("Chat", "Failed to send text: ${error.errorMessage}")
+       }
+   }
+   ```
+
+   **发送图片消息：**
    ```kotlin
    val uuid = "unique-image-id-123" // 生成唯一的图片标识符
    val imageUrl = "https://example.com/image.jpg" // 图片的 HTTP/HTTPS URL
    
-   api.sendImage("agentUserId", uuid, imageUrl) { error ->
+   api.chat("agentUserId", ImageMessage(uuid = uuid, imageUrl = imageUrl)) { error ->
        if (error != null) {
-           // 处理发送错误
-           Log.e("ImageSend", "Failed to send image: ${error.errorMessage}")
+           Log.e("Chat", "Failed to send image: ${error.errorMessage}")
        } else {
-           // 发送请求成功，等待回执确认
-           Log.d("ImageSend", "Image send request successful")
+           Log.d("Chat", "Image send request successful")
        }
    }
    ```
@@ -118,23 +138,51 @@
 
 ---
 
-## 发送图片消息
+## 消息类型说明
 
-### 发送图片
+### 文本消息 (TextMessage)
 
-使用 `sendImage` 接口发送图片消息给 AI agent：
+文本消息适用于自然语言交互：
 
 ```kotlin
-val uuid = "unique-image-id-123" // 生成唯一的图片标识符
-val imageUrl = "https://example.com/image.jpg" // 图片的 HTTP/HTTPS URL
+// 文本消息
+val textMessage = TextMessage(text = "Hello, how are you?")
+```
 
-api.sendImage("agentUserId", uuid, imageUrl) { error ->
+### 图片消息 (ImageMessage)
+
+图片消息适用于视觉内容处理，通过 `uuid` 进行状态跟踪：
+
+```kotlin
+// 使用图片 URL
+val urlImageMessage = ImageMessage(
+    uuid = "img_123",
+    imageUrl = "https://example.com/image.jpg"
+)
+
+// 使用 Base64 编码（注意 32KB 限制）
+val base64ImageMessage = ImageMessage(
+    uuid = "img_456",
+    imageBase64 = "data:image/jpeg;base64,..."
+)
+```
+
+### 发送消息
+
+使用统一的 `chat` 接口发送不同类型的消息：
+
+```kotlin
+// 发送文本消息
+api.chat("agentUserId", TextMessage(text = "Hello, how are you?")) { error ->
     if (error != null) {
-        // 处理发送错误
-        Log.e("ImageSend", "Failed to send image: ${error.errorMessage}")
-    } else {
-        // 发送请求成功，等待回执确认
-        Log.d("ImageSend", "Image send request successful")
+        Log.e("Chat", "Failed to send text: ${error.errorMessage}")
+    }
+}
+
+// 发送图片消息
+api.chat("agentUserId", ImageMessage(uuid = "img_123", imageUrl = "https://...")) { error ->
+    if (error != null) {
+        Log.e("Chat", "Failed to send image: ${error.errorMessage}")
     }
 }
 ```
@@ -227,16 +275,18 @@ override fun onAgentError(agentUserId: String, error: ModuleError) {
 - **所有事件回调均在主线程执行。**
   可直接在回调中安全更新 UI。
 
-- **图片发送状态确认：**
-  - `sendImage` 接口的 completion 回调仅表示发送请求是否成功，不代表图片实际发送状态
-  - 实际发送成功通过 `onMessageReceiptUpdated` 回调确认
-  - 实际发送失败通过 `onAgentError` 回调确认
-  - 需要解析回调中的 JSON 消息来获取具体的 uuid 和状态信息
+- **消息发送状态确认：**
+  - `chat` 接口的 completion 回调仅表示发送请求是否成功，不代表消息实际处理状态
+  - 图片消息的实际发送成功通过 `onMessageReceiptUpdated` 回调确认（使用 uuid 标识）
+  - 图片消息的发送失败通过 `onAgentError` 回调确认（使用 uuid 标识）
+  - 需要解析回调中的 JSON 消息来获取具体的标识符和状态信息
 
-- **图片消息解析步骤：**
-  - **成功回调**：必须先检查 `receipt.type == ModuleType.Context`，然后检查 `resource_type == "picture"`
-  - **失败回调**：必须先检查 `error.type == ModuleType.Context`，然后检查 `resource_type == "picture"`
-  - 只有满足以上条件后，才能通过 `uuid` 字段确认具体图片的发送状态
+- **图片消息状态跟踪：**
+  - **图片消息**：通过 `onMessageReceiptUpdated` 和 `onAgentError` 回调中的 `uuid` 字段确认发送状态
+  - **图片消息解析步骤**：
+    - **成功回调**：必须先检查 `receipt.type == ModuleType.Context`，然后检查 `resource_type == "picture"`
+    - **失败回调**：必须先检查 `error.type == ModuleType.Context`，然后检查 `resource_type == "picture"`
+    - 只有满足以上条件后，才能通过 `uuid` 字段确认具体图片的发送状态
 
 ---
 

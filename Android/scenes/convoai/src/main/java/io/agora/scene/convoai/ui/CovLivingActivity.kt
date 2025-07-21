@@ -264,7 +264,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             })
 
             btnSendMsg.setOnClickListener {
-                viewModel.sendChatMessage()   // For test only
+                viewModel.sendTextMessage()   // For test only
             }
 
             agentStateView.setOnInterruptClickListener {

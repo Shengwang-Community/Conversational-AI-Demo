@@ -341,13 +341,13 @@ class CovLivingViewModel : ViewModel() {
     )
 
     // Send chat message (for debugging)
-    fun sendChatMessage(message: String? = null) {
+    fun sendTextMessage(message: String? = null) {
         if (_connectionState.value != AgentConnectionState.CONNECTED) {
             ToastUtil.show("Please connect to agent first")
             return
         }
 
-        val chatMessage = ChatMessage(
+        val chatMessage = TextMessage(
             priority = Priority.INTERRUPT,
             responseInterruptable = true,
             text = message ?: randomMessages.random()
@@ -366,7 +366,12 @@ class CovLivingViewModel : ViewModel() {
     }
 
     // Send image message
-    fun sendImageMessage(uuid: String, imageUrl: String, completion: (error: ConversationalAIAPIError?) -> Unit) {
+    fun sendImageMessage(
+        uuid: String,
+        imageUrl: String?,
+        imageBase64: String? = null,
+        completion: (error: ConversationalAIAPIError?) -> Unit
+    ) {
         if (_connectionState.value != AgentConnectionState.CONNECTED) {
             ToastUtil.show("Please connect to agent first")
             return
@@ -375,7 +380,12 @@ class CovLivingViewModel : ViewModel() {
         if ((resourceError is PictureError) && resourceError.uuid == uuid) {
             _resourceError.value = null
         }
-        conversationalAIAPI?.sendImage(CovAgentManager.agentUID.toString(), uuid, imageUrl, completion)
+        val imageMessage = ImageMessage(
+            uuid = uuid,
+            imageUrl = imageUrl,
+            imageBase64 = imageBase64
+        )
+        conversationalAIAPI?.chat(CovAgentManager.agentUID.toString(), imageMessage, completion)
     }
 
     // Interrupt Agent
