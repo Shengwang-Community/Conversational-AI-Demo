@@ -49,13 +49,14 @@ extension ChatViewController {
             // Upload success
             self.addLog("<<<<<[uploadImage] Image upload successful, url: \(imageUrl ?? "nil")， uuid: \(uuid)")
             
-            self.convoAIAPI.sendImage(agentUserId: "\(agentUid)", imageUrl: imageUrl ?? "", uuid: uuid, completion: {[weak self] error in
+            let message = ImageMessage(uuid: uuid, url: imageUrl)
+            self.convoAIAPI.show(agentUserId: "\(agentUid)", message: message) { [weak self] error in
                 if let error = error {
                     self?.addLog("<<<<<[sendImage] send image failed, error: \(error.message)")
                 } else {
                     self?.addLog("<<<<<[sendImage] send image success")
                 }
-            })
+            }
         } failure: { [weak self] error in
             // Upload failed
             self?.addLog("<<<<<[uploadImage] Image upload failed: \(error)")

@@ -92,11 +92,11 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
             completion(covoAiError)
         }
     }
-
-    @objc public func sendImage(agentUserId: String, imageUrl: String, uuid: String, completion: @escaping (ConversationalAIAPIError?) -> Void) {
-        let traceId = uuid
+    
+    @objc public func show(agentUserId: String, message: ImageMessage, completion: @escaping (ConversationalAIAPIError?) -> Void) {
+        let traceId = message.uuid
         let userId = agentUserId
-        callMessagePrint(msg: ">>> [traceId:\(traceId)] [sendImage] \(userId), \(imageUrl)")
+        callMessagePrint(msg: ">>> [traceId:\(traceId)] [sendImage] \(userId), url: \(message.url ?? ""), base64: \(message.base64 ?? "")")
         
         guard let rtmEngine = self.config.rtmEngine else {
             callMessagePrint(msg: "[traceId:\(traceId)] !!! rtmEngine is nil")
@@ -108,8 +108,9 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         publishOptions.customType = "image.upload"
 
         let message: [String : Any] = [
-            "uuid": uuid,
-            "image_url": imageUrl,
+            "uuid": message.uuid,
+            "image_url": message.url ?? "",
+            "image_base64": message.base64 ?? ""
         ]
 
         do {

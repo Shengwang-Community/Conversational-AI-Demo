@@ -463,6 +463,28 @@ public enum MessageType: String, CaseIterable {
     }
 }
 
+/// Image message model
+/// Used for sending image information to the AI Agent
+/// Contains image UUID, URL, and base64 data
+@objc public class ImageMessage: NSObject, Codable {
+    /// Image uuid, The agent will use this uuid to identify the image.
+    @objc public let uuid: String
+    /// Image url, The agent will use this url to download the image and to identify the image.
+    @objc public let url: String?
+    /// Image base64, The agent will use this base64 to identify the image.
+    @objc public let base64: String?
+
+    init(uuid: String, url: String?, base64: String? = nil) {
+        self.uuid = uuid
+        self.url = url
+        self.base64 = base64
+    }
+    
+    public override var description: String {
+        return "ImageMessage(url: \(url ?? ""), uuid: \(uuid), base64: \(base64?.count ?? 0))"
+    }
+}
+
 /// ConversationalAI API configuration
 /// Contains the necessary configuration parameters to initialize the Conversational AI API.
 /// This configuration includes RTC engine for audio communication, RTM client for messaging,
@@ -580,17 +602,15 @@ public enum MessageType: String, CaseIterable {
     ///                 Returns nil on success, ConversationalAIAPIError on failure
     @objc func chat(agentUserId: String, message: ChatMessage, completion: @escaping (ConversationalAIAPIError?) -> Void)
      
-    /// @technical preview
-    /// Send an image to the AI Agent for processing
+    /// Look at the image and describe it
     /// This method sends an image to the Agent for processing.
     ///
     /// - Parameters:
     ///   - agentUserId: Agent RTM user ID, must be globally unique
-    ///   - imageUrl: Image URL to send
-    ///   - uuid: Unique identifier for the image
+    ///   - imageMessage: Image message containing url, uuid, and base64
     ///   - completion: Callback function called when the operation completes.
     ///                 Returns nil on success, ConversationalAIAPIError on failure
-    @objc func sendImage(agentUserId: String, imageUrl: String, uuid: String, completion: @escaping (ConversationalAIAPIError?) -> Void)
+    @objc func show(agentUserId: String, message: ImageMessage, completion: @escaping (ConversationalAIAPIError?) -> Void)
     
     /// Interrupt the AI Agent's current speech or processing
     /// Use this method to interrupt the currently speaking or processing Agent.
