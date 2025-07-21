@@ -2,29 +2,13 @@ package io.agora.scene.common.util
 
 import android.util.Log
 import io.agora.scene.common.AgentApp
-import io.agora.scene.common.constant.SSOUserManager
-import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.net.ApiManager
-import io.agora.scene.common.net.ApiManagerService
-import io.agora.scene.common.net.BaseResponse
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.asRequestBody
+import io.agora.scene.common.util.FileUtils
 import java.io.File
-import org.json.JSONObject
 
 object LogUploader {
 
     private const val TAG = "LogUploader"
-
-    private fun getApiService() = ApiManager.getService(ApiManagerService::class.java)
-
-    private val scope = CoroutineScope(Job() + Dispatchers.Main)
 
     // Get all log file paths
     private fun getAllLogFiles(): List<String> {
@@ -93,7 +77,10 @@ object LogUploader {
         FileUtils.compressFiles(logPaths, allLogZipFile.absolutePath, object : FileUtils.ZipCallback {
             override fun onSuccess(path: String) {
                 CommonLogger.d(TAG,"compress end")
-                requestUploadLog(agentId, channelName, File(path),
+                ApiManager.uploadLog(
+                    agentId = agentId,
+                    channelName = channelName,
+                    file = File(path),
                     onSuccess = {
                         FileUtils.deleteFile(allLogZipFile.absolutePath)
                         completion?.invoke(null)
@@ -103,7 +90,8 @@ object LogUploader {
                         FileUtils.deleteFile(allLogZipFile.absolutePath)
                         isUploading = false
                         completion?.invoke(it)
-                    })
+                    }
+                )
             }
 
             override fun onError(error: Exception) {
@@ -115,106 +103,5 @@ object LogUploader {
         })
     }
 
-    fun requestUploadLog(
-        agentId: String,
-        channelName: String,
-        file: File,
-        onSuccess: () -> Unit,
-        onError: (Exception) -> Unit
-    ) {
-        if (!file.exists()) {
-            onError(Exception("Log file not found"))
-            return
-        }
 
-        try {
-            // Create content part
-            val contentJson = JSONObject().apply {
-                put("appId", ServerConfig.rtcAppId)
-                put("channelName", channelName)
-                put("agentId", agentId)
-                put("payload", JSONObject().apply {
-                    put("name", file.name)
-                })
-            }
-
-            val contentBody = RequestBody.create(
-                "text/plain".toMediaTypeOrNull(),
-                contentJson.toString()
-            )
-
-            // Create file part
-            val fileBody = file.asRequestBody("application/octet-stream".toMediaTypeOrNull())
-            val filePart = MultipartBody.Part.createFormData("file", file.name, fileBody)
-
-            // Get token for authorization
-            val token = "Bearer ${SSOUserManager.getToken()}"
-            requestNoData(
-                block = {
-                    getApiService().requestUploadLog(token, contentBody, filePart)
-                },
-                onSuccess = onSuccess,
-                onError = onError
-            )
-        } catch (e: Exception) {
-            onError(e)
-            Log.e(TAG, "Failed to prepare upload request: ${e.message}")
-        }
-    }
-
-    fun <T : Any> requestWithData(
-        block: suspend () -> BaseResponse<T>,
-        onSuccess: (T) -> Unit,
-        onError: (Exception) -> Unit = {},
-    ): Job {
-        return scope.launch(Dispatchers.Main) {
-            runCatching {
-                block()
-            }.onSuccess { response ->
-                runCatching {
-                    if (response.isSuccess) {
-                        response.data?.let {
-                            onSuccess(it)
-                        } ?: run {
-                            onError(Exception("Response data is null"))
-                        }
-                    } else {
-                        onError(Exception("Error: ${response.message} (Code: ${response.code})"))
-                    }
-                }.onFailure { exception ->
-                    Log.e(TAG, "Request failed: ${exception.localizedMessage}", exception)
-                    onError(Exception("Request failed due to: ${exception.localizedMessage}"))
-                }
-            }.onFailure { exception ->
-                Log.e(TAG, "Request failed: ${exception.localizedMessage}", exception)
-                onError(Exception("Request failed due to: ${exception.localizedMessage}"))
-            }
-        }
-    }
-
-    fun requestNoData(
-        block: suspend () -> BaseResponse<Unit>,
-        onSuccess: () -> Unit,
-        onError: (Exception) -> Unit = {},
-    ): Job {
-        return scope.launch(Dispatchers.Main) {
-            runCatching {
-                block()
-            }.onSuccess { response ->
-                runCatching {
-                    if (response.isSuccess) {
-                        onSuccess()
-                    } else {
-                        onError(Exception("Error: ${response.message} (Code: ${response.code})"))
-                    }
-                }.onFailure { exception ->
-                    Log.e(TAG, "Request failed: ${exception.localizedMessage}", exception)
-                    onError(Exception("Request failed due to: ${exception.localizedMessage}"))
-                }
-            }.onFailure { exception ->
-                Log.e(TAG, "Request failed: ${exception.localizedMessage}", exception)
-                onError(Exception("Request failed due to: ${exception.localizedMessage}"))
-            }
-        }
-    }
 }

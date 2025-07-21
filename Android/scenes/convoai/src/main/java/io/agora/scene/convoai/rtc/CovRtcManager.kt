@@ -38,7 +38,7 @@ object CovRtcManager {
                 loadExtensionProvider("ai_echo_cancellation_extension")
                 loadExtensionProvider("ai_noise_suppression_extension")
             }
-            CovLogger.e(TAG, "createRtcEngine success")
+            CovLogger.d(TAG, "createRtcEngine success")
         } catch (e: Exception) {
             CovLogger.e(TAG, "createRtcEngine error: $e")
         }
