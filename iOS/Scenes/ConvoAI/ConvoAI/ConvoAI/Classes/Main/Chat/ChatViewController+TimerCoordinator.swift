@@ -37,7 +37,7 @@ extension ChatViewController: AgentTimerCoordinatorDelegate {
             var min = preset.callTimeLimitSecond / 60
             
             if let _ = manager.preference.avatar {
-                min = preset.callTimeLimitAvatarSecond
+                min = preset.callTimeLimitAvatarSecond / 60
             }
 
             TimeoutAlertView.show(in: view, image:UIImage.ag_named("ic_alert_timeout_icon"), title: title, description: String(format: ResourceManager.L10n.ChannelInfo.timeLimitdAlertDescription, min))

@@ -77,38 +77,61 @@ class ImagePreviewViewController: UIViewController {
     }
     
     private func setupGestures() {
-        // Add tap gesture to dismiss
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
+        // Single tap to dismiss (except on close button)
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         tapGesture.delegate = self
-        view.addGestureRecognizer(tapGesture)
-        
-        // Add double tap gesture to zoom
-        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(doubleTapped))
+        scrollView.addGestureRecognizer(tapGesture)
+
+        // Double tap to zoom
+        let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(doubleTapped(_:)))
         doubleTapGesture.numberOfTapsRequired = 2
+        doubleTapGesture.delegate = self
         scrollView.addGestureRecognizer(doubleTapGesture)
-        
-        // Make sure single tap doesn't interfere with double tap
+
+        // Make sure single tap waits for double tap to fail
         tapGesture.require(toFail: doubleTapGesture)
+
+        // Pan to dismiss (vertical only)
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+        panGesture.delegate = self
+        scrollView.addGestureRecognizer(panGesture)
+    }
+
+    // MARK: - Actions
+
+    @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
+        // Dismiss if not tapping on the close button
+        let location = gesture.location(in: view)
+        if !closeButton.frame.contains(location) {
+            dismiss(animated: true)
+        }
+    }
+
+    @objc private func doubleTapped(_ gesture: UITapGestureRecognizer) {
+        let point = gesture.location(in: imageView)
+        if scrollView.zoomScale > 1.0 {
+            scrollView.setZoomScale(1.0, animated: true)
+        } else {
+            let zoomRect = CGRect(x: point.x - 50, y: point.y - 50, width: 100, height: 100)
+            scrollView.zoom(to: zoomRect, animated: true)
+        }
+    }
+
+    @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: scrollView)
+        switch gesture.state {
+        case .ended:
+            // Dismiss if vertical swipe is more than 80pt
+            if abs(translation.y) > 80 {
+                dismiss(animated: true)
+            }
+        default:
+            break
+        }
     }
     
     @objc private func closeButtonTapped() {
         dismiss(animated: true)
-    }
-    
-    @objc private func backgroundTapped() {
-        dismiss(animated: true)
-    }
-    
-    @objc private func doubleTapped(_ gesture: UITapGestureRecognizer) {
-        if scrollView.zoomScale == scrollView.minimumZoomScale {
-            // Zoom in
-            let location = gesture.location(in: imageView)
-            let rect = CGRect(x: location.x - 50, y: location.y - 50, width: 100, height: 100)
-            scrollView.zoom(to: rect, animated: true)
-        } else {
-            // Zoom out
-            scrollView.setZoomScale(scrollView.minimumZoomScale, animated: true)
-        }
     }
     
     override var prefersStatusBarHidden: Bool {
@@ -133,8 +156,16 @@ extension ImagePreviewViewController: UIScrollViewDelegate {
 
 // MARK: - UIGestureRecognizerDelegate
 extension ImagePreviewViewController: UIGestureRecognizerDelegate {
+    // Only allow tap gesture if not on close button
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-        // Only allow tap gesture on the background (not on the close button)
-        return touch.view == view
+        if gestureRecognizer is UITapGestureRecognizer {
+            let location = touch.location(in: view)
+            return !closeButton.frame.contains(location)
+        }
+        return true
+    }
+    // Allow all gestures to work together
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
 }
