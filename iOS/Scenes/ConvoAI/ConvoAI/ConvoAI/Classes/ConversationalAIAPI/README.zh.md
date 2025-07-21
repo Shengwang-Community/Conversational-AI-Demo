@@ -109,13 +109,14 @@
 ```swift
 let uuid = UUID().uuidString
 let imageUrl = "https://example.com/image.jpg"
-self.convoAIAPI.sendImage(agentUserId: "agentUserId", imageUrl: imageUrl, uuid: uuid, completion: {[weak self] error in
+let message = ImageMessage(uuid: uuid, url: imageUrl)
+self.convoAIAPI.chat(agentUserId: "\(agentUid)", message: message) { [weak self] error in
     if let error = error {
         print("send image failed, error: \(error.message)")
     } else {
         print("send image success")
     }
-})
+}
 ```
 ##处理图片发送状态
 图片发送的实际成功或失败状态通过以下两个回调来确认：

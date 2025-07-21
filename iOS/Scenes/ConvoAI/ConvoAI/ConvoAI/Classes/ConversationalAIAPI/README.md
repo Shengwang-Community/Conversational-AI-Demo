@@ -110,13 +110,14 @@ Use the sendImage interface to send an image message to the AI agent:
 ```swift
 let uuid = UUID().uuidString
 let imageUrl = "https://example.com/image.jpg"
-self.convoAIAPI.sendImage(agentUserId: "agentUserId", imageUrl: imageUrl, uuid: uuid, completion: {[weak self] error in
+let message = ImageMessage(uuid: uuid, url: imageUrl)
+self.convoAIAPI.chat(agentUserId: "\(agentUid)", message: message) { [weak self] error in
     if let error = error {
         print("send image failed, error: \(error.message)")
     } else {
         print("send image success")
     }
-})
+}
 ```
 
 ## Processing Image Sending Status
