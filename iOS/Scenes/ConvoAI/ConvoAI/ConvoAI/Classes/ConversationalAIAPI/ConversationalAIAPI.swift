@@ -597,14 +597,13 @@ public enum MessageType: String, CaseIterable {
 /// This protocol defines interfaces for controlling Agent conversation behavior,
 /// including sending messages, interrupting agents, and managing audio settings.
 @objc public protocol ConversationalAIAPI: AnyObject {
-    /// @technical preview
     /// Send a message to the AI Agent for processing
     /// This method sends a message (containing text, images) to the Agent
     /// and indicates the success or failure of the operation through a completion callback.
     ///
     /// - Parameters:
     ///   - agentUserId: Agent RTM user ID, must be globally unique
-    ///   - message: Message object containing text, image URL, and priority settings
+    ///   - message: Message object containing text, image URL
     ///   - completion: Callback function called when the operation completes.
     ///                 Returns nil on success, ConversationalAIAPIError on failure
     @objc func chat(agentUserId: String, message: ChatMessage, completion: @escaping (ConversationalAIAPIError?) -> Void)
@@ -619,8 +618,6 @@ public enum MessageType: String, CaseIterable {
     ///   If error is nil, it indicates message sending succeeded, but doesn't guarantee Agent interruption success
     @objc func interrupt(agentUserId: String, completion: @escaping (ConversationalAIAPIError?) -> Void)
     
-    
-     
     /// Set audio best practice parameters for optimal performance
     /// Configure audio parameters required for optimal performance in AI conversations
     /// Uses default audio scenario (.aiClient)
