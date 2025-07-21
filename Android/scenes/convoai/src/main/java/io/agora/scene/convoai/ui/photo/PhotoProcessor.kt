@@ -47,8 +47,8 @@ object PhotoProcessor {
                 return null // Format not supported
             }
             
-            // Convert URI to bitmap
-            val originalBitmap = loadBitmapFromUri(context, uri)
+            // 用采样方式加载大图，防止内存暴涨
+            val originalBitmap = loadBitmapFromUri(context, uri, MAX_DIMENSION, MAX_DIMENSION)
             if (originalBitmap == null) {
                 Log.e(TAG, "Failed to load bitmap from URI")
                 return null
@@ -215,18 +215,52 @@ object PhotoProcessor {
     }
     
     /**
-     * Load bitmap from URI
+     * Efficiently load large images with sampling to avoid memory issues
      */
-    private fun loadBitmapFromUri(context: Context, uri: Uri): Bitmap? {
+    private fun loadBitmapFromUri(
+        context: Context,
+        uri: Uri,
+        reqWidth: Int = MAX_DIMENSION,
+        reqHeight: Int = MAX_DIMENSION
+    ): Bitmap? {
         return try {
             val contentResolver = context.contentResolver
+
+            // First decode: only get image dimensions
+            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             contentResolver.openInputStream(uri)?.use { inputStream ->
-                BitmapFactory.decodeStream(inputStream)
+                BitmapFactory.decodeStream(inputStream, null, options)
+            }
+
+            // Calculate optimal inSampleSize
+            options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
+            options.inJustDecodeBounds = false
+            options.inPreferredConfig = Bitmap.Config.RGB_565
+
+            // Second decode: load the actual bitmap with sampling
+            contentResolver.openInputStream(uri)?.use { inputStream ->
+                BitmapFactory.decodeStream(inputStream, null, options)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error loading bitmap from URI: ${e.message}", e)
             null
         }
+    }
+
+    /**
+     * Calculate the optimal inSampleSize to ensure the loaded bitmap does not exceed the target size
+     */
+    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        val (height: Int, width: Int) = options.outHeight to options.outWidth
+        var inSampleSize = 1
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight: Int = height / 2
+            val halfWidth: Int = width / 2
+            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+        return inSampleSize
     }
     
     /**
