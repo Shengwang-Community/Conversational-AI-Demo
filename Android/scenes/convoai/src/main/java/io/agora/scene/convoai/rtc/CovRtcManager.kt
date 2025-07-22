@@ -132,6 +132,11 @@ object CovRtcManager {
         CovLogger.d(TAG, "publishCameraTrack $publish")
         channelOptions.publishCameraTrack = publish
         rtcEngine?.updateChannelMediaOptions(channelOptions)
+        if (publish) {
+            rtcEngine?.startPreview()
+        } else {
+            rtcEngine?.stopPreview()
+        }
     }
 
     // switch camera
