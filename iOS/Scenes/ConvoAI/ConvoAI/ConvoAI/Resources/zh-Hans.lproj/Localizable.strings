@@ -108,6 +108,8 @@
 "error.join.error" = "智能体加入失败，请稍后重试。";
 "error.join.error.resource.limit" = "当前预设资源超限，请稍后再试";
 "error.network.disconnect" = "网络异常，请检查网络设置";
+"error.join.error.avatar.limit" = "所有数字人正忙，请稍后重试";
+
 "error.microphone.permission.alert.title" = "没有麦克风权限";
 "error.microphone.permission.alert.description" = "请在设置中打开麦克风权限";
 "error.permission.alert.cancel" = "取消";

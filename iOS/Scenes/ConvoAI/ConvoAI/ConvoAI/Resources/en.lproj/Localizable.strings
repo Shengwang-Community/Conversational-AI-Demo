@@ -102,6 +102,7 @@
 "error.join.error" = "Failed to join. Please try again.";
 "error.join.error.resource.limit" = "The current preset resources are out of limit. Please try again later";
 "error.network.disconnect" = "Network error. Please check yournetwork settings.";
+"error.join.error.avatar.limit" = "All avatars are busy now. Please try again later.";
 
 "error.microphone.permission.alert.title" = "No microphone permission";
 "error.microphone.permission.alert.description" = "Please enable microphone permissions in the settings";
