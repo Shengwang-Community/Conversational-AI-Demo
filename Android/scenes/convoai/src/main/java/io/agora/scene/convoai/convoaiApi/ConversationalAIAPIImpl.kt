@@ -14,6 +14,7 @@ import io.agora.rtm.PresenceEvent
 import io.agora.rtm.RtmConstants
 import io.agora.rtm.RtmEventListener
 import io.agora.rtm.SubscribeOptions
+import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.convoai.convoaiApi.subRender.v3.IConversationTranscriptionCallback
 import io.agora.scene.convoai.convoaiApi.subRender.v3.MessageParser
 import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionController
@@ -327,14 +328,31 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
         message: ChatMessage,
         completion: (ConversationalAIAPIError?) -> Unit
     ) {
+
+
+        when (message) {
+            is TextMessage -> {
+                sendText(agentUserId, message, completion)
+            }
+
+            is ImageMessage -> {
+                sendImage(agentUserId, message, completion)
+            }
+        }
+
+    }
+
+    private fun sendText(
+        agentUserId: String,
+        message: TextMessage,
+        completion: (ConversationalAIAPIError?) -> Unit
+    ) {
         val traceId = genTraceId
-        callMessagePrint(TAG, ">>> [traceId:$traceId] [chat] $agentUserId $message")
+        callMessagePrint(TAG, ">>> [traceId:$traceId] [sendText] $agentUserId $message")
         val receipt = mutableMapOf<String, Any>().apply {
             put("priority", message.priority?.name ?: Priority.INTERRUPT.name)
             put("interruptable", message.responseInterruptable ?: true)
             message.text?.let { put("message", it) }
-            message.imageUrl?.let { put("image_url", it) }
-            message.audioUrl?.let { put("audio_url", it) }
         }
         try {
             // Convert message object to JSON string
@@ -374,18 +392,26 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
         }
     }
 
-    override fun sendImage(
-        agentUserId: String,
-        uuid: String,
-        imageUrl: String,
-        completion: (ConversationalAIAPIError?) -> Unit
-    ) {
-        val traceId = uuid
-        callMessagePrint(TAG, ">>> [traceId:$traceId] [sendImage] $agentUserId $uuid $imageUrl")
+    private fun sendImage(agentUserId: String, message: ImageMessage, completion: (ConversationalAIAPIError?) -> Unit) {
+        val traceId = message.uuid
+        val base64Info = message.imageBase64?.let {
+            "base64:${it.hashCode()}"
+        } ?: "null"
+        callMessagePrint(
+            TAG,
+            ">>> [traceId:$traceId] [sendImage] $agentUserId ${message.uuid} ${message.imageUrl} $base64Info"
+        )
+
         val receipt = mutableMapOf<String, Any>().apply {
-            put("uuid", uuid)
-            put("image_url", imageUrl)
+            put("uuid", message.uuid)
+            message.imageUrl?.takeIf { it.isNotEmpty() }?.let {
+                put("image_url", it)
+            }
+            message.imageBase64?.takeIf { it.isNotEmpty() }?.let {
+                put("image_base64", it)
+            }
         }
+
         try {
             // Convert the actual upload payload to JSON string for sending
             val jsonMessage = JSONObject(receipt as Map<*, *>?).toString()
@@ -396,7 +422,16 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                 customType = "image.upload"     // Custom message type
             }
 
-            callMessagePrint(TAG, "[traceId:$traceId] rtm publish $jsonMessage")
+            val logMessage = if (message.imageBase64 != null) {
+                jsonMessage.replace(
+                    Regex("\"image_base64\":\"[^\"]*\""),
+                    "\"image_base64\":\"[BASE64_DATA:${message.imageBase64.hashCode()}]\""
+                )
+            } else {
+                jsonMessage
+            }
+
+            callMessagePrint(TAG, "[traceId:$traceId] rtm publish $logMessage")
             // Send RTM point-to-point message
             config.rtmClient.publish(
                 agentUserId, jsonMessage, options,

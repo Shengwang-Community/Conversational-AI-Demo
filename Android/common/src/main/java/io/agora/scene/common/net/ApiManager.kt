@@ -99,10 +99,7 @@ object ApiManager {
      * @param token User token
      * @param onResult Result callback
      */
-    fun getUserInfo(
-        token: String,
-        onResult: (Result<SSOUserInfo>) -> Unit
-    ) {
+    fun getUserInfo(token: String, onResult: (Result<SSOUserInfo>) -> Unit) {
         scope.launch {
             runCatching {
                 getService(ApiManagerService::class.java).ssoUserInfo("Bearer $token")

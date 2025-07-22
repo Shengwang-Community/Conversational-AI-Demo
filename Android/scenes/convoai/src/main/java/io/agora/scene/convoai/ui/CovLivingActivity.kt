@@ -19,7 +19,6 @@ import androidx.lifecycle.lifecycleScope
 import io.agora.rtc2.Constants
 import io.agora.rtc2.video.VideoCanvas
 import io.agora.scene.common.constant.AgentScenes
-import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.debugMode.DebugButton
 import io.agora.scene.common.debugMode.DebugConfigSettings
@@ -72,7 +71,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
     // ViewModel instances
     private val viewModel: CovLivingViewModel by viewModels()
-    private val mLoginViewModel: UserViewModel by viewModels()
+    private val userViewModel: UserViewModel by viewModels()
 
     // UI related
     private var appInfoDialog: CovAppInfoDialog? = null
@@ -100,7 +99,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         // Initialize ViewModel
         viewModel.initializeAPIs(rtcEngine, rtmClient)
 
-        checkLogin()
+        userViewModel.checkLogin()
 
         // v1 Subtitle Rendering Controller
         selfRenderController = SelfSubRenderController(SelfRenderConfig(rtcEngine, mBinding?.messageListViewV1))
@@ -146,8 +145,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 val data: Intent? = result.data
                 val token = data?.getStringExtra("token")
                 if (token != null) {
-                    SSOUserManager.saveToken(token)
-                    mLoginViewModel.getUserInfoByToken(token)
+                    userViewModel.getUserInfoByToken(token)
                 } else {
                     showLoginLoading(false)
                 }
@@ -264,7 +262,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             })
 
             btnSendMsg.setOnClickListener {
-                viewModel.sendChatMessage()   // For test only
+                viewModel.sendTextMessage()   // For test only
             }
 
             agentStateView.setOnInterruptClickListener {
@@ -295,33 +293,24 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     // Observe ViewModel state changes
     private fun observeViewModelStates() {
         lifecycleScope.launch {
-            mLoginViewModel.loginState.collect { state ->
+            userViewModel.loginState.collect { state ->
                 when (state) {
                     is LoginState.Success -> {
+                        viewModel.getPresetTokenConfig()
                         showLoginLoading(false)
                         updateLoginStatus(true)
-                        viewModel.getPresetTokenConfig()
                     }
 
-                    is LoginState.Expired -> {
-                        showLoginLoading(false)
-                        updateLoginStatus(false)
-                        CovRtmManager.logout()
-                        viewModel.stopAgentAndLeaveChannel()
-                        ToastUtil.show(io.agora.scene.common.R.string.common_login_expired)
-                    }
-
-                    is LoginState.Error -> {
-                        showLoginLoading(false)
-                        updateLoginStatus(false)
-                        CovRtmManager.logout()
-                        ToastUtil.show(state.message)
+                    is LoginState.Loading -> {
+                        showLoginLoading(true)
                     }
 
                     is LoginState.LoggedOut -> {
+                        viewModel.setAvatar(null)
+                        viewModel.stopAgentAndLeaveChannel()
+                        CovRtmManager.logout()
                         showLoginLoading(false)
                         updateLoginStatus(false)
-                        CovRtmManager.logout()
                     }
                 }
             }
@@ -618,6 +607,13 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
             agentSpeakingIndicator.isVisible = !showAvatar && showVideo && !showTranscription
             val isLight = vDragBigWindow.isVisible && !showTranscription
+
+            updateLightBackground(isLight)
+        }
+    }
+
+    private fun updateLightBackground(isLight: Boolean){
+        mBinding?.apply {
             clTop.updateLightBackground(isLight)
 
             if (isLight) {
@@ -627,8 +623,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 clBottomLogged.btnEndCall.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_block1_selector)
                 clBottomLogged.btnCamera.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_block1_selector)
             }
-            updateMicrophoneView(viewModel.isLocalAudioMuted.value)
         }
+        updateMicrophoneView(viewModel.isLocalAudioMuted.value)
     }
 
     private fun onClickStartAgent() {
@@ -688,6 +684,10 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     clBottomLogged.btnJoinCall.visibility = View.INVISIBLE
                     vConnecting.visibility = View.VISIBLE
                     agentStateView.visibility = View.GONE
+
+                    val showTranscription = viewModel.isShowMessageList.value
+                    val isLight = vDragBigWindow.isVisible && !showTranscription
+                    updateLightBackground(isLight)
                 }
 
                 AgentConnectionState.CONNECTED,
@@ -803,16 +803,6 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
         mCovBallAnim?.setupView()
     }
 
-    private fun checkLogin() {
-        val tempToken = SSOUserManager.getToken()
-        if (tempToken.isNotEmpty()) {
-            showLoginLoading(true)
-            mLoginViewModel.getUserInfoByToken(tempToken)
-        } else {
-            updateLoginStatus(false)
-        }
-    }
-
     private fun updateLoginStatus(isLogin: Boolean) {
         mBinding?.apply {
             clTop.updateLoginStatus(isLogin)
@@ -860,8 +850,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
     }
 
     private fun uploadImageWithRequestId(requestId: String, file: File) {
-        mLoginViewModel.uploadImage(
-            token = SSOUserManager.getToken(),
+        userViewModel.uploadImage(
             requestId = requestId,
             channelName = CovAgentManager.channelName,
             imageFile = file,
@@ -1009,10 +998,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 getString(io.agora.scene.common.R.string.common_logout_confirm_known),
                 onClick = {
                     cleanCookie()
-                    viewModel.stopAgentAndLeaveChannel()
-                    SSOUserManager.logout()
-
-                    updateLoginStatus(false)
+                    userViewModel.logout()
                     onLogout.invoke()
                 })
             .setNegativeButton(getString(io.agora.scene.common.R.string.common_logout_confirm_cancel))
@@ -1167,15 +1153,13 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             }
             try {
                 isReleased = true   // Mark as releasing
-                viewModel.setAvatar(null)
-                viewModel.stopAgentAndLeaveChannel()  // Stop agent and leave channel
+                userViewModel.logout()  // User logout
                 // lifecycleScope will be automatically cancelled when activity is destroyed
                 // Release animation resources
                 mCovBallAnim?.let { anim ->
                     anim.release()
                     mCovBallAnim = null
                 }
-                SSOUserManager.logout()  // User logout
                 CovRtcManager.destroy()    // Destroy RTC manager
                 CovRtmManager.destroy()   // Destroy RTM manager
                 CovAgentManager.resetData()  // Reset Agent manager data
