@@ -47,7 +47,7 @@ class AgentDraggableView: UIView {
         if recognizer.state == .ended {
             
             UIView.animate(withDuration: 0.2) {
-                self.center.x = superview.bounds.width - halfWidth
+                self.center.x = superview.bounds.width - (halfWidth + 10)
                 self.lastLocation = self.center
             }
         }

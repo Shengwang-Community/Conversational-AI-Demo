@@ -13,10 +13,22 @@ extension ChatViewController: LoginManagerDelegate {
     func loginManager(_ manager: LoginManager, userInfoDidChange userInfo: LoginModel?, loginState: Bool) {
         welcomeMessageView.isHidden = loginState
         topBar.updateButtonVisible(loginState)
-        if !loginState {
+        if loginState {
+            // setup presets
+            Task {
+                do {
+                    try await self.fetchPresetsIfNeeded()
+                } catch {
+                    self.addLog("[PreloadData error - presets]: \(error)")
+                }
+            }
+        } else {
             SSOWebViewController.clearWebViewCache()
             stopLoading()
             stopAgent()
+            // clean presets
+            deleteAllPresets()
+            AppContext.preferenceManager()?.updateAvatar(nil)
         }
     }
     

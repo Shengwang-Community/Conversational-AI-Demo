@@ -205,6 +205,7 @@ extension ChatViewController {
         videoCanvas.view = nil
         videoCanvas.renderMode = .hidden
         rtcEngine.setupLocalVideo(videoCanvas)
+        rtcEngine.stopPreview()
     }
     
     internal func startRenderRemoteVideoStream(renderView: UIView) {

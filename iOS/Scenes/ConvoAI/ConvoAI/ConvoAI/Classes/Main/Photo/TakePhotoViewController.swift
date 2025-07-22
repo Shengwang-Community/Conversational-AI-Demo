@@ -249,9 +249,6 @@ extension TakePhotoViewController: PHPickerViewControllerDelegate {
 
 extension TakePhotoViewController {
     
-    // TODO: Preview and capture consistency - manual adjustment to be implemented later
-    // You can add cropping logic here to ensure the captured result is exactly the same as the preview
-    
     func fetchLatestPhotoThumbnail() {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
@@ -259,8 +256,12 @@ extension TakePhotoViewController {
         let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
         guard let asset = fetchResult.firstObject else { return }
         let manager = PHImageManager.default()
-        manager.requestImage(for: asset, targetSize: CGSize(width: 48, height: 48), contentMode: .aspectFill, options: nil) { [weak self] image, _ in
-            self?.previewImageView.image = image
+        let targetSize = CGSize(width: 48, height: 48)
+        manager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFill, options: nil) { [weak self] image, _ in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                self.previewImageView.image = image
+            }
         }
     }
 }
