@@ -93,6 +93,9 @@ class CovLivingViewModel : ViewModel() {
     val avatar: StateFlow<CovAvatar?> = _avatar.asStateFlow()
 
     fun setAvatar(avatar: CovAvatar?) {
+        if (avatar == null) {
+            CovAgentManager.avatar = null
+        }
         _avatar.value = avatar
     }
 

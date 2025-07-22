@@ -8,7 +8,6 @@ import android.os.Looper
 import android.text.TextUtils
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
@@ -17,7 +16,6 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.core.view.isVisible
-import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig.toolBoxUrl
 import io.agora.scene.common.databinding.CommonActivitySsoBinding
 import io.agora.scene.common.util.CommonLogger
