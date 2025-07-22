@@ -618,6 +618,13 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
 
             agentSpeakingIndicator.isVisible = !showAvatar && showVideo && !showTranscription
             val isLight = vDragBigWindow.isVisible && !showTranscription
+
+            updateLightBackground(isLight)
+        }
+    }
+
+    private fun updateLightBackground(isLight: Boolean){
+        mBinding?.apply {
             clTop.updateLightBackground(isLight)
 
             if (isLight) {
@@ -627,8 +634,8 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 clBottomLogged.btnEndCall.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_block1_selector)
                 clBottomLogged.btnCamera.setBackgroundResource(io.agora.scene.common.R.drawable.btn_bg_block1_selector)
             }
-            updateMicrophoneView(viewModel.isLocalAudioMuted.value)
         }
+        updateMicrophoneView(viewModel.isLocalAudioMuted.value)
     }
 
     private fun onClickStartAgent() {
@@ -688,6 +695,10 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                     clBottomLogged.btnJoinCall.visibility = View.INVISIBLE
                     vConnecting.visibility = View.VISIBLE
                     agentStateView.visibility = View.GONE
+
+                    val showTranscription = viewModel.isShowMessageList.value
+                    val isLight = vDragBigWindow.isVisible && !showTranscription
+                    updateLightBackground(isLight)
                 }
 
                 AgentConnectionState.CONNECTED,
@@ -1009,6 +1020,7 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 getString(io.agora.scene.common.R.string.common_logout_confirm_known),
                 onClick = {
                     cleanCookie()
+                    viewModel.setAvatar(null)
                     viewModel.stopAgentAndLeaveChannel()
                     SSOUserManager.logout()
 
