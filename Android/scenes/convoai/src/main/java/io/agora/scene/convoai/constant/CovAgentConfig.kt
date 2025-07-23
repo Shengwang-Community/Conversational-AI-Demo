@@ -81,7 +81,7 @@ object CovAgentManager {
     }
 
     fun isEnableAvatar(): Boolean {
-        return avatar != null || BuildConfig.AVATAR_VENDOR.isNotEmpty()
+        return avatar != null || BuildConfig.AVATAR_ENABLE
     }
 
     // Preset change reminder management methods

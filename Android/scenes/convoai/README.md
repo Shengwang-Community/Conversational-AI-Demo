@@ -76,6 +76,11 @@ LLM_SYSTEM_MESSAGES=<LLM Prompt>(可选)
 #----------- TTS -----------
 TTS_VENDOR=<TTS 厂商>
 TTS_PARAMS=<TTS 参数>
+
+#----------- AVATAR -----------
+AVATAR_ENABLE=<是否开启 AVATAR>
+AVATAR_VENDOR=<AVATAR 厂商>
+AVATAR_PARAMS=<AVATAR 参数>
 ```
 
 - 用 Android Studio 运行项目即可开始您的体验
