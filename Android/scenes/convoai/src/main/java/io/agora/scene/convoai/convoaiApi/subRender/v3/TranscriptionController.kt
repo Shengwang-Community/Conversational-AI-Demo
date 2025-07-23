@@ -320,9 +320,9 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
             val text = msg["text"] as? String ?: ""
             val userId = msg["user_id"]?.toString() ?: ""
 
+            val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
             // deal with interrupt message
             if (isInterrupt) {
-                val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
                 val interruptEvent = InterruptEvent(turnId, startMs)
                 config.callback?.onAgentInterrupted(agentUserId, interruptEvent)
                 callMessagePrint(TAG, "<<< [onInterrupted] pts:$mPresentationMs $agentUserId $interruptEvent")
@@ -481,7 +481,7 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                 userId = userId,
                 text = text,
                 status = status,
-                type = TranscriptionType.AGENT
+                type = TranscriptionType.AGENT,
             )
             // Agent text mode messages are directly callback out
             callMessagePrint(TAG_UI, "<<< [Text Mode] pts:$mPresentationMs $agentUserId $transcription")
@@ -648,7 +648,7 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                             userId = turn.userId,
                             text = interruptedText,
                             status = TranscriptionStatus.INTERRUPTED,
-                            type = TranscriptionType.AGENT
+                            type = TranscriptionType.AGENT,
                         )
                         val agentUserId = turn.agentUserId
                         callMessagePrint(
@@ -708,7 +708,7 @@ internal class TranscriptionController(private val config: TranscriptionConfig) 
                 userId = targetTurn.userId,
                 text = if (targetIsEnd) targetTurn.text else targetWords.joinToString("") { it.word },
                 status = if (targetIsEnd) TranscriptionStatus.END else TranscriptionStatus.IN_PROGRESS,
-                type = TranscriptionType.AGENT
+                type = TranscriptionType.AGENT,
             )
             if (targetIsEnd) {
                 callMessagePrint(TAG_UI, "<<< [end] pts:$mPresentationMs $agentUserId $newTranscription")

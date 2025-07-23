@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Text shadow style for better readability against video backgrounds -->
+    <style name="TextShadowStyle">
+        <item name="android:shadowColor">#0F14142B</item>
+        <item name="android:shadowDx">0</item>
+        <item name="android:shadowDy">2</item>
+        <item name="android:shadowRadius">6</item>
+    </style>
+</resources>

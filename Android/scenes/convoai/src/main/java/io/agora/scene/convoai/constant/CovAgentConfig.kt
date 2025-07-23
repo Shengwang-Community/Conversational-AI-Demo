@@ -95,6 +95,9 @@ object CovAgentManager {
 
     fun resetData() {
         enableAiVad = false
+        presetList = null
+        preset = null
+        language = null
         avatar = null
     }
 }

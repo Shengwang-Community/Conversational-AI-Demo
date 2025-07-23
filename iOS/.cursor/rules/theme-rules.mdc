@@ -1,0 +1,151 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: iOS ConvoAI 项目主题颜色系统开发规范 - 自动应用于所有颜色相关开发任务
+globs:
+  - "**/*.swift"
+  - "**/*.strings"
+  - "Common/Common/Assets/**/*"
+  - "Common/Common/Classes/Colors/**/*"
+alwaysApply: true
+---
+
+# iOS ConvoAI 项目主题颜色规则
+
+## 主题颜色系统开发规范
+
+### 1. 颜色系统工作流程
+
+#### 设计到开发的流程：
+1. **设计师提供**：完整的 `colors_dark.strings` 和 `colors_light.strings` 文件
+2. **AI 根据 Figma 设计稿**：自动匹配现有颜色定义
+3. **开发者使用**：直接通过 `UIColor.themColor(named: "颜色名")` 调用
+
+#### 颜色文件结构：
+- **亮色主题**：`Common/Common/Assets/colors_light.strings`（设计师提供）
+- **暗色主题**：`Common/Common/Assets/colors_dark.strings`（设计师提供）
+- **主题管理**：`Common/Common/Classes/Colors/ThemColor.swift`（系统文件，不要修改）
+
+### 2. 颜色使用规范
+
+#### 正确使用方式：
+```swift
+// 使用主题颜色系统 - 从现有colors文件中选择
+view.backgroundColor = UIColor.themColor(named: "ai_fill1")
+label.textColor = UIColor.themColor(named: "ai_icontext1")
+button.backgroundColor = UIColor.themColor(named: "ai_brand_main6")
+```
+
+#### 错误使用方式：
+```swift
+// ❌ 硬编码颜色值
+view.backgroundColor = UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+label.textColor = UIColor.white
+button.backgroundColor = UIColor.blue
+
+// ❌ 使用系统颜色（不支持自定义主题）
+view.backgroundColor = UIColor.systemBackground
+label.textColor = UIColor.label
+
+// ❌ 直接使用十六进制颜色
+view.backgroundColor = UIColor(hexString: "#ffffff")
+
+// ❌ 向.strings文件添加新颜色（设计师负责维护）
+不要手动修改 colors_dark.strings 或 colors_light.strings 文件
+```
+
+### 3. 代码生成 Prompt 模板
+
+#### 根据 Figma 设计稿生成代码的完整 Prompt：
+
+```
+请根据 Figma 设计稿为 [功能名称] 生成代码，使用现有的主题颜色系统：
+
+Figma 设计信息：
+[设计稿中的颜色、尺寸等信息]
+
+请按照以下规范操作：
+
+1. 颜色使用：
+   - 根据设计稿中的颜色，从现有的 colors_light.strings 和 colors_dark.strings 文件中选择最匹配的颜色
+   - 使用 UIColor.themColor(named: "颜色名") 获取颜色
+   - 不要使用硬编码颜色值
+   - 不要修改 .strings 颜色文件
+
+2. 颜色匹配原则：
+   - 优先选择语义化颜色（如 ai_red6 表示错误色）
+   - 其次选择功能颜色（如 ai_fill1 表示主背景）
+   - 根据设计稿中的透明度选择对应等级的颜色
+
+3. 如果找不到完全匹配的颜色：
+   - 选择最接近的现有颜色
+   - 在注释中说明颜色差异
+   - 建议联系设计师确认颜色规范
+
+示例：
+// 根据设计稿：背景使用白色
+view.backgroundColor = UIColor.themColor(named: "ai_fill1")
+
+// 根据设计稿：主要文本使用黑色
+label.textColor = UIColor.themColor(named: "ai_icontext1")
+```
+
+### 4. 颜色选择指南
+
+#### 从 Figma 到代码的颜色映射：
+
+**背景色映射：**
+- 主背景 → `ai_fill1`
+- 卡片背景 → `ai_fill2`
+- 按钮背景 → `ai_fill3` 或 `ai_btn2`
+- 输入框背景 → `ai_input`
+
+**文本色映射：**
+- 主标题 → `ai_icontext1`
+- 副标题 → `ai_icontext2`
+- 辅助文本 → `ai_icontext3`
+- 占位符文本 → `ai_icontext4`
+
+**品牌色映射：**
+- 主要操作按钮 → `ai_brand_main6`
+- 次要操作按钮 → `ai_brand_main5`
+- 品牌元素 → `ai_brand_main3`
+
+**状态色映射：**
+- 错误状态 → `ai_red6`
+- 成功状态 → `ai_green6`
+- 警告状态 → `ai_yellow6`
+- 信息提示 → `ai_blue6`
+
+### 5. 日常使用指南
+
+#### 基于 Figma 设计稿开发的工作流程：
+1. **分析设计稿**：识别设计中使用的颜色
+2. **匹配现有颜色**：从 colors 文件中找到最接近的颜色
+3. **生成代码**：使用 `UIColor.themColor(named: "颜色名")`
+4. **如有疑问**：联系设计师确认颜色使用
+
+#### 常用AI指令：
+- "根据这个 Figma 设计稿，帮我选择合适的主题颜色"
+- "请检查当前代码中的颜色使用，确保都使用了主题颜色系统"
+- "这个设计稿中的颜色应该对应哪个主题颜色？"
+
+#### 颜色问题处理：
+```
+Figma 设计稿显示需要以下颜色：
+- 背景：#ffffff
+- 文本：#21202a  
+- 按钮：#00c2ff
+
+请帮我从现有的主题颜色中选择最匹配的颜色。
+```
+
+### 6. 注意事项
+
+1. **不要修改颜色文件**：colors_dark.strings 和 colors_light.strings 由设计师维护
+2. **优先使用现有颜色**：从预定义的颜色中选择，确保设计一致性
+3. **颜色命名理解**：理解 ai_ 前缀的颜色命名规范，便于快速选择
+4. **联系设计师**：如果现有颜色无法满足设计需求，及时与设计师沟通

@@ -18,14 +18,29 @@ class AgentSettingBar: UIView {
         button.tintColor = UIColor.themColor(named: "ai_icontext1")
         return button
     }()
-        
+    
     let netStateView = UIView()
+    
+    let wifiInfoButton: UIButton = {
+        let button = UIButton()
+        return button
+    }()
+    
     private let netTrackView = UIImageView(image: UIImage.ag_named("ic_agent_net_4"))
     private let netRenderView = UIImageView(image: UIImage.ag_named("ic_agent_net_3"))
     
     let settingButton: UIButton = {
         let button = UIButton(type: .custom)
         button.setImage(UIImage.ag_named("ic_agent_setting"), for: .normal)
+        return button
+    }()
+    
+    let cameraButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.setImage(UIImage.ag_named("ic_camera_switch_icon"), for: .normal)
+        button.isHidden = true
+        button.layer.cornerRadius = 16
+        button.backgroundColor = UIColor.themColor(named: "ai_block1")
         return button
     }()
     
@@ -100,9 +115,7 @@ class AgentSettingBar: UIView {
         label.text = "00:00"
         label.font = .systemFont(ofSize: 12)
         label.textAlignment = .center
-        label.layerCornerRadius = 11
         label.isHidden = true
-        label.backgroundColor = UIColor.white.withAlphaComponent(0.15)
         label.textColor = UIColor.themColor(named: "ai_brand_white10")
         return label
     }()
@@ -141,6 +154,16 @@ class AgentSettingBar: UIView {
         }
     }
     
+    func openCamera(isOpen: Bool) {
+        if isOpen {
+            addButton.isHidden = true
+            cameraButton.isHidden = false
+        } else {
+            addButton.isHidden = false
+            cameraButton.isHidden = true
+        }
+    }
+    
     public func updateButtonVisible(_ visible: Bool) {
         if (visible) {
             infoListButton.isHidden = false
@@ -160,6 +183,7 @@ class AgentSettingBar: UIView {
         // Update button visibility - show setting button, hide add and subtitle buttons
         infoListButton.isHidden = false
         addButton.isHidden = true
+        cameraButton.isHidden = true
         transcriptionButton.isHidden = true
         
         showTipsTimer?.invalidate()
@@ -183,7 +207,7 @@ class AgentSettingBar: UIView {
             centerTipsLabel.text = String(format: ResourceManager.L10n.Join.tips, minutes)
         }
         showTips()
-        showTipsTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(10), repeats: false) { [weak self] _ in
+        showTipsTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(3), repeats: false) { [weak self] _ in
             if self?.isShowTips == true {
                 self?.hideTips()
             }
@@ -270,6 +294,16 @@ class AgentSettingBar: UIView {
         }
     }
     
+    func setButtonColorTheme(showLight: Bool) {
+        var color = UIColor.themColor(named: "ai_block1")
+        if showLight {
+            color = UIColor.themColor(named: "ai_brand_black4")
+        }
+        
+        addButton.backgroundColor = color
+        transcriptionButton.backgroundColor = color
+    }
+    
     private func updateNetWorkView() {
         guard let manager = AppContext.preferenceManager() else {
             netStateView.isHidden = true
@@ -306,9 +340,9 @@ class AgentSettingBar: UIView {
     }
     
     private func setupViews() {
-        [titleContentView, infoListButton, netStateView, settingButton, addButton, transcriptionButton, countDownLabel].forEach { addSubview($0) }
+        [titleContentView, infoListButton, netStateView, settingButton, addButton, cameraButton, transcriptionButton, countDownLabel].forEach { addSubview($0) }
         [centerTipsLabel, centerTitleView, centerTitleButton].forEach { titleContentView.addSubview($0) }
-        [netTrackView, netRenderView].forEach { netStateView.addSubview($0) }
+        [netTrackView, netRenderView, wifiInfoButton].forEach { netStateView.addSubview($0) }
         
         let titleImageView = UIImageView()
         titleImageView.image = UIImage.ag_named("ic_agent_detail_logo")
@@ -362,6 +396,11 @@ class AgentSettingBar: UIView {
             make.width.height.equalTo(32)
             make.centerY.equalToSuperview()
         }
+        cameraButton.snp.makeConstraints { make in
+            make.left.equalTo(16)
+            make.width.height.equalTo(32)
+            make.centerY.equalToSuperview()
+        }
         transcriptionButton.snp.makeConstraints { make in
             make.left.equalTo(addButton.snp.right).offset(9)
             make.height.equalTo(32)
@@ -375,6 +414,9 @@ class AgentSettingBar: UIView {
         netTrackView.snp.makeConstraints { make in
             make.center.equalToSuperview()
             make.width.height.equalTo(22)
+        }
+        wifiInfoButton.snp.makeConstraints { make in
+            make.edges.equalTo(UIEdgeInsets.zero)
         }
         netRenderView.snp.makeConstraints { make in
             make.center.equalToSuperview()

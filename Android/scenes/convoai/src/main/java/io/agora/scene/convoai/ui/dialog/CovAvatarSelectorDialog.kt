@@ -9,6 +9,7 @@ import android.view.WindowManager
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.agora.scene.common.ui.BaseActivity.ImmersiveMode
 import io.agora.scene.common.ui.BaseDialogFragment
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.convoai.api.CovAvatar
@@ -32,6 +33,8 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
     // Input parameters
     private var currentAvatar: CovAvatar? = null
+
+    private var selectedAvatar: AvatarItem? = null
 
     companion object {
         private const val TAG = "CovAvatarSelectorDialog"
@@ -60,6 +63,8 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
     }
 
+    override fun immersiveMode(): ImmersiveMode = ImmersiveMode.FULLY_IMMERSIVE
+
     override fun getViewBinding(
         inflater: LayoutInflater,
         container: ViewGroup?
@@ -69,7 +74,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        isCancelable = false
         // Get input parameters
         arguments?.let {
             currentAvatar = it.getParcelable(ARG_AVATAR) as? CovAvatar
@@ -82,6 +87,11 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
             // Set back button click listener
             ivBack.setOnClickListener {
+                selectedAvatar?.let { selected->
+                    if (selected.covAvatar?.avatar_id!=currentAvatar?.avatar_id){
+                        onAvatarSelectedCallback?.invoke(selected)
+                    }
+                }
                 dismiss()
             }
 
@@ -95,17 +105,6 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
         // Set full screen display
         dialog?.window?.apply {
             setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
-            setBackgroundDrawableResource(android.R.color.transparent)
-
-            // Set full screen flags
-            decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            )
         }
     }
 
@@ -145,9 +144,8 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
             )
         }
 
-        avatarAdapter.updateAvatars(avatarList) { selectedAvatar ->
-            onAvatarSelectedCallback?.invoke(selectedAvatar)
-            dismiss()
+        avatarAdapter.updateAvatars(avatarList) { avatar ->
+            selectedAvatar = avatar
         }
     }
 
@@ -231,8 +229,14 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
                     // Set close icon selection state
                     ivCloseIcon.isSelected = isSelected
 
+                    if (isSelected){
+                        tvCloseText.setTextColor(root.context.getColor(io.agora.scene.common.R.color.ai_brand_main6))
+                    }else{
+                        tvCloseText.setTextColor(root.context.getColor(io.agora.scene.common.R.color.ai_icontext1))
+                    }
+
                     // Set click listener
-                    root.setOnClickListener(object : OnFastClickListener() {
+                    card.setOnClickListener(object : OnFastClickListener() {
                         override fun onClickJacking(view: View) {
                             if (selectedPosition != adapterPosition) {
                                 val oldPosition = selectedPosition
@@ -241,12 +245,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
                                 // Update selection state
                                 notifyItemChanged(oldPosition)
                                 notifyItemChanged(selectedPosition)
-
-                                // Delay 500ms to show selection effect before callback
-                                lifecycleScope.launch {
-                                    delay(500)
-                                    onItemClickListener?.invoke(avatar)
-                                }
+                                onItemClickListener?.invoke(avatar)
                             }
                         }
                     })
@@ -270,13 +269,13 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
                     GlideImageLoader.load(
                         ivAvatar,
-                        covAvatar?.avatar_url,
+                        covAvatar?.thumb_img_url,
                         null,
                         io.agora.scene.convoai.R.drawable.cov_default_avatar
                     )
 
                     // Set click listener
-                    root.setOnClickListener(object : OnFastClickListener() {
+                    card.setOnClickListener(object : OnFastClickListener() {
                         override fun onClickJacking(view: View) {
                             if (selectedPosition != adapterPosition) {
                                 val oldPosition = selectedPosition

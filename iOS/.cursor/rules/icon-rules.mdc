@@ -1,0 +1,228 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+
+# iOS ConvoAI 项目图片资源规则
+
+## 图片资源管理规范
+
+### 1. 图片资源工作流程
+
+#### 设计到开发的流程：
+1. **从 Figma 获取图片**：使用 Figma MCP 工具下载设计稿中的图片
+2. **AI 自动处理**：下载图片并放置到正确的目录结构
+3. **开发者使用**：通过 `UIImage.ag_named("图片名")` 调用
+
+#### 图片文件结构：
+- **图片存储目录**：`Common/Common/Assets/Assets.xcassets/icons/`
+- **图片扩展方法**：`Common/Common/Classes/Extension/UIImage+Bundle.swift`
+- **命名规范**：`ic_{功能}_{描述}_icon`
+
+### 2. 图片使用规范
+
+#### 正确使用方式：
+```swift
+// 使用图片扩展方法
+let iconImage = UIImage.ag_named("ic_agent_add_icon")
+imageView.image = UIImage.ag_named("ic_camera_switch_icon")
+button.setImage(UIImage.ag_named("ic_settings_icon"), for: .normal)
+```
+
+#### 错误使用方式：
+```swift
+// ❌ 直接使用 UIImage(named:)
+let image = UIImage(named: "ic_agent_add_icon")
+
+// ❌ 硬编码 bundle 路径
+let image = UIImage(named: "icon", in: Bundle(identifier: "com.xxx"), compatibleWith: nil)
+```
+
+### 3. 图片资源处理 Prompt 模板
+
+#### 根据 Figma 设计稿处理图片的完整 Prompt：
+
+```
+请根据 Figma 设计稿为 [功能名称] 处理图片资源：
+
+Figma 设计信息：
+[设计稿中的图片、图标等信息]
+
+请按照以下规范操作：
+
+1. 图片下载：
+   - 使用 Figma MCP 工具从设计稿中下载所需的图片
+   - 图片格式：PNG（支持 @2x 和 @3x 倍图）
+   - 下载路径：Common/Common/Assets/Assets.xcassets/icons/
+
+2. 图片命名规范：
+   - 使用格式：ic_{功能}_{描述}_icon
+   - 例如：ic_agent_add_icon, ic_camera_switch_icon
+   - 保持命名简洁明确，使用下划线分隔
+
+3. 目录结构：
+   - 创建 {图片名}.imageset 文件夹
+   - 包含 Contents.json 配置文件
+   - 包含对应的 @2x 和 @3x 图片文件
+
+4. 代码中使用：
+   - 使用 UIImage.ag_named("图片名") 获取图片
+   - 不要使用 UIImage(named:) 直接调用
+   - 不要硬编码 bundle 路径
+
+示例流程：
+1. 从 Figma 下载图标 → ic_new_feature_icon
+2. 创建目录：Common/Common/Assets/Assets.xcassets/icons/ic_new_feature_icon.imageset/
+3. 在代码中使用：UIImage.ag_named("ic_new_feature_icon")
+```
+
+### 4. 图片资源目录结构
+
+#### 标准目录结构：
+```
+Common/Common/Assets/Assets.xcassets/icons/
+├── ic_agent_add_icon.imageset/
+│   ├── Contents.json
+│   ├── icon2.png (@2x)
+│   └── icon2-1.png (@3x)
+├── ic_camera_switch_icon.imageset/
+│   ├── Contents.json
+│   ├── Union.png (@2x)
+│   └── Union-1.png (@3x)
+└── ...
+```
+
+#### Contents.json 标准格式：
+```json
+{
+  "images" : [
+    {
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "图片名@2x.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "图片名@3x.png",
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
+```
+
+### 5. 图片命名规范
+
+#### 命名格式：
+```
+ic_{功能模块}_{具体描述}_icon
+```
+
+#### 常见命名示例：
+- **导航相关**：
+  - `ic_back_icon` - 返回按钮
+  - `ic_close_icon` - 关闭按钮
+  - `ic_menu_icon` - 菜单按钮
+
+- **功能操作**：
+  - `ic_add_icon` - 添加按钮
+  - `ic_edit_icon` - 编辑按钮
+  - `ic_delete_icon` - 删除按钮
+  - `ic_search_icon` - 搜索按钮
+
+- **媒体相关**：
+  - `ic_camera_icon` - 相机按钮
+  - `ic_camera_switch_icon` - 摄像头切换
+  - `ic_mic_icon` - 麦克风按钮
+  - `ic_speaker_icon` - 扬声器按钮
+
+- **状态相关**：
+  - `ic_success_icon` - 成功状态
+  - `ic_error_icon` - 错误状态
+  - `ic_warning_icon` - 警告状态
+  - `ic_loading_icon` - 加载状态
+
+- **应用特定**：
+  - `ic_agent_add_icon` - 智能体添加
+  - `ic_settings_icon` - 设置按钮
+  - `ic_profile_icon` - 个人资料
+
+### 6. Figma MCP 下载流程
+
+#### 使用 Figma MCP 工具下载图片：
+
+1. **识别图标**：从 Figma 设计稿中识别需要下载的图标
+2. **调用 MCP 工具**：使用 Figma MCP 下载指定的图标
+3. **生成倍图**：自动生成 @2x 和 @3x 尺寸
+4. **创建目录**：自动创建对应的 .imageset 文件夹
+5. **生成配置**：自动生成 Contents.json 文件
+
+#### MCP 工具调用示例：
+```
+使用 Figma MCP 工具下载以下图标：
+- 节点ID：[从设计稿获取]
+- 图标名称：ic_new_button_icon
+- 输出路径：Common/Common/Assets/Assets.xcassets/icons/
+- 格式：PNG
+- 倍图：@2x, @3x
+```
+
+### 7. 图片处理注意事项
+
+1. **倍图处理**：确保下载 @2x 和 @3x 两种尺寸的图片
+2. **命名一致性**：图片名称要与 imageset 文件夹名称一致
+3. **格式统一**：统一使用 PNG 格式，保持透明背景
+4. **尺寸规范**：根据设计稿的实际尺寸下载对应倍图
+5. **不要直接修改**：不要手动修改 Assets.xcassets 结构，通过工具自动生成
+
+### 8. 常用AI指令
+
+#### 图片下载和使用：
+- "请从 Figma 设计稿中下载这个图标，并按照项目规范放置"
+- "这个按钮需要什么图标？请从设计稿中获取并下载"
+- "请检查当前代码中的图片使用，确保都使用了 ag_named 方法"
+
+#### 批量处理：
+```
+请从 Figma 设计稿中下载以下图标：
+- 添加按钮图标
+- 设置按钮图标
+- 返回按钮图标
+- 关闭按钮图标
+
+并按照项目规范进行命名和目录结构处理。
+```
+
+#### 代码生成时的图片处理：
+```
+请根据 Figma 设计稿实现这个界面，需要处理以下图标：
+[列出设计稿中的图标]
+
+请使用 Figma MCP 工具下载图标，并在代码中使用 UIImage.ag_named() 方法。
+```
+
+### 9. troubleshooting
+
+#### 常见问题：
+1. **图片显示不出来**：检查是否使用了 `UIImage.ag_named()` 方法
+2. **倍图模糊**：确认是否下载了正确尺寸的 @2x 和 @3x 图片
+3. **路径错误**：确认图片是否放在正确的 Assets.xcassets/icons/ 目录下
+4. **命名冲突**：确保图标命名符合规范且不重复
+
+#### 调试方法：
+```swift
+// 检查图片是否加载成功
+if let image = UIImage.ag_named("ic_test_icon") {
+    print("图片加载成功")
+} else {
+    print("图片加载失败，请检查路径和命名")
+}
+```

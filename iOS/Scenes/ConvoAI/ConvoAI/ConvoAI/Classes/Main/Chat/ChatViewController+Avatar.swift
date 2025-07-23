@@ -8,12 +8,19 @@
 import Foundation
 import AgoraRtcKit
 import Common
+import AlamofireImage
 
 extension ChatViewController {
     internal func startShowAvatar() {
         windowState.showAvatar = true
-        startRenderRemoteVideoStream(renderView: remoteAvatarView.renderView)
+        if let avatar = AppContext.preferenceManager()?.preference.avatar, let url = URL(string: avatar.bgImageUrl) {
+            remoteAvatarView.backgroundImageView.af.setImage(withURL: url)
+        }
         updateWindowContent()
+    }
+    
+    internal func startRenderRemoteVideoStream() {
+        startRenderRemoteVideoStream(renderView: remoteAvatarView.renderView)
     }
     
     internal func stopShowAvatar() {

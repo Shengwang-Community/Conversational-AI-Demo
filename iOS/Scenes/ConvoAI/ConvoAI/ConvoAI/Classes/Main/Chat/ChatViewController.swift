@@ -33,16 +33,17 @@ public class ChatViewController: UIViewController {
         return view
     }()
     
-    internal lazy var smallSizeContainerView: UIView = {
-        let view = UIView()
-        let button = UIButton()
-        view.addSubview(button)
-        
-        button.snp.makeConstraints { make in
-            make.edges.equalTo(UIEdgeInsets.zero)
-        }
-        
-        button.addTarget(self, action: #selector(smallWindowClicked), for: .touchUpInside)
+    internal lazy var smallSizeContainerView: AgentDraggableContentView = {
+        return AgentDraggableContentView()
+    }()
+    
+    internal lazy var miniView: AgentDraggableView = {
+        let view = AgentDraggableView()
+        view.layer.cornerRadius = 12
+        view.layer.masksToBounds = true
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(smallWindowClicked))
+        view.addGestureRecognizer(tapGesture)
+        view.isUserInteractionEnabled = true
         return view
     }()
     
@@ -53,6 +54,11 @@ public class ChatViewController: UIViewController {
     
     internal lazy var remoteAvatarView: AvatarView = {
         let view = AvatarView()
+        return view
+    }()
+    
+    internal lazy var volumeAnimateView: VolumeAnimateView = {
+        let view = VolumeAnimateView()
         return view
     }()
     
@@ -92,7 +98,9 @@ public class ChatViewController: UIViewController {
         let view = AgentSettingBar()
         view.infoListButton.addTarget(self, action: #selector(onClickInformationButton), for: .touchUpInside)
         view.settingButton.addTarget(self, action: #selector(onClickSettingButton), for: .touchUpInside)
+        view.wifiInfoButton.addTarget(self, action: #selector(onClickWifiInfoButton), for: .touchUpInside)
         view.addButton.addTarget(self, action: #selector(onClickAddButton), for: .touchUpInside)
+        view.cameraButton.addTarget(self, action: #selector(clickCameraButton), for: .touchUpInside)
         view.transcriptionButton.addTarget(self, action: #selector(onClickTranscriptionButton(_:)), for: .touchUpInside)
         view.centerTitleButton.addTarget(self, action: #selector(onClickLogo), for: .touchUpInside)
         return view
@@ -151,6 +159,7 @@ public class ChatViewController: UIViewController {
     internal lazy var messageView: ChatView = {
         let view = ChatView()
         view.isHidden = true
+        view.delegate = self
         return view
     }()
 
@@ -227,10 +236,12 @@ public class ChatViewController: UIViewController {
     
     private func registerDelegate() {
         AppContext.loginManager()?.addDelegate(self)
+        AppContext.preferenceManager()?.addDelegate(self)
     }
     
     private func deregisterDelegate() {
         AppContext.loginManager()?.removeDelegate(self)
+        AppContext.preferenceManager()?.removeDelegate(self)
     }
     
     private func preloadData() {
@@ -312,14 +323,7 @@ public class ChatViewController: UIViewController {
     func resetPreference() {
         AppContext.preferenceManager()?.resetAgentInformation()
     }
-    
-    @objc func smallWindowClicked() {
-        if !windowState.showTranscription {
-            return
-        }
-        
-        showTranscription(state: false)
-    }
+
 }
 
 

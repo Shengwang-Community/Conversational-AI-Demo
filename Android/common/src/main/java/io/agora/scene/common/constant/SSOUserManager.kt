@@ -1,6 +1,5 @@
 package io.agora.scene.common.constant
 
-import android.text.TextUtils
 import com.google.gson.JsonIOException
 import io.agora.scene.common.net.SSOUserInfo
 import io.agora.scene.common.util.CommonLogger
@@ -17,7 +16,7 @@ object SSOUserManager {
 
     private var mToken: String = ""
 
-    private var mUserIfo: SSOUserInfo? = null
+    private var mUserInfo: SSOUserInfo? = null
 
     fun saveToken(token: String) {
         this.mToken = token
@@ -34,45 +33,18 @@ object SSOUserManager {
     @JvmStatic
     fun logout() {
         this.mToken = ""
-        this.mUserIfo = null
+        this.mUserInfo = null
         LocalStorageUtil.clear()
     }
 
     fun saveUser(userData: SSOUserInfo) {
-        this.mUserIfo = userData
+        this.mUserInfo = userData
         val userString: String = try {
-            GsonTools.beanToString(mUserIfo) ?: ""
+            GsonTools.beanToString(mUserInfo) ?: ""
         } catch (io: JsonIOException) {
             CommonLogger.e(TAG, io.message ?: "parse error")
             ""
         }
         LocalStorageUtil.putString(CURRENT_SSO_USER, userString)
-    }
-
-    fun isLogin(): Boolean {
-        val userInfo = getUser()
-        return userInfo.accountUid.isNotEmpty() && userInfo.displayName.isNotEmpty() && mToken.isNotEmpty()
-    }
-
-    @JvmStatic
-    fun getUser(): SSOUserInfo {
-        if (mUserIfo != null && !mUserIfo?.accountUid.isNullOrEmpty()) {
-            return mUserIfo!!
-        }
-        readingUserInfoFromPrefs()
-        return mUserIfo!!
-    }
-
-    private fun readingUserInfoFromPrefs() {
-        val userInfo = LocalStorageUtil.getString(CURRENT_SSO_USER, "")
-        try {
-            if (!TextUtils.isEmpty(userInfo)) {
-                mUserIfo = GsonTools.toBean(userInfo, SSOUserInfo::class.java)
-            }
-        } catch (e: Exception) {
-            CommonLogger.e(TAG, "Error parsing user info: ${e.message}")
-            mUserIfo = SSOUserInfo("")
-        }
-        if (mUserIfo == null) mUserIfo = SSOUserInfo("")
     }
 }

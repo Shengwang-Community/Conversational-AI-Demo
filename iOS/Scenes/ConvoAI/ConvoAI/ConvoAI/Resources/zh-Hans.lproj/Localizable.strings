@@ -46,6 +46,7 @@
 "conversation.agent.state.speaking" = "说话或点击打断";
 "conversation.agent.state.muted" = "已静音";
 "conversation.agent.transcription" = "字幕";
+"conversation.vision.unsupport.message" = "当前 Preset 不支持视觉理解相关功能，请点击右上角设置按钮切换其他 Preset 体验！";
 
 "conversation.alert.cancel" = "取消";
 "conversation.alert.confirm" = "确定";
@@ -107,6 +108,8 @@
 "error.join.error" = "智能体加入失败，请稍后重试。";
 "error.join.error.resource.limit" = "当前预设资源超限，请稍后再试";
 "error.network.disconnect" = "网络异常，请检查网络设置";
+"error.join.error.avatar.limit" = "所有数字人正忙，请稍后重试";
+
 "error.microphone.permission.alert.title" = "没有麦克风权限";
 "error.microphone.permission.alert.description" = "请在设置中打开麦克风权限";
 "error.permission.alert.cancel" = "取消";

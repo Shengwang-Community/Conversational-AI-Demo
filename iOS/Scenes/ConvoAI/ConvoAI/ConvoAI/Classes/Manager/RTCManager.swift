@@ -69,6 +69,10 @@ extension RTCManager: RTCManagerProtocol {
         // which can be used to drive microphone volume animation rendering
         // If you don't need this feature, you can skip this setting
         rtcEngine.enableAudioVolumeIndication(100, smooth: 3, reportVad: false)
+        
+        let cameraConfig = AgoraCameraCapturerConfiguration()
+        cameraConfig.cameraDirection = .rear
+        rtcEngine.setCameraCapturerConfiguration(cameraConfig)
 
         // Audio pre-dump is enabled by default in demo, you don't need to set this in your app
         rtcEngine.setParameters("{\"che.audio.enable.predump\":{\"enable\":\"true\",\"duration\":\"60\"}}")

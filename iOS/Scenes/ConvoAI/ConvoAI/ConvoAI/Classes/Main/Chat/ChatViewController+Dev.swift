@@ -56,7 +56,7 @@ extension ChatViewController {
         NotificationCenter.default.post(name: .EnvironmentChanged, object: nil, userInfo: nil)
     }
     
-    private func deleteAllPresets() {
+    internal func deleteAllPresets() {
         IoTEntrance.deleteAllPresets()
         AppContext.preferenceManager()?.deleteAllPresets()
     }

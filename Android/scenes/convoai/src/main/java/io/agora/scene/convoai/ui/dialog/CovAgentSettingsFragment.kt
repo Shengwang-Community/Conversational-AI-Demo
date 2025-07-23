@@ -17,7 +17,6 @@ import io.agora.scene.common.ui.widget.LastItemDividerDecoration
 import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getDistanceFromScreenEdges
-import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.api.CovAgentLanguage
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.constant.AgentConnectionState
@@ -211,7 +210,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         CommonDialog.Builder()
             .setTitle(getString(io.agora.scene.convoai.R.string.cov_preset_change_dialog_title))
             .setContent(getString(io.agora.scene.convoai.R.string.cov_preset_change_dialog_content))
-            .setNegativeButton(getString(R.string.common_close)) {
+            .setNegativeButton(getString(R.string.common_cancel)) {
                 // User cancelled, no action needed
             }
             .setPositiveButtonWithReminder(getString(io.agora.scene.convoai.R.string.cov_preset_change_dialog_confirm)) { dontShowAgain ->
@@ -280,6 +279,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
 
     private fun updatePreset(preset: CovAgentPreset) {
         CovAgentManager.setPreset(preset)
+        livingViewModel.setAgentPreset(CovAgentManager.getPreset())
         CovAgentManager.avatar = null
         livingViewModel.setAvatar(null)
         updateBaseSettings()
@@ -348,7 +348,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         CommonDialog.Builder()
             .setTitle(getString(io.agora.scene.convoai.R.string.cov_language_change_dialog_title))
             .setContent(getString(io.agora.scene.convoai.R.string.cov_language_change_dialog_content))
-            .setNegativeButton(getString(R.string.common_close)) {
+            .setNegativeButton(getString(R.string.common_cancel)) {
                 // User cancelled, no action needed
             }
             .setPositiveButtonWithReminder(getString(io.agora.scene.convoai.R.string.cov_preset_change_dialog_confirm)) { dontShowAgain ->
@@ -378,10 +378,6 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
     }
 
     private fun onClickAvatar() {
-        if (CovAgentManager.getAvatars().isEmpty()) {
-            ToastUtil.show("No avatars available!")
-            return
-        }
         val activity = activity ?: return
 
         val avatarSelectorDialog = CovAvatarSelectorDialog.newInstance(
@@ -422,7 +418,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                 // Load avatar image with Glide
                 GlideImageLoader.load(
                     ivAvatar,
-                    selectedAvatar.avatar_url,
+                    selectedAvatar.thumb_img_url,
                     null,
                     io.agora.scene.convoai.R.drawable.cov_default_avatar
                 )

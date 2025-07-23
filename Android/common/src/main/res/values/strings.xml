@@ -24,6 +24,7 @@
     <string name="common_close">关闭</string>
     <string name="common_preview">预览</string>
     <string name="common_confirm">确定</string>
+    <string name="common_cancel">取消</string>
 
     <string name="common_login_chat">一键登录</string>
     <string name="common_login_chat_tips">解锁 \u221E 免费畅聊</string>

@@ -14,6 +14,7 @@ import android.view.animation.Animation
 import android.view.animation.TranslateAnimation
 import android.widget.CompoundButton
 import android.widget.TextView
+import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import io.agora.scene.common.R
 import io.agora.scene.common.constant.ServerConfig
@@ -54,8 +55,8 @@ class LoginDialog constructor() : BaseSheetDialog<CommonLoginDialogBinding>() {
                 }
             }
             cbTerms.setOnCheckedChangeListener { buttonView: CompoundButton?, isChecked: Boolean ->
-                if (tvCheckTips.visibility == View.VISIBLE) {
-                    tvCheckTips.visibility = View.INVISIBLE
+                if (tvCheckTips.isVisible) {
+                    tvCheckTips.isInvisible = true
                 }
                 onLoginDialogCallback?.onPrivacyChecked(isChecked)
             }
@@ -69,12 +70,16 @@ class LoginDialog constructor() : BaseSheetDialog<CommonLoginDialogBinding>() {
         val termsText = getString(R.string.common_terms_of_services)
         val andText = getString(R.string.common_and)
         val privacyText = getString(R.string.common_privacy_policy)
-        
-        val fullText = acceptText + termsText + andText + privacyText
-                        
-        val htmlText = Html.fromHtml(fullText, Html.FROM_HTML_MODE_COMPACT)
-        
-        val spannable = SpannableString(htmlText)
+
+        // Use StringBuilder to avoid string concatenation issues
+        val fullText = StringBuilder().apply {
+            append(acceptText)
+            append(termsText)
+            append(andText)
+            append(privacyText)
+        }.toString()
+
+        val spannable = SpannableString(fullText)
         
         val acceptStart = 0
         val acceptEnd = acceptText.length
@@ -84,18 +89,21 @@ class LoginDialog constructor() : BaseSheetDialog<CommonLoginDialogBinding>() {
         
         val privacyPolicyStart = termsOfServicesEnd + andText.length
         val privacyPolicyEnd = privacyPolicyStart + privacyText.length
-        
+
+        // Accept text span - clickable to toggle checkbox
         spannable.setSpan(object : ClickableSpan() {
             override fun onClick(widget: View) {
-                binding?.cbTerms?.isChecked = !(binding?.cbTerms?.isChecked ?: false)
+                binding?.cbTerms?.isChecked = binding?.cbTerms?.isChecked != true
             }
             
             override fun updateDrawState(ds: TextPaint) {
                 ds.color = textView.currentTextColor
                 ds.isUnderlineText = false
+                ds.letterSpacing = 0.0f // Explicitly set letter spacing
             }
         }, acceptStart, acceptEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        
+
+        // Terms of services span
         spannable.setSpan(object : ClickableSpan() {
             override fun onClick(widget: View) {
                 onLoginDialogCallback?.onTermsOfServices()
@@ -103,9 +111,11 @@ class LoginDialog constructor() : BaseSheetDialog<CommonLoginDialogBinding>() {
             override fun updateDrawState(ds: TextPaint) {
                 ds.color = textView.currentTextColor
                 ds.isUnderlineText = true
+                ds.letterSpacing = 0.0f // Explicitly set letter spacing
             }
         }, termsOfServicesStart, termsOfServicesEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        
+
+        // Privacy policy span
         spannable.setSpan(object : ClickableSpan() {
             override fun onClick(widget: View) {
                 onLoginDialogCallback?.onPrivacyPolicy()
@@ -113,6 +123,7 @@ class LoginDialog constructor() : BaseSheetDialog<CommonLoginDialogBinding>() {
             override fun updateDrawState(ds: TextPaint) {
                 ds.color = textView.currentTextColor
                 ds.isUnderlineText = true
+                ds.letterSpacing = 0.0f // Explicitly set letter spacing
             }
         }, privacyPolicyStart, privacyPolicyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         

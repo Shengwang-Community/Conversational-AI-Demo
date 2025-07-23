@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.ui.photo
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -12,7 +13,6 @@ import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovPhotoNavigationActivityBinding
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
 
 class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>() {
     
@@ -75,8 +75,8 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(
                 R.anim.slide_in_right,
-                0,
-                0,
+                R.anim.slide_out_left,
+                R.anim.slide_in_left,
                 R.anim.slide_out_right
             )
             .replace(R.id.fragment_container, fragment, "take_photo")
@@ -125,8 +125,8 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
             supportFragmentManager.beginTransaction()
                 .setCustomAnimations(
                     R.anim.slide_in_right,
-                    0,
-                    0,
+                    R.anim.slide_out_left,
+                    R.anim.slide_in_left,
                     R.anim.slide_out_right
                 )
                 .replace(R.id.fragment_container, fragment, "photo_edit")
@@ -198,16 +198,15 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
         
         // Create and return PhotoResult object
         return PhotoResult(
-            bitmap = bitmap,
             filePath = photoFile.absolutePath,
             fileUri = Uri.fromFile(photoFile),
             file = photoFile
         )
     }
 
+    @SuppressLint("MissingSuperCall")
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        super.onBackPressed()
         val fragmentManager = supportFragmentManager
         
         if (fragmentManager.backStackEntryCount > 0) {
@@ -228,18 +227,6 @@ class PhotoNavigationActivity : BaseActivity<CovPhotoNavigationActivityBinding>(
                     handleGallerySelection(imageUri)
                 }
             }
-        }
-    }
-    
-    private fun convertUriToBitmap(uri: Uri, callback: (Bitmap?) -> Unit) {
-        try {
-            val inputStream = contentResolver.openInputStream(uri)
-            val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
-            inputStream?.close()
-            callback(bitmap)
-        } catch (e: Exception) {
-            android.util.Log.e("PhotoNavigationActivity", "Error converting URI to bitmap", e)
-            callback(null)
         }
     }
 } 

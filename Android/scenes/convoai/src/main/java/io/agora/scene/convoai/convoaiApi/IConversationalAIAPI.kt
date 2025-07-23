@@ -15,7 +15,8 @@ const val ConversationalAIAPI_VERSION = "1.7.0"
  * val api = ConversationalAIAPI(config)
  * api.addHandler(object : IConversationalAIAPIEventHandler { ... })
  * api.subscribeMessage("channelName") { ... }
- * api.chat("agentUserId", ChatMessage(priority = Priority.INTERRUPT,responseInterruptable = true,text = "Hello!")) { ... }
+ * api.chat("agentUserId", TextMessage(priority = Priority.INTERRUPT, responseInterruptable = true, text = "Hello!")) { ... }
+ * api.chat("agentUserId", ImageMessage(uuid = "img_123", imageUrl = "https://example.com/image.jpg")) { ... }
  * // ...
  * api.destroy()
  */
@@ -34,10 +35,12 @@ enum class Priority {
      * High priority - Immediately interrupt the current interaction and process this message. Suitable for urgent or time-sensitive content.
      */
     INTERRUPT,
+
     /**
      * Medium priority - Queued for processing after the current interaction completes. Suitable for follow-up questions.
      */
     APPEND,
+
     /**
      * Low priority - Only processed when the agent is idle. Will be discarded during ongoing interactions. Suitable for optional content.
      */
@@ -45,25 +48,33 @@ enum class Priority {
 }
 
 /**
- * Message object for sending content to AI agents.
+ * Base sealed class for all message types sent to AI agents.
  *
- * Supports multiple content types that can be combined in a single message:
- * - Text content for natural language communication
- * - Image URLs for visual context (JPEG, PNG formats recommended)
- * - Audio URLs for voice input (WAV, MP3 formats recommended)
+ * This sealed class hierarchy provides type-safe message handling for different content types.
+ * Each message type contains only the fields relevant to its specific functionality.
  *
  * Usage examples:
- * - Text only: ChatMessage(text = "Hello, how are you?")
- * - Text with image: ChatMessage(text = "What's in this image?", imageUrl = "https://...")
- * - Priority control: ChatMessage(text = "Urgent message", priority = Priority.INTERRUPT)
- *
- * @property priority Message processing priority (default: INTERRUPT)
- * @property responseInterruptable Whether this message's response can be interrupted by higher priority messages (default: true)
- * @property text Text content of the message (optional)
- * @property imageUrl HTTP/HTTPS URL pointing to an image file (optional)
- * @property audioUrl HTTP/HTTPS URL pointing to an audio file (optional)
+ * - Text message: TextMessage(text = "Hello, how are you?", priority = Priority.INTERRUPT)
+ * - Image message: ImageMessage(uuid = "img_123", imageUrl = "https://...")
  */
-data class ChatMessage(
+sealed class ChatMessage
+
+/**
+ * Text message for sending natural language content to AI agents.
+ *
+ * Text messages support priority control and interruptable response settings,
+ * allowing fine-grained control over how the AI processes and responds to text input.
+ *
+ * Usage examples:
+ * - Basic text: TextMessage(text = "Hello, how are you?")
+ * - High priority: TextMessage(text = "Urgent message", priority = Priority.INTERRUPT)
+ * - Non-interruptable: TextMessage(text = "Important question", responseInterruptable = false)
+ *
+ * @property priority Message processing priority (default: null, uses system default)
+ * @property responseInterruptable Whether this message's response can be interrupted by higher priority messages (default: null, uses system default)
+ * @property text Text content of the message (required)
+ */
+data class TextMessage(
     /**
      * Message processing priority. Default is INTERRUPT.
      */
@@ -76,14 +87,44 @@ data class ChatMessage(
      * Text content of the message. Optional.
      */
     val text: String? = null,
-    /**
-     * Image URL (HTTP/HTTPS, JPEG/PNG recommended). Optional.
-     */
+) : ChatMessage()
+
+/**
+ * Image message for sending visual content to AI agents.
+ *
+ * Supports two image formats:
+ * - imageUrl: HTTP/HTTPS URL pointing to an image file (recommended for large images)
+ * - imageBase64: Base64 encoded image data (use with caution for large images)
+ *
+ * IMPORTANT: When using imageBase64, ensure the total message size (including JSON structure)
+ * is less than 32KB as per RTM Message Channel limitations. For larger images, use imageUrl instead.
+ *
+ * Reference: https://doc.shengwang.cn/doc/rtm2/android/user-guide/message/send-message
+ *
+ * Usage examples:
+ * - URL image: ImageMessage(uuid = "img_123", imageUrl = "https://example.com/image.jpg")
+ * - Base64 image: ImageMessage(uuid = "img_456", imageBase64 = "data:image/jpeg;base64,...")
+ *
+ * @property uuid Unique identifier for the image message (required)
+ * @property imageUrl HTTP/HTTPS URL pointing to an image file (optional, mutually exclusive with imageBase64)
+ * @property imageBase64 Base64 encoded image data (optional, mutually exclusive with imageUrl, limited to 32KB total message size)
+ */
+data class ImageMessage(
+    val uuid: String,
     val imageUrl: String? = null,
-    /**
-     * Audio URL (HTTP/HTTPS, WAV/MP3 recommended). Optional.
-     */
-    val audioUrl: String? = null
+    val imageBase64: String? = null,
+) : ChatMessage()
+
+/**
+ * Message receipt data class, supports multiple media types via MediaInfo
+ * @property type The module type (e.g., text, image, audio)
+ * @property turnId The turn ID of the message
+ * @property message The message information, can be ImageInfo, AudioInfo, etc.
+ */
+data class MessageReceipt(
+    val type: ModuleType,
+    val turnId: Long,
+    val message: String
 )
 
 /**
@@ -100,12 +141,16 @@ data class ChatMessage(
 enum class AgentState(val value: String) {
     /** Agent is silent */
     SILENT("silent"),
+
     /** Agent is listening */
     LISTENING("listening"),
+
     /** Agent is processing/thinking */
     THINKING("thinking"),
+
     /** Agent is speaking */
     SPEAKING("speaking"),
+
     /** Unknown state */
     UNKNOWN("unknown");
 
@@ -170,10 +215,15 @@ data class InterruptEvent(
 enum class ModuleType(val value: String) {
     /** LLM inference latency */
     LLM("llm"),
+
     /** MLLM inference latency */
     MLLM("mllm"),
+
     /** Text-to-speech synthesis latency */
     TTS("tts"),
+
+    Context("context"),
+
     /** Unknown type */
     UNKNOWN("unknown");
 
@@ -231,7 +281,9 @@ data class ModuleError(
     /** Error description message providing detailed error explanation */
     val message: String,
     /** Error occurrence timestamp (milliseconds since epoch, i.e., since January 1, 1970 UTC) */
-    val timestamp: Long
+    val timestamp: Long,
+    /** Optional: turnId for the image (used for image upload errors) */
+    val turnId: Long? = null,
 )
 
 /**
@@ -249,14 +301,22 @@ data class ModuleError(
 enum class MessageType(val value: String) {
     /** AI assistant transcription message */
     ASSISTANT("assistant.transcription"),
+
     /** User transcription message */
     USER("user.transcription"),
+
     /** Error message */
     ERROR("message.error"),
+
     /** Performance metrics message */
     METRICS("message.metrics"),
+
     /** Interrupt message */
     INTERRUPT("message.interrupt"),
+
+    /** Message receipt*/
+    MESSAGE_RECEIPT("message.info"),
+
     /** Unknown type */
     UNKNOWN("unknown");
 
@@ -281,6 +341,7 @@ enum class MessageType(val value: String) {
 enum class TranscriptionRenderMode {
     /** Word-by-word transcription rendering */
     Word,
+
     /** Full text transcription rendering */
     Text
 }
@@ -294,7 +355,7 @@ enum class TranscriptionRenderMode {
  * @property status Current status of the transcription
  * @property type Transcription type (AGENT/USER)
  */
-data class Transcription(
+data class Transcription constructor(
     /** Unique identifier for the conversation turn */
     val turnId: Long,
     /** User identifier associated with this transcription */
@@ -304,7 +365,7 @@ data class Transcription(
     /** Current status of the transcription */
     var status: TranscriptionStatus,
     /** Transcription type (AGENT/USER) */
-    var type: TranscriptionType
+    var type: TranscriptionType,
 )
 
 /**
@@ -316,6 +377,7 @@ data class Transcription(
 enum class TranscriptionType {
     /** AI assistant transcription */
     AGENT,
+
     /** User transcription */
     USER
 }
@@ -331,10 +393,13 @@ enum class TranscriptionType {
 enum class TranscriptionStatus {
     /** Transcription is still being generated or spoken */
     IN_PROGRESS,
+
     /** Transcription has completed normally */
     END,
+
     /** Transcription was interrupted before completion */
     INTERRUPTED,
+
     /** Unknown status */
     UNKNOWN
 }
@@ -373,8 +438,10 @@ data class ConversationalAIAPIConfig(
 sealed class ConversationalAIAPIError : Exception() {
     /** RTM layer error */
     data class RtmError(val code: Int, val msg: String) : ConversationalAIAPIError()
+
     /** RTC layer error */
     data class RtcError(val code: Int, val msg: String) : ConversationalAIAPIError()
+
     /** Unknown error */
     data class UnknownError(val msg: String) : ConversationalAIAPIError()
 
@@ -437,6 +504,13 @@ interface IConversationalAIAPIEventHandler {
     fun onAgentError(agentUserId: String, error: ModuleError)
 
     /**
+     * Called when message receipt is updated
+     * @param agentUserId Agent User ID
+     * @param receipt message receipt info
+     */
+    fun onMessageReceiptUpdated(agentUserId: String, receipt: MessageReceipt)
+
+    /**
      * Called when transcription content is updated.
      * @param agentUserId Agent user ID
      * @param transcription Transcription data
@@ -491,11 +565,15 @@ interface IConversationalAIAPI {
     fun unsubscribeMessage(channelName: String, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
-     * @technical preview
      *
      * Send a message to the AI agent.
+     * 
+     * Supports different message types through the ChatMessage sealed class hierarchy:
+     * - TextMessage: For natural language communication with priority control
+     * - ImageMessage: For visual content processing (atomic operation)
+     * 
      * @param agentUserId Agent user ID
-     * @param message Message object
+     * @param message Message object (TextMessage or ImageMessage)
      * @param completion Callback, error is null on success, non-null on failure
      */
     fun chat(agentUserId: String, message: ChatMessage, completion: (error: ConversationalAIAPIError?) -> Unit)
@@ -508,7 +586,7 @@ interface IConversationalAIAPI {
     fun interrupt(agentUserId: String, completion: (error: ConversationalAIAPIError?) -> Unit)
 
     /**
-     * Set audio parameters for optimal AI conversation performance. 
+     * Set audio parameters for optimal AI conversation performance.
      *
      * WARNING: This method MUST be called BEFORE rtcEngine.joinChannel().
      * If you do not call loadAudioSettings before joining the RTC channel, the audio quality for AI conversation may be suboptimal or incorrect.

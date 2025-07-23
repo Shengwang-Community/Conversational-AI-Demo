@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:paddingVertical="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical|end">
+        android:gravity="center_vertical|end"
+        android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/iv_message_icon"
@@ -23,8 +24,8 @@
             android:id="@+id/tv_message_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/ai_icontext1"
             android:text="@string/common_detail_message_list_you"
+            android:textColor="@color/ai_icontext1"
             android:textSize="14sp" />
 
     </LinearLayout>
@@ -33,37 +34,28 @@
         android:id="@+id/tv_message_content"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginStart="16dp"
         android:layout_gravity="end"
-        android:textSize="16sp"
-        android:textColor="@color/ai_icontext1"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
         android:background="@drawable/message_mine_item_border"
         android:paddingHorizontal="16dp"
         android:paddingVertical="12dp"
+        android:textColor="@color/ai_icontext1"
+        android:textSize="16sp"
         tools:text="Content" />
 
     <!-- Add image message layout below text message layout -->
     <!-- Image message item for user (hidden by default, shown for image messages) -->
-    <FrameLayout
+    <LinearLayout
         android:id="@+id/layout_image_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         android:layout_marginTop="8dp"
-        tools:visibility="visible"
         android:layout_marginEnd="20dp"
-        android:visibility="gone">
-
-        <ImageView
-            android:id="@+id/iv_image_message"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="120dp"
-            android:minHeight="120dp"
-            android:adjustViewBounds="true"
-            android:scaleType="centerCrop"
-            android:background="@drawable/message_mine_item_border" />
+        android:orientation="horizontal"
+        android:visibility="gone"
+        tools:visibility="visible">
 
         <!-- ProgressBar for uploading -->
         <ProgressBar
@@ -71,7 +63,8 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_gravity="center"
-            android:visibility="gone" />
+            android:visibility="gone"
+            tools:visibility="visible" />
 
         <!-- Error icon for upload failed -->
         <ImageView
@@ -80,6 +73,19 @@
             android:layout_height="24dp"
             android:layout_gravity="center"
             android:src="@drawable/scene_details_upload_error"
-            android:visibility="gone" />
-    </FrameLayout>
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/iv_image_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:background="@drawable/message_mine_item_border"
+            android:minWidth="120dp"
+            android:minHeight="120dp"
+            android:scaleType="centerCrop"
+            android:layout_marginStart="8dp"
+            app:shapeAppearance="@style/CommonCustomShape" />
+    </LinearLayout>
 </LinearLayout>

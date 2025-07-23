@@ -9,6 +9,7 @@ import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngine
 import io.agora.rtc2.RtcEngineConfig
 import io.agora.rtc2.RtcEngineEx
+import io.agora.rtc2.video.CameraCapturerConfiguration
 import io.agora.rtc2.video.VideoCanvas
 import io.agora.scene.common.AgentApp
 import io.agora.scene.common.constant.ServerConfig
@@ -37,7 +38,7 @@ object CovRtcManager {
                 loadExtensionProvider("ai_echo_cancellation_extension")
                 loadExtensionProvider("ai_noise_suppression_extension")
             }
-            CovLogger.e(TAG, "createRtcEngine success")
+            CovLogger.d(TAG, "createRtcEngine success")
         } catch (e: Exception) {
             CovLogger.e(TAG, "createRtcEngine error: $e")
         }
@@ -64,6 +65,7 @@ object CovRtcManager {
         // which can be used to drive microphone volume animation rendering
         // If you don't need this feature, you can skip this setting
         rtcEngine?.enableAudioVolumeIndication(100, 3, true)
+        rtcEngine?.setCameraCapturerConfiguration(CameraCapturerConfiguration(CameraCapturerConfiguration.CAMERA_DIRECTION.CAMERA_REAR))
 
         // Audio pre-dump is enabled by default in demo, you don't need to set this in your app
         rtcEngine?.setParameters("{\"che.audio.enable.predump\":{\"enable\":\"true\",\"duration\":\"60\"}}")
@@ -130,6 +132,11 @@ object CovRtcManager {
         CovLogger.d(TAG, "publishCameraTrack $publish")
         channelOptions.publishCameraTrack = publish
         rtcEngine?.updateChannelMediaOptions(channelOptions)
+        if (publish) {
+            rtcEngine?.startPreview()
+        } else {
+            rtcEngine?.stopPreview()
+        }
     }
 
     // switch camera

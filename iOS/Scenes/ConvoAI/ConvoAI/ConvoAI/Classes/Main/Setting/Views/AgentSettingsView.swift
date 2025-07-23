@@ -57,7 +57,8 @@ class AgentSettingsView: UIView {
     
     private lazy var avatarImageView: UIImageView = {
         let imageView = UIImageView()
-        if let state = AppContext.preferenceManager()?.information.agentState, state != .unload {
+        if let state = AppContext.preferenceManager()?.information.agentState, state != .unload,
+           let _ = AppContext.preferenceManager()?.preference.avatar {
             let view = UIView()
             view.backgroundColor = UIColor.black.withAlphaComponent(0.3)
             imageView.addSubview(view)
@@ -82,7 +83,7 @@ class AgentSettingsView: UIView {
         }
         
         // Add avatar image
-        if let avatar = AppContext.preferenceManager()?.preference.avatar, let url = URL(string: avatar.avatarUrl) {
+        if let avatar = AppContext.preferenceManager()?.preference.avatar, let url = URL(string: avatar.thumbImageUrl) {
             avatarImageView.af.setImage(withURL: url)
         }
         avatarImageView.contentMode = .scaleAspectFill
@@ -157,6 +158,11 @@ class AgentSettingsView: UIView {
         super.init(frame: frame)
         setupViews()
         setupConstraints()
+        loadData()
+    }
+    
+    func loadData() {
+        updateAvatar(AppContext.preferenceManager()?.preference.avatar)
     }
     
     required init?(coder: NSCoder) {
@@ -268,7 +274,7 @@ class AgentSettingsView: UIView {
     func updateAvatar(_ avatar: Avatar?) {
         if let avatar = avatar {
             digitalHumanItem.detailLabel.text = avatar.avatarName
-            if let url = URL(string: avatar.avatarUrl) {
+            if let url = URL(string: avatar.thumbImageUrl) {
                 avatarImageView.af.setImage(withURL: url)
             } else {
                 avatarImageView.image = nil

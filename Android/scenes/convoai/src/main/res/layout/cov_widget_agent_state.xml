@@ -32,7 +32,8 @@
         android:maxLines="1"
         android:text=""
         android:textColor="@color/ai_icontext1"
-        android:textSize="13sp" />
+        android:textSize="13sp"
+        style="@style/TextShadowStyle" />
 
     <TextView
         android:id="@+id/tvMuteText"
@@ -46,5 +47,6 @@
         android:text=""
         android:textColor="@color/ai_icontext1"
         android:textSize="13sp"
-        android:visibility="gone" />
+        android:visibility="gone"
+        style="@style/TextShadowStyle" />
 </LinearLayout>

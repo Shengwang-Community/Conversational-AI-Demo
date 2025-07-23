@@ -22,6 +22,7 @@ import io.agora.scene.common.net.TokenGeneratorType
 import io.agora.scene.common.util.toast.ToastUtil
 import android.widget.Toast
 import io.agora.scene.convoai.R
+import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.iot.api.CovIotApiManager
 import io.agora.scene.convoai.iot.manager.CovIotPresetManager
 import kotlinx.coroutines.*
@@ -33,6 +34,9 @@ import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import io.agora.scene.convoai.api.CovAvatar
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 /**
  * view model
@@ -74,6 +78,14 @@ class CovLivingViewModel : ViewModel() {
     private val _transcriptionUpdate = MutableStateFlow<Transcription?>(null)
     val transcriptionUpdate: StateFlow<Transcription?> = _transcriptionUpdate.asStateFlow()
 
+    // Media info
+    private val _mediaInfoUpdate = MutableStateFlow<MediaInfo?>(null)
+    val mediaInfoUpdate: StateFlow<MediaInfo?> = _mediaInfoUpdate.asStateFlow()
+
+    // Resource error
+    private val _resourceError = MutableStateFlow<ResourceError?>(null)
+    val resourceError: StateFlow<ResourceError?> = _resourceError.asStateFlow()
+
     private val _isAvatarJoinedRtc = MutableStateFlow(false)
     val isAvatarJoinedRtc: StateFlow<Boolean> = _isAvatarJoinedRtc.asStateFlow()
 
@@ -81,8 +93,21 @@ class CovLivingViewModel : ViewModel() {
     val avatar: StateFlow<CovAvatar?> = _avatar.asStateFlow()
 
     fun setAvatar(avatar: CovAvatar?) {
+        if (avatar == null) {
+            CovAgentManager.avatar = null
+        }
         _avatar.value = avatar
     }
+
+    private val _agentPreset = MutableStateFlow<CovAgentPreset?>(null)
+    val agentPreset: StateFlow<CovAgentPreset?> = _agentPreset.asStateFlow()
+
+    fun setAgentPreset(preset: CovAgentPreset?) {
+        _agentPreset.value = preset
+    }
+
+    val isVisionSupported: StateFlow<Boolean> = agentPreset.map { it?.is_support_vision == true }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     // Business states
     private var integratedToken: String? = null
@@ -122,11 +147,54 @@ class CovLivingViewModel : ViewModel() {
 
         override fun onAgentError(agentUserId: String, error: ModuleError) {
             // Handle agent error
+            if (error.type == ModuleType.Context) {
+                try {
+                    val json = JSONObject(error.message)
+                    val resourceType = ResourceType.fromValue(json.optString("resource_type"))
+                    if (resourceType == ResourceType.PICTURE) {
+                        val errorObj = json.optJSONObject("error")
+                        val pictureError = PictureError(
+                            uuid = json.optString("uuid"),
+                            success = json.optBoolean("success", true),
+                            errorCode = errorObj?.optInt("code"),
+                            errorMessage = errorObj?.optString("message")
+                        )
+                        _resourceError.value = pictureError
+                    }
+                } catch (e: Exception) {
+                    CovLogger.d(TAG, "onAgentError ${e.message}")
+                }
+            }
         }
 
         override fun onTranscriptionUpdated(agentUserId: String, transcription: Transcription) {
             // Update transcription state to notify Activity
             _transcriptionUpdate.value = transcription
+        }
+
+        override fun onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt) {
+            // Handle message receipt
+            if (messageReceipt.type == ModuleType.Context) {
+                try {
+                    val json = JSONObject(messageReceipt.message)
+                    val resourceType = ResourceType.fromValue(json.optString("resource_type"))
+                    if (resourceType == ResourceType.PICTURE) {
+                        val pictureInfo = PictureInfo(
+                            uuid = json.optString("uuid"),
+                            width = json.optInt("width"),
+                            height = json.optInt("height"),
+                            sizeBytes = json.optLong("size_bytes"),
+                            sourceType = json.optString("source_type"),
+                            sourceValue = json.optString("source_value"),
+                            uploadTime = json.optLong("upload_time"),
+                            totalUserImages = json.optInt("total_user_images"),
+                        )
+                        _mediaInfoUpdate.value = pictureInfo
+                    }
+                } catch (e: Exception) {
+                    CovLogger.d(TAG, "onMessageReceiptUpdated ${e.message}")
+                }
+            }
         }
 
         override fun onDebugLog(log: String) {
@@ -265,18 +333,27 @@ class CovLivingViewModel : ViewModel() {
         CovRtcManager.switchCamera()
     }
 
+    private val randomMessages = arrayOf(
+        "Hello!",
+        "Hi",
+        "Tell me a joke",
+        "Tell me a story",
+        "Are you ok?",
+        "How are you?",
+        "What can you see on this picture?"
+    )
 
     // Send chat message (for debugging)
-    fun sendChatMessage(message: String? = null) {
+    fun sendTextMessage(message: String? = null) {
         if (_connectionState.value != AgentConnectionState.CONNECTED) {
             ToastUtil.show("Please connect to agent first")
             return
         }
 
-        val chatMessage = ChatMessage(
+        val chatMessage = TextMessage(
             priority = Priority.INTERRUPT,
             responseInterruptable = true,
-            text = message
+            text = message ?: randomMessages.random()
         )
 
         conversationalAIAPI?.chat(
@@ -289,6 +366,29 @@ class CovLivingViewModel : ViewModel() {
                 ToastUtil.show("Message sent successfully!")
             }
         }
+    }
+
+    // Send image message
+    fun sendImageMessage(
+        uuid: String,
+        imageUrl: String?,
+        imageBase64: String? = null,
+        completion: (error: ConversationalAIAPIError?) -> Unit
+    ) {
+        if (_connectionState.value != AgentConnectionState.CONNECTED) {
+            ToastUtil.show("Please connect to agent first")
+            return
+        }
+        val resourceError = _resourceError.value
+        if ((resourceError is PictureError) && resourceError.uuid == uuid) {
+            _resourceError.value = null
+        }
+        val imageMessage = ImageMessage(
+            uuid = uuid,
+            imageUrl = imageUrl,
+            imageBase64 = imageBase64
+        )
+        conversationalAIAPI?.chat(CovAgentManager.agentUID.toString(), imageMessage, completion)
     }
 
     // Interrupt Agent
@@ -318,11 +418,6 @@ class CovLivingViewModel : ViewModel() {
                     CovLogger.d(TAG, "RTC Join channel success: $uid")
                     _networkQuality.value = 1
                     _isUserJoinedRtc.value = true
-                    if (CovAgentManager.isEnableAvatar()) {
-                        CovRtcManager.muteRemoteAudio(CovAgentManager.agentUID, true)
-                    } else {
-                        CovRtcManager.muteRemoteAudio(CovAgentManager.agentUID, false)
-                    }
                 }
             }
 
@@ -511,6 +606,7 @@ class CovLivingViewModel : ViewModel() {
                     R.string.cov_detail_start_agent_limit_error,
                     Toast.LENGTH_LONG
                 )
+
                 CovAgentApiManager.ERROR_AVATAR_LIMIT -> ToastUtil.show(
                     R.string.cov_detail_start_agent_avatar_limit_error,
                     Toast.LENGTH_LONG
@@ -541,8 +637,9 @@ class CovLivingViewModel : ViewModel() {
 
     suspend fun fetchPresetsAsync(): Boolean = suspendCoroutine { cont ->
         CovAgentApiManager.fetchPresets { err, presets ->
-            if (err == null && presets != null) {
+            if (err == null) {
                 CovAgentManager.setPresetList(presets)
+                setAgentPreset(CovAgentManager.getPreset())
                 cont.resume(true)
             } else {
                 cont.resume(false)
@@ -660,6 +757,8 @@ class CovLivingViewModel : ViewModel() {
         _isAgentJoinedRtc.value = false
         _isAvatarJoinedRtc.value = false
         _transcriptionUpdate.value = null
+        _mediaInfoUpdate.value = null
+        _resourceError.value = null
     }
 
     private fun getConvoaiBodyMap(channel: String, dataChannel: String = "rtm"): Map<String, Any?> {
@@ -709,7 +808,7 @@ class CovLivingViewModel : ViewModel() {
                     "style" to null,
                     "max_history" to null,
                     "ignore_empty" to null,
-//                    "input_modalities" to listOf("text", "image"),
+                    "input_modalities" to listOf("text", "image"),
                     "output_modalities" to null,
                     "failure_message" to null,
                 ),
@@ -745,6 +844,7 @@ class CovLivingViewModel : ViewModel() {
                         "protocol_version" to "v2",
                         "redundant" to null,
                     ),
+                    //"enable_dump" to true,
                     "sc" to mapOf(
                         "sessCtrlStartSniffWordGapInMs" to null,
                         "sessCtrlTimeOutInMs" to null,

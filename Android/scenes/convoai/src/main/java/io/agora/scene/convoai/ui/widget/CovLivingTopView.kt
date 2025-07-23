@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import io.agora.scene.convoai.constant.AgentConnectionState
 import android.view.animation.Animation
+import android.widget.ImageButton
 import androidx.core.view.isVisible
 import io.agora.scene.common.R
 
@@ -30,6 +31,7 @@ class CovLivingTopView @JvmOverloads constructor(
         CovActivityLivingTopBinding.inflate(LayoutInflater.from(context), this, true)
 
     private var onInfoClick: (() -> Unit)? = null
+    private var onWifiClick: (() -> Unit)? = null
     private var onSettingsClick: (() -> Unit)? = null
     private var onIvTopClick: (() -> Unit)? = null
     private var onCCClick: (() -> Unit)? = null
@@ -47,6 +49,7 @@ class CovLivingTopView @JvmOverloads constructor(
 
     init {
         binding.btnInfo.setOnClickListener { onInfoClick?.invoke() }
+        binding.btnNet.setOnClickListener { onWifiClick?.invoke() }
         binding.btnSettings.setOnClickListener { onSettingsClick?.invoke() }
         binding.ivTop.setOnClickListener { onIvTopClick?.invoke() }
         binding.btnAddPic.setOnClickListener { onAddPicClick?.invoke() }
@@ -73,11 +76,20 @@ class CovLivingTopView @JvmOverloads constructor(
         })
     }
 
+    val btnAddPic: ImageButton get() = binding.btnAddPic
+
     /**
      * Set callback for info button click.
      */
     fun setOnInfoClickListener(listener: (() -> Unit)?) {
         onInfoClick = listener
+    }
+
+    /**
+     * Set callback for wifi button click.
+     */
+    fun setOnWifiClickListener(listener: (() -> Unit)?) {
+        onWifiClick = listener
     }
 
     /**
@@ -245,7 +257,7 @@ class CovLivingTopView @JvmOverloads constructor(
             if (connectionState != AgentConnectionState.IDLE) {
                 binding.viewFlipper.showNext() // to ll_tips (index 1)
                 updateTvCcVisibility()
-                delay(5000)
+                delay(3000)
                 if (!isActive || !isTitleAnimRunning) return@launch
                 if (connectionState != AgentConnectionState.IDLE) {
                     binding.viewFlipper.showNext() // to ll_timer (index 2)

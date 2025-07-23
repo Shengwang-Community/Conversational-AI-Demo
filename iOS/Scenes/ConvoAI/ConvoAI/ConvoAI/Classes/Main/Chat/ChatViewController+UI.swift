@@ -15,7 +15,11 @@ class ChatWindowState {
     
     func reset() {
         showTranscription = false
-        showAvatar = false
+        if let _ = AppContext.preferenceManager()?.preference.avatar {
+            showAvatar = true
+        } else {
+            showAvatar = false
+        }
         showVideo = false
     }
 }
@@ -23,9 +27,10 @@ class ChatWindowState {
 extension ChatViewController {
     internal func setupViews() {
         view.backgroundColor = .black
-        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, topBar, welcomeMessageView, bottomBar, annotationView, devModeButton, sendMessageButton].forEach { view.addSubview($0) }
+        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, topBar, welcomeMessageView, bottomBar, volumeAnimateView, annotationView, devModeButton, sendMessageButton].forEach { view.addSubview($0) }
+        [miniView].forEach { smallSizeContainerView.addSubview($0) }
+        [remoteAvatarView].forEach { miniView.addSubview($0) }
         [localVideoView].forEach { fullSizeContainerView.addSubview($0) }
-        [remoteAvatarView].forEach { smallSizeContainerView.addSubview($0) }
     }
     
     internal func setupConstraints() {
@@ -33,6 +38,11 @@ extension ChatViewController {
             make.top.equalTo(view.safeAreaLayoutGuide.snp.top).offset(5)
             make.left.right.equalToSuperview()
             make.height.equalTo(48)
+        }
+        
+        volumeAnimateView.snp.makeConstraints { make in
+            make.top.equalTo(topBar.snp.bottom).offset(0)
+            make.centerX.equalToSuperview()
         }
         
         animateContentView.snp.makeConstraints { make in
@@ -70,6 +80,10 @@ extension ChatViewController {
         }
         
         smallSizeContainerView.snp.makeConstraints { make in
+            make.left.right.top.bottom.equalTo(0)
+        }
+        
+        miniView.snp.makeConstraints { make in
             make.top.equalTo(215)
             make.right.equalTo(-10)
             make.width.equalTo(90)
@@ -172,15 +186,17 @@ extension ChatViewController {
         let showVideo = windowState.showVideo
         let showTranscription = windowState.showTranscription
         fullSizeContainerView.removeSubviews()
-        smallSizeContainerView.removeSubviews()
+        miniView.removeSubviews()
         if showTranscription {
             if showAvatar, showVideo {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = false
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
+                animateContentView.isHidden = false
                 fullSizeContainerView.addSubview(remoteAvatarView)
-                smallSizeContainerView.addSubview(localVideoView)
+                miniView.addSubview(localVideoView)
                 localVideoView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
@@ -189,37 +205,45 @@ extension ChatViewController {
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
             } else if showAvatar {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = true
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
+                animateContentView.isHidden = true
                 fullSizeContainerView.addSubview(remoteAvatarView)
                 remoteAvatarView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
             } else if showVideo {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = true
                 smallSizeContainerView.isHidden = false
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
-                smallSizeContainerView.addSubview(localVideoView)
+                animateContentView.isHidden = false
+                miniView.addSubview(localVideoView)
                 localVideoView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
             } else {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = true
                 smallSizeContainerView.isHidden = true
                 upperBackgroundView.isHidden = false
                 lowerBackgroundView.isHidden = false
+                animateContentView.isHidden = false
             }
         } else {
             if showAvatar, showVideo {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = false
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
+                animateContentView.isHidden = false
                 fullSizeContainerView.addSubview(localVideoView)
-                smallSizeContainerView.addSubview(remoteAvatarView)
+                miniView.addSubview(remoteAvatarView)
                 localVideoView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
@@ -228,10 +252,12 @@ extension ChatViewController {
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
             } else if showAvatar {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = false
                 smallSizeContainerView.isHidden = true
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
+                animateContentView.isHidden = true
                 fullSizeContainerView.addSubview(remoteAvatarView)
                 remoteAvatarView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
@@ -242,15 +268,36 @@ extension ChatViewController {
                 upperBackgroundView.isHidden = true
                 lowerBackgroundView.isHidden = true
                 fullSizeContainerView.addSubview(localVideoView)
+                volumeAnimateView.isHidden = false
+                animateContentView.isHidden = false
                 localVideoView.snp.makeConstraints { make in
                     make.edges.equalTo(UIEdgeInsets.zero)
                 }
             } else {
+                volumeAnimateView.isHidden = true
                 fullSizeContainerView.isHidden = true
                 smallSizeContainerView.isHidden = true
                 upperBackgroundView.isHidden = false
                 lowerBackgroundView.isHidden = false
+                animateContentView.isHidden = false
             }
         }
+        let isLight = !fullSizeContainerView.isHidden && !showTranscription
+        bottomBar.setButtonColorTheme(showLight: isLight)
+        topBar.setButtonColorTheme(showLight: isLight)
+    }
+    
+    @objc func smallWindowClicked() {
+        if !windowState.showTranscription {
+            return
+        }
+        
+        showTranscription(state: false)
+    }
+}
+
+extension ChatViewController: ChatViewDelegate {
+    func resendImage(image: UIImage, uuid: String) {
+        sendImage(image: image, isResend: true, uuid: uuid)
     }
 }

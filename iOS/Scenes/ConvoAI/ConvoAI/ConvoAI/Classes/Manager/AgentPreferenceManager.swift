@@ -61,8 +61,6 @@ protocol AgentPreferenceManagerProtocol {
     // Alert ignore related methods
     func setPresetAlertIgnored(_ ignored: Bool)
     func isPresetAlertIgnored() -> Bool
-    func setLanguageAlertIgnored(_ ignored: Bool)
-    func isLanguageAlertIgnored() -> Bool
 }
 
 class AgentPreferenceManager: AgentPreferenceManagerProtocol {
@@ -196,20 +194,10 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
     // MARK: - Alert ignore related methods
     func setPresetAlertIgnored(_ ignored: Bool) {
         UserDefaults.standard.set(ignored, forKey: kPresetAlertIgnoredKey)
-        UserDefaults.standard.synchronize()
     }
     
     func isPresetAlertIgnored() -> Bool {
         return UserDefaults.standard.bool(forKey: kPresetAlertIgnoredKey)
-    }
-    
-    func setLanguageAlertIgnored(_ ignored: Bool) {
-        UserDefaults.standard.set(ignored, forKey: kLanguageAlertIgnoredKey)
-        UserDefaults.standard.synchronize()
-    }
-    
-    func isLanguageAlertIgnored() -> Bool {
-        return UserDefaults.standard.bool(forKey: kLanguageAlertIgnoredKey)
     }
     
     // MARK: - Private Methods
