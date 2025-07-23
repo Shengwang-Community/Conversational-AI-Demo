@@ -2,6 +2,7 @@ package io.agora.scene.convoai.ui
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Build
 import android.provider.Settings
 import android.view.Gravity
@@ -276,9 +277,9 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
                 }
             }
 
-            messageListViewV2.onImagePreviewClickListener = { message ->
+            messageListViewV2.onImagePreviewClickListener = { message, imageBounds ->
                 if (message.uploadStatus == CovMessageListView.UploadStatus.SUCCESS) {
-                    showPreviewDialog(message.content)
+                    showPreviewDialog(message.content, imageBounds)
                 }
             }
 
@@ -1111,9 +1112,9 @@ class CovLivingActivity : BaseActivity<CovActivityLivingBinding>() {
             .show(supportFragmentManager, "permission_dialog")
     }
 
-    private fun showPreviewDialog(imagePath: String) {
+    private fun showPreviewDialog(imagePath: String, imageBounds: Rect) {
         if (isFinishing || isDestroyed) return
-        CovImagePreviewDialog.newInstance(imagePath)
+        CovImagePreviewDialog.newInstance(imagePath, imageBounds)
             .show(supportFragmentManager, "preview_image__dialog")
     }
 
