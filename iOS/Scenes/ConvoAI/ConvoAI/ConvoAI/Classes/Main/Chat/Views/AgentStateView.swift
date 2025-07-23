@@ -17,6 +17,8 @@ class AgentStateView: UIView {
     private let stateLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 13)
+        label.shadowColor = UIColor(hex: 0x14142B, alpha: 0.06)
+        label.shadowOffset = CGSize(width: 0, height: 2)
         label.textColor = UIColor.themColor(named: "ai_icontext1")
         label.textAlignment = .center
         return label
