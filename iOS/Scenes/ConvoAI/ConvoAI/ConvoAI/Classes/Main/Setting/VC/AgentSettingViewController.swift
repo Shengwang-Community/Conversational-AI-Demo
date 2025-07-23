@@ -296,7 +296,7 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
             self.onClickHideTable(nil)
 
             // Check if alert is already ignored
-            if AppContext.preferenceManager()?.isLanguageAlertIgnored() == true {
+            if AppContext.preferenceManager()?.isPresetAlertIgnored() == true {
                 // If ignored, update language directly
                 AppContext.preferenceManager()?.updateLanguage(selected)
             } else {
@@ -312,7 +312,7 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
                         checkboxOption: CommonAlertView.CheckboxOption(text: ResourceManager.L10n.Settings.digitalHumanAlertIgnore, isChecked: false),
                         onConfirm: { isCheckboxChecked in
                             if isCheckboxChecked {
-                                AppContext.preferenceManager()?.setLanguageAlertIgnored(true)
+                                AppContext.preferenceManager()?.setPresetAlertIgnored(true)
                             }
                             AppContext.preferenceManager()?.updateLanguage(selected)
                         })

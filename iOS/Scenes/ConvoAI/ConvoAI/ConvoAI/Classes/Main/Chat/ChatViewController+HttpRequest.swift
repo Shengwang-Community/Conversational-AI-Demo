@@ -278,6 +278,7 @@ extension ChatViewController {
         }
         stopAgentRequest()
         leaveChannel()
+        stopRenderLocalVideoStream()
         resetUIDisplay()
         resetPreference()
     }

@@ -2,11 +2,18 @@
 //  AgentSettingInfoViewController.swift
 //  Agent
 //
-//  Created by qinhui on 2024/10/31.
+//  Created by HeZhengQing on 2024/10/31.
 //
 
 import UIKit
 import Common
+
+class AgentDraggableContentView: UIView {
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        let view = super.hitTest(point, with: event)
+        return view == self ? nil : view
+    }
+}
 
 class AgentDraggableView: UIView {
     private var lastLocation: CGPoint = .zero

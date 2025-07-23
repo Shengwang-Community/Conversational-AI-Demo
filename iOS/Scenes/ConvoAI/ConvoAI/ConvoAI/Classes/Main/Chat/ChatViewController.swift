@@ -33,8 +33,8 @@ public class ChatViewController: UIViewController {
         return view
     }()
     
-    internal lazy var smallSizeContainerView: UIView = {
-        return UIView()
+    internal lazy var smallSizeContainerView: AgentDraggableContentView = {
+        return AgentDraggableContentView()
     }()
     
     internal lazy var miniView: AgentDraggableView = {
