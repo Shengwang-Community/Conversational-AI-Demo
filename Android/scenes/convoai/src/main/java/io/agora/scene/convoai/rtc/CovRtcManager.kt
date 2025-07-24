@@ -29,7 +29,7 @@ object CovRtcManager {
         config.mContext = AgentApp.instance()
         config.mAppId = ServerConfig.rtcAppId
         config.mChannelProfile = Constants.CHANNEL_PROFILE_LIVE_BROADCASTING
-        config.mAudioScenario = Constants.AUDIO_SCENARIO_AI_CLIENT
+        config.mAudioScenario = Constants.AUDIO_SCENARIO_DEFAULT
         config.mEventHandler = rtcCallback
         try {
             rtcEngine = (RtcEngine.create(config) as RtcEngineEx).apply {
