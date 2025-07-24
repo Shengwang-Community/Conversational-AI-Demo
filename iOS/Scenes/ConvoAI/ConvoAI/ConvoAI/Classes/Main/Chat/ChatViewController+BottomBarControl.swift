@@ -38,15 +38,24 @@ extension ChatViewController: AgentControlToolbarDelegate {
         }
         
         if state {
-            windowState.showVideo = true
-            startRenderLocalVideoStream(renderView: localVideoView)
-            topBar.openCamera(isOpen: true)
+            PermissionManager.checkCameraPermission { [weak self] granted in
+                guard let self = self else { return }
+                if !granted {
+                    self.showCameraPermissionAlert()
+                    self.bottomBar.videoButton.isSelected = false
+                    return
+                }
+                self.windowState.showVideo = true
+                self.startRenderLocalVideoStream(renderView: self.localVideoView)
+                self.topBar.openCamera(isOpen: true)
+                self.updateWindowContent()
+            }
         } else {
             windowState.showVideo = false
             stopRenderLocalVideoStream()
             topBar.openCamera(isOpen: false)
+            updateWindowContent()
         }
-        updateWindowContent()
     }
 }
 
@@ -111,6 +120,18 @@ extension ChatViewController {
         let description = ResourceManager.L10n.Error.microphonePermissionDescription
         let cancel = ResourceManager.L10n.Error.permissionCancel
         let confirm = ResourceManager.L10n.Error.permissionConfirm
+        AgentAlertView.show(in: view, title: title, content: description, cancelTitle: cancel, confirmTitle: confirm, onConfirm: {
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+            }
+        })
+    }
+    
+    private func showCameraPermissionAlert() {
+        let title = ResourceManager.L10n.Photo.permissionCameraTitle
+        let description = ResourceManager.L10n.Photo.permissionCameraMessage
+        let cancel = ResourceManager.L10n.Photo.permissionCancel
+        let confirm = ResourceManager.L10n.Photo.permissionSettings
         AgentAlertView.show(in: view, title: title, content: description, cancelTitle: cancel, confirmTitle: confirm, onConfirm: {
             if let url = URL(string: UIApplication.openSettingsURLString) {
                 UIApplication.shared.open(url, options: [:], completionHandler: nil)

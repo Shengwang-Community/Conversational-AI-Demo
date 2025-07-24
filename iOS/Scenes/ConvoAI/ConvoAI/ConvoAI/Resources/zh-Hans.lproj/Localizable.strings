@@ -144,7 +144,7 @@
 "photo.permission.photo.title" = "相册访问权限";
 "photo.permission.photo.message" = "访问相册权限用于选择照片。请在设置中开启权限。";
 "photo.permission.camera.title" = "相机访问权限";
-"photo.permission.camera.message" = "相机权限用于拍摄照片。请在设置中开启权限。";
+"photo.permission.camera.message" = "相机权限用于拍摄。请在设置中开启权限。";
 "photo.permission.photo.preview.title" = "相册访问权限";
 "photo.permission.photo.preview.message" = "访问相册权限可以在拍照页面显示最新照片预览。您可以选择跳过此权限。";
 "photo.permission.cancel" = "取消";
