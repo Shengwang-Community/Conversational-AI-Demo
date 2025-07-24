@@ -269,7 +269,6 @@ class CovLivingViewModel : ViewModel() {
                     } else {
                         Constants.AUDIO_SCENARIO_AI_CLIENT
                     }
-                    }
                 }
                 conversationalAIAPI?.loadAudioSettings(scenario)
 
