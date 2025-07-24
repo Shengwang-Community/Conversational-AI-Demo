@@ -67,12 +67,21 @@ import AgoraRtmKit
     var messageType: ChatMessageType { get }
 }
 
-/// @technical preview  
-/// Message object for sending content to AI agents
-/// Supports multiple content types that can be combined in a single message:
-/// - Text content for natural language communication
+///@technical preview 
+/// Text message for sending natural language content to AI agents.
+///
+/// Text messages support priority control and interruptable response settings,
+/// allowing fine-grained control over how the AI processes and responds to text input.
+///
 /// Usage examples:
-/// - Text only: TextMessage(text: "tell me a joke")
+/// - Basic text: TextMessage(text = "Hello, how are you?")
+/// - High priority: TextMessage(text = "Urgent message", priority = .interrupt)
+/// - Non-interruptable: TextMessage(text = "Important question", interruptable = false)
+///
+/// @property priority Message processing priority (default: INTERRUPT, means the message will interrupt the current conversation)
+/// @property responseInterruptable Whether this message's response can be interrupted by higher priority messages (default: true)
+/// @property text Text content of the message (required)
+///
 @objc public class TextMessage: NSObject, ChatMessage {
     /// Message type
     @objc public let messageType: ChatMessageType = .text
@@ -93,6 +102,45 @@ import AgoraRtmKit
         self.responseInterruptable = interruptable
         self.text = text
         super.init()
+    }
+}
+
+/// Image message for sending visual content to AI agents.
+///
+/// Supports two image formats:
+/// - url: HTTP/HTTPS URL pointing to an image file (recommended for large images)
+/// - base64: Base64 encoded image data (use with caution for large images)
+///
+/// IMPORTANT: When using base64, ensure the total message size (including JSON structure)
+/// is less than 32KB as per RTM Message Channel limitations. For larger images, use url instead.
+///
+/// Reference: https://doc.shengwang.cn/doc/rtm2/android/user-guide/message/send-message
+///
+/// Usage examples:
+/// - URL image: ImageMessage(uuid = "img_123", url = "https://example.com/image.jpg")
+/// - Base64 image: ImageMessage(uuid = "img_456", base64 = "data:image/jpeg;base64,...")
+///
+/// @property uuid Unique identifier for the image message (required)
+/// @property url HTTP/HTTPS URL pointing to an image file (optional, mutually exclusive with base64)
+/// @property base64 Base64 encoded image data (optional, mutually exclusive with url, limited to 32KB total message size)
+@objc public class ImageMessage: NSObject, ChatMessage {
+    /// Message type
+    @objc public let messageType: ChatMessageType = .image
+    /// Image uuid, The agent will use this uuid to identify the image.
+    @objc public let uuid: String
+    /// Image url, The agent will use this url to download the image and to identify the image.
+    @objc public let url: String?
+    /// Image base64, The agent will use this base64 to identify the image.
+    @objc public let base64: String?
+
+    init(uuid: String, url: String?, base64: String? = nil) {
+        self.uuid = uuid
+        self.url = url
+        self.base64 = base64
+    }
+    
+    public override var description: String {
+        return "ImageMessage(url: \(url ?? ""), uuid: \(uuid), base64: \(base64?.count ?? 0))"
     }
 }
 
@@ -465,30 +513,6 @@ public enum MessageType: String, CaseIterable {
     
     public override var description: String {
         return "MessageReceipt(type: \(type), message: \(message))"
-    }
-}
-
-/// Image message model
-/// Used for sending image information to the AI Agent
-/// Contains image UUID, URL, and base64 data
-@objc public class ImageMessage: NSObject, ChatMessage {
-    /// Message type
-    @objc public let messageType: ChatMessageType = .image
-    /// Image uuid, The agent will use this uuid to identify the image.
-    @objc public let uuid: String
-    /// Image url, The agent will use this url to download the image and to identify the image.
-    @objc public let url: String?
-    /// Image base64, The agent will use this base64 to identify the image.
-    @objc public let base64: String?
-
-    init(uuid: String, url: String?, base64: String? = nil) {
-        self.uuid = uuid
-        self.url = url
-        self.base64 = base64
-    }
-    
-    public override var description: String {
-        return "ImageMessage(url: \(url ?? ""), uuid: \(uuid), base64: \(base64?.count ?? 0))"
     }
 }
 
