@@ -60,6 +60,8 @@ enum class Priority {
 sealed class ChatMessage
 
 /**
+ * @technical preview
+ *
  * Text message for sending natural language content to AI agents.
  *
  * Text messages support priority control and interruptable response settings,
@@ -117,9 +119,9 @@ data class ImageMessage(
 
 /**
  * Message receipt data class, supports multiple media types via MediaInfo
- * @property type The module type (e.g., text, image, audio)
+ * @property type The module type (e.g., llm, mllm, tts, context)
  * @property turnId The turn ID of the message
- * @property message The message information, can be ImageInfo, AudioInfo, etc.
+ * @property message The message information, can be ImageInfo, etc.
  */
 data class MessageReceipt(
     val type: ModuleType,
@@ -569,8 +571,8 @@ interface IConversationalAIAPI {
      * Send a message to the AI agent.
      * 
      * Supports different message types through the ChatMessage sealed class hierarchy:
-     * - TextMessage: For natural language communication with priority control
-     * - ImageMessage: For visual content processing (atomic operation)
+     * - TextMessage: For text message
+     * - ImageMessage: For image message
      * 
      * @param agentUserId Agent user ID
      * @param message Message object (TextMessage or ImageMessage)
