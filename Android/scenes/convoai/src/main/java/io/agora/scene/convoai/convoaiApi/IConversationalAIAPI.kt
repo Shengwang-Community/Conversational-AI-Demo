@@ -117,9 +117,9 @@ data class ImageMessage(
 
 /**
  * Message receipt data class, supports multiple media types via MediaInfo
- * @property type The module type (e.g., text, image, audio)
+ * @property type The module type (e.g., llm, mllm, tts, context)
  * @property turnId The turn ID of the message
- * @property message The message information, can be ImageInfo, AudioInfo, etc.
+ * @property message The message information, can be ImageInfo, etc.
  */
 data class MessageReceipt(
     val type: ModuleType,
