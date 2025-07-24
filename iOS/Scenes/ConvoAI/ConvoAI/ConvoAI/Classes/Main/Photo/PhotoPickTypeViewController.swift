@@ -345,21 +345,45 @@ extension PhotoPickTypeViewController: PHPickerViewControllerDelegate {
             }
             return
         }
-        guard itemProvider.canLoadObject(ofClass: UIImage.self) else { return }
-        itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
-            guard let self = self, let originalImage = image as? UIImage else { return }
-            DispatchQueue.main.async {
-                // Use PhotoProcessor to process the image
-                let processedImage = PhotoProcessor.processPhoto(originalImage)
-                
-                if let processedImage = processedImage {
-                    // If processing succeeds, navigate to edit screen
-                    let editVC = PhotoEditViewController()
-                    editVC.image = processedImage
-                    editVC.completion = self.completion
-                    self.navigationController?.pushViewController(editVC, animated: true)
-                } else {
-                    SVProgressHUD.showError(withStatus: ResourceManager.L10n.Photo.formatTips)
+        if itemProvider.canLoadObject(ofClass: UIImage.self) {
+            itemProvider.loadObject(ofClass: UIImage.self) { [weak self] image, error in
+                guard let self = self, let originalImage = image as? UIImage else { return }
+                DispatchQueue.main.async {
+                    // Use PhotoProcessor to process the image
+                    let processedImage = PhotoProcessor.processPhoto(originalImage)
+                    
+                    if let processedImage = processedImage {
+                        // If processing succeeds, navigate to edit screen
+                        let editVC = PhotoEditViewController()
+                        editVC.image = processedImage
+                        editVC.completion = self.completion
+                        self.navigationController?.pushViewController(editVC, animated: true)
+                    } else {
+                        SVProgressHUD.showError(withStatus: ResourceManager.L10n.Photo.formatTips)
+                    }
+                }
+            }
+        } else {
+            // webp compatibility
+            guard let idf = itemProvider.registeredTypeIdentifiers.first else {
+                SVProgressHUD.showError(withStatus: ResourceManager.L10n.Photo.formatTips)
+                return
+            }
+            itemProvider.loadDataRepresentation(forTypeIdentifier: idf) { [weak self] (data, error) in
+                guard let self = self, let data = data, let originalImage = UIImage(data: data) else { return }
+                DispatchQueue.main.async {
+                    // Use PhotoProcessor to process the image
+                    let processedImage = PhotoProcessor.processPhoto(originalImage)
+                    
+                    if let processedImage = processedImage {
+                        // If processing succeeds, navigate to edit screen
+                        let editVC = PhotoEditViewController()
+                        editVC.image = processedImage
+                        editVC.completion = self.completion
+                        self.navigationController?.pushViewController(editVC, animated: true)
+                    } else {
+                        SVProgressHUD.showError(withStatus: ResourceManager.L10n.Photo.formatTips)
+                    }
                 }
             }
         }

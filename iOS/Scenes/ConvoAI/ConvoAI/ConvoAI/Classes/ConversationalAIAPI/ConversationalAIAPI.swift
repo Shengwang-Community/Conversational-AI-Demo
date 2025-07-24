@@ -637,6 +637,7 @@ public enum MessageType: String, CaseIterable {
     /// Configure audio parameters required for optimal performance in AI conversations
     ///
     /// - Parameter scenario: Audio scenario for optimization (e.g., .aiClient, .meeting, etc.)
+    ///   if user enables avatar, please set scenario to .default for better audio mixing.
     /// - Important: If you need to enable audio best practices, you must call this method before each `joinChannel` call
     @objc func loadAudioSettings(secnario: AgoraAudioScenario)
     

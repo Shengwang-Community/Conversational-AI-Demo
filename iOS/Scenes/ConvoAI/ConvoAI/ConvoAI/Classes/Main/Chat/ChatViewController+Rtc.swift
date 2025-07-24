@@ -243,7 +243,13 @@ extension ChatViewController {
             return
         }
         let independent = (AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true)
-        convoAIAPI.loadAudioSettings(secnario: independent ? .chorus : .aiClient)
+        let secnario: AgoraAudioScenario = {
+            if AppContext.preferenceManager()?.preference.avatar != nil {
+                return .default
+            }
+            return independent ? .chorus : .aiClient
+        }()
+        convoAIAPI.loadAudioSettings(secnario: secnario)
         rtcManager.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
         AppContext.preferenceManager()?.updateRoomState(.connected)
         AppContext.preferenceManager()?.updateRoomId(channelName)

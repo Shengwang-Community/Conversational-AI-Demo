@@ -75,14 +75,7 @@ extension ChatViewController {
                     "silence_duration_ms": nil,
                     "threshold": nil
                 ],
-                "avatar": [
-                    "enable": AppContext.preferenceManager()?.preference.avatar != nil,
-                    "vendor": AppContext.preferenceManager()?.preference.avatar?.vendor ?? "",
-                    "params": [
-                        "agora_uid": "\(avatarUid)",
-                        "avatar_id": AppContext.preferenceManager()?.preference.avatar?.avatarId
-                    ]
-                ],
+                "avatar": avatarMap(),
                 "parameters": [
                     "data_channel": "rtm",
                     "enable_flexible": nil,
@@ -106,6 +99,25 @@ extension ChatViewController {
                 ]
             ]
         ]
+    }
+    
+    private func avatarMap() -> [String: Any?] {
+        if AppContext.shared.avatarEnable {
+            return [
+                "enable": AppContext.shared.avatarEnable,
+                "vendor": AppContext.shared.avatarVendor,
+                "params": AppContext.shared.avatarParams
+            ]
+        } else {
+            return [
+                "enable": AppContext.preferenceManager()?.preference.avatar != nil,
+                "vendor": AppContext.preferenceManager()?.preference.avatar?.vendor ?? "",
+                "params": [
+                    "agora_uid": "\(avatarUid)",
+                    "avatar_id": AppContext.preferenceManager()?.preference.avatar?.avatarId
+                ]
+            ]
+        }
     }
     
     private func removeNilValues(from value: Any?) -> Any? {

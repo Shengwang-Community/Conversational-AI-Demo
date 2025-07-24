@@ -25,11 +25,14 @@ extension ChatViewController: AgentControlToolbarDelegate {
     }
     
     func switchPublishVideoStream(state: Bool) {
-        guard let preset = AppContext.preferenceManager()?.preference.preset else {
+        // if the agent is not connected, reset the state
+        if AppContext.preferenceManager()?.information.agentState != .connected {
+            bottomBar.videoButton.isSelected = false
+            SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.retryAfterConnect)
             return
         }
-        
-        if !preset.isSupportVision {
+        if  let preset = AppContext.preferenceManager()?.preference.preset,
+            !preset.isSupportVision {
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.visionUnsupportMessage)
             return
         }
@@ -43,10 +46,8 @@ extension ChatViewController: AgentControlToolbarDelegate {
             stopRenderLocalVideoStream()
             topBar.openCamera(isOpen: false)
         }
-        
         updateWindowContent()
     }
-    
 }
 
 extension ChatViewController {

@@ -43,6 +43,9 @@
 "conversation.agent.state.listening" = "Listening...";
 "conversation.agent.state.speaking" = "Speak or tap to interrupt";
 "conversation.agent.state.muted" = "Muted";
+"conversation.agent.transcription" = "CC";
+"conversation.vision.unsupport.message" = "This preset does not support vision-related features. Please click the settings button in the upper right corner to select another preset.";
+"conversation.vision.retry.after.connect" = "Please connect and try again!";
 
 "conversation.message.alert.title" = "Clear Messages";
 "conversation.message.alert.content" = "Are you sure you want to clear all messages?";
@@ -68,6 +71,14 @@
 "settings.noise.forceResponse" = "Force Response";
 "settings.noise.bhvs" = "Background Human Voice Suppression";
 "settings.digital.human" = "Digital Human";
+"settings.digital.human.closed" = "Closed";
+"settings.digital.human.preset.alert.title" = "Changing Preset requires reconfiguring the virtual human";
+"settings.digital.human.preset.alert.description" = "Preset is related to the gender of the virtual human. Please reconfigure the virtual human after changing the Preset.";
+"settings.digital.human.language.alert.title" = "Changing Language requires reconfiguring the virtual human";
+"settings.digital.human.language.alert.description" = "Language is related to the gender of the virtual human. Please reconfigure the virtual human after changing the Language.";
+"settings.digital.human.alert.ignore" = "Ignore";
+"settings.digital.human.alert.cancel" = "Cancel";
+"settings.digital.human.alert.confirm" = "Confirm";
 
 // Channel Info View
 "channel.info.device.titie" = "My Devices";
@@ -111,6 +122,8 @@
 
 "devmode.title" = "Developer Mode";
 "devmode.rtc" = "RTC Version";
+"devmode.rtm" = "RTM Version";
+"devmode.metric" = "Metrics";
 "devmode.host" = "ConvoAI Host";
 "devmode.dump" = "Audio Dump";
 "devmode.sessionLimit" = "Session Limit";
@@ -123,7 +136,6 @@
 "devmode.text.view" = "View";
 "devmode.text.confirm" = "Confirm";
 
-
 "iot.info.title" = "Conversational AI Device";
 "iot.info.device" = "%@ Devices";
 
@@ -133,11 +145,11 @@
 "photo.format.tips" = "Only JPG, PNG, WEBP, and JPEG image formats are supported.";
 
 // Photo permissions
-"photo.permission.photo.title" = "Photo Access Permission";
+"photo.permission.photo.title" = "Need Access";
 "photo.permission.photo.message" = "We need access to your photo library to select images. Please enable photo access permission in Settings.";
-"photo.permission.camera.title" = "Camera Access Permission";
+"photo.permission.camera.title" = "Need Access";
 "photo.permission.camera.message" = "We need access to your camera to take photos. Please enable camera access permission in Settings.";
-"photo.permission.photo.preview.title" = "Photo Access Permission";
+"photo.permission.photo.preview.title" = "Need Access";
 "photo.permission.photo.preview.message" = "Photo access permission allows preview of recent photos on the camera page. You can choose to skip this permission.";
 "photo.permission.cancel" = "Cancel";
 "photo.permission.settings" = "Settings";

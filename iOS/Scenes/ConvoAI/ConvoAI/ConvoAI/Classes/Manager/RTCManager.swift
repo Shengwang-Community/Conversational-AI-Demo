@@ -56,7 +56,7 @@ extension RTCManager: RTCManagerProtocol {
         let config = AgoraRtcEngineConfig()
         config.appId = AppContext.shared.appId
         config.channelProfile = .liveBroadcasting
-        config.audioScenario = .aiClient
+        config.audioScenario = .default
         rtcEngine = AgoraRtcEngineKit.sharedEngine(with: config, delegate: delegate)
         ConvoAILogger.info("rtc version: \(AgoraRtcEngineKit.getSdkVersion())")
         return rtcEngine
