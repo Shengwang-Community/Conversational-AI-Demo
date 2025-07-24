@@ -31,6 +31,7 @@ android {
         buildConfigField("String", "LLM_SYSTEM_MESSAGES", "\"${project.properties["LLM_SYSTEM_MESSAGES"].toString().replace('"', '\\"')}\"")
         buildConfigField("String", "TTS_VENDOR", "\"${project.getProperty("TTS_VENDOR")}\"")
         buildConfigField "String", "TTS_PARAMS", "\"${project.properties['TTS_PARAMS'].toString().replace('"', '\\"')}\""
+        buildConfigField("Boolean", "AVATAR_ENABLE", "${project.getProperty("AVATAR_ENABLE").toBoolean()}")
         buildConfigField("String", "AVATAR_VENDOR", "\"${project.getProperty("AVATAR_VENDOR")}\"")
         buildConfigField "String", "AVATAR_PARAMS", "\"${project.properties['AVATAR_PARAMS'].toString().replace('"', '\\"')}\""
     }

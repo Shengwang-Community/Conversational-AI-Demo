@@ -60,6 +60,8 @@ enum class Priority {
 sealed class ChatMessage
 
 /**
+ * @technical preview
+ *
  * Text message for sending natural language content to AI agents.
  *
  * Text messages support priority control and interruptable response settings,
@@ -117,9 +119,9 @@ data class ImageMessage(
 
 /**
  * Message receipt data class, supports multiple media types via MediaInfo
- * @property type The module type (e.g., text, image, audio)
+ * @property type The module type (e.g., llm, mllm, tts, context)
  * @property turnId The turn ID of the message
- * @property message The message information, can be ImageInfo, AudioInfo, etc.
+ * @property message The message information, can be ImageInfo, etc.
  */
 data class MessageReceipt(
     val type: ModuleType,
@@ -569,8 +571,8 @@ interface IConversationalAIAPI {
      * Send a message to the AI agent.
      * 
      * Supports different message types through the ChatMessage sealed class hierarchy:
-     * - TextMessage: For natural language communication with priority control
-     * - ImageMessage: For visual content processing (atomic operation)
+     * - TextMessage: For text message
+     * - ImageMessage: For image message
      * 
      * @param agentUserId Agent user ID
      * @param message Message object (TextMessage or ImageMessage)
@@ -591,7 +593,7 @@ interface IConversationalAIAPI {
      * WARNING: This method MUST be called BEFORE rtcEngine.joinChannel().
      * If you do not call loadAudioSettings before joining the RTC channel, the audio quality for AI conversation may be suboptimal or incorrect.
      *
-     * @param scenario Audio scenario, default is AUDIO_SCENARIO_AI_CLIENT
+     * @param scenario Audio scenario, default is AUDIO_SCENARIO_AI_CLIENT. If user enables avatar, please set scenario to AUDIO_SCENARIO_DEFAULT for better audio mixing.
      * @note This method must be called before each joinChannel call to ensure best audio quality.
      * @example
      * val api = ConversationalAIAPI(config)

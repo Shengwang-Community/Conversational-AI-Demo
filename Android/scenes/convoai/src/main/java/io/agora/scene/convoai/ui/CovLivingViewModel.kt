@@ -21,6 +21,7 @@ import io.agora.scene.common.net.TokenGenerator
 import io.agora.scene.common.net.TokenGeneratorType
 import io.agora.scene.common.util.toast.ToastUtil
 import android.widget.Toast
+import io.agora.scene.common.BuildConfig
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.iot.api.CovIotApiManager
@@ -259,7 +260,18 @@ class CovLivingViewModel : ViewModel() {
 
                 // Configure audio settings
                 val isIndependent = CovAgentManager.getPreset()?.isIndependent() == true
-                conversationalAIAPI?.loadAudioSettings(if (isIndependent) Constants.AUDIO_SCENARIO_CHORUS else Constants.AUDIO_SCENARIO_AI_CLIENT)
+                val scenario = if (CovAgentManager.isEnableAvatar()) {
+                    // If digital avatar is enabled, use AUDIO_SCENARIO_DEFAULT for better audio mixing
+                    Constants.AUDIO_SCENARIO_DEFAULT
+                } else {
+                    if (isIndependent) {
+                        Constants.AUDIO_SCENARIO_CHORUS
+                    } else {
+                        Constants.AUDIO_SCENARIO_AI_CLIENT
+                    }
+                    }
+                }
+                conversationalAIAPI?.loadAudioSettings(scenario)
 
                 // Join RTC channel
                 CovRtcManager.joinChannel(integratedToken ?: "", CovAgentManager.channelName, CovAgentManager.uid)
@@ -786,24 +798,24 @@ class CovLivingViewModel : ViewModel() {
                     "vendor_model" to null,
                 ),
                 "llm" to mapOf(
-                    "url" to io.agora.scene.common.BuildConfig.LLM_URL.takeIf { it.isNotEmpty() },
-                    "api_key" to io.agora.scene.common.BuildConfig.LLM_API_KEY.takeIf { it.isNotEmpty() },
+                    "url" to BuildConfig.LLM_URL.takeIf { it.isNotEmpty() },
+                    "api_key" to BuildConfig.LLM_API_KEY.takeIf { it.isNotEmpty() },
                     "system_messages" to try {
-                        io.agora.scene.common.BuildConfig.LLM_SYSTEM_MESSAGES.takeIf { it.isNotEmpty() }?.let {
+                        BuildConfig.LLM_SYSTEM_MESSAGES.takeIf { it.isNotEmpty() }?.let {
                             org.json.JSONArray(it)
                         }
                     } catch (e: Exception) {
                         CovLogger.e(TAG, "Failed to parse system_messages as JSON: ${e.message}")
-                        io.agora.scene.common.BuildConfig.LLM_SYSTEM_MESSAGES.takeIf { it.isNotEmpty() }
+                        BuildConfig.LLM_SYSTEM_MESSAGES.takeIf { it.isNotEmpty() }
                     },
                     "greeting_message" to null,
                     "params" to try {
-                        io.agora.scene.common.BuildConfig.LLM_PARRAMS.takeIf { it.isNotEmpty() }?.let {
+                        BuildConfig.LLM_PARRAMS.takeIf { it.isNotEmpty() }?.let {
                             JSONObject(it)
                         }
                     } catch (e: Exception) {
                         CovLogger.e(TAG, "Failed to parse LLM params as JSON: ${e.message}")
-                        io.agora.scene.common.BuildConfig.LLM_PARRAMS.takeIf { it.isNotEmpty() }
+                        BuildConfig.LLM_PARRAMS.takeIf { it.isNotEmpty() }
                     },
                     "style" to null,
                     "max_history" to null,
@@ -813,14 +825,14 @@ class CovLivingViewModel : ViewModel() {
                     "failure_message" to null,
                 ),
                 "tts" to mapOf(
-                    "vendor" to io.agora.scene.common.BuildConfig.TTS_VENDOR.takeIf { it.isNotEmpty() },
+                    "vendor" to BuildConfig.TTS_VENDOR.takeIf { it.isNotEmpty() },
                     "params" to try {
-                        io.agora.scene.common.BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() }?.let {
+                        BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() }?.let {
                             JSONObject(it)
                         }
                     } catch (e: Exception) {
                         CovLogger.e(TAG, "Failed to parse TTS params as JSON: ${e.message}")
-                        io.agora.scene.common.BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() }
+                        BuildConfig.TTS_PARAMS.takeIf { it.isNotEmpty() }
                     },
                 ),
                 "avatar" to buildAvatarMap(),
@@ -858,17 +870,17 @@ class CovLivingViewModel : ViewModel() {
 
     private fun buildAvatarMap(): Map<String, Any?>? {
         var avatarMap: Map<String, Any?>? = null
-        if (io.agora.scene.common.BuildConfig.AVATAR_VENDOR.isNotEmpty()) {
+        if (BuildConfig.AVATAR_ENABLE) {
             avatarMap = mapOf(
                 "enable" to true,
-                "vendor" to io.agora.scene.common.BuildConfig.AVATAR_VENDOR.takeIf { it.isNotEmpty() },
+                "vendor" to BuildConfig.AVATAR_VENDOR.takeIf { it.isNotEmpty() },
                 "params" to try {
-                    io.agora.scene.common.BuildConfig.AVATAR_PARAMS.takeIf { it.isNotEmpty() }?.let {
+                    BuildConfig.AVATAR_PARAMS.takeIf { it.isNotEmpty() }?.let {
                         JSONObject(it)
                     }
                 } catch (e: Exception) {
                     CovLogger.e(TAG, "Failed to parse AVATAR params as JSON: ${e.message}")
-                    io.agora.scene.common.BuildConfig.AVATAR_PARAMS.takeIf { it.isNotEmpty() }
+                    BuildConfig.AVATAR_PARAMS.takeIf { it.isNotEmpty() }
                 },
             )
         } else {
