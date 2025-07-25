@@ -327,6 +327,15 @@ extension ConversationalAIAPIImpl {
         }
     }
 
+    private func notifyDelegatesMessageError(agentUserId: String, error: MessageError) {
+        callMessagePrint(msg: "<<< [onMessageError], agentUserId: \(agentUserId), error: \(error)")
+        DispatchQueue.main.async {
+            for delegate in self.delegates.allObjects {
+                delegate.onMessageError(agentUserId: agentUserId, error: error)
+            }
+        }
+    }
+
     private func notifyDelegatesError(agentUserId: String, error: ModuleError) {
         callMessagePrint(msg: "<<< [onAgentError], agentUserId: \(agentUserId), error: \(error)")
 
@@ -445,12 +454,26 @@ extension ConversationalAIAPIImpl {
             notifyDelegatesDebugLog("Unknown error type: \(errorTypeStr)")
         }
         
-        let code = (msg["code"] as? NSNumber)?.intValue ?? -1
-        let message = msg["message"] as? String ?? "Unknown error"
-        let timestamp = (msg["timestamp"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970
+        if venderType == .context {
+            let message = msg["message"] as? String ?? "Unknown error"
+            
+            do {
+                let messageData = try parseJsonToMap(message)
+                let resourceType = messageData["resource_type"] as? String ?? "unknown"
+                let messageError = MessageError(type: resourceType == "picture" ? .image : .unknown, message: message)
+                notifyDelegatesMessageError(agentUserId: uid, error: messageError)
+            } catch {
+                notifyDelegatesDebugLog("Failed to parse context message JSON: \(error.localizedDescription)")
+            }
+        } else {
+            let code = (msg["code"] as? NSNumber)?.intValue ?? -1
+            let message = msg["message"] as? String ?? "Unknown error"
+            let timestamp = (msg["timestamp"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970
+            
+            let agentError = ModuleError(type: venderType, code: code, message: message, timestamp: timestamp)
+            notifyDelegatesError(agentUserId: uid, error: agentError)
+        }
         
-        let agentError = ModuleError(type: venderType, code: code, message: message, timestamp: timestamp)
-        notifyDelegatesError(agentUserId: uid, error: agentError)
     }
     
     func callMessagePrint(msg: String) {

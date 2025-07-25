@@ -58,6 +58,8 @@ import AgoraRtmKit
     case text = 0
     /// Image message type
     case image = 1
+    /// Unknown message type
+    case unknown = 2
 }
 
 /// Chat message protocol
@@ -303,6 +305,23 @@ import AgoraRtmKit
 
     public override var description: String {
         return "Metric(type: \(type.stringValue), name: \(name), value: \(value), timestamp: \(timestamp))"
+    }
+}
+
+@objc public class MessageError: NSObject {
+    /// Message error type
+    @objc public let type: ChatMessageType
+    /// Error description message providing detailed error explanation
+    /// Usually JSON string containing resource information
+    @objc public let message: String
+    
+    /// Initialize a message error
+    /// - Parameters:
+    ///   - type: Message type where error occurred
+    ///   - message: Error message
+    @objc public init(type: ChatMessageType, message: String) {
+        self.type = type
+        self.message = message
     }
 }
 
@@ -616,6 +635,16 @@ public enum MessageType: String, CaseIterable {
     ///   - agentUserId: Agent RTM user ID
     ///   - messageReceipt: Message receipt containing type, module, and image information
     @objc func onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt)
+    
+    /// Called when message error occurs
+    /// This method is called when message processing encounters errors,
+    /// For example, when the chat message is failed to send, the error message will be returned.
+    ///
+    /// - Parameters:
+    ///   - agentUserId: Agent RTM user ID
+    ///   - error: Message error containing type, message
+    @objc func onMessageError(agentUserId: String, error: MessageError)
+
 }
 
 /// ConversationalAI API control protocol
