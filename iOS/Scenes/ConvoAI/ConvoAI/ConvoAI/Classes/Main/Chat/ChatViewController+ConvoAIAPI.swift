@@ -48,7 +48,7 @@ extension ChatViewController {
             guard let self = self else { return }
             // Upload success
             self.addLog("<<<<<[uploadImage] Image upload successful, url: \(imageUrl ?? "")， uuid: \(uuid)")
-            let message = ImageMessage(uuid: uuid, url: "")
+            let message = ImageMessage(uuid: uuid, url: imageUrl)
             self.convoAIAPI.chat(agentUserId: "\(agentUid)", message: message) { [weak self] error in
                 if let error = error {
                     self?.addLog("<<<<<[sendImage] send image failed, error: \(error.message)")
@@ -90,24 +90,23 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     }
     
     public func onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt) {
-        if messageReceipt.type == .context {
+        if messageReceipt.moduleType == .context {
             guard let messageData = messageReceipt.message.data(using: .utf8) else {
+                ConvoAILogger.error("Failed to parse message string from image info message")
                 return
             }
             
-            do {
-                let imageInfo = try JSONDecoder().decode(PictureInfo.self, from: messageData)
-                let uuid = imageInfo.uuid
-                addLog("<<<<<onMessageReceiptUpdated: uuid: \(uuid)")
-                self.messageView.viewModel.updateImageMessage(uuid: uuid, state: .success)
-            } catch {
-                addLog("Failed to decode PictureInfo: \(error)")
+            if messageReceipt.messageType == .image {
+                do {
+                    let imageInfo = try JSONDecoder().decode(PictureInfo.self, from: messageData)
+                    let uuid = imageInfo.uuid
+                    addLog("<<<<<onMessageReceiptUpdated: uuid: \(uuid)")
+                    self.messageView.viewModel.updateImageMessage(uuid: uuid, state: .success)
+                } catch {
+                    addLog("Failed to decode PictureInfo: \(error)")
+                }
             }
-
-          ConvoAILogger.error("Failed to parse message string from image info message")
-          return
       }
-        
     }
     
     public func onAgentStateChanged(agentUserId: String, event: StateChangeEvent) {

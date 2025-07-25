@@ -426,8 +426,14 @@ extension ConversationalAIAPIImpl {
         }
         
         let moduleType = ModuleType.fromValue(module)
-        let messageReceipt = MessageReceipt(type: moduleType, message: messageString, turnId: turnId)
-        notifyDelegatesMessageReceipt(agentUserId: uid, messageReceipt: messageReceipt)
+        do {
+            let messageData = try parseJsonToMap(messageString)
+            let resource_type = messageData["resource_type"] as? String ?? "unknown"
+            let messageReceipt = MessageReceipt(moduleType: moduleType, messageType: resource_type == "picture" ? .image : .unknown, message: messageString, turnId: turnId)
+            notifyDelegatesMessageReceipt(agentUserId: uid, messageReceipt: messageReceipt)
+        } catch {
+            notifyDelegatesDebugLog("Failed to parse message string from image info message: \(error.localizedDescription)")
+        }
     }
     
     private func handleMetricsMessage(uid: String, msg: [String: Any]) {

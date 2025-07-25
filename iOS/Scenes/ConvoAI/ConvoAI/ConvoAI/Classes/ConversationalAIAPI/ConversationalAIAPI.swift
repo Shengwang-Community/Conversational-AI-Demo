@@ -504,9 +504,11 @@ public enum MessageType: String, CaseIterable {
 /// Message receipt model
 /// Used for tracking message processing status and metadata
 /// Contains type, image information, and turn ID
-@objc public class MessageReceipt: NSObject, Codable {
+@objc public class MessageReceipt: NSObject {
     /// Message type    
-    @objc public let type: ModuleType 
+    @objc public let moduleType: ModuleType 
+    /// Message type
+    @objc public let messageType: ChatMessageType
     /// Image information, Parse according to type:
     /// Context type: Usually JSON string containing resource information
     @objc public let message: String
@@ -518,21 +520,16 @@ public enum MessageType: String, CaseIterable {
     ///   - type: Message type
     ///   - message: Image information
     ///   - turnId: Turn ID
-    @objc public init(type: ModuleType, message: String, turnId: Int) {
-        self.type = type
+    @objc public init(moduleType: ModuleType, messageType: ChatMessageType, message: String, turnId: Int) {
+        self.moduleType = moduleType
+        self.messageType = messageType
         self.message = message
         self.turnId = turnId
         super.init()
     }
     
-    enum CodingKeys: String, CodingKey {
-        case type = "module"
-        case message
-        case turnId = "turn_id"
-    }
-    
     public override var description: String {
-        return "MessageReceipt(type: \(type), message: \(message))"
+        return "MessageReceipt(moduleType: \(moduleType), messageType: \(messageType), message: \(message), turnId: \(turnId))"
     }
 }
 
