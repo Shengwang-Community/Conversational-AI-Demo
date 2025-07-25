@@ -118,10 +118,11 @@ data class ImageMessage(
 ) : ChatMessage()
 
 /**
- * Message receipt data class, supports multiple media types via MediaInfo
+ * Message receipt data class
  * @property type The module type (e.g., llm, mllm, tts, context)
  * @property turnId The turn ID of the message
- * @property message The message information, can be ImageInfo, etc.
+ * @property message The message information. Parse according to type:
+ *                   - Context type: Usually JSON string containing resource information
  */
 data class MessageReceipt(
     val type: ModuleType,
