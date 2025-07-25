@@ -488,7 +488,8 @@ public enum MessageType: String, CaseIterable {
 @objc public class MessageReceipt: NSObject, Codable {
     /// Message type    
     @objc public let type: ModuleType 
-    /// Image information 
+    /// Image information, Parse according to type:
+    /// Context type: Usually JSON string containing resource information
     @objc public let message: String
     /// Conversation turn ID, used to identify specific conversation rounds
     @objc public let turnId: Int
