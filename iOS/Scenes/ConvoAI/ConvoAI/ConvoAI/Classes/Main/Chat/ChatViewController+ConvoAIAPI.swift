@@ -48,7 +48,7 @@ extension ChatViewController {
             guard let self = self else { return }
             // Upload success
             self.addLog("<<<<<[uploadImage] Image upload successful, url: \(imageUrl ?? "")， uuid: \(uuid)")
-            let message = ImageMessage(uuid: uuid, url: imageUrl)
+            let message = ImageMessage(uuid: uuid, url: "")
             self.convoAIAPI.chat(agentUserId: "\(agentUid)", message: message) { [weak self] error in
                 if let error = error {
                     self?.addLog("<<<<<[sendImage] send image failed, error: \(error.message)")
@@ -68,6 +68,27 @@ extension ChatViewController {
 }
 
 extension ChatViewController: ConversationalAIAPIEventHandler {
+    public func onMessageError(agentUserId: String, error: MessageError) {
+        if let messageData = error.message.data(using: .utf8) {
+            do {
+                let errorResponse = try JSONDecoder().decode(ImageUploadErrorResponse.self, from: messageData)
+                if !errorResponse.success {
+                    let errorMessage = errorResponse.error?.message ?? "Unknown error"
+                    let errorCode = errorResponse.error?.code ?? 0
+                    
+                    addLog("<<< [ImageUploadError] Image upload failed: \(errorMessage) (code: \(errorCode))")
+                    
+                    // Update UI to show error state
+                    DispatchQueue.main.async { [weak self] in
+                        self?.messageView.viewModel.updateImageMessage(uuid: errorResponse.uuid, state: .failed)
+                    }
+                }
+            } catch {
+                addLog("<<< [onAgentError] Failed to parse error message JSON: \(error)")
+            }
+        }
+    }
+    
     public func onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt) {
         if messageReceipt.type == .context {
             guard let messageData = messageReceipt.message.data(using: .utf8) else {
@@ -103,27 +124,6 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     }
     
     public func onAgentError(agentUserId: String, error: ModuleError) {
-        if error.type == .context {
-            // Parse image upload error from error.message
-            if let messageData = error.message.data(using: .utf8) {
-                do {
-                    let errorResponse = try JSONDecoder().decode(ImageUploadErrorResponse.self, from: messageData)
-                    if !errorResponse.success {
-                        let errorMessage = errorResponse.error?.message ?? "Unknown error"
-                        let errorCode = errorResponse.error?.code ?? 0
-                        
-                        addLog("<<< [ImageUploadError] Image upload failed: \(errorMessage) (code: \(errorCode))")
-                        
-                        // Update UI to show error state
-                        DispatchQueue.main.async { [weak self] in
-                            self?.messageView.viewModel.updateImageMessage(uuid: errorResponse.uuid, state: .failed)
-                        }
-                    }
-                } catch {
-                    addLog("<<< [onAgentError] Failed to parse error message JSON: \(error)")
-                }
-            }
-        }
         addLog("<<< [onAgentError] error: \(error)")
     }
     
