@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { getEndpointFromNextRequest } from '@/app/api/_utils'
 import { basicRemoteResSchema, REMOTE_USER_INFO } from '@/constants'
 
@@ -7,9 +7,14 @@ import { logger } from '@/lib/logger'
 const remoteResSchema = basicRemoteResSchema
 
 export async function GET(request: NextRequest) {
-  const { tokenServer, agentServer, appId, devMode, endpoint, authorizationHeader } =
-    getEndpointFromNextRequest(request)
-
+  const {
+    tokenServer,
+    agentServer,
+    appId,
+    devMode,
+    endpoint,
+    authorizationHeader
+  } = getEndpointFromNextRequest(request)
 
   if (!authorizationHeader) {
     return NextResponse.json(
@@ -24,19 +29,15 @@ export async function GET(request: NextRequest) {
   )
 
   try {
-
     const res = await fetch(url, {
       method: 'GET',
       headers: {
-        Authorization: `${authorizationHeader}`,
-      },
+        Authorization: `${authorizationHeader}`
+      }
     })
 
     if (res.status === 401) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
     const data = await res.json()
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       code: resData.code,
       data: resData.data,
-      msg: resData.msg,
+      msg: resData.msg
     })
   } catch (error) {
     console.error({ error }, 'error')

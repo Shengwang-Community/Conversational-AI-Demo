@@ -7,180 +7,43 @@ export enum EAgentPresetMode {
   // !SPECIAL CASE[spoken_english_practice]
   SPOKEN_ENGLISH_PRACTICE = 'spoken_english_practice',
   // !SPECIAL CASE[ultra_low_latency_conversational_agent]
-  ULTRA_LOW_LATENCY_CONVERSATIONAL_AGENT = 'ultra_low_latency_conversational_agent',
+  ULTRA_LOW_LATENCY_CONVERSATIONAL_AGENT = 'ultra_low_latency_conversational_agent'
 }
 
 export enum EDefaultLanguage {
   EN_US = 'en-US',
-  ZH_CN = 'zh-CN',
+  ZH_CN = 'zh-CN'
 }
-
-export const DEFAULT_LANGUAGE_OPTIONS = [
-  { transKey: 'language.enUS', value: EDefaultLanguage.EN_US },
-  { transKey: 'language.zhCN', value: EDefaultLanguage.ZH_CN },
-]
-
-export const MAX_PROMPT_LENGTH = 4096
-
-export const agentCustomLLMStyleSchema = z
-  .string()
-  .describe('llm-style')
-  .optional()
-export const agentCustomLLMSchema = z.object({
-  url: z.string().url().optional().describe('llm-url'),
-  api_key: z.string().optional().describe('llm-api-key'),
-  model: z.string().optional().describe('llm-model'),
-  prompt: z.string().max(MAX_PROMPT_LENGTH).optional().describe('llm-prompt'),
-  style: isCN ? z.undefined().describe('llm-style') : agentCustomLLMStyleSchema,
-})
-
-export const agentCustomTTSchema = z.object({
-  vendor: z.string().optional().describe('tts-vendor'),
-  params: z.record(z.any()).optional().describe('tts-params'),
-})
-
-export const agentBasicASRSchema = z
-  .object({
-    language: isCN
-      ? z.string().default(EDefaultLanguage.ZH_CN).describe('asr-language')
-      : z.string().default(EDefaultLanguage.EN_US).describe('asr-language'),
-  })
-  .describe('asr')
-
-export const agentASRSchema = agentBasicASRSchema.extend({
-  vendor: z.string().optional().describe('asr-vendor'),
-})
-
-export const agentVADSchema = z
-  .object({
-    interrupt_duration_ms: z
-      .number()
-      .default(160)
-      .describe('vad-interrupt-duration'),
-    prefix_padding_ms: z.number().default(300).describe('vad-prefix-padding'),
-    silence_duration_ms: z
-      .number()
-      .default(500)
-      .describe('vad-silence-duration'),
-    threshold: z.number().min(0).max(1).default(0.5).describe('vad-threshold'),
-  })
-  .describe('vad')
 
 export const agentAdvancedFeaturesSchema = z
   .object({
-    enable_bhvs: z.boolean().default(true).describe('enable_bhvs'),
-    enable_aivad: z.boolean().default(false).describe('enable_aivad'),
+    enable_bhvs: z.boolean().describe('Enable BHVS').optional().default(true),
+    enable_aivad: z
+      .boolean()
+      .describe('Enable AIVAD')
+      .optional()
+      .default(false),
+    enable_rtm: z.boolean().describe('Enable RTM').optional().default(true)
   })
-  .describe('advanced-features')
-
-export const agentParametersSchema = z
-  .object({
-    enable_flexible: z.boolean().default(false).describe('enable_flexible'),
-    aivad_force_threshold: z
-      .number()
-      .default(3000)
-      .describe('aivad_force_threshold'),
-    output_audio_codec: z
-      .enum(['', 'PCMU', 'PCMA', 'G722', 'OPUS', 'OPUSFB'])
-      .default('')
-      .describe('output_audio_codec'),
-    audio_scenario: z
-      .enum(['default', 'chorus', 'aiserver'])
-      .default('default')
-      .describe('audio_scenario'),
-  })
-  .describe('parameters')
-export const agentIdleTimeoutSchema = z
-  .number()
-  .min(0)
-  .default(30)
-  .describe('idle-timeout')
-
-// for public usage
-export const agentBasicFormSchema = z
-  .object({
-    preset_name: z.literal(EAgentPresetMode.CUSTOM),
-    custom_llm: agentCustomLLMSchema.optional(),
-    asr: agentBasicASRSchema,
-    advanced_features: agentAdvancedFeaturesSchema,
-    tts: agentCustomTTSchema.optional(),
-    // !SPECIAL CASE[audio_scenario]
-    parameters: z
-      .object({
-        audio_scenario: z
-          .enum(['default'])
-          .default('default')
-          .describe('audio_scenario'),
-      })
-      .describe('parameters'),
-    graph_id: z.string().optional().describe('graph_id'),
-  })
-  .or(
-    z.object({
-      preset_name: z
-        .string()
-        .min(1)
-        .pipe(z.string().refine((val) => val !== EAgentPresetMode.CUSTOM)),
-      asr: agentASRSchema,
-      custom_llm: agentCustomLLMSchema.optional(),
-      advanced_features: agentAdvancedFeaturesSchema,
-      tts: agentCustomTTSchema.optional(),
-      // !SPECIAL CASE[audio_scenario]
-      parameters: z
-        .object({
-          audio_scenario: z
-            .enum(['default'])
-            .default('default')
-            .describe('audio_scenario'),
-        })
-        .describe('parameters'),
-      graph_id: z.string().optional().describe('graph_id'),
-    })
-  )
-export const agentBasicRTCSettingsSchema = z.object({
-  channel_name: z.string().describe('channel-name'),
-  agent_rtc_uid: z.coerce.string().describe('agent-rtc-uid'),
-  remote_rtc_uid: z.coerce.string().describe('remote-rtc-uid'),
-})
-export const agentBasicSettingsSchema = agentBasicFormSchema.and(
-  agentBasicRTCSettingsSchema
-)
-
-// for private usage
-export const agentSettingsFormSchema = z
-  .object({
-    preset_name: z
-      .string()
-      .min(1)
-      .pipe(z.string().refine((val) => val !== EAgentPresetMode.CUSTOM)),
-    asr: agentASRSchema,
-    advanced_features: agentAdvancedFeaturesSchema,
-  })
-  .or(
-    z.object({
-      preset_name: z.literal(EAgentPresetMode.CUSTOM),
-      custom_llm: agentCustomLLMSchema,
-      tts: agentCustomTTSchema,
-      asr: agentASRSchema,
-      vad: agentVADSchema,
-      advanced_features: agentAdvancedFeaturesSchema,
-      parameters: agentParametersSchema,
-      idle_timeout: agentIdleTimeoutSchema,
-    })
-  )
-
-export const agentSettingsSchema = agentSettingsFormSchema.and(
-  agentBasicRTCSettingsSchema
-)
+  .describe('Advanced Features')
 
 export const agentPresetLLMStyleConfigSchema = z.object({
   display_name: z.string(),
   style: z.string().min(1),
-  default: z.boolean().optional(),
+  default: z.boolean().optional()
+})
+
+export const agentPresetAvatarSchema = z.object({
+  vendor: z.string(),
+  avatar_id: z.string(),
+  avatar_name: z.string(),
+  thumb_img_url: z.string(),
+  bg_img_url: z.string(),
+  web_bg_img_url: z.string()
 })
 
 export const agentPresetSchema = z.object({
-  index: z.number().optional(),
+  // index: z.number(),
   name: z.string(),
   display_name: z.string(),
   preset_type: z.string(),
@@ -192,29 +55,126 @@ export const agentPresetSchema = z.object({
         language_code: z.string().optional(),
         language_name: z.string().optional(),
         aivad_supported: z.boolean().optional(),
-        aivad_enabled_by_default: z.boolean().optional(),
+        aivad_enabled_by_default: z.boolean().optional()
       })
     )
     .optional(),
   llm_style_configs: z.array(agentPresetLLMStyleConfigSchema).optional(),
   call_time_limit_second: z.number().optional(),
+  call_time_limit_avatar_second: z.number().optional(),
+  avatar_ids_by_lang: z
+    .record(z.string(), z.array(agentPresetAvatarSchema))
+    .optional(),
+  is_support_vision: z.boolean().optional()
 })
 
-export const agentPresetFallbackData: z.infer<typeof agentPresetSchema> = {
-  index: -1,
-  name: EAgentPresetMode.CUSTOM,
-  display_name: isCN ? '自定义' : 'Custom',
-  preset_type: 'custom',
-  default_language_code: isCN ? EDefaultLanguage.ZH_CN : EDefaultLanguage.EN_US,
-  default_language_name: isCN ? '中文' : 'English',
-  support_languages: [
-    {
-      language_code: EDefaultLanguage.EN_US,
-      language_name: 'English',
-    },
-    {
-      language_code: EDefaultLanguage.ZH_CN,
-      language_name: '中文',
-    },
-  ],
-}
+export const publicAgentSettingSchema = z.object({
+  preset_name: z.string().describe('preset-name'),
+  asr: z
+    .object({
+      language: z
+        .string()
+        .default(isCN ? EDefaultLanguage.ZH_CN : EDefaultLanguage.EN_US)
+        .describe('asr-language')
+    })
+    .describe('ASR'),
+  advanced_features: agentAdvancedFeaturesSchema,
+  llm: z
+    .object({
+      style: z.string().describe('llm-style').optional()
+    })
+    .optional(),
+  parameters: z
+    .object({
+      // !SPECIAL CASE[audio_scenario]
+      audio_scenario: z
+        .enum(['default'])
+        .default('default')
+        .describe('audio_scenario')
+    })
+    .describe('parameters'),
+  // FOR dev mode
+  graph_id: z.string().optional().describe('graph_id'),
+  preset: z.string().optional().describe('preset'),
+  // avatar: z
+  //   .object({
+  //     enable: z.boolean().describe('Avatar Enable').optional(),
+  //     vendor: z.string().describe('Avatar Vendor').optional(),
+  //     params: z
+  //       .object({
+  //         agora_uid: z.string().describe('Agora UID'),
+  //         avatar_id: z.string().describe('Avatar ID')
+  //       })
+  //       .describe('Avatar Params')
+  //       .optional()
+  //   })
+  //   .describe('Avatar')
+  //   .optional()
+  avatar: agentPresetAvatarSchema.describe('Avatar').optional()
+})
+
+export const opensourceAgentSettingSchema = z.object({
+  asr: z
+    .object({
+      language: z
+        .string()
+        .default(isCN ? EDefaultLanguage.ZH_CN : EDefaultLanguage.EN_US)
+        .describe('Language')
+    })
+    .describe('ASR'),
+  advanced_features: agentAdvancedFeaturesSchema.optional(),
+  llm: z
+    .object({
+      url: z.string().url().describe('LLM URL'),
+      api_key: z.string().describe('LLM API Key').optional(),
+      system_messages: z.string().describe('LLM System Messages').optional(), // transform to object in service
+      greeting_message: z.string().describe('LLM Greeting Message').optional(),
+      params: z.string().describe('LLM Params').optional() // transform to object in service
+    })
+    .describe('LLM'),
+  tts: z
+    .object({
+      vendor: z.string().describe('TTS Vendor'),
+      params: z.string().describe('TTS Params') // transform to object in service
+    })
+    .describe('TTS'),
+  parameters: z
+    .object({
+      // !SPECIAL CASE[audio_scenario]
+      audio_scenario: z
+        .enum(['default'])
+        .default('default')
+        .describe('audio_scenario')
+    })
+    .describe('Parameters')
+})
+
+export const localStartAgentPropertiesBaseSchema = z.object({
+  channel: z.string().describe('channel-name'),
+  token: z.string().describe('token').optional(),
+  agent_rtc_uid: z.string().describe('agent-rtc-uid'),
+  remote_rtc_uids: z.array(z.string()).describe('remote-rtc-uid list')
+})
+
+export const localStartAgentPropertiesSchema =
+  localStartAgentPropertiesBaseSchema.merge(
+    publicAgentSettingSchema.extend({
+      avatar: z
+        .object({
+          enable: z.boolean().describe('Avatar Enable').optional(),
+          vendor: z.string().describe('Avatar Vendor').optional(),
+          params: z
+            .object({
+              agora_uid: z.string().describe('Agora UID'),
+              avatar_id: z.string().describe('Avatar ID')
+            })
+            .describe('Avatar Params')
+            .optional()
+        })
+        .describe('Avatar')
+        .optional()
+    })
+  )
+
+export const localOpensourceStartAgentPropertiesSchema =
+  localStartAgentPropertiesBaseSchema.merge(opensourceAgentSettingSchema)

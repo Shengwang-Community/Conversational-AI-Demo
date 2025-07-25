@@ -81,6 +81,17 @@
         "title": "<label>启用</label> 优雅打断",
         "description": ""
       }
+    },
+    "standard_avatar": {
+      "title": "数字人",
+      "close": "关闭",
+      "dialog": {
+        "title": "更换Preset需重新设置数字人",
+        "description": "Preset 和数字人的性别相关，更换 Preset 后请重新设置数字人",
+        "confirm": "确定变更",
+        "cancel": "取消",
+        "do-not-ask-again": "不再显示"
+      }
     }
   },
   "agent": {
@@ -173,5 +184,21 @@
     "title": "体验对话时间到！",
     "description": "体验对话限时{minutes}分钟，本次对话时间已到。",
     "button": "我知道了"
+  },
+  "dialog": {
+    "title": "提示",
+    "confirm": "确定",
+    "cancel": "取消",
+    "close": "关闭"
+  },
+  "agent-action": {
+    "max-image-size": "图片大小必须小于5MB",
+    "upload-image-failed": "上传图片失败，请重试",
+    "missing-image-url": "图片URL不可用，请上传新图片。",
+    "resend-image-error": "重发图片失败，请重试。",
+    "resend-image-success": "图片重发成功。",
+    "max-image-dimensions": "图片尺寸不得超过2048x2048像素。",
+    "upload-image-tooltip": "图片大小5M以内，尺寸小于2048x2048。支持JPG、PNG、WEBP、JPEG格式",
+    "avatar-busy-error": "所有数字人正忙，请稍后重试。"
   }
 }

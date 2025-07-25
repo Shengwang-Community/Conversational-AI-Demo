@@ -1,10 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
-
-import { inputSchema, genAgoraToken } from "./utils"
-import { REMOTE_TOKEN_GENERATE } from "@/constants"
-import { getEndpointFromNextRequest } from "@/app/api/_utils"
-
-import { logger } from "@/lib/logger"
+import { type NextRequest, NextResponse } from 'next/server'
+import { getEndpointFromNextRequest } from '@/app/api/_utils'
+import { REMOTE_TOKEN_GENERATE } from '@/constants'
+import { logger } from '@/lib/logger'
+import { genAgoraToken, inputSchema } from './utils'
 
 export async function POST(request: NextRequest) {
   const { tokenServer, agentServer, appId, devMode, endpoint, appCert } =
@@ -14,12 +12,12 @@ export async function POST(request: NextRequest) {
 
   logger.info(
     { tokenServer, agentServer, appId, devMode, endpoint, url, appCert },
-    "getEndpointFromNextRequest"
+    'getEndpointFromNextRequest'
   )
 
   try {
     const body = await request.json()
-    logger.info({ body }, "request body")
+    logger.info({ body }, 'request body')
     const { uid } = inputSchema.parse(body)
 
     const resData = await genAgoraToken(
@@ -27,10 +25,10 @@ export async function POST(request: NextRequest) {
         appId,
         appCertificate: appCert,
         uid: `${uid}`,
-        channelName: "*",
+        channelName: '*',
         expire: 86400,
         types: [1, 2, 3],
-        src: "web",
+        src: 'web'
       },
       url
     )
@@ -38,13 +36,13 @@ export async function POST(request: NextRequest) {
       code: resData.code,
       data: {
         token: resData.data.token,
-        appId: appId,
-      },
+        appId: appId
+      }
     })
   } catch (error) {
-    console.error({ error }, "error")
+    console.error({ error }, 'error')
     return NextResponse.json(
-      { code: 1, msg: "Invalid request", error },
+      { code: 1, msg: 'Invalid request', error },
       { status: 400 }
     )
   }

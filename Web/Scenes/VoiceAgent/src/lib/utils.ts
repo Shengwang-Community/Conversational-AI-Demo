@@ -1,6 +1,6 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-import _ from "lodash"
+import { type ClassValue, clsx } from 'clsx'
+import _ from 'lodash'
+import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -12,16 +12,16 @@ export function decodeStreamMessage(stream: Uint8Array) {
 }
 
 export const genUUID = () => {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0
-    const v = c === "x" ? r : (r & 0x3) | 0x8
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
     return v.toString(16)
   })
 }
 
 export const genTranceID = (length: number = 8) => {
-  let result = ""
-  const characters = "abcdefghijklmnopqrstuvwxyz0123456789"
+  let result = ''
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
   const charactersLength = characters.length
 
   for (let i = 0; i < length; i++) {
@@ -43,18 +43,18 @@ export const genUserId = () => {
 }
 
 export const genRandomString = (length: number = 6) => {
-  let result = ""
-  const characters = "abcdefghijklmnopqrstuvwxyz0123456789"
+  let result = ''
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
 
   result = _.times(length, () => {
-    return _.sample(characters) || ""
-  }).join("")
+    return _.sample(characters) || ''
+  }).join('')
 
   return result
 }
 
 export const genChannelName = () => {
-  const prefix = process.env.NEXT_PUBLIC_CHANNEL_PREFIX || "convoai"
+  const prefix = process.env.NEXT_PUBLIC_CHANNEL_PREFIX || 'convoai'
   const randomString = genUUID()
   return `${prefix}-${randomString}`
 }
@@ -77,7 +77,7 @@ export const normalizeFrequencies = (
   return normalizedArray
 }
 
-export const isCN = process.env.NEXT_PUBLIC_LOCALE === "zh-CN"
+export const isCN = process.env.NEXT_PUBLIC_LOCALE === 'zh-CN'
 
 export const calculateTimeLeft = (
   endTimestamp: number,
@@ -92,7 +92,7 @@ export const calculateTimeLeft = (
     displayDays = false,
     displayHours = false,
     displayMinutes = true,
-    displaySeconds = true,
+    displaySeconds = true
   } = options || {}
   const difference = endTimestamp - +new Date()
   let timeLeft: {
@@ -104,7 +104,7 @@ export const calculateTimeLeft = (
     days: null,
     hours: null,
     minutes: null,
-    seconds: null,
+    seconds: null
   }
 
   if (difference > 0) {
@@ -117,24 +117,42 @@ export const calculateTimeLeft = (
         days: displayDays ? 0 : null,
         hours: displayHours ? 0 : null,
         minutes: displayMinutes ? minutes : null,
-        seconds: displaySeconds ? seconds : null,
+        seconds: displaySeconds ? seconds : null
       }
     } else {
       const time = {
         d: Math.floor(difference / (1000 * 60 * 60 * 24)),
         h: Math.floor((difference / (1000 * 60 * 60)) % 24),
         m: Math.floor((difference / (1000 * 60)) % 60),
-        s: Math.floor((difference / 1000) % 60),
+        s: Math.floor((difference / 1000) % 60)
       }
 
       timeLeft = {
         days: displayDays ? time.d : null,
         hours: displayHours ? time.h : null,
         minutes: displayMinutes ? time.m : null,
-        seconds: displaySeconds ? time.s : null,
+        seconds: displaySeconds ? time.s : null
       }
     }
   }
 
   return timeLeft
+}
+
+export async function getImageDimensions(
+  file: File
+): Promise<{ width: number; height: number; type: string }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.src = URL.createObjectURL(file)
+
+    img.onload = () => {
+      resolve({ width: img.width, height: img.height, type: file.type })
+      URL.revokeObjectURL(img.src) // Clean up the object URL
+    }
+
+    img.onerror = (err) => {
+      reject(err)
+    }
+  })
 }

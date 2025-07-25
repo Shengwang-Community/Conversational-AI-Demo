@@ -1,7 +1,7 @@
 'use client'
 
-import * as React from 'react'
 import type { IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng'
+import * as React from 'react'
 
 import { normalizeFrequencies } from '@/lib/utils'
 

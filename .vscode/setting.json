@@ -1,0 +1,26 @@
+{
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true,
+    "[typescript]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "biome.configurationPath": "biome.json",
+    "biome.requireConfiguration": false,
+    "biome.lsp.bin": "./Web/Scenes/VoiceAgent/node_modules/bin/.biome",
+    "biome.enabled": true
+}

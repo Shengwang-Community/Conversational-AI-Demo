@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import z from 'zod'
 
 import { getEndpointFromNextRequest } from '@/app/api/_utils'
-import { REMOTE_SSO_LOGIN } from '@/constants'
 import { Login } from '@/app/api/sso/login/_utils'
+import { REMOTE_SSO_LOGIN } from '@/constants'
 
 import { logger } from '@/lib/logger'
 
 const querySchema = z.object({
-  code: z.string(),
+  code: z.string()
 })
 
 export async function GET(request: NextRequest) {
@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       code: resData.code,
       data: {
-        token: resData.data.token,
-      },
+        token: resData.data.token
+      }
     })
   } catch (error) {
     console.error({ error }, 'error')

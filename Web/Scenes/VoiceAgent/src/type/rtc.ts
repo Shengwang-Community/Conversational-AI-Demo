@@ -4,15 +4,15 @@ import type {
   ICameraVideoTrack,
   IMicrophoneAudioTrack,
   NetworkQuality,
-  UID,
-} from "agora-rtc-sdk-ng"
+  UID
+} from 'agora-rtc-sdk-ng'
 
 import type {
   EAgentState,
   IAgentTranscription,
   ISubtitleHelperItem,
-  IUserTranscription,
-} from "@/conversational-ai-api/type"
+  IUserTranscription
+} from '@/conversational-ai-api/type'
 
 export interface IUserTracks {
   videoTrack?: ICameraVideoTrack
@@ -20,26 +20,26 @@ export interface IUserTracks {
 }
 
 export enum ERTCServicesEvents {
-  NETWORK_QUALITY = "networkQuality",
-  REMOTE_USER_CHANGED = "remoteUserChanged",
-  TEXT_CHANGED = "textChanged",
-  AGENT_STATE_CHANGED = "agentStateChanged",
-  LOCAL_TRACKS_CHANGED = "localTracksChanged",
-  REMOTE_USER_JOINED = "remoteUserJoined",
-  REMOTE_USER_LEFT = "remoteUserLeft",
-  CONNECTION_STATE_CHANGE = "connectionStateChange",
-  MICROPHONE_CHANGED = "microphoneChanged",
+  NETWORK_QUALITY = 'networkQuality',
+  REMOTE_USER_CHANGED = 'remoteUserChanged',
+  TEXT_CHANGED = 'textChanged',
+  AGENT_STATE_CHANGED = 'agentStateChanged',
+  LOCAL_TRACKS_CHANGED = 'localTracksChanged',
+  REMOTE_USER_JOINED = 'remoteUserJoined',
+  REMOTE_USER_LEFT = 'remoteUserLeft',
+  CONNECTION_STATE_CHANGE = 'connectionStateChange',
+  MICROPHONE_CHANGED = 'microphoneChanged'
 }
 
 export enum ERTCEvents {
-  NETWORK_QUALITY = "network-quality",
-  USER_PUBLISHED = "user-published",
-  USER_UNPUBLISHED = "user-unpublished",
-  STREAM_MESSAGE = "stream-message",
-  USER_JOINED = "user-joined",
-  USER_LEFT = "user-left",
-  CONNECTION_STATE_CHANGE = "connection-state-change",
-  AUDIO_METADATA = "audio-metadata",
+  NETWORK_QUALITY = 'network-quality',
+  USER_PUBLISHED = 'user-published',
+  USER_UNPUBLISHED = 'user-unpublished',
+  STREAM_MESSAGE = 'stream-message',
+  USER_JOINED = 'user-joined',
+  USER_LEFT = 'user-left',
+  CONNECTION_STATE_CHANGE = 'connection-state-change',
+  AUDIO_METADATA = 'audio-metadata'
 }
 
 /** @deprecated */
@@ -52,7 +52,7 @@ export interface ITextDataChunk {
 
 /** @deprecated */
 export interface ITextItem {
-  dataType: "transcribe" | "translate"
+  dataType: 'transcribe' | 'translate'
   uid: string
   time: number
   text: string
@@ -60,28 +60,28 @@ export interface ITextItem {
 }
 
 export enum ENetworkStatus {
-  UNKNOWN = "unknown",
-  GOOD = "good",
-  MEDIUM = "medium",
-  BAD = "bad",
-  DISCONNECTED = "disconnected",
-  RECONNECTING = "reconnecting",
+  UNKNOWN = 'unknown',
+  GOOD = 'good',
+  MEDIUM = 'medium',
+  BAD = 'bad',
+  DISCONNECTED = 'disconnected',
+  RECONNECTING = 'reconnecting'
 }
 
 export enum EConnectionStatus {
-  UNKNOWN = "unknown",
-  CONNECTED = "connected",
-  DISCONNECTED = "disconnected",
-  CONNECTING = "connecting",
-  ERROR = "error",
-  RECONNECTING = "reconnecting",
+  UNKNOWN = 'unknown',
+  CONNECTED = 'connected',
+  DISCONNECTED = 'disconnected',
+  CONNECTING = 'connecting',
+  ERROR = 'error',
+  RECONNECTING = 'reconnecting'
 }
 
 export enum EAgentRunningStatus {
-  DEFAULT = "default",
-  SPEAKING = "speaking",
-  LISTENING = "listening",
-  RECONNECTING = "reconnecting",
+  DEFAULT = 'default',
+  SPEAKING = 'speaking',
+  LISTENING = 'listening',
+  RECONNECTING = 'reconnecting'
 }
 
 export interface IRtcUser extends IUserTracks {
@@ -104,7 +104,7 @@ export interface IRtcEvents {
     curState,
     revState,
     reason,
-    channel,
+    channel
   }: {
     curState: ConnectionState
     revState: ConnectionState
@@ -115,8 +115,8 @@ export interface IRtcEvents {
 }
 
 export enum EChatItemType {
-  USER = "user",
-  AGENT = "agent",
+  USER = 'user',
+  AGENT = 'agent'
 }
 
 export interface IChatItem {
@@ -129,14 +129,14 @@ export interface IChatItem {
 }
 
 export enum EMicrophoneStatus {
-  ALLOW = "ALLOW",
-  DISALLOW = "DISALLOW",
-  OFF = "OFF",
+  ALLOW = 'ALLOW',
+  DISALLOW = 'DISALLOW',
+  OFF = 'OFF'
 }
 
 export enum EUploadLogStatus {
-  IDLE = "IDLE",
-  UPLOADING = "UPLOADING",
-  UPLOADED = "UPLOADED",
-  UPLOAD_ERROR = "UPLOAD_ERROR",
+  IDLE = 'IDLE',
+  UPLOADING = 'UPLOADING',
+  UPLOADED = 'UPLOADED',
+  UPLOAD_ERROR = 'UPLOAD_ERROR'
 }

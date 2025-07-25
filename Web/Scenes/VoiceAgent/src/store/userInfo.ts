@@ -47,14 +47,15 @@ export const useUserInfoStore = create<IUserInfoStore>((set) => ({
   updateCompanyName: (companyName: string) => set({ companyName }),
   updateCompanyCountry: (companyCountry: string) => set({ companyCountry }),
   updateUserInfo: (userInfo: UserInfoStore) => set(userInfo),
-  clearUserInfo: () => set({
-    accountUid: '',
-    accountType: '', 
-    email: '',
-    companyId: 0,
-    profileId: 0,
-    displayName: '',
-    companyName: '',
-    companyCountry: '',
-  })
+  clearUserInfo: () =>
+    set({
+      accountUid: '',
+      accountType: '',
+      email: '',
+      companyId: 0,
+      profileId: 0,
+      displayName: '',
+      companyName: '',
+      companyCountry: ''
+    })
 }))

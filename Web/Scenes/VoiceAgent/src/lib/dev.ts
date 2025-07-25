@@ -1,5 +1,5 @@
 import { DEV_MODE_QUERY_KEY } from '@/constants'
-import { TDevModeQuery } from '@/type/dev'
+import type { TDevModeQuery } from '@/type/dev'
 
 // --- dev mode ---
 

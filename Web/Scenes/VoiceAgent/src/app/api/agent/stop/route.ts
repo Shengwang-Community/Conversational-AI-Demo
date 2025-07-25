@@ -1,11 +1,10 @@
 // import * as z from 'zod'
-import { NextResponse, type NextRequest } from 'next/server'
-
-import {
-  remoteAgentStopReqSchema,
-  REMOTE_CONVOAI_AGENT_STOP,
-} from '@/constants'
+import { type NextRequest, NextResponse } from 'next/server'
 import { getEndpointFromNextRequest } from '@/app/api/_utils'
+import {
+  REMOTE_CONVOAI_AGENT_STOP,
+  remoteAgentStopReqSchema
+} from '@/constants'
 
 import { logger } from '@/lib/logger'
 
@@ -18,7 +17,7 @@ export async function POST(request: NextRequest) {
     appId,
     authorizationHeader,
     basicAuthKey,
-    basicAuthSecret,
+    basicAuthSecret
   } = getEndpointFromNextRequest(request)
 
   if (!authorizationHeader) {
@@ -41,17 +40,17 @@ export async function POST(request: NextRequest) {
   const body = remoteAgentStopReqSchema.parse({
     ...reqBody,
     app_id: appId,
-    basic_auth_username:basicAuthKey,
-    basic_auth_password: basicAuthSecret,
+    basic_auth_username: basicAuthKey,
+    basic_auth_password: basicAuthSecret
   })
   logger.info({ body }, 'REMOTE request body')
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(authorizationHeader && { Authorization: authorizationHeader }),
+      ...(authorizationHeader && { Authorization: authorizationHeader })
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(body)
   })
 
   if (res.status === 401) {

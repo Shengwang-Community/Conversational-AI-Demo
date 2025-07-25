@@ -22,7 +22,7 @@ export class RTMHelper {
 
   public initClient({
     app_id,
-    user_id,
+    user_id
   }: {
     app_id: string
     user_id: string

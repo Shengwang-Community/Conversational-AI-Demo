@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 import { DEV_MODE_QUERY_KEY } from '@/constants'
 
@@ -12,13 +12,12 @@ const remoteTokenServerUrl = process.env.NEXT_PUBLIC_DEMO_SERVER_URL || ''
 
 export const basicAuthKey = process.env.AGENT_BASIC_AUTH_KEY || undefined
 export const basicAuthSecret = process.env.AGENT_BASIC_AUTH_SECRET || undefined
-export const customParameter= process.env.CUSTOM_CONVOAI_PARAMETER || undefined
 
 const appCert = process.env.AGORA_APP_CERT || undefined
 export const getEndpointFromNextRequest = (request: NextRequest) => {
   const query = request.nextUrl.searchParams
   const isDev = query.get(DEV_MODE_QUERY_KEY) === 'true'
-  const authorizationHeader = request.headers.get('authorization')
+  const authorizationHeader = request.headers.get('Authorization')
   // normal mode: prod
   if (!isDev) {
     return {
@@ -30,7 +29,7 @@ export const getEndpointFromNextRequest = (request: NextRequest) => {
       authorizationHeader,
       appCert,
       basicAuthKey,
-      basicAuthSecret,
+      basicAuthSecret
     }
   }
   return {
@@ -42,6 +41,6 @@ export const getEndpointFromNextRequest = (request: NextRequest) => {
     authorizationHeader,
     appCert,
     basicAuthKey,
-    basicAuthSecret,
+    basicAuthSecret
   }
 }

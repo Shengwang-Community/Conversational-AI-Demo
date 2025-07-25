@@ -1,16 +1,16 @@
+import type * as z from 'zod'
 import { create } from 'zustand'
-import * as z from 'zod'
 
 import {
-  agentBasicFormSchema,
-  agentPresetSchema,
-  agentPresetFallbackData,
-  EDefaultLanguage,
+  type agentPresetSchema,
   DEFAULT_CONVERSATION_DURATION,
+  EAgentPresetMode,
+  EDefaultLanguage,
+  type publicAgentSettingSchema
 } from '@/constants'
 import { isCN } from '@/lib/utils'
 
-export type TAgentSettings = z.infer<typeof agentBasicFormSchema>
+export type TAgentSettings = z.infer<typeof publicAgentSettingSchema>
 
 export interface IAgentSettings {
   presets: z.infer<typeof agentPresetSchema>[]
@@ -27,23 +27,13 @@ export interface IAgentSettings {
 }
 
 const CUSTOM_LLM_URL = process.env.NEXT_PUBLIC_CUSTOM_LLM_URL || undefined
-const CUSTOM_LLM_KEY = process.env.NEXT_PUBLIC_CUSTOM_LLM_KEY || ''
-const CUSTOM_TTS_VENDOR = process.env.NEXT_PUBLIC_CUSTOM_TTS_VENDOR || ''
-const CUSTOM_TTS_PARAMS = process.env.NEXT_PUBLIC_CUSTOM_TTS_PARAMS || null
-const CUSTOM_LLM_MODEL = process.env.NEXT_PUBLIC_CUSTOM_LLM_MODEL || ''
+const CUSTOM_LLM_KEY = process.env.NEXT_PUBLIC_CUSTOM_LLM_KEY || undefined
+const CUSTOM_LLM_SYSTEM_MESSAGES =
+  process.env.NEXT_PUBLIC_CUSTOM_LLM_SYSTEM_MESSAGES || undefined
+const CUSTOM_LLM_PARAMS = process.env.NEXT_PUBLIC_CUSTOM_LLM_PARAMS || undefined
 
-
-const getLocalTTSParams = () => {
-  if (CUSTOM_TTS_PARAMS) {
-    try {
-      return JSON.parse(CUSTOM_TTS_PARAMS)
-    } catch (e) {
-      console.error('Error parsing TTS params', e)
-      return undefined
-    }
-  }
-  return undefined
-}
+const CUSTOM_TTS_VENDOR = process.env.NEXT_PUBLIC_CUSTOM_TTS_VENDOR || undefined
+const CUSTOM_TTS_PARAMS = process.env.NEXT_PUBLIC_CUSTOM_TTS_PARAMS || undefined
 
 export const useAgentSettingsStore = create<IAgentSettings>((set) => ({
   presets: [],
@@ -51,29 +41,31 @@ export const useAgentSettingsStore = create<IAgentSettings>((set) => ({
   conversationTimerEndTimestamp: null,
   settings: {
     preset_name: '',
-    custom_llm: {
+    llm: {
       url: CUSTOM_LLM_URL,
       api_key: CUSTOM_LLM_KEY,
-      model: CUSTOM_LLM_MODEL,
-      prompt: '',
-      style: undefined,
+      system_messages: CUSTOM_LLM_SYSTEM_MESSAGES,
+      params: CUSTOM_LLM_PARAMS
     },
     tts: {
       vendor: CUSTOM_TTS_VENDOR,
-      params: getLocalTTSParams(),
+      params: CUSTOM_TTS_PARAMS
     },
     asr: {
-      language: isCN ? EDefaultLanguage.ZH_CN : EDefaultLanguage.EN_US,
+      language: isCN ? EDefaultLanguage.ZH_CN : EDefaultLanguage.EN_US
     },
     advanced_features: {
       enable_bhvs: true,
       enable_aivad: false,
+      enable_rtm: true
     },
     // !SPECIAL CASE[audio_scenario]
     parameters: {
-      audio_scenario: 'default',
+      audio_scenario: 'default'
     },
     graph_id: undefined,
+    preset: undefined,
+    avatar: undefined
   },
 
   updateSettings: <T>(settings: T) => {
@@ -104,23 +96,24 @@ export const useAgentSettingsStore = create<IAgentSettings>((set) => ({
         presets: newPresets,
         settings: {
           ...prev.settings,
-          preset_name: newPresets[0]?.name || agentPresetFallbackData.name,
+          preset_name: newPresets[0]?.name || EAgentPresetMode.CUSTOM,
           asr: {
             ...prev.settings.asr,
             language:
-              newPresets[0]?.default_language_code ||
-              agentPresetFallbackData.default_language_code,
-          },
-        } as TAgentSettings,
+              newPresets[0]?.default_language_code || isCN
+                ? EDefaultLanguage.ZH_CN
+                : EDefaultLanguage.EN_US
+          }
+        } as TAgentSettings
       }
     })
   },
   updateConversationDuration: (input?: number) => {
     set(() => ({
-      conversationDuration: input || DEFAULT_CONVERSATION_DURATION,
+      conversationDuration: input || DEFAULT_CONVERSATION_DURATION
     }))
   },
   setConversationTimerEndTimestamp: (endTimestamp: number | null) => {
     set(() => ({ conversationTimerEndTimestamp: endTimestamp }))
-  },
+  }
 }))

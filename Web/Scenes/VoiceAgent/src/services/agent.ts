@@ -1,36 +1,45 @@
-import * as z from 'zod'
 import Cookies from 'js-cookie'
-
-import { useCancelableSWR } from '@/lib/request'
+import { toast } from 'sonner'
+import * as z from 'zod'
+import { loginResSchema } from '@/app/api/sso/login/_utils'
+import { localResSchema } from '@/app/api/token/utils'
 import {
-  agentBasicSettingsSchema,
-  agentSettingsSchema,
-  basicRemoteResSchema,
-  remoteAgentStartRespDataSchema,
-  remoteAgentStopSettingsSchema,
-  remoteAgentPingReqSchema,
-  remoteAgentStartRespDataDevSchema,
+  API_AGENT,
   API_AGENT_PING,
   API_AGENT_PRESETS,
-  API_TOKEN,
-  API_AGENT,
   API_AGENT_STOP,
   API_AUTH_TOKEN,
+  API_TOKEN,
+  API_UPLOAD_IMAGE,
   API_UPLOAD_LOG,
   API_USER_INFO,
+  basicRemoteResSchema,
   ERROR_CODE,
   ERROR_MESSAGE,
+  localOpensourceStartAgentPropertiesSchema,
+  localStartAgentPropertiesSchema,
+  remoteAgentPingReqSchema,
+  remoteAgentStartRespDataDevSchema,
+  remoteAgentStartRespDataSchema,
+  remoteAgentStopSettingsSchema
 } from '@/constants'
+import { generateDevModeQuery } from '@/lib/dev'
+import { useCancelableSWR } from '@/lib/request'
 import { genUUID } from '@/lib/utils'
-import { localResSchema } from '@/app/api/token/utils'
-
 import type { IAgentPreset, IUploadLogInput } from '@/type/agent'
 import type { TDevModeQuery } from '@/type/dev'
-import { generateDevModeQuery } from '@/lib/dev'
-import { loginResSchema } from '@/app/api/sso/login/_utils'
-import { toast } from 'sonner'
 
 const DEFAULT_FETCH_TIMEOUT = 10000
+
+export class ResourceLimitError extends Error {
+  public readonly code: ERROR_CODE
+
+  constructor(code: ERROR_CODE, message?: string) {
+    super(message)
+    this.name = 'ResourceLimitError'
+    this.code = code
+  }
+}
 
 export const useAgentPresets = (options?: TDevModeQuery) => {
   const { devMode, accountUid } = options ?? {}
@@ -40,14 +49,14 @@ export const useAgentPresets = (options?: TDevModeQuery) => {
     accountUid ? url : null,
     {
       revalidateOnFocus: false,
-      refreshInterval: 0,
+      refreshInterval: 0
     }
   )
 
   return {
     data,
     isLoading,
-    error,
+    error
   }
 }
 
@@ -89,7 +98,7 @@ export const fetchWithTimeout = async (
 
     const resp = await fetch(url, {
       ...fetchOptions,
-      signal: fetchSignal,
+      signal: fetchSignal
     })
     const handledResp = await handleUnauthorizedError(resp)
     if (!handledResp) {
@@ -111,8 +120,8 @@ export const login = async (code: string) => {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${Cookies.get('token')}`,
-    },
+      Authorization: `Bearer ${Cookies.get('token')}`
+    }
   })
   const respData = await resp?.json()
   const resData = loginResSchema.parse(respData)
@@ -127,8 +136,8 @@ export const getUserInfo = async () => {
   const resp = await fetchWithTimeout(url, {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${token}`,
-    },
+      Authorization: `Bearer ${token}`
+    }
   })
   const respData = await resp?.json()
   const resData = basicRemoteResSchema.parse(respData)
@@ -146,8 +155,8 @@ export const uploadLog = async ({ content, file }: IUploadLogInput) => {
     method: 'POST',
     body: formData,
     headers: {
-      Authorization: `Bearer ${Cookies.get('token')}`,
-    },
+      Authorization: `Bearer ${Cookies.get('token')}`
+    }
   })
   const respData = await resp?.json()
   // const resData = localUploadLogResSchema.parse(respData)
@@ -165,15 +174,15 @@ export const getAgentToken = async (
   const data = {
     request_id: genUUID(),
     uid: userId ? `${userId}` : undefined,
-    channel_name: channel ?? '',
+    channel_name: channel ?? ''
   }
 
   const resp = await fetchWithTimeout(url, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(data)
   })
   const respData = await resp?.json()
   const resData = localResSchema.parse(respData)
@@ -181,65 +190,107 @@ export const getAgentToken = async (
 }
 
 export const startAgent = async (
-  payload: z.infer<typeof agentBasicSettingsSchema>,
+  payload: z.infer<
+    | typeof localStartAgentPropertiesSchema
+    | typeof localOpensourceStartAgentPropertiesSchema
+  >,
   abortController?: AbortController
 ) => {
   const url = API_AGENT
-  const data = agentBasicSettingsSchema.parse(payload)
-  console.log('settings startAgent', payload, data)
+  const data = (payload as z.infer<typeof localStartAgentPropertiesSchema>)
+    ?.preset_name
+    ? localStartAgentPropertiesSchema.parse(payload)
+    : localOpensourceStartAgentPropertiesSchema.parse(payload)
+
+  try {
+    const opensourceData = data as z.infer<
+      typeof localOpensourceStartAgentPropertiesSchema
+    >
+    const llm_system_messages = opensourceData.llm?.system_messages?.trim()
+      ? JSON.parse(opensourceData.llm.system_messages)
+      : undefined
+    if (llm_system_messages) {
+      opensourceData.llm.system_messages = llm_system_messages
+    }
+    const llm_params = opensourceData?.llm.params?.trim()
+      ? JSON.parse(opensourceData.llm.params.trim())
+      : undefined
+    if (llm_params) {
+      opensourceData.llm.params = llm_params
+    }
+    const tts_params = opensourceData?.tts?.params?.trim()
+      ? JSON.parse(opensourceData.tts.params.trim())
+      : undefined
+    if (tts_params) {
+      opensourceData.tts.params = tts_params
+    }
+  } catch (error) {
+    console.error(error, '[FullAgentSettingsForm] JSON parse error')
+    throw new Error('JSON parse error in agent settings')
+  }
+
   const resp = await fetchWithTimeout(
     url,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${Cookies.get('token')}`,
+        Authorization: `Bearer ${Cookies.get('token')}`
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(data)
     },
     {
-      abortController,
+      abortController
     }
   )
+
   const respData = await resp?.json()
   const remoteRespSchema = basicRemoteResSchema.extend({
-    data: remoteAgentStartRespDataSchema,
+    data: remoteAgentStartRespDataSchema
   })
   if (respData.code === ERROR_CODE.RESOURCE_LIMIT_EXCEEDED) {
     toast.error('resource quota limit exceeded')
-    throw new Error(ERROR_MESSAGE.RESOURCE_LIMIT_EXCEEDED)
+    throw new ResourceLimitError(
+      ERROR_CODE.RESOURCE_LIMIT_EXCEEDED,
+      ERROR_MESSAGE.RESOURCE_LIMIT_EXCEEDED
+    )
+  } else if (respData.code === ERROR_CODE.AVATAR_LIMIT_EXCEEDED) {
+    // toast.error('Avatar limit exceeded')
+    throw new ResourceLimitError(
+      ERROR_CODE.AVATAR_LIMIT_EXCEEDED,
+      'Agent start failed'
+    )
   }
   const remoteResp = remoteRespSchema.parse(respData)
-
   return remoteResp.data
 }
 
 export const startAgentDev = async (
-  payload: z.infer<typeof agentSettingsSchema>,
+  payload: z.infer<typeof localStartAgentPropertiesSchema>,
   options?: TDevModeQuery,
   abortController?: AbortController
 ) => {
   const { devMode } = options ?? {}
   const query = generateDevModeQuery({ devMode })
   const url = `${API_AGENT}${query}`
-  const data = agentSettingsSchema.parse(payload)
+  const data = localStartAgentPropertiesSchema.parse(payload)
   const resp = await fetchWithTimeout(
     url,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${Cookies.get('token')}`,
+        Authorization: `Bearer ${Cookies.get('token')}`
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(data)
     },
     {
-      abortController,
+      abortController
     }
   )
   const respData = await resp?.json()
   const remoteRespSchema = basicRemoteResSchema.extend({
-    data: remoteAgentStartRespDataDevSchema,
+    data: remoteAgentStartRespDataDevSchema
   })
   const remoteResp = remoteRespSchema.parse(respData)
   return remoteResp.data
@@ -257,13 +308,13 @@ export const stopAgent = async (
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${Cookies.get('token')}`,
+      Authorization: `Bearer ${Cookies.get('token')}`
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(data)
   })
   const respData = await resp?.json()
   const remoteRespSchema = basicRemoteResSchema.extend({
-    data: z.any().optional(),
+    data: z.any().optional()
   })
   const remoteResp = remoteRespSchema.parse(respData)
   return remoteResp
@@ -282,14 +333,44 @@ export const pingAgent = async (
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${Cookies.get('token')}`,
+      Authorization: `Bearer ${Cookies.get('token')}`
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(data)
   })
   const respData = await resp?.json()
   const remoteRespSchema = basicRemoteResSchema.extend({
-    data: z.any().optional(),
+    data: z.any().optional()
   })
   const remoteResp = remoteRespSchema.parse(respData)
   return remoteResp.data
+}
+
+export const uploadImage = async ({
+  image,
+  channel_name
+}: {
+  image: File
+  channel_name: string
+}) => {
+  const formData = new FormData()
+  if (!image || !channel_name) {
+    throw new Error('Image and channel_name are required')
+  }
+  const imageName = encodeURIComponent(image.name)
+  formData.append('image', image, imageName)
+  formData.append('channel_name', channel_name)
+  formData.append('request_id', genUUID())
+  const resp = await fetchWithTimeout(API_UPLOAD_IMAGE, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      Authorization: `Bearer ${Cookies.get('token')}`
+    }
+  })
+  const respData = await resp?.json()
+  const imgObjectStorageUrl = respData?.data?.img_url as string
+  if (!imgObjectStorageUrl) {
+    throw new Error('Image upload failed')
+  }
+  return imgObjectStorageUrl
 }

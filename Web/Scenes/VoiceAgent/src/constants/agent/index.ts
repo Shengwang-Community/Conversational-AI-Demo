@@ -15,7 +15,13 @@ export const CONSOLE_IMG_URL = isCN
   : '/img/console-en-20250227.png'
 export const CONSOLE_IMG_WIDTH = 632
 export const CONSOLE_IMG_HEIGHT = 160
-export const TERMS_LINK = isCN ? '/terms/service/' : 'https://www.agora.io/en/terms-of-service/'
-export const POLICY_LINK = isCN ? '/terms/privacy/' : 'https://www.agora.io/en/privacy-policy/'
+export const TERMS_LINK = isCN
+  ? '/terms/service/'
+  : 'https://www.agora.io/en/terms-of-service/'
+export const POLICY_LINK = isCN
+  ? '/terms/privacy/'
+  : 'https://www.agora.io/en/privacy-policy/'
 
 export * from '@/constants/agent/schema'
+
+export const DEFAULT_AVATAR_DOM_ID = 'agent-avatar-player'

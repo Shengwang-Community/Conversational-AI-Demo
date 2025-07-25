@@ -1,58 +1,60 @@
-import type { RTMEvents } from "agora-rtm"
 import type {
-  IMicrophoneAudioTrack,
-  UID,
-  NetworkQuality,
-  IAgoraRTCRemoteUser,
-  ConnectionState,
-  ICameraVideoTrack,
   ConnectionDisconnectedReason,
-} from "agora-rtc-sdk-ng"
+  ConnectionState,
+  IAgoraRTCRemoteUser,
+  ICameraVideoTrack,
+  IMicrophoneAudioTrack,
+  NetworkQuality,
+  UID
+} from 'agora-rtc-sdk-ng'
+import type { RTMEvents } from 'agora-rtm'
 
 export enum ESubtitleHelperMode {
-  TEXT = "text",
-  WORD = "word",
-  UNKNOWN = "unknown",
+  TEXT = 'text',
+  WORD = 'word',
+  UNKNOWN = 'unknown'
 }
 
 export enum EMessageType {
-  USER_TRANSCRIPTION = "user.transcription",
-  AGENT_TRANSCRIPTION = "assistant.transcription",
-  MSG_INTERRUPTED = "message.interrupt",
-  MSG_METRICS = "message.metrics",
-  MSG_ERROR = "message.error",
+  USER_TRANSCRIPTION = 'user.transcription',
+  AGENT_TRANSCRIPTION = 'assistant.transcription',
+  MSG_INTERRUPTED = 'message.interrupt',
+  MSG_METRICS = 'message.metrics',
+  MSG_ERROR = 'message.error',
   /** @deprecated */
-  MSG_STATE = "message.state",
+  MSG_STATE = 'message.state',
+  IMAGE_UPLOAD = 'image.upload',
+  MESSAGE_INFO = 'message.info'
 }
 
 export enum ERTMEvents {
-  MESSAGE = "message",
-  PRESENCE = "presence",
+  MESSAGE = 'message',
+  PRESENCE = 'presence',
   // TOPIC = 'topic',
   // STORAGE = 'storage',
   // LOCK = 'lock',
-  STATUS = "status",
+  STATUS = 'status'
   // LINK_STATE = 'linkState',
   // TOKEN_PRIVILEGE_WILL_EXPIRE = 'tokenPrivilegeWillExpire',
 }
 
 export enum ERTCEvents {
-  NETWORK_QUALITY = "network-quality",
-  USER_PUBLISHED = "user-published",
-  USER_UNPUBLISHED = "user-unpublished",
-  STREAM_MESSAGE = "stream-message",
-  USER_JOINED = "user-joined",
-  USER_LEFT = "user-left",
-  CONNECTION_STATE_CHANGE = "connection-state-change",
-  AUDIO_METADATA = "audio-metadata",
+  NETWORK_QUALITY = 'network-quality',
+  USER_PUBLISHED = 'user-published',
+  USER_UNPUBLISHED = 'user-unpublished',
+  STREAM_MESSAGE = 'stream-message',
+  USER_JOINED = 'user-joined',
+  USER_LEFT = 'user-left',
+  CONNECTION_STATE_CHANGE = 'connection-state-change',
+  AUDIO_METADATA = 'audio-metadata'
 }
 
 export enum ERTCCustomEvents {
-  MICROPHONE_CHANGED = "microphone-changed",
-  REMOTE_USER_CHANGED = "remote-user-changed",
-  REMOTE_USER_JOINED = "remote-user-joined",
-  REMOTE_USER_LEFT = "remote-user-left",
-  LOCAL_TRACKS_CHANGED = "local-tracks-changed",
+  MICROPHONE_CHANGED = 'microphone-changed',
+  REMOTE_USER_CHANGED = 'remote-user-changed',
+  REMOTE_USER_JOINED = 'remote-user-joined',
+  REMOTE_USER_LEFT = 'remote-user-left',
+  LOCAL_TRACKS_CHANGED = 'local-tracks-changed'
 }
 
 /**
@@ -60,7 +62,7 @@ export enum ERTCCustomEvents {
  *
  * @description
  * Defines the event types that can be emitted by the Conversational AI API.
- * Contains events for agent state changes, interruptions, metrics, errors, transcription updates, and debug logs.
+ * Contains events for agent state changes, interruptions, metrics, errors, transcription updates, debug logs, and message receipt updates.
  *
  * @remarks
  * - All events are string literals and can be used with event listeners
@@ -69,12 +71,13 @@ export enum ERTCCustomEvents {
  * @since 1.6.0
  */
 export enum EConversationalAIAPIEvents {
-  AGENT_STATE_CHANGED = "agent-state-changed",
-  AGENT_INTERRUPTED = "agent-interrupted",
-  AGENT_METRICS = "agent-metrics",
-  AGENT_ERROR = "agent-error",
-  TRANSCRIPTION_UPDATED = "transcription-updated",
-  DEBUG_LOG = "debug-log",
+  AGENT_STATE_CHANGED = 'agent-state-changed',
+  AGENT_INTERRUPTED = 'agent-interrupted',
+  AGENT_METRICS = 'agent-metrics',
+  AGENT_ERROR = 'agent-error',
+  TRANSCRIPTION_UPDATED = 'transcription-updated',
+  DEBUG_LOG = 'debug-log',
+  MESSAGE_RECEIPT_UPDATED = 'message-receipt-updated'
 }
 
 /**
@@ -90,15 +93,17 @@ export enum EConversationalAIAPIEvents {
  * - LLM: Language Learning Model
  * - MLLM: Multimodal Language Learning Model
  * - TTS: Text-to-Speech
+ * - CONTEXT: Context management module
  * - UNKNOWN: Unknown module type
  *
  * @since 1.6.0
  */
 export enum EModuleType {
-  LLM = "llm",
-  MLLM = "mllm",
-  TTS = "tts",
-  UNKNOWN = "unknown",
+  LLM = 'llm',
+  MLLM = 'mllm',
+  TTS = 'tts',
+  CONTEXT = 'context',
+  UNKNOWN = 'unknown'
 }
 
 /**
@@ -119,6 +124,24 @@ export type TAgentMetric = {
   name: string
   value: number
   timestamp: number
+}
+
+/**
+ * Message receipt type definition
+ *
+ * @description
+ * Represents a message receipt from the AI module, including type, message content and turn ID
+ *
+ * @param type - The module type that sent the message {@link EModuleType}
+ * @param message - The content of the message
+ * @param turnId - Unique identifier for the conversation turn
+ *
+ * @since 1.7.0
+ */
+export type TMessageReceipt = {
+  type: EModuleType
+  message: string
+  turnId: number
 }
 
 /**
@@ -234,6 +257,10 @@ export interface IConversationalAIAPIEventHandlers {
     >[]
   ) => void
   [EConversationalAIAPIEvents.DEBUG_LOG]: (message: string) => void
+  [EConversationalAIAPIEvents.MESSAGE_RECEIPT_UPDATED]: (
+    agentUserId: string,
+    messageReceipt: TMessageReceipt
+  ) => void
 }
 
 // export interface IHelperRTMEvents {
@@ -248,11 +275,11 @@ export interface IHelperRTCEvents {
   [ERTCEvents.NETWORK_QUALITY]: (quality: NetworkQuality) => void
   [ERTCEvents.USER_PUBLISHED]: (
     user: IAgoraRTCRemoteUser,
-    mediaType: "audio" | "video"
+    mediaType: 'audio' | 'video'
   ) => void
   [ERTCEvents.USER_UNPUBLISHED]: (
     user: IAgoraRTCRemoteUser,
-    mediaType: "audio" | "video"
+    mediaType: 'audio' | 'video'
   ) => void
   [ERTCEvents.USER_JOINED]: (user: IAgoraRTCRemoteUser) => void
   [ERTCEvents.USER_LEFT]: (user: IAgoraRTCRemoteUser, reason?: string) => void
@@ -269,7 +296,7 @@ export interface IHelperRTCEvents {
 export class NotFoundError extends Error {
   constructor(message: string) {
     super(message)
-    this.name = "NotFoundError"
+    this.name = 'NotFoundError'
   }
 }
 
@@ -288,7 +315,7 @@ export type TSubtitleHelperObjectWord = TDataChunkMessageWord & {
 export enum ETurnStatus {
   IN_PROGRESS = 0,
   END = 1,
-  INTERRUPTED = 2,
+  INTERRUPTED = 2
 }
 
 /**
@@ -314,11 +341,11 @@ export enum ETurnStatus {
  * @since 1.6.0
  */
 export enum EAgentState {
-  IDLE = "idle",
-  LISTENING = "listening",
-  THINKING = "thinking",
-  SPEAKING = "speaking",
-  SILENT = "silent",
+  IDLE = 'idle',
+  LISTENING = 'listening',
+  THINKING = 'thinking',
+  SPEAKING = 'speaking',
+  SILENT = 'silent'
 }
 
 export interface ITranscriptionBase {
@@ -348,7 +375,7 @@ export interface IAgentTranscription extends ITranscriptionBase {
 export interface IMessageInterrupt {
   object: EMessageType.MSG_INTERRUPTED // "message.interrupt"
   message_id: string
-  data_type: "message"
+  data_type: 'message'
   turn_id: number
   start_ms: number
   send_ts: number
@@ -373,7 +400,7 @@ export interface IMessageError {
 }
 
 export interface IPresenceState
-  extends Omit<RTMEvents.PresenceEvent, "stateChanged"> {
+  extends Omit<RTMEvents.PresenceEvent, 'stateChanged'> {
   stateChanged: {
     state: EAgentState
     turn_id: string
@@ -423,4 +450,110 @@ export interface ISubtitleHelperItem<T> {
 export interface IUserTracks {
   videoTrack?: ICameraVideoTrack
   audioTrack?: IMicrophoneAudioTrack
+}
+
+// --- rtm ---
+
+/**
+ * Enumeration defining chat message priority levels for handling message processing.
+ *
+ * Specifies how incoming chat messages should be handled when they arrive during
+ * ongoing conversation processing, providing control over message queue behavior
+ * and user experience during real-time interactions.
+ *
+ * @remarks
+ * - Used to determine message processing behavior in conversational AI systems
+ * - Helps manage message flow during concurrent or overlapping conversations
+ * - Critical for maintaining proper conversation context and user experience
+ *
+ * @enum {string}
+ *
+ * @since 1.7.0
+ */
+export enum EChatMessagePriority {
+  INTERRUPTED = 'interrupted',
+  APPEND = 'append',
+  IGNORE = 'ignore'
+}
+
+/**
+ * Enumeration defining the different types of chat messages supported in the conversational AI system.
+ *
+ * @enum {string}
+ *
+ *  @since 1.7.0
+ */
+export enum EChatMessageType {
+  TEXT = 'text',
+  IMAGE = 'image'
+}
+
+/**
+ * Base interface for chat messages containing the fundamental message type property.
+ * This interface serves as the foundation for all chat message types in the system.
+ *
+ * @since 1.7.0
+ */
+export interface IChatMessageBase {
+  messageType: EChatMessageType
+}
+
+/**
+ * Represents a text-based chat message with priority and interruption settings.
+ *
+ * @interface IChatMessageText
+ * @extends IChatMessageBase
+ *
+ * @property messageType - The type of message, must be TEXT
+ * @property priority - The priority level of the chat message
+ * @property responseInterruptable - Whether the response can be interrupted
+ * @property text - The optional text content of the message
+ *
+ * @since 1.7.0
+ */
+export interface IChatMessageText extends IChatMessageBase {
+  messageType: EChatMessageType.TEXT
+  priority: EChatMessagePriority
+  responseInterruptable: boolean
+  text?: string
+}
+
+/**
+ * Represents an image-based chat message that can contain either a URL or base64 encoded image data.
+ *
+ * @interface IChatMessageImage
+ * @extends IChatMessageBase
+ *
+ * @property messageType - The type of message, must be IMAGE
+ * @property uuid - Unique identifier for the image message
+ * @property url - Optional URL pointing to the image resource
+ * @property base64 - Optional base64 encoded image data
+ */
+export interface IChatMessageImage extends IChatMessageBase {
+  messageType: EChatMessageType.IMAGE
+  uuid: string
+  url?: string
+  base64?: string
+}
+
+// --- local ---
+export enum ELocalTranscriptStatus {
+  PENDING = 'pending',
+  SENT = 'sent',
+  FAILED = 'failed'
+}
+
+export interface ILocalTranscriptionBase {
+  id: string
+  uid: string
+  _time: number
+  status: ELocalTranscriptStatus
+}
+export interface ILocalImageTranscription extends ILocalTranscriptionBase {
+  localImage: File
+  imageDimensions: {
+    width: number
+    height: number
+  }
+  image_url?: string
 }

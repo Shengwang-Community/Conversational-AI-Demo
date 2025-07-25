@@ -10,6 +10,18 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   // Configure `pageExtensions` to include markdown and MDX files
   pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
+  images: {
+    remotePatterns: [
+      new URL('https://demo-app-download.agora.io/convoai/**'),
+      new URL(
+        'https://dwg-aigc-paas.oss-cn-hangzhou.aliyuncs.com/materials/**'
+      ),
+      new URL(
+        'https://dwg-aigc-paas-test.oss-cn-hangzhou.aliyuncs.com/materials/**'
+      ),
+      new URL('https://fullapp.oss-cn-beijing.aliyuncs.com/convoai_img/**')
+    ]
+  }
 }
 
 const withMDX = createMDX({

@@ -1,32 +1,31 @@
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import { type AbstractIntlMessages, NextIntlClientProvider } from "next-intl"
-import { getLocale, getMessages } from "next-intl/server"
-import { NuqsAdapter } from "nuqs/adapters/next/app"
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import { type AbstractIntlMessages, NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
+import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { MOTD } from '@/components/layout/motd'
+import { ThemeProvider } from '@/components/theme-provider'
+import { Toaster } from '@/components/ui/sonner'
 
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/sonner"
-import { MOTD } from "@/components/Layout/MOTD"
-
-import "./globals.css"
+import './globals.css'
 
 const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
+  subsets: ['latin'],
+  variable: '--font-inter'
 })
 
 export async function generateMetadata(): Promise<Metadata> {
   const messages = await getMessages()
 
   return {
-    title: (messages?.metadata as AbstractIntlMessages)?.title || "ConvoAI",
+    title: (messages?.metadata as AbstractIntlMessages)?.title || 'ConvoAI',
     description:
-      (messages?.metadata as AbstractIntlMessages)?.description || "ConvoAI",
+      (messages?.metadata as AbstractIntlMessages)?.description || 'ConvoAI'
   } as Metadata
 }
 
 export default async function RootLayout({
-  children,
+  children
 }: Readonly<{
   children: React.ReactNode
 }>) {
@@ -38,9 +37,9 @@ export default async function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`}>
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider
-            attribute="class"
-            forcedTheme="dark"
-            defaultTheme="dark"
+            attribute='class'
+            forcedTheme='dark'
+            defaultTheme='dark'
             enableSystem
             disableTransitionOnChange
           >
@@ -49,7 +48,7 @@ export default async function RootLayout({
               richColors
               visibleToasts={1}
               closeButton
-              position="top-center"
+              position='top-center'
             />
           </ThemeProvider>
         </NextIntlClientProvider>

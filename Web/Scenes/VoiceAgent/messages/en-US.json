@@ -81,6 +81,17 @@
         "title": "Intelligent Interruption Handling",
         "description": ""
       }
+    },
+    "standard_avatar": {
+      "title": "Avatar",
+      "close": "Close",
+      "dialog": {
+        "title": "Changing Preset Requires Reconfiguring Avatar",
+        "description": "The preset is related to the gender of the avatar. Please reconfigure the avatar after changing the preset.",
+        "confirm": "Confirm Change",
+        "cancel": "Cancel",
+        "do-not-ask-again": "Do not show again"
+      }
     }
   },
   "agent": {
@@ -173,5 +184,21 @@
     "title": "Time's Up!",
     "description": "Each conversation is limited to {minutes} minutes. The time is up for this conversation. You can close this dialog to start a new conversation.",
     "button": "Got it"
+  },
+  "dialog": {
+    "title": "Notice",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "close": "Close"
+  },
+  "agent-action": {
+    "max-image-size": "Image size must be less than 5MB",
+    "upload-image-failed": "Failed to upload image. Please try again.",
+    "missing-image-url": "Image URL is not available for resending. Please upload a new image.",
+    "resend-image-error": "Failed to resend image. Please try again.",
+    "resend-image-success": "Image resent successfully.",
+    "max-image-dimensions": "Image dimensions must not exceed 2048x2048 pixels.",
+    "upload-image-tooltip": "Image size up to 5MB, dimensions under 2048x2048. Supports JPG, PNG, WEBP, JPEG formats.",
+    "avatar-busy-error": "All avatars are busy now. Please try again later."
   }
 }

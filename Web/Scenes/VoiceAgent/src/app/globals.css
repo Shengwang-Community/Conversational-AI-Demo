@@ -1,9 +1,144 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
+@plugin 'tailwindcss-animate';
+@plugin '@tailwindcss/typography';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-roboto-mono);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-brand-black-3: var(--ai_brand_black3);
+  --color-brand-black-8: var(--ai_brand_black8);
+  --color-brand-black: var(--ai_brand_black10);
+
+  --color-brand-light-7: var(--ai_brand_lightbrand7);
+  --color-brand-light: var(--ai_brand_lightbrand6);
+
+  --color-brand-main-3: var(--ai_brand_main3);
+  --color-brand-main-4: var(--ai_brand_main4);
+  --color-brand-main-5: var(--ai_brand_main5);
+  --color-brand-main-7: var(--ai_brand_main7);
+  --color-brand-main: var(--ai_brand_main6);
+  --color-brand-main-hover: var(--ai_mainhover);
+
+  --color-brand-white-1: var(--ai_brand_white1);
+  --color-brand-white-6: var(--ai_brand_white6);
+  --color-brand-white-8: var(--ai_brand_white8);
+  --color-brand-white: var(--ai_brand_white10);
+
+  --color-brand-red-6: var(--ai_red6);
+  --color-brand-red: var(--ai_red1);
+
+  --color-brand-green: var(--ai_green6);
+
+  --color-icontext: var(--ai_icontext1);
+  --color-icontext-hover: var(--ai_icontext2);
+  --color-icontext-disabled: var(--ai_icontext3);
+  --color-icontext-inverse: var(--ai_icontext_inverse1);
+
+  --color-fill: var(--ai_fill1);
+  --color-fill-popover: var(--ai_fill2);
+  --color-fill-drawer: var(--ai_fill5);
+
+  --color-block-2: var(--ai_block2);
+  --color-block-3: var(--ai_block3);
+  --color-block-4: var(--ai_block4_chat);
+  --color-block-5: var(--ai_block5);
+  --color-block: var(--ai_block1);
+
+  --color-line-2: var(--ai_line2);
+  --color-line-3: var(--ai_line3);
+  --color-line: var(--ai_line1);
+
+  --radius-xxxl: calc(var(--radius) + 10px);
+  --radius-xxl: calc(var(--radius) + 6px);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-xs: calc(var(--radius) - 8px);
+
+  --animate-rotate: rotate 3s linear infinite;
+  --animate-shake: shake 0.2s ease-in-out 2;
+
+  @keyframes rotate {
+    0% {
+      transform: rotate(0deg) scale(10);
+    }
+    100% {
+      transform: rotate(-360deg) scale(10);
+    }
+  }
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% 75% {
+      transform: translateX(-10px);
+    }
+    50% {
+      transform: translateX(10px);
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility image-rendering-high-quality {
+  image-rendering: high-quality;
+}
+
+@layer utilities {
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+  }
 }
 
 @layer base {
@@ -76,7 +211,7 @@ body {
     --ai_block2-light: rgba(255 255 255 / 0.95);
     --ai_block2-dark: rgba(64 64 69 / 0.9);
     --ai_block1-light: rgba(255 255 255 / 0.7);
-    --ai_block1-dark: rgba(171 171 232 / 0.16);
+    --ai_block1-dark: rgba(63, 63, 90, 0.7);
     --ai_block4_chat-light: #f4f3ff;
     --ai_block4_chat-dark: #444549;
     --ai_icontext4-light: rgba(61 64 77 / 0.8);
@@ -155,6 +290,7 @@ body {
     --ai_brand_black10-dark: rgba(0 0 0 / 0.98);
     --ai_erricontext6-light: var(--ai_red6);
     --ai_erricontext6-dark: #ffffff;
+    --fcr_ui_scene_inverse2: rgba(30, 30, 30, 0.95);
   }
   :root {
     --ai_block1: var(--ai_block1-light);
@@ -203,6 +339,7 @@ body {
     --ai_secondhover: var(--ai_secondhover-light);
     --ai_secondhover3: var(--ai_secondhover3-light);
     --ai_yellow6: var(--ai_yellow6-light);
+    --fcr_ui_scene_inverse2: var(--fcr_ui_scene_inverse2);
   }
 
   .dark {
@@ -272,6 +409,7 @@ body {
     --ai_secondhover: var(--ai_secondhover-dark);
     --ai_secondhover3: var(--ai_secondhover3-dark);
     --ai_yellow6: var(--ai_yellow6-dark);
+    --fcr_ui_scene_inverse2: var(--fcr_ui_scene_inverse2);
   }
 }
 
@@ -284,106 +422,143 @@ body {
   }
 }
 
-.ag-custom-gradient-title {
-  background: linear-gradient(
-    90deg,
-    #226afe 0%,
-    #828efc 34%,
-    #17b2ff 62%,
-    #2238fe 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-
-  .Typewriter {
-    display: flex;
-    align-items: center;
-  }
-
-  .Typewriter__wrapper {
-    @apply leading-normal text-center;
-  }
-
-  .Typewriter__cursor {
-    @apply inline-block h-7 w-7 rounded-full bg-brand-main;
-  }
-}
-
-.ag-custom-gradient-title.failed {
-  background: linear-gradient(90deg, #fe5522 0%, #ff8989 50%, #fe5522 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-
-  .Typewriter__cursor {
-    @apply inline-block h-7 w-7 rounded-full bg-[#FE5522];
-  }
-}
-
-@media (max-width: 768px) {
+@layer utilities {
   .ag-custom-gradient-title {
-    .Typewriter__cursor {
-      @apply h-5 w-5;
+    background: linear-gradient(
+      90deg,
+      #226afe 0%,
+      #828efc 34%,
+      #17b2ff 62%,
+      #2238fe 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+
+    .Typewriter {
+      display: flex;
+      align-items: center;
     }
 
-    &.failed {
+    .Typewriter__wrapper {
+      @apply text-center;
+    }
+
+    .Typewriter__cursor {
+      @apply inline-block min-h-7 min-w-7 h-7 w-7 rounded-full bg-brand-main;
+    }
+  }
+
+  .ag-custom-gradient-title.failed {
+    background: linear-gradient(90deg, #fe5522 0%, #ff8989 50%, #fe5522 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+
+    .Typewriter__cursor {
+      @apply inline-block min-h-7 min-w-7 h-7 w-7 rounded-full bg-[#FE5522];
+    }
+  }
+
+  @media (max-width: 768px) {
+    .ag-custom-gradient-title {
       .Typewriter__cursor {
-        @apply h-5 w-5;
+        @apply h-5 w-5 min-h-5 min-w-5;
+      }
+
+      &.failed {
+        .Typewriter__cursor {
+          @apply h-5 w-5 min-h-5 min-w-5;
+        }
       }
     }
   }
-}
 
-.ag-custom-gradient-button {
-  background: linear-gradient(90deg, #17f1fe 0%, #17c5ff 15.5%, #283dff 100%);
-  border-radius: 9999px;
-  color: var(--ai_brand_white10);
-}
+  .ag-custom-gradient-button {
+    background: linear-gradient(90deg, #17f1fe 0%, #17c5ff 15.5%, #283dff 100%);
+    border-radius: 9999px;
+    color: var(--ai_brand_white10);
+  }
 
-.ag-warn-time-pulse {
-  color: var(--ai_red6);
-  animation: warn-time-pulse 2s infinite;
-}
-
-@keyframes warn-time-pulse {
-  0% {
+  .ag-warn-time-pulse {
     color: var(--ai_red6);
+    animation: warn-time-pulse 2s infinite;
   }
-  50% {
-    color: var(--ai_red1);
+
+  @keyframes warn-time-pulse {
+    0% {
+      color: var(--ai_red6);
+    }
+    50% {
+      color: var(--ai_red1);
+    }
+    100% {
+      color: var(--ai_red6);
+    }
   }
-  100% {
-    color: var(--ai_red6);
+
+  /* Custom Scrollbar Styles */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted);
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+
+  /* For Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted) transparent;
   }
 }
 
-/* Custom Scrollbar Styles */
-::-webkit-scrollbar {
-  width: 10px;
+@layer components {
+  [data-rmiz] {
+    @apply block relative;
+  }
+  
+  [data-rmiz-ghost] {
+    @apply pointer-events-none absolute;
+  }
+  
+  [data-rmiz-btn-zoom],
+  [data-rmiz-btn-unzoom] {
+    @apply hidden;
+  }
+  
+  [data-rmiz-modal][open] {
+    @apply fixed inset-0 w-screen h-screen m-0 p-0 overflow-hidden;
+    @apply max-w-none max-h-none bg-transparent;
+  }
+  
+  [data-rmiz-modal-overlay] {
+    @apply absolute inset-0 transition-colors;
+  }
+  
+  [data-rmiz-modal-img] {
+    @apply absolute transform-gpu transition-transform duration-300;
+    transform-origin: 0 0;
+  }
+  
+  [data-rmiz-content="found"] img {
+    @apply cursor-zoom-in;
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--muted);
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
-}
-
-/* For Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--muted) transparent;
-}
-
-
-.nextjs-toast {
-  display: none !important;
+@media (prefers-reduced-motion: reduce) {
+  [data-rmiz-modal-overlay],
+  [data-rmiz-modal-img] {
+    transition-duration: 0.01ms !important;
+  }
 }

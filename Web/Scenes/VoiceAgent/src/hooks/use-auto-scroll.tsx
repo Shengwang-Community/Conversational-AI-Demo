@@ -22,7 +22,7 @@ export const useAutoScroll = (ref: React.RefObject<HTMLElement | null>) => {
     observerRef.current = new MutationObserver(callback)
     observerRef.current.observe(ref.current, {
       childList: true,
-      subtree: true,
+      subtree: true
     })
 
     return () => {
@@ -49,9 +49,9 @@ export const useAutoScroll = (ref: React.RefObject<HTMLElement | null>) => {
       observerRef.current = new MutationObserver(callback)
       observerRef.current.observe(ref.current, {
         childList: true,
-        subtree: true,
+        subtree: true
       })
     },
-    mutate,
+    mutate
   }
 }

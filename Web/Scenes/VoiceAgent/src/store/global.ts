@@ -1,4 +1,6 @@
+import type * as React from 'react'
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 export interface IGlobalStore {
   showSidebar: boolean
@@ -17,26 +19,72 @@ export interface IGlobalStore {
   setShowTimeoutDialog: (showTimeoutDialog: boolean) => void
   showLoginPanel: boolean
   setShowLoginPanel: (showLoginPanel: boolean) => void
+  isPresetDigitalReminderIgnored: boolean
+  setIsPresetDigitalReminderIgnored: (
+    isPresetDigitalReminderIgnored: boolean
+  ) => void
+  confirmDialog?: {
+    title: string | React.ReactNode
+    description?: string | React.ReactNode
+    content?: string | React.ReactNode
+    confirmText?: string
+    cancelText?: string
+    onConfirm?: (() => void) | (() => Promise<void>)
+    onCancel?: () => void
+  }
+  setConfirmDialog: (confirmDialog?: {
+    title: string
+    description?: string
+    content?: string | React.ReactNode
+    confirmText?: string
+    cancelText?: string
+    onConfirm?: (() => void) | (() => Promise<void>)
+    onCancel?: () => void
+  }) => void
 }
 
-export const useGlobalStore = create<IGlobalStore>((set) => ({
-  showSidebar: false,
-  setShowSidebar: (showSidebar: boolean) => set({ showSidebar }),
-  onClickSidebar: () => set((state) => ({ showSidebar: !state.showSidebar })),
-  showSubtitle: false,
-  setShowSubtitle: (showSubtitle: boolean) => set({ showSubtitle }),
-  onClickSubtitle: () =>
-    set((state) => ({ showSubtitle: !state.showSubtitle })),
-  isDevMode: false,
-  setIsDevMode: (isDevMode: boolean) => set({ isDevMode }),
-  isRTCCompatible: true,
-  setIsRTCCompatible: (isRTCCompatible: boolean) => set({ isRTCCompatible }),
-  showCompatibilityDialog: false,
-  setShowCompatibilityDialog: (showCompatibilityDialog: boolean) =>
-    set({ showCompatibilityDialog }),
-  showTimeoutDialog: false,
-  setShowTimeoutDialog: (showTimeoutDialog: boolean) =>
-    set({ showTimeoutDialog }),
-  showLoginPanel: false,
-  setShowLoginPanel: (showLoginPanel: boolean) => set({ showLoginPanel }),
-}))
+export const useGlobalStore = create<IGlobalStore>()(
+  persist(
+    (set) => ({
+      showSidebar: false,
+      setShowSidebar: (showSidebar: boolean) => set({ showSidebar }),
+      onClickSidebar: () =>
+        set((state) => ({ showSidebar: !state.showSidebar })),
+      showSubtitle: false,
+      setShowSubtitle: (showSubtitle: boolean) => set({ showSubtitle }),
+      onClickSubtitle: () =>
+        set((state) => ({ showSubtitle: !state.showSubtitle })),
+      isDevMode: false,
+      setIsDevMode: (isDevMode: boolean) => set({ isDevMode }),
+      isRTCCompatible: true,
+      setIsRTCCompatible: (isRTCCompatible: boolean) =>
+        set({ isRTCCompatible }),
+      showCompatibilityDialog: false,
+      setShowCompatibilityDialog: (showCompatibilityDialog: boolean) =>
+        set({ showCompatibilityDialog }),
+      showTimeoutDialog: false,
+      setShowTimeoutDialog: (showTimeoutDialog: boolean) =>
+        set({ showTimeoutDialog }),
+      showLoginPanel: false,
+      setShowLoginPanel: (showLoginPanel: boolean) => set({ showLoginPanel }),
+      isPresetDigitalReminderIgnored: false,
+      setIsPresetDigitalReminderIgnored: (
+        isPresetDigitalReminderIgnored: boolean
+      ) => set({ isPresetDigitalReminderIgnored }),
+      confirmDialog: undefined,
+      setConfirmDialog: (confirmDialog) => {
+        if (confirmDialog) {
+          set({ confirmDialog })
+        } else {
+          set({ confirmDialog: undefined })
+        }
+      }
+    }),
+    {
+      name: 'global-store',
+      partialize: (state) => ({
+        isPresetDigitalReminderIgnored: state.isPresetDigitalReminderIgnored
+      })
+    }
+  )
+)

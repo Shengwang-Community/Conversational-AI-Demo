@@ -8,13 +8,13 @@ import { logger } from '@/lib/logger'
 
 export const loginResSchema = remoteResSchema.extend({
   data: z.object({
-    token: z.string(),
-  }),
+    token: z.string()
+  })
 })
 
 export const Login = async (url: string) => {
   const res = await fetch(url, {
-    method: 'GET',
+    method: 'GET'
   })
   const data = await res.json()
   const resData = remoteResSchema.parse(data)

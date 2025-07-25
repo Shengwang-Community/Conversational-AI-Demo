@@ -4,7 +4,7 @@ export async function GET() {
   const data = {
     status: 'ok',
     timestamp: new Date().getTime(),
-    timestamp_iso: new Date().toISOString(),
+    timestamp_iso: new Date().toISOString()
   }
 
   return NextResponse.json(data)

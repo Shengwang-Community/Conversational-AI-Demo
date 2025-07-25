@@ -1,13 +1,13 @@
-import JSZip from "jszip"
+import JSZip from 'jszip'
 
 const MAX_ZIP_SIZE = 4 * 1024 * 1024 // 4MB
 
 export enum ELoggerType {
-  log = "log",
-  info = "info",
-  debug = "debug",
-  error = "error",
-  warn = "warn",
+  log = 'log',
+  info = 'info',
+  debug = 'debug',
+  error = 'error',
+  warn = 'warn'
 }
 
 interface LogEntry {
@@ -24,9 +24,9 @@ class LogManager {
     try {
       const timestamp = new Date().toISOString()
       const logMessage = args
-        .map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
-        .join(" ")
-      if (process.env.NODE_ENV === "development") {
+        .map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg)))
+        .join(' ')
+      if (process.env.NODE_ENV === 'development') {
         // In development, log to console
         console[level](`[${timestamp}] ${logMessage}`)
       }
@@ -35,7 +35,7 @@ class LogManager {
       const logSize = this.textEncoder.encode(fullLogMessage).length
       const logEntry: LogEntry = {
         message: fullLogMessage,
-        size: logSize,
+        size: logSize
       }
 
       this.logs.push(logEntry)
@@ -60,24 +60,24 @@ class LogManager {
         this.currentSize -= removedSize
       }
     } catch (error) {
-      console.info("Error in addLog:", error)
+      console.info('Error in addLog:', error)
     }
   }
 
   async downloadLogs(): Promise<File | null> {
     try {
       const zip = new JSZip()
-      const logContent = this.logs.map((log) => log.message).join("")
+      const logContent = this.logs.map((log) => log.message).join('')
 
-      zip.file("log.txt", logContent)
-      const content = await zip.generateAsync({ type: "blob" })
-      console.log("content", content.size)
+      zip.file('log.txt', logContent)
+      const content = await zip.generateAsync({ type: 'blob' })
+      console.log('content', content.size)
 
       this.clear()
 
-      return new File([content], "logs.zip", { type: "application/zip" })
+      return new File([content], 'logs.zip', { type: 'application/zip' })
     } catch (error) {
-      console.error("Error creating log file:", error)
+      console.error('Error creating log file:', error)
       return null
     }
   }

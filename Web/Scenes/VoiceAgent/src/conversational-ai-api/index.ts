@@ -1,31 +1,35 @@
-import type { IAgoraRTCClient } from "agora-rtc-sdk-ng"
-import type { RTMClient, RTMEvents, ChannelType } from "agora-rtm"
-
-import { EventHelper } from "@/conversational-ai-api/utils/event"
-import { CovSubRenderController } from "@/conversational-ai-api/utils/sub-render"
+import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng'
+import type { ChannelType, RTMClient, RTMEvents } from 'agora-rtm'
 import {
-  ESubtitleHelperMode,
-  ERTMEvents,
-  ERTCEvents,
-  type IConversationalAIAPIEventHandlers,
-  EConversationalAIAPIEvents,
-  NotFoundError,
   type EAgentState,
+  EChatMessagePriority,
+  EChatMessageType,
+  EConversationalAIAPIEvents,
+  EMessageType,
+  ERTCEvents,
+  ERTMEvents,
+  ESubtitleHelperMode,
+  type IAgentTranscription,
+  type IChatMessageImage,
+  type IChatMessageText,
+  type IConversationalAIAPIEventHandlers,
   type ISubtitleHelperItem,
   type IUserTranscription,
-  type IAgentTranscription,
-  type TStateChangeEvent,
-  EMessageType,
+  NotFoundError,
   type TAgentMetric,
+  type TMessageReceipt,
   type TModuleError,
-} from "@/conversational-ai-api/type"
-import { factoryFormatLog } from "@/conversational-ai-api/utils"
-import { logger, ELoggerType } from "@/lib/logger"
-import { genTranceID } from "@/lib/utils"
+  type TStateChangeEvent
+} from '@/conversational-ai-api/type'
+import { factoryFormatLog } from '@/conversational-ai-api/utils'
+import { EventHelper } from '@/conversational-ai-api/utils/event'
+import { CovSubRenderController } from '@/conversational-ai-api/utils/sub-render'
+import { ELoggerType, logger } from '@/lib/logger'
+import { genTranceID } from '@/lib/utils'
 
-const TAG = "ConversationalAIAPI"
+const TAG = 'ConversationalAIAPI'
 // const CONSOLE_LOG_PREFIX = `[${TAG}]`
-const VERSION = "1.6.0"
+const VERSION = '1.7.0'
 
 const formatLog = factoryFormatLog({ tag: TAG })
 
@@ -101,6 +105,10 @@ export interface IConversationalAIAPIConfig {
  *   console.debug('Debug log:', message);
  * });
  *
+ * conversationalAIAPI.on(EConversationalAIAPIEvents.MESSAGE_RECEIPT_UPDATED, (agentUserId, messageReceipt) => {
+ *  console.log(`Message receipt updated for agent ${agentUserId}:`, messageReceipt);
+ * });
+ *
  * // Unsubscribe from events using off() method
  * conversationalAIAPI.off(EConversationalAIAPIEvents.AGENT_STATE_CHANGED, handleAgentStateChanged);
  * conversationalAIAPI.off(EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED, handleTranscriptionUpdated);
@@ -108,6 +116,7 @@ export interface IConversationalAIAPIConfig {
  * conversationalAIAPI.off(EConversationalAIAPIEvents.AGENT_METRICS, handleAgentMetrics);
  * conversationalAIAPI.off(EConversationalAIAPIEvents.AGENT_ERROR, handleAgentError);
  * conversationalAIAPI.off(EConversationalAIAPIEvents.DEBUG_LOG, handleDebugLog);
+ * conversationalAIAPI.off(EConversationalAIAPIEvents.MESSAGE_RECEIPT_UPDATED, handleMessageReceiptUpdated);
  * ```
  *
  * @fires {@link EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED} When chat history is updated
@@ -116,8 +125,9 @@ export interface IConversationalAIAPIConfig {
  * @fires {@link EConversationalAIAPIEvents.AGENT_METRICS} When agent metrics are received
  * @fires {@link EConversationalAIAPIEvents.AGENT_ERROR} When an error occurs
  * @fires {@link EConversationalAIAPIEvents.DEBUG_LOG} When debug logs are generated
+ * @fires {@link EConversationalAIAPIEvents.MESSAGE_RECEIPT_UPDATED} When message receipt is updated
  *
- * @since 1.6.0
+ * @since 1.7.0
  */
 export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHandlers> {
   private static NAME = TAG
@@ -157,6 +167,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       onDebugLog: this.onDebugLog.bind(this),
       onAgentMetrics: this.onAgentMetrics.bind(this),
       onAgentError: this.onAgentError.bind(this),
+      onMessageReceipt: this.onMessageReceiptUpdated.bind(this)
     })
   }
 
@@ -177,21 +188,21 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
    */
   public static getInstance() {
     if (!ConversationalAIAPI._instance) {
-      throw new NotFoundError("ConversationalAIAPI is not initialized")
+      throw new NotFoundError('ConversationalAIAPI is not initialized')
     }
     return ConversationalAIAPI._instance
   }
 
   protected getCfg() {
     if (!this.rtcEngine || !this.rtmEngine) {
-      throw new NotFoundError("ConversationalAIAPI is not initialized")
+      throw new NotFoundError('ConversationalAIAPI is not initialized')
     }
     return {
       rtcEngine: this.rtcEngine,
       rtmEngine: this.rtmEngine,
       renderMode: this.renderMode,
       channel: this.channel,
-      enableLog: this.enableLog,
+      enableLog: this.enableLog
     }
   }
 
@@ -290,8 +301,192 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     )
   }
 
-  // TODO: Implement chat method
-  // public chat() {}
+  /**
+   * Sends a chat message to the conversational AI agent.
+   *
+   * @param agentUserId - The unique identifier of the agent user
+   * @param message - The chat message to send, can be either text or image type
+   * @returns A promise that resolves with the result of sending the message
+   * @throws {Error} When an unsupported chat message type is provided
+   *
+   * @since 1.7.0
+   *
+   * @example
+   * ```typescript
+   * // Send a text message
+   * const textMessage: IChatMessageText = {
+   *   messageType: EChatMessageType.TEXT,
+   *   priority: EChatMessagePriority.HIGH,
+   *   responseInterruptable: true,
+   *   text: "Hello, how are you?"
+   * };
+   * await api.chat("user123", textMessage);
+   *
+   * // Send an image message
+   * const imageMessage: IChatMessageImage = {
+   *   messageType: EChatMessageType.IMAGE,
+   *   uuid: "msg-456",
+   *   url: "https://example.com/image.jpg"
+   * };
+   * await api.chat("user123", imageMessage);
+   * ```
+   */
+  public async chat(
+    agentUserId: string,
+    message: IChatMessageText | IChatMessageImage
+  ) {
+    switch (message.messageType) {
+      case EChatMessageType.TEXT:
+        return this.sendText(agentUserId, message as IChatMessageText)
+      case EChatMessageType.IMAGE:
+        return this.sendImage(agentUserId, message as IChatMessageImage)
+      default:
+        throw new Error('Unsupported chat message type')
+    }
+  }
+
+  /**
+   * Sends a text message to the specified agent user through RTM engine.
+   *
+   * @param agentUserId - The unique identifier of the agent user to send the message to
+   * @param message - The chat message object containing text content and optional settings
+   * @param message.priority - Optional priority level for the message (defaults to INTERRUPTED)
+   * @param message.responseInterruptable - Optional flag indicating if the response can be interrupted (defaults to true)
+   * @param message.text - The actual text content of the message
+   *
+   * @returns Promise that resolves when the message is successfully sent
+   *
+   * @throws {Error} Throws an error with message "failed to send chat message" if the RTM publish operation fails
+   *
+   * @since 1.7.0
+   *
+   * @example
+   * ```typescript
+   * await api.sendText('user123', {
+   *   text: 'Hello, how can I help you?',
+   *   priority: EChatMessagePriority.HIGH,
+   *   responseInterruptable: false
+   * });
+   * ```
+   */
+  public async sendText(agentUserId: string, message: IChatMessageText) {
+    const traceId = genTranceID()
+    this.callMessagePrint(
+      ELoggerType.debug,
+      `>>> [trancID:${traceId}] [chat] ${agentUserId}`,
+      message
+    )
+
+    const { rtmEngine } = this.getCfg()
+
+    const payload = {
+      priority: message.priority ?? EChatMessagePriority.INTERRUPTED,
+      interruptable: message.responseInterruptable ?? true,
+      message: message.text ?? ''
+    }
+
+    try {
+      const payloadStr = JSON.stringify(payload)
+      const options = {
+        channelType: 'USER' as ChannelType,
+        customType: EMessageType.USER_TRANSCRIPTION
+      }
+
+      this.callMessagePrint(
+        ELoggerType.debug,
+        `msg: [traceID: ${traceId}] rtm publish`,
+        payloadStr
+      )
+
+      const result = await rtmEngine.publish(agentUserId, payloadStr, options)
+
+      this.callMessagePrint(
+        ELoggerType.debug,
+        `>>> [trancID:${traceId}] [chat]`,
+        'sucessfully sent chat message',
+        result
+      )
+    } catch (error: unknown) {
+      this.callMessagePrint(
+        ELoggerType.error,
+        `>>> [trancID:${traceId}] [chat]`,
+        'failed to send chat message',
+        error
+      )
+      throw new Error('failed to send chat message')
+    }
+  }
+
+  /**
+   * Sends an image message to a specific agent user through RTM (Real-Time Messaging).
+   *
+   * @param agentUserId - The unique identifier of the agent user to send the image to
+   * @param message - The image message object containing UUID and either URL or base64 data
+   * @param message.uuid - Unique identifier for the message
+   * @param message.url - Optional URL of the image to send
+   * @param message.base64 - Optional base64 encoded image data
+   *
+   * @throws {Error} Throws an error with message "failed to send chat message" if the RTM publish operation fails
+   *
+   * @returns Promise that resolves when the image message is successfully sent
+   *
+   * @since 1.7.0
+   *
+   * @example
+   * ```typescript
+   * await sendImage('user123', {
+   *   uuid: 'msg-456',
+   *   url: 'https://example.com/image.jpg'
+   * });
+   * ```
+   */
+  public async sendImage(agentUserId: string, message: IChatMessageImage) {
+    const traceId = genTranceID()
+    this.callMessagePrint(
+      ELoggerType.debug,
+      `>>> [trancID:${traceId}] [chat] ${agentUserId}`,
+      message
+    )
+
+    const { rtmEngine } = this.getCfg()
+
+    const payload = {
+      uuid: message.uuid,
+      image_url: message?.url || '',
+      image_base64: message?.base64 || ''
+    }
+
+    try {
+      const payloadStr = JSON.stringify(payload)
+      const options = {
+        channelType: 'USER' as ChannelType,
+        customType: EMessageType.IMAGE_UPLOAD
+      }
+
+      this.callMessagePrint(
+        ELoggerType.debug,
+        `msg: [traceID: ${traceId}] rtm publish`,
+        payloadStr
+      )
+
+      const result = await rtmEngine.publish(agentUserId, payloadStr, options)
+
+      this.callMessagePrint(
+        ELoggerType.debug,
+        `>>> [trancID:${traceId}] [chat]`,
+        'sucessfully sent chat message',
+        result
+      )
+    } catch (error: unknown) {
+      this.callMessagePrint(
+        ELoggerType.error,
+        `>>> [trancID:${traceId}] [chat]`,
+        'failed to send chat message',
+        error
+      )
+      throw new Error('failed to send chat message')
+    }
+  }
 
   /**
    * Sends an interrupt message to the specified agent user.
@@ -317,11 +512,11 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     const { rtmEngine } = this.getCfg()
 
     const options = {
-      channelType: "USER" as ChannelType,
-      customType: EMessageType.MSG_INTERRUPTED,
+      channelType: 'USER' as ChannelType,
+      customType: EMessageType.MSG_INTERRUPTED
     }
     const messageStr = JSON.stringify({
-      customType: EMessageType.MSG_INTERRUPTED,
+      customType: EMessageType.MSG_INTERRUPTED
     })
 
     try {
@@ -329,17 +524,17 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       this.callMessagePrint(
         ELoggerType.debug,
         `>>> [trancID:${traceId}] [interrupt]`,
-        "sucessfully sent interrupt message",
+        'sucessfully sent interrupt message',
         result
       )
     } catch (error: unknown) {
       this.callMessagePrint(
         ELoggerType.error,
         `>>> [trancID:${traceId}] [interrupt]`,
-        "failed to send interrupt message",
+        'failed to send interrupt message',
         error
       )
-      throw new Error("failed to send interrupt message")
+      throw new Error('failed to send interrupt message')
     }
   }
 
@@ -400,6 +595,22 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       error
     )
     this.emit(EConversationalAIAPIEvents.AGENT_ERROR, agentUserId, error)
+  }
+  private onMessageReceiptUpdated(
+    agentUserId: string,
+    messageReceipt: TMessageReceipt
+  ) {
+    this.callMessagePrint(
+      ELoggerType.error,
+      `>>> ${EConversationalAIAPIEvents.MESSAGE_RECEIPT_UPDATED}`,
+      agentUserId,
+      messageReceipt
+    )
+    this.emit(
+      EConversationalAIAPIEvents.MESSAGE_RECEIPT_UPDATED,
+      agentUserId,
+      messageReceipt
+    )
   }
 
   private bindRtcEvents() {
@@ -479,7 +690,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     try {
       const messageData = message.message
       // if string, parse it
-      if (typeof messageData === "string") {
+      if (typeof messageData === 'string') {
         const parsedMessage = JSON.parse(messageData)
         this.callMessagePrint(
           ELoggerType.debug,
@@ -487,13 +698,13 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
           parsedMessage
         )
         this.covSubRenderController.handleMessage(parsedMessage, {
-          publisher: message.publisher,
+          publisher: message.publisher
         })
         return
       }
       // if Uint8Array, convert to string
       if (messageData instanceof Uint8Array) {
-        const decoder = new TextDecoder("utf-8")
+        const decoder = new TextDecoder('utf-8')
         const messageString = decoder.decode(messageData)
         const parsedMessage = JSON.parse(messageString)
         this.callMessagePrint(
@@ -502,20 +713,20 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
           parsedMessage
         )
         this.covSubRenderController.handleMessage(parsedMessage, {
-          publisher: message.publisher,
+          publisher: message.publisher
         })
         return
       }
       this.callMessagePrint(
         ELoggerType.warn,
         `>>> [trancID:${traceId}] ${ERTMEvents.MESSAGE}`,
-        "Unsupported message type received"
+        'Unsupported message type received'
       )
     } catch (error) {
       this.callMessagePrint(
         ELoggerType.error,
         `>>> [trancID:${traceId}] ${ERTMEvents.MESSAGE}`,
-        "Failed to parse message",
+        'Failed to parse message',
         error
       )
     }
@@ -536,7 +747,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
         `State changed: ${stateChanged.state}, Turn ID: ${stateChanged.turn_id}, timestamp: ${presence.timestamp}`
       )
       this.covSubRenderController.handleAgentStatus(
-        presence as Omit<RTMEvents.PresenceEvent, "stateChanged"> & {
+        presence as Omit<RTMEvents.PresenceEvent, 'stateChanged'> & {
           stateChanged: {
             state: EAgentState
             turn_id: string
@@ -547,7 +758,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     this.callMessagePrint(
       ELoggerType.debug,
       `>>> [trancID:${traceId}] ${ERTMEvents.PRESENCE}`,
-      "No state change detected, skipping handling presence event"
+      'No state change detected, skipping handling presence event'
     )
   }
   private _handleRtmStatus(

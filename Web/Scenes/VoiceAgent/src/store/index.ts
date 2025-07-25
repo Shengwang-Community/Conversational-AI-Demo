@@ -1,5 +1,5 @@
 export { useAgentSettingsStore } from '@/store/agent'
+export { useChatStore } from '@/store/chat'
 export { useGlobalStore } from '@/store/global'
 export { useRTCStore } from '@/store/rtc'
-export { useChatStore } from '@/store/chat'
 export { useUserInfoStore } from '@/store/userInfo'
