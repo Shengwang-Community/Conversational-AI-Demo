@@ -311,17 +311,22 @@ import AgoraRtmKit
 @objc public class MessageError: NSObject {
     /// Message error type
     @objc public let type: ChatMessageType
+    /// Specific error code for identifying particular error conditions
+    @objc public let code: Int
     /// Error description message providing detailed error explanation
     /// Usually JSON string containing resource information
     @objc public let message: String
-    
+    /// Error occurrence timestamp (milliseconds since January 1, 1970 UTC)
+    @objc public let timestamp: TimeInterval
     /// Initialize a message error
     /// - Parameters:
     ///   - type: Message type where error occurred
     ///   - message: Error message
-    @objc public init(type: ChatMessageType, message: String) {
+    @objc public init(type: ChatMessageType, code: Int, message: String, timestamp: TimeInterval) {
         self.type = type
+        self.code = code
         self.message = message
+        self.timestamp = timestamp
     }
 }
 

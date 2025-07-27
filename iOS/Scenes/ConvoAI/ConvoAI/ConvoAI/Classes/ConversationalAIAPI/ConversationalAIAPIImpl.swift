@@ -454,31 +454,31 @@ extension ConversationalAIAPIImpl {
     
     private func handleErrorMessage(uid: String, msg: [String: Any]) {
         let errorTypeStr = msg["module"] as? String ?? ""
-        let venderType = ModuleType.fromValue(errorTypeStr)
+        let moduleType = ModuleType.fromValue(errorTypeStr)
         
-        if venderType == .unknown && !errorTypeStr.isEmpty {
+        if moduleType == .unknown && !errorTypeStr.isEmpty {
             notifyDelegatesDebugLog("Unknown error type: \(errorTypeStr)")
         }
         
-        if venderType == .context {
+        let code = (msg["code"] as? NSNumber)?.intValue ?? -1
+        let message = msg["message"] as? String ?? "Unknown error"
+        let timestamp = (msg["timestamp"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970
+        
+        if moduleType == .context {
             let message = msg["message"] as? String ?? "Unknown error"
             
             do {
                 let messageData = try parseJsonToMap(message)
                 let resourceType = messageData["resource_type"] as? String ?? "unknown"
-                let messageError = MessageError(type: resourceType == "picture" ? .image : .unknown, message: message)
+                let messageError = MessageError(type: resourceType == "picture" ? .image : .unknown, code: code, message: message, timestamp: timestamp)
                 notifyDelegatesMessageError(agentUserId: uid, error: messageError)
             } catch {
                 notifyDelegatesDebugLog("Failed to parse context message JSON: \(error.localizedDescription)")
             }
-        } else {
-            let code = (msg["code"] as? NSNumber)?.intValue ?? -1
-            let message = msg["message"] as? String ?? "Unknown error"
-            let timestamp = (msg["timestamp"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970
-            
-            let agentError = ModuleError(type: venderType, code: code, message: message, timestamp: timestamp)
-            notifyDelegatesError(agentUserId: uid, error: agentError)
         }
+        
+        let agentError = ModuleError(type: moduleType, code: code, message: message, timestamp: timestamp)
+        notifyDelegatesError(agentUserId: uid, error: agentError)
         
     }
     
