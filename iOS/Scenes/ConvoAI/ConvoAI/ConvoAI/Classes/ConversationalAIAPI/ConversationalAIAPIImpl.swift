@@ -462,7 +462,7 @@ extension ConversationalAIAPIImpl {
         
         let code = (msg["code"] as? NSNumber)?.intValue ?? -1
         let message = msg["message"] as? String ?? "Unknown error"
-        let timestamp = (msg["timestamp"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970
+        let timestamp = (msg["send_ts"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970
         
         if moduleType == .context {
             let message = msg["message"] as? String ?? "Unknown error"
