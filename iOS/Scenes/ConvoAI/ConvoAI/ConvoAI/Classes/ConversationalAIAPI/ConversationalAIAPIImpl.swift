@@ -327,6 +327,15 @@ extension ConversationalAIAPIImpl {
         }
     }
 
+    private func notifyDelegatesMessageError(agentUserId: String, error: MessageError) {
+        callMessagePrint(msg: "<<< [onMessageError], agentUserId: \(agentUserId), error: \(error)")
+        DispatchQueue.main.async {
+            for delegate in self.delegates.allObjects {
+                delegate.onMessageError(agentUserId: agentUserId, error: error)
+            }
+        }
+    }
+
     private func notifyDelegatesError(agentUserId: String, error: ModuleError) {
         callMessagePrint(msg: "<<< [onAgentError], agentUserId: \(agentUserId), error: \(error)")
 
@@ -417,8 +426,14 @@ extension ConversationalAIAPIImpl {
         }
         
         let moduleType = ModuleType.fromValue(module)
-        let messageReceipt = MessageReceipt(type: moduleType, message: messageString, turnId: turnId)
-        notifyDelegatesMessageReceipt(agentUserId: uid, messageReceipt: messageReceipt)
+        do {
+            let messageData = try parseJsonToMap(messageString)
+            let resource_type = messageData["resource_type"] as? String ?? "unknown"
+            let messageReceipt = MessageReceipt(moduleType: moduleType, messageType: resource_type == "picture" ? .image : .unknown, message: messageString, turnId: turnId)
+            notifyDelegatesMessageReceipt(agentUserId: uid, messageReceipt: messageReceipt)
+        } catch {
+            notifyDelegatesDebugLog("Failed to parse message string from image info message: \(error.localizedDescription)")
+        }
     }
     
     private func handleMetricsMessage(uid: String, msg: [String: Any]) {
@@ -439,18 +454,32 @@ extension ConversationalAIAPIImpl {
     
     private func handleErrorMessage(uid: String, msg: [String: Any]) {
         let errorTypeStr = msg["module"] as? String ?? ""
-        let venderType = ModuleType.fromValue(errorTypeStr)
+        let moduleType = ModuleType.fromValue(errorTypeStr)
         
-        if venderType == .unknown && !errorTypeStr.isEmpty {
+        if moduleType == .unknown && !errorTypeStr.isEmpty {
             notifyDelegatesDebugLog("Unknown error type: \(errorTypeStr)")
         }
         
         let code = (msg["code"] as? NSNumber)?.intValue ?? -1
         let message = msg["message"] as? String ?? "Unknown error"
-        let timestamp = (msg["timestamp"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970
+        let timestamp = (msg["send_ts"] as? NSNumber)?.doubleValue ?? Date().timeIntervalSince1970
         
-        let agentError = ModuleError(type: venderType, code: code, message: message, timestamp: timestamp)
+        if moduleType == .context {
+            let message = msg["message"] as? String ?? "Unknown error"
+            
+            do {
+                let messageData = try parseJsonToMap(message)
+                let resourceType = messageData["resource_type"] as? String ?? "unknown"
+                let messageError = MessageError(type: resourceType == "picture" ? .image : .unknown, code: code, message: message, timestamp: timestamp)
+                notifyDelegatesMessageError(agentUserId: uid, error: messageError)
+            } catch {
+                notifyDelegatesDebugLog("Failed to parse context message JSON: \(error.localizedDescription)")
+            }
+        }
+        
+        let agentError = ModuleError(type: moduleType, code: code, message: message, timestamp: timestamp)
         notifyDelegatesError(agentUserId: uid, error: agentError)
+        
     }
     
     func callMessagePrint(msg: String) {

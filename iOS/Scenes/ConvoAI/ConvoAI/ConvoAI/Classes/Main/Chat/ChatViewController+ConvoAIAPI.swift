@@ -68,25 +68,45 @@ extension ChatViewController {
 }
 
 extension ChatViewController: ConversationalAIAPIEventHandler {
+    public func onMessageError(agentUserId: String, error: MessageError) {
+        if let messageData = error.message.data(using: .utf8) {
+            do {
+                let errorResponse = try JSONDecoder().decode(ImageUploadErrorResponse.self, from: messageData)
+                if !errorResponse.success {
+                    let errorMessage = errorResponse.error?.message ?? "Unknown error"
+                    let errorCode = errorResponse.error?.code ?? 0
+                    
+                    addLog("<<< [ImageUploadError] Image upload failed: \(errorMessage) (code: \(errorCode))")
+                    
+                    // Update UI to show error state
+                    DispatchQueue.main.async { [weak self] in
+                        self?.messageView.viewModel.updateImageMessage(uuid: errorResponse.uuid, state: .failed)
+                    }
+                }
+            } catch {
+                addLog("<<< [onAgentError] Failed to parse error message JSON: \(error)")
+            }
+        }
+    }
+    
     public func onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt) {
-        if messageReceipt.type == .context {
+        if messageReceipt.moduleType == .context {
             guard let messageData = messageReceipt.message.data(using: .utf8) else {
+                ConvoAILogger.error("Failed to parse message string from image info message")
                 return
             }
             
-            do {
-                let imageInfo = try JSONDecoder().decode(PictureInfo.self, from: messageData)
-                let uuid = imageInfo.uuid
-                addLog("<<<<<onMessageReceiptUpdated: uuid: \(uuid)")
-                self.messageView.viewModel.updateImageMessage(uuid: uuid, state: .success)
-            } catch {
-                addLog("Failed to decode PictureInfo: \(error)")
+            if messageReceipt.messageType == .image {
+                do {
+                    let imageInfo = try JSONDecoder().decode(PictureInfo.self, from: messageData)
+                    let uuid = imageInfo.uuid
+                    addLog("<<<<<onMessageReceiptUpdated: uuid: \(uuid)")
+                    self.messageView.viewModel.updateImageMessage(uuid: uuid, state: .success)
+                } catch {
+                    addLog("Failed to decode PictureInfo: \(error)")
+                }
             }
-
-          ConvoAILogger.error("Failed to parse message string from image info message")
-          return
       }
-        
     }
     
     public func onAgentStateChanged(agentUserId: String, event: StateChangeEvent) {
@@ -103,27 +123,6 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     }
     
     public func onAgentError(agentUserId: String, error: ModuleError) {
-        if error.type == .context {
-            // Parse image upload error from error.message
-            if let messageData = error.message.data(using: .utf8) {
-                do {
-                    let errorResponse = try JSONDecoder().decode(ImageUploadErrorResponse.self, from: messageData)
-                    if !errorResponse.success {
-                        let errorMessage = errorResponse.error?.message ?? "Unknown error"
-                        let errorCode = errorResponse.error?.code ?? 0
-                        
-                        addLog("<<< [ImageUploadError] Image upload failed: \(errorMessage) (code: \(errorCode))")
-                        
-                        // Update UI to show error state
-                        DispatchQueue.main.async { [weak self] in
-                            self?.messageView.viewModel.updateImageMessage(uuid: errorResponse.uuid, state: .failed)
-                        }
-                    }
-                } catch {
-                    addLog("<<< [onAgentError] Failed to parse error message JSON: \(error)")
-                }
-            }
-        }
         addLog("<<< [onAgentError] error: \(error)")
     }
     

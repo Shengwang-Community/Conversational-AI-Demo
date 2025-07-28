@@ -58,6 +58,8 @@ import AgoraRtmKit
     case text = 0
     /// Image message type
     case image = 1
+    /// Unknown message type
+    case unknown = 2
 }
 
 /// Chat message protocol
@@ -306,6 +308,28 @@ import AgoraRtmKit
     }
 }
 
+@objc public class MessageError: NSObject {
+    /// Message error type
+    @objc public let type: ChatMessageType
+    /// Specific error code for identifying particular error conditions
+    @objc public let code: Int
+    /// Error description message providing detailed error explanation
+    /// Usually JSON string containing resource information
+    @objc public let message: String
+    /// Error occurrence timestamp (milliseconds since January 1, 1970 UTC)
+    @objc public let timestamp: TimeInterval
+    /// Initialize a message error
+    /// - Parameters:
+    ///   - type: Message type where error occurred
+    ///   - message: Error message
+    @objc public init(type: ChatMessageType, code: Int, message: String, timestamp: TimeInterval) {
+        self.type = type
+        self.code = code
+        self.message = message
+        self.timestamp = timestamp
+    }
+}
+
 /// AI module error information
 /// Data class for handling and reporting AI-related errors. Contains error type, error code,
 /// error description and timestamp, facilitating error monitoring, logging, and troubleshooting.
@@ -485,9 +509,11 @@ public enum MessageType: String, CaseIterable {
 /// Message receipt model
 /// Used for tracking message processing status and metadata
 /// Contains type, image information, and turn ID
-@objc public class MessageReceipt: NSObject, Codable {
+@objc public class MessageReceipt: NSObject {
     /// Message type    
-    @objc public let type: ModuleType 
+    @objc public let moduleType: ModuleType 
+    /// Message type
+    @objc public let messageType: ChatMessageType
     /// Image information, Parse according to type:
     /// Context type: Usually JSON string containing resource information
     @objc public let message: String
@@ -499,21 +525,16 @@ public enum MessageType: String, CaseIterable {
     ///   - type: Message type
     ///   - message: Image information
     ///   - turnId: Turn ID
-    @objc public init(type: ModuleType, message: String, turnId: Int) {
-        self.type = type
+    @objc public init(moduleType: ModuleType, messageType: ChatMessageType, message: String, turnId: Int) {
+        self.moduleType = moduleType
+        self.messageType = messageType
         self.message = message
         self.turnId = turnId
         super.init()
     }
     
-    enum CodingKeys: String, CodingKey {
-        case type = "module"
-        case message
-        case turnId = "turn_id"
-    }
-    
     public override var description: String {
-        return "MessageReceipt(type: \(type), message: \(message))"
+        return "MessageReceipt(moduleType: \(moduleType), messageType: \(messageType), message: \(message), turnId: \(turnId))"
     }
 }
 
@@ -616,6 +637,16 @@ public enum MessageType: String, CaseIterable {
     ///   - agentUserId: Agent RTM user ID
     ///   - messageReceipt: Message receipt containing type, module, and image information
     @objc func onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt)
+    
+    /// Called when message error occurs
+    /// This method is called when message processing encounters errors,
+    /// For example, when the chat message is failed to send, the error message will be returned.
+    ///
+    /// - Parameters:
+    ///   - agentUserId: Agent RTM user ID
+    ///   - error: Message error containing type, message
+    @objc func onMessageError(agentUserId: String, error: MessageError)
+
 }
 
 /// ConversationalAI API control protocol
