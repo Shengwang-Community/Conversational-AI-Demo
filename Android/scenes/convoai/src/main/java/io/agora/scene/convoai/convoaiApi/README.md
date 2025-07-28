@@ -226,8 +226,8 @@ override fun onMessageError(agentUserId: String, error: MessageError) {
     if (error.chatMessageType == ChatMessageType.Image) {
         try {
             val json = JSONObject(error.message)
-            if (jsonObject.has("uuid")) {
-                val failedUuid = jsonObject.getString("uuid")
+            if (json.has("uuid")) {
+                val failedUuid = json.getString("uuid")
 
                 // 如果 uuid 匹配，说明此图片发送失败
                 if (failedUuid == "your-sent-uuid") {
