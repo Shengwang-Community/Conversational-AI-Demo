@@ -182,7 +182,7 @@ public func onMessageError(agentUserId: String, error: MessageError) {
                 }
             }
         } catch {
-            addLog("<<< [onAgentError] Failed to parse error message JSON: \(error)")
+            addLog("<<< [onMessageError] Failed to parse error message JSON: \(error)")
         }
     }
 }
