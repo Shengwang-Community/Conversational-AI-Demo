@@ -14,7 +14,6 @@ import io.agora.rtm.PresenceEvent
 import io.agora.rtm.RtmConstants
 import io.agora.rtm.RtmEventListener
 import io.agora.rtm.SubscribeOptions
-import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.convoai.convoaiApi.subRender.v3.IConversationTranscriptionCallback
 import io.agora.scene.convoai.convoaiApi.subRender.v3.MessageParser
 import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionController
@@ -155,6 +154,23 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                     conversationalAIHandlerHelper.notifyEventHandlers {
                         it.onAgentError(agentUserId, aiError)
                     }
+
+                    if (moduleType == ModuleType.Context) {
+                        var chatMessageType = ChatMessageType.UNKNOWN
+                        try {
+                            val json = JSONObject(message)
+                            chatMessageType = ChatMessageType.fromValue(json.optString("resource_type"))
+                        } catch (e: Exception) {
+                            callMessagePrint(TAG, "$objectType ${e.message}")
+                        }
+                        val messageError = MessageError(chatMessageType, code, message, sendTs)
+
+                        val agentUserId = publisherId
+                        callMessagePrint(TAG, "<<< [onMessageError] $agentUserId $messageError")
+                        conversationalAIHandlerHelper.notifyEventHandlers {
+                            it.onMessageError(agentUserId, messageError)
+                        }
+                    }
                 }
 
                 /**
@@ -169,7 +185,17 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                     val moduleType = ModuleType.fromValue(msg["module"] as? String ?: "")
                     val turnId = (msg["turn_id"] as? Number)?.toLong() ?: -1L
                     val message = msg["message"] as? String ?: "Unknown error"
-                    val receipt = MessageReceipt(moduleType, turnId, message)
+
+                    var chatMessageType = ChatMessageType.UNKNOWN
+                    if (moduleType == ModuleType.Context) {
+                        try {
+                            val json = JSONObject(message)
+                            chatMessageType = ChatMessageType.fromValue(json.optString("resource_type"))
+                        } catch (e: Exception) {
+                            callMessagePrint(TAG, "$objectType ${e.message}")
+                        }
+                    }
+                    val receipt = MessageReceipt(moduleType, chatMessageType, turnId, message)
 
                     val agentUserId = publisherId
                     callMessagePrint(TAG, "<<< [onMessageReceiptUpdated] $agentUserId $receipt")
