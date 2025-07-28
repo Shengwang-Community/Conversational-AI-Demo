@@ -56,7 +56,7 @@ extension ChatViewController: AgentTimerCoordinatorDelegate {
             timerCoordinator.stopJoinChannelTimer()
             return
         }
-        let avatarState = avatarIsSelected()
+        let avatarState = isEnableAvatar()
         var remoteIsJoined = self.agentIsJoined
         if avatarState {
             remoteIsJoined = agentIsJoined && avatarIsJoined

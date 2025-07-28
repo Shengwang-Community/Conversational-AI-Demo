@@ -29,7 +29,7 @@ extension ChatViewController {
         updateWindowContent()
     }
     
-    internal func avatarIsSelected() -> Bool {
-        return AppContext.preferenceManager()?.preference.avatar != nil
+    internal func isEnableAvatar() -> Bool {
+        return AppContext.shared.avatarEnable || AppContext.preferenceManager()?.preference.avatar != nil
     }
 }
