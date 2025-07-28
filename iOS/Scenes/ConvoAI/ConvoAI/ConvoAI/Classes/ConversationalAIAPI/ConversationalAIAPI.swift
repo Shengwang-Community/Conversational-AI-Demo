@@ -308,6 +308,9 @@ import AgoraRtmKit
     }
 }
 
+/// Message error information
+/// Data class for handling and reporting message errors. Contains error type, error code,
+/// error description and timestamp.
 @objc public class MessageError: NSObject {
     /// Message error type
     @objc public let type: ChatMessageType
