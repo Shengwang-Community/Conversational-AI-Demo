@@ -140,10 +140,9 @@ enum class ChatMessageType(val value: String) {
 }
 
 /**
- * Agent state change event.
- *
- * Represents an event when the AI agent state changes, containing complete state information and timestamp.
- * Used for tracking conversation flow and updating user interface state indicators.
+ * Message error information
+ * Data class for handling and reporting message errors. Contains error type, error code,
+ * error description and timestamp.
  *
  * @property chatMessageType Message error type
  * @property code Specific error code for identifying particular error conditions
