@@ -153,7 +153,7 @@ public func onMessageReceiptUpdated(agentUserId: String, messageReceipt: Message
   }
 ```
 
-2. **Image Sending Failure - onAgentError**
+2. **Image Sending Failure - onMessageError**
 ```swift
 struct ImageUploadError: Codable {
     let code: Int
@@ -166,28 +166,25 @@ struct ImageUploadErrorResponse: Codable {
     let error: ImageUploadError?
 }
 
-public func onAgentError(agentUserId: String, error: ModuleError) {
-    if error.type == .context {
-        if let messageData = error.message.data(using: .utf8) {
-            do {
-                let errorResponse = try JSONDecoder().decode(ImageUploadErrorResponse.self, from: messageData)
-                if !errorResponse.success {
-                    let errorMessage = errorResponse.error?.message ?? "Unknown error"
-                    let errorCode = errorResponse.error?.code ?? 0
-                    
-                    print("Image upload failed: \(errorMessage) (code: \(errorCode))")
-                    
-                    // Update UI
-                    DispatchQueue.main.async { [weak self] in
-                        self?.messageView.viewModel.updateImageMessage(uuid: errorResponse.uuid, state: .failed)
-                    }
+public func onMessageError(agentUserId: String, error: MessageError) {
+    if let messageData = error.message.data(using: .utf8) {
+        do {
+            let errorResponse = try JSONDecoder().decode(ImageUploadErrorResponse.self, from: messageData)
+            if !errorResponse.success {
+                let errorMessage = errorResponse.error?.message ?? "Unknown error"
+                let errorCode = errorResponse.error?.code ?? 0
+                
+                addLog("<<< [ImageUploadError] Image upload failed: \(errorMessage) (code: \(errorCode))")
+                
+                // Update UI to show error state
+                DispatchQueue.main.async { [weak self] in
+                    self?.messageView.viewModel.updateImageMessage(uuid: errorResponse.uuid, state: .failed)
                 }
-            } catch {
-                print("<<< [onAgentError] Failed to parse error message JSON: \(error)")
             }
+        } catch {
+            addLog("<<< [onAgentError] Failed to parse error message JSON: \(error)")
         }
     }
-    addLog("<<< [onAgentError] error: \(error)")
 }
 ```
 
