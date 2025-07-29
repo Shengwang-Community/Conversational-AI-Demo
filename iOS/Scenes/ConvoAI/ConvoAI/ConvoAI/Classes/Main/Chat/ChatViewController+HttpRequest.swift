@@ -86,7 +86,7 @@ extension ChatViewController {
                     "audio_scenario": nil,
                     "transcript": [
                         "enable": true,
-                        "enable_words": AppContext.preferenceManager()?.preference.avatar == nil,
+                        "enable_words": !isEnableAvatar(),
                         "protocol_version": "v2",
 //                        "redundant": nil,
                     ],
@@ -110,7 +110,7 @@ extension ChatViewController {
             ]
         } else {
             return [
-                "enable": AppContext.preferenceManager()?.preference.avatar != nil,
+                "enable": isEnableAvatar(),
                 "vendor": AppContext.preferenceManager()?.preference.avatar?.vendor ?? "",
                 "params": [
                     "agora_uid": "\(avatarUid)",
@@ -230,7 +230,7 @@ extension ChatViewController {
         let parameters = getStartAgentParameters()
         isSelfSubRender = (AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true)
 
-        if let _ = AppContext.preferenceManager()?.preference.avatar {
+        if isEnableAvatar() {
             addLog("will start avatar, avatar id: \(avatarUid)")
             startRenderRemoteVideoStream()
         }

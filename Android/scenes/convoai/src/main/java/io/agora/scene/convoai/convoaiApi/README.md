@@ -63,6 +63,7 @@
        override fun onAgentInterrupted(agentUserId: String, event: InterruptEvent) { /* ... */ }
        override fun onAgentMetrics(agentUserId: String, metric: Metric) { /* ... */ }
        override fun onAgentError(agentUserId: String, error: ModuleError) { /* ... */ }
+       override fun onMessageError(agentUserId: String, error: MessageError) { /* ... */ }
        override fun onMessageReceiptUpdated(agentUserId: String, receipt: MessageReceipt) { /* ... */ }
        override fun onTranscriptionUpdated(agentUserId: String, transcription: Transcription) { /* ... */ }
        override fun onDebugLog(log: String) { /* ... */ }
@@ -84,6 +85,14 @@
 
    ```kotlin
    api.loadAudioSettings()
+   rtcEngine.joinChannel(token, channelName, null, userId)
+   ```
+
+   **⚠️ 重要：如果启用数字人（Avatar），必须设置正确的音频场景：**
+
+   ```kotlin
+   // 启用数字人时，使用 AUDIO_SCENARIO_DEFAULT 以获得更好的音频混音效果
+   api.loadAudioSettings(Constants.AUDIO_SCENARIO_DEFAULT)
    rtcEngine.joinChannel(token, channelName, null, userId)
    ```
 
@@ -193,31 +202,20 @@ api.chat("agentUserId", ImageMessage(uuid = "img_123", imageUrl = "https://...")
 
 #### 1. 图片发送成功 - onMessageReceiptUpdated
 
-当收到 `onMessageReceiptUpdated` 回调时，需要按以下步骤解析来确认图片发送状态：
-
-**重要：必须先检查 `receipt.type` 是否为 `ModuleType.Context`，然后再检查 `resource_type`**
+当收到 `onMessageReceiptUpdated` 回调时，可以通过以下方式确认图片发送状态：
 
 ```kotlin
 override fun onMessageReceiptUpdated(agentUserId: String, receipt: MessageReceipt) {
-    // 第一步：检查消息类型是否为 Context
-    if (receipt.type == ModuleType.Context) {
+    if (receipt.chatMessageType == ChatMessageType.Image) {
         try {
-            // 第二步：解析 receipt.message 为 JSON 对象
-            val jsonObject = JSONObject(receipt.message)
-            
-            // 第三步：检查 resource_type 是否为 picture
-            if (jsonObject.has("resource_type") && 
-                jsonObject.getString("resource_type") == "picture") {
+            val json = JSONObject(receipt.message)
+            if (json.has("uuid")) {
+                val receivedUuid = json.getString("uuid")
                 
-                // 第四步：检查是否包含 uuid 字段
-                if (jsonObject.has("uuid")) {
-                    val receivedUuid = jsonObject.getString("uuid")
-                    
-                    // 如果 uuid 匹配，说明此图片发送成功
-                    if (receivedUuid == "your-sent-uuid") {
-                        Log.d("ImageSend", "Image sent successfully: $receivedUuid")
-                        // 更新 UI 显示发送成功状态
-                    }
+                // 如果 uuid 匹配，说明此图片发送成功
+                if (receivedUuid == "your-sent-uuid") {
+                    Log.d("ImageSend", "Image sent successfully: $receivedUuid")
+                    // 更新 UI 显示发送成功状态
                 }
             }
         } catch (e: Exception) {
@@ -227,31 +225,22 @@ override fun onMessageReceiptUpdated(agentUserId: String, receipt: MessageReceip
 }
 ```
 
-#### 2. 图片发送失败 - onAgentError
+#### 2. 图片发送失败 - onMessageError
 
-当收到 `onAgentError` 回调且 `error.type` 为 `ModuleType.Context` 时，需要解析 `error.message` 来确认图片发送失败：
+当收到 `onMessageError` 回调时，可以通过以下方式确认图片发送失败：
 
 ```kotlin
-override fun onAgentError(agentUserId: String, error: ModuleError) {
-    // 检查是否为 Context 类型的错误
-    if (error.type == ModuleType.Context) {
+override fun onMessageError(agentUserId: String, error: MessageError) {
+    if (error.chatMessageType == ChatMessageType.Image) {
         try {
-            // 解析 error.message 为 JSON 对象
-            val jsonObject = JSONObject(error.message)
-            
-            // 检查 resource_type 是否为 picture
-            if (jsonObject.has("resource_type") && 
-                jsonObject.getString("resource_type") == "picture") {
-                
-                // 检查是否包含 uuid 字段
-                if (jsonObject.has("uuid")) {
-                    val failedUuid = jsonObject.getString("uuid")
-                    
-                    // 如果 uuid 匹配，说明此图片发送失败
-                    if (failedUuid == "your-sent-uuid") {
-                        Log.e("ImageSend", "Image send failed: $failedUuid")
-                        // 更新 UI 显示发送失败状态
-                    }
+            val json = JSONObject(error.message)
+            if (json.has("uuid")) {
+                val failedUuid = json.getString("uuid")
+
+                // 如果 uuid 匹配，说明此图片发送失败
+                if (failedUuid == "your-sent-uuid") {
+                    Log.e("ImageSend", "Image send failed: $failedUuid")
+                    // 更新 UI 显示发送失败状态
                 }
             }
         } catch (e: Exception) {
@@ -272,21 +261,30 @@ override fun onAgentError(agentUserId: String, error: ModuleError) {
   rtcEngine.joinChannel(token, channelName, null, userId)
   ```
 
+- **数字人音频设置：**
+  如果启用数字人功能，必须使用 `Constants.AUDIO_SCENARIO_DEFAULT` 音频场景以获得最佳的音频混音效果：
+  ```kotlin
+  // 启用数字人时的正确音频设置
+  api.loadAudioSettings(Constants.AUDIO_SCENARIO_DEFAULT)
+  rtcEngine.joinChannel(token, channelName, null, userId)
+  ```
+  
+  不同场景的音频设置建议：
+  - **数字人模式**：`Constants.AUDIO_SCENARIO_DEFAULT` - 提供更好的音频混音效果
+  - **标准模式**：`Constants.AUDIO_SCENARIO_AI_CLIENT` - 适用于标准AI对话场景
+
 - **所有事件回调均在主线程执行。**
   可直接在回调中安全更新 UI。
 
 - **消息发送状态确认：**
   - `chat` 接口的 completion 回调仅表示发送请求是否成功，不代表消息实际处理状态
-  - 图片消息的实际发送成功通过 `onMessageReceiptUpdated` 回调确认（使用 uuid 标识）
-  - 图片消息的发送失败通过 `onAgentError` 回调确认（使用 uuid 标识）
-  - 需要解析回调中的 JSON 消息来获取具体的标识符和状态信息
+  - 图片消息的实际发送成功通过 `onMessageReceiptUpdated` 回调确认
+  - 图片消息的发送失败通过 `onMessageError` 回调确认
+  - 推荐使用 `sou` 字段进行快速判断，性能更好
 
 - **图片消息状态跟踪：**
-  - **图片消息**：通过 `onMessageReceiptUpdated` 和 `onAgentError` 回调中的 `uuid` 字段确认发送状态
-  - **图片消息解析步骤**：
-    - **成功回调**：必须先检查 `receipt.type == ModuleType.Context`，然后检查 `resource_type == "picture"`
-    - **失败回调**：必须先检查 `error.type == ModuleType.Context`，然后检查 `resource_type == "picture"`
-    - 只有满足以上条件后，才能通过 `uuid` 字段确认具体图片的发送状态
+  - 直接检查 `chatMessageType == ChatMessageType.Image`
+  - 通过解析 JSON 中的 `uuid` 字段确认具体图片的发送状态
 
 ---
 

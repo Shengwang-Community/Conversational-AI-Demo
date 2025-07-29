@@ -64,7 +64,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, didJoinedOfUid uid: UInt, elapsed: Int) {
         addLog("[RTC Call Back] didJoinedOfUid uid: \(uid)")
-        let avatarState = avatarIsSelected()
+        let avatarState = isEnableAvatar()
         if uid == agentUid {
             agentIsJoined = true
             if avatarState {
@@ -244,7 +244,7 @@ extension ChatViewController {
         }
         let independent = (AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true)
         let secnario: AgoraAudioScenario = {
-            if AppContext.preferenceManager()?.preference.avatar != nil {
+            if isEnableAvatar() {
                 return .default
             }
             return independent ? .chorus : .aiClient

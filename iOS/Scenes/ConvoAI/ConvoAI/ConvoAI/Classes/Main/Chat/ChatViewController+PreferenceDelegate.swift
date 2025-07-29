@@ -9,11 +9,10 @@ import Foundation
 
 extension ChatViewController: AgentPreferenceManagerDelegate {
     func preferenceManager(_ manager: AgentPreferenceManager, avatarDidUpdated avatar: Avatar?) {
-        guard avatar != nil else {
+        if isEnableAvatar() {
+            startShowAvatar()
+        } else {
             stopShowAvatar()
-            return
         }
-        
-        startShowAvatar()
     }
 }

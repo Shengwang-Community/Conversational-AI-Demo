@@ -69,6 +69,25 @@ struct KeyCenter {
      */
     static let TTS_VENDOR: String = ""
     static let TTS_PARAMS: [String : Any] = [:]
-        
+    
+    /**
+     AVATAR
+     Get from AVATAR vendor
+     For example:
+     https://github.com/Shengwang-Community/Conversational-AI-Demo/issues/69
+     
+     static let AVATAR_ENABLE: Bool = true
+     static let AVATAR_VENDOR: String = "vendor name"
+     static let AVATAR_PARAMS: [String: Any] = [
+        "agora_uid":"agent rtc uid",
+        "agora_token":"agent rtc token",
+        "appId":"agora app id",
+        "app_key":"vendor app key",
+        "avatar_id":"vendor avatar id number",
+        "sceneList":[["digital_role":["face_feature_id":"vendor face feature id","position":["x":0,"y":0],"url":"https://xxx"]]]
+     ]
+     */
+    static let AVATAR_ENABLE: Bool = false
+    static let AVATAR_VENDOR: String = ""
+    static let AVATAR_PARAMS: [String: Any] = [:]
 }
-

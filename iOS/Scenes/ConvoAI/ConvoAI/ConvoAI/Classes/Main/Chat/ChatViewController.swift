@@ -227,6 +227,11 @@ public class ChatViewController: UIViewController {
         setupViews()
         setupConstraints()
         setupSomeNecessaryConfig()
+        if isEnableAvatar() {
+            startShowAvatar()
+        } else {
+            stopShowAvatar()
+        }
     }
     
     public override func viewDidLayoutSubviews() {

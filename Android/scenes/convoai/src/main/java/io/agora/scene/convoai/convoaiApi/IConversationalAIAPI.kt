@@ -645,11 +645,20 @@ interface IConversationalAIAPI {
      * WARNING: This method MUST be called BEFORE rtcEngine.joinChannel().
      * If you do not call loadAudioSettings before joining the RTC channel, the audio quality for AI conversation may be suboptimal or incorrect.
      *
-     * @param scenario Audio scenario, default is AUDIO_SCENARIO_AI_CLIENT. If user enables avatar, please set scenario to AUDIO_SCENARIO_DEFAULT for better audio mixing.
+     * ⚠️ IMPORTANT: If you enable Avatar, you MUST use AUDIO_SCENARIO_DEFAULT for better audio mixing.
+     *
+     * @param scenario Audio scenario, default is AUDIO_SCENARIO_AI_CLIENT. 
+     *                - For Avatar: Use AUDIO_SCENARIO_DEFAULT
+     *                - For standard mode: Use AUDIO_SCENARIO_AI_CLIENT
      * @note This method must be called before each joinChannel call to ensure best audio quality.
      * @example
      * val api = ConversationalAIAPI(config)
-     * api.loadAudioSettings() // <-- MUST be called before joinChannel!
+     * // For avatar
+     * api.loadAudioSettings(Constants.AUDIO_SCENARIO_DEFAULT) // <-- MUST be called before joinChannel!
+     * rtcEngine.joinChannel(token, channelName, null, userId)
+     * 
+     * // For standard mode
+     * api.loadAudioSettings(Constants.AUDIO_SCENARIO_AI_CLIENT) // <-- MUST be called before joinChannel!
      * rtcEngine.joinChannel(token, channelName, null, userId)
      */
     fun loadAudioSettings(scenario: Int = Constants.AUDIO_SCENARIO_AI_CLIENT)

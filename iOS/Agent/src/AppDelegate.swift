@@ -27,6 +27,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         AppContext.shared.ttsVendor = KeyCenter.TTS_VENDOR
         AppContext.shared.ttsParams = KeyCenter.TTS_PARAMS
         AppContext.shared.baseServerUrl = KeyCenter.TOOLBOX_SERVER_HOST
+        AppContext.shared.avatarEnable = KeyCenter.AVATAR_ENABLE
+        AppContext.shared.avatarVendor = KeyCenter.AVATAR_VENDOR
+        AppContext.shared.avatarParams = KeyCenter.AVATAR_PARAMS
         
         AppContext.shared.loadInnerEnvironment()
                 
