@@ -70,7 +70,7 @@
 "settings.noise.aiVad.highlight" = "Intelligent Interruption Handling";
 "settings.noise.forceResponse" = "Force Response";
 "settings.noise.bhvs" = "Background Human Voice Suppression";
-"settings.digital.human" = "Digital Human";
+"settings.digital.human" = "AI Avatar";
 "settings.digital.human.closed" = "Closed";
 "settings.digital.human.preset.alert.title" = "Changing Preset requires reconfiguring the virtual human";
 "settings.digital.human.preset.alert.description" = "Preset is related to the gender of the virtual human. Please reconfigure the virtual human after changing the Preset.";

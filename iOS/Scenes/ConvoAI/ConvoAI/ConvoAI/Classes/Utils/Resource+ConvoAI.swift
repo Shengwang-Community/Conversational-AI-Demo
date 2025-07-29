@@ -25,8 +25,6 @@ extension ResourceManager {
             public static let aiCardDes = ResourceManager.localizedString("scene.ai.card.des")
             public static let v2vCardTitle = ResourceManager.localizedString("scene.v2v.card.title")
             public static let v2vCardDes = ResourceManager.localizedString("scene.v2v.card.des")
-            public static let digCardTitle = ResourceManager.localizedString("scene.dig.card.title")
-            public static let digCardDes = ResourceManager.localizedString("scene.dig.card.des")
         }
 
         public enum Login {
