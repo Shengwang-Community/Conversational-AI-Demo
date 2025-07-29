@@ -88,6 +88,14 @@
    rtcEngine.joinChannel(token, channelName, null, userId)
    ```
 
+   **⚠️ 重要：如果启用数字人（Avatar），必须设置正确的音频场景：**
+
+   ```kotlin
+   // 启用数字人时，使用 AUDIO_SCENARIO_DEFAULT 以获得更好的音频混音效果
+   api.loadAudioSettings(Constants.AUDIO_SCENARIO_DEFAULT)
+   rtcEngine.joinChannel(token, channelName, null, userId)
+   ```
+
 6. **（可选 发送消息给 AI agent**
 
    **发送文本消息：**
@@ -252,6 +260,18 @@ override fun onMessageError(agentUserId: String, error: MessageError) {
   api.loadAudioSettings()
   rtcEngine.joinChannel(token, channelName, null, userId)
   ```
+
+- **数字人音频设置：**
+  如果启用数字人功能，必须使用 `Constants.AUDIO_SCENARIO_DEFAULT` 音频场景以获得最佳的音频混音效果：
+  ```kotlin
+  // 启用数字人时的正确音频设置
+  api.loadAudioSettings(Constants.AUDIO_SCENARIO_DEFAULT)
+  rtcEngine.joinChannel(token, channelName, null, userId)
+  ```
+  
+  不同场景的音频设置建议：
+  - **数字人模式**：`Constants.AUDIO_SCENARIO_DEFAULT` - 提供更好的音频混音效果
+  - **标准模式**：`Constants.AUDIO_SCENARIO_AI_CLIENT` - 适用于标准AI对话场景
 
 - **所有事件回调均在主线程执行。**
   可直接在回调中安全更新 UI。
