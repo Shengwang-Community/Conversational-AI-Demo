@@ -682,6 +682,7 @@ public enum MessageType: String, CaseIterable {
     /// Uses default audio scenario (.aiClient)
     ///
     /// - Important: If you need to enable audio best practices, you must call this method before each `joinChannel` call
+    ///  If you enable Avatar, you MUST use .default for better audio mixing.
     /// - Example:
     /// ```swift
     /// // Set audio best practice parameters before joining channel
@@ -698,6 +699,10 @@ public enum MessageType: String, CaseIterable {
     /// - Parameter scenario: Audio scenario for optimization (e.g., .aiClient, .meeting, etc.)
     ///   if user enables avatar, please set scenario to .default for better audio mixing.
     /// - Important: If you need to enable audio best practices, you must call this method before each `joinChannel` call
+    ///  If you enable Avatar, you MUST use .default for better audio mixing.
+    ///  @param scenario Audio scenario, default is .aiClient
+    ///               - For Avatar: Use .default
+    ///              - For standard mode: Use .aiClient
     @objc func loadAudioSettings(secnario: AgoraAudioScenario)
     
     /// Subscribe to channel messages
