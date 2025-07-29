@@ -230,7 +230,7 @@ extension ChatViewController {
         let parameters = getStartAgentParameters()
         isSelfSubRender = (AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true)
 
-        if let _ = AppContext.preferenceManager()?.preference.avatar {
+        if isEnableAvatar() {
             addLog("will start avatar, avatar id: \(avatarUid)")
             startRenderRemoteVideoStream()
         }

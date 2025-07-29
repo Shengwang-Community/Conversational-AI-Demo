@@ -15,7 +15,7 @@ class ChatWindowState {
     
     func reset() {
         showTranscription = false
-        if let _ = AppContext.preferenceManager()?.preference.avatar {
+        if AppContext.shared.avatarEnable || AppContext.preferenceManager()?.preference.avatar != nil {
             showAvatar = true
         } else {
             showAvatar = false
