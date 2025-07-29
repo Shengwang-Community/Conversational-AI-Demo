@@ -73,6 +73,11 @@
     #----------- TTS -----------
     static let TTS_VENDOR: String = <TTS 厂商>
     static let TTS_PARAMS: [String : Any] = <TTS 参数>
+
+    #----------- AVATAR -----------
+    static let AVATAR_ENABLE: Bool = <是否启用AVATAR功能>
+    static let AVATAR_VENDOR: String = <AVATAR 厂商>
+    static let AVATAR_PARAMS: [String: Any] = <AVATAR 参数>
 ```
 
 - 在 iOS 目录执行 `pod install` 后运行项目，即可开始您的体验
@@ -91,12 +96,12 @@
 | [AgentInformationViewController.swift](ConvoAI/ConvoAI/Classes/Main/Setting/VC/AgentInformationViewController.swift)  | 智能体运行状态信息展示对话框                   |
 | [AgentSettingViewController.swift](ConvoAI/ConvoAI/Classes/Main/Setting/VC/AgentSettingViewController.swift)          | 智能体参数配置设置对话框                       |
 | [Utils/](ConvoAI/ConvoAI/Classes/Utils)                                                                               | 实用工具类和辅助函数                          |
-| [SubRender/](ConvoAI/ConvoAI/Classes/Utils/SubRender)                                                                 | 实时对话字幕渲染组件                          |
+| [ConversationalAIAPI/](ConvoAI/ConvoAI/Classes/ConversationalAIAPI)                                                   | 实时对话字幕渲染组件                          |
 
 ### 2.2 实时字幕
 与对话式智能体进行实时互动时，你可能需要实时字幕显示你与智能体的对话内容。
 - 📖 查看我们的 [实时字幕功能指南](https://doc.shengwang.cn/doc/convoai/restful/user-guides/realtime-sub) 了解如何实现该功能
-- 实现该功能需要使用 [开源字幕处理模块](ConvoAI/ConvoAI/Classes/Utils/SubRender)，请参考上述文档将对应文件集成进您的项目
+- 实现该功能需要使用 [开源字幕处理模块](ConvoAI/ConvoAI/Classes/ConversationalAIAPI)，请参考上述文档将对应文件集成进您的项目
 - ⚠️ 开源字幕处理模块由 Swift 语言开发，如果您的项目是纯 OC 项目，您可以参考 Apple 官方文档 [在Objective-C中导入Swift](https://developer.apple.com/documentation/swift/importing-swift-into-objective-c) 把对应文件集成进您的项目
 
 ## 📚 三、相关资源
