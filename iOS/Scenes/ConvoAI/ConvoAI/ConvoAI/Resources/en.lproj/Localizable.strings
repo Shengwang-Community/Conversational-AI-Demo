@@ -72,11 +72,11 @@
 "settings.noise.bhvs" = "Background Human Voice Suppression";
 "settings.digital.human" = "AI Avatar";
 "settings.digital.human.closed" = "Closed";
-"settings.digital.human.preset.alert.title" = "Changing Preset requires reconfiguring the virtual human";
-"settings.digital.human.preset.alert.description" = "Preset is related to the gender of the virtual human. Please reconfigure the virtual human after changing the Preset.";
-"settings.digital.human.language.alert.title" = "Changing Language requires reconfiguring the virtual human";
-"settings.digital.human.language.alert.description" = "Language is related to the gender of the virtual human. Please reconfigure the virtual human after changing the Language.";
-"settings.digital.human.alert.ignore" = "Ignore";
+"settings.digital.human.preset.alert.title" = "AI Avatar Will Be Reset";
+"settings.digital.human.preset.alert.description" = "Reconfigure AI avatar after changing preset.";
+"settings.digital.human.language.alert.title" = "AI Avatar Will Be Reset";
+"settings.digital.human.language.alert.description" = "Reconfigure AI avatar after changing language.";
+"settings.digital.human.alert.ignore" = "Don't show again";
 "settings.digital.human.alert.cancel" = "Cancel";
 "settings.digital.human.alert.confirm" = "Confirm";
 
