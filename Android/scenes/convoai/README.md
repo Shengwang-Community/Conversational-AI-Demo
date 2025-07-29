@@ -88,18 +88,19 @@ AVATAR_PARAMS=<AVATAR 参数>
 ## 🗂️ 二、项目结构导览
 
 ### 2.1 基本结构
-| 路径                                                                                    | 描述                          |
-|---------------------------------------------------------------------------------------|-----------------------------|
-| [api/](src/main/java/io/agora/scene/convoai/api)                                      | 对话式 AI 引擎 RESTful 接口实现和数据模型 |
-| [animation/](src/main/java/io/agora/scene/convoai/animation)                          | 智能体交互动画效果实现                 |
-| [constant/](src/main/java/io/agora/scene/convoai/constant)                            | 常量和枚举类型定义                   |
-| [convoaiApi/](src/main/java/io/agora/scene/convoai/convoaiApi/)                       | ConversationalAI组件                  |
-| [rtc/](src/main/java/io/agora/scene/convoai/rtc)                                      | RTC 音视频通信相关实现               |
-| [rtm/](src/main/java/io/agora/scene/convoai/rtm)                                      | RTM 实时消息相关实现                |
-| [ui/](src/main/java/io/agora/scene/convoai/ui)                                        | UI 界面组件和交互页面                |
-| [CovLivingActivity.kt](src/main/java/io/agora/scene/convoai/ui/CovLivingActivity.kt)  | AI 对话主交互界面                  |
-| [CovSettingsDialog.kt](src/main/java/io/agora/scene/convoai/ui/CovSettingsDialog.kt)  | 智能体参数配置设置对话框                |
-| [CovAgentInfoDialog.kt](src/main/java/io/agora/scene/convoai/ui/CovAgentInfoDialog.kt) | 智能体运行状态信息展示对话框              |
+| 路径                                                                                                        | 描述                          |
+|-----------------------------------------------------------------------------------------------------------|-----------------------------|
+| [api/](src/main/java/io/agora/scene/convoai/api)                                                          | 对话式 AI 引擎 RESTful 接口实现和数据模型 |
+| [animation/](src/main/java/io/agora/scene/convoai/animation)                                              | 智能体交互动画效果实现                 |
+| [constant/](src/main/java/io/agora/scene/convoai/constant)                                                | 常量和枚举类型定义                   |
+| [convoaiApi/](src/main/java/io/agora/scene/convoai/convoaiApi/)                                           | ConversationalAI组件          |
+| [rtc/](src/main/java/io/agora/scene/convoai/rtc)                                                          | RTC 音视频通信相关实现               |
+| [rtm/](src/main/java/io/agora/scene/convoai/rtm)                                                          | RTM 实时消息相关实现                |
+| [ui/](src/main/java/io/agora/scene/convoai/ui)                                                            | UI 界面组件和交互页面                |
+| [CovLivingActivity.kt](src/main/java/io/agora/scene/convoai/ui/CovLivingActivity.kt)                      | AI 对话主交互界面                  |
+| [CovAgentSettingsFragment.kt](src/main/java/io/agora/scene/convoai/ui/dialog/CovAgentSettingsFragment.kt) | 智能体参数配置设置界面                 |
+| [CovAgentInfoFragment.kt](src/main/java/io/agora/scene/convoai/ui/dialog/CovAgentInfoFragment.kt)         | 智能体运行状态信息展示界面               |
+| [CovAvatarSelectorDialog.kt](src/main/java/io/agora/scene/convoai/ui/dialog/CovAvatarSelectorDialog.kt)         | 数字人选择界面                     |
 
 ### 2.2 实时字幕
 与对话式智能体进行实时互动时，你可能需要实时字幕显示你与智能体的对话内容。
