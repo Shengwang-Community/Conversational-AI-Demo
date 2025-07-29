@@ -211,6 +211,17 @@ public func onMessageError(agentUserId: String, error: MessageError) {
     convoAIAPI.loadAudioSettings()
     rtcEngine.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
   ```
+- **数字人音频设置：**
+如果启用数字人功能，必须使用 `.default` 音频场景以获得最佳的音频混音效果：
+  ```swift
+    // 启用数字人时的正确音频设置
+    convoAIAPI.loadAudioSettings(secnario: .default)
+    rtcEngine.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
+  ```
+
+不同场景的音频设置建议：
+- **数字人模式**：`.default` - 提供更好的音频混音效果
+- **标准模式**：`.aiClient` - 适用于标准AI对话场景
 
 - **所有事件回调均在主线程执行。**
   可直接在回调中安全更新 UI。

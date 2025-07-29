@@ -216,6 +216,17 @@ public func onMessageError(agentUserId: String, error: MessageError) {
     convoAIAPI.loadAudioSettings()
     rtcEngine.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
   ```
+- **Avatar Audio Settings：**
+If the avatar feature is enabled, the `.default` audio scene must be used to achieve optimal audio mixing effects.：
+  ```swift
+    // Correct audio settings when enabling avatar
+    convoAIAPI.loadAudioSettings(secnario: .default)
+    rtcEngine.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
+  ```
+
+Audio settings recommendations for different scenarios:
+- **Avatar mode**：`.default` - Deliver better audio mixing results
+- **Standard Mode**：`.aiClient` - Applicable to standard AI dialogue scenarios
 
 - **All event callbacks are executed on the main thread.**
   You can safely update the UI directly in callbacks.
