@@ -105,6 +105,7 @@ object CovAgentManager {
         preset = null
         language = null
         avatar = null
+        renderMode = CovRenderMode.WORD
     }
 
     val isOpenSource: Boolean get() = BuildConfig.IS_OPEN_SOURCE
