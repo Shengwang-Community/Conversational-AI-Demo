@@ -154,8 +154,8 @@ class CovMessageListView @JvmOverloads constructor(
     /**
      * Update agent name
      */
-    fun updateAgentName(name: String, url: String) {
-        messageAdapter.updateAgentName(name, url)
+    fun updateAgentName(str: String, url: String, @androidx.annotation.DrawableRes defaultImage:Int) {
+        messageAdapter.updateAgentName(str, url, defaultImage)
     }
 
     /**
@@ -256,8 +256,9 @@ class CovMessageListView @JvmOverloads constructor(
 
         private var agentName: String = ""
         private var agentUrl: String = ""
+        @androidx.annotation.DrawableRes
+        private var agentDefaultImage: Int = R.drawable.common_default_agent
         private val messages = mutableListOf<Message>()
-
 
         abstract inner class MessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
             abstract fun bind(message: Message)
@@ -322,13 +323,13 @@ class CovMessageListView @JvmOverloads constructor(
             override fun bind(message: Message) {
                 binding.tvMessageTitle.text = agentName
                 if (agentUrl.isEmpty()) {
-                    binding.ivMessageIcon.setImageResource(R.drawable.common_default_agent)
+                    binding.ivMessageIcon.setImageResource(agentDefaultImage)
                 } else {
                     GlideImageLoader.load(
                         binding.ivMessageIcon,
                         agentUrl,
-                        R.drawable.common_default_agent,
-                        R.drawable.common_default_agent
+                        agentDefaultImage,
+                        agentDefaultImage
                     )
                 }
                 if (message.type == MessageType.TEXT) {
@@ -487,9 +488,10 @@ class CovMessageListView @JvmOverloads constructor(
         /**
          * Update agent name
          */
-        fun updateAgentName(name: String, url: String) {
+        fun updateAgentName(name: String, url: String, @androidx.annotation.DrawableRes defaultImage:Int) {
             agentName = name
             agentUrl = url
+            agentDefaultImage = defaultImage
             notifyDataSetChanged()
         }
 

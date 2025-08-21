@@ -15,7 +15,7 @@ data class CovAgentPreset(
     val call_time_limit_avatar_second: Long,
     val avatar_ids_by_lang: Map<String, List<CovAvatar>>? = null,
     val is_support_vision: Boolean,
-    val avatar_url: String,
+    val avatar_url: String?,
     val description: String,
 ) {
     val isIndependent: Boolean

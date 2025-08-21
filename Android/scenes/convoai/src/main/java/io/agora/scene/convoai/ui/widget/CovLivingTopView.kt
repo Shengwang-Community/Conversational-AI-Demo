@@ -1,26 +1,25 @@
 package io.agora.scene.convoai.ui.widget
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import androidx.constraintlayout.widget.ConstraintLayout
-import io.agora.rtc2.Constants
-import io.agora.scene.convoai.databinding.CovActivityLivingTopBinding
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
-import io.agora.scene.convoai.constant.AgentConnectionState
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.Animation
-import android.widget.ImageButton
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
+import io.agora.rtc2.Constants
 import io.agora.scene.common.R
 import io.agora.scene.common.util.GlideImageLoader
-import android.animation.ObjectAnimator
-import android.animation.AnimatorSet
-import android.view.animation.AccelerateDecelerateInterpolator
+import io.agora.scene.convoai.constant.AgentConnectionState
+import io.agora.scene.convoai.databinding.CovActivityLivingTopBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 /**
  * Top bar view for living activity, encapsulating info/settings/net buttons, ViewFlipper switching, and timer logic.
@@ -93,16 +92,16 @@ class CovLivingTopView @JvmOverloads constructor(
         onCCClick = listener
     }
 
-    fun updateTitleName(name: String, url: String) {
+    fun updateTitleName(name: String, url: String, @androidx.annotation.DrawableRes defaultImage:Int) {
         binding.tvPresetName.text = name
         if (url.isEmpty()) {
-            binding.ivPreset.setImageResource(R.drawable.common_default_agent)
+            binding.ivPreset.setImageResource(defaultImage)
         } else {
             GlideImageLoader.load(
                 binding.ivPreset,
                 url,
-                R.drawable.common_default_agent,
-                R.drawable.common_default_agent
+                defaultImage,
+                defaultImage
             )
         }
     }

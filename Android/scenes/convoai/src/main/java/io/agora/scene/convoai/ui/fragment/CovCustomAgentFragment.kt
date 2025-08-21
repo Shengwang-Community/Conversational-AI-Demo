@@ -505,13 +505,17 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
                     tvTitle.text = preset.display_name
                     tvDescription.isVisible  =  preset.description.isNotEmpty()
                     tvDescription.text = preset.description
-                    // For now, using default avatar
-                    GlideImageLoader.load(
-                        ivAvatar,
-                        preset.avatar_url,
-                        io.agora.scene.common.R.drawable.common_default_agent,
-                        io.agora.scene.common.R.drawable.common_default_agent
-                    )
+                    if (preset.avatar_url.isNullOrEmpty()) {
+                        ivAvatar.setImageResource(io.agora.scene.common.R.drawable.common_custom_agent)
+                    } else {
+                        GlideImageLoader.load(
+                            ivAvatar,
+                            preset.avatar_url,
+                            io.agora.scene.common.R.drawable.common_custom_agent,
+                            io.agora.scene.common.R.drawable.common_custom_agent
+                        )
+                    }
+
                     rootView.setOnClickListener {
                         val position = adapterPosition
                         if (position != RecyclerView.NO_POSITION) {
