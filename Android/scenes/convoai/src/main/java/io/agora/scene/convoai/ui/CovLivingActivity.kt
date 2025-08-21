@@ -128,7 +128,12 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             val layoutParams = clTop.layoutParams as ViewGroup.MarginLayoutParams
             layoutParams.topMargin = statusBarHeight
             clTop.layoutParams = layoutParams
-            clTop.updateTitleName(viewModel.agentName, viewModel.agentUrl)
+            val defaultImage = if (CovAgentManager.getPreset()?.isCustom == true) {
+                io.agora.scene.common.R.drawable.common_custom_agent
+            } else {
+                io.agora.scene.common.R.drawable.common_default_agent
+            }
+            clTop.updateTitleName(viewModel.agentName, viewModel.agentUrl, defaultImage)
             agentStateView.configureStateTexts(
                 silent = getString(R.string.cov_agent_silent),
                 listening = getString(R.string.cov_agent_listening),
@@ -438,7 +443,12 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                             mCovBallAnim = null
                         }
                     }
-                    clTop.updateTitleName(viewModel.agentName, viewModel.agentUrl)
+                    val defaultImage = if (CovAgentManager.getPreset()?.isCustom == true) {
+                        io.agora.scene.common.R.drawable.common_custom_agent
+                    } else {
+                        io.agora.scene.common.R.drawable.common_default_agent
+                    }
+                    clTop.updateTitleName(viewModel.agentName, viewModel.agentUrl, defaultImage)
                 }
             }
         }
@@ -602,12 +612,17 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
         }
 
         mBinding?.apply {
+            val defaultImage = if (CovAgentManager.getPreset()?.isCustom == true) {
+                io.agora.scene.common.R.drawable.common_custom_agent
+            } else {
+                io.agora.scene.common.R.drawable.common_default_agent
+            }
             if (isSelfSubRender) {
                 selfRenderController?.enable(true)
-                messageListViewV1.updateAgentName(viewModel.agentName, viewModel.agentUrl)
+                messageListViewV1.updateAgentName(viewModel.agentName, viewModel.agentUrl, defaultImage)
             } else {
                 selfRenderController?.enable(false)
-                messageListViewV2.updateAgentName(viewModel.agentName, viewModel.agentUrl)
+                messageListViewV2.updateAgentName(viewModel.agentName, viewModel.agentUrl, defaultImage)
             }
         }
 

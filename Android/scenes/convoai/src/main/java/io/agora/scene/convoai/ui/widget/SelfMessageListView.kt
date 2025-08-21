@@ -73,8 +73,8 @@ class SelfMessageListView @JvmOverloads constructor(
         return messageAdapter.getAllMessage()
     }
 
-    fun updateAgentName(str: String, url: String) {
-        messageAdapter.updateFromTitle(str, url)
+    fun updateAgentName(str: String, url: String, @androidx.annotation.DrawableRes defaultImage:Int) {
+        messageAdapter.updateFromTitle(str, url, defaultImage)
     }
 
     private fun handleUserMessage(turnId: Long, text: String, isFinal: Boolean) {
@@ -173,6 +173,8 @@ class SelfMessageListView @JvmOverloads constructor(
 
         private var fromTitle: String = ""
         private var fromUrl: String = ""
+        @androidx.annotation.DrawableRes
+        private var fromDefaultImage: Int = R.drawable.common_default_agent
         private val messages = mutableListOf<Message>()
 
         abstract class MessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -191,13 +193,13 @@ class SelfMessageListView @JvmOverloads constructor(
                 binding.tvMessageContent.text = message.content
                 binding.tvMessageTitle.text = fromTitle
                 if (fromUrl.isEmpty()) {
-                    binding.ivMessageIcon.setImageResource(R.drawable.common_default_agent)
+                    binding.ivMessageIcon.setImageResource(fromDefaultImage)
                 } else {
                     GlideImageLoader.load(
                         binding.ivMessageIcon,
                         fromUrl,
-                        R.drawable.common_default_agent,
-                        R.drawable.common_default_agent
+                        fromDefaultImage,
+                        fromDefaultImage
                     )
                 }
             }
@@ -270,9 +272,10 @@ class SelfMessageListView @JvmOverloads constructor(
             }
         }
 
-        fun updateFromTitle(title: String, url: String) {
+        fun updateFromTitle(title: String, url: String, @androidx.annotation.DrawableRes defaultImage:Int) {
             fromTitle = title
             fromUrl = url
+            fromDefaultImage = defaultImage
             notifyDataSetChanged()
         }
     }
