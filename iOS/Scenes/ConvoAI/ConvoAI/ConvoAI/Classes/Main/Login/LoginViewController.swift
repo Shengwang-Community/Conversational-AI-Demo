@@ -181,13 +181,12 @@ class LoginViewController: UIViewController {
             make.top.equalToSuperview().offset(100)
         }
         termsTextLabel.snp.makeConstraints { make in
-            make.centerX.equalToSuperview()
+            make.centerX.equalToSuperview().offset(10)
             make.bottom.equalTo(self.view.safeAreaLayoutGuide.snp.bottom).offset(-40)
-            make.left.equalTo(termsCheckbox.snp.right).offset(8)
         }
         termsCheckbox.snp.makeConstraints { make in
             make.centerY.equalTo(termsTextLabel)
-            make.right.equalTo(termsTextLabel.snp.left)
+            make.right.equalTo(termsTextLabel.snp.left).offset(-8)
             make.width.height.equalTo(20)
         }
         warningButton.snp.makeConstraints { make in
