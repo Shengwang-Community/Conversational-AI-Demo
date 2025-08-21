@@ -62,18 +62,18 @@ class CustomAgentViewController: UIViewController {
 
     func setupConstraints() {
         inputContainerView.snp.makeConstraints { make in
-            make.left.right.equalToSuperview().inset(12)
-            make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-17)
+            make.left.right.equalToSuperview()
+            make.bottom.equalToSuperview()
         }
         
         tableView.snp.makeConstraints { make in
             make.top.left.right.equalTo(0)
-            make.bottom.equalTo(inputContainerView.snp.top).offset(-21)
+            make.bottom.equalTo(inputContainerView.snp.top)
         }
 
         emptyStateView.snp.makeConstraints { make in
             make.top.equalTo(0)
-            make.bottom.equalTo(inputContainerView.snp.top).offset(-21)
+            make.bottom.equalTo(inputContainerView.snp.top).offset(-18)
             make.left.right.equalToSuperview().inset(12)
         }
     }

@@ -35,6 +35,7 @@ class CustomAgentEmptyView: UIView {
         label.textColor = UIColor.themColor(named: "ai_icontext3")
         label.font = .systemFont(ofSize: 12)
         label.textAlignment = .center
+        label.numberOfLines = 0
         return label
     }()
 
@@ -61,6 +62,8 @@ class CustomAgentEmptyView: UIView {
         addSubview(stackView)
         stackView.snp.makeConstraints { make in
             make.center.equalToSuperview()
+            make.left.equalTo(16)
+            make.right.equalTo(-16)
         }
     }
 

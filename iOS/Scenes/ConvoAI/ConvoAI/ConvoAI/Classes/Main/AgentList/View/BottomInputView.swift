@@ -13,6 +13,14 @@ class BottomInputView: UIView, UITextFieldDelegate {
 
     private let maxCharCount = 8
 
+    let inputContainerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.themColor(named: "ai_fill5")
+        view.layer.cornerRadius = 16
+        
+        return view
+    }()
+
     let textField: UITextField = {
         let textField = UITextField()
         textField.borderStyle = .none
@@ -42,10 +50,9 @@ class BottomInputView: UIView, UITextFieldDelegate {
     override init(frame: CGRect) {
         super.init(frame: frame)
         textField.delegate = self
-        backgroundColor = UIColor.themColor(named: "ai_fill5")
+        backgroundColor = UIColor.themColor(named: "ai_fill1")
         layer.cornerRadius = 16
-        layer.borderColor = UIColor.themColor(named: "ai_line2").cgColor
-        layer.borderWidth = 0.5
+        layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         setupViews()
     }
 
@@ -54,9 +61,14 @@ class BottomInputView: UIView, UITextFieldDelegate {
     }
 
     private func setupViews() {
-        addSubview(textField)
-        addSubview(actionButton)
-        
+        addSubview(inputContainerView)
+        inputContainerView.addSubview(textField)
+        inputContainerView.addSubview(actionButton)
+
+        inputContainerView.snp.makeConstraints { make in
+            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16))
+        }
+
         actionButton.snp.makeConstraints { make in
             make.trailing.equalToSuperview().offset(-9)
             make.centerY.equalToSuperview()
@@ -72,7 +84,7 @@ class BottomInputView: UIView, UITextFieldDelegate {
         }
         
         self.snp.makeConstraints { make in
-            make.height.equalTo(54)
+            make.height.equalTo(74)
         }
     }
 
@@ -111,8 +123,8 @@ class BottomInputViewController: UIViewController {
         bottomInputView.actionButton.addTarget(self, action: #selector(actionButtonTapped), for: .touchUpInside)
 
         bottomInputView.snp.makeConstraints { make in
-            make.leading.trailing.equalToSuperview().inset(15)
-            self.bottomConstraint = make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20).constraint
+            make.leading.trailing.equalToSuperview()
+            self.bottomConstraint = make.bottom.equalTo(view.safeAreaLayoutGuide).constraint
         }
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
@@ -131,7 +143,7 @@ class BottomInputViewController: UIViewController {
               let curve = (userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? NSNumber)?.uintValue else { return }
 
         let keyboardHeight = keyboardFrame.height
-        let newBottomOffset = -keyboardHeight + view.safeAreaInsets.bottom - 10
+        let newBottomOffset = -keyboardHeight + view.safeAreaInsets.bottom
 
         bottomConstraint?.update(offset: newBottomOffset)
 
@@ -145,7 +157,7 @@ class BottomInputViewController: UIViewController {
               let duration = (userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber)?.doubleValue,
               let curve = (userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? NSNumber)?.uintValue else { return }
 
-        bottomConstraint?.update(offset: -20)
+        bottomConstraint?.update(offset: 0)
 
         UIView.animate(withDuration: duration, delay: 0, options: UIView.AnimationOptions(rawValue: curve), animations: {
             self.view.layoutIfNeeded()
