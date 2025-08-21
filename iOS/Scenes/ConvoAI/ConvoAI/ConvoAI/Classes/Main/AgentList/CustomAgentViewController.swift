@@ -12,11 +12,41 @@ import CryptoKit
 import SVProgressHUD
 
 fileprivate let kCustomPresetSave = "io.agora.customPresets"
-class CustomAgentViewController: AgentListViewController {
+
+class CustomAgentViewController: UIViewController {
+    var presets: [AgentPreset] = [AgentPreset]()
+    weak var scrollDelegate: AgentScrollViewDelegate?
+    let agentManager = AgentManager()
     private let emptyStateView = CustomAgentEmptyView()
     private let inputContainerView = BottomInputView()
     
-    override func setupUI() {
+    lazy var refreshControl: UIRefreshControl = {
+        let refresh = UIRefreshControl()
+        refresh.addTarget(self, action: #selector(refreshHandler), for: .valueChanged)
+        return refresh
+    }()
+    
+    lazy var tableView: UITableView = {
+        let tableView = UITableView()
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.register(AgentTableViewCell.self, forCellReuseIdentifier: "AgentTableViewCell")
+        tableView.backgroundColor = .clear
+        tableView.separatorStyle = .none
+        tableView.showsVerticalScrollIndicator = false
+        tableView.contentInset = UIEdgeInsets.init(top: 0, left: 0, bottom: 110, right: 0)
+        return tableView
+    }()
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+        setupConstraints()
+        fetchData()
+    }
+    
+    func setupUI() {
+        view.backgroundColor = UIColor.themColor(named: "ai_fill7")
         view.addSubview(tableView)
         view.addSubview(emptyStateView)
         emptyStateView.isHidden = true
@@ -30,7 +60,7 @@ class CustomAgentViewController: AgentListViewController {
         tableView.addSubview(refreshControl)
     }
 
-    override func setupConstraints() {
+    func setupConstraints() {
         inputContainerView.snp.makeConstraints { make in
             make.left.right.equalToSuperview().inset(12)
             make.bottom.equalTo(view.safeAreaLayoutGuide).offset(-17)
@@ -47,6 +77,7 @@ class CustomAgentViewController: AgentListViewController {
             make.left.right.equalToSuperview().inset(12)
         }
     }
+    
     @objc private func onClickFetch() {
         guard let text = inputContainerView.textField.text, !text.isEmpty else { return }
         SVProgressHUD.show()
@@ -86,11 +117,11 @@ class CustomAgentViewController: AgentListViewController {
         }
     }
     
-    override func refreshHandler() {
+    @objc func refreshHandler() {
         fetchData()
     }
     
-    override func fetchData() {
+    func fetchData() {
         guard UserCenter.shared.isLogin() else {
             self.presets.removeAll()
             self.reloadData()
@@ -182,9 +213,30 @@ class CustomAgentViewController: AgentListViewController {
     }
 }
 
-extension CustomAgentViewController {
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+extension CustomAgentViewController: UITableViewDelegate, UITableViewDataSource {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        scrollDelegate?.agentScrollViewDidScroll(scrollView)
+    }
+
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return self.presets.count
+    }
+
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 89
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "AgentTableViewCell", for: indexPath) as! AgentTableViewCell
         let preset = presets[indexPath.row]
+        cell.nameLabel.text = preset.displayName
+        cell.avatarImageView.kf.setImage(with: URL(string: preset.avatarUrl.stringValue()), placeholder: UIImage.ag_named("ic_custom_agent_head"))
+        cell.descriptionLabel.text = preset.description ?? ""
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        var preset = presets[indexPath.row]
         let id = preset.name.stringValue()
         SVProgressHUD.show()
         agentManager.searchCustomPresets(customPresetIds: [id]) { [weak self] error, result in
@@ -204,6 +256,7 @@ extension CustomAgentViewController {
                 return
             }
             if let presets = result, !presets.isEmpty {
+                preset.defaultAvatar = "ic_custom_agent_head"
                 AppContext.preferenceManager()?.preference.isCustomPreset = true
                 AppContext.preferenceManager()?.updatePreset(preset)
                 let chatViewController = ChatViewController()

@@ -73,8 +73,8 @@ class CharactersInformationView: UIView {
         }
     }
     
-    func configure(icon: String, name: String) {
-        avatarImageView.kf.setImage(with: URL(string: icon), placeholder: UIImage.ag_named("ic_default_avatar_icon"))
+    func configure(icon: String, defaultIcon: String, name: String) {
+        avatarImageView.kf.setImage(with: URL(string: icon), placeholder: UIImage.ag_named(defaultIcon))
         nameLabel.text = name
     }
 }

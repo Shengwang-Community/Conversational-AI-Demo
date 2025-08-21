@@ -48,7 +48,7 @@ class MainNavigationBar: UIView {
     
     let characterInfo: CharactersInformationView = {
         let informationView = CharactersInformationView()
-        informationView.configure(icon: "", name: "hello kitty")
+        informationView.configure(icon: "", defaultIcon: "", name: "hello kitty")
         informationView.backgroundColor = UIColor.themColor(named: "ai_brand_white1")
         informationView.layer.cornerRadius = 16
         informationView.layer.masksToBounds = true
@@ -145,8 +145,8 @@ class MainNavigationBar: UIView {
         }
     }
     
-    public func updateCharacterInformation(icon: String, name: String) {
-        characterInfo.configure(icon: icon, name: name)
+    public func updateCharacterInformation(icon: String, defaultIcon: String, name: String) {
+        characterInfo.configure(icon: icon, defaultIcon: defaultIcon, name: name)
     }
     
     public func updateButtonVisible(_ visible: Bool) {

@@ -50,6 +50,7 @@ struct AgentPreset: Codable {
     let supportLanguages: [SupportLanguage]?
     let avatarIdsByLang: [String: [Avatar]]?
     let avatarUrl: String?
+    var defaultAvatar: String?
 
     enum CodingKeys: String, CodingKey {
         case name
@@ -64,51 +65,6 @@ struct AgentPreset: Codable {
         case supportLanguages = "support_languages"
         case avatarIdsByLang = "avatar_ids_by_lang"
         case avatarUrl = "avatar_url"
+        case defaultAvatar = "default_avatar"
     }
-
-//    public init(from decoder: Decoder) throws {
-//        let container = try decoder.container(keyedBy: CodingKeys.self)
-//
-//        if let nameString = try? container.decode(String.self, forKey: .name) {
-//            self.name = nameString
-//        } else {
-//            let nameInt = try container.decode(Int.self, forKey: .name)
-//            self.name = "\(nameInt)"
-//        }
-//
-//        self.displayName = try container.decode(String.self, forKey: .displayName)
-//        self.description = try container.decodeIfPresent(String.self, forKey: .description)
-//        self.presetType = try container.decode(String.self, forKey: .presetType)
-//        self.defaultLanguageCode = try container.decodeIfPresent(String.self, forKey: .defaultLanguageCode)
-//        self.defaultLanguageName = try container.decodeIfPresent(String.self, forKey: .defaultLanguageName)
-//
-//        if let isSupportVisionBool = try? container.decode(Bool.self, forKey: .isSupportVision) {
-//            self.isSupportVision = isSupportVisionBool
-//        } else {
-//            let isSupportVisionInt = try container.decode(Int.self, forKey: .isSupportVision)
-//            self.isSupportVision = (isSupportVisionInt == 1)
-//        }
-//
-//        self.callTimeLimitSecond = try container.decode(Int.self, forKey: .callTimeLimitSecond)
-//        self.callTimeLimitAvatarSecond = try container.decodeIfPresent(Int.self, forKey: .callTimeLimitAvatarSecond)
-//        self.supportLanguages = try container.decodeIfPresent([SupportLanguage].self, forKey: .supportLanguages)
-//        self.avatarIdsByLang = try container.decodeIfPresent([String: [Avatar]].self, forKey: .avatarIdsByLang)
-//        self.avatarUrl = try container.decodeIfPresent(String.self, forKey: .avatarUrl)
-//    }
-    
-//    public func encode(to encoder: Encoder) throws {
-//        var container = encoder.container(keyedBy: CodingKeys.self)
-//        try container.encode(name, forKey: .name)
-//        try container.encode(displayName, forKey: .displayName)
-//        try container.encodeIfPresent(description, forKey: .description)
-//        try container.encode(presetType, forKey: .presetType)
-//        try container.encodeIfPresent(defaultLanguageCode, forKey: .defaultLanguageCode)
-//        try container.encodeIfPresent(defaultLanguageName, forKey: .defaultLanguageName)
-//        try container.encode(isSupportVision, forKey: .isSupportVision)
-//        try container.encode(callTimeLimitSecond, forKey: .callTimeLimitSecond)
-//        try container.encodeIfPresent(callTimeLimitAvatarSecond, forKey: .callTimeLimitAvatarSecond)
-//        try container.encodeIfPresent(supportLanguages, forKey: .supportLanguages)
-//        try container.encodeIfPresent(avatarIdsByLang, forKey: .avatarIdsByLang)
-//        try container.encodeIfPresent(avatarUrl, forKey: .avatarUrl)
-//    }
 }

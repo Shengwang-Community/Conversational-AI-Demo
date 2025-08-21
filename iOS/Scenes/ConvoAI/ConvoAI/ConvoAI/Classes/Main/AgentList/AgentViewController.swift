@@ -134,7 +134,7 @@ public class AgentViewController: UIViewController {
         }
         if let firstViewController = viewControllers.first {
             pageViewController.setViewControllers([firstViewController], direction: .forward, animated: true, completion: nil)
-            if let vc = firstViewController as? AgentListViewController {
+            if let vc = firstViewController as? OfficialAgentViewController {
                 vc.scrollDelegate = self
             } else if let vc = firstViewController as? CustomAgentViewController {
                 vc.scrollDelegate = self
@@ -230,7 +230,7 @@ extension AgentViewController: UIPageViewControllerDataSource, UIPageViewControl
             if segmentedControl.selectedIndex != index {
                 segmentedControl.selectedIndex = index
             }
-            if let vc = currentViewController as? AgentListViewController {
+            if let vc = currentViewController as? OfficialAgentViewController {
                 vc.scrollDelegate = self
             } else if let vc = currentViewController as? CustomAgentViewController {
                 vc.scrollDelegate = self
