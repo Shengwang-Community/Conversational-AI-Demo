@@ -175,5 +175,40 @@ class CovSegmentedControl: UIView {
             make.width.equalTo(newWidth)
             make.centerX.equalTo(self.snp.leading).offset(newCenterX)
         }
+        
+        // Update button colors based on progress
+        updateButtonColorsWithProgress(progress: p, fromIndex: fromIndex, toIndex: toIndex)
+    }
+    
+    private func updateButtonColorsWithProgress(progress: CGFloat, fromIndex: Int, toIndex: Int) {
+        for (buttonIndex, button) in buttons.enumerated() {
+            if buttonIndex == fromIndex {
+                // From button: fade from selected to unselected
+                let color = interpolateColor(from: selectorTextColor, to: textColor, with: progress)
+                button.setTitleColor(color, for: .normal)
+            } else if buttonIndex == toIndex {
+                // To button: fade from unselected to selected
+                let color = interpolateColor(from: textColor, to: selectorTextColor, with: progress)
+                button.setTitleColor(color, for: .normal)
+            } else {
+                // Other buttons: keep unselected color
+                button.setTitleColor(textColor, for: .normal)
+            }
+        }
+    }
+    
+    private func interpolateColor(from: UIColor, to: UIColor, with percent: CGFloat) -> UIColor {
+        var fromR: CGFloat = 0, fromG: CGFloat = 0, fromB: CGFloat = 0, fromA: CGFloat = 0
+        var toR: CGFloat = 0, toG: CGFloat = 0, toB: CGFloat = 0, toA: CGFloat = 0
+        
+        from.getRed(&fromR, green: &fromG, blue: &fromB, alpha: &fromA)
+        to.getRed(&toR, green: &toG, blue: &toB, alpha: &toA)
+        
+        let r = fromR + (toR - fromR) * percent
+        let g = fromG + (toG - fromG) * percent
+        let b = fromB + (toB - fromB) * percent
+        let a = fromA + (toA - fromA) * percent
+        
+        return UIColor(red: r, green: g, blue: b, alpha: a)
     }
 }
