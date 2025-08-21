@@ -8,7 +8,7 @@
 import UIKit
 import Common
 
-public class ChatViewController: UIViewController {
+class ChatViewController: BaseViewController {
     internal var agentIsJoined = false
     internal var avatarIsJoined = false
     internal var channelName = ""
@@ -195,7 +195,7 @@ public class ChatViewController: UIViewController {
     var lastClickTime: Date?
     
     deinit {
-        print("liveing view controller deinit")
+        print("living view controller deinit")
         deregisterDelegate()
     }
     
@@ -213,6 +213,16 @@ public class ChatViewController: UIViewController {
         setupViews()
         setupConstraints()
         setupSomeNecessaryConfig()
+    }
+    
+    // MARK: - BaseViewController Override Methods
+    override func shouldEnablePopGesture() -> Bool {
+        // Only enable pop gesture when the agent is NOT joined
+        return navivationBar.style == .idle
+    }
+    
+    override func viewWillDisappearAndPop() {
+        rtcManager.destroy()
     }
     
     public override func viewDidLayoutSubviews() {
@@ -285,10 +295,6 @@ public class ChatViewController: UIViewController {
         }
     }
     
-    func addLog(_ txt: String) {
-        ConvoAILogger.info("\(tag) \(txt)")
-    }
-    
     func showTranscription(state: Bool) {
         messageView.isHidden = !state
         messageMaskView.isHidden = !state
@@ -299,7 +305,4 @@ public class ChatViewController: UIViewController {
     func resetPreference() {
         AppContext.preferenceManager()?.resetAgentInformation()
     }
-
 }
-
-

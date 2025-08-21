@@ -27,6 +27,7 @@ class ChatWindowState {
 extension ChatViewController {
     internal func setupViews() {
         view.backgroundColor = .black
+        naviBar.isHidden = true
         [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, navivationBar, sideNavigationBar, callControlBar, volumeAnimateView, annotationView, sendMessageButton].forEach { view.addSubview($0) }
 
         [miniView].forEach { smallSizeContainerView.addSubview($0) }
@@ -171,6 +172,7 @@ extension ChatViewController {
         callControlBar.resetState()
         timerCoordinator.stopAllTimer()
         agentStateView.isHidden = true
+        sideNavigationBar.voiceprintState(status: false)
         updateWindowContent()
     }
     
