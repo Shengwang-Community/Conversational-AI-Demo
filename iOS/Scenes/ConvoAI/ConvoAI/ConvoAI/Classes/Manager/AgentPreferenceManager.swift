@@ -193,13 +193,6 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
     
     func setPresets(presets: [AgentPreset]) {
         self.presets = presets
-        if presets.isEmpty { return }
-        
-        guard let preset = presets.first else {
-            return
-        }
-        
-        self.updatePreset(preset)
     }
     
     func setAvatar(_ avatar: Avatar?) {
