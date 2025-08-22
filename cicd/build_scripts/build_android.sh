@@ -179,6 +179,7 @@ fi
 
 sed -ie "s#$(sed -n '/AG_APP_ID/p' gradle.properties)#AG_APP_ID=${APP_ID_VAR}#g" gradle.properties
 sed -ie "s#$(sed -n '/TOOLBOX_SERVER_HOST/p' gradle.properties)#TOOLBOX_SERVER_HOST=${toolbox_url}#g" gradle.properties
+sed -ie "s#$(sed -n '/IS_OPEN_SOURCE/p' gradle.properties)#IS_OPEN_SOURCE=false#g" gradle.properties
 cat gradle.properties
 
 # Compile apk

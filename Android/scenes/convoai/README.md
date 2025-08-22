@@ -68,7 +68,6 @@ BASIC_AUTH_KEY=<声网 RESTful API KEY>
 BASIC_AUTH_SECRET=<声网 RESTful API SECRET>
 
 #----------- Open Source --------------
-# 开发者自行编译，需要修改为 true, 填写 LLM,TTS,AVATAR
 IS_OPEN_SOURCE=true
 
 #----------- LLM -----------
