@@ -11,7 +11,7 @@ import Common
 
 protocol AgentPreferenceManagerDelegate: AnyObject {
     func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset)
-    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage)
+    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage?)
     func preferenceManager(_ manager: AgentPreferenceManager, avatarDidUpdated avatar: Avatar?)
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool)
     func preferenceManager(_ manager: AgentPreferenceManager, transcriptModeDidUpdated mode: TranscriptDisplayMode)
@@ -38,7 +38,7 @@ protocol AgentPreferenceManagerProtocol {
     
     // Preference Updates
     func updatePreset(_ preset: AgentPreset)
-    func updateLanguage(_ language: SupportLanguage)
+    func updateLanguage(_ language: SupportLanguage?)
     func updateAvatar(_ avatar: Avatar?)
 
     func updateAiVadState(_ state: Bool)
@@ -99,14 +99,17 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
         
         if let language = supportLanguages?.first(where: { $0.languageCode == resetLanguageCode }) {
             updateLanguage(language)
+        } else {
+            updateLanguage(nil)
         }
         
         updateAvatar(nil)
         notifyDelegates { $0.preferenceManager(self, presetDidUpdated: preset) }
     }
     
-    func updateLanguage(_ language: SupportLanguage) {
+    func updateLanguage(_ language: SupportLanguage?) {
         preference.language = language
+        preference.aiVad = language?.aivadEnabledByDefault ?? false
         notifyDelegates { $0.preferenceManager(self, languageDidUpdated: language) }
     }
     
@@ -225,7 +228,7 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
 
 enum ConnectionStatus: String {
     case connected
-    case disconnected 
+    case disconnected
     case unload
     
     var rawValue: String {
@@ -363,7 +366,7 @@ enum TranscriptDisplayMode: CaseIterable {
 
 extension AgentPreferenceManagerDelegate {
     func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset) {}
-    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage) {}
+    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage?) {}
     func preferenceManager(_ manager: AgentPreferenceManager, avatarDidUpdated avatar: Avatar?) {}
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool) {}
     func preferenceManager(_ manager: AgentPreferenceManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {}

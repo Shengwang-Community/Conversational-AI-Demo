@@ -420,7 +420,7 @@ extension AgentSettingViewController: AgentPreferenceManagerDelegate {
         channelInfoView.updateUserId(userId)
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage) {
+    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage?) {
         agentSettingsView.updateLanguage(language)
         manager.updateAvatar(nil)
     }

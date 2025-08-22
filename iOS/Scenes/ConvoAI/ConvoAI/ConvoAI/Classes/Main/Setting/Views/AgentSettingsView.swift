@@ -131,17 +131,21 @@ class AgentSettingsView: UIView {
             make.centerY.equalTo(view.titleLabel)
             make.width.height.equalTo(16)
         }
+        
         if let manager = AppContext.preferenceManager(),
-           let language = manager.preference.preset,
-           let presetType = manager.preference.preset?.presetType
-        {
+           let language = manager.preference.language,
+           let presetType = manager.preference.preset?.presetType {
             if manager.information.agentState != .unload ||
-                presetType.contains("independent") {
+                presetType.contains("independent") ||
+                language.aivadSupported == false {
                 view.setEnable(false)
             } else {
                 view.setEnable(true)
             }
-            view.setOn(manager.preference.aiVad)
+            view.setOn(language.aivadEnabledByDefault.boolValue())
+        } else {
+            view.setEnable(false)
+            view.setOn(false)
         }
         view.updateLayout()
         return view
@@ -269,8 +273,15 @@ class AgentSettingsView: UIView {
         }
     }
     
-    func updateLanguage(_ language: SupportLanguage) {
-        languageItem.detailLabel.text = language.languageName
+    func updateLanguage(_ language: SupportLanguage?) {
+        languageItem.detailLabel.text = language?.languageName ?? ""
+        if let l = language, l.aivadSupported.boolValue() {
+            aiVadItem.setEnable(true)
+            aiVadItem.setOn(l.aivadEnabledByDefault.boolValue())
+        } else {
+            aiVadItem.setEnable(false)
+            aiVadItem.setOn(false)
+        }
     }
     
     func updateTranscriptMode(_ mode: TranscriptDisplayMode) {
@@ -332,4 +343,5 @@ class AgentSettingsView: UIView {
     @objc private func onClickAIVadTips() {
         SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Settings.aiVadTips)
     }
+
 }
