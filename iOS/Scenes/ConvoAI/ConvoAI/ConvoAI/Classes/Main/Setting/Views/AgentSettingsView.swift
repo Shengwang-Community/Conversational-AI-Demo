@@ -131,20 +131,20 @@ class AgentSettingsView: UIView {
             make.centerY.equalTo(view.titleLabel)
             make.width.height.equalTo(16)
         }
-        
         if let manager = AppContext.preferenceManager(),
            let language = manager.preference.language,
            let presetType = manager.preference.preset?.presetType {
             if manager.information.agentState != .unload ||
-                presetType.contains("independent") ||
-                language.aivadSupported == false {
+                presetType.contains("independent")
+            // Agent-cn dont need aivadSupported
+            {
                 view.setEnable(false)
             } else {
                 view.setEnable(true)
             }
-            view.setOn(language.aivadEnabledByDefault.boolValue())
+            view.setOn(manager.preference.aiVad)
         } else {
-            view.setEnable(false)
+            view.setEnable(true)
             view.setOn(false)
         }
         view.updateLayout()
