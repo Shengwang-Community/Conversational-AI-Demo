@@ -249,8 +249,11 @@ extension AgentViewController: LoginManagerDelegate {
     
     func userDidLogout(reason: LogoutReason) {
         addLog("[Call] userDidLogout \(reason)")
-        
-        SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Login.sessionExpired)
+        if reason == .userInitiated {
+            SSOWebViewController.clearWebViewCache()
+        } else {
+            SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Login.sessionExpired)
+        }
         // Dismiss all view controllers and return to root
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first {
