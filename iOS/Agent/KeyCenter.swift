@@ -25,7 +25,7 @@ struct KeyCenter {
      AVATAR_VENDOR
      AVATAR_PARAMS
      */
-    static var IS_OPEN_SOURCE: Bool = false
+    static var IS_OPEN_SOURCE: Bool = true
     
     /**
      Demo Server
