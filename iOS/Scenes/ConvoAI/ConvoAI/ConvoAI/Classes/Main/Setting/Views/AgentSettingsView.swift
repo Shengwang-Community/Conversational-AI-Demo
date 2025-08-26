@@ -122,6 +122,7 @@ class AgentSettingsView: UIView {
         view.titleLabel.text = ResourceManager.L10n.Settings.aiVadLight
         view.addtarget(self, action: #selector(onClickAiVad(_:)), for: .touchUpInside)
         let button = UIButton()
+        button.imageView?.contentMode = .scaleAspectFit
         button.setImage(UIImage.ag_named("ic_aivad_tips_icon"), for: .normal)
         button.addTarget(self, action: #selector(onClickAIVadTips), for: .touchUpInside)
         view.addSubview(button)
