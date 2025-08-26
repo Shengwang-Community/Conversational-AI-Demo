@@ -51,7 +51,7 @@ extension ChatMessageViewModel {
             message?.index = startIndex
             message?.transcript = content
             if timer == nil {
-                let timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { [weak self] timer in
+                let timer = Timer.scheduledTimer(withTimeInterval: 0.135, repeats: true, block: { [weak self] timer in
                     guard let self = self, let message = message else {
                         self?.stopTimer()
                         return
