@@ -248,9 +248,15 @@ extension ResourceManager {
             public static let recordingTime = ResourceManager.localizedString("settings.voiceprint.recording.time")
             public static let recordingInstruction = ResourceManager.localizedString("settings.voiceprint.recording.instruction")
             public static let recordingComplete = ResourceManager.localizedString("settings.voiceprint.recording.complete")
-            public static let pleaseRead = ResourceManager.localizedString("settings.voiceprint.please.read")
-            public static let holdToRecord = ResourceManager.localizedString("settings.voiceprint.hold.to.record")
-            public static let warning = ResourceManager.localizedString("settings.voiceprint.warning")
+                    public static let pleaseRead = ResourceManager.localizedString("settings.voiceprint.please.read")
+        public static let holdToRecord = ResourceManager.localizedString("settings.voiceprint.hold.to.record")
+        public static let warning = ResourceManager.localizedString("settings.voiceprint.warning")
+        public static let createTitle = ResourceManager.localizedString("settings.voiceprint.create.title")
+        public static let createButton = ResourceManager.localizedString("settings.voiceprint.create.button")
+        public static let reRecordButton = ResourceManager.localizedString("settings.voiceprint.re.record.button")
+        public static let uploading = ResourceManager.localizedString("settings.voiceprint.uploading")
+        public static let uploadFailed = ResourceManager.localizedString("settings.voiceprint.upload.failed")
+        public static let dateFormat = ResourceManager.localizedString("settings.voiceprint.date.format")
         }
     }
 }

@@ -53,8 +53,8 @@ class VoiceprintViewController: BaseViewController {
     
     private var modeItems: [VoiceprintModeItemView] = []
         
-    private lazy var voiceprintCreationTab: VoiceprintCreationTabView = {
-        let view = VoiceprintCreationTabView()
+    private lazy var voiceprintCreationTab: VoiceprintInfoTabView = {
+        let view = VoiceprintInfoTabView()
         view.bindCreateButtonAction(target: self, action: #selector(onCreateVoiceprintTapped))
         view.layer.cornerRadius = 12
         view.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
@@ -164,119 +164,9 @@ class VoiceprintViewController: BaseViewController {
     }
 }
 
-// MARK: - VoiceprintCreationTabView
-class VoiceprintCreationTabView: UIView {
-    
-    private lazy var voiceprintIconView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor(red: 57/255, green: 202/255, blue: 255/255, alpha: 1.0) // #39CAFF
-        view.layer.cornerRadius = 8
-        view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOffset = CGSize(width: 0, height: 2)
-        view.layer.shadowOpacity = 0.06
-        view.layer.shadowRadius = 6
-        return view
-    }()
-    
-    private lazy var voiceprintIcon: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage.ag_named("ic_agent_mute") // 使用现有的麦克风图标
-        imageView.contentMode = .scaleAspectFit
-        imageView.tintColor = .white
-        return imageView
-    }()
-    
-    private lazy var voiceprintTitleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "创建我的声纹"
-        label.font = .systemFont(ofSize: 14, weight: .regular)
-        label.textColor = .white
-        return label
-    }()
-    
-    lazy var createButton: UIButton = {
-        let button = UIButton(type: .custom)
-        button.backgroundColor = UIColor.white.withAlphaComponent(0.15)
-        button.layer.cornerRadius = 8
-        button.setTitle("创建", for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 12, weight: .regular)
-        return button
-    }()
-    
-    private lazy var createArrowIcon: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage.ag_named("ic_agent_setting_arrow") // 使用现有的箭头图标
-        imageView.contentMode = .scaleAspectFit
-        imageView.tintColor = .white
-        return imageView
-    }()
-    
-    // MARK: - Initialization
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        setupViews()
-        setupConstraints()
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    // MARK: - Setup Methods
-    
-    private func setupViews() {
-        backgroundColor = UIColor.themColor(named: "ai_brand_main6")
 
-        addSubview(voiceprintIconView)
-        addSubview(voiceprintTitleLabel)
-        addSubview(createButton)
-        addSubview(createArrowIcon)
-        voiceprintIconView.addSubview(voiceprintIcon)
-    }
-    
-    private func setupConstraints() {
-        voiceprintIconView.snp.makeConstraints { make in
-            make.left.equalTo(16)
-            make.centerY.equalToSuperview()
-            make.width.height.equalTo(30)
-        }
-        
-        voiceprintIcon.snp.makeConstraints { make in
-            make.center.equalToSuperview()
-            make.width.height.equalTo(16)
-        }
-        
-        voiceprintTitleLabel.snp.makeConstraints { make in
-            make.left.equalTo(voiceprintIconView.snp.right).offset(12)
-            make.centerY.equalToSuperview()
-        }
-        
-        createButton.snp.makeConstraints { make in
-            make.right.equalTo(createArrowIcon.snp.left).offset(-4)
-            make.centerY.equalToSuperview()
-            make.height.equalTo(24)
-            make.width.greaterThanOrEqualTo(40)
-        }
-        
-        createArrowIcon.snp.makeConstraints { make in
-            make.right.equalTo(-16)
-            make.centerY.equalToSuperview()
-            make.width.height.equalTo(16)
-        }
-    }
-    
-    // MARK: - Public Methods
-    
-    // Expose the button for external action binding
-    func bindCreateButtonAction(target: Any, action: Selector) {
-        createButton.addTarget(target, action: action, for: .touchUpInside)
-    }
-}
 
 // MARK: - VoiceprintModeItemView
-
 class VoiceprintModeItemView: UIControl {
     
     private let mode: VoiceprintMode
@@ -299,20 +189,10 @@ class VoiceprintModeItemView: UIControl {
         return label
     }()
     
-    private lazy var selectionIndicator: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor.themColor(named: "ai_brand_white10")
-        view.layer.cornerRadius = 12
-        return view
-    }()
-    
     private lazy var checkmarkImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage.ag_named("ic_checkbox_checked")
-        imageView.isUserInteractionEnabled = true
+        imageView.image = UIImage.ag_named("ic_digital_human_circle")
         imageView.contentMode = .scaleAspectFit
-        imageView.tintColor = .white
-        imageView.isHidden = true
         return imageView
     }()
     
@@ -332,31 +212,25 @@ class VoiceprintModeItemView: UIControl {
         
         addSubview(titleLabel)
         addSubview(descriptionLabel)
-        addSubview(selectionIndicator)
-        selectionIndicator.addSubview(checkmarkImageView)
+        addSubview(checkmarkImageView)
         
         titleLabel.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(12)
             make.left.equalToSuperview().offset(16)
-            make.right.equalTo(selectionIndicator.snp.left).offset(-16)
+            make.right.equalTo(checkmarkImageView.snp.left).offset(-16)
         }
         
         descriptionLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(3)
+            make.top.equalTo(titleLabel.snp.bottom).offset(6)
             make.left.equalTo(titleLabel)
             make.right.equalTo(titleLabel)
             make.bottom.equalToSuperview().offset(-12)
         }
         
-        selectionIndicator.snp.makeConstraints { make in
+        checkmarkImageView.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
             make.right.equalToSuperview().offset(-16)
             make.width.height.equalTo(24)
-        }
-        
-        checkmarkImageView.snp.makeConstraints { make in
-            make.center.equalToSuperview()
-            make.width.height.equalTo(16)
         }
     }
     
@@ -364,9 +238,9 @@ class VoiceprintModeItemView: UIControl {
         self.isSelected = isSelected
         
         if isSelected {
-            checkmarkImageView.isHidden = false
+            checkmarkImageView.image = UIImage.ag_named("ic_digital_human_circle_s")
         } else {
-            checkmarkImageView.isHidden = true
+            checkmarkImageView.image = UIImage.ag_named("ic_digital_human_circle")
         }
     }
 }

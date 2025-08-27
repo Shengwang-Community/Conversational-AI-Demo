@@ -184,3 +184,9 @@
 "settings.voiceprint.please.read" = "Please read";
 "settings.voiceprint.hold.to.record" = "Hold to record";
 "settings.voiceprint.warning" = "Only one voiceprint is allowed. Re-recording will delete the historical voiceprint.";
+"settings.voiceprint.create.title" = "Create My Voiceprint";
+"settings.voiceprint.create.button" = "Create";
+"settings.voiceprint.re.record.button" = "Re-record";
+"settings.voiceprint.uploading" = "Uploading...";
+"settings.voiceprint.upload.failed" = "Upload failed, please try again";
+"settings.voiceprint.date.format" = "Voiceprint on %@";

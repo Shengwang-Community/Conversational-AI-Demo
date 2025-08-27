@@ -197,3 +197,9 @@
 "settings.voiceprint.please.read" = "请朗读";
 "settings.voiceprint.hold.to.record" = "长按录制";
 "settings.voiceprint.warning" = "只允许录入一条声纹，重新录入历史声纹将被删除";
+"settings.voiceprint.create.title" = "创建我的声纹";
+"settings.voiceprint.create.button" = "创建";
+"settings.voiceprint.re.record.button" = "重新录入";
+"settings.voiceprint.uploading" = "上传中...";
+"settings.voiceprint.upload.failed" = "上传失败，请重试";
+"settings.voiceprint.date.format" = "Voiceprint on %@";
