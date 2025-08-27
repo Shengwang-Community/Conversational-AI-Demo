@@ -288,14 +288,15 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
     
     func agentSettingsViewDidTapTranscriptRender(_ view: AgentSettingsView, sender: UIButton) {
         selectTableMask.isHidden = false
-        guard let preference = AppContext.preferenceManager()?.preference, let language = preference.language else { return }
+        guard let preference = AppContext.preferenceManager()?.preference else { return }
         let currentMode = preference.transcriptMode
         let isCustomPreset = preference.isCustomPreset
         var allModes = TranscriptDisplayMode.allCases
         if isCustomPreset {
             allModes.removeAll { $0 == .text}
         } else {
-            if language.languageCode != "zh-CN" {
+            if let language = preference.language,
+               language.languageCode != "zh-CN" {
                 allModes.removeAll { $0 == .text}
             }
         }
