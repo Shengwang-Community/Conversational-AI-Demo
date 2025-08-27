@@ -167,4 +167,20 @@
 "agent.list.get" = "Get";
 "agent.list.get.agent" = "Get Your AI Assistant";
 
-
+// Voiceprint Mode Settings
+"settings.voiceprint.mode.title" = "Voiceprint Mode";
+"settings.voiceprint.mode.off" = "Off";
+"settings.voiceprint.mode.off.description" = "If not enabled, the agent may be interrupted or disturbed by other people's voices around.";
+"settings.voiceprint.mode.seamless" = "Seamless Mode";
+"settings.voiceprint.mode.seamless.description" = "AI will intelligently learn the user's voiceprint from conversations with the agent and automatically block other user voiceprints. AI will intelligently learn the user's voiceprint from conversations with the agent and automatically block other user voiceprints.";
+"settings.voiceprint.mode.aware" = "Aware Mode";
+"settings.voiceprint.mode.aware.description" = "Record a segment of your voiceprint, and the agent will automatically block other voices";
+"settings.voiceprint.lock.title" = "Voiceprint Lock";
+"settings.voiceprint.setting.success" = "Setting successful";
+"settings.voiceprint.recording.title" = "Recording, please read...";
+"settings.voiceprint.recording.time" = "Audio: %ds / 10s";
+"settings.voiceprint.recording.instruction" = "Release to create, swipe up to cancel";
+"settings.voiceprint.recording.complete" = "Voiceprint recording completed";
+"settings.voiceprint.please.read" = "Please read";
+"settings.voiceprint.hold.to.record" = "Hold to record";
+"settings.voiceprint.warning" = "Only one voiceprint is allowed. Re-recording will delete the historical voiceprint.";

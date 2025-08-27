@@ -233,6 +233,25 @@ extension ResourceManager {
             public static let loadingFailed = ResourceManager.localizedString("empty.state.loading.failed")
             public static let retry = ResourceManager.localizedString("empty.state.retry")
         }
+        
+        public enum VoiceprintMode {
+            public static let title = ResourceManager.localizedString("settings.voiceprint.mode.title")
+            public static let off = ResourceManager.localizedString("settings.voiceprint.mode.off")
+            public static let offDescription = ResourceManager.localizedString("settings.voiceprint.mode.off.description")
+            public static let seamless = ResourceManager.localizedString("settings.voiceprint.mode.seamless")
+            public static let seamlessDescription = ResourceManager.localizedString("settings.voiceprint.mode.seamless.description")
+            public static let aware = ResourceManager.localizedString("settings.voiceprint.mode.aware")
+            public static let awareDescription = ResourceManager.localizedString("settings.voiceprint.mode.aware.description")
+            public static let lockTitle = ResourceManager.localizedString("settings.voiceprint.lock.title")
+            public static let settingSuccess = ResourceManager.localizedString("settings.voiceprint.setting.success")
+            public static let recordingTitle = ResourceManager.localizedString("settings.voiceprint.recording.title")
+            public static let recordingTime = ResourceManager.localizedString("settings.voiceprint.recording.time")
+            public static let recordingInstruction = ResourceManager.localizedString("settings.voiceprint.recording.instruction")
+            public static let recordingComplete = ResourceManager.localizedString("settings.voiceprint.recording.complete")
+            public static let pleaseRead = ResourceManager.localizedString("settings.voiceprint.please.read")
+            public static let holdToRecord = ResourceManager.localizedString("settings.voiceprint.hold.to.record")
+            public static let warning = ResourceManager.localizedString("settings.voiceprint.warning")
+        }
     }
 }
 

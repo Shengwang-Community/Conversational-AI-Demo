@@ -179,3 +179,21 @@
 /* 空状态视图 */
 "empty.state.loading.failed" = "页面加载失败，请重试";
 "empty.state.retry" = "重试";
+
+// Voiceprint Mode Settings
+"settings.voiceprint.mode.title" = "声纹模式";
+"settings.voiceprint.mode.off" = "关闭";
+"settings.voiceprint.mode.off.description" = "若不启用，智能体可能被周围其他人的声音打断或干扰。";
+"settings.voiceprint.mode.seamless" = "无感模式";
+"settings.voiceprint.mode.seamless.description" = "AI 将智能学习与智能体会话的用户声纹，自动屏蔽其他用户声纹。AI 将智能学习与智能体会话的用户声纹，自动屏蔽其他用户声纹。";
+"settings.voiceprint.mode.aware" = "有感模式";
+"settings.voiceprint.mode.aware.description" = "录入一段你的声纹，智能体将自动屏蔽其它声音";
+"settings.voiceprint.lock.title" = "声纹锁定";
+"settings.voiceprint.setting.success" = "设置成功";
+"settings.voiceprint.recording.title" = "录音中，请朗读...";
+"settings.voiceprint.recording.time" = "语料: %ds / 10s";
+"settings.voiceprint.recording.instruction" = "松手创建，上移取消";
+"settings.voiceprint.recording.complete" = "声纹录制完成";
+"settings.voiceprint.please.read" = "请朗读";
+"settings.voiceprint.hold.to.record" = "长按录制";
+"settings.voiceprint.warning" = "只允许录入一条声纹，重新录入历史声纹将被删除";
