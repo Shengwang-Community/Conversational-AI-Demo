@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { devtools } from 'zustand/middleware'
 import { EAgentState } from '@/conversational-ai-api/type'
 import { genAgentId, genChannelName, genUserId } from '@/lib/utils'
 import {
@@ -43,40 +44,43 @@ export interface IRTCStore extends RTCStore {
   updateIsAvatarPlaying: (isAvatarPlaying: boolean) => void
 }
 
-export const useRTCStore = create<IRTCStore>((set) => ({
-  network: ENetworkStatus.DISCONNECTED,
-  agentStatus: EConnectionStatus.DISCONNECTED,
-  roomStatus: EConnectionStatus.DISCONNECTED,
-  channel_name: genChannelName(),
-  agent_rtc_uid: genAgentId(),
-  avatar_rtc_uid: genAgentId(),
-  remote_rtc_uid: genUserId(),
-  agent_id: undefined,
-  /** @deprecated use agentState */
-  agentRunningStatus: EAgentRunningStatus.DEFAULT,
-  agentState: EAgentState.IDLE,
-  upload_log_status: EUploadLogStatus.IDLE,
-  isLocalMuted: false,
-  isAvatarPlaying: false,
-  updateNetwork: (network: ENetworkStatus) => set({ network }),
-  updateAgentStatus: (agentStatus: EConnectionStatus) => set({ agentStatus }),
-  updateRoomStatus: (roomStatus: EConnectionStatus) => set({ roomStatus }),
-  updateChannelName: (channelName?: string) =>
-    set({ channel_name: channelName || genChannelName() }),
-  updateAgentRtcUid: (agentRtcUid: number) =>
-    set({ agent_rtc_uid: agentRtcUid }),
-  updateAvatarRtcUid: (avatarRtcUid: number) =>
-    set({ avatar_rtc_uid: avatarRtcUid }),
-  updateRemoteRtcUid: (remoteRtcUid: number) =>
-    set({ remote_rtc_uid: remoteRtcUid }),
-  updateAgentId: (agentId: string) => set({ agent_id: agentId }),
-  /** @deprecated */
-  updateAgentRunningStatus: (agentRunningStatus: EAgentRunningStatus) =>
-    set({ agentRunningStatus }),
-  updateAgentState: (agentState: EAgentState) => set({ agentState }),
-  updateAgentUrl: (agentUrl: string) => set({ agent_url: agentUrl }),
-  updateUploadLogStatus: (uploadLogStatus: EUploadLogStatus) =>
-    set({ upload_log_status: uploadLogStatus }),
-  updateIsLocalMuted: (isLocalMuted: boolean) => set({ isLocalMuted }),
-  updateIsAvatarPlaying: (isAvatarPlaying: boolean) => set({ isAvatarPlaying })
-}))
+export const useRTCStore = create<IRTCStore>()(
+  devtools((set) => ({
+    network: ENetworkStatus.DISCONNECTED,
+    agentStatus: EConnectionStatus.DISCONNECTED,
+    roomStatus: EConnectionStatus.DISCONNECTED,
+    channel_name: genChannelName(),
+    agent_rtc_uid: genAgentId(),
+    avatar_rtc_uid: genAgentId(),
+    remote_rtc_uid: genUserId(),
+    agent_id: undefined,
+    /** @deprecated use agentState */
+    agentRunningStatus: EAgentRunningStatus.DEFAULT,
+    agentState: EAgentState.IDLE,
+    upload_log_status: EUploadLogStatus.IDLE,
+    isLocalMuted: false,
+    isAvatarPlaying: false,
+    updateNetwork: (network: ENetworkStatus) => set({ network }),
+    updateAgentStatus: (agentStatus: EConnectionStatus) => set({ agentStatus }),
+    updateRoomStatus: (roomStatus: EConnectionStatus) => set({ roomStatus }),
+    updateChannelName: (channelName?: string) =>
+      set({ channel_name: channelName || genChannelName() }),
+    updateAgentRtcUid: (agentRtcUid: number) =>
+      set({ agent_rtc_uid: agentRtcUid }),
+    updateAvatarRtcUid: (avatarRtcUid: number) =>
+      set({ avatar_rtc_uid: avatarRtcUid }),
+    updateRemoteRtcUid: (remoteRtcUid: number) =>
+      set({ remote_rtc_uid: remoteRtcUid }),
+    updateAgentId: (agentId: string) => set({ agent_id: agentId }),
+    /** @deprecated */
+    updateAgentRunningStatus: (agentRunningStatus: EAgentRunningStatus) =>
+      set({ agentRunningStatus }),
+    updateAgentState: (agentState: EAgentState) => set({ agentState }),
+    updateAgentUrl: (agentUrl: string) => set({ agent_url: agentUrl }),
+    updateUploadLogStatus: (uploadLogStatus: EUploadLogStatus) =>
+      set({ upload_log_status: uploadLogStatus }),
+    updateIsLocalMuted: (isLocalMuted: boolean) => set({ isLocalMuted }),
+    updateIsAvatarPlaying: (isAvatarPlaying: boolean) =>
+      set({ isAvatarPlaying })
+  }))
+)

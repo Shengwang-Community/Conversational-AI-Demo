@@ -8,9 +8,13 @@ import {
   BlurredBackdrop,
   BlurredImageFillTopBottom
 } from '@/components/blurred-element-fill'
+import { PresetBadgeButton } from '@/components/button/preset-badge'
 import { GlobalConfirmDialog } from '@/components/dialog/global-confirm'
 import { AgentCard, AgentCardContent } from '@/components/home/agent-card'
+import { PresetBadges } from '@/components/home/preset-badges'
 import { GreetingTypewriter } from '@/components/home/typewriter'
+import { PresetPlaceholderIcon } from '@/components/icon/agent'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { DEFAULT_AVATAR_DOM_ID } from '@/constants'
 import { EAgentState } from '@/conversational-ai-api/type'
 import { logger } from '@/lib/logger'
@@ -36,11 +40,16 @@ const agentSplineCubeId = 'ae38b084-bb14-4926-ae64-00b5319e888a'
 export function AgentBlock() {
   const [isSplineInited, setIsSplineInited] = React.useState(false)
 
-  const { agentStatus, remote_rtc_uid, agentState, isAvatarPlaying } =
-    useRTCStore()
-  const { showSubtitle, isDevMode } = useGlobalStore()
+  const {
+    agentStatus,
+    remote_rtc_uid,
+    agentState,
+    isAvatarPlaying,
+    roomStatus
+  } = useRTCStore()
+  const { showSubtitle } = useGlobalStore()
   const { history } = useChatStore()
-  const { settings } = useAgentSettingsStore()
+  const { settings, selectedPreset } = useAgentSettingsStore()
 
   const cube = React.useRef<SPEObject | null>(null)
   const splineRef = React.useRef<Application | null>(null)
@@ -48,6 +57,12 @@ export function AgentBlock() {
   const isUserSubtitleExist =
     history.some((item) => item.uid === `${remote_rtc_uid}`) &&
     agentStatus === EConnectionStatus.CONNECTED
+  const disableFormMemo = React.useMemo(() => {
+    return !(
+      roomStatus === EConnectionStatus.DISCONNECTED ||
+      roomStatus === EConnectionStatus.UNKNOWN
+    )
+  }, [roomStatus])
 
   React.useEffect(() => {
     if (!cube.current || !splineRef.current) {
@@ -59,11 +74,11 @@ export function AgentBlock() {
       agentState === EAgentState.SILENT ||
       agentState === EAgentState.THINKING
     ) {
-      splineRef.current.setVariable('mk0', new Date().getTime())
+      splineRef.current.setVariable('mk0', Date.now())
     } else if (agentState === EAgentState.LISTENING) {
-      splineRef.current.setVariable('mk1', new Date().getTime())
+      splineRef.current.setVariable('mk1', Date.now())
     } else if (agentState === EAgentState.SPEAKING) {
-      splineRef.current.setVariable('mk2', new Date().getTime())
+      splineRef.current.setVariable('mk2', Date.now())
     }
   }, [agentState])
 
@@ -72,14 +87,25 @@ export function AgentBlock() {
       if (!splineRef.current) {
         return
       }
-      const isMobile = window.innerWidth < 768
+      // Call handleResize to set initial zoom based on screen size
+      const isMobile =
+        typeof window !== 'undefined' ? window.innerWidth < 768 : false
+      const isXLarge =
+        typeof window !== 'undefined' ? window.innerWidth > 1280 : false
+      const isLarge =
+        typeof window !== 'undefined'
+          ? window.innerWidth > 1024 && window.innerWidth < 1280
+          : false
       if (isMobile) {
         splineRef.current.setZoom(0.5)
-        cube.current?.emitEvent('start')
+      } else if (isXLarge) {
+        splineRef.current.setZoom(0.8)
+      } else if (isLarge) {
+        splineRef.current.setZoom(0.8)
       } else {
-        splineRef.current.setZoom(1)
-        cube.current?.emitEvent('start')
+        splineRef.current.setZoom(0.8)
       }
+      cube.current?.emitEvent('start')
     }
 
     window.addEventListener('resize', handleResize)
@@ -109,11 +135,11 @@ export function AgentBlock() {
     if (isMobile) {
       spline.setZoom(0.5)
     } else if (isXLarge) {
-      spline.setZoom(1)
+      spline.setZoom(0.8)
     } else if (isLarge) {
       spline.setZoom(0.8)
     } else {
-      spline.setZoom(1)
+      spline.setZoom(0.8)
     }
     setIsSplineInited(true)
   }
@@ -121,8 +147,23 @@ export function AgentBlock() {
   return (
     <>
       <AgentCard>
+        {disableFormMemo && selectedPreset?.preset && (
+          <PresetBadgeButton
+            readonly
+            className='absolute top-2 left-3 z-50'
+            avatar={
+              selectedPreset.type === 'default'
+                ? {
+                    src: selectedPreset.preset.avatar_url,
+                    alt: selectedPreset.preset.display_name
+                  }
+                : undefined
+            }
+          >
+            {selectedPreset.preset.display_name}
+          </PresetBadgeButton>
+        )}
         <div
-          // id={DEFAULT_AVATAR_DOM_ID}
           className={cn(
             'z-0 overflow-hidden rounded-xl',
             '-translate-x-1/2 absolute top-0 left-1/2 transform',
@@ -159,10 +200,11 @@ export function AgentBlock() {
             className={cn(
               'relative',
               'flex w-full flex-col items-center gap-3',
-              'h-full min-h-fit',
+              'h-fit',
               'transition-height duration-500',
               {
-                ['gap-0']: isUserSubtitleExist
+                'gap-0': isUserSubtitleExist,
+                'h-full': disableFormMemo
               }
             )}
           >
@@ -173,44 +215,78 @@ export function AgentBlock() {
                     'flex items-center gap-2',
                     'transition-[height,opacity] duration-500',
                     {
-                      ['failed']: agentStatus === EConnectionStatus.ERROR,
-                      ['mt-0 h-0 min-h-0 opacity-0']:
+                      failed: agentStatus === EConnectionStatus.ERROR,
+                      'mt-0 h-0 min-h-0 opacity-0':
                         isUserSubtitleExist ||
                         ![
                           EConnectionStatus.DISCONNECTED,
                           EConnectionStatus.UNKNOWN
                         ].includes(agentStatus),
-                      ['leading-[1.2] md:text-[44px]']: !isCN
+                      'leading-[1.2] md:text-[44px]': !isCN
                     }
                   )}
                 >
                   <GreetingTypewriter />
                 </AgentGreeting>
-                <div
-                  className={cn(
-                    'pointer-events-none',
-                    'flex w-full items-center justify-center',
-                    'h-(--ag-spline-height) min-h-(--ag-spline-height)',
-                    'my-auto',
-                    'transition-opacity duration-500',
-                    { ['opacity-0']: !isSplineInited }
-                  )}
-                >
-                  <Spline
-                    scene='/spline/scene-250216.splinecode'
-                    onLoad={onSplineLoad}
-                  />
-                </div>
+                {(disableFormMemo ? true : !selectedPreset) && (
+                  <div
+                    className={cn(
+                      'pointer-events-none',
+                      'flex w-full items-center justify-center',
+                      'h-(--ag-spline-height) min-h-(--ag-spline-height)',
+                      'my-auto',
+                      'transition-opacity duration-500',
+                      { 'opacity-0': !isSplineInited }
+                    )}
+                  >
+                    <Spline
+                      scene='/spline/scene-250216.splinecode'
+                      onLoad={onSplineLoad}
+                    />
+                  </div>
+                )}
+                {selectedPreset && !disableFormMemo && (
+                  <div className='my-auto flex flex-col items-center justify-center gap-5'>
+                    <Avatar
+                      asChild
+                      className='size-45'
+                      key={`greeting-avatar-${selectedPreset.preset.name}`}
+                    >
+                      <div>
+                        {selectedPreset.type === 'default' &&
+                          selectedPreset.preset?.avatar_url && (
+                            <AvatarImage
+                              src={selectedPreset.preset.avatar_url}
+                              alt={selectedPreset.preset.display_name}
+                            />
+                          )}
+                        <AvatarFallback>
+                          <PresetPlaceholderIcon />
+                        </AvatarFallback>
+                      </div>
+                    </Avatar>
+                    {selectedPreset?.preset && (
+                      <div className='flex flex-col items-center gap-5'>
+                        <p className='font-bold text-icontext text-xl'>
+                          {selectedPreset?.preset.display_name}
+                        </p>
+                        <p className='text-icontext-hover'>
+                          {selectedPreset?.preset.description}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             )}
 
-            {isDevMode && <div className='z-9'>Agent State: {agentState}</div>}
+            {!disableFormMemo && <PresetBadges className='mt-auto' />}
 
             <SubTitle
               className={cn(
                 'absolute top-0 right-0 bottom-0 left-0 h-full w-full',
                 {
-                  ['hidden']: !showSubtitle
+                  hidden: !showSubtitle
                 }
               )}
             />

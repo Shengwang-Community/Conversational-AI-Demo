@@ -47,6 +47,7 @@
   --color-brand-main-3: var(--ai_brand_main3);
   --color-brand-main-4: var(--ai_brand_main4);
   --color-brand-main-5: var(--ai_brand_main5);
+  --color-brand-main-6: var(--ai_brand_main6);
   --color-brand-main-7: var(--ai_brand_main7);
   --color-brand-main: var(--ai_brand_main6);
   --color-brand-main-hover: var(--ai_mainhover);
@@ -150,9 +151,9 @@
       100dvh - var(--ag-header-height) - var(--ag-body-padding) * 3
     );
     --ag-sidebar-width: 340px;
-    --ag-action-height: 76px;
+    --ag-action-height: 60px;
     --ag-greeting-height: 75px;
-    --ag-spline-height: 400px;
+    --ag-spline-height: 320px;
 
     @media (max-width: 1024px) {
       --ag-sidebar-width: 240px;
@@ -161,7 +162,6 @@
     @media (max-width: 768px) {
       --ag-greeting-height: 48px;
       --ag-spline-height: 240px;
-      --ag-action-height: 60px;
     }
   }
 
@@ -494,6 +494,15 @@
     }
     100% {
       color: var(--ai_red6);
+    }
+  }
+
+  @keyframes ag-rainbow {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 200% 0%;
     }
   }
 

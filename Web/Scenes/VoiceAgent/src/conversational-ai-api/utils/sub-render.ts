@@ -1,3 +1,4 @@
+import { logger as agoraLogger } from '@agora-js/report'
 import type { RTMEvents } from 'agora-rtm'
 import _ from 'lodash'
 import {
@@ -6,7 +7,7 @@ import {
   type EConversationalAIAPIEvents,
   EMessageType,
   EModuleType,
-  ESubtitleHelperMode,
+  ETranscriptHelperMode,
   ETurnStatus,
   type IAgentTranscription,
   type IConversationalAIAPIEventHandlers,
@@ -14,12 +15,12 @@ import {
   type IMessageInterrupt,
   type IMessageMetrics,
   type IPresenceState,
-  type ISubtitleHelperItem,
+  type ITranscriptHelperItem,
   type ITranscriptionBase,
   type IUserTranscription,
   type TDataChunkMessageWord,
   type TQueueItem,
-  type TSubtitleHelperObjectWord
+  type TTranscriptHelperObjectWord
 } from '@/conversational-ai-api/type'
 import { factoryFormatLog } from '@/conversational-ai-api/utils'
 import { ELoggerType, logger } from '@/lib/logger'
@@ -27,14 +28,15 @@ import { ELoggerType, logger } from '@/lib/logger'
 const TAG = 'CovSubRenderController'
 const CONSOLE_LOG_PREFIX = `[${TAG}]`
 const SELF_USER_ID = 0
-const VERSION = '1.6.0'
+const VERSION = '1.8.0'
 
 const DEFAULT_INTERVAL = 200 // milliseconds
+const DEFAULT_CHUNK_INTERVAL = 100 // milliseconds, 10 char/s
 
 const formatLog = factoryFormatLog({ tag: TAG })
 
 /**
- * CovSubRenderController is a service that manages the subtitle messages from RTM messages.
+ * CovSubRenderController is a service that manages the transcript messages from RTM messages.
  *
  * Best practices:
  *
@@ -42,7 +44,7 @@ const formatLog = factoryFormatLog({ tag: TAG })
  *
  * 2. Call `run` method to start the service. One common use case is to call it after the user joins a channel.
  *
- * 3. Call `setPts` method to update the current PTS (Presentation Time Stamp) when receiving new media data. This is crucial for synchronizing the subtitles with the media playback.
+ * 3. Call `setPts` method to update the current PTS (Presentation Time Stamp) when receiving new media data. This is crucial for synchronizing the transcripts with the media playback.
  *
  * 4. [Cleanup] Call `cleanup` method to reset the service state when leaving a channel or when the service is no longer needed. This will clear the chat history, queue, and other internal states.
  */
@@ -52,7 +54,7 @@ export class CovSubRenderController {
   private callMessagePrint: (type: ELoggerType, ...args: unknown[]) => void
   public static self_uid = SELF_USER_ID
 
-  private _mode: ESubtitleHelperMode = ESubtitleHelperMode.UNKNOWN
+  private _mode: ETranscriptHelperMode = ETranscriptHelperMode.UNKNOWN
   private _queue: TQueueItem[] = []
   private _interval: number
   private _intervalRef: NodeJS.Timeout | null = null
@@ -64,8 +66,13 @@ export class CovSubRenderController {
     turn_id: string | number
     timestamp: number
   } | null = null
+  private _transcriptChunk: {
+    index: number
+    data: IAgentTranscription
+    uid: string
+  } | null = null
 
-  public chatHistory: ISubtitleHelperItem<
+  public chatHistory: ITranscriptHelperItem<
     Partial<IUserTranscription | IAgentTranscription>
   >[] = []
   public onChatHistoryUpdated:
@@ -113,6 +120,7 @@ export class CovSubRenderController {
     ) => {
       logger[type](formatLog(...args))
       this.onDebugLog?.(`[${type}] ${formatLog(...args)}`)
+      agoraLogger[type](...args)
     }
     this.callMessagePrint(
       ELoggerType.debug,
@@ -129,19 +137,35 @@ export class CovSubRenderController {
     this.onMessageError = options.onMessageError ?? null
   }
 
-  private _setupInterval() {
+  private _preSetupInterval() {
     if (!this._isRunning) {
       console.error(CONSOLE_LOG_PREFIX, 'Message service is not running')
       this.callMessagePrint(
         ELoggerType.error,
-        '_setupInterval',
+        '_preSetupInterval',
         'Message service is not running'
       )
       return
     }
+  }
+
+  private _setupIntervalForWords(options?: { isForce?: boolean }) {
+    this._preSetupInterval()
+    // if force: clean older and reset interval
+    if (options?.isForce) {
+      if (this._intervalRef) {
+        clearInterval(this._intervalRef)
+        this._intervalRef = null
+      }
+      this._intervalRef = setInterval(
+        this._handleQueue.bind(this),
+        this._interval
+      )
+      return
+    }
+    // else(if not forced): skip if interval is already set, otherwise set an interval
     if (this._intervalRef) {
-      clearInterval(this._intervalRef)
-      this._intervalRef = null
+      return
     }
     this._intervalRef = setInterval(
       this._handleQueue.bind(this),
@@ -239,7 +263,7 @@ export class CovSubRenderController {
         turn_id: queueItem.turn_id,
         uid: queueItem.uid,
         stream_id: queueItem.stream_id,
-        _time: new Date().getTime(),
+        _time: Date.now(),
         text: '',
         status: queueItem.status,
         metadata: queueItem
@@ -247,7 +271,7 @@ export class CovSubRenderController {
       this._appendChatHistory(correspondingChatHistoryItem)
     }
     // update correspondingChatHistoryItem._time for chatHistory auto-scroll
-    correspondingChatHistoryItem._time = new Date().getTime()
+    correspondingChatHistoryItem._time = Date.now()
     // update correspondingChatHistoryItem.metadata
     correspondingChatHistoryItem.metadata = queueItem
     // update correspondingChatHistoryItem.status if queueItem.status is interrupted(from message.interrupt event)
@@ -255,8 +279,8 @@ export class CovSubRenderController {
       correspondingChatHistoryItem.status = ETurnStatus.INTERRUPTED
     }
     // pop all valid word items(those word.start_ms <= curPTS) in queueItem
-    const validWords: TSubtitleHelperObjectWord[] = []
-    const restWords: TSubtitleHelperObjectWord[] = []
+    const validWords: TTranscriptHelperObjectWord[] = []
+    const restWords: TTranscriptHelperObjectWord[] = []
     for (const word of queueItem.words) {
       if (word.start_ms <= curPTS) {
         validWords.push(word)
@@ -309,7 +333,9 @@ export class CovSubRenderController {
   }
 
   private _appendChatHistory(
-    item: ISubtitleHelperItem<Partial<IUserTranscription | IAgentTranscription>>
+    item: ITranscriptHelperItem<
+      Partial<IUserTranscription | IAgentTranscription>
+    >
   ) {
     // if item.turn_id is 0, append to the front of chatHistory(greeting message)
     if (item.turn_id === 0) {
@@ -372,7 +398,7 @@ export class CovSubRenderController {
 
   private _pushToQueue(data: {
     turn_id: number
-    words: TSubtitleHelperObjectWord[]
+    words: TTranscriptHelperObjectWord[]
     text: string
     status: ETurnStatus
     stream_id: number
@@ -454,7 +480,7 @@ export class CovSubRenderController {
     if (words.length === 0) {
       return words
     }
-    const sortedWords: TSubtitleHelperObjectWord[] = words
+    const sortedWords: TTranscriptHelperObjectWord[] = words
       .map((word) => ({
         ...word,
         word_status: ETurnStatus.IN_PROGRESS
@@ -466,7 +492,7 @@ export class CovSubRenderController {
           acc.push(curr)
         }
         return acc
-      }, [] as TSubtitleHelperObjectWord[])
+      }, [] as TTranscriptHelperObjectWord[])
     const isMessageFinal = turn_status !== ETurnStatus.IN_PROGRESS
     if (isMessageFinal) {
       sortedWords[sortedWords.length - 1].word_status = turn_status
@@ -478,7 +504,8 @@ export class CovSubRenderController {
     const turn_id = message.turn_id
     const text = message.text || ''
     const stream_id = message.stream_id
-    const turn_status = ETurnStatus.END
+    const turn_status =
+      (message as { turn_status?: ETurnStatus }).turn_status || ETurnStatus.END
 
     const targetChatHistoryItem = this.chatHistory.find(
       (item) => item.turn_id === turn_id && item.stream_id === stream_id
@@ -498,7 +525,7 @@ export class CovSubRenderController {
           ? `${CovSubRenderController.self_uid}`
           : `${uid}`,
         stream_id,
-        _time: new Date().getTime(),
+        _time: Date.now(),
         text,
         status: turn_status,
         metadata: message
@@ -508,7 +535,7 @@ export class CovSubRenderController {
       targetChatHistoryItem.text = text
       targetChatHistoryItem.status = turn_status
       targetChatHistoryItem.metadata = message
-      targetChatHistoryItem._time = new Date().getTime()
+      targetChatHistoryItem._time = Date.now()
       this.callMessagePrint(
         ELoggerType.debug,
         `[Text Mode]`,
@@ -517,6 +544,115 @@ export class CovSubRenderController {
       )
     }
     this._mutateChatHistory()
+  }
+
+  private _handleTranscriptChunk() {
+    if (!this._transcriptChunk) {
+      this.callMessagePrint(
+        ELoggerType.warn,
+        `[${ETranscriptHelperMode.CHUNK} Mode]`,
+        '_handleTranscriptChunk',
+        'missing _transcriptChunk'
+      )
+      return
+    }
+    const currentIdx = this._transcriptChunk.index
+    const currentTranscript = this._transcriptChunk.data
+    const currentMaxLength = currentTranscript.text.length
+    const uid = this._transcriptChunk.uid
+
+    const nextIdx =
+      currentIdx + 1 >= currentMaxLength ? currentMaxLength : currentIdx + 1
+    this._transcriptChunk.index = nextIdx
+    const validTranscriptString = currentTranscript.text.substring(0, nextIdx)
+    const isValidTranscriptStringEnded =
+      validTranscriptString.length > 0 &&
+      currentTranscript.turn_status !== ETurnStatus.IN_PROGRESS &&
+      validTranscriptString.length === currentTranscript.text.length
+
+    const targetChatHistoryItem = this.chatHistory.find(
+      (item) =>
+        item.turn_id === currentTranscript.turn_id &&
+        item.stream_id === currentTranscript.stream_id
+    )
+    // if not found, push to chatHistory
+    if (!targetChatHistoryItem) {
+      this.callMessagePrint(
+        ELoggerType.debug,
+        `[${ETranscriptHelperMode.CHUNK} Mode]`,
+        `[${uid}]`,
+        'new transcriptChunk',
+        this._transcriptChunk
+      )
+      this._appendChatHistory({
+        turn_id: currentTranscript.turn_id,
+        uid: currentTranscript.stream_id
+          ? `${CovSubRenderController.self_uid}`
+          : `${uid}`,
+        stream_id: currentTranscript.stream_id,
+        _time: Date.now(),
+        text: validTranscriptString,
+        status: currentTranscript.turn_status,
+        metadata: currentTranscript
+      })
+    } else {
+      // if found, update text and status
+      targetChatHistoryItem.text = validTranscriptString
+      targetChatHistoryItem.status = isValidTranscriptStringEnded
+        ? currentTranscript.turn_status
+        : targetChatHistoryItem.status
+      targetChatHistoryItem.metadata = currentTranscript
+      targetChatHistoryItem._time = Date.now()
+      this.callMessagePrint(
+        ELoggerType.debug,
+        `[${ETranscriptHelperMode.CHUNK} Mode]`,
+        `[${uid}]`,
+        'update transcriptChunk',
+        targetChatHistoryItem
+      )
+    }
+    this._mutateChatHistory()
+  }
+
+  protected handleChunkTextMessage(uid: string, message: IAgentTranscription) {
+    this.callMessagePrint(
+      ELoggerType.debug,
+      `[${ETranscriptHelperMode.CHUNK} Mode]`,
+      `[${uid}]`,
+      'new item',
+      message
+    )
+    // 0. check turn_id, teardown interval if new turn
+    if (
+      this._transcriptChunk &&
+      this._transcriptChunk.data.turn_id < message.turn_id
+    ) {
+      this._teardownInterval()
+      // set chathistory items turn_status to ended
+      const lastChatHistory = this.chatHistory.find(
+        (item) =>
+          item.turn_id === this._transcriptChunk?.data.turn_id &&
+          item.uid === uid
+      )
+      if (lastChatHistory) {
+        lastChatHistory.status = ETurnStatus.END
+      }
+      // set _transcriptChunk to null
+      this._transcriptChunk = null
+    }
+    // 1. update _transcriptChunk
+    this._transcriptChunk = {
+      index: this._transcriptChunk?.index ?? 0,
+      data: message,
+      uid
+    }
+    // 2. check if interval is set, if not, set it
+    if (!this._intervalRef) {
+      this._intervalRef = setInterval(
+        this._handleTranscriptChunk.bind(this),
+        this._interval
+      )
+    }
   }
 
   protected handleMessageInterrupt(uid: string, message: IMessageInterrupt) {
@@ -533,6 +669,21 @@ export class CovSubRenderController {
       turn_id,
       start_ms
     })
+    // interrupt chunk
+    if (this._transcriptChunk) {
+      this._teardownInterval()
+      // set chathistory items turn_status to ended
+      const lastChatHistory = this.chatHistory.find(
+        (item) =>
+          item.turn_id === this._transcriptChunk?.data.turn_id &&
+          item.uid === uid
+      )
+      if (lastChatHistory) {
+        lastChatHistory.status = ETurnStatus.INTERRUPTED
+      }
+      // set _transcriptChunk to null
+      this._transcriptChunk = null
+    }
     this._mutateChatHistory()
     this.onAgentInterrupted?.(`${uid}`, {
       turnID: turn_id,
@@ -747,8 +898,8 @@ export class CovSubRenderController {
     })
   }
 
-  public setMode(mode: ESubtitleHelperMode) {
-    if (this._mode !== ESubtitleHelperMode.UNKNOWN) {
+  public setMode(mode: ETranscriptHelperMode) {
+    if (this._mode !== ETranscriptHelperMode.UNKNOWN) {
       this.callMessagePrint(
         ELoggerType.warn,
         `Mode should only be set once, but it is set[${mode}] again`,
@@ -757,14 +908,21 @@ export class CovSubRenderController {
       )
       return
     }
-    if (mode === ESubtitleHelperMode.UNKNOWN) {
+    if (mode === ETranscriptHelperMode.UNKNOWN) {
       this.callMessagePrint(ELoggerType.warn, 'Unknown mode should not be set')
       return
+    }
+    if (mode === ETranscriptHelperMode.CHUNK) {
+      // set interval to chunk interval
+      this._interval = DEFAULT_CHUNK_INTERVAL
+    } else {
+      // set interval to default interval
+      this._interval = DEFAULT_INTERVAL
     }
     this.callMessagePrint(
       ELoggerType.debug,
       `setMode`,
-      ESubtitleHelperMode.TEXT
+      ETranscriptHelperMode.TEXT
     )
     this._mode = mode
   }
@@ -795,28 +953,36 @@ export class CovSubRenderController {
     const isMessageInfo = message.object === EMessageType.MESSAGE_INFO
 
     // set mode (only once)
-    if (isAgentMessage && this._mode === ESubtitleHelperMode.UNKNOWN) {
+    if (isAgentMessage && this._mode === ETranscriptHelperMode.UNKNOWN) {
       // check if words is empty, and set mode
       if (!message.words) {
-        this.setMode(ESubtitleHelperMode.TEXT)
+        this.setMode(ETranscriptHelperMode.TEXT)
       } else {
-        this._setupInterval()
-        this.setMode(ESubtitleHelperMode.WORD)
+        this._setupIntervalForWords({ isForce: true })
+        this.setMode(ETranscriptHelperMode.WORD)
       }
     }
 
     // handle Agent Message
-    if (isAgentMessage && this._mode === ESubtitleHelperMode.WORD) {
+    if (isAgentMessage && this._mode === ETranscriptHelperMode.WORD) {
+      this._setupIntervalForWords({ isForce: false })
       this.handleWordAgentMessage(
         options.publisher,
         message as unknown as IAgentTranscription
       )
       return
     }
-    if (isAgentMessage && this._mode === ESubtitleHelperMode.TEXT) {
+    if (isAgentMessage && this._mode === ETranscriptHelperMode.TEXT) {
       this.handleTextMessage(
         options.publisher,
         message as unknown as IUserTranscription
+      )
+      return
+    }
+    if (isAgentMessage && this._mode === ETranscriptHelperMode.CHUNK) {
+      this.handleChunkTextMessage(
+        options.publisher,
+        message as unknown as IAgentTranscription
       )
       return
     }
@@ -885,7 +1051,8 @@ export class CovSubRenderController {
     // cleanup chatHistory
     this.chatHistory = []
     // cleanup mode
-    this._mode = ESubtitleHelperMode.UNKNOWN
+    this._mode = ETranscriptHelperMode.UNKNOWN
     this._agentMessageState = null
+    this._transcriptChunk = null
   }
 }

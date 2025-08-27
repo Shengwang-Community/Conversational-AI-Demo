@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
       ...(basicAuthKey && { basic_auth_username: basicAuthKey }),
       ...(basicAuthSecret && { basic_auth_password: basicAuthSecret }),
       preset_name: reqBody.preset_name,
+      preset_type: reqBody.preset_type,
       convoai_body: {
         graph_id: reqBody.graph_id,
         preset: reqBody.preset,

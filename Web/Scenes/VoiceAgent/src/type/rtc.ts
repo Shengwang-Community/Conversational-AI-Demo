@@ -10,7 +10,7 @@ import type {
 import type {
   EAgentState,
   IAgentTranscription,
-  ISubtitleHelperItem,
+  ITranscriptHelperItem,
   IUserTranscription
 } from '@/conversational-ai-api/type'
 
@@ -77,6 +77,7 @@ export enum EConnectionStatus {
   RECONNECTING = 'reconnecting'
 }
 
+/** @deprecated use EAgentState from '@/conversational-ai-api/type' */
 export enum EAgentRunningStatus {
   DEFAULT = 'default',
   SPEAKING = 'speaking',
@@ -93,7 +94,7 @@ export interface IRtcEvents {
   localTracksChanged: (tracks: IUserTracks) => void
   networkQuality: (quality: NetworkQuality) => void
   textChanged: (
-    history: ISubtitleHelperItem<
+    history: ITranscriptHelperItem<
       Partial<IUserTranscription | IAgentTranscription>
     >[]
   ) => void

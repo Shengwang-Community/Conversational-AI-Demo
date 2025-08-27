@@ -114,5 +114,8 @@ export const startAgentRequestBodySchema = z.object({
   basic_auth_username: z.string().optional(),
   basic_auth_password: z.string().optional(),
   preset_name: z.string().optional(),
+  preset_type: z
+    .enum(['standard', 'standard_avatar', 'independent', 'custom_private'])
+    .optional(),
   convoai_body: convoaiBodySchema
 })
