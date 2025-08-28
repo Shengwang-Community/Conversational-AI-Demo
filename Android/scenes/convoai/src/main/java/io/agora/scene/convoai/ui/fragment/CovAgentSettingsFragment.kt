@@ -22,6 +22,7 @@ import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.api.CovAgentLanguage
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
+import io.agora.scene.convoai.constant.VoiceprintMode
 import io.agora.scene.convoai.databinding.CovAgentSettingsFragmentBinding
 import io.agora.scene.convoai.databinding.CovSettingOptionItem2Binding
 import io.agora.scene.convoai.databinding.CovSettingOptionItemBinding
@@ -29,6 +30,7 @@ import io.agora.scene.convoai.ui.CovLivingViewModel
 import io.agora.scene.convoai.ui.CovRenderMode
 import io.agora.scene.convoai.ui.CovTranscriptRender
 import io.agora.scene.convoai.ui.dialog.CovAvatarSelectorDialog
+import io.agora.scene.convoai.ui.voiceprint.CovVoiceprintLockDialog
 import kotlin.collections.indexOf
 
 /**
@@ -117,12 +119,18 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                     onClickRenderMode()
                 }
             })
+            clVoiceprintMode.setOnClickListener(object : OnFastClickListener() {
+                override fun onClickJacking(view: View) {
+                    onClickVoiceprint()
+                }
+            })
         }
         updatePageEnable()
         updateBaseSettings()
         setAiVadBySelectLanguage()
         // Update avatar settings display
         updateAvatarSettings()
+        updateVoiceprintSettings()
     }
 
 
@@ -421,6 +429,34 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                 tvAvatarDetail.text = getString(R.string.common_close)
                 ivAvatar.visibility = View.GONE
             }
+        }
+    }
+
+    private fun onClickVoiceprint() {
+        val activity = activity ?: return
+        val voiceprintDialog = CovVoiceprintLockDialog.newInstance(
+            currentMode = CovAgentManager.voiceprintMode,
+            onDismiss = {
+                // Handle dialog closure
+            },
+            onModeSelected = { voiceprintMode ->
+                handleVoiceprintSelection(voiceprintMode)
+            }
+        )
+
+        voiceprintDialog.show(activity.supportFragmentManager, "voiceprint_dialog")
+    }
+
+    private fun handleVoiceprintSelection(voiceprintMode: VoiceprintMode) {
+        CovAgentManager.voiceprintMode = voiceprintMode
+        livingViewModel.setVoiceprintMode(voiceprintMode)
+        updateVoiceprintSettings()
+    }
+
+    private fun updateVoiceprintSettings() {
+        mBinding?.apply {
+            val selectedVoiceprintMode = CovAgentManager.voiceprintMode
+            tvVoiceprintDetail.setText(selectedVoiceprintMode.title)
         }
     }
 

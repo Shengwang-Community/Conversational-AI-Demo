@@ -1,10 +1,11 @@
 package io.agora.scene.common.util
 
+import android.os.Parcelable
 import com.tencent.mmkv.MMKV
 
 object LocalStorageUtil {
 
-    private val mmkv by lazy {
+    val mmkv by lazy {
         MMKV.defaultMMKV()
     }
 
@@ -30,6 +31,29 @@ object LocalStorageUtil {
 
     fun getString(key: String, default: String = ""): String {
         return mmkv.getString(key, default) ?: default
+    }
+
+    // Parcelable
+    inline fun <reified T : Parcelable> putParcelable(key: String, obj: T) {
+        mmkv.encode(key, obj)
+    }
+
+    //  Parcelable
+    inline fun <reified T : Parcelable> getParcelable(key: String): T? {
+        return mmkv.decodeParcelable(key, T::class.java)
+    }
+
+    //  Parcelable
+    inline fun <reified T : Parcelable> getParcelable(key: String, defaultValue: T): T {
+        return mmkv.decodeParcelable(key, T::class.java) ?: defaultValue
+    }
+
+    fun containsKey(key: String): Boolean {
+        return mmkv.containsKey(key)
+    }
+
+    fun remove(key: String) {
+        mmkv.removeValueForKey(key)
     }
 
     fun clear(){

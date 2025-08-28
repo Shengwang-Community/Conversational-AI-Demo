@@ -327,7 +327,7 @@ class CovDeviceConnectActivity : BaseActivity<CovActivityDeviceConnectBinding>()
                 // Return to device list page
                 navigateToDeviceListPage()
             }
-            .setImage(R.drawable.cov_iot_connect_success)
+            .setImageBackground(R.drawable.cov_iot_connect_success)
             .hideNegativeButton()
             .setCancelable(false)
             .build()

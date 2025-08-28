@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="horizontal"
+    tools:background="@color/ai_block2"
+    android:paddingVertical="10dp">
+
+    <!-- Content Section -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="16dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/cov_voiceprint_close"
+                android:textColor="@color/ai_icontext1"
+                android:textSize="14sp"
+                android:textStyle="normal" />
+
+            <TextView
+                android:id="@+id/tv_voiceprint_tag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/cov_voiceprint_tag_bg"
+                android:drawableStart="@drawable/common_icon_voiceprint_tag"
+                android:drawablePadding="6dp"
+                android:paddingHorizontal="5dp"
+                android:visibility="gone"
+                android:paddingVertical="5dp"
+                android:gravity="center"
+                tools:visibility="visible"
+                android:text="@string/cov_voiceprint_has"
+                android:layout_marginStart="8dp"
+                android:textColor="@color/ai_icontext1"
+                android:textSize="8sp" />
+        </LinearLayout>
+
+
+        <TextView
+            android:id="@+id/tvDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:ellipsize="end"
+            android:text="@string/cov_voiceprint_close_tips"
+            android:textColor="@color/ai_icontext2"
+            android:textSize="12sp"
+            android:textStyle="normal" />
+
+    </LinearLayout>
+
+    <!-- Selection Indicator -->
+    <FrameLayout
+        android:id="@+id/layoutCheckbox"
+        android:layout_width="62dp"
+        android:layout_height="44dp"
+        android:layout_gravity="center_vertical"
+        android:gravity="center">
+
+        <ImageView
+            android:id="@+id/ivCheckbox"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:background="@drawable/cov_avatar_checkbox_selector"
+            android:visibility="visible" />
+
+    </FrameLayout>
+
+</LinearLayout>

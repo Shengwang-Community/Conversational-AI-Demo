@@ -15,6 +15,16 @@
         app:shapeAppearanceOverlay="@style/CommonTopCustomShape"
         android:background="@drawable/common_bg_dialog" />
 
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/ivImage2"
+        android:layout_width="125dp"
+        android:layout_height="125dp"
+        android:visibility="gone"
+        android:layout_gravity="center"
+        android:layout_marginTop="24dp"
+        app:shapeAppearanceOverlay="@style/CommonTopCustomShape"
+        android:background="@drawable/scene_detail_no_voiceprint" />
+
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="match_parent"

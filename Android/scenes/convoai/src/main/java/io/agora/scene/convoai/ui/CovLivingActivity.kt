@@ -303,11 +303,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                         if (!hasShownTitleAnim) {
                             hasShownTitleAnim = true
                             ToastUtil.show(R.string.cov_detail_join_call_succeed)
-                            ToastUtil.showByPosition(
-                                R.string.cov_detail_join_call_tips,
-                                gravity = Gravity.BOTTOM,
-                                duration = Toast.LENGTH_LONG
-                            )
+                            ToastUtil.show(R.string.cov_detail_join_call_tips, duration = Toast.LENGTH_LONG)
                             mBinding?.clTop?.showTitleAnim(
                                 CovAgentManager.isSessionLimitMode,
                                 CovAgentManager.roomExpireTime,
@@ -802,7 +798,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             .show(supportFragmentManager, "end_dialog_tag")
     }
 
-    private fun checkMicrophonePermission(granted: (Boolean) -> Unit, force: Boolean) {
+    fun checkMicrophonePermission(granted: (Boolean) -> Unit, force: Boolean) {
         if (force) {
             if (mPermissionHelp.hasMicPerm()) {
                 granted.invoke(true)
@@ -830,6 +826,13 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
         } else {
             granted.invoke(true)
         }
+    }
+
+    /**
+     * Public method for Dialog to check microphone permission
+     */
+    fun hasMicPerm(): Boolean{
+        return mPermissionHelp.hasMicPerm()
     }
 
     private fun checkCameraPermission(granted: (Boolean) -> Unit, force: Boolean) {

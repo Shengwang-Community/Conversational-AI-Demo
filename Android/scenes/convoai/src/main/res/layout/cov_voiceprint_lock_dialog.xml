@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ai_fill2"
+    android:orientation="vertical"
+    android:paddingTop="32dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="20dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/ivBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            android:src="@drawable/cov_back"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/ai_icontext1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/cov_voiceprint_recognition"
+            android:textColor="@color/ai_icontext1"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_create_voiceprint"
+        android:layout_width="match_parent"
+        android:layout_height="108dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="-12dp"
+        android:background="@drawable/cov_voiceprint_recording_bg"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/rcVoiceprintOptions"
+        tools:visibility="visible">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/scene_detail_voice_bg"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="96dp"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="16dp"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <!--         voiceprint name   -->
+            <LinearLayout
+                android:id="@+id/layout_voiceprint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/iv_voiceprint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/common_icon_recording_voiceprint" />
+
+                <TextView
+                    android:id="@+id/tv_voiceprint_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="@string/cov_voiceprint_create_mine_voice"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="14sp"
+                    app:layout_constraintBottom_toBottomOf="@+id/iv_voiceprint"
+                    app:layout_constraintStart_toEndOf="@+id/iv_voiceprint"
+                    app:layout_constraintTop_toTopOf="@+id/iv_voiceprint" />
+            </LinearLayout>
+
+            <!--         voiceprint create   -->
+            <LinearLayout
+                android:id="@+id/layout_voiceprint_create"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <ImageView
+                    android:id="@+id/voiceprint_create"
+                    android:layout_width="36dp"
+                    android:layout_height="24dp"
+                    android:paddingHorizontal="12dp"
+                    android:src="@drawable/common_ic_arrow"
+                    android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <TextView
+                    android:id="@+id/voiceprint_create_with_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/cov_voiceprint_button_bg"
+                    android:drawableEnd="@drawable/common_ic_arrow"
+                    android:drawablePadding="6dp"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="4dp"
+                    android:text="@string/cov_voiceprint_recording"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!--     uploading      -->
+            <LinearLayout
+                android:id="@+id/layout_uploading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="42dp"
+                android:background="@drawable/cov_voiceprint_button_bg"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/layout_voiceprint"
+                tools:visibility="visible">
+
+                <ImageView
+                    android:id="@+id/iv_loading"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/cov_loading"
+                    android:src="@drawable/cov_loading_animation" />
+
+                <TextView
+                    android:id="@+id/tv_loading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/cov_voiceprint_uploading"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!--      retry upload      -->
+            <LinearLayout
+                android:id="@+id/layout_retry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="42dp"
+                android:background="@drawable/cov_voiceprint_failed_button_bg"
+                android:gravity="center"
+                android:padding="1dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/layout_voiceprint">
+
+                <TextView
+                    android:id="@+id/tv_failed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/cov_voiceprint_upload_failed"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="12sp" />
+
+                <ImageView
+                    android:id="@+id/iv_retry"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="8dp"
+                    android:src="@drawable/common_icon_retry"
+                    android:visibility="visible" />
+            </LinearLayout>
+
+            <!--      play      -->
+            <LinearLayout
+                android:id="@+id/layout_play"
+                android:layout_width="wrap_content"
+                android:layout_height="24dp"
+                android:layout_marginStart="42dp"
+                android:gravity="center"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/layout_voiceprint">
+
+                <ImageView
+                    android:id="@+id/iv_start_play"
+                    android:layout_width="48dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/cov_voiceprint_button_bg"
+                    android:paddingHorizontal="16dp"
+                    android:src="@drawable/common_icon_voice_play"
+                    android:visibility="visible" />
+
+                <io.agora.scene.convoai.ui.widget.AgentSpeakingIndicator
+                    android:id="@+id/iv_playing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/cl_top"
+                    tools:visibility="visible" />
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rcVoiceprintOptions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:background="@drawable/cov_voiceprint_list_bg"
+        android:clipToPadding="false"
+        android:paddingVertical="6dp"
+        app:layout_constraintTop_toBottomOf="@+id/layout_title"
+        tools:itemCount="3"
+        tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        tools:listitem="@layout/cov_voiceprint_option_item" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,11 +1,16 @@
 package io.agora.scene.convoai.constant
 
+import androidx.annotation.StringRes
 import io.agora.scene.common.BuildConfig
+import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.debugMode.DebugConfigSettings
+import io.agora.scene.convoai.R
 import io.agora.scene.convoai.api.CovAgentLanguage
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.api.CovAvatar
 import io.agora.scene.convoai.ui.CovRenderMode
+import io.agora.scene.convoai.ui.voiceprint.VoiceprintInfo
+import io.agora.scene.convoai.ui.voiceprint.VoiceprintManager
 import kotlin.random.Random
 
 enum class AgentConnectionState() {
@@ -16,6 +21,16 @@ enum class AgentConnectionState() {
     ERROR
 }
 
+
+/**
+ * Voiceprint recognition modes
+ */
+enum class VoiceprintMode(@StringRes val title: Int, @StringRes val description: Int) {
+    OFF(R.string.cov_voiceprint_close, R.string.cov_voiceprint_close_tips),
+    AUTO_LEARNING(R.string.cov_voiceprint_senseless, R.string.cov_voiceprint_senseless_tips),
+    MANUAL(R.string.cov_voiceprint_sensible, R.string.cov_voiceprint_sensible_tips),
+}
+
 object CovAgentManager {
 
     private val TAG = "CovAgentManager"
@@ -24,6 +39,9 @@ object CovAgentManager {
     private var preset: CovAgentPreset? = null
     var language: CovAgentLanguage? = null
     var avatar: CovAvatar? = null
+
+    var voiceprintMode: VoiceprintMode = VoiceprintMode.OFF
+
     var renderMode: Int = CovRenderMode.WORD
 
     var enableAiVad = false
@@ -106,11 +124,19 @@ object CovAgentManager {
         language = null
         avatar = null
         renderMode = CovRenderMode.WORD
+        voiceprintMode = VoiceprintMode.OFF
     }
 
     val isOpenSource: Boolean get() = BuildConfig.IS_OPEN_SOURCE
 
     val channelPrefix: String get() = if (isDebugging) "agent_debug_" else "agent_"
+
+    val voiceprintInfo: VoiceprintInfo?
+        get() {
+            val accountUid = SSOUserManager.accountUid
+            return if (accountUid.isEmpty()) null
+            else VoiceprintManager.getVoiceprint(accountUid)
+        }
 
     // debug config =================================
     val isDebugging: Boolean get() = DebugConfigSettings.isDebug
