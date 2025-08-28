@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Common
 
 extension ChatViewController: AgentPreferenceManagerDelegate {
     func preferenceManager(_ manager: AgentPreferenceManager, avatarDidUpdated avatar: Avatar?) {
@@ -14,5 +15,29 @@ extension ChatViewController: AgentPreferenceManagerDelegate {
         } else {
             stopShowAvatar()
         }
+        
+        updateCharacterInformation()
     }
+    
+    private func getTranscriptRenderMode() -> TranscriptRenderMode {
+        let isEnableAvatar = isEnableAvatar()
+        if isEnableAvatar {
+            return .text
+        }
+        
+        guard let renderMode = AppContext.preferenceManager()?.preference.transcriptMode else {
+            return .words
+        }
+        
+        if renderMode != .words {
+            return .text
+        }
+        
+        return .words
+    }
+    
+    func enableWords() -> Bool {
+        return getTranscriptRenderMode() == .words
+    }
+    
 }

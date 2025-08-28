@@ -8,9 +8,14 @@
 import UIKit
 import Common
 
+struct AgentSelectTableItem {
+    let title: String
+    let subTitle: String
+}
+
 class AgentSelectTableView: UIView {
     private let tableView = UITableView(frame: .zero, style: .plain)
-    private var dataSource = [String]()
+    private var dataSource = [AgentSelectTableItem]()
     private var onSelected: ((Int) -> Void)?
     private var selectedIndex: Int = 0
 
@@ -19,8 +24,8 @@ class AgentSelectTableView: UIView {
         setup()
     }
     
-    init(items: [String], selected: @escaping ((Int) -> Void)) {
-        super.init(frame: CGRect(x: 0, y: 0, width: 250.0, height: CGFloat(dataSource.count) * 44.0))
+    init(items: [AgentSelectTableItem], selected: @escaping ((Int) -> Void)) {
+        super.init(frame: .zero) 
         dataSource = items
         onSelected = selected
         setup()
@@ -35,10 +40,9 @@ class AgentSelectTableView: UIView {
     }
     
     func getHeight() -> CGFloat {
-        if CGFloat(dataSource.count) * 56.0 > 200 {
-            return 200
-        }
-        return CGFloat(dataSource.count) * 56.0
+        tableView.layoutIfNeeded()
+        let contentHeight = tableView.contentSize.height
+        return min(contentHeight, 300)
     }
 
     private func setup() {
@@ -49,11 +53,14 @@ class AgentSelectTableView: UIView {
         tableView.register(cellWithClass: AgentSettingSubOptionCell.self)
         tableView.separatorStyle = .none
         tableView.backgroundColor = .clear
-        tableView.rowHeight = 56
+        
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 56
+        
         tableView.bounces = false
         addSubview(tableView)
         tableView.snp.makeConstraints { make in
-            make.left.right.top.bottom.equalToSuperview()
+            make.edges.equalToSuperview()
         }
     }
 
@@ -70,11 +77,18 @@ extension AgentSelectTableView: UITableViewDataSource, UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withClass: AgentSettingSubOptionCell.self)
-        let title = dataSource[indexPath.row]
-        cell.configure(with: title, isSelected: indexPath.row == selectedIndex)
-        // if the cell is last cell, hide the bottom line
+        let item = dataSource[indexPath.row]
+        cell.configure(with: item.title, subtitle: item.subTitle, isSelected: indexPath.row == selectedIndex)
         cell.bottomLine.isHidden = (indexPath.row == dataSource.count - 1)
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return max(UITableView.automaticDimension, 56)
+    }
+
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 56
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

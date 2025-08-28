@@ -11,48 +11,45 @@ import SnapKit
 import SVProgressHUD
 
 class LoginViewController: UIViewController {
-    var loginAction: (() -> ())?
     
-    private lazy var containerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor.themColor(named: "ai_fill5")
-        view.layer.cornerRadius = 16
-        view.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+    static func start(from presentingVC: UIViewController) {
+        let nav = UINavigationController(rootViewController: LoginViewController())
+        nav.modalPresentationStyle = .overCurrentContext
+        presentingVC.present(nav, animated: true)
+    }
+    
+    var completion: (() -> Void)?
+
+    private lazy var devModeButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.addTarget(self, action: #selector(onClickDevTouch), for: .touchUpInside)
+        return button
+    }()
+    
+    private lazy var welcomeMessageView: TypewriterLabel = {
+        let view = TypewriterLabel()
+        view.font = UIFont.boldSystemFont(ofSize: 20)
+        view.startAnimation()
         return view
     }()
     
-    private lazy var titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = ResourceManager.L10n.Login.title
-        label.font = .systemFont(ofSize: 20, weight: .bold)
-        label.textColor = UIColor.themColor(named: "ai_icontext1")
-        return label
-    }()
-    
-    private lazy var subtitleLabel: UILabel = {
-        let label = UILabel()
-        label.text = ResourceManager.L10n.Login.description
-        label.font = .systemFont(ofSize: 20, weight: .bold)
-        label.numberOfLines = 0
-        label.textColor = UIColor.themColor(named: "ai_icontext1")
-        label.isHidden = false
-        return label
-    }()
-    
-    private lazy var logoView: UIImageView = {
-        let view = UIImageView()
-        view.image = UIImage.ag_named("ic_login_logo")
-        return view
+    private lazy var centerImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.image = UIImage.ag_named("img_login_bg")
+        return imageView
     }()
     
     private lazy var phoneLoginButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.backgroundColor = UIColor.themColor(named: "ai_icontext1")
-        button.layer.cornerRadius = 12
-        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
+        let button = UIButton(type: .custom)
         button.setTitle(ResourceManager.L10n.Login.buttonTitle, for: .normal)
-        button.setTitleColor(UIColor.themColor(named: "ai_icontext_inverse1"), for: .normal)
-        button.addTarget(self, action: #selector(phoneLoginTapped), for: .touchUpInside)
+        button.setImage(UIImage.ag_named("ic_agent_join_button_icon"), for: .normal)
+        button.setTitleColor(UIColor.themColor(named: "ai_brand_white10"), for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 18)
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 10)
+        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 0)
+        button.addTarget(self, action: #selector(onClickLogin), for: .touchUpInside)
+        button.setBackgroundImage(UIImage.ag_named("btn_gradient_borderd"), for: .normal)
         return button
     }()
     
@@ -142,16 +139,6 @@ class LoginViewController: UIViewController {
         return label
     }()
     
-    private lazy var closeButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage.ag_named("ic_login_close"), for: .normal)
-        button.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
-        button.tintColor = UIColor.themColor(named: "ai_icontext4")
-        return button
-    }()
-    
-    private let backgroundView = UIView()
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -160,97 +147,66 @@ class LoginViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        animateIn()
+        self.navigationController?.setNavigationBarHidden(true, animated: true)
+    }
+    
+    private func goToSSOViewController() {
+        let ssoWebVC = SSOWebViewController()
+        let baseUrl = AppContext.shared.baseServerUrl
+        ssoWebVC.urlString = "\(baseUrl)/v1/convoai/sso/login"
+        self.navigationController?.pushViewController(ssoWebVC, animated: true)
+    }
+    
+    func addLog(_ txt: String) {
+        ConvoAILogger.info(txt)
     }
     
     private func setupUI() {
-        backgroundView.backgroundColor = UIColor.themColor(named: "ai_mask1")
-        backgroundView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(backgroundTapped)))
-        
-        view.addSubview(backgroundView)
-        view.addSubview(containerView)
-        
-        containerView.addSubview(titleLabel)
-        containerView.addSubview(subtitleLabel)
-        containerView.addSubview(logoView)
-        containerView.addSubview(phoneLoginButton)
-        containerView.addSubview(warningButton)
-        containerView.addSubview(termsCheckbox)
-        containerView.addSubview(termsTextLabel)
-        containerView.addSubview(closeButton)
+        view.backgroundColor = UIColor(hex: "#0A0A0A")
+        view.addSubview(centerImageView)
+        view.addSubview(welcomeMessageView)
+        view.addSubview(phoneLoginButton)
+//        view.addSubview(registerButton)
+        view.addSubview(termsCheckbox)
+        view.addSubview(termsTextLabel)
+        view.addSubview(warningButton)
+        view.addSubview(devModeButton)
     }
     
     private func setupConstraints() {
-        backgroundView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
+        centerImageView.snp.makeConstraints { make in
+            make.centerX.equalToSuperview()
+            make.top.equalToSuperview().offset(100)
         }
-        
-        containerView.snp.makeConstraints { make in
-            make.left.right.bottom.equalToSuperview()
-            make.height.equalTo(319)
+        termsTextLabel.snp.makeConstraints { make in
+            make.centerX.equalToSuperview().offset(10)
+            make.bottom.equalTo(self.view.safeAreaLayoutGuide.snp.bottom).offset(-40)
         }
-        
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(40)
-            make.left.equalToSuperview().offset(30)
-            make.right.equalTo(logoView.snp.left).offset(-10)
-        }
-        
-        subtitleLabel.snp.makeConstraints { make in
-            make.bottom.equalTo(logoView.snp.bottom).offset(-1)
-            make.left.right.equalTo(titleLabel)
-        }
-        
-        logoView.snp.makeConstraints { make in
-            make.top.equalTo(40)
-            make.right.equalTo(-33)
-            make.width.height.equalTo(64)
-        }
-        
-        phoneLoginButton.snp.makeConstraints { make in
-            make.top.equalTo(logoView.snp.bottom).offset(46)
-            make.left.equalTo(30)
-            make.right.equalTo(-30)
-            make.height.equalTo(58)
-        }
-        
         termsCheckbox.snp.makeConstraints { make in
-            make.top.equalTo(phoneLoginButton.snp.bottom).offset(50)
-            make.left.equalTo(titleLabel)
+            make.centerY.equalTo(termsTextLabel)
+            make.right.equalTo(termsTextLabel.snp.left).offset(-8)
             make.width.height.equalTo(20)
         }
-        
-        termsTextLabel.snp.makeConstraints { make in
-            make.top.equalTo(termsCheckbox)
-            make.left.equalTo(termsCheckbox.snp.right).offset(8)
-            make.right.equalTo(-30)
-        }
-        
         warningButton.snp.makeConstraints { make in
             make.left.equalTo(termsCheckbox.snp.left).offset(-5)
             make.bottom.equalTo(termsCheckbox.snp.top).offset(-3)
         }
-        
-        closeButton.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(10)
-            make.right.equalToSuperview().offset(-10)
-            make.width.height.equalTo(24)
+        phoneLoginButton.snp.makeConstraints { make in
+            make.bottom.equalTo(termsCheckbox.snp.top).offset(-125)
+            make.left.equalToSuperview().offset(30)
+            make.right.equalToSuperview().offset(-30)
+            make.height.equalTo(58)
         }
-    }
-    
-    private func animateIn() {
-        containerView.transform = CGAffineTransform(translationX: 0, y: view.bounds.height)
-        UIView.animate(withDuration: 0.3) {
-            self.containerView.transform = .identity
+        welcomeMessageView.snp.makeConstraints { make in
+            make.bottom.equalTo(phoneLoginButton.snp.top).offset(-53)
+            make.centerX.equalToSuperview()
+            make.width.equalToSuperview()
         }
-    }
-    
-    private func animateOut(completion: @escaping () -> Void) {
-        UIView.animate(withDuration: 0.3, animations: {
-            self.containerView.transform = CGAffineTransform(translationX: 0, y: self.view.bounds.height)
-            self.backgroundView.alpha = 0
-        }) { _ in
-            completion()
+        devModeButton.snp.makeConstraints { make in
+            make.centerX.equalToSuperview()
+            make.top.equalTo(self.view.safeAreaLayoutGuide.snp.top)
+            make.width.equalTo(80)
+            make.height.equalTo(44)
         }
     }
     
@@ -262,15 +218,18 @@ class LoginViewController: UIViewController {
         warningButton.layer.add(animation, forKey: "shake")
     }
     
-    @objc private func phoneLoginTapped() {
+    @objc private func onClickRegister() {
+        // TODO: Handle register action
+        print("Register button tapped")
+    }
+    
+    @objc private func onClickLogin() {
         if !termsCheckbox.isSelected {
             warningButton.isHidden = false
             shakeWarningLabel()
             return
         }
-        
-        loginAction?()
-        self.dismiss()
+        goToSSOViewController()
     }
     
     @objc private func termsCheckboxTapped() {
@@ -293,8 +252,8 @@ class LoginViewController: UIViewController {
         
         let locationOfTouchInLabel = gesture.location(in: label)
         let indexOfCharacter = layoutManager.characterIndex(for: locationOfTouchInLabel,
-                                                          in: textContainer,
-                                                          fractionOfDistanceBetweenInsertionPoints: nil)
+                                                            in: textContainer,
+                                                            fractionOfDistanceBetweenInsertionPoints: nil)
         
         text.enumerateAttribute(.init(rawValue: "LinkType"), in: NSRange(location: 0, length: text.length)) { value, range, _ in
             if range.contains(indexOfCharacter) {
@@ -330,17 +289,7 @@ class LoginViewController: UIViewController {
         self.present(termsServiceVC, animated: true)
     }
     
-    @objc private func backgroundTapped() {
-        dismiss()
-    }
-    
-    @objc private func closeTapped() {
-        dismiss()
-    }
-    
-    private func dismiss() {
-        animateOut { [weak self] in
-            self?.dismiss(animated: false)
-        }
+    @objc func onClickDevTouch() {
+        DeveloperConfig.shared.countTouch()
     }
 }

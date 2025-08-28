@@ -11,112 +11,198 @@ import Common
 import IoT
 
 extension ChatViewController {
-    private func getStartAgentParameters() -> [String: Any] {
+    private func getStartAgentParametersForConvoAI() -> [String: Any] {
         let parameters: [String: Any?] = [
             // Basic parameters
             "app_id": AppContext.shared.appId,
             "preset_name": AppContext.preferenceManager()?.preference.preset?.name,
-            "app_cert": AppContext.shared.certificate.isEmpty ? nil : AppContext.shared.certificate,
-            "basic_auth_username": AppContext.shared.basicAuthKey.isEmpty ? nil : AppContext.shared.basicAuthKey,
-            "basic_auth_password": AppContext.shared.basicAuthSecret.isEmpty ? nil : AppContext.shared.basicAuthSecret,
-            
+            "app_cert": nil,
+            "basic_auth_username": nil,
+            "basic_auth_password": nil,
+            "preset_type": AppContext.preferenceManager()?.preference.preset?.presetType,
             // ConvoAI request body
-            "convoai_body": getConvoaiBodyMap()
-        ]
-        return (removeNilValues(from: parameters) as? [String: Any]) ?? [:]
-    }
-    
-    private func getConvoaiBodyMap() -> [String: Any?] {
-        return [
-            "graph_id": DeveloperConfig.shared.graphId,
-            "name": nil,
-            "preset": DeveloperConfig.shared.convoaiServerConfig,
-            "properties": [
-                "channel": channelName,
-                "token": nil,
-                "agent_rtc_uid": "\(agentUid)",
-                "remote_rtc_uids": [uid],
-                "enable_string_uid": nil,
-                "idle_timeout": nil,
-                "advanced_features": [
-                    "enable_aivad": AppContext.preferenceManager()?.preference.aiVad,
-                    "enable_bhvs": AppContext.preferenceManager()?.preference.bhvs,
-                    "enable_rtm": true
-                ],
-                "asr": [
-                    "language": AppContext.preferenceManager()?.preference.language?.languageCode,
-                    "vendor": nil,
-                    "vendor_model": nil
-                ],
-                "llm": [
-                    "url": AppContext.shared.llmUrl.isEmpty ? nil : AppContext.shared.llmUrl,
-                    "api_key": AppContext.shared.llmApiKey.isEmpty ? nil : AppContext.shared.llmApiKey,
-                    "system_messages": AppContext.shared.llmSystemMessages.isEmpty ? nil : AppContext.shared.llmSystemMessages,
-                    "greeting_message": nil,
-                    "params": AppContext.shared.llmParams.isEmpty ? nil : AppContext.shared.llmParams,
-                    "style": nil,
-                    "max_history": nil,
-                    "ignore_empty": nil,
-                    "input_modalities": [
-                        "text",
-                        "image"
+            "convoai_body": [
+                "graph_id": DeveloperConfig.shared.graphId,
+                "name": nil,
+                "preset": DeveloperConfig.shared.convoaiServerConfig,
+                "properties": [
+                    "channel": channelName,
+                    "token": nil,
+                    "agent_rtc_uid": "\(agentUid)",
+                    "remote_rtc_uids": [uid],
+                    "enable_string_uid": nil,
+                    "idle_timeout": nil,
+                    "advanced_features": [
+                        "enable_aivad": AppContext.preferenceManager()?.preference.aiVad,
+                        "enable_bhvs": AppContext.preferenceManager()?.preference.bhvs,
+                        "enable_rtm": true
                     ],
-                    "output_modalities": nil,
-                    "failure_message": nil
-                ],
-                "tts": [
-                    "vendor": AppContext.shared.ttsVendor.isEmpty ? nil : AppContext.shared.ttsVendor as Any,
-                    "params": AppContext.shared.ttsParams.isEmpty ? nil : AppContext.shared.ttsParams,
-                    "adjust_volume": nil,
-                ],
-                "vad": [
-                    "interrupt_duration_ms": nil,
-                    "prefix_padding_ms": nil,
-                    "silence_duration_ms": nil,
-                    "threshold": nil
-                ],
-                "avatar": avatarMap(),
-                "parameters": [
-                    "data_channel": "rtm",
-                    "enable_flexible": nil,
-                    "enable_metrics": self.enableMetric,
-                    "enable_error_message": true,
-                    "aivad_force_threshold": nil,
-                    "output_audio_codec": nil,
-                    "audio_scenario": nil,
-                    "transcript": [
-                        "enable": true,
-                        "enable_words": !isEnableAvatar(),
-                        "protocol_version": "v2",
-//                        "redundant": nil,
+                    "asr": [
+                        "language": AppContext.preferenceManager()?.preference.language?.languageCode,
+                        "vendor": nil,
+                        "vendor_model": nil
                     ],
-                    "sc": [
-                        "sessCtrlStartSniffWordGapInMs": nil,
-                        "sessCtrlTimeOutInMs": nil,
-                        "sessCtrlWordGapLenVolumeThr": nil,
-                        "sessCtrlWordGapLenInMs": nil
+                    "llm": [
+                        "url": nil,
+                        "api_key": nil,
+                        "system_messages": nil,
+                        "greeting_message": nil,
+                        "params": nil,
+                        "style": nil,
+                        "max_history": nil,
+                        "ignore_empty": nil,
+                        "input_modalities": [
+                            "text",
+                            "image"
+                        ],
+                        "output_modalities": nil,
+                        "failure_message": nil
+                    ],
+                    "tts": [
+                        "vendor": nil,
+                        "params": nil,
+                        "adjust_volume": nil,
+                    ],
+                    "vad": [
+                        "interrupt_duration_ms": nil,
+                        "prefix_padding_ms": nil,
+                        "silence_duration_ms": nil,
+                        "threshold": nil
+                    ],
+                    "avatar": [
+                        "enable": isEnableAvatar(),
+                        "vendor": AppContext.preferenceManager()?.preference.avatar?.vendor ?? "",
+                        "params": [
+                            "agora_uid": "\(avatarUid)",
+                            "avatar_id": AppContext.preferenceManager()?.preference.avatar?.avatarId
+                        ]
+                    ],
+                    "parameters": [
+                        "data_channel": "rtm",
+                        "enable_flexible": nil,
+                        "enable_metrics": self.enableMetric,
+                        "enable_error_message": true,
+                        "aivad_force_threshold": nil,
+                        "output_audio_codec": nil,
+                        "audio_scenario": nil,
+                        "transcript": [
+                            "enable": true,
+                            "enable_words": enableWords(),
+                            "protocol_version": "v2",
+    //                        "redundant": nil,
+                        ],
+                        "sc": [
+                            "sessCtrlStartSniffWordGapInMs": nil,
+                            "sessCtrlTimeOutInMs": nil,
+                            "sessCtrlWordGapLenVolumeThr": nil,
+                            "sessCtrlWordGapLenInMs": nil
+                        ]
                     ]
                 ]
             ]
         ]
+        return (removeNilValues(from: parameters) as? [String: Any]) ?? [:]
     }
     
-    private func avatarMap() -> [String: Any?] {
-        if AppContext.shared.avatarEnable {
-            return [
-                "enable": AppContext.shared.avatarEnable,
-                "vendor": AppContext.shared.avatarVendor,
-                "params": AppContext.shared.avatarParams
-            ]
-        } else {
-            return [
-                "enable": isEnableAvatar(),
-                "vendor": AppContext.preferenceManager()?.preference.avatar?.vendor ?? "",
-                "params": [
-                    "agora_uid": "\(avatarUid)",
-                    "avatar_id": AppContext.preferenceManager()?.preference.avatar?.avatarId
+    private func getStartAgentParametersForOpenSouce() -> [String: Any] {
+        let parameters: [String: Any?] = [
+            // Basic parameters
+            "app_id": AppContext.shared.appId,
+            "preset_name": nil,
+            "app_cert": AppContext.shared.certificate,
+            "basic_auth_username": AppContext.shared.basicAuthKey,
+            "basic_auth_password": AppContext.shared.basicAuthSecret,
+            
+            // ConvoAI request body
+            "convoai_body": [
+                "graph_id": nil,
+                "name": nil,
+                "preset": nil,
+                "properties": [
+                    "channel": channelName,
+                    "token": nil,
+                    "agent_rtc_uid": "\(agentUid)",
+                    "remote_rtc_uids": [uid],
+                    "enable_string_uid": nil,
+                    "idle_timeout": nil,
+                    "advanced_features": [
+                        "enable_aivad": false,
+                        "enable_bhvs": true,
+                        "enable_rtm": true
+                    ],
+                    "asr": [
+                        "language": nil,
+                        "vendor": nil,
+                        "vendor_model": nil
+                    ],
+                    "llm": [
+                        "url": AppContext.shared.llmUrl,
+                        "api_key": AppContext.shared.llmApiKey,
+                        "system_messages": AppContext.shared.llmSystemMessages,
+                        "greeting_message": nil,
+                        "params": AppContext.shared.llmParams,
+                        "style": nil,
+                        "max_history": nil,
+                        "ignore_empty": nil,
+                        "input_modalities": [
+                            "text",
+                            "image"
+                        ],
+                        "output_modalities": nil,
+                        "failure_message": nil
+                    ],
+                    "tts": [
+                        "vendor": AppContext.shared.ttsVendor as Any,
+                        "params": AppContext.shared.ttsParams,
+                        "adjust_volume": nil,
+                    ],
+                    "vad": [
+                        "interrupt_duration_ms": nil,
+                        "prefix_padding_ms": nil,
+                        "silence_duration_ms": nil,
+                        "threshold": nil
+                    ],
+                    "avatar": [
+                        "enable": AppContext.shared.avatarEnable,
+                        "vendor": AppContext.shared.avatarVendor,
+                        "params": AppContext.shared.avatarParams
+                    ],
+                    "parameters": [
+                        "data_channel": "rtm",
+                        "enable_flexible": nil,
+                        "enable_metrics": false,
+                        "enable_error_message": true,
+                        "aivad_force_threshold": nil,
+                        "output_audio_codec": nil,
+                        "audio_scenario": nil,
+                        "transcript": [
+                            "enable": true,
+                            "enable_words": enableWords(),
+                            "protocol_version": "v2",
+    //                        "redundant": nil,
+                        ],
+                        "sc": [
+                            "sessCtrlStartSniffWordGapInMs": nil,
+                            "sessCtrlTimeOutInMs": nil,
+                            "sessCtrlWordGapLenVolumeThr": nil,
+                            "sessCtrlWordGapLenInMs": nil
+                        ]
+                    ]
                 ]
             ]
+        ]
+        
+        return (removeNilValues(from: parameters) as? [String: Any]) ?? [:]
+    }
+}
+
+extension ChatViewController {
+    private func getStartAgentParameters() -> [String: Any] {
+        let isOpenSource = AppContext.shared.isOpenSource
+        if isOpenSource {
+            return getStartAgentParametersForOpenSouce()
+        } else {
+            return getStartAgentParametersForConvoAI()
         }
     }
     
@@ -144,39 +230,7 @@ extension ChatViewController {
 }
 
 extension ChatViewController {
-    internal func fetchIotPresetsIfNeeded() async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            IoTEntrance.fetchPresetIfNeed { error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                continuation.resume()
-            }
-        }
-    }
-
-    internal func fetchPresetsIfNeeded() async throws {
-        guard AppContext.preferenceManager()?.allPresets() == nil else { return }
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            agentManager.fetchAgentPresets(appId: AppContext.shared.appId) { error, result in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                guard let result = result else {
-                    continuation.resume(throwing: NSError(domain: "", code: -1,
-                        userInfo: [NSLocalizedDescriptionKey: "result is empty"]))
-                    return
-                }
-                
-                AppContext.preferenceManager()?.setPresets(presets: result)
-                continuation.resume()
-            }
-        }
-    }
+    
     
     internal func fetchTokenIfNeeded() async throws {
         return try await withCheckedThrowingContinuation { continuation in
@@ -228,7 +282,7 @@ extension ChatViewController {
         }
         
         let parameters = getStartAgentParameters()
-        isSelfSubRender = (AppContext.preferenceManager()?.preference.preset?.presetType.hasPrefix("independent") == true)
+        isSelfSubRender = (AppContext.preferenceManager()?.preference.preset?.presetType?.hasPrefix("independent") == true)
 
         if isEnableAvatar() {
             addLog("will start avatar, avatar id: \(avatarUid)")
@@ -273,13 +327,27 @@ extension ChatViewController {
     internal func stopAgentRequest() {
         var presetName = ""
         if let preset = AppContext.preferenceManager()?.preference.preset {
-            presetName = preset.name
+            presetName = preset.name.stringValue()
         }
         
         if remoteAgentId.isEmpty {
             return
         }
         agentManager.stopAgent(appId: AppContext.shared.appId, agentId: remoteAgentId, channelName: channelName, presetName: presetName) { _, _ in }
+    }
+    
+    internal func startPingRequest() {
+        addLog("[Call] startPingRequest()")
+        let presetName = AppContext.preferenceManager()?.preference.preset?.name ?? ""
+        agentManager.ping(appId: AppContext.shared.appId, channelName: channelName, presetName: presetName) { [weak self] err, res in
+            guard let self = self else { return }
+            guard let error = err else {
+                self.addLog("ping request")
+                return
+            }
+            
+            self.addLog("ping error : \(error.message)")
+        }
     }
     
     internal func stopAgent() {

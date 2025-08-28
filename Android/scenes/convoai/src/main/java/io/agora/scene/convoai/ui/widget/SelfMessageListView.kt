@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.agora.scene.common.R
+import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.common.util.dp
 import io.agora.scene.convoai.convoaiApi.subRender.v1.ISelfMessageListView
 import io.agora.scene.convoai.databinding.CovMessageAgentItemBinding
@@ -71,8 +73,8 @@ class SelfMessageListView @JvmOverloads constructor(
         return messageAdapter.getAllMessage()
     }
 
-    fun updateAgentName(str: String) {
-        messageAdapter.updateFromTitle(str)
+    fun updateAgentName(str: String, url: String, @androidx.annotation.DrawableRes defaultImage:Int) {
+        messageAdapter.updateFromTitle(str, url, defaultImage)
     }
 
     private fun handleUserMessage(turnId: Long, text: String, isFinal: Boolean) {
@@ -94,7 +96,7 @@ class SelfMessageListView @JvmOverloads constructor(
 
     private fun handleAgentMessage(turnId: Long, text: String, isFinal: Boolean) {
         // The message's turnId is 0
-        val exitMessage = if (turnId==0L) currentAgentMessage else messageAdapter.getMessageByTurnId(turnId, false)
+        val exitMessage = if (turnId == 0L) currentAgentMessage else messageAdapter.getMessageByTurnId(turnId, false)
         if (exitMessage == null) {
             val message = Message(false, turnId, text, isFinal)
             currentAgentMessage = message
@@ -170,6 +172,9 @@ class SelfMessageListView @JvmOverloads constructor(
     class MessageAdapter : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
 
         private var fromTitle: String = ""
+        private var fromUrl: String = ""
+        @androidx.annotation.DrawableRes
+        private var fromDefaultImage: Int = R.drawable.common_default_agent
         private val messages = mutableListOf<Message>()
 
         abstract class MessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -187,6 +192,16 @@ class SelfMessageListView @JvmOverloads constructor(
             override fun bind(message: Message) {
                 binding.tvMessageContent.text = message.content
                 binding.tvMessageTitle.text = fromTitle
+                if (fromUrl.isEmpty()) {
+                    binding.ivMessageIcon.setImageResource(fromDefaultImage)
+                } else {
+                    GlideImageLoader.load(
+                        binding.ivMessageIcon,
+                        fromUrl,
+                        fromDefaultImage,
+                        fromDefaultImage
+                    )
+                }
             }
         }
 
@@ -257,8 +272,10 @@ class SelfMessageListView @JvmOverloads constructor(
             }
         }
 
-        fun updateFromTitle(title: String) {
+        fun updateFromTitle(title: String, url: String, @androidx.annotation.DrawableRes defaultImage:Int) {
             fromTitle = title
+            fromUrl = url
+            fromDefaultImage = defaultImage
             notifyDataSetChanged()
         }
     }

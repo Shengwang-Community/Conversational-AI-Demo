@@ -8,16 +8,22 @@
 import Foundation
 import Common
 
+enum LogoutReason {
+    case userInitiated
+    case sessionExpired
+}
+
 protocol LoginManagerDelegate: AnyObject {
-    func loginManager(_ manager: LoginManager, userInfoDidChange userInfo: LoginModel?, loginState: Bool)
-    func userLoginSessionExpired()
+    func loginManager(_ manager: LoginManager, userInfoDidChange userInfo: LoginModel)
+    func userDidLogin()
+    func userDidLogout(reason: LogoutReason)
 }
 
 protocol LoginManagerProtocol {
     func addDelegate(_ delegate: LoginManagerDelegate)
     func removeDelegate(_ delegate: LoginManagerDelegate)
     func updateUserInfo(userInfo: LoginModel)
-    func logout()
+    func logout(reason: LogoutReason)
 }
 
 class LoginManager {
@@ -41,8 +47,7 @@ class LoginManager {
     
     @objc private func loginSessionExpired() {
         if UserCenter.shared.isLogin() {
-            UserCenter.shared.logout()
-            notifyDelegates { $0.userLoginSessionExpired() }
+            logout(reason: .sessionExpired)
         }
     }
 }
@@ -57,19 +62,26 @@ extension LoginManager: LoginManagerProtocol {
     }
     
     func updateUserInfo(userInfo: LoginModel) {
+        let wasLoggedIn = UserCenter.shared.isLogin()
         UserCenter.shared.storeUserInfo(userInfo)
-        let loginState = UserCenter.shared.isLogin()
-        notifyDelegates { $0.loginManager(self, userInfoDidChange: userInfo, loginState: loginState)}
+        let isLoggedIn = UserCenter.shared.isLogin()
+        if !wasLoggedIn && isLoggedIn {
+            notifyDelegates { $0.userDidLogin() }
+        }
+        notifyDelegates { $0.loginManager(self, userInfoDidChange: userInfo) }
     }
     
-    func logout() {
+    func logout(reason: LogoutReason) {
+        guard UserCenter.shared.isLogin() else {
+            return
+        }
         UserCenter.shared.logout()
-        let loginState = UserCenter.shared.isLogin()
-        notifyDelegates { $0.loginManager(self, userInfoDidChange: nil, loginState: loginState)}
+        notifyDelegates { $0.userDidLogout(reason: reason) }
     }
 }
 
 extension LoginManagerDelegate {
-    func loginManager(_ manager: LoginManager, userInfoDidChange userInfo: LoginModel?, loginState: Bool) {}
-    func userLoginSessionExpired() {}
+    func loginManager(_ manager: LoginManager, userInfoDidChange userInfo: LoginModel) {}
+    func userDidLogout(reason: LogoutReason) {}
+    func userDidLogin() {}
 }

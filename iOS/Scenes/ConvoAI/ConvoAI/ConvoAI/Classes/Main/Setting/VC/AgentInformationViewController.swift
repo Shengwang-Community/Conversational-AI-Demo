@@ -11,7 +11,7 @@ import SVProgressHUD
 import IoT
 
 class AgentInformationViewController: UIViewController {
-    static func show(in viewController: UIViewController, rtcManager: RTCManager?) {
+    static func show(in viewController: UIViewController) {
         SVProgressHUD.show()
         IoTEntrance.fetchPresetIfNeed { error in
             SVProgressHUD.dismiss()
@@ -22,14 +22,12 @@ class AgentInformationViewController: UIViewController {
             }
             
             let settingVC = AgentInformationViewController()
-            settingVC.rtcManager = rtcManager
             let navigatonVC = UINavigationController(rootViewController: settingVC)
             navigatonVC.modalPresentationStyle = .overFullScreen
             viewController.present(navigatonVC, animated: false)
         }
     }
     
-    public var rtcManager: RTCManager?
     private let backgroundViewWidth: CGFloat = 315
     private var initialCenter: CGPoint = .zero
     private var panGesture: UIPanGestureRecognizer?
@@ -205,8 +203,8 @@ class AgentInformationViewController: UIViewController {
                             cancelTitle: ResourceManager.L10n.Login.logoutAlertCancel,
                             confirmTitle: ResourceManager.L10n.Login.logoutAlertConfirm,
                             onConfirm:  {
-            AppContext.loginManager()?.logout()
-            self.animateBackgroundViewOut()
+            self.dismiss(animated: false)
+            AppContext.loginManager()?.logout(reason: .userInitiated)
         })
     }
 }

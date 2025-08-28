@@ -1,0 +1,28 @@
+[{
+    "avatar_ids_by_lang": {
+        "zh-CN": [{
+            "avatar_id": "a2296686b0694a92bce529edc1d329fc_s1",
+            "avatar_name": "NaNa",
+            "bg_img_url": "https://demo-app-download.agora.io/convoai/avatar/sensetime_bg_a2296686b0694a92bce529edc1d329fc_s1.jpg",
+            "thumb_img_url": "https://demo-app-download.agora.io/convoai/avatar/sensetime_thumb_a2296686b0694a92bce529edc1d329fc_s1.jpg",
+            "vendor": "sensetime",
+            "web_bg_img_url": "https://demo-app-download.agora.io/convoai/avatar/web_sensetime_bg_a2296686b0694a92bce529edc1d329fc_s1.jpg"
+        }]
+    },
+    "call_time_limit_avatar_second": 300,
+    "call_time_limit_second": 1800,
+    "default_language_code": "zh-CN",
+    "default_language_name": "Chinese",
+    "display_name": "Assistant",
+    "avatar_url": "https://fullapp.oss-accelerate.aliyuncs.com/pic/agent_avatar/intelligent_assistant.png",
+    "description": "",
+    "is_support_vision": true,
+    "name": "intelligent_assistant",
+    "preset_type": "standard_avatar",
+    "support_languages": [{
+        "language_code": "zh-CN",
+        "language_name": "Chinese",
+        "aivad_supported": false,
+        "aivad_enabled_by_default": false
+    }]
+}]

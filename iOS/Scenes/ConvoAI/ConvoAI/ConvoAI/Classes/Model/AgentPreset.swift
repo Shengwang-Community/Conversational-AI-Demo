@@ -8,11 +8,11 @@
 import Foundation
 
 struct Avatar: Codable {
-    let vendor: String
-    let avatarId: String
-    let avatarName: String
-    let thumbImageUrl: String
-    let bgImageUrl: String
+    let vendor: String?
+    let avatarId: String?
+    let avatarName: String?
+    let thumbImageUrl: String?
+    let bgImageUrl: String?
     
     enum CodingKeys: String, CodingKey {
         case vendor = "vendor"
@@ -24,10 +24,10 @@ struct Avatar: Codable {
 }
 
 struct SupportLanguage: Codable {
-    let languageCode: String
-    let languageName: String
-    let aivadEnabledByDefault: Bool
-    let aivadSupported: Bool
+    let languageCode: String?
+    let languageName: String?
+    let aivadEnabledByDefault: Bool?
+    let aivadSupported: Bool?
     
     enum CodingKeys: String, CodingKey {
         case languageCode = "language_code"
@@ -38,20 +38,24 @@ struct SupportLanguage: Codable {
 }
 
 struct AgentPreset: Codable {
-    let name: String
-    let displayName: String
-    let presetType: String
-    let defaultLanguageCode: String
-    let defaultLanguageName: String
-    let isSupportVision: Bool
-    let callTimeLimitSecond: Int
-    let callTimeLimitAvatarSecond: Int
-    let supportLanguages: [SupportLanguage]
+    let name: String?
+    let displayName: String?
+    let description: String?
+    let presetType: String?
+    let defaultLanguageCode: String?
+    let defaultLanguageName: String?
+    let isSupportVision: Bool?
+    let callTimeLimitSecond: Int?
+    let callTimeLimitAvatarSecond: Int?
+    let supportLanguages: [SupportLanguage]?
     let avatarIdsByLang: [String: [Avatar]]?
-    
+    let avatarUrl: String?
+    var defaultAvatar: String?
+
     enum CodingKeys: String, CodingKey {
         case name
         case displayName = "display_name"
+        case description
         case presetType = "preset_type"
         case defaultLanguageCode = "default_language_code"
         case defaultLanguageName = "default_language_name"
@@ -60,5 +64,7 @@ struct AgentPreset: Codable {
         case callTimeLimitAvatarSecond = "call_time_limit_avatar_second"
         case supportLanguages = "support_languages"
         case avatarIdsByLang = "avatar_ids_by_lang"
+        case avatarUrl = "avatar_url"
+        case defaultAvatar = "default_avatar"
     }
 }

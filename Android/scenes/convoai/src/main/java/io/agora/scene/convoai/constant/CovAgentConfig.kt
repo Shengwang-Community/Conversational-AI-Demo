@@ -1,9 +1,11 @@
 package io.agora.scene.convoai.constant
 
 import io.agora.scene.common.BuildConfig
+import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.convoai.api.CovAgentLanguage
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.api.CovAvatar
+import io.agora.scene.convoai.ui.CovRenderMode
 import kotlin.random.Random
 
 enum class AgentConnectionState() {
@@ -19,10 +21,10 @@ object CovAgentManager {
     private val TAG = "CovAgentManager"
 
     // Settings
-    private var presetList: List<CovAgentPreset>? = null
     private var preset: CovAgentPreset? = null
     var language: CovAgentLanguage? = null
     var avatar: CovAvatar? = null
+    var renderMode: Int = CovRenderMode.WORD
 
     var enableAiVad = false
     val enableBHVS = true
@@ -38,26 +40,17 @@ object CovAgentManager {
 
     // room expire time sec
     var roomExpireTime = 600L
-        get(){
-            return if (isEnableAvatar()){
+        get() {
+            return if (isEnableAvatar) {
                 // If call_time_limit_avatar_second is null or <= 0, use 300L as default
                 val limit = preset?.call_time_limit_avatar_second ?: 0L
                 if (limit > 0) limit else 300L
-            }else{
+            } else {
                 // If call_time_limit_second is null or <= 0, use 300L as default
                 val limit = preset?.call_time_limit_second ?: 0L
                 if (limit > 0) limit else 600L
             }
-    }
-
-    fun setPresetList(l: List<CovAgentPreset>) {
-        presetList = l.filter { it.preset_type != "custom" }
-        setPreset(presetList?.firstOrNull())
-    }
-
-    fun getPresetList(): List<CovAgentPreset>? {
-        return presetList
-    }
+        }
 
     fun setPreset(p: CovAgentPreset?) {
         preset = p
@@ -77,12 +70,21 @@ object CovAgentManager {
     }
 
     fun getAvatars(): List<CovAvatar> {
+        if (isOpenSource) {
+            return listOf(
+                CovAvatar(
+                    avatar_name = "Avatar",
+                    vendor = "",
+                    avatar_id = "",
+                    thumb_img_url = "",
+                    bg_img_url = "",
+                )
+            )
+        }
         return preset?.getAvatarsForLang(language?.language_code) ?: emptyList()
     }
 
-    fun isEnableAvatar(): Boolean {
-        return avatar != null || BuildConfig.AVATAR_ENABLE
-    }
+    val isEnableAvatar: Boolean get() = avatar != null
 
     // Preset change reminder management methods
     fun shouldShowPresetChangeReminder(): Boolean {
@@ -93,11 +95,31 @@ object CovAgentManager {
         showPresetChangeReminder = show
     }
 
+    val isWordRenderMode: Boolean
+        get() {
+            return renderMode == CovRenderMode.WORD && !isEnableAvatar
+        }
+
     fun resetData() {
         enableAiVad = false
-        presetList = null
         preset = null
         language = null
         avatar = null
+        renderMode = CovRenderMode.WORD
     }
+
+    val isOpenSource: Boolean get() = BuildConfig.IS_OPEN_SOURCE
+
+    val channelPrefix: String get() = if (isDebugging) "agent_debug_" else "agent_"
+
+    // debug config =================================
+    val isDebugging: Boolean get() = DebugConfigSettings.isDebug
+
+    val graphId: String get() = DebugConfigSettings.graphId
+
+    val convoAIParameter: String get() = DebugConfigSettings.convoAIParameter
+
+    val isMetricsEnabled: Boolean get() = DebugConfigSettings.isMetricsEnabled
+
+    val isSessionLimitMode: Boolean get() = DebugConfigSettings.isSessionLimitMode
 }

@@ -5,7 +5,7 @@ import io.agora.rtc2.RtcEngine
 import io.agora.rtm.RtmClient
 import io.agora.scene.convoai.convoaiApi.AgentState.UNKNOWN
 
-const val ConversationalAIAPI_VERSION = "1.7.0"
+const val ConversationalAIAPI_VERSION = "1.8.0"
 
 /*
  * This file defines the core interfaces, data structures, and error system for the Conversational AI API.
@@ -336,18 +336,18 @@ data class ModuleError(
  *
  * Used to distinguish different types of messages in the system.
  *
- * @property ASSISTANT AI assistant transcription message
- * @property USER User transcription message
+ * @property ASSISTANT AI assistant transcript message
+ * @property USER User transcript message
  * @property ERROR Error message
  * @property METRICS Performance metrics message
  * @property INTERRUPT Interrupt message
  * @property UNKNOWN Unknown type
  */
 enum class MessageType(val value: String) {
-    /** AI assistant transcription message */
+    /** AI assistant transcript message */
     ASSISTANT("assistant.transcription"),
 
-    /** User transcription message */
+    /** User transcript message */
     USER("user.transcription"),
 
     /** Error message */
@@ -361,6 +361,9 @@ enum class MessageType(val value: String) {
 
     /** Message receipt*/
     MESSAGE_RECEIPT("message.info"),
+
+    /**voice print register*/
+    VOICE_PRINT("message.sal_status"),
 
     /** Unknown type */
     UNKNOWN("unknown");
@@ -378,71 +381,120 @@ enum class MessageType(val value: String) {
 }
 
 /**
- * Defines different modes for transcription rendering.
+ * @technical preview
  *
- * @property Word Word-by-word transcriptions are rendered.
- * @property Text Full text transcriptions are rendered.
+ * Voiceprint status enumeration
+ * Used to track the status of voiceprint registration and sending
+ * Helps in managing voiceprint lifecycle and UI display by identifying different states
  */
-enum class TranscriptionRenderMode {
-    /** Word-by-word transcription rendering */
+enum class VoiceprintStatus(val value: String) {
+    /** Voice print function disabled */
+    DISABLE("VP_DISABLE"),
+    /** Voice print un-register */
+    UNREGISTER("VP_UNREGISTER"),
+    /** Voice print registering */
+    REGISTERING("VP_REGISTERING"),
+    /** Voice print register success */
+    REGISTER_SUCCESS("VP_REGISTER_SUCCESS"),
+    /** Voice print register failed */
+    REGISTER_FAIL("VP_REGISTER_FAIL"),
+    /** Voice print register duplicate */
+    REGISTER_DUPLICATE("VP_REGISTER_DUPLICATE"),
+    /** Unknown status */
+    UNKNOWN("unknown");
+
+    companion object {
+        /**
+         * Initialize from string value
+         */
+        fun fromValue(value: String): VoiceprintStatus {
+            return entries.find { it.value == value } ?: UNKNOWN
+        }
+    }
+}
+
+/**
+ * @technical preview
+ *
+ * @property timeOffset For example, from unregister to register success, how much time it takes
+ * @property timestamp Event occurrence timestamp (milliseconds since epoch, i.e., since January 1, 1970 UTC)
+ * @property status Voice print status
+ */
+data class VoiceprintStateChangeEvent(
+    /** Milliseconds duration of the status，Offset duration relative to the first audios，Using this data, the duration of switching between the two states can be calculated.*/
+    val timeOffset: Int,
+    /** Milliseconds relative to the start of the audio */
+    val timestamp: Long,
+    /** Voice print status */
+    val status: VoiceprintStatus
+)
+
+/**
+ * Defines different modes for transcript rendering.
+ *
+ * @property Word Word-by-word transcript are rendered.
+ * @property Text Full text transcripts are rendered.
+ */
+enum class TranscriptRenderMode {
+    /** Word-by-word transcript rendering */
     Word,
 
-    /** Full text transcription rendering */
+    /** Full text transcript rendering */
     Text
 }
 
 /**
- * Data class representing a complete transcription message for UI rendering.
+ * Data class representing a complete transcript message for UI rendering.
  *
  * @property turnId Unique identifier for the conversation turn
- * @property userId User identifier associated with this transcription
- * @property text The actual transcription text content
- * @property status Current status of the transcription
- * @property type Transcription type (AGENT/USER)
+ * @property userId User identifier associated with this transcript
+ * @property text The actual transcript text content
+ * @property status Current status of the transcript
+ * @property type transcript type (AGENT/USER)
  */
-data class Transcription constructor(
+data class Transcript(
     /** Unique identifier for the conversation turn */
     val turnId: Long,
-    /** User identifier associated with this transcription */
+    /** User identifier associated with this Transcript */
     val userId: String = "",
-    /** The actual transcription text content */
+    /** The actual Transcript text content */
     val text: String,
-    /** Current status of the transcription */
-    var status: TranscriptionStatus,
-    /** Transcription type (AGENT/USER) */
-    var type: TranscriptionType,
+    /** Current status of the Transcript */
+    var status: TranscriptStatus,
+    /** Transcript type (AGENT/USER) */
+    var type: TranscriptType,
 )
 
 /**
- * Transcription type enum.
+ * Transcript type enum.
  *
- * @property AGENT AI assistant transcription
- * @property USER User transcription
+ * @property AGENT AI assistant transcript
+ * @property USER User transcript
  */
-enum class TranscriptionType {
-    /** AI assistant transcription */
+enum class TranscriptType {
+    /** AI assistant transcript */
     AGENT,
 
-    /** User transcription */
+    /** User transcript */
     USER
 }
 
 /**
- * Represents the current status of a transcription.
+ * Represents the current status of a Transcript.
  *
- * @property IN_PROGRESS Transcription is still being generated or spoken
- * @property END Transcription has completed normally
- * @property INTERRUPTED Transcription was interrupted before completion
+ * @property IN_PROGRESS Transcript is still being generated or spoken
+ * @property END Transcript has completed normally
+ * @property INTERRUPTED Transcript was interrupted before completion
  * @property UNKNOWN Unknown status
  */
-enum class TranscriptionStatus {
-    /** Transcription is still being generated or spoken */
+enum class TranscriptStatus {
+    /** Transcript is still being generated or spoken */
     IN_PROGRESS,
 
-    /** Transcription has completed normally */
+    /** Transcript has completed normally */
     END,
 
-    /** Transcription was interrupted before completion */
+    /** Transcript was interrupted before completion */
     INTERRUPTED,
 
     /** Unknown status */
@@ -454,11 +506,11 @@ enum class TranscriptionStatus {
  *
  * Contains the necessary configuration parameters to initialize the Conversational AI API.
  * This configuration includes RTC engine for audio communication, RTM client for messaging,
- * and transcription rendering mode settings.
+ * and Transcript rendering mode settings.
  *
  * @property rtcEngine RTC engine instance for audio/video communication
  * @property rtmClient RTM client instance for real-time messaging
- * @property renderMode Transcription rendering mode (Word or Text level)
+ * @property renderMode Transcript rendering mode (Word or Text level)
  * @property enableLog Whether to enable logging (default: true). When set to true, logs will be written to the RTC SDK log file.
  */
 data class ConversationalAIAPIConfig(
@@ -466,8 +518,8 @@ data class ConversationalAIAPIConfig(
     val rtcEngine: RtcEngine,
     /** RTM client instance for real-time messaging */
     val rtmClient: RtmClient,
-    /** Transcription rendering mode, default is word-level */
-    val renderMode: TranscriptionRenderMode = TranscriptionRenderMode.Word,
+    /** Transcript rendering mode, default is word-level */
+    val renderMode: TranscriptRenderMode = TranscriptRenderMode.Word,
     /** Whether to enable logging, default is true. When true, logs will be written to the RTC SDK log file. */
     val enableLog: Boolean = true
 )
@@ -514,10 +566,10 @@ sealed class ConversationalAIAPIError : Exception() {
 /**
  * Conversational AI API event handler interface.
  *
- * Implement this interface to receive AI conversation events such as state changes, transcriptions, errors, and metrics.
+ * Implement this interface to receive AI conversation events such as state changes, transcript, errors, and metrics.
  * All callbacks are invoked on the main thread for UI updates.
  *
- * @note Some callbacks (such as onTranscriptionUpdated) may be triggered at high frequency for reliability. If your business requires deduplication, please handle it at the business layer.
+ * @note Some callbacks (such as onTranscriptUpdated) may be triggered at high frequency for reliability. If your business requires deduplication, please handle it at the business layer.
  */
 interface IConversationalAIAPIEventHandler {
     /**
@@ -565,12 +617,19 @@ interface IConversationalAIAPIEventHandler {
     fun onMessageReceiptUpdated(agentUserId: String, receipt: MessageReceipt)
 
     /**
-     * Called when transcription content is updated.
+     * Called when message receipt is updated
+     * @param agentUserId Agent User ID
+     * @param event voice print event
+     */
+    fun onAgentVoiceprintStateChanged(agentUserId: String, event: VoiceprintStateChangeEvent)
+
+    /**
+     * Called when Transcript content is updated.
      * @param agentUserId Agent user ID
-     * @param transcription Transcription data
+     * @param transcript Transcript data
      * @note This callback may be triggered at high frequency. If you need to deduplicate, please handle it at the business layer.
      */
-    fun onTranscriptionUpdated(agentUserId: String, transcription: Transcription)
+    fun onTranscriptUpdated(agentUserId: String, transcript: Transcript)
 
     /**
      * Called for internal debug logs.

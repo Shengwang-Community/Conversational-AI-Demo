@@ -22,7 +22,6 @@
 "join.start.tips.no.limit" = "Session Limit: None";
 "join.timeout.tips" = "Timeout. Please try again.";
 
-"conversation.ai.hello" = "Greetings, Human";
 "conversation.ai.welcome.title" = "Hey, I'm Conversational AI Engine.";
 "conversation.ai.welcome.description" = "Have you ever questioned the nature of your reality?";
 "conversation.ai.app.name" = "Convo AI";
@@ -124,17 +123,21 @@
 "devmode.rtc" = "RTC Version";
 "devmode.rtm" = "RTM Version";
 "devmode.metric" = "Metrics";
-"devmode.host" = "ConvoAI Host";
 "devmode.dump" = "Audio Dump";
 "devmode.sessionLimit" = "Session Limit";
-"devmode.copy" = "Copy Mine Messages";
+"devmode.copy.click" = "Click to Copy";
 "devmode.close" = "Close Developer Mode";
 "devmode.graph" = "Graph id";
-"devmode.server" = "Server";
+"devmode.server.switch" = "Switch Environment";
 "devmode.sdk.params" = "SDK audio parameter config";
 "devmode.sc.config" = "Convo AI service Preset config";
-"devmode.text.view" = "View";
-"devmode.text.confirm" = "Confirm";
+"devmode.basic.settings" = "Basic Settings";
+"devmode.convoai.settings" = "ConvoAI Settings";
+"devmode.user.settings" = "User Settings";
+"devmode.overall.config" = "Overall Configuration";
+"devmode.copy.question" = "Copy Mine Messages";
+"devmode.caption.mode" = "Caption Rendering Mode";
+"devmode.user.settings.hint" = "Quick Settings for Current User";
 
 "iot.info.title" = "Conversational AI Device";
 "iot.info.device" = "%@ Devices";
@@ -155,3 +158,13 @@
 "photo.permission.settings" = "Settings";
 "photo.permission.skip" = "Skip";
 "photo.permission.enable" = "Enable Permission";
+
+// agent list
+"agent.list.contact" = "Please contact Agora staff to get custom agent ID";
+"agent.list.input" = "Enter agent ID to get";
+"agent.list.custom" = "Custom Agent";
+"agent.list.official" = "Official Agents";
+"agent.list.get" = "Get";
+"agent.list.get.agent" = "Get Your AI Assistant";
+
+

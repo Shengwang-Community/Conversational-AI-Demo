@@ -13,12 +13,14 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/iv_message_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:layout_marginEnd="6dp"
-            android:src="@drawable/scene_detail_message_list_agent" />
+            android:scaleType="centerCrop"
+            android:src="@drawable/common_default_agent"
+            app:shapeAppearance="@style/CommonRoundShape"/>
 
         <TextView
             android:id="@+id/tv_message_title"
@@ -29,15 +31,23 @@
 
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/tv_message_content"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
-        android:maxLines="999"
-        android:textColor="@color/ai_icontext1"
-        android:textSize="16sp" />
+        android:orientation="horizontal"
+        android:gravity="start|center_vertical">
+
+        <io.agora.scene.convoai.ui.widget.TypingTextView
+            android:id="@+id/tv_message_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="999"
+            android:textColor="@color/ai_icontext1"
+            android:textSize="16sp" />
+
+    </LinearLayout>
 
     <!-- Add image message layout below text message layout -->
     <!-- Image message item for agent (hidden by default, shown for image messages) -->

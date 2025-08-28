@@ -1,12 +1,13 @@
-// MARK: - Message Model
-
 import Common
-
 
 // MARK: - ChatMessageCell
 class ChatMessageCell: UITableViewCell {
     static let identifier = "ChatMessageCell"
     
+    private let dotAttachment = DotTextAttachment(data: nil, ofType: nil)
+    private var transcript: NSAttributedString?
+    private var message: Message?
+        
     // MARK: - UI Components
     private lazy var avatarView: UIView = {
         let view = UIView()
@@ -18,6 +19,8 @@ class ChatMessageCell: UITableViewCell {
     private lazy var avatarImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
+        imageView.layer.cornerRadius = 10
+        imageView.clipsToBounds = true
         return imageView
     }()
     
@@ -41,7 +44,7 @@ class ChatMessageCell: UITableViewCell {
         label.text = ""
         return label
     }()
-        
+            
     private lazy var interruptButton: UIButton = {
         let button = UIButton(type: .custom)
         button.setImage(UIImage.ag_named("ic_interrput_icon"), for: .normal)
@@ -69,13 +72,14 @@ class ChatMessageCell: UITableViewCell {
     // MARK: - Initialization
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        
         setupViews()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+        
     // MARK: - Setup
     private func setupViews() {
         backgroundColor = .clear
@@ -89,7 +93,9 @@ class ChatMessageCell: UITableViewCell {
         messageBubble.addSubview(messageLabel)
     }
     
-    func configure(with message: Message) {
+    func configure(with message: Message, isLastMessage: Bool) {
+        self.message = message
+        
         if message.isMine {
             setupUserLayout()
             nameLabel.text = ResourceManager.L10n.Conversation.messageYou
@@ -100,8 +106,17 @@ class ChatMessageCell: UITableViewCell {
         } else {
             setupAgentLayout()
             avatarView.backgroundColor = .clear
-            avatarImageView.image = UIImage.ag_named("ic_agent_avatar")
-            nameLabel.text = AppContext.preferenceManager()?.preference.preset?.displayName ?? ""
+            if let avatar = AppContext.preferenceManager()?.preference.avatar {
+                avatarImageView.kf.setImage(with: URL(string: avatar.thumbImageUrl.stringValue()))
+            } else if let preset = AppContext.preferenceManager()?.preference.preset {
+                avatarImageView.kf.setImage(
+                    with: URL(string: preset.avatarUrl.stringValue()),
+                    placeholder: UIImage.ag_named(preset.defaultAvatar ?? "")
+                )
+            } else {
+                avatarImageView.image = UIImage.ag_named("ic_agent_avatar")
+            }
+            nameLabel.text = AppContext.preferenceManager()?.preference.preset?.displayName.stringValue()
             nameLabel.textColor = UIColor.themColor(named: "ai_icontext1")
             messageLabel.textColor = UIColor.themColor(named: "ai_icontext1")
             messageBubble.backgroundColor = .clear
@@ -112,8 +127,19 @@ class ChatMessageCell: UITableViewCell {
         let attributes: [NSAttributedString.Key: Any] = [
             .paragraphStyle: paragraphStyle
         ]
-        let attributedString = NSAttributedString(string: message.content, attributes: attributes)
-        messageLabel.attributedText = attributedString
+        
+        let messageString = NSMutableAttributedString(
+            string: message.content,
+            attributes: attributes
+        )
+        
+        transcript = messageString.copy() as? NSAttributedString
+        if !message.isMine && !message.isInterrupted && !message.isFinal && isLastMessage {
+            messageString.append(NSAttributedString(string: " "))
+            messageString.append(NSAttributedString(attachment: dotAttachment))
+        }
+        
+        messageLabel.attributedText = messageString
         
         let detector = NSLinguisticTagger(tagSchemes: [.language], options: 0)
         detector.string = message.content
@@ -125,6 +151,17 @@ class ChatMessageCell: UITableViewCell {
         }
         
         interruptButton.isHidden = !message.isInterrupted
+    }
+    
+    func stopLoadingAnimate() {
+        guard let transcript = transcript else { return }
+        messageLabel.attributedText = transcript
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        transcript = nil
+        message = nil
     }
     
     private func setupUserLayout() {
@@ -168,7 +205,7 @@ class ChatMessageCell: UITableViewCell {
         
         avatarImageView.snp.remakeConstraints { make in
             make.center.equalToSuperview()
-            make.size.equalTo(CGSize(width: 15, height: 10))
+            make.size.equalTo(CGSize(width: 20, height: 20))
         }
         
         nameLabel.snp.remakeConstraints { make in
@@ -389,8 +426,17 @@ class ChatImageMessageCell: UITableViewCell {
             avatarImageView.image = UIImage.ag_named("ic_agent_mine_avatar")
         } else {
             setupAgentLayout()
-            avatarImageView.image = UIImage.ag_named("ic_agent_avatar")
-            nameLabel.text = AppContext.preferenceManager()?.preference.preset?.displayName ?? ""
+            if let avatar = AppContext.preferenceManager()?.preference.avatar {
+                avatarImageView.kf.setImage(with: URL(string: avatar.thumbImageUrl.stringValue()))
+            } else if let preset = AppContext.preferenceManager()?.preference.preset {
+                avatarImageView.kf.setImage(
+                    with: URL(string: preset.avatarUrl.stringValue()),
+                    placeholder: UIImage.ag_named(preset.defaultAvatar ?? "")
+                )
+            } else {
+                avatarImageView.image = UIImage.ag_named("ic_agent_avatar")
+            }
+            nameLabel.text = AppContext.preferenceManager()?.preference.preset?.displayName.stringValue()
         }
         
         // Configure image content
@@ -448,7 +494,7 @@ class ChatImageMessageCell: UITableViewCell {
         
         avatarImageView.snp.remakeConstraints { make in
             make.center.equalToSuperview()
-            make.size.equalTo(CGSize(width: 15, height: 10))
+            make.size.equalTo(CGSize(width: 20, height: 20))
         }
         
         messageBubble.snp.remakeConstraints { make in
@@ -581,6 +627,14 @@ class ChatView: UIView {
     func getLastMessage(fromUser: Bool) -> Message? {
         return viewModel.messages.last { $0.isMine == fromUser }
     }
+    
+    func stopLoadingAnimation() {
+        for cell in tableView.visibleCells {
+            if let chatCell = cell as? ChatMessageCell {
+                chatCell.stopLoadingAnimate()
+            }
+        }
+    }
 }
 
 // MARK: - UITableViewDelegate & UITableViewDataSource
@@ -591,6 +645,7 @@ extension ChatView: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let message = viewModel.messages[indexPath.row]
+        let isLatestMessage = indexPath.row == viewModel.messages.count - 1
         if message.isImage {
             let cell = tableView.dequeueReusableCell(withIdentifier: ChatImageMessageCell.identifier, for: indexPath) as! ChatImageMessageCell
             cell.resendImageAction = { [weak self] image, uuid in
@@ -602,7 +657,7 @@ extension ChatView: UITableViewDelegate, UITableViewDataSource {
             return cell
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: ChatMessageCell.identifier, for: indexPath) as! ChatMessageCell
-            cell.configure(with: message)
+            cell.configure(with: message, isLastMessage: isLatestMessage)
             return cell
         }
     }
@@ -630,10 +685,10 @@ extension ChatView: UITableViewDelegate, UITableViewDataSource {
 }
 
 extension ChatView: ChatMessageViewModelDelegate {
-    func startNewMessage() {
-        tableView.reloadData()
-        scrollToBottom()
-    }
+//    func startNewMessage() {
+//        tableView.reloadData()
+//        scrollToBottom()
+//    }
     
     func messageUpdated() {
         tableView.reloadData()
@@ -645,5 +700,7 @@ extension ChatView: ChatMessageViewModelDelegate {
     func messageFinished() {
         tableView.reloadData()
         scrollToBottom()
+        stopLoadingAnimation()
     }
 }
+

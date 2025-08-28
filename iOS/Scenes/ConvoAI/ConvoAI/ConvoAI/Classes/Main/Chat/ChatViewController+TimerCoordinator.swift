@@ -13,31 +13,31 @@ import Common
 extension ChatViewController: AgentTimerCoordinatorDelegate {
     func agentUseLimitedTimerClosed() {
         addLog("[Call] agentUseLimitedTimerClosed")
-        topBar.stop()
+        sideNavigationBar.stop()
     }
     
     func agentUseLimitedTimerStarted(duration: Int) {
         addLog("[Call] agentUseLimitedTimerStarted")
-        topBar.showTips(seconds: duration)
-        topBar.updateRestTime(duration)
+        sideNavigationBar.showTips(seconds: duration)
+        sideNavigationBar.updateRestTime(duration)
     }
     
     func agentUseLimitedTimerUpdated(duration: Int) {
         addLog("[Call] agentUseLimitedTimerUpdated")
-        topBar.updateRestTime(duration)
+        sideNavigationBar.updateRestTime(duration)
     }
     
     func agentUseLimitedTimerEnd() {
         addLog("[Call] agentUseLimitedTimerEnd")
-        topBar.stop()
+        sideNavigationBar.stop()
         stopLoading()
         stopAgent()
         let title = ResourceManager.L10n.ChannelInfo.timeLimitdAlertTitle
-        if let manager = AppContext.preferenceManager(), let preset = manager.preference.preset {
-            var min = preset.callTimeLimitSecond / 60
+        if let manager = AppContext.preferenceManager(), let preset = manager.preference.preset, let callTimeLimitSecond = preset.callTimeLimitSecond {
+            var min = callTimeLimitSecond / 60
             
             if let _ = manager.preference.avatar {
-                min = preset.callTimeLimitAvatarSecond / 60
+                min = preset.callTimeLimitAvatarSecond ?? 600 / 60
             }
 
             TimeoutAlertView.show(in: view, image:UIImage.ag_named("ic_alert_timeout_icon"), title: title, description: String(format: ResourceManager.L10n.ChannelInfo.timeLimitdAlertDescription, min))
@@ -78,18 +78,3 @@ extension ChatViewController: AgentTimerCoordinatorDelegate {
     }
 }
 
-extension ChatViewController {
-    private func startPingRequest() {
-        addLog("[Call] startPingRequest()")
-        let presetName = AppContext.preferenceManager()?.preference.preset?.name ?? ""
-        agentManager.ping(appId: AppContext.shared.appId, channelName: channelName, presetName: presetName) { [weak self] err, res in
-            guard let self = self else { return }
-            guard let error = err else {
-                self.addLog("ping request")
-                return
-            }
-            
-            self.addLog("ping error : \(error.message)")
-        }
-    }
-}

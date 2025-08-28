@@ -1,6 +1,12 @@
 <resources>
-    <string name="common_app_name">对话式 AI 引擎体验</string>
+    <string name="common_app_name">声网对话式 AI 引擎</string>
     <string name="common_detail_message_list_you">你</string>
+    <string name="common_debug_base_config">基础配置</string>
+    <string name="common_debug_cov_config">ConvoAI 配置</string>
+    <string name="common_debug_overall_config">整体配置</string>
+    <string name="common_debug_user_config">用户配置</string>
+    <string name="common_debug_quick_setting_for_current_user">当前使用者的快捷设置</string>
+    <string name="common_debug_click_to_copy">点击复制</string>
     <string name="common_debug_mode_enable">开发者模式已开</string>
     <string name="common_debug_mode_disable">开发者模式已关闭</string>
     <string name="common_debug_setting">开发者模式</string>
@@ -16,7 +22,7 @@
     <string name="common_debug_graph_id">Graph id</string>
     <string name="common_debug_sdk_parameters">SDK 音频参数配置</string>
     <string name="common_debug_sc_config">ConvoAI 服务 preset 配置</string>
-    <string name="common_debug_close">关闭开发者模式</string>
+    <string name="common_debug_close">退出开发者模式</string>
     <string name="common_debug_copy_user_question">复制用户当前通话提问</string>
     <string name="common_call_time_is_up">本次对话时间到！</string>
     <string name="common_call_time_is_up_tips">体验对话限时%1s分钟，本次对话时间已到。</string>
@@ -44,7 +50,7 @@
     <string name="common_upload_time_success">提交成功，感谢反馈</string>
     <string name="common_upload_time_failed">提交失败，请稍后重试</string>
     <string name="common_login_expired">登录过期，请重新登录</string>
-    <string name="common_login_typing_text1">你好，人类</string>
+    <string name="common_login_typing_text1">欢迎体验声网实时对话式AI引擎</string>
     <string name="common_login_typing_text2">你好，我是对话式AI引擎</string>
     <string name="common_login_typing_text3">秒应智答，零滞畅聊</string>
     <string name="common_app_version">v%1s</string>

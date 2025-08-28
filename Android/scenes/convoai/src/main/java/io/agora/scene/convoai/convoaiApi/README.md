@@ -43,7 +43,7 @@
    val config = ConversationalAIAPIConfig(
        rtcEngine = rtcEngineInstance,
        rtmClient = rtmClientInstance,
-       renderMode = TranscriptionRenderMode.Word, // 或 TranscriptionRenderMode.Text
+       renderMode = TranscriptRenderMode.Word, // 或 TranscriptRenderMode.Text
        enableLog = true
    )
    ```
@@ -65,7 +65,8 @@
        override fun onAgentError(agentUserId: String, error: ModuleError) { /* ... */ }
        override fun onMessageError(agentUserId: String, error: MessageError) { /* ... */ }
        override fun onMessageReceiptUpdated(agentUserId: String, receipt: MessageReceipt) { /* ... */ }
-       override fun onTranscriptionUpdated(agentUserId: String, transcription: Transcription) { /* ... */ }
+       override fun onAgentVoiceprintStateChanged(agentUserId: String, event: VoiceprintStateChangeEvent) { /* ... */ }
+       override fun onTranscriptUpdated(agentUserId: String, transcript: Transcript) { /* ... */ }  
        override fun onDebugLog(log: String) { /* ... */ }
    })
    ```
@@ -295,7 +296,7 @@ override fun onMessageError(agentUserId: String, error: MessageError) {
 - [ConversationalAIUtils.kt](./ConversationalAIUtils.kt) — 工具函数与事件回调管理
 - [subRender/](./subRender/)
   - [v3/](./subRender/v3/) — 字幕部分模块
-    - [TranscriptionController.kt](./subRender/v3/TranscriptionController.kt)
+    - [TranscriptController.kt](./subRender/v3/TranscriptController.kt)
     - [MessageParser.kt](./subRender/v3/MessageParser.kt)
 
 > 以上文件和文件夹即为集成 ConversationalAI API 所需全部内容，无需拷贝其他文件。

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:layout_gravity="bottom"
+    tools:background="@color/ai_fill2"
+    android:background="@android:color/transparent">
+
+    <LinearLayout
+        android:id="@+id/ll_calling"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="22dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_mic"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:backgroundTint="@android:color/transparent"
+            app:cardCornerRadius="36dp"
+            app:cardElevation="0dp">
+
+            <ImageButton
+                android:id="@+id/btn_mic"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/btn_bg_block1_selector"
+                android:src="@drawable/agent_user_speaker" />
+        </androidx.cardview.widget.CardView>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_camera"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:backgroundTint="@android:color/transparent"
+            app:cardCornerRadius="36dp"
+            app:cardElevation="0dp">
+
+            <ImageButton
+                android:id="@+id/btn_camera"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/btn_bg_block1_selector"
+                android:src="@drawable/scene_detail_camera_off"
+                app:tint="@color/ai_icontext1" />
+        </androidx.cardview.widget.CardView>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_image"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:backgroundTint="@android:color/transparent"
+            app:cardCornerRadius="36dp"
+            app:cardElevation="0dp">
+
+            <FrameLayout
+                android:id="@+id/btn_image_container"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/btn_bg_block1_selector"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/iv_add_pic"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:padding="20dp"
+                    android:src="@drawable/scene_detail_add_pic"
+                    android:scaleType="centerInside"
+                    app:tint="@color/ai_icontext1"
+                    android:visibility="visible" />
+
+                <ImageView
+                    android:id="@+id/iv_camera_switch"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:padding="20dp"
+                    android:src="@drawable/scene_detail_camera_switch"
+                    android:scaleType="centerInside"
+                    app:tint="@color/ai_icontext1"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+        </androidx.cardview.widget.CardView>
+
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_end_call"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:backgroundTint="@android:color/transparent"
+            app:cardCornerRadius="36dp"
+            app:cardElevation="0dp">
+
+            <ImageButton
+                android:id="@+id/btn_end_call"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/btn_bg_block1_selector"
+                android:src="@drawable/scene_detail_close"
+                app:tint="@color/ai_red6" />
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnJoinCall"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/ai_dp_large"
+        android:background="@drawable/selector_gradient_button_with_border999"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:stateListAnimator="@null"
+        android:text="@string/cov_detail_join_call"
+        android:textAllCaps="false"
+        android:textColor="@color/ai_brand_white10"
+        android:textSize="18sp"
+        app:backgroundTint="@null"
+        app:icon="@drawable/cov_detail_join_call"
+        app:iconGravity="textStart"
+        app:iconPadding="10dp"
+        app:iconSize="24dp"
+        app:iconTint="@color/ai_brand_white10"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.84"
+        tools:visibility="gone"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

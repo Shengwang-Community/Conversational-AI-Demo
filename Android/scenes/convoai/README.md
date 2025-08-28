@@ -11,7 +11,7 @@
 
 ## 🚀 一、快速开始
 
-这个部分主要介绍如何快速跑通声网对话式 AI 引擎体验应用项目。
+这个部分主要介绍如何快速跑通声网对话式 AI 引擎应用项目。
 
 ### 📱 1.1 环境准备
 
@@ -67,6 +67,9 @@ AG_APP_CERTIFICATE=<声网 App Certificate>
 BASIC_AUTH_KEY=<声网 RESTful API KEY>
 BASIC_AUTH_SECRET=<声网 RESTful API SECRET>
 
+#----------- Open Source --------------
+IS_OPEN_SOURCE=true
+
 #----------- LLM -----------
 LLM_URL=<LLM 厂商的 API BASE URL>
 LLM_API_KEY=<LLM 厂商的 API KEY>(可选)
@@ -78,7 +81,6 @@ TTS_VENDOR=<TTS 厂商>
 TTS_PARAMS=<TTS 参数>
 
 #----------- AVATAR -----------
-AVATAR_ENABLE=<是否开启 AVATAR>
 AVATAR_VENDOR=<AVATAR 厂商>
 AVATAR_PARAMS=<AVATAR 参数>
 ```

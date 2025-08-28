@@ -22,6 +22,14 @@ class AgentSettingSubOptionCell: UITableViewCell {
         return label
     }()
     
+    lazy var subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor.themColor(named: "ai_icontext3")
+        label.font = .systemFont(ofSize: 12)
+        label.numberOfLines = 0
+        return label
+    }()
+    
     let bottomLine: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor.themColor(named: "ai_line1")
@@ -36,26 +44,37 @@ class AgentSettingSubOptionCell: UITableViewCell {
     private func setupViews() {
         backgroundColor = UIColor.themColor(named: "ai_block3")
         selectionStyle = .none
-        [titleLabel, bottomLine, checkImageView].forEach { contentView.addSubview($0) }
-        
+        [titleLabel, subtitleLabel, bottomLine, checkImageView].forEach { contentView.addSubview($0) }
+                
         titleLabel.snp.makeConstraints { make in
             make.left.equalTo(16)
-            make.centerY.equalToSuperview()
+            make.top.equalTo(8)
+            make.right.lessThanOrEqualTo(checkImageView.snp.left).offset(-12)
         }
+        
+        subtitleLabel.snp.makeConstraints { make in
+            make.left.equalTo(titleLabel)
+            make.top.equalTo(titleLabel.snp.bottom).offset(4)
+            make.right.equalTo(titleLabel)
+            make.bottom.equalTo(-8)
+        }
+        
         checkImageView.snp.makeConstraints { make in
             make.right.equalTo(-12)
             make.centerY.equalToSuperview()
-            make.width.equalTo(24)
-            make.height.equalTo(24)
+            make.width.height.equalTo(24)
         }
+        
         bottomLine.snp.makeConstraints { make in
             make.left.right.bottom.equalToSuperview()
             make.height.equalTo(0.5)
         }
     }
     
-    func configure(with title: String, isSelected: Bool) {
+    func configure(with title: String, subtitle: String, isSelected: Bool) {
         titleLabel.text = title
+        subtitleLabel.text = subtitle
+        subtitleLabel.isHidden = subtitle.isEmpty
         checkImageView.isHidden = !isSelected
     }
 

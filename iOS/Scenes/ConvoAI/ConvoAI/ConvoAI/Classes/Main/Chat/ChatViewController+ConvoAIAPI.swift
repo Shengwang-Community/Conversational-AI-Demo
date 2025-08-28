@@ -7,6 +7,7 @@
 
 import Foundation
 import Common
+import SVProgressHUD
 
 // MARK: - Image Upload Error Models
 struct ImageUploadError: Codable {
@@ -68,6 +69,15 @@ extension ChatViewController {
 }
 
 extension ChatViewController: ConversationalAIAPIEventHandler {
+    public func onAgentVoiceprintStateChanged(agentUserId: String, event: VoiceprintStateChangeEvent) {
+        if event.status == .registerSuccess {
+            SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.voiceprintLockToast)
+            sideNavigationBar.voiceprintState(status: true)
+        } else {
+            sideNavigationBar.voiceprintState(status: false)
+        }
+    }
+    
     public func onMessageError(agentUserId: String, error: MessageError) {
         if let messageData = error.message.data(using: .utf8) {
             do {
@@ -115,7 +125,8 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     }
     
     public func onAgentInterrupted(agentUserId: String, event: InterruptEvent) {
-        
+        addLog("<<< [onAgentInterrupted]")
+        messageView.viewModel.reduceLLMInterrupt(turnId: event.turnId)
     }
     
     public func onAgentMetrics(agentUserId: String, metrics: Metric) {
@@ -126,14 +137,15 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
         addLog("<<< [onAgentError] error: \(error)")
     }
     
-    public func onTranscriptionUpdated(agentUserId: String, transcription: Transcription) {
+    public func onTranscriptUpdated(agentUserId: String, transcript: Transcript) {
         if isSelfSubRender {
             return
         }
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.messageView.viewModel.reduceStandardMessage(turnId: transcription.turnId, message: transcription.text, timestamp: 0, owner: transcription.type, isInterrupted: transcription.status == .interrupted)
+            print("receive transcription: \(transcript.status)")
+            self.messageView.viewModel.reduceStandardMessage(turnId: transcript.turnId, message: transcript.text, timestamp: 0, owner: transcript.type, isInterrupted: transcript.status == .interrupted, isFinal: transcript.status == .end)
         }
     }
     

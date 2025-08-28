@@ -52,7 +52,7 @@ Please follow these steps to quickly integrate and use the ConversationalAI API:
 
 3. **Register Event Callbacks**
 
-   Implement and add event callbacks to receive AI agent events and transcription content:
+   Implement and add event callbacks to receive AI agent events and transcript content:
    ```swift
    convoAIAPI.addHandler(handler: self)
    ```
@@ -237,8 +237,8 @@ Audio settings recommendations for different scenarios:
 
 - [ConversationalAIAPI.swift](./ConversationalAIAPI.swift) — API interfaces and related data structures and enums
 - [ConversationalAIAPIImpl.swift](./ConversationalAIAPIImpl.swift) — ConversationalAI API main implementation logic
-- [Transcription/](./Transcription/)
-  - [TranscriptionController.swift](./Transcription/TranscriptionController.swift) — Subtitle controller
+- [Transcript/](./Transcript/)
+  - [TranscriptController.swift](./Transcript/TranscriptController.swift) — Subtitle controller
 
 > The above files and folders are all the content needed to integrate ConversationalAI API, no need to copy other files.
 

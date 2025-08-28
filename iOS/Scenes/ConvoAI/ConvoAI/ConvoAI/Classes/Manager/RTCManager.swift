@@ -64,7 +64,6 @@ extension RTCManager: RTCManagerProtocol {
     
     func joinChannel(rtcToken: String, channelName: String, uid: String, isIndependent: Bool = false) {
         rtcEngine.enableVideo()
-
         // Calling this API enables the onAudioVolumeIndication callback to report volume values,
         // which can be used to drive microphone volume animation rendering
         // If you don't need this feature, you can skip this setting

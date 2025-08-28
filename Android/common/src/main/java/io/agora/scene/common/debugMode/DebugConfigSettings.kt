@@ -7,6 +7,7 @@ import io.agora.scene.common.constant.EnvConfig
 import io.agora.scene.common.util.LocalStorageUtil
 import java.io.BufferedReader
 
+
 data class DevEnvConfig(
     val china: List<EnvConfig>,
     val global: List<EnvConfig>
@@ -121,6 +122,8 @@ object DebugConfigSettings {
             counts = 0
             enableDebugMode(true)
             DebugButton.getInstance(AgentApp.instance()).show()
+            // Immediately notify DebugManager to activate debug for current activity
+            DebugManager.onDebugModeEnabled()
         }
     }
 }

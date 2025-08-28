@@ -10,54 +10,73 @@ import SVProgressHUD
 import Common
 import IoT
 
-extension ChatViewController {
-    @objc internal func onClickDevMode() {
-        DeveloperConfig.shared
-            .setServerHost(AppContext.preferenceManager()?.information.targetServer ?? "")
-            .setAudioDump(enabled: rtcManager.getAudioDump(), onChange: { [weak self] isOn in
-                self?.rtcManager.enableAudioDump(enabled: isOn)
-            })
-            .setSessionLimit(enabled: !DeveloperConfig.shared.getSessionFree(), onChange: { [weak self] isOn in
-                self?.timerCoordinator.setDurationLimit(limited: isOn)
-            })
-            .setMetrics(enabled: DeveloperConfig.shared.metrics, onChange: { [weak self] isOn in
-                self?.enableMetric = isOn
-            })
-            .setCloseDevModeCallback { [weak self] in
-                self?.devModeButton.isHidden = true
-                self?.sendMessageButton.isHidden = true
-            }
-            .setSwitchServerCallback { [weak self] in
-                self?.switchEnvironment()
-            }
-            .setSDKParamsCallback { [weak self] param in
-                self?.rtcManager.getRtcEntine().setParameters(param)
-            }
-            .setCopyCallback { [weak self] in
-                let messageContents = self?.messageView.getAllMessages()
-                    .filter { $0.isMine }
-                    .map { $0.content }
-                    .joined(separator: "\n")
-                let pasteboard = UIPasteboard.general
-                pasteboard.string = messageContents
-                SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.DevMode.copy)
-            }
-        DeveloperModeViewController.show(from: self)
+extension ChatViewController: DeveloperConfigDelegate {
+    internal func configDevMode() {
+        navivationBar.characterButton.addTarget(self, action: #selector(onClickLogo), for: .touchUpInside)
+
+        DeveloperConfig.shared.add(delegate: self)
+        
+        if (DeveloperConfig.shared.isDeveloperMode) {
+            self.sendMessageButton.isHidden = false
+            applyDevParams()
+        } else {
+            self.sendMessageButton.isHidden = true
+        }
     }
     
-    private func switchEnvironment() {
-        deleteAllPresets()
+    public func applyDevParams() {
+        self.enableMetric = DeveloperConfig.shared.metrics
+        self.timerCoordinator.setDurationLimit(limited: DeveloperConfig.shared.getSessionLimit())
+        self.rtcManager.enableAudioDump(enabled: DeveloperConfig.shared.audioDump)
+        DeveloperConfig.shared.sdkParams.forEach { p in
+            self.rtcManager.getRtcEntine().setParameters(p)
+        }
+    }
+    
+    public func devConfigDidOpenDevMode(_ config: DeveloperConfig) {
+        self.sendMessageButton.isHidden = false
+        applyDevParams()
+    }
+    
+    public func devConfigDidCloseDevMode(_ config: DeveloperConfig) {
+        self.sendMessageButton.isHidden = true
+    }
+    
+    public func devConfigDidSwitchServer(_ config: DeveloperConfig) {
         stopLoading()
         stopAgent()
         animateView.releaseView()
         rtcManager.destroy()
         rtmManager.destroy()
-        UserCenter.shared.logout()
-        NotificationCenter.default.post(name: .EnvironmentChanged, object: nil, userInfo: nil)
     }
     
-    internal func deleteAllPresets() {
-        IoTEntrance.deleteAllPresets()
-        AppContext.preferenceManager()?.deleteAllPresets()
+    public func devConfigDidCopy(_ config: DeveloperConfig) {
+        let messageContents = self.messageView.getAllMessages()
+            .filter { $0.isMine }
+            .map { $0.content }
+            .joined(separator: "\n")
+        let pasteboard = UIPasteboard.general
+        pasteboard.string = messageContents
+        SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.DevMode.copyQuestion)
+    }
+
+    public func devConfig(_ config: DeveloperConfig, sessionLimitDidChange enabled: Bool) {
+        self.timerCoordinator.setDurationLimit(limited: enabled)
+    }
+
+    public func devConfig(_ config: DeveloperConfig, audioDumpDidChange enabled: Bool) {
+        self.rtcManager.enableAudioDump(enabled: enabled)
+    }
+
+    public func devConfig(_ config: DeveloperConfig, metricsDidChange enabled: Bool) {
+        self.enableMetric = enabled
+    }
+
+    public func devConfig(_ config: DeveloperConfig, sdkParamsDidChange params: String) {
+        self.rtcManager.getRtcEntine().setParameters(params)
+    }
+    
+    @objc func onClickLogo() {
+        DeveloperConfig.shared.countTouch()
     }
 }

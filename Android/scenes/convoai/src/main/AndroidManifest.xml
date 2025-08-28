@@ -1,25 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <application>
-    <activity
-        android:name="io.agora.scene.convoai.ui.CovLivingActivity"
-        android:keepScreenOn="true"
-        android:configChanges="locale|layoutDirection"
-        android:screenOrientation="portrait"
-        android:launchMode="singleTask"
-        android:exported="false" />
-        
-    
-        <activity 
-            android:name=".ui.photo.PhotoNavigationActivity"
+
+        <activity
+            android:name="io.agora.scene.convoai.ui.CovLoginActivity"
+            android:exported="false"
             android:screenOrientation="portrait"
-            android:theme="@style/TransparentAppCompatTheme"
-            android:exported="false" />
+            android:windowSoftInputMode="stateHidden|adjustPan" />
+
+        <activity
+            android:name="io.agora.scene.convoai.ui.CovAgentListActivity"
+            android:configChanges="locale|layoutDirection"
+            android:exported="false"
+            android:keepScreenOn="true"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+
+        <activity
+            android:name="io.agora.scene.convoai.ui.CovLivingActivity"
+            android:configChanges="locale|layoutDirection"
+            android:exported="false"
+            android:keepScreenOn="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait" />
+
+
+        <activity
+            android:name=".ui.photo.PhotoNavigationActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/TransparentAppCompatTheme" />
 
         <service
             android:name=".ui.CovLocalRecordingService"
-            android:foregroundServiceType="microphone|mediaPlayback">
-        </service>
+            android:foregroundServiceType="microphone|mediaPlayback"/>
     </application>
 </manifest>

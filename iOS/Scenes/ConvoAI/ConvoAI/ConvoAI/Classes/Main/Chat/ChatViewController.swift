@@ -8,7 +8,7 @@
 import UIKit
 import Common
 
-public class ChatViewController: UIViewController {
+class ChatViewController: BaseViewController {
     internal var agentIsJoined = false
     internal var avatarIsJoined = false
     internal var channelName = ""
@@ -74,7 +74,7 @@ public class ChatViewController: UIViewController {
     internal lazy var timerCoordinator: AgentTimerCoordinator = {
         let coordinator = AgentTimerCoordinator()
         coordinator.delegate = self
-        coordinator.setDurationLimit(limited: !DeveloperConfig.shared.getSessionFree())
+        coordinator.setDurationLimit(limited: DeveloperConfig.shared.getSessionLimit())
         return coordinator
     }()
     
@@ -89,33 +89,26 @@ public class ChatViewController: UIViewController {
         return manager
     }()
     
-    internal lazy var agentManager: AgentManager = {
-        let manager = AgentManager(host: AppContext.shared.baseServerUrl)
-        return manager
-    }()
+    internal lazy var agentManager = AgentManager()
     
-    internal lazy var topBar: AgentSettingBar = {
-        let view = AgentSettingBar()
-        view.infoListButton.addTarget(self, action: #selector(onClickInformationButton), for: .touchUpInside)
+    internal lazy var navivationBar: MainNavigationBar = {
+        let view = MainNavigationBar()
         view.settingButton.addTarget(self, action: #selector(onClickSettingButton), for: .touchUpInside)
         view.wifiInfoButton.addTarget(self, action: #selector(onClickWifiInfoButton), for: .touchUpInside)
-        view.addButton.addTarget(self, action: #selector(onClickAddButton), for: .touchUpInside)
-        view.cameraButton.addTarget(self, action: #selector(clickCameraButton), for: .touchUpInside)
         view.transcriptionButton.addTarget(self, action: #selector(onClickTranscriptionButton(_:)), for: .touchUpInside)
-        view.centerTitleButton.addTarget(self, action: #selector(onClickLogo), for: .touchUpInside)
+        view.closeButton.addTarget(self, action: #selector(onCloseButton), for: .touchUpInside)
+        return view
+    }()
+    
+    internal lazy var sideNavigationBar: SideNavigationBar = {
+        let view = SideNavigationBar()
+        view.isHidden = true
         return view
     }()
 
-    internal lazy var bottomBar: AgentControlToolbar = {
-        let view = AgentControlToolbar()
+    internal lazy var callControlBar: CallControlbar = {
+        let view = CallControlbar()
         view.delegate = self
-        return view
-    }()
-    
-    internal lazy var welcomeMessageView: TypewriterLabel = {
-        let view = TypewriterLabel()
-        view.font = UIFont.boldSystemFont(ofSize: 20)
-        view.startAnimation()
         return view
     }()
     
@@ -177,13 +170,6 @@ public class ChatViewController: UIViewController {
         return view
     }()
     
-    internal lazy var devModeButton: UIButton = {
-        let button = UIButton(type: .custom)
-        button.setImage(UIImage.ag_named("ic_setting_debug"), for: .normal)
-        button.addTarget(self, action: #selector(onClickDevMode), for: .touchUpInside)
-        return button
-    }()
-    
     internal var traceId: String {
         get {
             return "\(UUID().uuidString.prefix(8))"
@@ -209,7 +195,7 @@ public class ChatViewController: UIViewController {
     var lastClickTime: Date?
     
     deinit {
-        print("liveing view controller deinit")
+        print("living view controller deinit")
         deregisterDelegate()
     }
     
@@ -227,11 +213,16 @@ public class ChatViewController: UIViewController {
         setupViews()
         setupConstraints()
         setupSomeNecessaryConfig()
-        if isEnableAvatar() {
-            startShowAvatar()
-        } else {
-            stopShowAvatar()
-        }
+    }
+    
+    // MARK: - BaseViewController Override Methods
+    override func shouldEnablePopGesture() -> Bool {
+        // Only enable pop gesture when the agent is NOT joined
+        return navivationBar.style == .idle
+    }
+    
+    override func viewWillDisappearAndPop() {
+        rtcManager.destroy()
     }
     
     public override func viewDidLayoutSubviews() {
@@ -264,22 +255,6 @@ public class ChatViewController: UIViewController {
             
             Task {
                 do {
-                    try await self.fetchIotPresetsIfNeeded()
-                } catch {
-                    self.addLog("[PreloadData error - iot presets]: \(error)")
-                }
-            }
-            
-            Task {
-                do {
-                    try await self.fetchPresetsIfNeeded()
-                } catch {
-                    self.addLog("[PreloadData error - presets]: \(error)")
-                }
-            }
-                
-            Task {
-                do {
                     try await self.fetchTokenIfNeeded()
                 } catch {
                     self.addLog("[PreloadData error - token]: \(error)")
@@ -292,7 +267,6 @@ public class ChatViewController: UIViewController {
         let rtcEngine = rtcManager.getRtcEntine()
         animateView.setupMediaPlayer(rtcEngine)
         animateView.updateAgentState(.idle)
-        devModeButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
         sendMessageButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
 
         guard let rtmEngine = rtmManager.getRtmEngine() else {
@@ -312,10 +286,13 @@ public class ChatViewController: UIViewController {
 //        subRenderController2.setupWithConfig(subRenderConfig2)
         
         convoAIAPI.addHandler(handler: self)
-    }
-    
-    func addLog(_ txt: String) {
-        ConvoAILogger.info("\(tag) \(txt)")
+        updateCharacterInformation()
+        
+        if isEnableAvatar() {
+            startShowAvatar()
+        } else {
+            stopShowAvatar()
+        }
     }
     
     func showTranscription(state: Bool) {
@@ -328,7 +305,4 @@ public class ChatViewController: UIViewController {
     func resetPreference() {
         AppContext.preferenceManager()?.resetAgentInformation()
     }
-
 }
-
-

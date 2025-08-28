@@ -11,11 +11,13 @@ import Common
 
 protocol AgentPreferenceManagerDelegate: AnyObject {
     func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset)
-    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage)
+    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage?)
     func preferenceManager(_ manager: AgentPreferenceManager, avatarDidUpdated avatar: Avatar?)
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool)
+    func preferenceManager(_ manager: AgentPreferenceManager, transcriptModeDidUpdated mode: TranscriptDisplayMode)
     func preferenceManager(_ manager: AgentPreferenceManager, bhvsStateDidUpdated state: Bool)
     func preferenceManager(_ manager: AgentPreferenceManager, loginStateDidUpdated state: Bool)
+
 
     func preferenceManager(_ manager: AgentPreferenceManager, networkDidUpdated networkState: NetworkStatus)
     func preferenceManager(_ manager: AgentPreferenceManager, agentStateDidUpdated agentState: ConnectionStatus)
@@ -36,10 +38,11 @@ protocol AgentPreferenceManagerProtocol {
     
     // Preference Updates
     func updatePreset(_ preset: AgentPreset)
-    func updateLanguage(_ language: SupportLanguage)
+    func updateLanguage(_ language: SupportLanguage?)
     func updateAvatar(_ avatar: Avatar?)
 
     func updateAiVadState(_ state: Bool)
+    func updateTranscriptMode(_ mode: TranscriptDisplayMode)
     func updateForceThresholdState(_ state: Bool)
     
     // Information Updates
@@ -86,11 +89,27 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
     // MARK: - Preference Updates
     func updatePreset(_ preset: AgentPreset) {
         preference.preset = preset
+        let defaultLanguageCode = preset.defaultLanguageCode
+        let supportLanguages = preset.supportLanguages
+        
+        var resetLanguageCode = defaultLanguageCode
+        if defaultLanguageCode == nil, let languageCode = supportLanguages?.first?.languageCode {
+            resetLanguageCode = languageCode
+        }
+        
+        if let language = supportLanguages?.first(where: { $0.languageCode == resetLanguageCode }) {
+            updateLanguage(language)
+        } else {
+            updateLanguage(nil)
+        }
+        
+        updateAvatar(nil)
         notifyDelegates { $0.preferenceManager(self, presetDidUpdated: preset) }
     }
     
-    func updateLanguage(_ language: SupportLanguage) {
+    func updateLanguage(_ language: SupportLanguage?) {
         preference.language = language
+        preference.aiVad = false
         notifyDelegates { $0.preferenceManager(self, languageDidUpdated: language) }
     }
     
@@ -102,6 +121,11 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
     func updateAiVadState(_ state: Bool) {
         preference.aiVad = state
         notifyDelegates { $0.preferenceManager(self, aiVadStateDidUpdated: state) }
+    }
+    
+    func updateTranscriptMode(_ mode: TranscriptDisplayMode) {
+        preference.transcriptMode = mode
+        notifyDelegates { $0.preferenceManager(self, transcriptModeDidUpdated: mode)}
     }
     
     func updateForceThresholdState(_ state: Bool) {
@@ -169,21 +193,6 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
     
     func setPresets(presets: [AgentPreset]) {
         self.presets = presets
-        if presets.isEmpty { return }
-        
-        guard let preset = presets.first else {
-            return
-        }
-        
-        self.updatePreset(preset)
-        
-        if preset.supportLanguages.isEmpty { return }
-        
-        guard let language = preset.supportLanguages.first else {
-            return
-        }
-        
-        self.updateLanguage(language)
     }
     
     func setAvatar(_ avatar: Avatar?) {
@@ -212,7 +221,7 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
 
 enum ConnectionStatus: String {
     case connected
-    case disconnected 
+    case disconnected
     case unload
     
     var rawValue: String {
@@ -285,6 +294,8 @@ class AgentPreference {
     var avatar: Avatar?
     var aiVad = false
     var bhvs = true
+    var isCustomPreset = false
+    var transcriptMode: TranscriptDisplayMode = .words
 }
 
 class AgentInfomation {
@@ -297,11 +308,61 @@ class AgentInfomation {
     var targetServer: String = ""
 }
 
+enum TranscriptDisplayMode: CaseIterable {
+    //Transcript appear word by word, with subtitles and audio synchronized.
+    case words
+    //10 words every second
+    case text
+    //Transcript appear one by one.
+    case chunk
+    
+    var renderMode: TranscriptRenderMode {
+        if self == .words {
+            return .words
+        }
+        
+        return .text
+    }
+    
+    var renderDisplayName: String {
+        if self == .words {
+            return ResourceManager.L10n.Settings.transcriptRenderWordMode
+        }
+        
+        if self == .text {
+            return ResourceManager.L10n.Settings.transcriptRenderPretextMode
+        }
+        
+        if self == .chunk {
+            return ResourceManager.L10n.Settings.transcriptRenderTextMode
+        }
+        
+        return "" // Should not happen
+    }
+
+    var renderSubtitle: String {
+        if self == .words {
+            return ResourceManager.L10n.Settings.transcriptRenderWordModeDescription
+        }
+        
+        if self == .text {
+            return ResourceManager.L10n.Settings.transcriptRenderPretextModeDescription
+        }
+        
+        if self == .chunk {
+            return ResourceManager.L10n.Settings.transcriptRenderTextModeDescription
+        }
+        
+        return ""
+    }
+}
+
 extension AgentPreferenceManagerDelegate {
     func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset) {}
-    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage) {}
+    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage?) {}
     func preferenceManager(_ manager: AgentPreferenceManager, avatarDidUpdated avatar: Avatar?) {}
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool) {}
+    func preferenceManager(_ manager: AgentPreferenceManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {}
     func preferenceManager(_ manager: AgentPreferenceManager, bhvsStateDidUpdated state: Bool) {}
     func preferenceManager(_ manager: AgentPreferenceManager, loginStateDidUpdated state: Bool) {}
 

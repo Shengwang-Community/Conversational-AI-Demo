@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="42dp"
+    android:layout_height="74dp"
     android:background="@android:color/transparent"
     app:layout_constraintTop_toTopOf="parent"
     tools:background="@color/ai_fill2">
@@ -17,174 +17,92 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageButton
-            android:id="@+id/btn_info"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:id="@+id/btn_back"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
             android:layout_marginStart="10dp"
             android:background="@android:color/transparent"
-            android:src="@drawable/app_living_info"
+            android:padding="10dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/cov_living_back"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/ai_icontext1"
-            tools:visibility="gone" />
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cv_add_pic"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginStart="10dp"
-            android:backgroundTint="@android:color/transparent"
-            android:visibility="gone"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:visibility="invisible">
-
-            <ImageButton
-                android:id="@+id/btn_add_pic"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/btn_bg_block1_selector"
-                android:src="@drawable/scene_detail_top_add"
-                app:tint="@color/ai_icontext1" />
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cv_switch_camera"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginStart="10dp"
-            android:backgroundTint="@android:color/transparent"
-            android:visibility="gone"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:visibility="visible">
-
-            <ImageButton
-                android:id="@+id/btn_switch_camera"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/btn_bg_block1_selector"
-                android:src="@drawable/scene_detail_switch_camera"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/ai_icontext1" />
-        </androidx.cardview.widget.CardView>
+            app:tint="@color/ai_icontext1" />
 
         <androidx.cardview.widget.CardView
             android:id="@+id/cv_cc"
             android:layout_width="wrap_content"
             android:layout_height="32dp"
+            android:layout_marginStart="10dp"
             android:backgroundTint="@android:color/transparent"
             android:visibility="gone"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
-            android:layout_marginStart="50dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:visibility="visible">
+            app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/tv_cc"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:background="@drawable/btn_bg_block1_selector"
-            android:drawableStart="@drawable/scene_detail_top_captions"
-            android:drawablePadding="4dp"
-            android:gravity="center"
-            android:paddingHorizontal="12dp"
-            android:text="@string/cov_captions"
-            android:textColor="@color/ai_brand_white10"
-            android:textSize="12sp" />
+            <TextView
+                android:id="@+id/tv_cc"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="@drawable/btn_bg_block1_selector"
+                android:drawableStart="@drawable/scene_detail_top_captions"
+                android:drawablePadding="4dp"
+                android:gravity="center"
+                android:paddingHorizontal="12dp"
+                android:text="@string/cov_captions"
+                android:textColor="@color/ai_brand_white10"
+                android:textSize="12sp" />
         </androidx.cardview.widget.CardView>
 
-        <ViewFlipper
-            android:id="@+id/viewFlipper"
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_preset_name"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:inAnimation="@anim/cov_flip_in"
-            android:outAnimation="@anim/cov_flip_out"
+            android:layout_height="32dp"
+            android:backgroundTint="@android:color/transparent"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <LinearLayout
-                android:id="@+id/ll_top_title"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/layout_preset_name"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:layout_height="match_parent"
+                android:background="@drawable/btn_bg_brand_white1_selector">
 
-                <ImageView
-                    android:id="@+id/ivTop"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_marginEnd="8dp"
-                    android:src="@drawable/scene_detail_convo_ai_logo" />
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/iv_preset"
+                    android:layout_width="20dp"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="6dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/cov_default_avatar"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintDimensionRatio="1:1"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:shapeAppearance="@style/CommonRoundShape" />
 
                 <TextView
-                    android:id="@+id/tvTopTitle"
+                    android:id="@+id/tv_preset_name"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/cov_detail_agent_title"
-                    android:textColor="@color/ai_icontext1"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/ll_tips"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/tvTips"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="10dp"
                     android:gravity="center"
-                    android:text="@string/common_limit_time"
-                    android:textColor="@color/ai_icontext1"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:text="hello kitty"
+                    android:textColor="@color/ai_brand_white10"
+                    android:textSize="11sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/iv_preset" />
 
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/ll_timer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/tv_timer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="30dp"
-                    android:paddingHorizontal="10dp"
-                    android:paddingVertical="5dp"
-                    android:textColor="@color/ai_icontext1"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    tools:text="00:00" />
-            </LinearLayout>
-
-
-        </ViewFlipper>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.cardview.widget.CardView>
 
         <ImageButton
             android:id="@+id/btn_settings"
@@ -209,5 +127,96 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <ViewFlipper
+        android:id="@+id/viewFlipper"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inAnimation="@anim/cov_flip_in"
+        android:outAnimation="@anim/cov_flip_out"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
+        <LinearLayout
+            android:id="@+id/ll_limit_tips"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_limit_tips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/common_limit_time"
+                android:textColor="@color/ai_icontext2"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/ll_timer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_timer"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="5dp"
+                android:textColor="@color/ai_icontext2"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </ViewFlipper>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cv_voice_print"
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:layout_marginStart="10dp"
+        android:backgroundTint="@android:color/transparent"
+        android:visibility="gone"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:layout_constraintBottom_toBottomOf="@id/viewFlipper"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="visible"
+        app:layout_constraintTop_toTopOf="@id/viewFlipper">
+
+        <LinearLayout
+            android:id="@+id/layout_voice_print"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:background="@drawable/btn_bg_block1_selector"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/cov_voiceprint_lock"
+                android:textColor="@color/ai_brand_white10"
+                android:textSize="11sp" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="4dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/agent_ai_lock" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

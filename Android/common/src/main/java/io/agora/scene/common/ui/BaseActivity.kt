@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
@@ -34,7 +33,9 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     }
 
     open fun onHandleOnBackPressed() {
-        finish()
+        if (supportOnBackPressed()) {
+            finish()
+        }
     }
 
     abstract fun getViewBinding(): VB
@@ -57,6 +58,8 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     }
 
     open fun immersiveMode(): ImmersiveMode = ImmersiveMode.SEMI_IMMERSIVE
+
+    open fun supportOnBackPressed(): Boolean = true
 
     /**
      * Determines the status bar icons/text color

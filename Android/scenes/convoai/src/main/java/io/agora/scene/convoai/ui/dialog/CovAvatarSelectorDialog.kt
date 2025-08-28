@@ -20,6 +20,7 @@ import io.agora.scene.convoai.databinding.CovAvatarSelectorDialogBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import io.agora.scene.common.util.GlideImageLoader
+import io.agora.scene.convoai.CovLogger
 
 /**
  * Avatar selector dialog - full screen display
@@ -59,10 +60,6 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
         }
     }
 
-    override fun onHandleOnBackPressed() {
-
-    }
-
     override fun immersiveMode(): ImmersiveMode = ImmersiveMode.FULLY_IMMERSIVE
 
     override fun getViewBinding(
@@ -74,7 +71,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        isCancelable = false
+        isCancelable = true  // Allow swipe-to-dismiss and back button
         // Get input parameters
         arguments?.let {
             currentAvatar = it.getParcelable(ARG_AVATAR) as? CovAvatar
@@ -87,12 +84,8 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
             // Set back button click listener
             ivBack.setOnClickListener {
-                selectedAvatar?.let { selected->
-                    if (selected.covAvatar?.avatar_id!=currentAvatar?.avatar_id){
-                        onAvatarSelectedCallback?.invoke(selected)
-                    }
-                }
-                dismiss()
+                CovLogger.d(TAG, "Back button clicked")
+                handleDismiss()
             }
 
             // Load avatar data
@@ -109,8 +102,52 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
     }
 
     override fun onDismiss(dialog: DialogInterface) {
+        CovLogger.d(TAG, "onDismiss called")
         super.onDismiss(dialog)
         onDismissCallback?.invoke()
+    }
+
+    override fun onCancel(dialog: DialogInterface) {
+        CovLogger.d(TAG, "onCancel called - this is triggered by swipe-to-dismiss or touch outside")
+        super.onCancel(dialog)
+        // Handle swipe-to-dismiss with avatar selection logic
+        handleDismissWithoutDismiss()
+    }
+
+    /**
+     * Handle dialog dismiss with avatar selection logic (without calling dismiss)
+     */
+    private fun handleDismissWithoutDismiss() {
+        CovLogger.d(TAG, "handleDismissWithoutDismiss called")
+        selectedAvatar?.let { selected ->
+            if (selected.covAvatar?.avatar_id != currentAvatar?.avatar_id) {
+                CovLogger.d(TAG, "Avatar changed, invoking callback")
+                onAvatarSelectedCallback?.invoke(selected)
+            } else {
+                CovLogger.d(TAG, "Avatar not changed, skipping callback")
+            }
+        }
+    }
+
+    /**
+     * Handle dialog dismiss with avatar selection logic
+     */
+    private fun handleDismiss() {
+        CovLogger.d(TAG, "handleDismiss called")
+        selectedAvatar?.let { selected ->
+            if (selected.covAvatar?.avatar_id != currentAvatar?.avatar_id) {
+                CovLogger.d(TAG, "Avatar changed, invoking callback")
+                onAvatarSelectedCallback?.invoke(selected)
+            } else {
+                CovLogger.d(TAG, "Avatar not changed, skipping callback")
+            }
+        }
+        dismiss()
+    }
+
+    override fun onHandleOnBackPressed() {
+        CovLogger.d(TAG, "onHandleOnBackPressed called")
+        handleDismiss()
     }
 
     override fun onDestroyView() {

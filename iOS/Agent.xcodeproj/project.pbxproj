@@ -445,12 +445,12 @@
 				CODE_SIGN_ENTITLEMENTS = "Agent-cn.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202507291800;
+				CURRENT_PROJECT_VERSION = 202508251437;
 				DEVELOPMENT_TEAM = 48TB6ZZL5S;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Agent/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "对话式 AI 引擎体验";
+				INFOPLIST_KEY_CFBundleDisplayName = "声网对话式AI引擎";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "The app needs to use Bluetooth to connect to smart home devices.";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "The app needs to use Bluetooth to connect to smart home devices.";
@@ -474,8 +474,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.7.0;
-				PRODUCT_BUNDLE_IDENTIFIER = cn.shengwang.convoai;
+				MARKETING_VERSION = 1.8.0;
+				PRODUCT_BUNDLE_IDENTIFIER = shengwang.convoai.test;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -496,12 +496,12 @@
 				CODE_SIGN_ENTITLEMENTS = "Agent-cn.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202507291800;
+				CURRENT_PROJECT_VERSION = 202508251437;
 				DEVELOPMENT_TEAM = 48TB6ZZL5S;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Agent/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "对话式 AI 引擎体验";
+				INFOPLIST_KEY_CFBundleDisplayName = "声网对话式AI引擎";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "The app needs to use Bluetooth to connect to smart home devices.";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "The app needs to use Bluetooth to connect to smart home devices.";
@@ -525,8 +525,8 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.7.0;
-				PRODUCT_BUNDLE_IDENTIFIER = cn.shengwang.convoai;
+				MARKETING_VERSION = 1.8.0;
+				PRODUCT_BUNDLE_IDENTIFIER = shengwang.convoai.test;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="bottom"
+    android:background="#0A0A0A">
+
+    <View
+        android:id="@+id/guideline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="88dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toTopOf="@+id/btnStartWithoutLogin" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.6" />
+
+    <ImageView
+        android:id="@+id/iv_agent_sample"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@drawable/common_ic_agent_sample"
+        app:layout_constraintBottom_toTopOf="@+id/guideline2"
+        app:layout_constraintDimensionRatio="375:352" />
+
+    <io.agora.scene.common.ui.widget.TypewriterTextView
+        android:id="@+id/tvTyping"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:breakStrategy="simple"
+        android:hyphenationFrequency="normalFast"
+        android:lineSpacingExtra="2dp"
+        android:lineSpacingMultiplier="1.1"
+        android:textColor="@color/ai_icontext1"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/guideline"
+        app:layout_constraintWidth_percent="0.84" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnStartWithoutLogin"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/ai_dp_large"
+        android:layout_marginHorizontal="30dp"
+        android:layout_marginBottom="75dp"
+        android:background="@drawable/selector_gradient_button_with_border20"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:text="@string/common_login_with_agora_sso"
+        android:textAllCaps="false"
+        android:textColor="@color/ai_brand_white10"
+        android:textSize="18sp"
+        app:backgroundTint="@null"
+        app:icon="@drawable/cov_detail_join_call"
+        app:iconGravity="textStart"
+        app:iconPadding="10dp"
+        app:iconSize="24dp"
+        app:iconTint="@color/ai_brand_white10"
+        app:layout_constraintBottom_toTopOf="@+id/layoutAgreeTermsContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layoutAgreeTermsContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="30dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="40dp"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/tvCheckTips"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/app_agree_bg_tips"
+            android:gravity="center"
+            android:text="@string/common_terms_tips"
+            android:textColor="@color/ai_icontext_inverse1"
+            android:textSize="14sp"
+            android:visibility="invisible"
+            android:layout_marginStart="2dp"
+            app:layout_constraintBottom_toTopOf="@+id/layoutAgreeTerms"
+            app:layout_constraintStart_toStartOf="@+id/layoutAgreeTerms"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:visibility="visible" />
+
+        <LinearLayout
+            android:id="@+id/layoutAgreeTerms"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="10dp"
+            android:layout_marginBottom="40dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <CheckBox
+                android:id="@+id/cb_terms"
+                android:layout_width="26dp"
+                android:layout_height="32dp"
+                android:background="@android:color/transparent"
+                android:button="@null"
+                android:drawableStart="@drawable/agent_terms_cb_selector" />
+
+            <TextView
+                android:id="@+id/tv_terms_rich_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:breakStrategy="simple"
+                android:hyphenationFrequency="none"
+                android:letterSpacing="0.0"
+                android:lineSpacingExtra="2dp"
+                android:text="@string/common_acceept"
+                android:textColor="@color/ai_icontext1"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <View
+        android:id="@+id/view_top"
+        android:layout_width="80dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="25dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

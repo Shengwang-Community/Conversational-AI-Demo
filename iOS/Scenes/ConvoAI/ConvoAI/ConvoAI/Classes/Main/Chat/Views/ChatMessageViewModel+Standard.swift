@@ -8,13 +8,14 @@
 import Foundation
 
 protocol MessageStandard {
-    func reduceStandardMessage(turnId: Int, message: String, timestamp: Int64, owner: TranscriptionType, isInterrupted: Bool)
+    func reduceStandardMessage(turnId: Int, message: String, timestamp: Int64, owner: TranscriptType, isInterrupted: Bool, isFinal: Bool)
     func addImageMessage(uuid: String, image: UIImage)
     func updateImageMessage(uuid: String, state: ImageState)
+    func reduceLLMInterrupt(turnId: Int)
 }
 
 extension ChatMessageViewModel: MessageStandard {
-    private func generateMessageKey(turnId: Int, isMine: Bool) -> String {
+    internal func generateMessageKey(turnId: Int, isMine: Bool) -> String {
         let key = isMine ? "agent_\(turnId)" : "mine_\(turnId)"
         return key
     }
@@ -46,49 +47,47 @@ extension ChatMessageViewModel: MessageStandard {
         messages.append(message)
         sortMessages()
         
-        delegate?.startNewMessage()
+        delegate?.messageUpdated()
     }
     
     func updateImageMessage(uuid: String, state: ImageState) {
         updateImageContent(uuid: uuid, isMine: false, state: state)
     }
     
-    func reduceStandardMessage(turnId: Int, message: String, timestamp: Int64, owner: TranscriptionType, isInterrupted: Bool) {
+    func reduceStandardMessage(turnId: Int, message: String, timestamp: Int64, owner: TranscriptType, isInterrupted: Bool, isFinal: Bool) {
         let isMine = owner == .user
         let key = generateMessageKey(turnId: turnId, isMine: isMine)
         let messageObj = messageMapTable[key]
-
         if messageObj != nil {
-            updateContent(content: message, turnId: turnId, isMine: isMine, isInterrupted: isInterrupted)
+            if displayMode == .text {
+                updateMessageForTextMode(content: message, turnId: turnId, isMine: isMine, isInterrupted: isInterrupted, isFinal: isFinal)
+            } else if displayMode == .words {
+                updateMessageForWordsMode(content: message, turnId: turnId, isMine: isMine, isInterrupted: isInterrupted, isFinal: isFinal)
+            } else if displayMode == .chunk {
+                updateMessageForChunkMode(content: message, turnId: turnId, isMine: isMine, isInterrupted: isInterrupted, isFinal: isFinal)
+            }
         } else {
-            startNewMessage(content: message, timestamp: timestamp, isMine: isMine, turnId: turnId)
+            if displayMode == .text {
+                createNewMessageForTextMode(content: message, timestamp: timestamp, isMine: isMine, turnId: turnId, isInterrupted: isInterrupted, isFinal: isFinal)
+            } else if displayMode == .words {
+                createNewMessageForWordsMode(content: message, timestamp: timestamp, isMine: isMine, turnId: turnId, isInterrupted: isInterrupted, isFinal: isFinal)
+            } else if displayMode == .chunk {
+                createNewMessageForChunkMode(content: message, timestamp: timestamp, isMine: isMine, turnId: turnId, isInterrupted: isInterrupted, isFinal: isFinal)
+            }
         }
     }
-    
-    private func startNewMessage(content: String, timestamp: Int64, isMine: Bool, turnId: Int) {
-        let message = Message()
-        message.content = content
-        message.isMine = isMine
-        message.isFinal = false
-        message.turn_id = turnId
-        message.timestamp = timestamp
-        
-        let key = generateMessageKey(turnId: turnId, isMine: isMine)
-        messageMapTable[key] = message
-        messages.append(message)
-        sortMessages()
-        
-        delegate?.startNewMessage()
-    }
-    
-    private func updateContent(content: String, turnId: Int, isMine: Bool, isInterrupted: Bool) {
-        let key = generateMessageKey(turnId: turnId, isMine: isMine)
-        let message = messageMapTable[key]
-        message?.content = content
-        message?.turn_id = turnId
-        message?.isInterrupted = isInterrupted
-        
-        delegate?.messageUpdated()
+
+    func reduceLLMInterrupt(turnId: Int) {
+        if displayMode == .text {
+            stopTimer()
+            let key = generateMessageKey(turnId: turnId, isMine: false)
+            let message = messageMapTable[key]
+            message?.isFinal = true
+        } else if displayMode == .words {
+            //do nothing now
+        } else if displayMode == .chunk {
+            //do nothing now
+        }
     }
     
     private func updateImageContent(uuid: String, isMine: Bool, state: ImageState) {
@@ -100,7 +99,7 @@ extension ChatMessageViewModel: MessageStandard {
         delegate?.messageUpdated()
     }
     
-    private func sortMessages() {
+    internal func sortMessages() {
         messages.sort { m1, m2 in
             let turn1 = m1.turn_id >= 0 ? m1.turn_id : m1.local_turn
             let turn2 = m2.turn_id >= 0 ? m2.turn_id : m2.local_turn
@@ -118,4 +117,11 @@ extension ChatMessageViewModel: MessageStandard {
             }
         }
     }
+    
+    func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+        delegate?.messageFinished()
+    }
+    
 }

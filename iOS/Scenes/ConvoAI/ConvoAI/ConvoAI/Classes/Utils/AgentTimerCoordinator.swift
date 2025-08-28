@@ -55,9 +55,10 @@ class AgentTimerCoordinator: NSObject {
             return
         }
         
-        var duration = preset.callTimeLimitSecond
-        if let _ = manager.preference.avatar {
-            duration = preset.callTimeLimitAvatarSecond
+        var duration = preset.callTimeLimitSecond.intValue()
+        if let _ = manager.preference.avatar,
+           let avatarDuration = preset.callTimeLimitAvatarSecond {
+            duration = avatarDuration
         }
         
         useDuration = isDurationLimited ? duration : 0

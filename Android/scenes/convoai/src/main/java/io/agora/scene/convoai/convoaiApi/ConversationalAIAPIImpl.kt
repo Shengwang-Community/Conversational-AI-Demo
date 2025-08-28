@@ -14,10 +14,10 @@ import io.agora.rtm.PresenceEvent
 import io.agora.rtm.RtmConstants
 import io.agora.rtm.RtmEventListener
 import io.agora.rtm.SubscribeOptions
-import io.agora.scene.convoai.convoaiApi.subRender.v3.IConversationTranscriptionCallback
+import io.agora.scene.convoai.convoaiApi.subRender.v3.IConversationTranscriptCallback
 import io.agora.scene.convoai.convoaiApi.subRender.v3.MessageParser
-import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionController
-import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptionConfig
+import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptController
+import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptConfig
 import java.util.UUID
 
 /**
@@ -29,9 +29,9 @@ import java.util.UUID
  *
  * Key responsibilities:
  * - Manage RTM subscriptions and message routing
- * - Parse and handle different message types (state, error, metrics, transcription)
+ * - Parse and handle different message types (state, error, metrics, transcript)
  * - Configure audio parameters for optimal AI conversation quality
- * - Coordinate with transcription rendering system
+ * - Coordinate with transcript rendering system
  * - Provide thread-safe delegate notifications
  *
  * @see IConversationalAIAPI
@@ -40,7 +40,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
 
     private var mMessageParser = MessageParser()
 
-    private var transcriptionController: TranscriptionController
+    private var transcriptController: TranscriptController
     private var channelName: String? = null
 
     private val conversationalAIHandlerHelper = ObservableHelper<IConversationalAIAPIEventHandler>()
@@ -113,8 +113,8 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
         }
 
         private fun dealMessageWithMap(publisherId: String, msg: Map<String, Any>) {
-            val transcriptionObj = msg["object"] as? String ?: return
-            val objectType = MessageType.fromValue(transcriptionObj)
+            val transcriptObj = msg["object"] as? String ?: return
+            val objectType = MessageType.fromValue(transcriptObj)
             when (objectType) {
                 /**
                  * {object=message.metrics, module=tts, metric_name=ttfb, turn_id=4, latency_ms=182, data_type=message, message_id=2d7de2a2, send_ts=1749630519485}
@@ -204,6 +204,24 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                     }
                 }
 
+                /**
+                 * {object=message.sal_status, status=VP_REGISTER_SUCCESS, timestamp=18400, data_type=message, message_id=44aff975, send_ts=1754466757510}
+                 */
+                MessageType.VOICE_PRINT -> {
+                    val status = VoiceprintStatus.fromValue(msg["status"] as? String ?: "")
+
+                    val timeOffset = (msg["timestamp"] as? Number)?.toInt() ?: -1
+                    val sendTs = (msg["send_ts"] as? Number)?.toLong() ?: -1L
+
+                    val event = VoiceprintStateChangeEvent(timeOffset, sendTs, status)
+
+                    val agentUserId = publisherId
+                    callMessagePrint(TAG, "<<< [onAgentVoiceprintStateChanged] $agentUserId $event")
+                    conversationalAIHandlerHelper.notifyEventHandlers {
+                        it.onAgentVoiceprintStateChanged(agentUserId, event)
+                    }
+                }
+
                 else -> return
             }
         }
@@ -249,14 +267,14 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
     }
 
     init {
-        val transcriptionConfig = TranscriptionConfig(
+        val transcriptConfig = TranscriptConfig(
             rtcEngine = config.rtcEngine,
             rtmClient = config.rtmClient,
-            renderMode = if (config.renderMode == TranscriptionRenderMode.Word) TranscriptionRenderMode.Word else TranscriptionRenderMode.Text,
-            callback = object : IConversationTranscriptionCallback {
-                override fun onTranscriptionUpdated(agentUserId: String, transcription: Transcription) {
+            renderMode = if (config.renderMode == TranscriptRenderMode.Word) TranscriptRenderMode.Word else TranscriptRenderMode.Text,
+            callback = object : IConversationTranscriptCallback {
+                override fun onTranscriptUpdated(agentUserId: String, transcript: Transcript) {
                     conversationalAIHandlerHelper.notifyEventHandlers { delegate ->
-                        delegate.onTranscriptionUpdated(agentUserId, transcription)
+                        delegate.onTranscriptUpdated(agentUserId, transcript)
                     }
                 }
 
@@ -275,8 +293,8 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
         mMessageParser.onError = { message ->
             callMessagePrint(TAG, message)
         }
-        // Initialize transcription controller for transcription
-        transcriptionController = TranscriptionController(transcriptionConfig)
+        // Initialize transcript controller for transcript
+        transcriptController = TranscriptController(transcriptConfig)
         // Register RTC event handler to receive audio/video events
         config.rtcEngine.addHandler(covRtcHandler)
         // Register RTM event listener to receive real-time messages
@@ -298,7 +316,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
     override fun subscribeMessage(channel: String, completion: (ConversationalAIAPIError?) -> Unit) {
         val traceId = genTraceId
         callMessagePrint(TAG, ">>> [traceId:$traceId] [subscribeMessage] $channel")
-        transcriptionController.reset()
+        transcriptController.reset()
         channelName = channel
         stateChangeEvent = null
         val option = SubscribeOptions().apply {
@@ -330,7 +348,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
         channelName = null
         val traceId = genTraceId
         callMessagePrint(TAG, ">>> [traceId:$traceId] [unsubscribeMessage] $channel")
-        transcriptionController.reset()
+        transcriptController.reset()
         config.rtmClient.unsubscribe(channel, object : ResultCallback<Void> {
             override fun onSuccess(responseInfo: Void?) {
                 callMessagePrint(TAG, "<<< [traceId:$traceId] rtm unsubscribe onSuccess")
@@ -542,7 +560,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
         config.rtcEngine.removeHandler(covRtcHandler)
         config.rtmClient.removeEventListener(covRtmMsgProxy)
         conversationalAIHandlerHelper.unSubscribeAll()
-        transcriptionController.release()
+        transcriptController.release()
     }
 
     // set audio config parameters

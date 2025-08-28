@@ -6,17 +6,15 @@
 //
 
 import UIKit
-import WebKit
+@preconcurrency import WebKit
 import SVProgressHUD
 import Common
 
 class CustomNavigationView: UIView {
-    var onBackButtonTapped: (() -> Void)?
     
-    private lazy var backButton: UIButton = {
+    lazy var backButton: UIButton = {
         let button = UIButton(type: .custom)
         button.setImage(UIImage.ag_named("ic_agent_setting_back"), for: .normal)
-        button.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
         return button
     }()
     
@@ -56,10 +54,6 @@ class CustomNavigationView: UIView {
         }
     }
     
-    @objc private func backButtonTapped() {
-        onBackButtonTapped?()
-    }
-    
     func setTitle(_ title: String?) {
         titleLabel.text = title
     }
@@ -70,9 +64,7 @@ class CustomNavigationView: UIView {
         let view = CustomNavigationView()
         view.setTitle(ResourceManager.L10n.Conversation.appName)
         view.backgroundColor = UIColor.themColor(named: "ai_fill4")
-        view.onBackButtonTapped = { [weak self] in
-            self?.navigationController?.popViewController(animated: false)
-        }
+        view.backButton.addTarget(self, action: #selector(onClickBack), for: .touchUpInside)
         return view
     }()
 
@@ -104,6 +96,7 @@ class CustomNavigationView: UIView {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        self.navigationController?.setNavigationBarHidden(true, animated: animated)
         SVProgressHUD.setOffsetFromCenter(UIOffset(horizontal: 0, vertical: 0))
     }
     
@@ -121,6 +114,10 @@ class CustomNavigationView: UIView {
             let request = URLRequest(url: url)
             ssoWebView.load(request)
         }
+    }
+    
+    @objc func onClickBack() {
+        self.navigationController?.popViewController(animated: true)
     }
     
     private func setupUI() {
@@ -145,7 +142,10 @@ class CustomNavigationView: UIView {
         }
         
         emptyView.isHidden = true
-
+    }
+    
+    func addLog(_ txt: String) {
+        ConvoAILogger.info(txt)
     }
     
     // MARK: - JavaScript Injection
@@ -228,13 +228,14 @@ extension SSOWebViewController: WKScriptMessageHandler {
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "handleResponse" {
             if let response = message.body as? String {
+                self.addLog("SSO response: \(response)")
                 if !response.hasPrefix("Error") {
-                    // Process the token
-                    completionHandler?(response)
-                    self.navigationController?.popViewController(animated: false)
+                    let token = response
+                    let model = LoginModel()
+                    model.token = token
+                    AppContext.loginManager()?.updateUserInfo(userInfo: model)
+                    self.navigationController?.dismiss(animated: true)
                 } else {
-                    // Handle error
-                    print("Error: \(response)")
                     completionHandler?(nil)
                 }
             }

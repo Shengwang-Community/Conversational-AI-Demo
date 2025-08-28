@@ -28,6 +28,7 @@ object CovAgentApiManager {
 
     const val ERROR_RESOURCE_LIMIT_EXCEEDED = 1412
     const val ERROR_AVATAR_LIMIT = 1700
+    const val ERROR_AGENT_OFFLINE = 1800
 
     private val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -65,6 +66,9 @@ object CovAgentApiManager {
             }
             CovAgentManager.getPreset()?.name?.let {
                 postBody.put("preset_name", it)
+            }
+            CovAgentManager.getPreset()?.preset_type?.let {
+                postBody.put("preset_type", it)
             }
 
             // Process convoaiBody, convert Map to JSONObject and filter out null values
@@ -328,6 +332,56 @@ object CovAgentApiManager {
                 runOnMainThread {
                     agentId = null
                     completion.invoke(e)
+                }
+            }
+        })
+    }
+
+
+    fun fetchCustomsPresets(customPresetIds: String, completion: (error: ApiException?, List<CovAgentPreset>) -> Unit) {
+        val baseUrl = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/customPresets/search"
+        val requestURL = "$baseUrl?customPresetIds=$customPresetIds"
+
+        val request = buildRequest(requestURL, "GET")
+
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val json = response.body.string()
+                val httpCode = response.code
+                if (httpCode != 200) {
+                    runOnMainThread {
+                        completion.invoke(ApiException(httpCode, "Http error"), emptyList())
+                    }
+                } else {
+                    try {
+                        val jsonObject = GsonTools.toBean(json, JsonObject::class.java)
+                        val code = jsonObject?.get("code")?.asInt ?: -1
+                        if (code == 0 && jsonObject != null) {
+                            val data = GsonTools.toList(
+                                jsonObject.getAsJsonArray("data").toString(),
+                                CovAgentPreset::class.java
+                            ) ?: emptyList()
+                            runOnMainThread {
+                                completion.invoke(null, data)
+                            }
+                        } else {
+                            runOnMainThread {
+                                completion.invoke(ApiException(code), emptyList())
+                            }
+                        }
+                    } catch (e: Exception) {
+                        CovLogger.e(TAG, "JSON parse error: ${e.message}")
+                        runOnMainThread {
+                            completion.invoke(ApiException(-1), emptyList())
+                        }
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                CovLogger.e(TAG, "fetch custom presets failed: $e")
+                runOnMainThread {
+                    completion.invoke(ApiException(-1), emptyList())
                 }
             }
         })

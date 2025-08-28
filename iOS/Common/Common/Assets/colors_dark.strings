@@ -1,6 +1,6 @@
 "ai_icontext1" = "#ffffffff";
 "ai_icontext2" = "#bfffffff";
-"ai_icontext3" = "#99ffffff";
+"ai_icontext3" = "#7fffffff";
 "ai_icontext_inverse1" = "#e5000000";
 "ai_brand_main6" = "#ff446cff";
 "ai_brand_main5" = "#cc446cff";
@@ -54,3 +54,6 @@
 "ai_btn2" = "#ff555b69";
 "ai_brand_black4" = "#66000000";
 "ai_brand_black5" = "#7f000000";
+"ai_fill6" = "#ff282f40";
+"ai_fill7" = "#ff1a202e";
+"ai_mask3" = "#cc292a2d";

@@ -39,11 +39,52 @@ protocol AgentAPI {
     /// Retrieves the list of available agent presets
     /// - Parameter completion: Callback with optional error and array of agent presets
     func fetchAgentPresets(appId: String, completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void))
+    
+    /// Retrieves the list of custom agent presets
+    /// - Parameters:
+    ///   - customPresetIds: The list of custom preset IDs
+    ///   - completion: Callback with optional error and array of agent presets
+    func searchCustomPresets(customPresetIds: [String], completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void))
 }
 
 class AgentManager: AgentAPI {
-    init(host: String) {
-        AgentServiceUrl.host = host
+    
+    func searchCustomPresets(customPresetIds: [String], completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void)) {
+        let url = AgentServiceUrl.searchCustomPresetsPath("convoai/v4/customPresets/search").toHttpUrlSting()
+        ConvoAILogger.info("request search custom presets api: \(url)")
+        let requesetBody: [String: Any] = [
+            "customPresetIds": customPresetIds.joined(separator: ",")
+        ]
+        
+        NetworkManager.shared.getRequest(urlString: url, params: requesetBody) { result in
+            ConvoAILogger.info("search custom presets request response: \(result)")
+            if let code = result["code"] as? Int, code != 0 {
+                let msg = result["msg"] as? String ?? "Unknown error"
+                let error = ConvoAIError.serverError(code: code, message: msg)
+                completion(error, nil)
+                return
+            }
+            
+            guard let data = result["data"] as? [[String: Any]] else {
+                let error = ConvoAIError.serverError(code: -1, message: "data error")
+                completion(error, nil)
+                return
+            }
+            
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: data)
+                let presets = try JSONDecoder().decode([AgentPreset].self, from: jsonData)
+                completion(nil, presets)
+            } catch {
+                ConvoAILogger.error("JSON decode error: \(error)")
+                ConvoAILogger.error("Raw data: \(data)")
+                let decodeError = ConvoAIError.serverError(code: -1, message: "JSON decode error: \(error.localizedDescription)")
+                completion(decodeError, nil)
+            }
+        } failure: { msg in
+            let error = ConvoAIError.serverError(code: -1, message: msg)
+            completion(error, nil)
+        }
     }
     
     func fetchAgentPresets(appId: String, completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void)) {
@@ -176,7 +217,6 @@ class AgentManager: AgentAPI {
 
 enum AgentServiceUrl {
     static let retryCount = 1
-    static var host: String = ""
     var baseUrl: String {
         return AppContext.shared.baseServerUrl + "/"
     }
@@ -185,6 +225,7 @@ enum AgentServiceUrl {
     case updateAgentPath(String)
     case stopAgentPath(String)
     case fetchAgentPresetsPath(String)
+    case searchCustomPresetsPath(String)
     
     public func toHttpUrlSting() -> String {
         switch self {
@@ -195,6 +236,8 @@ enum AgentServiceUrl {
         case .updateAgentPath(let path):
             return baseUrl + path
         case .fetchAgentPresetsPath(let path):
+            return baseUrl + path
+        case .searchCustomPresetsPath(let path):
             return baseUrl + path
         }
     }

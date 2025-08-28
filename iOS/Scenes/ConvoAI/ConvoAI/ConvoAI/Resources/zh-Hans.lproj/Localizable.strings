@@ -14,7 +14,7 @@
 "logout.alert.confirm.title" = "取消";
 "logout.alert.cancel.title" = "退出登录";
 
-"join.start.title" = "对话式 AI 引擎体验";
+"join.start.title" = "声网对话式AI引擎";
 "join.start.state" = "未加入";
 "join.start.button.title" = "连接 AI 引擎";
 "join.start.agent.name" = "智能体";
@@ -22,10 +22,9 @@
 "join.start.tips.no.limit" = "本次体验对话无限制时长";
 "join.timeout.tips" = "智能体加入超时，请稍后重试。";
 
-"conversation.ai.hello" = "你好，人类";
-"conversation.ai.welcome.title" = "你好，我是对话式AI引擎";
+"conversation.ai.welcome.title" = "欢迎体验声网实时对话式AI引擎";
 "conversation.ai.welcome.description" = "秒应智答，零滞畅聊";
-"conversation.ai.app.name" = "对话式 AI 引擎体验";
+"conversation.ai.app.name" = "声网对话式AI引擎";
 "conversation.agent.name" = "智能体";
 "conversation.button.end.call" = "结束通话";
 "conversation.agent.loading" = "智能体正在加入";
@@ -48,10 +47,12 @@
 "conversation.agent.transcription" = "字幕";
 "conversation.vision.unsupport.message" = "当前 Preset 不支持视觉理解相关功能，请点击右上角设置按钮切换其他 Preset 体验！";
 "conversation.vision.retry.after.connect" = "请连接后重试";
+"conversation.agent.voice.lock.tips" = "声纹锁定";
 
 "conversation.alert.cancel" = "取消";
 "conversation.alert.confirm" = "确定";
 "conversation.alert.clear" = "清除";
+"conversation.agent.voiceprint.lock.toast" = "引擎将学习您说话的声纹，过滤周围其他人的声音和噪音";
 
 "settings.title" = "人物设定";
 "settings.connected.tips" = "(连接中不可修改)";
@@ -64,8 +65,15 @@
 "settings.microphone" = "麦克风";
 "settings.speaker" = "扬声器";
 "settings.noise.cancellation" = "噪声取消";
-"settings.noise.aiVad.nomal" = "启用 ";
 "settings.noise.aiVad.highlight" = "优雅打断";
+"settings.noise.aiVad.tips" = "优雅打断是声网自研高阶打断功能，支持让智能体临时停下逻辑推理去做其他事情，返回后继续让智能体按照打断前的节点继续的技术";
+"settings.transcript.render.mode" = "字幕渲染模式";
+"settings.transcript.render.word.mode" = "Word 模式";
+"settings.transcript.render.text.mode" = "Text - 字幕先出模式";
+"settings.transcript.render.pretext.mode" = "Text - 同步模式";
+"settings.transcript.render.word.mode.description" = "逐字渲染，字幕和音频同步";
+"settings.transcript.render.pretext.mode.description" = "字幕和语音同步展示的Text模式";
+"settings.transcript.render.text.mode.description" = "字幕一次性渲染";
 "settings.noise.forceResponse" = "Force Response";
 "settings.noise.bhvs" = "启用 对话人声锁定";
 "settings.digital.human" = "数字人";
@@ -115,22 +123,29 @@
 "error.microphone.permission.alert.description" = "请在设置中打开麦克风权限";
 "error.permission.alert.cancel" = "取消";
 "error.permission.alert.confirm" = "设置";
+"error.agent.is.not.exist" = "智能体获取失败，当前数据库无此智能体";
+"error.agent.is.offline" = "智能体已被下线，请联系声网工作人员";
+
 
 "devmode.title" = "开发者模式";
 "devmode.rtc" = "RTC 版本";
 "devmode.rtm" = "RTM 版本";
-"devmode.metric" = "性能指标开关";
-"devmode.host" = "ConvoAI Host";
+"devmode.metric" = "性能指标";
 "devmode.dump" = "音频 Dump";
 "devmode.sessionLimit" = "会话时间限制";
-"devmode.copy" = "复制用户当前通话问题";
-"devmode.close" = "关闭开发者模式";
+"devmode.copy.click" = "点击复制";
+"devmode.close" = "退出开发者模式";
 "devmode.graph" = "Graph id";
-"devmode.server" = "切换服务器";
+"devmode.server.switch" = "切换环境";
 "devmode.sdk.params" = "SDK 音频参数配置";
 "devmode.sc.config" = "Convo AI 服务Preset配置";
-"devmode.text.view" = "预览";
-"devmode.text.confirm" = "确定";
+"devmode.basic.settings" = "基础配置";
+"devmode.convoai.settings" = "ConvoAI 配置";
+"devmode.user.settings" = "用户设置";
+"devmode.overall.config" = "整体配置";
+"devmode.copy.question" = "复制用户当前通话提问";
+"devmode.caption.mode" = "字幕渲染模式";
+"devmode.user.settings.hint" = "当前使用者的快捷设置";
 
 "iot.info.title" = "对话式 AI 设备";
 "iot.info.device" = "%@个设备";
@@ -151,3 +166,16 @@
 "photo.permission.settings" = "去设置";
 "photo.permission.skip" = "跳过";
 "photo.permission.enable" = "开启权限";
+
+// agent list
+"agent.list.contact" = "请联系声网员工获取自定义智能体ID";
+"agent.list.input" = "输入智能体ID获取";
+"agent.list.custom" = "自定义智能体";
+"agent.list.official" = "官方智能体";
+"agent.list.get" = "获取";
+"agent.list.get.agent" = "获取你的智能助手";
+"agent.search.success" = "智能体获取成功";
+
+/* 空状态视图 */
+"empty.state.loading.failed" = "页面加载失败，请重试";
+"empty.state.retry" = "重试";

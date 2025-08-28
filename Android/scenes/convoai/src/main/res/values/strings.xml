@@ -1,6 +1,6 @@
 <resources>
     <string name="cov_login_for_chat">连接 AI 引擎</string>
-    <string name="cov_detail_agent_title">对话式 AI 引擎体验</string>
+    <string name="cov_detail_agent_title">声网对话式 AI 引擎</string>
     <string name="cov_detail_not_joined">未加入</string>
     <string name="cov_detail_join_call">连接 AI 引擎</string>
     <string name="cov_detail_end_call">结束通话</string>
@@ -45,7 +45,7 @@
     <string name="cov_info_more">更多操作</string>
     <string name="cov_info_uploader">一键上报</string>
 
-    <string name="cov_setting_title">人物设定</string>
+    <string name="cov_setting_title">智能体设定</string>
     <string name="cov_setting_title_connected">(连接中不可修改)</string>
     <string name="cov_setting_agent">智能体</string>
     <string name="cov_setting_preset">预设</string>
@@ -60,6 +60,7 @@
     <string name="cov_setting_bhvs">启用 对话人声锁定</string>
     <string name="cov_setting_ai_vad">启用&#160;&#160;</string>
     <string name="cov_setting_ai_vad_high">优雅打断</string>
+    <string name="cov_setting_ai_vad_high_desc">优雅打断是声网自研高阶打断功能，支持让智能体临时停下逻辑推理去做其它事情，返回后继续让智能体按照打断前的节点继续的技术</string>
     <string name="cov_setting_network_error">请求失败：</string>
     <string name="cov_agent_connecting">连接中...</string>
     <string name="cov_copy_succeed">已复制</string>
@@ -101,7 +102,7 @@
     <string name="cov_captions">字幕</string>
 
     <!-- vision -->
-    <string name="cov_preset_not_support_vision">当前 Preset 不支持视觉理解相关功能，请点击右上角设置按钮切换其他 Preset 体验！</string>
+    <string name="cov_preset_not_support_vision">当前 Preset 不支持视觉理解相关功能，请切换其他 Preset 体验！</string>
     <string name="cov_vision_connect_and_try_again">请连接后重试！</string>
 
     <!-- photo -->
@@ -116,5 +117,30 @@
     <string name="cov_photo_permission_enable">开启权限</string>
     <string name="cov_photo_permission_go_settings">去设置</string>
     <string name="cov_photo_permission_cancel">取消</string>
+
+    <!-- Agent List -->
+    <string name="cov_official_agent_title">官方智能体</string>
+    <string name="cov_custom_agent_title">自定义智能体</string>
+    <string name="cov_custom_agent_acquire">获取你的智能助手</string>
+    <string name="cov_custom_agent_acquire_tip">请找声网员工获取自定义智能体ID</string>
+    <string name="cov_custom_agent_input_tip">输入智能体ID获取</string>
+    <string name="cov_custom_agent_get">获取</string>
+    <string name="cov_voiceprint_lock">声纹锁定</string>
+    <string name="cov_voiceprint_lock_success">引擎将学习您说话的声纹，过滤周围其他人的声音和噪音</string>
+    <string name="cov_word_mode">Word 模式</string>
+    <string name="cov_word_mode_tips">逐字渲染，字幕和语音同步</string>
+    <string name="cov_text_sync_mode">Text-同步模式</string>
+    <string name="cov_text_sync_mode_tips">字幕和语音同步展示的 Text 模式</string>
+    <string name="cov_text_first_mode">Text-字幕先出模式</string>
+    <string name="cov_text_first_mode_tips">字幕一次性展示</string>
+    <string name="cov_transcript_render_mode">字幕渲染模式</string>
+    <string name="cov_remove_agent_title">删除智能体</string>
+    <string name="cov_remove_agent_content">确定要删除智能体「%s」吗？</string>
+    <string name="cov_remove_agent_confirm">删除</string>
+    <string name="cov_remove_agent_cancel">取消</string>
+    <string name="cov_get_agent_success">智能体获取成功</string>
+    <string name="cov_get_agent_failed">智能体获取失败，当前数据库无此智能体</string>
+    <string name="cov_get_agent_offline">智能体已被下线，请联系声网工作人员</string>
+    <string name="cov_retry_tips">页面加载失败，请重试</string>
 
 </resources>

@@ -17,7 +17,7 @@ class AgentSettingViewController: UIViewController {
     weak var rtcManager: RTCManager!
     var channelName = ""
     
-    var currentTabIndex = 1
+    var currentTabIndex = 0
     
     // MARK: - Public Methods
     
@@ -97,8 +97,8 @@ class AgentSettingViewController: UIViewController {
     
     private func setupTabSelector() {
         let tabItems = [
-            TabSelectorView.TabItem(title: ResourceManager.L10n.ChannelInfo.subtitle, iconName: "ic_wifi_setting_icon"),
-            TabSelectorView.TabItem(title: ResourceManager.L10n.Settings.title, iconName: "ic_agent_setting")
+            TabSelectorView.TabItem(title: ResourceManager.L10n.Settings.title, iconName: "ic_agent_setting"),
+            TabSelectorView.TabItem(title: ResourceManager.L10n.ChannelInfo.subtitle, iconName: "ic_wifi_setting_icon")
         ]
         tabSelectorView.configure(with: tabItems, selectedIndex: currentTabIndex)
         switchToTab(index: currentTabIndex)
@@ -106,7 +106,7 @@ class AgentSettingViewController: UIViewController {
     
     private func switchToTab(index: Int) {
         UIView.animate(withDuration: 0.2) {
-            if index == 0 {
+            if index == 1 {
                 self.channelInfoView.isHidden = false
                 self.agentSettingsView.isHidden = true
             } else {
@@ -227,70 +227,15 @@ extension AgentSettingViewController: ChannelInfoViewDelegate {
 
 // MARK: - AgentSettingsViewDelegate
 extension AgentSettingViewController: AgentSettingsViewDelegate {
-    func agentSettingsViewDidTapPreset(_ view: AgentSettingsView, sender: UIButton) {
-        selectTableMask.isHidden = false
-        guard let allPresets = AppContext.preferenceManager()?.allPresets() else {
-            return
-        }
-        
-        guard let currentPreset = AppContext.preferenceManager()?.preference.preset else {
-            return
-        }
-    
-        let currentIndex = allPresets.firstIndex { $0.displayName == currentPreset.displayName } ?? 0
-        let table = AgentSelectTableView(items: allPresets.map {$0.displayName}) { index in
-            let selected = allPresets[index]
-            if selected.displayName == currentPreset.displayName { return }
-            self.onClickHideTable(nil)
-
-            // Check if alert is already ignored
-            if AppContext.preferenceManager()?.isPresetAlertIgnored() == true {
-                // If ignored, update preset directly
-                AppContext.preferenceManager()?.updatePreset(selected)
-            } else {
-                if let _ = AppContext.preferenceManager()?.preference.avatar {
-                    // Show confirmation alert
-                    CommonAlertView.show(
-                        in: self.view,
-                        title: ResourceManager.L10n.Settings.digitalHumanPresetAlertTitle,
-                        content: ResourceManager.L10n.Settings.digitalHumanPresetAlertDescription,
-                        cancelTitle: ResourceManager.L10n.Settings.digitalHumanAlertCancel,
-                        confirmTitle: ResourceManager.L10n.Settings.digitalHumanAlertConfirm,
-                        confirmStyle: .primary,
-                        checkboxOption: CommonAlertView.CheckboxOption(text: ResourceManager.L10n.Settings.digitalHumanAlertIgnore, isChecked: false),
-                        onConfirm: { isCheckboxChecked in
-                            if isCheckboxChecked {
-                                AppContext.preferenceManager()?.setPresetAlertIgnored(true)
-                            }
-                            AppContext.preferenceManager()?.updatePreset(selected)
-                        })
-                } else {
-                    AppContext.preferenceManager()?.updatePreset(selected)
-                }
-                
-            }
-        }
-        table.setSelectedIndex(currentIndex)
-        self.view.addSubview(table)
-        selectTable = table
-        table.snp.makeConstraints { make in
-            make.top.equalTo(sender.snp.centerY)
-            make.width.equalTo(table.getWith())
-            make.height.equalTo(table.getHeight())
-            make.right.equalTo(sender).offset(-20)
-        }
-    }
-    
     func agentSettingsViewDidTapLanguage(_ view: AgentSettingsView, sender: UIButton) {
         print("onClickLanguage")
         selectTableMask.isHidden = false
-        guard let currentPreset = AppContext.preferenceManager()?.preference.preset else { return }
-        let allLanguages = currentPreset.supportLanguages
-        
-        guard let currentLanguage = AppContext.preferenceManager()?.preference.language else { return }
-        
+        guard let currentPreset = AppContext.preferenceManager()?.preference.preset,
+              let allLanguages = currentPreset.supportLanguages,
+              let currentLanguage = AppContext.preferenceManager()?.preference.language
+        else { return }
         let currentIndex = allLanguages.firstIndex { $0.languageName == currentLanguage.languageName } ?? 0
-        let table = AgentSelectTableView(items: allLanguages.map { $0.languageName }) { index in
+        let table = AgentSelectTableView(items: allLanguages.map { AgentSelectTableItem(title: $0.languageName.stringValue(), subTitle: "") }) { index in
             let selected = allLanguages[index]
             if currentLanguage.languageCode == selected.languageCode { return }
             self.onClickHideTable(nil)
@@ -339,6 +284,41 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
     
     func agentSettingsViewDidToggleAiVad(_ view: AgentSettingsView, isOn: Bool) {
         AppContext.preferenceManager()?.updateAiVadState(isOn)
+    }
+    
+    func agentSettingsViewDidTapTranscriptRender(_ view: AgentSettingsView, sender: UIButton) {
+        selectTableMask.isHidden = false
+        guard let preference = AppContext.preferenceManager()?.preference else { return }
+        let currentMode = preference.transcriptMode
+        let isCustomPreset = preference.isCustomPreset
+        var allModes = TranscriptDisplayMode.allCases
+        if isCustomPreset {
+            allModes.removeAll { $0 == .text}
+        } else {
+            if let language = preference.language,
+               language.languageCode != "zh-CN" {
+                allModes.removeAll { $0 == .text}
+            }
+        }
+        
+        let currentIndex = allModes.firstIndex { $0 == currentMode } ?? 0
+        
+        let table = AgentSelectTableView(items: allModes.map { AgentSelectTableItem(title: $0.renderDisplayName, subTitle: $0.renderSubtitle) }) { index in
+            let selected = allModes[index]
+            if currentMode == selected { return }
+            self.onClickHideTable(nil)
+            AppContext.preferenceManager()?.updateTranscriptMode(selected)
+        }
+        
+        table.setSelectedIndex(currentIndex)
+        self.view.addSubview(table)
+        selectTable = table
+        table.snp.makeConstraints { make in
+            make.bottom.equalTo(sender.snp.centerY)
+            make.width.equalTo(table.getWith())
+            make.height.equalTo(table.getHeight())
+            make.right.equalTo(sender).offset(-20)
+        }
     }
 }
 
@@ -405,11 +385,11 @@ extension AgentSettingViewController: AgentPreferenceManagerDelegate {
         let supportLanguages = preset.supportLanguages
         
         var resetLanguageCode = defaultLanguageCode
-        if defaultLanguageCode.isEmpty, let languageCode = supportLanguages.first?.languageCode {
+        if defaultLanguageCode == nil, let languageCode = supportLanguages?.first?.languageCode {
             resetLanguageCode = languageCode
         }
         
-        if let language = supportLanguages.first(where: { $0.languageCode == resetLanguageCode }) {
+        if let language = supportLanguages?.first(where: { $0.languageCode == resetLanguageCode }) {
             manager.updateLanguage(language)
         }
         
@@ -441,13 +421,17 @@ extension AgentSettingViewController: AgentPreferenceManagerDelegate {
         channelInfoView.updateUserId(userId)
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage) {
+    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage?) {
         agentSettingsView.updateLanguage(language)
         manager.updateAvatar(nil)
     }
     
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool) {
         agentSettingsView.updateAiVadState(state)
+    }
+    
+    func preferenceManager(_ manager: AgentPreferenceManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {
+        agentSettingsView.updateTranscriptMode(mode)
     }
 }
 

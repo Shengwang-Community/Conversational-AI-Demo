@@ -5,12 +5,11 @@ import android.os.Build
 import android.os.Bundle
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import io.agora.agent.databinding.WelcomeActivityBinding
-import io.agora.scene.common.constant.AgentScenes
 import io.agora.scene.common.ui.BaseActivity
-import io.agora.scene.common.util.toast.ToastUtil
-import io.agora.scene.convoai.ui.CovLivingActivity
 import androidx.annotation.RequiresApi
-
+import io.agora.scene.common.constant.SSOUserManager
+import io.agora.scene.convoai.ui.CovAgentListActivity
+import io.agora.scene.convoai.ui.CovLoginActivity
 
 class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
 
@@ -27,15 +26,20 @@ class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
         super.onCreate(savedInstanceState)
     }
 
-    override fun immersiveMode(): ImmersiveMode {
-        return ImmersiveMode.FULLY_IMMERSIVE
-    }
+    override fun immersiveMode(): ImmersiveMode  = ImmersiveMode.FULLY_IMMERSIVE
+
+    override fun supportOnBackPressed(): Boolean = false
 
     override fun initView() {
     }
 
     private fun goScene() {
-        startActivity(Intent(this, CovLivingActivity::class.java))
+        if (SSOUserManager.getToken().isNotEmpty()) {
+            initBugly()
+            startActivity(Intent(this@WelcomeActivity, CovAgentListActivity::class.java))
+        } else {
+            startActivity(Intent(this, CovLoginActivity::class.java))
+        }
         finish()
     }
 

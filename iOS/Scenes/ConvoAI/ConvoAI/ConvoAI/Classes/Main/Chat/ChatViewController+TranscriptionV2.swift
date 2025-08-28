@@ -16,8 +16,8 @@ extension ChatViewController: ConversationSubtitleDelegate2 {
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            let owner: TranscriptionType = (subtitle.userId == ConversationSubtitleController2.localUserId) ? .user : .agent
-            self.messageView.viewModel.reduceStandardMessage(turnId: subtitle.turnId, message: subtitle.text, timestamp: 0, owner: owner, isInterrupted: subtitle.status == .interrupt)
+            let owner: TranscriptType = (subtitle.userId == ConversationSubtitleController2.localUserId) ? .user : .agent
+            self.messageView.viewModel.reduceStandardMessage(turnId: subtitle.turnId, message: subtitle.text, timestamp: 0, owner: owner, isInterrupted: subtitle.status == .interrupt, isFinal: subtitle.status == .end)
         }
     }
 

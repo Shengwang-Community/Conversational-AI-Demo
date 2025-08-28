@@ -19,7 +19,7 @@ android {
         minSdk rootProject.ext.minSdkVersion
         targetSdk rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.7.0"
+        versionName "1.8.0"
         
         buildConfigField("String", "BUILD_TIMESTAMP", "\"${buildTimestamp}\"")
 
@@ -32,7 +32,7 @@ android {
         china {
             dimension "region"
             applicationId "cn.shengwang.convoai"
-            resValue "string", "app_name", "对话式 AI 引擎体验"
+            resValue "string", "app_name", "声网对话式 AI 引擎"
             buildConfigField("String", "TOOLBOX_SERVER_HOST", "\"${project.getProperty("TOOLBOX_SERVER_HOST")}\"")
             buildConfigField("String", "AG_APP_ID", "\"${project.getProperty("AG_APP_ID")}\"")
             buildConfigField("String", "AG_APP_CERTIFICATE", "\"${project.getProperty("AG_APP_CERTIFICATE")}\"")

@@ -60,7 +60,8 @@ extension ChatMessageViewModel: MessageIndependent {
         messages.append(message)
         messages.sort { $0.timestamp < $1.timestamp }
         
-        delegate?.startNewMessage()
+//        delegate?.startNewMessage()
+        delegate?.messageUpdated()
     }
     
     private func updateContent(content: String) {

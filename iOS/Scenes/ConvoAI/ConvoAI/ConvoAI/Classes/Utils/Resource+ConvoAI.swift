@@ -57,7 +57,6 @@ extension ResourceManager {
         }
 
         public enum Conversation {
-            public static let appHello = ResourceManager.localizedString("conversation.ai.hello")
             public static let appWelcomeTitle = ResourceManager.localizedString("conversation.ai.welcome.title")
             public static let appWelcomeDescription = ResourceManager.localizedString("conversation.ai.welcome.description")
             public static let appName = ResourceManager.localizedString("conversation.ai.app.name")
@@ -84,6 +83,8 @@ extension ResourceManager {
             public static let agentTranscription = ResourceManager.localizedString("conversation.agent.transcription")
             public static let visionUnsupportMessage = ResourceManager.localizedString("conversation.vision.unsupport.message")
             public static let retryAfterConnect = ResourceManager.localizedString("conversation.vision.retry.after.connect")
+            public static let voiceLockTips = ResourceManager.localizedString("conversation.agent.voice.lock.tips")
+            public static let voiceprintLockToast = ResourceManager.localizedString("conversation.agent.voiceprint.lock.toast")
         }
         
         public enum Setting {
@@ -101,6 +102,9 @@ extension ResourceManager {
             public static let microphonePermissionDescription = ResourceManager.localizedString("error.microphone.permission.alert.description")
             public static let permissionCancel = ResourceManager.localizedString("error.permission.alert.cancel")
             public static let permissionConfirm = ResourceManager.localizedString("error.permission.alert.confirm")
+            public static let agentNotFound = ResourceManager.localizedString("error.agent.is.not.exist")
+            public static let agentOffline = ResourceManager.localizedString("error.agent.is.offline")
+            public static let agentListFetchFailed = ResourceManager.localizedString("error.agent.list.fetch.failed")
         }
 
         public enum Settings {
@@ -115,8 +119,14 @@ extension ResourceManager {
             public static let microphone = ResourceManager.localizedString("settings.microphone")
             public static let speaker = ResourceManager.localizedString("settings.speaker")
             public static let noiseCancellation = ResourceManager.localizedString("settings.noise.cancellation")
-            public static let aiVadNormal = ResourceManager.localizedString("settings.noise.aiVad.nomal")
             public static let aiVadLight = ResourceManager.localizedString("settings.noise.aiVad.highlight")
+            public static let transcriptRenderMode = ResourceManager.localizedString("settings.transcript.render.mode")
+            public static let transcriptRenderWordMode = ResourceManager.localizedString("settings.transcript.render.word.mode")
+            public static let transcriptRenderTextMode = ResourceManager.localizedString("settings.transcript.render.text.mode")
+            public static let transcriptRenderPretextMode = ResourceManager.localizedString("settings.transcript.render.pretext.mode")
+            public static let transcriptRenderWordModeDescription = ResourceManager.localizedString("settings.transcript.render.word.mode.description")
+            public static let transcriptRenderTextModeDescription = ResourceManager.localizedString("settings.transcript.render.text.mode.description")
+            public static let transcriptRenderPretextModeDescription = ResourceManager.localizedString("settings.transcript.render.pretext.mode.description")
             public static let bhvs = ResourceManager.localizedString("settings.noise.bhvs")
             public static let forceResponse = ResourceManager.localizedString("settings.noise.forceResponse")
             public static let agentConnected = ResourceManager.localizedString("settings.agent.connected")
@@ -130,6 +140,7 @@ extension ResourceManager {
             public static let digitalHumanAlertIgnore = ResourceManager.localizedString("settings.digital.human.alert.ignore")
             public static let digitalHumanAlertCancel = ResourceManager.localizedString("settings.digital.human.alert.cancel")
             public static let digitalHumanAlertConfirm = ResourceManager.localizedString("settings.digital.human.alert.confirm")
+            public static let aiVadTips = ResourceManager.localizedString("settings.noise.aiVad.tips")
         }
         
         public enum ChannelInfo {
@@ -166,16 +177,20 @@ extension ResourceManager {
             public static let rtc = ResourceManager.localizedString("devmode.rtc")
             public static let rtm = ResourceManager.localizedString("devmode.rtm")
             public static let metrics = ResourceManager.localizedString("devmode.metric")
-            public static let host = ResourceManager.localizedString("devmode.host")
             public static let dump = ResourceManager.localizedString("devmode.dump")
             public static let sessionLimit = ResourceManager.localizedString("devmode.sessionLimit")
-            public static let copy = ResourceManager.localizedString("devmode.copy")
+            public static let copyClick = ResourceManager.localizedString("devmode.copy.click")
             public static let close = ResourceManager.localizedString("devmode.close")
-            public static let server = ResourceManager.localizedString("devmode.server")
+            public static let serverSwitch = ResourceManager.localizedString("devmode.server.switch")
             public static let sdkParams = ResourceManager.localizedString("devmode.sdk.params")
             public static let convoai = ResourceManager.localizedString("devmode.sc.config")
-            public static let textView = ResourceManager.localizedString("devmode.text.view")
-            public static let textConfirm = ResourceManager.localizedString("devmode.text.confirm")
+            public static let basicSettings = ResourceManager.localizedString("devmode.basic.settings")
+            public static let convoaiSettings = ResourceManager.localizedString("devmode.convoai.settings")
+            public static let userSettings = ResourceManager.localizedString("devmode.user.settings")
+            public static let overallConfig = ResourceManager.localizedString("devmode.overall.config")
+            public static let copyQuestion = ResourceManager.localizedString("devmode.copy.question")
+            public static let captionMode = ResourceManager.localizedString("devmode.caption.mode")
+            public static let userSettingsHint = ResourceManager.localizedString("devmode.user.settings.hint")
         }
 
         public enum Iot {
@@ -203,5 +218,22 @@ extension ResourceManager {
             public static let permissionCameraTitle = ResourceManager.localizedString("photo.permission.camera.title")
             public static let permissionCameraMessage = ResourceManager.localizedString("photo.permission.camera.message")
         }
+
+        public enum AgentList {
+            public static let contact = ResourceManager.localizedString("agent.list.contact")
+            public static let input = ResourceManager.localizedString("agent.list.input")
+            public static let custom = ResourceManager.localizedString("agent.list.custom")
+            public static let official = ResourceManager.localizedString("agent.list.official")
+            public static let fetch = ResourceManager.localizedString("agent.list.get")
+            public static let getAgent = ResourceManager.localizedString("agent.list.get.agent")
+            public static let agentSearchSuccess = ResourceManager.localizedString("agent.search.success")
+        }
+        
+        public enum Empty {
+            public static let loadingFailed = ResourceManager.localizedString("empty.state.loading.failed")
+            public static let retry = ResourceManager.localizedString("empty.state.retry")
+        }
     }
 }
+
+

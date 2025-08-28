@@ -14,6 +14,7 @@ import Bugly
     public let mainlandTermsOfServiceUrl: String = "https://conversational-ai.shengwang.cn/terms/service"
     public let mainlandPrivacyUrl: String = "https://conversational-ai.shengwang.cn/terms/privacy"
 
+    private var _isOpenSource: Bool = false
     private var _appId: String = ""
     private var _certificate: String = ""
     private var _baseServerUrl: String = ""
@@ -107,6 +108,17 @@ import Bugly
         }
     }
     
+    public func loadLocalPreset() -> Data? {
+        if let bundlePath = Bundle.main.path(forResource: "Common", ofType: "bundle"),
+           let bundle = Bundle(path: bundlePath),
+           let localPresetPath = bundle.path(forResource: "local_preset", ofType: "json"),
+           let data = try? Data(contentsOf: URL(fileURLWithPath: localPresetPath)) {
+            return data
+        }
+        
+        return nil
+    }
+    
     @objc public var basicAuthKey: String {
         get { return _basicAuthKey }
         set { _basicAuthKey = newValue }
@@ -150,6 +162,11 @@ import Bugly
     @objc public var avatarEnable: Bool {
         get { return _avatarEnable }
         set { _avatarEnable = newValue }
+    }
+    
+    @objc public var isOpenSource: Bool {
+        get { return _isOpenSource }
+        set { _isOpenSource = newValue }
     }
     
     @objc public var avatarVendor: String {

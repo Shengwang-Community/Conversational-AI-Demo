@@ -22,6 +22,15 @@ class BaseViewController: UIViewController {
         configCustomNaviBar()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        // Clean up when view is about to disappear
+        if isMovingFromParent || isBeingDismissed {
+            viewWillDisappearAndPop()
+        }
+    }
+    
     private func configCustomNaviBar() {
         naviBar.backgroundColor = UIColor.themColor(named: "ai_fill2")
         view.addSubview(naviBar)
@@ -37,6 +46,9 @@ class BaseViewController: UIViewController {
                 image: UIImage.ag_named("ic_agora_back")
             )
         }
+        
+        // Configure interactive pop gesture recognizer
+        configurePopGestureRecognizer()
     }
     
     func addLog(_ txt: String) {
@@ -48,4 +60,55 @@ class BaseViewController: UIViewController {
     }
     
     @objc func navigationRightButtonTapped() {}
+    
+    // MARK: - Pop Gesture Configuration
+    private func configurePopGestureRecognizer() {
+        // Enable interactive pop gesture recognizer even when navigation bar is hidden
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = true
+        navigationController?.interactivePopGestureRecognizer?.delegate = self
+    }
+    
+    // MARK: - Override Methods for Subclasses
+    /// Override this method to customize pop gesture behavior
+    func shouldEnablePopGesture() -> Bool {
+        return true
+    }
+    
+    /// Override this method to handle custom logic when pop gesture begins
+    func popGestureWillBegin() {
+        // Default implementation does nothing
+    }
+    
+    /// Override this method to handle cleanup when view controller is about to be popped
+    func viewWillDisappearAndPop() {
+        // Default implementation does nothing
+    }
+}
+
+// MARK: - UIGestureRecognizerDelegate
+extension BaseViewController: UIGestureRecognizerDelegate {
+    public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        // Check if this is the pop gesture recognizer
+        if gestureRecognizer == navigationController?.interactivePopGestureRecognizer {
+            // Only allow pop gesture if there are more than one view controller in the stack
+            let shouldBegin = navigationController?.viewControllers.count ?? 0 > 1 && shouldEnablePopGesture()
+            
+            if shouldBegin {
+                popGestureWillBegin()
+            }
+            
+            return shouldBegin
+        }
+        return true
+    }
+    
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        // Allow simultaneous recognition with other gesture recognizers
+        return true
+    }
+    
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        // Ensure pop gesture has priority over other gestures
+        return true
+    }
 }

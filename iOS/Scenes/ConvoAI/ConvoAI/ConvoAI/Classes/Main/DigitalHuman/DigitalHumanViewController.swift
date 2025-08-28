@@ -60,7 +60,7 @@ class DigitalHumanViewController: BaseViewController {
             return
         }
         
-        guard let visibleAvatars = avatarIdsByLang[language.languageCode] else {
+        guard let visibleAvatars = avatarIdsByLang[language.languageCode.stringValue()] else {
             let closeCard = DigitalHuman(avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "", thumbImageUrl: "", bgImageUrl: ""), isAvailable: true, isSelected: true)
             digitalHumans.insert(closeCard, at: 0)
             return

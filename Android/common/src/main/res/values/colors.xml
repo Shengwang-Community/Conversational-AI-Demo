@@ -2,7 +2,7 @@
 <resources>
     <color name="ai_icontext1">#ffffffff</color>
     <color name="ai_icontext2">#bfffffff</color>
-    <color name="ai_icontext3">#99ffffff</color>
+    <color name="ai_icontext3">#7fffffff</color>
     <color name="ai_icontext_inverse1">#e5000000</color>
     <color name="ai_brand_main6">#ff446cff</color>
     <color name="ai_brand_main5">#cc446cff</color>
@@ -15,9 +15,9 @@
     <color name="ai_line1">#994f4f51</color>
     <color name="ai_mainhover">#cc353546</color>
     <color name="ai_click">#cc84878e</color>
-    <color name="ai_line2">#ff555b69</color>
-    <color name="ai_block2">#FA404045</color>
-    <color name="ai_block1">#28ababe8</color>
+    <color name="ai_line2">#e5555b69</color>
+    <color name="ai_block2">#f9404045</color>
+    <color name="ai_block1">#b23e3e5a</color>
     <color name="ai_block4_chat">#ff444449</color>
     <color name="ai_icontext4">#4cffffff</color>
     <color name="ai_red6">#ffe6544b</color>
@@ -29,7 +29,6 @@
     <color name="ai_disable">#33222222</color>
     <color name="ai_brand_white8">#ccffffff</color>
     <color name="ai_brand_white6">#99ffffff</color>
-    <color name="ai_brand_white1">#26ffffff</color>
     <color name="ai_block5">#e53e3e43</color>
     <color name="ai_brand_lightbrand7">#ff17f1fe</color>
     <color name="ai_mask1">#d8242439</color>
@@ -39,24 +38,33 @@
     <color name="ai_red1">#4ce6544b</color>
     <color name="ai_brand_black10">#f9000000</color>
     <color name="ai_brand_black8">#cc000000</color>
-    <color name="ai_brand_black6">#99000000</color>
     <color name="ai_erricontext6">#ffffffff</color>
     <color name="ai_fill3">#ff22233d</color>
     <color name="ai_fill4">#ff242439</color>
     <color name="ai_icontext_inverse2">#b2000000</color>
     <color name="ai_fill5">#ff3e3e4d</color>
-    <color name="ai_click_app">#30343E</color>
-    <color name="ai_btn2">#555B69</color>
-    <color name="ai_green8">#50E3C2</color>
+    <color name="ai_brand_white1">#26ffffff</color>
+    <color name="ai_brand_black3">#4c000000</color>
+    <color name="ai_brand_main7">#ff3a5cd9</color>
+    <color name="ai_brand_black6">#99000000</color>
+    <color name="ai_blue6">#ff39caff</color>
+    <color name="ai_mask2">#7f000000</color>
+    <color name="ai_brand_lightpurple">#66b9ceff</color>
+    <color name="ai_click_app">#ff30343d</color>
+    <color name="ai_brand_white2">#33ffffff</color>
+    <color name="ai_toast">#f2ffffff</color>
+    <color name="ai_btn2">#ff555b69</color>
+    <color name="ai_brand_black4">#66000000</color>
+    <color name="ai_brand_black5">#7f000000</color>
+    <color name="ai_fill6">#ff282f40</color>
+    <color name="ai_fill7">#ff1a202e</color>
+    <color name="ai_mask3">#cc292a2d</color>
+
+    <color name="ai_block1_50">#80acacef</color>
+    <color name="ai_brand_white1_50">#80ffffff</color>
 
     <array name="gradient_border_default_colors">
         <item>#FF00C2FF</item>
         <item>#19FFFFFF</item>
     </array>
-
-    <color name="ai_block1_50">#80acacef</color>
-    <color name="ai_disable1">#595959</color>
-    <color name="ai_brand_black3">#40000000</color>
-    <color name="ai_brand_black4">#66000000</color>
-    <color name="ai_brand_black5">#7f000000</color>
 </resources>

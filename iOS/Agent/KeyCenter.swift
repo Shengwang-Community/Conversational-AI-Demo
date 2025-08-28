@@ -8,6 +8,26 @@
 
 struct KeyCenter {
     /**
+     Whether to run open-source configuration, disabled by default
+     Enabling this option will use user-defined host, LLM, TTS, and avatar configurations to connect to the ConvoAI service.
+     The following configuration items will be read:
+     AG_APP_ID
+     AG_APP_CERTIFICATE
+     BASIC_AUTH_KEY
+     BASIC_AUTH_SECRET
+     LLM_URL
+     LLM_API_KEY
+     LLM_SYSTEM_MESSAGES
+     LLM_PARAMS
+     TTS_VENDOR
+     TTS_PARAMS
+     AVATAR_ENABLE
+     AVATAR_VENDOR
+     AVATAR_PARAMS
+     */
+    static var IS_OPEN_SOURCE: Bool = true
+    
+    /**
      Demo Server
      demo server is only for testing, not for production environment, please use your own server for production
     */

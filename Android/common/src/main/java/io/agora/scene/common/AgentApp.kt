@@ -13,6 +13,7 @@ import io.agora.scene.common.constant.AgentConstant
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.debugMode.DebugButton
 import io.agora.scene.common.debugMode.DebugConfigSettings
+import io.agora.scene.common.debugMode.DebugManager
 import io.agora.scene.common.util.AgoraLogger
 import io.agora.scene.common.util.CommonLogger
 import io.agora.scene.common.util.LocaleManager
@@ -62,6 +63,9 @@ class AgentApp : Application() {
         AgoraLogger.initXLog(this)
         initMMKV()
         DebugConfigSettings.init(this)
+        
+        // Initialize unified debug manager
+        DebugManager.initialize(this)
 
         try {
             extractResourceToCache(AgentConstant.RTC_COMMON_RESOURCE)
@@ -85,12 +89,16 @@ class AgentApp : Application() {
                 when (event) {
                     Lifecycle.Event.ON_START -> {
                         // App comes to foreground
-                        DebugButton.getInstance(applicationContext).restoreVisibility()
+                        if (DebugConfigSettings.isDebug) {
+                            DebugManager.showDebugButton()
+                        }
                     }
 
                     Lifecycle.Event.ON_STOP -> {
                         // App goes to background
-                        DebugButton.getInstance(applicationContext).temporaryHide()
+                        if (DebugConfigSettings.isDebug) {
+                            DebugManager.hideDebugButton()
+                        }
                     }
 
                     else -> {}

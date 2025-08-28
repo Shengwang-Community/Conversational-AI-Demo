@@ -63,7 +63,7 @@ extension AgentSettingSwitchItemView {
         
         addSubview(switcher)
         
-        switcher.onTintColor = UIColor.themColor(named: "ai_brand_lightbrand6")
+        switcher.onTintColor = UIColor.themColor(named: "ai_brand_main6")
         switcher.backgroundColor = UIColor.themColor(named: "ai_brand_white10")
         switcher.layer.cornerRadius = switcher.frame.height / 2
         switcher.clipsToBounds = true
@@ -111,7 +111,7 @@ extension AgentSettingSwitchItemView {
         let isOn = switcher.isOn
         let enable = switcher.isEnabled
         if (isOn && enable) {
-            switcher.onTintColor = UIColor.themColor(named: "ai_brand_lightbrand6")
+            switcher.onTintColor = UIColor.themColor(named: "ai_brand_main6")
             switcher.backgroundColor = UIColor.themColor(named: "ai_brand_white10")
         } else if (isOn && !enable) {
             switcher.onTintColor = UIColor.themColor(named: "ai_disable")

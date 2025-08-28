@@ -14,15 +14,24 @@ data class CovAgentPreset(
     val call_time_limit_second: Long,
     val call_time_limit_avatar_second: Long,
     val avatar_ids_by_lang: Map<String, List<CovAvatar>>? = null,
-    val is_support_vision: Boolean
+    val is_support_vision: Boolean,
+    val avatar_url: String?,
+    val description: String,
 ) {
-    fun isIndependent(): Boolean {
-        return preset_type.startsWith("independent")
-    }
+    val isIndependent: Boolean
+        get() {
+            return preset_type.startsWith("independent")
+        }
 
-    fun isStandard(): Boolean {
-        return preset_type == "standard"
-    }
+    val isStandard: Boolean
+        get() {
+            return preset_type.startsWith("standard")
+        }
+
+    val isCustom: Boolean
+        get() {
+            return preset_type.startsWith("custom")
+        }
 
     fun getAvatarsForLang(lang: String?): List<CovAvatar> {
         if (lang == null) return emptyList()
@@ -34,9 +43,9 @@ data class CovAgentLanguage(
     val language_code: String,
     val language_name: String
 ) {
-    fun englishEnvironment(): Boolean {
-        return language_code == "en-US"
-    }
+
+    val isChinese: Boolean
+        get() = language_code == "zh-CN" || language_code == "zh-TW" || language_code == "zh-HK"
 }
 
 @Parcelize

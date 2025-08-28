@@ -16,6 +16,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        AppContext.shared.isOpenSource = KeyCenter.IS_OPEN_SOURCE
         AppContext.shared.appId = KeyCenter.AG_APP_ID
         AppContext.shared.certificate = KeyCenter.AG_APP_CERTIFICATE
         AppContext.shared.basicAuthKey = KeyCenter.BASIC_AUTH_KEY

@@ -2,8 +2,6 @@ package io.agora.scene.convoai.ui.widget
 
 import android.content.Context
 import android.graphics.Rect
-import android.os.Handler
-import android.os.Looper
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -13,16 +11,16 @@ import android.widget.ImageView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import io.agora.scene.common.constant.ServerConfig
+import io.agora.scene.common.R
+import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.common.util.dp
 import io.agora.scene.convoai.constant.CovAgentManager
-import io.agora.scene.convoai.convoaiApi.Transcription
-import io.agora.scene.convoai.convoaiApi.TranscriptionStatus
-import io.agora.scene.convoai.convoaiApi.TranscriptionType
+import io.agora.scene.convoai.convoaiApi.Transcript
+import io.agora.scene.convoai.convoaiApi.TranscriptStatus
+import io.agora.scene.convoai.convoaiApi.TranscriptType
 import io.agora.scene.convoai.databinding.CovMessageAgentItemBinding
 import io.agora.scene.convoai.databinding.CovMessageListViewBinding
 import io.agora.scene.convoai.databinding.CovMessageMineItemBinding
-import java.util.UUID
 
 /**
  * CovMessageListView is a custom view for displaying a conversation message list.
@@ -43,12 +41,6 @@ class CovMessageListView @JvmOverloads constructor(
     private var autoScrollToBottom = true
 
     private var isScrollBottom = false
-
-    // Use Handler for scroll debouncing
-    private val scrollHandler = Handler(Looper.getMainLooper())
-
-    // Runnable for scrolling to bottom
-    private val scrollRunnable = Runnable { scrollToBottom() }
 
     /**
      * Callback invoked when the user clicks the error icon on an image message.
@@ -123,7 +115,6 @@ class CovMessageListView @JvmOverloads constructor(
             binding.btnToBottom.postDelayed({ binding.btnToBottom.isEnabled = true }, 300)
         }
     }
-    
 
 
     /**
@@ -163,26 +154,26 @@ class CovMessageListView @JvmOverloads constructor(
     /**
      * Update agent name
      */
-    fun updateAgentName(name: String) {
-        messageAdapter.updateAgentName(name)
+    fun updateAgentName(str: String, url: String, @androidx.annotation.DrawableRes defaultImage:Int) {
+        messageAdapter.updateAgentName(str, url, defaultImage)
     }
 
     /**
      * Handle received subtitle messages - fix scrolling issues
      */
-    private fun handleMessage(transcription: Transcription) {
-        val isUser = transcription.type == TranscriptionType.USER
+    private fun handleMessage(transcript: Transcript) {
+        val isUser = transcript.type == TranscriptType.USER
         val newMessage = Message(
             isMe = isUser,
-            turnId = transcription.turnId,
-            content = transcription.text,
-            status = transcription.status,
-            localTurn = transcription.turnId
+            turnId = transcript.turnId,
+            content = transcript.text,
+            status = transcript.status,
+            localTurn = transcript.turnId
         )
         messageAdapter.addOrUpdateMessage(newMessage)
         // Determine if this is a new message (just inserted)
         val isNewMessage =
-            messageAdapter.getAllMessages().count { it.turnId == transcription.turnId && it.isMe == isUser } == 1
+            messageAdapter.getAllMessages().count { it.turnId == transcript.turnId && it.isMe == isUser } == 1
         handleScrollAfterUpdate(isNewMessage)
     }
 
@@ -251,7 +242,7 @@ class CovMessageListView @JvmOverloads constructor(
         val isMe: Boolean,
         val turnId: Long,
         var content: String, // For text: text content; for image: local path
-        var status: TranscriptionStatus? = null, // Only for text messages, null for image
+        var status: TranscriptStatus? = null, // Only for text messages, null for image
         val type: MessageType = MessageType.TEXT,
         val uuid: String? = null, // Unique local ID for local image messages
         val localTurn: Long = 0L,
@@ -264,8 +255,10 @@ class CovMessageListView @JvmOverloads constructor(
     inner class MessageAdapter : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
 
         private var agentName: String = ""
+        private var agentUrl: String = ""
+        @androidx.annotation.DrawableRes
+        private var agentDefaultImage: Int = R.drawable.common_default_agent
         private val messages = mutableListOf<Message>()
-
 
         abstract inner class MessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
             abstract fun bind(message: Message)
@@ -278,6 +271,8 @@ class CovMessageListView @JvmOverloads constructor(
                 if (message.type == MessageType.TEXT) {
                     binding.tvMessageContent.isVisible = true
                     binding.layoutImageMessage.isVisible = false
+
+                    // Show normal text content for user messages
                     binding.tvMessageContent.text = message.content
                 } else if (message.type == MessageType.IMAGE) {
                     binding.tvMessageContent.isVisible = false
@@ -326,12 +321,32 @@ class CovMessageListView @JvmOverloads constructor(
         inner class AgentMessageViewHolder(private val binding: CovMessageAgentItemBinding) :
             MessageViewHolder(binding.root) {
             override fun bind(message: Message) {
+                binding.tvMessageTitle.text = agentName
+                if (agentUrl.isEmpty()) {
+                    binding.ivMessageIcon.setImageResource(agentDefaultImage)
+                } else {
+                    GlideImageLoader.load(
+                        binding.ivMessageIcon,
+                        agentUrl,
+                        agentDefaultImage,
+                        agentDefaultImage
+                    )
+                }
                 if (message.type == MessageType.TEXT) {
-                    binding.tvMessageTitle.text = agentName
                     binding.tvMessageContent.isVisible = true
                     binding.layoutImageMessage.isVisible = false
+
+                    // Set text content
                     binding.tvMessageContent.text = message.content
-                    binding.layoutMessageInterrupt.isVisible = message.status == TranscriptionStatus.INTERRUPTED
+
+                    // Show/hide typing dots based on message status
+                    if (message.status == TranscriptStatus.IN_PROGRESS) {
+                        binding.tvMessageContent.setShowTypingDots(true)
+                    } else {
+                        binding.tvMessageContent.setShowTypingDots(false)
+                    }
+
+                    binding.layoutMessageInterrupt.isVisible = message.status == TranscriptStatus.INTERRUPTED
                 } else if (message.type == MessageType.IMAGE) {
                     binding.tvMessageContent.isVisible = false
                     binding.layoutImageMessage.isVisible = true
@@ -402,7 +417,7 @@ class CovMessageListView @JvmOverloads constructor(
             handleScrollAfterUpdate(true)
         }
 
-        fun updateLocalImageMessage(uuid: String,status:UploadStatus){
+        fun updateLocalImageMessage(uuid: String, status: UploadStatus) {
             val idx = messages.indexOfFirst { it.uuid == uuid }
             if (idx != -1) {
                 val message = messages[idx].copy().apply {
@@ -473,8 +488,10 @@ class CovMessageListView @JvmOverloads constructor(
         /**
          * Update agent name
          */
-        fun updateAgentName(name: String) {
+        fun updateAgentName(name: String, url: String, @androidx.annotation.DrawableRes defaultImage:Int) {
             agentName = name
+            agentUrl = url
+            agentDefaultImage = defaultImage
             notifyDataSetChanged()
         }
 
@@ -494,17 +511,20 @@ class CovMessageListView @JvmOverloads constructor(
                 return
             }
             // Use GlideImageLoader with callback to get real size
-            io.agora.scene.common.util.GlideImageLoader.loadWithSizeCallback(imageView, imgPath, { bitmap, w, h ->
-                var targetW = minSize
-                var targetH = minSize
-                if (w > h) {
+            io.agora.scene.common.util.GlideImageLoader.loadWithSizeCallback(imageView, imgPath, { _, w, h ->
+                val targetW = if (w > h) {
                     // Wide image
-                    targetW = maxWidth
-                    targetH = (h * (maxWidth.toFloat() / w)).toInt().coerceAtLeast(minSize)
+                    maxWidth
                 } else {
                     // Tall image
-                    targetH = maxWidth
-                    targetW = (w * (maxWidth.toFloat() / h)).toInt().coerceAtLeast(minSize)
+                    (w * (maxWidth.toFloat() / h)).toInt().coerceAtLeast(minSize)
+                }
+                val targetH = if (w > h) {
+                    // Wide image
+                    (h * (maxWidth.toFloat() / w)).toInt().coerceAtLeast(minSize)
+                } else {
+                    // Tall image
+                    maxWidth
                 }
                 val params = imageView.layoutParams
                 params.width = targetW
@@ -515,17 +535,19 @@ class CovMessageListView @JvmOverloads constructor(
     }
 
     /**
-     * Called when a new transcription is received or updated.
+     * Called when a new transcript is received or updated.
      * Handles both user and agent messages, and triggers scroll logic if needed.
-     * @param transcription The incoming transcription data.
+     * @param transcript The incoming transcript data.
      */
-    fun onTranscriptionUpdated(transcription: Transcription) {
-        // Transcription for other users
-        if (transcription.type == TranscriptionType.USER && transcription.userId != CovAgentManager.uid.toString()) {
+    fun onTranscriptUpdated(transcript: Transcript) {
+        // Transcript for other users
+        if (transcript.type == TranscriptType.USER && transcript.userId != CovAgentManager.uid.toString()) {
             return
         }
-        handleMessage(transcription)
+
+        handleMessage(transcript)
     }
+
 
     /**
      * Add a local image message to the message list.
@@ -552,8 +574,8 @@ class CovMessageListView @JvmOverloads constructor(
         messageAdapter.addLocalImageMessage(localMsg)
     }
 
-    fun updateLocalImageMessage(uuid: String,uploadStatus:UploadStatus){
-        messageAdapter.updateLocalImageMessage(uuid,uploadStatus)
+    fun updateLocalImageMessage(uuid: String, uploadStatus: UploadStatus) {
+        messageAdapter.updateLocalImageMessage(uuid, uploadStatus)
     }
 
     /**
@@ -588,5 +610,9 @@ class CovMessageListView @JvmOverloads constructor(
             isScrollBottom = true
             binding.cvToBottom.visibility = INVISIBLE
         }
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
     }
 }

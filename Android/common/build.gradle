@@ -25,13 +25,13 @@ android {
         buildConfigField("String", "TOOLBOX_SERVER_HOST", "\"${project.getProperty("TOOLBOX_SERVER_HOST")}\"")
         buildConfigField("String", "BASIC_AUTH_KEY", "\"${project.getProperty("BASIC_AUTH_KEY")}\"")
         buildConfigField("String", "BASIC_AUTH_SECRET", "\"${project.getProperty("BASIC_AUTH_SECRET")}\"")
+        buildConfigField("Boolean", "IS_OPEN_SOURCE", "${project.getProperty("IS_OPEN_SOURCE").toBoolean()}")
         buildConfigField("String", "LLM_URL", "\"${project.getProperty("LLM_URL")}\"")
         buildConfigField("String", "LLM_API_KEY", "\"${project.getProperty("LLM_API_KEY")}\"")
         buildConfigField("String", "LLM_PARRAMS", "\"${project.properties["LLM_PARRAMS"].toString().replace('"', '\\"')}\"")
         buildConfigField("String", "LLM_SYSTEM_MESSAGES", "\"${project.properties["LLM_SYSTEM_MESSAGES"].toString().replace('"', '\\"')}\"")
         buildConfigField("String", "TTS_VENDOR", "\"${project.getProperty("TTS_VENDOR")}\"")
         buildConfigField "String", "TTS_PARAMS", "\"${project.properties['TTS_PARAMS'].toString().replace('"', '\\"')}\""
-        buildConfigField("Boolean", "AVATAR_ENABLE", "${project.getProperty("AVATAR_ENABLE").toBoolean()}")
         buildConfigField("String", "AVATAR_VENDOR", "\"${project.getProperty("AVATAR_VENDOR")}\"")
         buildConfigField "String", "AVATAR_PARAMS", "\"${project.properties['AVATAR_PARAMS'].toString().replace('"', '\\"')}\""
     }
@@ -73,6 +73,7 @@ dependencies {
     api libs.navigation.fragment.ktx
     api libs.navigation.ui.ktx
     api libs.splashscreen
+    api libs.androidx.swiperefreshlayout
 
     api libs.okhttp.core
     api libs.okhttp.logging.interceptor

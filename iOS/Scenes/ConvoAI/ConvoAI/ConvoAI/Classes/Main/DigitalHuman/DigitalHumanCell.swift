@@ -7,7 +7,6 @@
 
 import UIKit
 import Common
-import AlamofireImage
 
 class DigitalHumanCell: UICollectionViewCell {
     static let identifier = "DigitalHumanCell"
@@ -123,8 +122,8 @@ class DigitalHumanCell: UICollectionViewCell {
         nameLabel.text = digitalHuman.avatar.avatarName
         
         // Load avatar image
-        if let url = URL(string: digitalHuman.avatar.thumbImageUrl) {
-            avatarImageView.af.setImage(withURL: url)
+        if let url = URL(string: digitalHuman.avatar.thumbImageUrl ?? "") {
+            avatarImageView.kf.setImage(with: url)
         } else {
             avatarImageView.image = nil
         }

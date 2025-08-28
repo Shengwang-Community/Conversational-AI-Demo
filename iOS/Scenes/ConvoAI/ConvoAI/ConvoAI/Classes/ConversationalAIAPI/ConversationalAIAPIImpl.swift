@@ -10,7 +10,7 @@ import AgoraRtcKit
 import AgoraRtmKit
 
 @objc public class ConversationalAIAPIImpl: NSObject {
-    public static let version: String = "1.7.0"
+    public static let version: String = "1.8.0"
     private let tag: String = "[ConvoAPI]"
     private let delegates = NSHashTable<ConversationalAIAPIEventHandler>.weakObjects()
     private let config: ConversationalAIAPIConfig
@@ -19,9 +19,9 @@ import AgoraRtmKit
     private var audioScenario: AgoraAudioScenario = .aiClient
     private var stateChangeEvent: StateChangeEvent? = nil
 
-    private lazy var transcriptionController: TranscriptionController = {
-        let transcriptionController = TranscriptionController()
-        return transcriptionController
+    private lazy var transcriptController: TranscriptController = {
+        let transcriptController = TranscriptController()
+        return transcriptController
     }()
 
     @objc public init(config: ConversationalAIAPIConfig) {
@@ -34,8 +34,8 @@ import AgoraRtmKit
         rtcEngine.setParameters("{\"rtc.log_external_input\": true}")
         rtcEngine.addDelegate(self)
         rtmEngine.addDelegate(self)
-        let transcriptionConfig = TranscriptionRenderConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: config.renderMode, delegate: self)
-        transcriptionController.setupWithConfig(transcriptionConfig)
+        let transcriptConfig = TranscriptRenderConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: config.renderMode, delegate: self)
+        transcriptController.setupWithConfig(transcriptConfig)
     }
 }
 
@@ -125,7 +125,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         callMessagePrint(msg: ">>> [traceId:\(traceId)] [subscribe] channel: \(channelName)")
         
         stateChangeEvent = nil
-        self.transcriptionController.reset()
+        self.transcriptController.reset()
         let subscribeOptions = AgoraRtmSubscribeOptions()
         subscribeOptions.features = [.presence, .message]
         rtmEngine.subscribe(channelName: channelName, option: subscribeOptions) {[weak self] response, error in
@@ -146,7 +146,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         }
         channel = nil
         stateChangeEvent = nil
-        transcriptionController.reset()
+        transcriptController.reset()
         let traceId = UUID().uuidString.prefix(8)
         callMessagePrint(msg: ">>> [traceId:\(traceId)] [unsubscribe] channel: \(channelName)")
 
@@ -182,7 +182,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         rtcEngine.removeDelegate(self)
         rtmEngine.removeDelegate(self)
         
-        transcriptionController.reset()
+        transcriptController.reset()
     }
 }
 
@@ -317,6 +317,15 @@ extension ConversationalAIAPIImpl {
         }
     }
 
+    private func notifyDelegatesVoiceprintMessage(agentUserId: String, event: VoiceprintStateChangeEvent) {
+        callMessagePrint(msg: "<<< [onVoiceprintMessageUpdated], agentUserId: \(agentUserId), voiceprint: \(event)")
+        DispatchQueue.main.async {
+            for delegate in self.delegates.allObjects {
+                delegate.onAgentVoiceprintStateChanged(agentUserId: agentUserId, event: event)
+            }
+        }
+    }
+    
     private func notifyDelegatesMessageReceipt(agentUserId: String, messageReceipt: MessageReceipt) {
         callMessagePrint(msg: "<<< [onMessageReceiptUpdated], agentUserId: \(agentUserId), messageReceipt: \(messageReceipt)")
 
@@ -346,10 +355,10 @@ extension ConversationalAIAPIImpl {
         }
     }
     
-    private func notifyDelegatesTranscription(agentUserId: String, transcription: Transcription) {
+    private func notifyDelegatesTranscript(agentUserId: String, transcript: Transcript) {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
-                delegate.onTranscriptionUpdated(agentUserId: agentUserId, transcription: transcription)
+                delegate.onTranscriptUpdated(agentUserId: agentUserId, transcript: transcript)
             }
         }
     }
@@ -399,29 +408,40 @@ extension ConversationalAIAPIImpl {
     }
     
     private func dealMessageWithMap(uid: String, msg: [String: Any]) {
-        guard let transcriptionObj = msg["object"] as? String else {
+        guard let transcriptObj = msg["object"] as? String else {
             return
         }
         
-        let messageType = MessageType.fromValue(transcriptionObj)
+        let messageType = MessageType.fromValue(transcriptObj)
         
         switch messageType {
         case .metrics:
             handleMetricsMessage(uid: uid, msg: msg)
         case .error:
             handleErrorMessage(uid: uid, msg: msg)
-        case .imageInfo:
-            handleImageInfoMessage(uid: uid, msg: msg)
+        case .messageReceipt:
+            handleMessageReceipt(uid: uid, msg: msg)
+        case .voiceprint:
+            handleVoiceprintMessage(uid: uid, msg: msg)
         default:
             break
         }
     }
     
-    private func handleImageInfoMessage(uid: String, msg: [String: Any]) {
+    private func handleVoiceprintMessage(uid: String, msg: [String: Any]) {
+        let status = msg["status"] as? String ?? ""
+        let offset = msg["timestamp"] as? Int ?? 0
+        let timestamp = msg["send_ts"] as? Int ?? 0
+        print("voiceprint --> \(msg)")
+        let event = VoiceprintStateChangeEvent(timestamp: timestamp, timeOffset: offset, status: VoiceprintStatus(stringValue: status) ?? .unknown)
+        notifyDelegatesVoiceprintMessage(agentUserId: uid, event: event)
+    }
+    
+    private func handleMessageReceipt(uid: String, msg: [String: Any]) {
         guard let messageString = msg["message"] as? String,
               let module = msg["module"] as? String,
               let turnId = msg["turn_id"] as? Int else {
-            ConvoAILogger.error("Failed to parse message string from image info message")
+            callMessagePrint(msg: "Failed to parse message string from image info message")
             return
         }
         
@@ -577,13 +597,13 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
     }
 }
 
-extension ConversationalAIAPIImpl: TranscriptionDelegate {
+extension ConversationalAIAPIImpl: TranscriptDelegate {
     func onInterrupted(agentUserId: String, event: InterruptEvent) {
         notifyDelegatesInterrupt(agentUserId: agentUserId, event: event)
     }
     
-    func onTranscriptionUpdated(agentUserId: String, transcription: Transcription) {
-        notifyDelegatesTranscription(agentUserId: agentUserId, transcription: transcription)
+    func onTranscriptUpdated(agentUserId: String, transcript: Transcript) {
+        notifyDelegatesTranscript(agentUserId: agentUserId, transcript: transcript)
     }
     
     func onDebugLog(_ txt: String) {

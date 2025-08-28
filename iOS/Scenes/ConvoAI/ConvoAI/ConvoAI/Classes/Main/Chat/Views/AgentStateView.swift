@@ -9,7 +9,6 @@ import UIKit
 import Common
 
 class AgentStateView: UIView {
-    
     private var isAnimating = false
     private var state: AgentState = .idle
     private var isMute = false
