@@ -179,4 +179,13 @@
     <string name="cov_voiceprint_date_format">yyyy年MM月dd日</string>
     <string name="cov_voiceprint_recording_tips_title">声纹录入提示</string>
     <string name="cov_voiceprint_recording_tips_content">您的声音默认存储在本机，声网有感声纹锁定功能需要收集您的声音，单次体验该功能完毕后会将云端声纹删除，绝对不会使用您的声音用作商业用途。</string>
+    <string name="cov_avatar_generator_by_ai">本数字人由 AI 生成</string>
+    <string name="cov_privacy_policy">个人信息保护指引</string>
+    <string name="cov_privacy_policy_content">欢迎使用声网对话式 AI
+        引擎！当您点击“同意”时，视为您已阅读并愿意接受《用户协议》和《隐私政策的所有内容》。当您点击“不同意”时，将无法体验本应用的完整功能。</string>
+    <string name="cov_agree">同意</string>
+    <string name="cov_disagree">不同意</string>
+    <string name="cov_user_agreement_text">《用户协议》</string>
+    <string name="cov_privacy_policy_text">《隐私政策的所有内容》</string>
+    <string name="cov_service_info">服务信息</string>
 </resources>

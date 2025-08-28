@@ -101,6 +101,12 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Force immersive mode again to ensure it stays hidden
+        forceImmersiveMode()
+    }
+
     override fun onDismiss(dialog: DialogInterface) {
         CovLogger.d(TAG, "onDismiss called")
         super.onDismiss(dialog)

@@ -1,14 +1,10 @@
 package io.agora.scene.convoai.ui.dialog
 
-import android.animation.ValueAnimator
-import android.animation.AnimatorListenerAdapter
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.LinearInterpolator
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -25,6 +21,7 @@ import io.agora.scene.convoai.ui.fragment.CovAgentSettingsFragment
 /**
  * Bottom sheet dialog with tab switching functionality
  * Contains Channel Info and Agent Settings tabs
+ * Supports half-screen display with slide-up to full screen
  */
 class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
 
@@ -32,8 +29,6 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
     private var agentState: AgentConnectionState? = null
     private var initialTab: Int = TAB_AGENT_SETTINGS
 
-    // Tab indicator animation variables
-    private var tabIndicatorAnimator: ValueAnimator? = null
     private var tabWidth: Int = 0
 
     companion object {
@@ -84,9 +79,6 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
 
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
-        // Clean up animation resources
-        tabIndicatorAnimator?.cancel()
-        tabIndicatorAnimator = null
         onDismissCallback?.invoke()
     }
 
@@ -129,7 +121,7 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
             vpContent.offscreenPageLimit = 2
         }
     }
-
+    
     private fun setupTabLayout() {
         binding?.apply {
             // Create custom tab layout with icons and text
@@ -176,16 +168,8 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
                 val channelInfoTab = tabLayout.newTab()
                 val agentSettingsTab = tabLayout.newTab()
 
-                val channelInfoView = createTabView(
-                    io.agora.scene.common.R.drawable.scene_detail_wifi,
-                    getString(R.string.cov_channel_info_title),
-                    tabWidth
-                )
-                val agentSettingsView = createTabView(
-                    io.agora.scene.common.R.drawable.scene_detail_setting,
-                    getString(R.string.cov_setting_title),
-                    tabWidth
-                )
+                val channelInfoView = createTabView(getString(R.string.cov_service_info), tabWidth)
+                val agentSettingsView = createTabView(getString(R.string.cov_setting_title), tabWidth)
 
                 channelInfoTab.customView = channelInfoView
                 agentSettingsTab.customView = agentSettingsView
@@ -210,12 +194,10 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
         }
     }
 
-    private fun createTabView(iconRes: Int, text: String, width: Int): View {
+    private fun createTabView(text: String, width: Int): View {
         val tabView = LayoutInflater.from(context).inflate(R.layout.cov_custom_tab_item, null)
         tabView.layoutParams = ViewGroup.LayoutParams(width, ViewGroup.LayoutParams.MATCH_PARENT)
-        val iconView = tabView.findViewById<ImageView>(R.id.ivTabIcon)
         val textView = tabView.findViewById<TextView>(R.id.tvTabText)
-        iconView.setImageResource(iconRes)
         textView.text = text
         return tabView
     }
@@ -228,7 +210,6 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
                 val isSelected = i == selectedPosition
 
                 tab?.customView?.let { tabView ->
-                    val iconView = tabView.findViewById<ImageView>(R.id.ivTabIcon)
                     val textView = tabView.findViewById<TextView>(R.id.tvTabText)
 
                     if (isSelected) {
@@ -240,19 +221,10 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
                                 io.agora.scene.common.R.color.ai_brand_white10
                             )
                         )
-                        iconView.setColorFilter(
-                            ContextCompat.getColor(
-                                context,
-                                io.agora.scene.common.R.color.ai_brand_white10
-                            )
-                        )
                     } else {
                         // Unselected state: transparent background, semi-transparent white text and icon
                         tabView.background = null
                         textView.setTextColor(
-                            ContextCompat.getColor(context, io.agora.scene.common.R.color.ai_icontext2)
-                        )
-                        iconView.setColorFilter(
                             ContextCompat.getColor(context, io.agora.scene.common.R.color.ai_icontext2)
                         )
                     }

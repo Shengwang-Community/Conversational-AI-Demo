@@ -104,14 +104,6 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         }
     }
 
-    // Extension function for setting dialog width
-    private fun View.setDialogWidth(widthRatio: Float) {
-        layoutParams = FrameLayout.LayoutParams(
-            (resources.displayMetrics.widthPixels * widthRatio).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-    }
-
     class Builder {
         private var config = DialogConfig()
 

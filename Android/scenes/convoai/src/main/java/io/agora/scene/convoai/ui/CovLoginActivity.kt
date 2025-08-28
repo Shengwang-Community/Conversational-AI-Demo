@@ -27,6 +27,7 @@ import io.agora.scene.common.ui.SSOWebViewActivity
 import io.agora.scene.common.ui.TermsActivity
 import io.agora.scene.convoai.databinding.CovActivityLoginBinding
 import androidx.core.graphics.toColorInt
+import io.agora.scene.convoai.ui.dialog.CovPrivacyPolicyDialog
 
 class CovLoginActivity : DebugSupportActivity<CovActivityLoginBinding>() {
 
@@ -56,13 +57,15 @@ class CovLoginActivity : DebugSupportActivity<CovActivityLoginBinding>() {
         }
         mBinding?.apply {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            tvTyping.setGradientColors( listOf(
-                "#ffffffff".toColorInt(),
-                "#ccffffff".toColorInt(),
-                "#99ffffff".toColorInt(),
-                "#ccffffff".toColorInt(),
-                "#e6ffffff".toColorInt()
-            ))
+            tvTyping.setGradientColors(
+                listOf(
+                    "#ffffffff".toColorInt(),
+                    "#ccffffff".toColorInt(),
+                    "#99ffffff".toColorInt(),
+                    "#ccffffff".toColorInt(),
+                    "#e6ffffff".toColorInt()
+                )
+            )
             tvTyping.startAnimation()
             setupRichTextTerms(tvTermsRichText)
             btnStartWithoutLogin.setOnClickListener(object : OnFastClickListener() {
@@ -71,6 +74,7 @@ class CovLoginActivity : DebugSupportActivity<CovActivityLoginBinding>() {
                         onClickStartSSO()
                     } else {
                         animCheckTip()
+                        showPrivacyDialog()
                     }
                 }
             })
@@ -173,6 +177,18 @@ class CovLoginActivity : DebugSupportActivity<CovActivityLoginBinding>() {
         }
     }
 
+    private fun showPrivacyDialog() {
+        CovPrivacyPolicyDialog.newInstance(
+            onAgreeCallback = {
+                if (it) {
+                    mBinding?.apply {
+                        cbTerms.isChecked = true
+                    }
+                }
+            }
+        ).show(supportFragmentManager, "privacy_policy_dialog")
+    }
+
     // Override debug callback to provide custom behavior for login screen
     override fun createDefaultDebugCallback(): DebugTabDialog.DebugCallback {
         return object : DebugTabDialog.DebugCallback {
@@ -181,7 +197,7 @@ class CovLoginActivity : DebugSupportActivity<CovActivityLoginBinding>() {
             }
         }
     }
-    
+
     override fun handleEnvironmentChange() {
         // Already on login page, just recreate activity to refresh environment
         recreate()

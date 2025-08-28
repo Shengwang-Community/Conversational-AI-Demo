@@ -15,14 +15,6 @@
         android:gravity="center"
         android:layout_gravity="center">
 
-        <ImageView
-            android:id="@+id/ivTabIcon"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginEnd="4dp"
-            android:src="@drawable/scene_detail_wifi"
-            tools:src="@drawable/scene_detail_wifi" />
-
         <TextView
             android:id="@+id/tvTabText"
             android:layout_width="wrap_content"

@@ -11,6 +11,7 @@ import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
+import android.widget.FrameLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -175,5 +176,12 @@ abstract class BaseDialogFragment<B : ViewBinding> : DialogFragment() {
                         or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
             }
         }
+    }
+
+    fun View.setDialogWidth(widthRatio: Float) {
+        layoutParams = FrameLayout.LayoutParams(
+            (resources.displayMetrics.widthPixels * widthRatio).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
     }
 }

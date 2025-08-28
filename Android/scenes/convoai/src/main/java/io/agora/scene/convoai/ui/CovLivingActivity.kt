@@ -416,12 +416,14 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             viewModel.avatar.collect { avatar ->
                 mBinding?.apply {
                     if (avatar == null) {
+                        tvAvatarHint.isVisible = false
                         clAnimationContent.isVisible = true
                         vDragBigWindow.isVisible = false
                         ivAvatarPreview.isVisible = false
                         videoView.isVisible = true
                         setupBallAnimView()
                     } else {
+                        tvAvatarHint.isVisible = true
                         clAnimationContent.isVisible = false
                         vDragBigWindow.isVisible = true
                         ivAvatarPreview.isVisible = true
@@ -584,6 +586,8 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             val isLight = vDragBigWindow.isVisible && !showTranscript
 
             updateLightBackground(isLight)
+
+            tvAvatarHint.isVisible = showAvatar
         }
     }
 
