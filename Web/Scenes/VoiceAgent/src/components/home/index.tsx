@@ -15,7 +15,7 @@ import { PresetBadges } from '@/components/home/preset-badges'
 import { GreetingTypewriter } from '@/components/home/typewriter'
 import { PresetPlaceholderIcon } from '@/components/icon/agent'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { DEFAULT_AVATAR_DOM_ID } from '@/constants'
+import { AVATAR_PLACEHOLDER_IMAGE, DEFAULT_AVATAR_DOM_ID } from '@/constants'
 import { EAgentState } from '@/conversational-ai-api/type'
 import { logger } from '@/lib/logger'
 import { cn, isCN } from '@/lib/utils'
@@ -200,11 +200,10 @@ export function AgentBlock() {
             className={cn(
               'relative',
               'flex w-full flex-col items-center gap-3',
-              'h-fit',
+              'h-full min-h-fit',
               'transition-height duration-500',
               {
-                'gap-0': isUserSubtitleExist,
-                'h-full': disableFormMemo
+                'gap-0': isUserSubtitleExist
               }
             )}
           >
@@ -254,12 +253,17 @@ export function AgentBlock() {
                     >
                       <div>
                         {selectedPreset.type === 'default' &&
-                          selectedPreset.preset?.avatar_url && (
-                            <AvatarImage
-                              src={selectedPreset.preset.avatar_url}
-                              alt={selectedPreset.preset.display_name}
-                            />
-                          )}
+                        selectedPreset.preset?.avatar_url ? (
+                          <AvatarImage
+                            src={selectedPreset.preset.avatar_url}
+                            alt={selectedPreset.preset.display_name}
+                          />
+                        ) : (
+                          <AvatarImage
+                            src={AVATAR_PLACEHOLDER_IMAGE}
+                            alt={selectedPreset.preset.display_name}
+                          />
+                        )}
                         <AvatarFallback>
                           <PresetPlaceholderIcon />
                         </AvatarFallback>
@@ -275,12 +279,11 @@ export function AgentBlock() {
                         </p>
                       </div>
                     )}
+                    {!disableFormMemo && <PresetBadges className='mb-auto' />}
                   </div>
                 )}
               </>
             )}
-
-            {!disableFormMemo && <PresetBadges className='mt-auto' />}
 
             <SubTitle
               className={cn(

@@ -454,9 +454,11 @@ export function AgentSettingsForm(props: {
 
         <div className='mt-4 flex flex-col items-center justify-center'>
           <div>V{packageJson.version}</div>
-          <p className='text-muted-foreground text-xs'>
-            {packageJson.description}
-          </p>
+          {process.env.NEXT_PUBLIC_COMMIT_SHA ? (
+            <p className='text-muted-foreground text-xs'>
+              {`Build ${process.env.NEXT_PUBLIC_COMMIT_SHA}`}
+            </p>
+          ) : null}
         </div>
       </form>
     </Form>

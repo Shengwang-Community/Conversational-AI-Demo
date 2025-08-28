@@ -128,10 +128,7 @@ export function CustomPrivateSettingsForm(props: {
                 <FormItem>
                   <div className='flex items-center justify-between gap-2'>
                     <FormLabel
-                      className={cn(
-                        'flex items-center gap-1',
-                        'text-brand-light'
-                      )}
+                      className={cn('flex items-center gap-1 font-normal')}
                     >
                       {t.rich('advanced_features.enable_aivad.title', {
                         label: (chunks) => (
@@ -163,7 +160,7 @@ export function CustomPrivateSettingsForm(props: {
             )}
           />
           <div className='flex items-center justify-between gap-2'>
-            <Label className='text-brand-light'>
+            <Label className='font-normal'>
               {t('transcription.render-mode')}
             </Label>
             <Select
@@ -266,9 +263,11 @@ export function CustomPrivateSettingsForm(props: {
 
         <div className='mt-4 flex flex-col items-center justify-center'>
           <div>V{packageJson.version}</div>
-          <p className='text-muted-foreground text-xs'>
-            {packageJson.description}
-          </p>
+          {process.env.NEXT_PUBLIC_COMMIT_SHA ? (
+            <p className='text-muted-foreground text-xs'>
+              {`Build ${process.env.NEXT_PUBLIC_COMMIT_SHA}`}
+            </p>
+          ) : null}
         </div>
       </form>
     </Form>

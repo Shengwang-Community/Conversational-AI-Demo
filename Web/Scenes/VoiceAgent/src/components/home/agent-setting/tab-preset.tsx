@@ -19,7 +19,11 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip'
-import { ERROR_MESSAGE, type remoteAgentCustomPresetItem } from '@/constants'
+import {
+  AVATAR_PLACEHOLDER_IMAGE,
+  ERROR_MESSAGE,
+  type remoteAgentCustomPresetItem
+} from '@/constants'
 import { cn } from '@/lib/utils'
 import { retrievePresetById } from '@/services/agent'
 import { useAgentSettingsStore, useGlobalStore, useRTCStore } from '@/store'
@@ -70,7 +74,7 @@ export const Presets = (props: { className?: string }) => {
   }, [customPresets, disabledPresetNameList])
 
   return (
-    <div className={cn('flex flex-col gap-3', className)}>
+    <div className={cn('flex flex-1 flex-col gap-3', className)}>
       <ul className={cn('flex flex-col gap-3')}>
         {presets.map((preset) => (
           <li key={`presets-li-${preset.name}`}>
@@ -197,7 +201,7 @@ export const Presets = (props: { className?: string }) => {
           </ul>
         </>
       )}
-      <RetrieveCustomPreset />
+      <RetrieveCustomPreset className='mt-auto' />
     </div>
   )
 }
@@ -243,7 +247,14 @@ export const PresetCardItem = (props: {
     >
       <div className='relative'>
         <Avatar className='h-15 w-15'>
-          {avatar?.src && <AvatarImage src={avatar.src} alt={avatar.alt} />}
+          {avatar?.src ? (
+            <AvatarImage src={avatar.src} alt={avatar.alt} />
+          ) : (
+            <AvatarImage
+              src={AVATAR_PLACEHOLDER_IMAGE}
+              alt='avatar-placeholder'
+            />
+          )}
           <AvatarFallback>
             <PresetPlaceholderIcon />
           </AvatarFallback>
@@ -271,7 +282,7 @@ export const PresetCardItem = (props: {
   )
 }
 
-export const RetrieveCustomPreset = () => {
+export const RetrieveCustomPreset = (props: { className?: string }) => {
   const [input, setInput] = React.useState<string>('')
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
 
@@ -322,7 +333,7 @@ export const RetrieveCustomPreset = () => {
 
   return (
     <TooltipProvider>
-      <div className='flex flex-col gap-2'>
+      <div className={cn('flex flex-col gap-2', props.className)}>
         <Label className='font-semibold text-sm'>
           {t('title')}
           <Tooltip>

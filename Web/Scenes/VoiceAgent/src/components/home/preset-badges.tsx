@@ -2,7 +2,6 @@ import { useTranslations } from 'next-intl'
 import { PresetBadgeButton } from '@/components/button/preset-badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { MOCK_PRESET_LIST } from '@/constants'
 import { cn } from '@/lib/utils'
 import {
   useAgentSettingsStore,
@@ -12,27 +11,9 @@ import {
 
 export const PresetBadges = (props: { className?: string }) => {
   const { accountUid } = useUserInfoStore()
-  const t = useTranslations()
 
   if (!accountUid) {
-    return (
-      <BlockWrapper className={cn('relative', props.className)}>
-        <div className='absolute top-0 left-0 z-1 h-full w-full backdrop-blur' />
-        <div className='flex flex-col items-center gap-5'>
-          <p className='font-bold text-xl'>{t('mock.preset.title')}</p>
-          <p className='text-icontext-hover'>{t('mock.preset.description')}</p>
-        </div>
-        <BadgesWrapper>
-          {MOCK_PRESET_LIST.map((preset) => (
-            <li key={preset.id}>
-              <PresetBadgeButton>
-                <span>{t(preset.transKey)}</span>
-              </PresetBadgeButton>
-            </li>
-          ))}
-        </BadgesWrapper>
-      </BlockWrapper>
-    )
+    return null
   }
 
   return <PresetBadgesList className={cn(props.className)} />
@@ -149,7 +130,7 @@ export const BlockWrapper = (props: {
       className={cn(
         'flex flex-col items-center gap-16 text-icontext',
         'w-full',
-        'mb-21 py-4',
+        'py-4',
         props.className
       )}
       style={props.style}

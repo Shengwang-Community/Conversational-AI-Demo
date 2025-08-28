@@ -26,30 +26,4 @@ export const POLICY_LINK = isCN
 export * from '@/constants/agent/schema'
 
 export const DEFAULT_AVATAR_DOM_ID = 'agent-avatar-player'
-
-export const MOCK_PRESET_LIST = [
-  {
-    id: 'preset-1',
-    transKey: 'mock.preset.mock-1'
-  },
-  {
-    id: 'preset-2',
-    transKey: 'mock.preset.mock-2'
-  },
-  {
-    id: 'preset-3',
-    transKey: 'mock.preset.mock-3'
-  },
-  {
-    id: 'preset-4',
-    transKey: 'mock.preset.mock-4'
-  },
-  {
-    id: 'preset-5',
-    transKey: 'mock.preset.mock-5'
-  },
-  {
-    id: 'preset-6',
-    transKey: 'mock.preset.mock-6'
-  }
-]
+export const AVATAR_PLACEHOLDER_IMAGE = '/img/avatar-placeholder.png'

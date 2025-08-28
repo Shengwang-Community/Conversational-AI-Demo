@@ -129,14 +129,14 @@
     "greeting": {
       "hi": "你好，",
       "greeting1": "人类",
-      "greeting2": "欢迎体验声网实时对话式AI引擎",
+      "greeting2": "欢迎体验声网对话式 AI 引擎",
       "greeting3": "秒应智答，零滞畅聊",
       "connecting": "我在连接中...",
       "connected": "我已加入",
       "speakLoudly": "请你大声跟我说话，以便我更好地和你沟通",
       "failed": "我加入失败，请晚点再试"
     },
-    "getStart": "连接 AI 引擎",
+    "getStart": "连接对话式 AI 引擎",
     "subtitle": "字幕",
     "enableSubtitle": "打开字幕",
     "disableSubtitle": "关闭字幕",
