@@ -5,6 +5,7 @@ import { loginResSchema } from '@/app/api/sso/login/_utils'
 import { localResSchema } from '@/app/api/token/utils'
 import {
   API_AGENT,
+  API_AGENT_CUSTOM_PRESET,
   API_AGENT_PING,
   API_AGENT_PRESETS,
   API_AGENT_STOP,
@@ -18,6 +19,7 @@ import {
   ERROR_MESSAGE,
   localOpensourceStartAgentPropertiesSchema,
   localStartAgentPropertiesSchema,
+  remoteAgentCustomPresetItem,
   remoteAgentPingReqSchema,
   remoteAgentStartRespDataDevSchema,
   remoteAgentStartRespDataSchema,
@@ -373,4 +375,24 @@ export const uploadImage = async ({
     throw new Error('Image upload failed')
   }
   return imgObjectStorageUrl
+}
+
+export const retrievePresetById = async (id: string) => {
+  const url = `${API_AGENT_CUSTOM_PRESET}?customPresetIds=${id}`
+  const resp = await fetchWithTimeout(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${Cookies.get('token')}`
+    }
+  })
+  const respData = await resp?.json()
+  if (respData.code === ERROR_CODE.PRESET_DEPRECATED) {
+    // Preset is offline
+    throw new Error(ERROR_MESSAGE.PRESET_DEPRECATED)
+  }
+  const remoteRespSchema = basicRemoteResSchema.extend({
+    data: z.array(remoteAgentCustomPresetItem)
+  })
+  const remoteResp = remoteRespSchema.parse(respData)
+  return remoteResp.data
 }

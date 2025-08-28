@@ -47,14 +47,14 @@ import {
 import { ConversationalAIAPI } from '@/conversational-ai-api'
 import { RTCHelper } from '@/conversational-ai-api/helper/rtc'
 import { RTMHelper } from '@/conversational-ai-api/helper/rtm'
-import { LegacyMessageHelper } from '@/conversational-ai-api/helper/subtitle'
+import { LegacyMessageHelper } from '@/conversational-ai-api/helper/transcript'
 import {
   EAgentState,
   EConversationalAIAPIEvents,
   ERTCCustomEvents,
   ERTCEvents,
   type IAgentTranscription,
-  type ISubtitleHelperItem,
+  type ITranscriptHelperItem,
   type IUserTranscription,
   type TStateChangeEvent
 } from '@/conversational-ai-api/type'
@@ -80,7 +80,7 @@ import {
   type IUserTracks
 } from '@/type/rtc'
 
-export default function AgentControl() {
+export default function AgentControl(props: { className?: string }) {
   const [audioTrack, setAudioTrack] = React.useState<IMicrophoneAudioTrack>()
   const [disableHangUp, setDisableHangUp] = React.useState<boolean>(false)
 
@@ -108,6 +108,7 @@ export default function AgentControl() {
   const {
     settings,
     presets,
+    transcriptionRenderMode,
     conversationDuration,
     setConversationTimerEndTimestamp
   } = useAgentSettingsStore()
@@ -159,8 +160,8 @@ export default function AgentControl() {
       const conversationalAIAPI = ConversationalAIAPI.init({
         rtcEngine: rtcHelper.client,
         rtmEngine,
-        enableLog: isDevMode || process.env.NODE_ENV === 'development'
-        // renderMode: ESubtitleHelperMode,
+        enableLog: isDevMode || process.env.NODE_ENV === 'development',
+        renderMode: transcriptionRenderMode
       })
 
       rtcHelper.on(ERTCCustomEvents.LOCAL_TRACKS_CHANGED, onLocalTracksChanged)
@@ -585,7 +586,7 @@ export default function AgentControl() {
   }
 
   const onTextChanged = (
-    history: ISubtitleHelperItem<
+    history: ITranscriptHelperItem<
       Partial<IUserTranscription | IAgentTranscription>
     >[]
   ) => {
@@ -693,7 +694,7 @@ export default function AgentControl() {
       )} */}
 
       {/* Agent Control Content */}
-      <div className={cn('flex flex-col items-center gap-6')}>
+      <div className={cn('flex flex-col items-center gap-6', props.className)}>
         {!showActionMemo && (
           <AgentActionStart
             disabled={accountUid ? !isFormValid : false}

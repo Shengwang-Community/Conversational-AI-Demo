@@ -93,29 +93,30 @@ export function GreetingTypewriterCN() {
   }
 
   return (
-    <>
-      <Typewriter
-        options={{ cursor: '', delay: 'natural' }}
-        onInit={(typewriter) => {
-          typewriterRef.current = typewriter
-          typewriter
-            .typeString(tAgentGreeting('hi'))
-            .typeString(tAgentGreeting('greeting1'))
-            .pauseFor(3000)
-            .deleteChars(2)
-            .typeString(tAgentGreeting('greeting2'))
-            .pauseFor(3000)
-            .deleteAll(1)
-            .typeString(tAgentGreeting('greeting3'))
-            .pauseFor(3000)
-            .deleteAll(1)
-            .typeString(tAgentGreeting('hi'))
-            .pauseFor(1000)
-            .typeString(tAgentGreeting('greeting1'))
-            .start()
-        }}
-      />
-    </>
+    <Typewriter
+      options={{ cursor: '', delay: 'natural' }}
+      onInit={(typewriter) => {
+        typewriterRef.current = typewriter
+        typewriter
+          // .typeString(tAgentGreeting('hi'))
+          // .typeString(tAgentGreeting('greeting1'))
+          // .pauseFor(3000)
+          // .deleteChars(2)
+          .typeString(tAgentGreeting('greeting2'))
+          .pauseFor(3000)
+          .deleteAll(1)
+          .typeString(tAgentGreeting('greeting3'))
+          .pauseFor(3000)
+          .deleteAll(1)
+          .typeString(tAgentGreeting('greeting2'))
+          .pauseFor(3000)
+          // .deleteAll(1)
+          // .typeString(tAgentGreeting('hi'))
+          // .pauseFor(1000)
+          // .typeString(tAgentGreeting('greeting1'))
+          .start()
+      }}
+    />
   )
 }
 
@@ -202,26 +203,24 @@ export function GreetingTypewriterEN() {
   }
 
   return (
-    <>
-      <Typewriter
-        options={{ cursor: '', delay: 20 }}
-        onInit={(typewriter) => {
-          typewriterRef.current = typewriter
-          typewriter
-            .typeString(tAgentGreeting('greeting1'))
-            .pauseFor(3000)
-            .deleteAll(1)
-            .typeString(tAgentGreeting('greeting2'))
-            .pauseFor(3000)
-            .deleteAll(1)
-            .typeString(tAgentGreeting('greeting3'))
-            .pauseFor(3000)
-            .deleteAll(1)
-            .typeString(tAgentGreeting('greeting1'))
-            .start()
-        }}
-      />
-    </>
+    <Typewriter
+      options={{ cursor: '', delay: 20 }}
+      onInit={(typewriter) => {
+        typewriterRef.current = typewriter
+        typewriter
+          .typeString(tAgentGreeting('greeting1'))
+          .pauseFor(3000)
+          .deleteAll(1)
+          .typeString(tAgentGreeting('greeting2'))
+          .pauseFor(3000)
+          .deleteAll(1)
+          .typeString(tAgentGreeting('greeting3'))
+          .pauseFor(3000)
+          .deleteAll(1)
+          .typeString(tAgentGreeting('greeting1'))
+          .start()
+      }}
+    />
   )
 }
 

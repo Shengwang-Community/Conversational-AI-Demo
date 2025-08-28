@@ -1,8 +1,8 @@
 import type { UID } from 'agora-rtc-sdk-ng'
 import {
   EConversationalAIAPIEvents,
-  ESubtitleHelperMode as EMessageServiceMode,
-  type ISubtitleHelperItem as IMessageServiceItem
+  ETranscriptHelperMode as EMessageServiceMode,
+  type ITranscriptHelperItem as IMessageServiceItem
 } from '@/conversational-ai-api/type'
 import { EventHelper } from '@/conversational-ai-api/utils/event'
 import { logger } from '@/lib/logger'
@@ -24,13 +24,13 @@ export type TDataChunkMessageV1 = {
   is_final: boolean
   /** Int user ID - 0 for AI agent, non-zero for corresponding user int uid */
   stream_id: number
-  /** String unique identifier for each subtitle message */
+  /** String unique identifier for each transcript message */
   message_id: string
   /** String data type, defaults to 'transcribe' */
   data_type: string
-  /** Int timestamp when subtitle was generated */
+  /** Int timestamp when transcript was generated */
   text_ts: number
-  /** String subtitle content */
+  /** String transcript content */
   text: string
 }
 

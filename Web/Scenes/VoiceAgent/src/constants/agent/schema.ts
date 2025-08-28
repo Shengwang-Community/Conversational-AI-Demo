@@ -65,11 +65,14 @@ export const agentPresetSchema = z.object({
   avatar_ids_by_lang: z
     .record(z.string(), z.array(agentPresetAvatarSchema))
     .optional(),
-  is_support_vision: z.boolean().optional()
+  is_support_vision: z.boolean().optional(),
+  avatar_url: z.string().optional(),
+  description: z.string().optional()
 })
 
 export const publicAgentSettingSchema = z.object({
   preset_name: z.string().describe('preset-name'),
+  preset_type: z.string().optional().describe('preset-type'),
   asr: z
     .object({
       language: z
@@ -77,7 +80,8 @@ export const publicAgentSettingSchema = z.object({
         .default(isCN ? EDefaultLanguage.ZH_CN : EDefaultLanguage.EN_US)
         .describe('asr-language')
     })
-    .describe('ASR'),
+    .describe('ASR')
+    .optional(),
   advanced_features: agentAdvancedFeaturesSchema,
   llm: z
     .object({
@@ -91,6 +95,7 @@ export const publicAgentSettingSchema = z.object({
         .enum(['default'])
         .default('default')
         .describe('audio_scenario')
+        .optional()
     })
     .describe('parameters'),
   // FOR dev mode
@@ -145,6 +150,7 @@ export const opensourceAgentSettingSchema = z.object({
         .enum(['default'])
         .default('default')
         .describe('audio_scenario')
+        .optional()
     })
     .describe('Parameters')
 })
