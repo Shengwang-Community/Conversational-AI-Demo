@@ -9,9 +9,30 @@ import type {
 } from 'agora-rtc-sdk-ng'
 import type { RTMEvents } from 'agora-rtm'
 
-export enum ESubtitleHelperMode {
+/**
+ * Transcript modes for the Conversational AI API
+ *
+ * @description
+ * Defines the different modes available for transcript processing and display.
+ * Used to determine how transcription data should be handled and presented.
+ *
+ * @remarks
+ * - All modes are string literals for easy serialization
+ * - Modes determine the granularity of transcript processing
+ * - TEXT should be used as a fallback for unrecognized modes
+ *
+ * Values include:
+ * - TEXT: Plain text mode for simple transcript display
+ * - WORD: Word-level processing with individual word tracking
+ * - CHUNK: Chunk-based processing for grouped text segments
+ * - UNKNOWN: Initial mode for unrecognized transcript types
+ *
+ * @since 1.6.0
+ */
+export enum ETranscriptHelperMode {
   TEXT = 'text',
   WORD = 'word',
+  CHUNK = 'chunk',
   UNKNOWN = 'unknown'
 }
 
@@ -244,7 +265,7 @@ export type TStateChangeEvent = {
  * @see {@link TStateChangeEvent} for state change event structure
  * @see {@link TAgentMetric} for agent metrics structure
  * @see {@link TModuleError} for error structure
- * @see {@link ISubtitleHelperItem} for transcription item structure
+ * @see {@link ITranscriptHelperItem} for transcription item structure
  * @see {@link TMessageReceipt} for message receipt structure
  * @see {@link EChatMessageType} for message type enumeration
  */
@@ -269,7 +290,7 @@ export interface IConversationalAIAPIEventHandlers {
     error: TModuleError
   ) => void
   [EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED]: (
-    transcription: ISubtitleHelperItem<
+    transcription: ITranscriptHelperItem<
       Partial<IUserTranscription | IAgentTranscription>
     >[]
   ) => void
@@ -334,7 +355,7 @@ export type TDataChunkMessageWord = {
   stable: boolean
 }
 
-export type TSubtitleHelperObjectWord = TDataChunkMessageWord & {
+export type TTranscriptHelperObjectWord = TDataChunkMessageWord & {
   word_status?: ETurnStatus
 }
 
@@ -437,16 +458,16 @@ export interface IPresenceState
 export type TQueueItem = {
   turn_id: number
   text: string
-  words: TSubtitleHelperObjectWord[]
+  words: TTranscriptHelperObjectWord[]
   status: ETurnStatus
   stream_id: number
   uid: string
 }
 
 /**
- * Interface for subtitle helper item
+ * Interface for transcript helper item
  *
- * Defines the data structure for a single subtitle item in the subtitle system. Contains basic subtitle information such as user ID, stream ID, turn ID, timestamp, text content, status, and metadata.
+ * Defines the data structure for a single transcript item in the transcript system. Contains basic transcript information such as user ID, stream ID, turn ID, timestamp, text content, status, and metadata.
  *
  * @remarks
  * - This interface supports generics, allowing different types of metadata as needed
@@ -456,14 +477,14 @@ export type TQueueItem = {
  * @param uid - Unique identifier for the user
  * @param stream_id - Stream identifier
  * @param turn_id - Turn identifier in the conversation
- * @param _time - Timestamp of the subtitle (in milliseconds)
- * @param text - Subtitle text content
- * @param status - Current status of the subtitle item
+ * @param _time - Timestamp of the transcript (in milliseconds)
+ * @param text - Transcript text content
+ * @param status - Current status of the transcript item
  * @param metadata - Additional metadata information
  *
  * @since 1.6.0
  */
-export interface ISubtitleHelperItem<T> {
+export interface ITranscriptHelperItem<T> {
   uid: string
   stream_id: number
   turn_id: number

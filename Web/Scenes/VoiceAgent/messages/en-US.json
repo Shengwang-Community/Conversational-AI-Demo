@@ -52,7 +52,19 @@
     "moreAction": "More Actions"
   },
   "settings": {
-    "title": "Agent Settings",
+    "tab": {
+      "agent": "Agent",
+      "settings": "Settings"
+    },
+    "custom_agent": {
+      "title": "Custom Agent",
+      "description": "Please contact Agora staff to get a custom agent ID",
+      "placeholder": "Enter agent ID to retrieve",
+      "retrieve_button": "Retrieve",
+      "message_success": "Agent retrieved successfully",
+      "message_error": "Failed to retrieve agent. No such agent in the database.",
+      "message_sunset": "Agent has been taken offline. Please contact Agora staff."
+    },
     "save": "Save",
     "options": {
       "custom": "Custom",
@@ -79,19 +91,38 @@
       },
       "enable_aivad": {
         "title": "Intelligent Interruption Handling",
-        "description": ""
+        "description": "Intelligent interruption is Agora's advanced interruption feature, allowing the AI agent to temporarily pause its reasoning to perform other tasks, and then resume from where it left off before the interruption."
       }
     },
     "standard_avatar": {
-      "title": "Avatar",
+      "title": "AI Avatar",
       "close": "Close",
       "dialog": {
-        "title": "Changing Preset Requires Reconfiguring Avatar",
-        "description": "The preset is related to the gender of the avatar. Please reconfigure the avatar after changing the preset.",
+        "title": "AI Avatar Will Be Reset",
+        "description": "Reconfigure AI avatar after changing preset/language.",
         "confirm": "Confirm Change",
         "cancel": "Cancel",
         "do-not-ask-again": "Do not show again"
       }
+    },
+    "transcription": {
+      "render-mode": "Subtitle Render Mode",
+      "word": {
+        "title": "Word Mode",
+        "description": "Word-by-word rendering, subtitles synchronized with speech"
+      },
+      "chunk": {
+        "title": "Text - Sync Mode",
+        "description": "Text mode with subtitles and speech displayed synchronously"
+      },
+      "text": {
+        "title": "Text - Subtitle First Mode",
+        "description": "Subtitles rendered all at once"
+      }
+    },
+    "voice-lock": {
+      "title": "Voice Lock",
+      "description": "Voice Lock (TODO)"
     }
   },
   "agent": {
@@ -200,5 +231,20 @@
     "max-image-dimensions": "Image dimensions must not exceed 2048x2048 pixels.",
     "upload-image-tooltip": "Image size up to 5MB, dimensions under 2048x2048. Supports JPG, PNG, WEBP, JPEG formats.",
     "avatar-busy-error": "All avatars are busy now. Please try again later."
+  },
+  "preset": {
+    "more": "More+"
+  },
+  "mock": {
+    "preset": {
+      "title": "Smart Assistant",
+      "description": "Universal AI assistant that you can chat with about anything you want to know",
+      "mock-1": "Smart Assistant",
+      "mock-2": "Customer Service - Online Call",
+      "mock-3": "English Practice Partner",
+      "mock-4": "Emotional Companion - Male",
+      "mock-5": "Emotional Companion - Female",
+      "mock-6": "More+"
+    }
   }
 }

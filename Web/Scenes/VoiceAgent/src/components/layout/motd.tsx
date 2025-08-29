@@ -24,6 +24,10 @@ const packageMetaList = [
     value: packageInfo.version
   },
   {
+    name: 'Hash',
+    value: process.env.NEXT_PUBLIC_COMMIT_SHA
+  },
+  {
     name: 'agora-rtc-sdk-ng',
     value: packageInfo?.dependencies?.['agora-rtc-sdk-ng']
   },
