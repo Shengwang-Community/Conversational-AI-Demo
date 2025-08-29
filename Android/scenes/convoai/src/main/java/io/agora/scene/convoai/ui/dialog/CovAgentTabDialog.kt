@@ -26,7 +26,6 @@ import io.agora.scene.convoai.ui.fragment.CovAgentSettingsFragment
 class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
 
     private var onDismissCallback: (() -> Unit)? = null
-    private var agentState: AgentConnectionState? = null
     private var initialTab: Int = TAB_AGENT_SETTINGS
 
     private var tabWidth: Int = 0
@@ -39,13 +38,11 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
         const val TAB_CHANNEL_INFO = 1
 
         fun newInstance(
-            agentState: AgentConnectionState?,
             initialTab: Int = TAB_AGENT_SETTINGS,
             onDismiss: (() -> Unit)? = null
         ): CovAgentTabDialog {
             return CovAgentTabDialog().apply {
                 this.onDismissCallback = onDismiss
-                this.agentState = agentState
                 this.initialTab = initialTab
             }
         }
@@ -262,11 +259,6 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
         return (binding?.vpContent?.adapter as? InfoTabPagerAdapter)?.getFragmentAt(TAB_AGENT_SETTINGS) as? CovAgentSettingsFragment
     }
 
-    fun updateConnectStatus(state: AgentConnectionState) {
-        getChannelInfoFragment()?.updateConnectStatus(state)
-        getAgentSettingsFragment()?.updateConnectStatus(state)
-    }
-
     /**
      * ViewPager2 adapter for tab fragments
      */
@@ -278,8 +270,8 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
 
         override fun createFragment(position: Int): Fragment {
             val fragment = when (position) {
-                TAB_AGENT_SETTINGS -> CovAgentSettingsFragment.newInstance(agentState)
-                TAB_CHANNEL_INFO -> CovAgentInfoFragment.newInstance(agentState)
+                TAB_AGENT_SETTINGS -> CovAgentSettingsFragment.newInstance()
+                TAB_CHANNEL_INFO -> CovAgentInfoFragment.newInstance()
                 else -> throw IllegalArgumentException("Invalid position: $position")
             }
             fragments[position] = fragment

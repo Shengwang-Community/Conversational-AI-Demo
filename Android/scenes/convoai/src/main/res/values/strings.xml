@@ -146,11 +146,11 @@
     <string name="cov_voiceprint_recognition">声纹锁定</string>
     <string name="cov_voiceprint_close">关闭</string>
     <string name="cov_voiceprint_close_tips">若不启用，智能体可能被周围其他人的声音打断或干扰。</string>
-    <string name="cov_voiceprint_senseless">无感模式</string>
-    <string name="cov_voiceprint_senseless_tips">AI 将智能学习与智能体会话的用户声纹，自动屏蔽其他用户声纹。</string>
-    <string name="cov_voiceprint_sensible">有感模式</string>
+    <string name="cov_voiceprint_seamless">无感模式</string>
+    <string name="cov_voiceprint_seamless_tips">AI 将智能学习与智能体会话的用户声纹，自动屏蔽其他用户声纹。</string>
+    <string name="cov_voiceprint_personalized">有感模式</string>
+    <string name="cov_voiceprint_personalized_tips">录入一段你的声纹，智能体将自动屏蔽其它声音</string>
     <string name="cov_voiceprint_has">本机有声纹录入</string>
-    <string name="cov_voiceprint_sensible_tips">录入一段你的声纹，智能体将自动屏蔽其它声音</string>
     <string name="cov_voiceprint_create_mine_voice">创建我的声纹</string>
     <string name="cov_voiceprint_recording">创建</string>
     <string name="cov_voiceprint_re_recording">重新录入</string>
@@ -188,4 +188,9 @@
     <string name="cov_user_agreement_text">《用户协议》</string>
     <string name="cov_privacy_policy_text">《隐私政策的所有内容》</string>
     <string name="cov_service_info">服务信息</string>
+    <string name="cov_agent_service_info">对话 AI 服务状态</string>
+    <string name="cov_agent_not_activated">未生效</string>
+    <string name="cov_agent_activating">生效中</string>
+    <string name="cov_agent_sensitive">有感</string>
+    <string name="cov_agent_insensitive">无感</string>
 </resources>

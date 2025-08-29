@@ -230,7 +230,7 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
                 dismiss()
             }
 
-            mode == VoiceprintMode.MANUAL && CovAgentManager.voiceprintInfo == null -> {
+            mode == VoiceprintMode.PERSONALIZED && CovAgentManager.voiceprintInfo == null -> {
                 showNoVoiceprintDialog {
                     if (it) dismiss()
                 }
@@ -275,7 +275,7 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
             selectedMode = mode
             updateCreateVoiceprintVisibility(mode)
 
-            if (selectedMode == VoiceprintMode.MANUAL) {
+            if (selectedMode == VoiceprintMode.PERSONALIZED) {
                 voiceprintViewModel.checkVoiceprintUpdate()
             }
         }
@@ -393,7 +393,7 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
     private fun updateCreateVoiceprintVisibility(mode: VoiceprintMode) {
         mBinding?.layoutCreateVoiceprint?.let { createLayout ->
             when (mode) {
-                VoiceprintMode.MANUAL -> {
+                VoiceprintMode.PERSONALIZED -> {
                     if (!createLayout.isVisible) {
                         showCreateVoiceprintWithAnimation()
                     }
@@ -498,17 +498,24 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
             fun bind(modeItem: VoiceprintModeItem, isSelected: Boolean) {
                 binding.apply {
                     val mode = modeItem.mode
-                    tvTitle.setText(mode.title)
-                    tvDescription.setText(mode.description)
-
+                    when(mode){
+                        VoiceprintMode.OFF -> {
+                            tvTitle.setText(R.string.cov_voiceprint_close)
+                            tvDescription.setText(R.string.cov_voiceprint_close_tips)
+                        }
+                        VoiceprintMode.SEAMLESS -> {
+                            tvTitle.setText(R.string.cov_voiceprint_seamless)
+                            tvDescription.setText(R.string.cov_voiceprint_seamless_tips)
+                        }
+                        VoiceprintMode.PERSONALIZED -> {
+                            tvTitle.setText(R.string.cov_voiceprint_personalized)
+                            tvDescription.setText(R.string.cov_voiceprint_personalized_tips)
+                        }
+                    }
                     // Set checkbox selection state
                     ivCheckbox.isSelected = isSelected
 
-                    if (mode == VoiceprintMode.MANUAL && CovAgentManager.voiceprintInfo != null) {
-                        tvVoiceprintTag.isVisible = true
-                    } else {
-                        tvVoiceprintTag.isVisible = false
-                    }
+                    tvVoiceprintTag.isVisible = mode == VoiceprintMode.PERSONALIZED && CovAgentManager.voiceprintInfo != null
 
                     // Set click listener
                     card.setOnClickListener(object : OnFastClickListener() {

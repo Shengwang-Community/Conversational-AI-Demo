@@ -7,6 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import io.agora.scene.common.ui.BaseFragment
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.util.LogUploader
@@ -16,29 +18,33 @@ import io.agora.scene.convoai.R
 import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
+import io.agora.scene.convoai.convoaiApi.VoiceprintStatus
 import io.agora.scene.convoai.databinding.CovAgentInfoFragmentBinding
 import io.agora.scene.convoai.rtc.CovRtcManager
+import io.agora.scene.convoai.ui.ActivateStatus
+import io.agora.scene.convoai.ui.ConnectionStatus
+import io.agora.scene.convoai.ui.CovLivingViewModel
+import io.agora.scene.convoai.ui.VoiceprintUIStatus
+import io.agora.scene.convoai.ui.vm.CovAgentInfoViewModel
+import kotlinx.coroutines.launch
 
 /**
  * Fragment for Channel Info tab
  * Displays channel-related information and status
+ * Uses ViewModel for reactive data management
  */
 class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
 
     companion object {
         private const val TAG = "CovAgentInfoFragment"
-        private const val ARG_AGENT_STATE = "arg_agent_state"
 
-        fun newInstance(state: AgentConnectionState?): CovAgentInfoFragment {
-            val fragment = CovAgentInfoFragment()
-            val args = Bundle()
-            args.putSerializable(ARG_AGENT_STATE, state)
-            fragment.arguments = args
-            return fragment
+        fun newInstance(): CovAgentInfoFragment {
+            return CovAgentInfoFragment()
         }
     }
 
-    private var connectionState: AgentConnectionState = AgentConnectionState.IDLE
+    private val livingViewModel: CovLivingViewModel by activityViewModels()
+    private val agentInfoViewModel: CovAgentInfoViewModel by activityViewModels()
 
     private var uploadAnimation: Animation? = null
 
@@ -49,13 +55,6 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
         return CovAgentInfoFragmentBinding.inflate(inflater, container, false)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            connectionState = it.getSerializable(ARG_AGENT_STATE) as? AgentConnectionState ?: AgentConnectionState.IDLE
-        }
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -63,8 +62,9 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
             uploadAnimation = AnimationUtils.loadAnimation(cxt, R.anim.cov_rotate_loading)
         }
 
-        // Initialize channel info UI components
+        // Setup UI and observe ViewModel
         setupChannelInfo()
+        observeViewModel()
     }
 
     override fun onHandleOnBackPressed() {
@@ -102,67 +102,121 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
                     }, 2000L)
                 }
             })
-            updateView()
-            updateUploadingStatus(disable = connectionState != AgentConnectionState.CONNECTED)
         }
     }
 
-    fun updateConnectStatus(state: AgentConnectionState) {
-        this.connectionState = state
-        updateView()
-        updateUploadingStatus(disable = connectionState != AgentConnectionState.CONNECTED)
-    }
+    /**
+     * Observe ViewModel data changes using StateFlow
+     */
+    private fun observeViewModel() {
+        // Observe all state changes in a single coroutine
+        lifecycleScope.launch {
+            livingViewModel.connectionState.collect { state ->
+                agentInfoViewModel.updateConnectionState(state)
+                updateUploadingStatus(disable = state != AgentConnectionState.CONNECTED)
+            }
+        }
 
-    private fun updateView() {
-        val context = context ?: return
-        mBinding?.apply {
-            when (connectionState) {
-                AgentConnectionState.IDLE, AgentConnectionState.ERROR -> {
-                    mtvRoomStatus.text = getString(R.string.cov_info_your_network_disconnected)
-                    mtvRoomStatus.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_red6))
+        lifecycleScope.launch {
+            livingViewModel.voiceprintStateChangeEvent.collect { voicePrint ->
+                agentInfoViewModel.updateVoiceprintState(voicePrint?.status ?: VoiceprintStatus.UNKNOWN)
+            }
+        }
 
-                    mtvAgentStatus.text = getString(R.string.cov_info_your_network_disconnected)
-                    mtvAgentStatus.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_red6))
+        lifecycleScope.launch {
+            // Collect service status
+            agentInfoViewModel.voiceprintStatus.collect { status ->
+                mBinding?.mtvVoiceprintLockStatus?.apply {
+                    when (status) {
+                        VoiceprintUIStatus.NotActivated -> {
+                            text = context.getString(R.string.cov_agent_not_activated)
+                            setTextColor(context.getColor(io.agora.scene.common.R.color.ai_red6))
+                        }
 
-                    mtvAgentId.text = getString(R.string.cov_info_empty)
-                    mtvRoomId.text = getString(R.string.cov_info_empty)
-                    mtvUidValue.text = getString(R.string.cov_info_empty)
+                        VoiceprintUIStatus.Seamless -> {
+                            text = context.getString(R.string.cov_agent_insensitive)
+                            setTextColor(context.getColor(io.agora.scene.common.R.color.ai_green6))
+                        }
+
+                        VoiceprintUIStatus.Personalized -> {
+                            text = context.getString(R.string.cov_agent_sensitive)
+                            setTextColor(context.getColor(io.agora.scene.common.R.color.ai_green6))
+                        }
+                    }
                 }
+            }
+        }
 
-                AgentConnectionState.CONNECTING -> {
-                    mtvRoomStatus.text = getString(R.string.cov_info_your_network_disconnected)
-                    mtvRoomStatus.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_red6))
+        lifecycleScope.launch {
+            // Collect AI VAD status
+            agentInfoViewModel.aiVadStatus.collect { status ->
+                mBinding?.mtvAiVadStatus?.apply {
+                    when (status) {
+                        ActivateStatus.NotActivated -> {
+                            text = context.getString(R.string.cov_agent_not_activated)
+                            setTextColor(context.getColor(io.agora.scene.common.R.color.ai_red6))
+                        }
 
-                    mtvAgentStatus.text = getString(R.string.cov_info_your_network_disconnected)
-                    mtvAgentStatus.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_red6))
-
-                    mtvAgentId.text = getString(R.string.cov_info_empty)
-                    mtvRoomId.text = CovAgentManager.channelName
-                    mtvUidValue.text = CovAgentManager.uid.toString()
+                        ActivateStatus.Activating -> {
+                            text = context.getString(R.string.cov_agent_activating)
+                            setTextColor(context.getColor(io.agora.scene.common.R.color.ai_green6))
+                        }
+                    }
                 }
+            }
+        }
 
-                AgentConnectionState.CONNECTED -> {
-                    mtvRoomStatus.text = getString(R.string.cov_info_agent_connected)
-                    mtvRoomStatus.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_green6))
-
-                    mtvAgentStatus.text = getString(R.string.cov_info_agent_connected)
-                    mtvAgentStatus.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_green6))
-
-                    mtvAgentId.text = CovAgentApiManager.agentId ?: getString(R.string.cov_info_empty)
-                    mtvRoomId.text = CovAgentManager.channelName
-                    mtvUidValue.text = CovAgentManager.uid.toString()
+        lifecycleScope.launch {
+            agentInfoViewModel.agentConnectionState.collect { state ->
+                mBinding?.mtvAgentStatus?.apply {
+                    if (state == ConnectionStatus.Connected) {
+                        text = getString(R.string.cov_info_agent_connected)
+                        setTextColor(context.getColor(io.agora.scene.common.R.color.ai_green6))
+                    } else {
+                        text = getString(R.string.cov_info_your_network_disconnected)
+                        setTextColor(context.getColor(io.agora.scene.common.R.color.ai_red6))
+                    }
                 }
+            }
+        }
 
-                AgentConnectionState.CONNECTED_INTERRUPT -> {
-                    mtvRoomStatus.text = getString(R.string.cov_info_your_network_disconnected)
-                    mtvRoomStatus.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_red6))
+        lifecycleScope.launch {
+            agentInfoViewModel.roomConnectionState.collect { state ->
+                mBinding?.mtvRoomStatus?.apply {
+                    if (state == ConnectionStatus.Connected) {
+                        text = getString(R.string.cov_info_agent_connected)
+                        setTextColor(context.getColor(io.agora.scene.common.R.color.ai_green6))
+                    } else {
+                        text = getString(R.string.cov_info_your_network_disconnected)
+                        setTextColor(context.getColor(io.agora.scene.common.R.color.ai_red6))
+                    }
+                }
+            }
+        }
 
-                    mtvAgentStatus.text = getString(R.string.cov_info_your_network_disconnected)
-                    mtvAgentStatus.setTextColor(context.getColor(io.agora.scene.common.R.color.ai_red6))
+        lifecycleScope.launch {
+            // Collect agent information
+            agentInfoViewModel.agentId.collect { agentId ->
+                mBinding?.mtvAgentId?.apply {
+                    text = agentId
+                }
+            }
+        }
 
-                    mtvAgentId.text = CovAgentApiManager.agentId ?: getString(R.string.cov_info_empty)
-                    mtvRoomId.text = CovAgentManager.channelName
-                    mtvUidValue.text = CovAgentManager.uid.toString()
+        lifecycleScope.launch {
+            // Collect room information
+            agentInfoViewModel.roomId.collect { roomId ->
+                mBinding?.mtvRoomId?.apply {
+                    text = roomId
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            // Collect UID information
+            agentInfoViewModel.uid.collect { uid ->
+                mBinding?.mtvUidValue?.apply {
+                    text = uid
                 }
             }
         }
@@ -197,17 +251,6 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
         context?.apply {
             copyToClipboard(text)
             ToastUtil.show(getString(R.string.cov_copy_succeed))
-        }
-    }
-
-    /**
-     * Update channel information
-     * Can be called from parent dialog to refresh data
-     */
-    fun updateChannelInfo() {
-        mBinding?.apply {
-            // TODO: Update channel information display
-            // This method can be called when data changes
         }
     }
 }

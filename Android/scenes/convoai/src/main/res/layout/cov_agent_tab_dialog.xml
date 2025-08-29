@@ -6,8 +6,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/bottom_dialog_bg"
-    android:layout_gravity="bottom"
-    android:paddingBottom="50dp">
+    android:layout_gravity="bottom">
 
     <!-- Header with tabs -->
     <FrameLayout

@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.CompoundButton
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.common.R
@@ -31,6 +32,7 @@ import io.agora.scene.convoai.ui.CovRenderMode
 import io.agora.scene.convoai.ui.CovTranscriptRender
 import io.agora.scene.convoai.ui.dialog.CovAvatarSelectorDialog
 import io.agora.scene.convoai.ui.voiceprint.CovVoiceprintLockDialog
+import kotlinx.coroutines.launch
 import kotlin.collections.indexOf
 
 /**
@@ -41,14 +43,9 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
 
     companion object {
         private const val TAG = "CovAgentSettingsFragment"
-        private const val ARG_AGENT_STATE = "arg_agent_state"
 
-        fun newInstance(state: AgentConnectionState?): CovAgentSettingsFragment {
-            val fragment = CovAgentSettingsFragment()
-            val args = Bundle()
-            args.putSerializable(ARG_AGENT_STATE, state)
-            fragment.arguments = args
-            return fragment
+        fun newInstance(): CovAgentSettingsFragment {
+            return CovAgentSettingsFragment()
         }
     }
 
@@ -63,17 +60,11 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         return CovAgentSettingsFragmentBinding.inflate(inflater, container, false)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            connectionState = it.getSerializable(ARG_AGENT_STATE) as? AgentConnectionState ?: AgentConnectionState.IDLE
-        }
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         setupAgentSettings()
+        observeViewModel()
     }
 
     override fun onHandleOnBackPressed() {
@@ -133,44 +124,49 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         updateVoiceprintSettings()
     }
 
+    private fun observeViewModel(){
+        lifecycleScope.launch {
+            livingViewModel.connectionState.collect { state ->
+                updatePageEnable()
+            }
+        }
+    }
 
     private fun updateBaseSettings() {
         mBinding?.apply {
             tvLanguageDetail.text = CovAgentManager.language?.language_name
             when (CovAgentManager.renderMode) {
-                CovRenderMode.WORD -> {
-                    tvRenderDetail.text = getString(io.agora.scene.convoai.R.string.cov_word_mode)
-                }
-                CovRenderMode.SYNC_TEXT -> {
-                    tvRenderDetail.text = getString(io.agora.scene.convoai.R.string.cov_text_sync_mode)
-                }
-                CovRenderMode.TEXT -> {
-                    tvRenderDetail.text = getString(io.agora.scene.convoai.R.string.cov_text_first_mode)
-                }
+                CovRenderMode.WORD -> tvRenderDetail.text = getString(io.agora.scene.convoai.R.string.cov_word_mode)
+                CovRenderMode.SYNC_TEXT -> tvRenderDetail.text =
+                    getString(io.agora.scene.convoai.R.string.cov_text_sync_mode)
+
+                CovRenderMode.TEXT -> tvRenderDetail.text =
+                    getString(io.agora.scene.convoai.R.string.cov_text_first_mode)
             }
         }
     }
 
-    private val isIdle get() = connectionState == AgentConnectionState.IDLE
+    private val isIdle get() = livingViewModel.connectionState.value == AgentConnectionState.IDLE
 
     // The non-English overseas version must disable AiVad.
-    private fun setAiVadBySelectLanguage() {
+    private fun setAiVadBySelectLanguage(userClick: Boolean = false) {
         mBinding?.apply {
-            if (CovAgentManager.getPreset()?.isIndependent == true) {
+            // Feature: TEN-1534
+            if (CovAgentManager.language?.aivad_supported == true) {
+                cbAiVad.isEnabled = isIdle
+                if (isIdle){
+                    val aiVadEnableDefault = (CovAgentManager.language?.aivad_enabled_by_default == true)
+                    if (userClick){
+                        CovAgentManager.enableAiVad = aiVadEnableDefault
+                    }
+                    cbAiVad.isChecked = CovAgentManager.enableAiVad
+                }
+            } else {
                 CovAgentManager.enableAiVad = false
                 cbAiVad.isChecked = false
                 cbAiVad.isEnabled = false
-            } else {
-                cbAiVad.isEnabled = isIdle
             }
         }
-    }
-
-    private var connectionState = AgentConnectionState.IDLE
-
-    fun updateConnectStatus(state: AgentConnectionState) {
-        this.connectionState = state
-        updatePageEnable()
     }
 
     private fun updatePageEnable() {
@@ -194,6 +190,12 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                 ivAvatarArrow.setColorFilter(
                     context.getColor(R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
                 )
+
+                clVoiceprintMode.isEnabled = true
+                tvVoiceprintDetail.setTextColor(context.getColor(R.color.ai_icontext1))
+                ivVoiceprintArrow.setColorFilter(
+                    context.getColor(R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
+                )
             }
         } else {
             mBinding?.apply {
@@ -212,6 +214,12 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                 clAvatar.isEnabled = false
                 tvAvatarDetail.setTextColor(context.getColor(R.color.ai_icontext4))
                 ivAvatarArrow.setColorFilter(
+                    context.getColor(R.color.ai_icontext4), PorterDuff.Mode.SRC_IN
+                )
+
+                clVoiceprintMode.isEnabled = false
+                tvVoiceprintDetail.setTextColor(context.getColor(R.color.ai_icontext4))
+                ivVoiceprintArrow.setColorFilter(
                     context.getColor(R.color.ai_icontext4), PorterDuff.Mode.SRC_IN
                 )
             }
@@ -305,7 +313,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         CovAgentManager.avatar = null
         livingViewModel.setAvatar(null)
         updateBaseSettings()
-        setAiVadBySelectLanguage()
+        setAiVadBySelectLanguage(true)
         mBinding?.vOptionsMask?.visibility = View.INVISIBLE
 
         // Update avatar settings display
@@ -455,8 +463,12 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
 
     private fun updateVoiceprintSettings() {
         mBinding?.apply {
-            val selectedVoiceprintMode = CovAgentManager.voiceprintMode
-            tvVoiceprintDetail.setText(selectedVoiceprintMode.title)
+            val mode = CovAgentManager.voiceprintMode
+            when (mode) {
+                VoiceprintMode.OFF -> tvVoiceprintDetail.setText(io.agora.scene.convoai.R.string.cov_voiceprint_close)
+                VoiceprintMode.SEAMLESS -> tvVoiceprintDetail.setText(io.agora.scene.convoai.R.string.cov_voiceprint_seamless)
+                VoiceprintMode.PERSONALIZED -> tvVoiceprintDetail.setText(io.agora.scene.convoai.R.string.cov_voiceprint_personalized)
+            }
         }
     }
 
