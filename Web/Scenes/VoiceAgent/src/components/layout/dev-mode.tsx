@@ -53,9 +53,9 @@ export const DevModeBadge = () => {
               </div>
               <div className='flex flex-1 items-center gap-2'>
                 <div className='flex-1 overflow-auto text-sm'>
-                  {`${process.env.NEXT_PUBLIC_SSO_LOGIN_URL}`}
+                  {`${process.env.NEXT_PUBLIC_DEMO_SERVER_URL}`}
                 </div>
-                <CopyButton text={`${process.env.NEXT_PUBLIC_SSO_LOGIN_URL}`} />
+                <CopyButton text={`${process.env.NEXT_PUBLIC_DEMO_SERVER_URL}`} />
               </div>
             </div>
             <Separator />
