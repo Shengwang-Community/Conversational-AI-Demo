@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.webkit.CookieManager
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -15,6 +16,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
 import io.agora.scene.common.ui.BaseActivity.ImmersiveMode
+import io.agora.scene.common.util.CommonLogger
 
 abstract class BaseFragment<VB : ViewBinding> : Fragment() {
 
@@ -161,5 +163,17 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
                 }
             }
         }
+    }
+
+    fun cleanCookie() {
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.removeAllCookies { success ->
+            if (success) {
+                CommonLogger.d("cleanCookie", "Cookies successfully removed")
+            } else {
+                CommonLogger.d("cleanCookie", "Failed to remove cookies")
+            }
+        }
+        cookieManager.flush()
     }
 } 

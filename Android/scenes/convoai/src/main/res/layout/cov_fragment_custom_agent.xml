@@ -119,8 +119,7 @@
         android:layout_height="wrap_content"
         android:background="@drawable/cov_custom_agent_bottom_bg"
         android:orientation="vertical"
-        android:paddingTop="12dp"
-        android:paddingBottom="16dp"
+        android:paddingVertical="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -177,11 +176,6 @@
                 app:rippleColor="#1AFFFFFF"
                 tools:text="@string/cov_custom_agent_get" />
         </LinearLayout>
-
-        <View
-            android:id="@+id/viewBottomSpace"
-            android:layout_width="match_parent"
-            android:layout_height="62dp" />
     </LinearLayout>
 
     <!-- Loading indicator -->

@@ -25,7 +25,7 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
     }
 
     private lateinit var adapter: OfficialAgentAdapter
-    private val viewModel: CovListViewModel by activityViewModels()
+    private val listViewModel: CovListViewModel by activityViewModels()
 
     override fun getViewBinding(
         inflater: LayoutInflater,
@@ -46,13 +46,13 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
         mBinding?.apply {
             // Setup retry button click listener
             btnRetry.setOnClickListener {
-                viewModel.loadOfficialAgents()
+                listViewModel.loadOfficialAgents()
             }
             
             // Setup SwipeRefreshLayout
             swipeRefreshLayout.setOnRefreshListener {
                 CovLogger.d(TAG, "SwipeRefreshLayout triggered")
-                viewModel.loadOfficialAgents()
+                listViewModel.loadOfficialAgents()
             }
             
             // Set refresh colors
@@ -60,6 +60,7 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
                 io.agora.scene.common.R.color.ai_brand_main6
             )
         }
+        listViewModel.loadOfficialAgents()
     }
 
     private fun setupAdapter() {
@@ -75,13 +76,13 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
         CovLogger.d(TAG, "Setting up ViewModel observer")
         
         // Observe data changes
-        viewModel.officialAgents.observe(viewLifecycleOwner) { presets ->
+        listViewModel.officialAgents.observe(viewLifecycleOwner) { presets ->
             CovLogger.d(TAG, "Data updated: ${presets.size} items")
             adapter.updateData(presets)
         }
         
         // Observe state changes
-        viewModel.officialState.observe(viewLifecycleOwner) { state ->
+        listViewModel.officialState.observe(viewLifecycleOwner) { state ->
             CovLogger.d(TAG, "State changed: $state")
             when (state) {
                 is CovListViewModel.AgentListState.Loading -> {

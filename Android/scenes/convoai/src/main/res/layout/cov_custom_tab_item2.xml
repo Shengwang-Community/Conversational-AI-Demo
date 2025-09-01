@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="42dp"
+    android:gravity="center"
+    android:minHeight="42dp"
+    android:orientation="horizontal"
+    tools:background="@color/ai_fill7">
+
+    <TextView
+        android:id="@+id/tab_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="6dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:textColor="@color/ai_icontext1"
+        android:textSize="16sp"
+        tools:text="@string/cov_official_agent_title" />
+
+    <ImageView
+        android:id="@+id/tab_icon"
+        android:layout_width="24dp"
+        android:layout_height="16dp"
+        android:layout_gravity="end|bottom"
+        android:layout_marginBottom="4dp"
+        android:src="@drawable/app_icon_subtract" />
+</FrameLayout>

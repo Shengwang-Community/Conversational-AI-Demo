@@ -193,4 +193,24 @@
     <string name="cov_agent_activating">生效中</string>
     <string name="cov_agent_sensitive">有感</string>
     <string name="cov_agent_insensitive">无感</string>
+
+    <!-- Mine -->
+    <string name="cov_mine_delete_account">注销账号</string>
+    <string name="cov_mine_important_notice">重要提示</string>
+    <string name="cov_mine_delete_account_content">账号注销成功后将彻底删除该账号及关联的所有数据且无法恢复，请谨慎选择并操作。</string>
+    <string name="cov_mine_delete_account_tips">我已了解注销账号的各项风险</string>
+    <string name="cov_mine_confirm_deleted">确认注销</string>
+    <string name="cov_mine_delete_account_toast">您必须勾选并同意注销账号的各项风险才可以注销。</string>
+    <string name="cov_mine_filing_no">备案号</string>
+    <string name="cov_mine_settings">设置</string>
+    <string name="cov_mine_privacy">隐私</string>
+    <string name="cov_mine_nickname">昵称</string>
+    <string name="cov_mine_should">称呼您为</string>
+    <string name="cov_mine_mr">先生</string>
+    <string name="cov_mine_ms">女士</string>
+    <string name="cov_mine_your_birthday">您的生日</string>
+    <string name="cov_mine_about_me">自我介绍</string>
+    <string name="cov_mine_select_your_birthday">选择您的生日</string>
+    <string name="cov_mine_iot_devices">我的对话式 AI 设备</string>
+    <string name="cov_mine_devices">已绑定 %d 台设备</string>
 </resources>

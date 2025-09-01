@@ -10,6 +10,7 @@ import android.view.ViewTreeObserver
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.common.ui.BaseFragment
@@ -24,6 +25,7 @@ import io.agora.scene.convoai.databinding.CovFragmentCustomAgentBinding
 import io.agora.scene.convoai.databinding.CovItemOfficialAgentBinding
 import io.agora.scene.convoai.ui.CovLivingActivity
 import io.agora.scene.convoai.ui.vm.CovListViewModel
+import kotlinx.coroutines.launch
 
 class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
 
@@ -32,19 +34,11 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
         private const val SCROLL_THRESHOLD_MULTIPLIER = 1.5f // Show button after scrolling 1.5 screens
     }
 
-    // Callback to notify activity about keyboard state
-    private var keyboardStateCallback: ((Boolean) -> Unit)? = null
-
-    fun setKeyboardStateCallback(callback: (Boolean) -> Unit) {
-        keyboardStateCallback = callback
-    }
-
     private lateinit var adapter: CustomAgentAdapter
-    private val viewModel: CovListViewModel by activityViewModels()
+    private val listViewModel: CovListViewModel by activityViewModels()
 
     // Keyboard handling
     private var isKeyboardVisible = false
-    private var isHeaderCollapsed = false
     private val globalLayoutListener = ViewTreeObserver.OnGlobalLayoutListener {
         handleKeyboardVisibility()
     }
@@ -64,6 +58,7 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
         observeViewModel()
         setupKeyboardListener()
         setupScrollListener()
+        listViewModel.loadCustomAgents()
     }
 
     private fun initViews() {
@@ -72,14 +67,14 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
             keyboardOverlayMask.setOnClickListener {
                 hideKeyboardAndMask()
             }
-            
+
             // Setup button click listener
             btnGetAgent.setOnClickListener {
                 val agentName = etAgentName.text.toString()
                 if (agentName.isEmpty()) {
                     ToastUtil.show(R.string.cov_custom_agent_input_tip)
                 } else {
-                    viewModel.loadCustomAgent(
+                    listViewModel.loadCustomAgent(
                         customAgentName = agentName,
                         isUpdate = false,
                         onLoading = { show ->
@@ -104,21 +99,21 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
                     )
                 }
             }
-            
+
             // Setup SwipeRefreshLayout
             swipeRefreshLayout.setOnRefreshListener {
                 CovLogger.d(TAG, "SwipeRefreshLayout triggered")
-                viewModel.loadCustomAgents(showLoading = false)
+                listViewModel.loadCustomAgents(showLoading = false)
             }
-            
+
             // Set refresh colors
             swipeRefreshLayout.setColorSchemeResources(
                 io.agora.scene.common.R.color.ai_brand_main6
             )
-            
+
             // Setup EditText for agent ID input
             setupAgentIdInput()
-            
+
             // Setup back to top button
             ivBackToTop.setOnClickListener {
                 scrollToTop()
@@ -134,7 +129,7 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
                 scrollThreshold = (screenHeight * SCROLL_THRESHOLD_MULTIPLIER).toInt()
                 CovLogger.d(TAG, "Screen height: $screenHeight, Scroll threshold: $scrollThreshold")
             }
-            
+
             // Add scroll listener to RecyclerView
             rvCustomAgents.addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -151,11 +146,11 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
             layoutManager?.let { manager ->
                 val firstVisibleItemPosition = manager.findFirstVisibleItemPosition()
                 val firstVisibleItemView = manager.findViewByPosition(firstVisibleItemPosition)
-                
+
                 if (firstVisibleItemView != null) {
                     val scrollOffset = firstVisibleItemView.top
                     val totalScrollDistance = (firstVisibleItemPosition * firstVisibleItemView.height) - scrollOffset
-                    
+
                     // Show/hide back to top button based on scroll distance
                     if (totalScrollDistance > scrollThreshold) {
                         if (ivBackToTop.visibility != View.VISIBLE) {
@@ -174,7 +169,7 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
     private fun scrollToTop() {
         mBinding?.apply {
             rvCustomAgents.smoothScrollToPosition(0)
-            
+
             // Hide the button after scrolling to top
             ivBackToTop.hide()
         }
@@ -198,7 +193,7 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
             // Add text watcher to update character count
             etAgentName.doAfterTextChanged {
                 val currentLength = it?.length ?: 0
-                ivClearInput.isVisible = currentLength>0
+                ivClearInput.isVisible = currentLength > 0
 
             }
 
@@ -224,12 +219,12 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
 
     private fun observeViewModel() {
         // Observe data changes
-        viewModel.customAgents.observe(viewLifecycleOwner) { presets ->
+        listViewModel.customAgents.observe(viewLifecycleOwner) { presets ->
             adapter.updateData(presets)
         }
 
         // Observe state changes
-        viewModel.customState.observe(viewLifecycleOwner) { state ->
+        listViewModel.customState.observe(viewLifecycleOwner) { state ->
             CovLogger.d(TAG, "State changed: $state")
             when (state) {
                 is CovListViewModel.AgentListState.Loading -> {
@@ -249,6 +244,28 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
                 is CovListViewModel.AgentListState.Empty -> {
                     if (adapter.itemCount == 0) {
                         showEmptyState()
+                    }
+                }
+            }
+        }
+
+        // Observe keyboard state from ViewModel and update UI accordingly
+        lifecycleScope.launch {
+            listViewModel.isKeyboardVisible.collect { isVisible ->
+                // Only update UI, don't modify local isKeyboardVisible to avoid conflicts
+                mBinding?.apply {
+                    if (isVisible) {
+                        keyboardOverlayMask.isVisible = true
+                        val location = IntArray(2)
+                        llBottomAction.getLocationInWindow(location)
+                        val rect = android.graphics.Rect()
+                        view?.getWindowVisibleDisplayFrame(rect)
+                        val effectiveBottom = location[1] + llBottomAction.height
+                        val overlap = effectiveBottom - rect.bottom
+                        llBottomAction.translationY = if (overlap > 0) -overlap.toFloat() else 0f
+                    } else {
+                        llBottomAction.translationY = 0f
+                        hideKeyboardAndMask()
                     }
                 }
             }
@@ -282,7 +299,7 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
     private fun onPresetSelected(preset: CovAgentPreset) {
         CovLogger.d(TAG, "Selected custom preset: ${preset.name}")
 
-        viewModel.loadCustomAgent(
+        listViewModel.loadCustomAgent(
             customAgentName = preset.name,
             isUpdate = true,
             onLoading = { show ->
@@ -326,7 +343,7 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
             .setTitle(getString(R.string.cov_remove_agent_title))
             .setContent(getString(R.string.cov_remove_agent_content, preset.display_name))
             .setPositiveButton(getString(R.string.cov_remove_agent_confirm)) {
-                viewModel.removeCustomAgentName(preset.name)
+                listViewModel.removeCustomAgentName(preset.name)
                 // Remove from current UI list
                 adapter.removeAgentByName(preset.name)
                 // If list becomes empty after removal, show empty state
@@ -355,33 +372,8 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
 
         if (isKeyboardNowVisible != isKeyboardVisible) {
             isKeyboardVisible = isKeyboardNowVisible
-
-            mBinding?.apply {
-                if (isKeyboardVisible) {
-                    // Show fragment keyboard overlay mask
-                    keyboardOverlayMask.visibility = View.VISIBLE
-                    
-                    val location = IntArray(2)
-                    llBottomAction.getLocationInWindow(location)
-
-                    val effectiveBottom = if (isHeaderCollapsed) {
-                        location[1] + llBottomAction.height
-                    } else {
-                        val bottomSpaceHeight = if (viewBottomSpace.isVisible) viewBottomSpace.height else 0
-                        location[1] + llBottomAction.height - bottomSpaceHeight
-                    }
-
-                    val overlap = effectiveBottom - rect.bottom
-                    llBottomAction.translationY = if (overlap > 0) -overlap.toFloat() else 0f
-                } else {
-                    // Hide fragment keyboard overlay mask
-                    keyboardOverlayMask.visibility = View.GONE
-                    llBottomAction.translationY = 0f
-                }
-            }
-            
-            // Notify activity about keyboard state
-            keyboardStateCallback?.invoke(isKeyboardVisible)
+            // Only update ViewModel state, UI will be updated through StateFlow observer
+            listViewModel.setKeyboardVisible(isKeyboardVisible)
         }
     }
 
@@ -406,29 +398,14 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
         mBinding?.apply {
             // Clear focus and hide keyboard
             etAgentName.clearFocus()
-            
+
             // Hide keyboard
-            val imm = context?.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+            val imm =
+                context?.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
             imm?.hideSoftInputFromWindow(etAgentName.windowToken, 0)
-            
+
             // Hide fragment keyboard overlay mask
-            keyboardOverlayMask.visibility = View.GONE
-        }
-    }
-
-    fun setBottomActionVisibility(visible: Boolean) {
-        isHeaderCollapsed = !visible
-
-        mBinding?.apply {
-            viewBottomSpace.isVisible = !isHeaderCollapsed
-            if (!isHeaderCollapsed) {
-                viewBottomSpace.alpha = 1f
-                viewBottomSpace.translationY = 0f
-            }
-
-            if (isKeyboardVisible) {
-                handleKeyboardVisibility()
-            }
+            keyboardOverlayMask.isVisible = false
         }
     }
 
@@ -503,7 +480,7 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
             fun bind(preset: CovAgentPreset) {
                 binding.apply {
                     tvTitle.text = preset.display_name
-                    tvDescription.isVisible  =  preset.description.isNotEmpty()
+                    tvDescription.isVisible = preset.description.isNotEmpty()
                     tvDescription.text = preset.description
                     if (preset.avatar_url.isNullOrEmpty()) {
                         ivAvatar.setImageResource(io.agora.scene.common.R.drawable.common_custom_agent)

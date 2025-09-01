@@ -11,7 +11,7 @@
             android:windowSoftInputMode="stateHidden|adjustPan" />
 
         <activity
-            android:name="io.agora.scene.convoai.ui.CovAgentListActivity"
+            android:name="io.agora.scene.convoai.ui.CovMainActivity"
             android:configChanges="locale|layoutDirection"
             android:exported="false"
             android:keepScreenOn="true"

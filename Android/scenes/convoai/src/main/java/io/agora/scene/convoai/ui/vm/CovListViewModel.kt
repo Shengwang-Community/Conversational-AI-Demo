@@ -14,6 +14,9 @@ import io.agora.scene.convoai.api.ApiException
 import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.constant.CovAgentManager
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -38,6 +41,10 @@ class CovListViewModel : ViewModel() {
     private val _customState = MutableLiveData<AgentListState>()
     val customState: LiveData<AgentListState> = _customState
 
+    // Keyboard state management
+    private val _isKeyboardVisible = MutableStateFlow(false)
+    val isKeyboardVisible: StateFlow<Boolean> = _isKeyboardVisible.asStateFlow()
+
     // Local storage key for custom agent IDs
     private val customAgentIdsKey: String
         get() = generateCustomAgentIdsKey()
@@ -56,6 +63,7 @@ class CovListViewModel : ViewModel() {
         _customAgents.value = emptyList()
         _officialState.value = AgentListState.Empty
         _customState.value = AgentListState.Empty
+        _isKeyboardVisible.value = false
     }
 
     /**
@@ -303,6 +311,16 @@ class CovListViewModel : ViewModel() {
                 saveCustomAgentIdsToStorage(newIds)
                 CovLogger.d(TAG, "Removed custom agent ID: $agentName")
             }
+        }
+    }
+
+    /**
+     * Update keyboard visibility state
+     */
+    fun setKeyboardVisible(isVisible: Boolean) {
+        if (_isKeyboardVisible.value != isVisible) {
+            _isKeyboardVisible.value = isVisible
+            CovLogger.d(TAG, "Keyboard visibility changed: $isVisible")
         }
     }
 }
