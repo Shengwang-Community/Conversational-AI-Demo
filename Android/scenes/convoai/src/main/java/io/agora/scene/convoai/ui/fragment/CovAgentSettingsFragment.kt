@@ -117,14 +117,13 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
             })
         }
         updatePageEnable()
-        updateBaseSettings()
         setAiVadBySelectLanguage()
-        // Update avatar settings display
-        updateAvatarSettings()
-        updateVoiceprintSettings()
+        setAvatarSettings()
+        setRenderText()
+        setVoiceprintSettings()
     }
 
-    private fun observeViewModel(){
+    private fun observeViewModel() {
         lifecycleScope.launch {
             livingViewModel.connectionState.collect { state ->
                 updatePageEnable()
@@ -132,9 +131,8 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         }
     }
 
-    private fun updateBaseSettings() {
+    private fun setRenderText() {
         mBinding?.apply {
-            tvLanguageDetail.text = CovAgentManager.language?.language_name
             when (CovAgentManager.renderMode) {
                 CovRenderMode.WORD -> tvRenderDetail.text = getString(io.agora.scene.convoai.R.string.cov_word_mode)
                 CovRenderMode.SYNC_TEXT -> tvRenderDetail.text =
@@ -149,19 +147,15 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
     private val isIdle get() = livingViewModel.connectionState.value == AgentConnectionState.IDLE
 
     // The non-English overseas version must disable AiVad.
-    private fun setAiVadBySelectLanguage(userClick: Boolean = false) {
+    private fun setAiVadBySelectLanguage() {
         mBinding?.apply {
-            // Feature: TEN-1534
+            tvLanguageDetail.text = CovAgentManager.language?.language_name
+            // AI-VAD - Only update UI state, preserve user settings
             if (CovAgentManager.language?.aivad_supported == true) {
                 cbAiVad.isEnabled = isIdle
-                if (isIdle){
-                    val aiVadEnableDefault = (CovAgentManager.language?.aivad_enabled_by_default == true)
-                    if (userClick){
-                        CovAgentManager.enableAiVad = aiVadEnableDefault
-                    }
-                    cbAiVad.isChecked = CovAgentManager.enableAiVad
-                }
+                cbAiVad.isChecked = CovAgentManager.enableAiVad
             } else {
+                // Language doesn't support AI-VAD, force disable
                 CovAgentManager.enableAiVad = false
                 cbAiVad.isChecked = false
                 cbAiVad.isEnabled = false
@@ -183,7 +177,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                 )
                 clLanguage.isEnabled = true
                 clRenderMode.isEnabled = true
-                cbAiVad.isEnabled = true
+                cbAiVad.isEnabled = CovAgentManager.language?.aivad_supported ?: false
 
                 clAvatar.isEnabled = true
                 tvAvatarDetail.setTextColor(context.getColor(R.color.ai_icontext1))
@@ -312,12 +306,10 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         CovAgentManager.language = language
         CovAgentManager.avatar = null
         livingViewModel.setAvatar(null)
-        updateBaseSettings()
-        setAiVadBySelectLanguage(true)
+        setAiVadBySelectLanguage()
         mBinding?.vOptionsMask?.visibility = View.INVISIBLE
-
         // Update avatar settings display
-        updateAvatarSettings()
+        setAvatarSettings()
     }
 
     private fun onClickRenderMode() {
@@ -381,7 +373,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                     return@updateOptions
                 }
                 CovAgentManager.renderMode = transcriptRender.renderMode
-                tvRenderDetail.text = transcriptRender.text
+                setRenderText()
                 mBinding?.vOptionsMask?.visibility = View.INVISIBLE
             }
         }
@@ -411,13 +403,13 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         val avatar = if (selectedAvatar.isClose) null else selectedAvatar.covAvatar
         CovAgentManager.avatar = avatar
         livingViewModel.setAvatar(avatar)
-        updateAvatarSettings()
+        setAvatarSettings()
     }
 
     /**
      * Update avatar settings display
      */
-    private fun updateAvatarSettings() {
+    private fun setAvatarSettings() {
         mBinding?.apply {
             val selectedAvatar = CovAgentManager.avatar
             if (selectedAvatar != null) {
@@ -458,10 +450,10 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
     private fun handleVoiceprintSelection(voiceprintMode: VoiceprintMode) {
         CovAgentManager.voiceprintMode = voiceprintMode
         livingViewModel.setVoiceprintMode(voiceprintMode)
-        updateVoiceprintSettings()
+        setVoiceprintSettings()
     }
 
-    private fun updateVoiceprintSettings() {
+    private fun setVoiceprintSettings() {
         mBinding?.apply {
             val mode = CovAgentManager.voiceprintMode
             when (mode) {

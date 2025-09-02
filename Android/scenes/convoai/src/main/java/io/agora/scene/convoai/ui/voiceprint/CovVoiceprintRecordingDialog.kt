@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.ui.voiceprint
 
+import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.Gravity
@@ -7,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import io.agora.scene.common.ui.BaseActivity.ImmersiveMode
 import io.agora.scene.common.ui.BaseSheetDialog
@@ -16,6 +18,8 @@ import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovVoiceprintRecordingDialogBinding
 import io.agora.scene.convoai.ui.CovLivingActivity
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlin.getValue
 
 /**
@@ -56,6 +60,7 @@ class CovVoiceprintRecordingDialog : BaseSheetDialog<CovVoiceprintRecordingDialo
 
         setupViews()
         setupRecordingView()
+        observeViewModel()
     }
 
     override fun onStart() {
@@ -97,36 +102,23 @@ class CovVoiceprintRecordingDialog : BaseSheetDialog<CovVoiceprintRecordingDialo
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun setupRecordingView() {
         binding?.recordingView?.apply {
             setRecordingCallbacks(
-                onStart = {
-                    CovLogger.d(TAG, "Recording started")
-                },
-                onFinish = { file, duration, autoEnd ->
-                    CovLogger.d(TAG, "Recording finished: $file, duration: $duration")
-                    if (autoEnd) {
-                        ToastUtil.showNew(
-                            resId = R.string.cov_voiceprint_recording_auto_end,
-                            gravity = Gravity.TOP,
-                            offsetY = 100.dp.toInt()
-                        )
+                onStartRecording = {
+                    CovLogger.d(TAG, "UI: Start recording requested")
+                    context?.let { ctx ->
+                        voiceprintViewModel.startRecording(ctx)
                     }
-                    onRecordingFinishCallback?.invoke(file.absolutePath)
-                    dismiss()
                 },
-                onCancel = {
-                    // nothing
+                onStopRecording = {
+                    CovLogger.d(TAG, "UI: Stop recording requested")
+                    voiceprintViewModel.stopRecording()
                 },
-                onTooShort = {
-                    ToastUtil.showNewTips(
-                        resId = R.string.cov_voiceprint_recording_short,
-                        gravity = Gravity.TOP,
-                        offsetY = 100.dp.toInt()
-                    )
-                },
-                onError = { error ->
-                    ToastUtil.show("onError: $error")
+                onCancelRecording = {
+                    CovLogger.d(TAG, "UI: Cancel recording requested")
+                    voiceprintViewModel.cancelRecording()
                 },
                 onRequestPermission = {
                     if (hasMicPerm()) {
@@ -134,8 +126,10 @@ class CovVoiceprintRecordingDialog : BaseSheetDialog<CovVoiceprintRecordingDialo
                     } else {
                         binding?.recordingView?.onPermissionDenied()
                         checkMicrophonePermission { granted ->
-                            // Permission check completed, callback can be used for additional logic if needed
                             CovLogger.d(TAG, "Permission check completed: $granted")
+                            if (granted) {
+                                binding?.recordingView?.onPermissionGranted()
+                            }
                         }
                     }
                 }
@@ -149,6 +143,52 @@ class CovVoiceprintRecordingDialog : BaseSheetDialog<CovVoiceprintRecordingDialo
      * @param granted Callback function that receives the final permission result
      *                true: permission granted, false: permission denied
      */
+    /**
+     * Observe ViewModel state changes and update UI accordingly
+     */
+    private fun observeViewModel() {
+        // Setup ViewModel callbacks
+        voiceprintViewModel.onRecordingFinish = { file, duration, autoEnd ->
+            CovLogger.d(TAG, "ViewModel: Recording finished - ${file.absolutePath}, duration: $duration")
+            if (autoEnd) {
+                ToastUtil.showNew(
+                    resId = R.string.cov_voiceprint_recording_auto_end,
+                    gravity = Gravity.TOP,
+                    offsetY = 100.dp.toInt()
+                )
+            }
+            binding?.recordingView?.onRecordingFinished()
+            onRecordingFinishCallback?.invoke(file.absolutePath)
+            dismiss()
+        }
+
+        voiceprintViewModel.onRecordingCancel = {
+            CovLogger.d(TAG, "ViewModel: Recording cancelled")
+            binding?.recordingView?.onRecordingCancelled()
+        }
+
+        voiceprintViewModel.onRecordingTooShort = {
+            CovLogger.d(TAG, "ViewModel: Recording too short")
+            ToastUtil.showNewTips(
+                resId = R.string.cov_voiceprint_recording_short,
+                gravity = Gravity.TOP,
+                offsetY = 100.dp.toInt()
+            )
+            binding?.recordingView?.onRecordingFinished()
+        }
+
+        voiceprintViewModel.onRecordingError = { error ->
+            CovLogger.e(TAG, "ViewModel: Recording error - $error")
+            ToastUtil.show("Recording error: $error")
+            binding?.recordingView?.onRecordingFinished()
+        }
+
+        // Observe recording duration for UI updates
+        voiceprintViewModel.recordingDuration.onEach { duration ->
+            binding?.recordingView?.updateRecordingTime(duration)
+        }.launchIn(lifecycleScope)
+    }
+
     private fun checkMicrophonePermission(granted: (Boolean) -> Unit) {
         val activity = activity
         if (activity !is CovLivingActivity) {

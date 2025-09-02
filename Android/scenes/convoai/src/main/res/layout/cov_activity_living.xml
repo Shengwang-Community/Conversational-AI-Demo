@@ -107,7 +107,7 @@
     <io.agora.scene.convoai.ui.widget.CovLivingTopView
         android:id="@+id/cl_top"
         android:layout_width="match_parent"
-        android:layout_height="74dp"
+        android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent" />
 
     <View
@@ -213,7 +213,8 @@
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cl_top"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="74dp"
         tools:visibility="visible" />
 
     <FrameLayout

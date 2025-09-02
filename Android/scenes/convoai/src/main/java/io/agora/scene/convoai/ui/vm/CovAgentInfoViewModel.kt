@@ -14,8 +14,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 
-
-
 /**
  * ViewModel for managing Agent Info fragment data
  * Centralizes all data management and provides reactive updates

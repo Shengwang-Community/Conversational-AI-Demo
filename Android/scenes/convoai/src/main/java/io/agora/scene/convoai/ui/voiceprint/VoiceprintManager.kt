@@ -6,8 +6,6 @@ import kotlinx.parcelize.Parcelize
 import io.agora.scene.common.util.LocalStorageUtil
 import io.agora.scene.convoai.CovLogger
 import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
 
 /**
  * Voiceprint information data class
@@ -24,12 +22,12 @@ data class VoiceprintInfo(
 
     companion object {
         // Voiceprint update strategy configuration
-        private const val UPDATE_INTERVAL: Long = (2.5 * 24 * 60 * 60 * 1000).toLong() // 2.5 days (milliseconds)
+        private const val UPDATE_INTERVAL: Long = (2.5 * 24 * 60 * 60).toLong() // 2.5 days (seconds)
     }
 
     // Check if voiceprint needs to be updated
     fun needToUpdate(): Boolean {
-        val currentTime = System.currentTimeMillis()
+        val currentTime = System.currentTimeMillis() / 1000
         return currentTime - timestamp > UPDATE_INTERVAL
     }
 }
@@ -61,8 +59,11 @@ object VoiceprintManager {
      * @return File object for the new recording
      */
     fun createRecordingFile(context: Context): File {
-        val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
-        val fileName = "voiceprint_$timestamp.m4a"
+        val timestamp =
+            java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
+        // Use .pcm extension for raw PCM audio data
+        // 16kHz, 16-bit, mono PCM format ready for server processing
+        val fileName = "voiceprint_$timestamp.pcm"
         val dir = File(getVoiceprintDirectoryPath(context))
         return File(dir, fileName)
     }
@@ -109,7 +110,7 @@ object VoiceprintManager {
      * @return Voiceprint information, returns null if failed to get
      */
     fun getVoiceprint(userId: String?): VoiceprintInfo? {
-        if (userId.isNullOrEmpty()){
+        if (userId.isNullOrEmpty()) {
             return null
         }
         return try {

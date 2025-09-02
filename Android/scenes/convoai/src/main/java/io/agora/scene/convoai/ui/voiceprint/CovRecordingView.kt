@@ -2,7 +2,6 @@ package io.agora.scene.convoai.ui.voiceprint
 
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
-import android.media.MediaRecorder
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
@@ -16,7 +15,6 @@ import io.agora.scene.common.util.dp
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovWidgetRecordingViewBinding
-import java.io.File
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.cos
@@ -44,8 +42,6 @@ class CovRecordingView @JvmOverloads constructor(
 
     companion object {
         private const val TAG = "CovRecordingView"
-        private const val MIN_RECORDING_TIME = 10000L // 10 seconds
-        private const val MAX_RECORDING_TIME = 20000L // 20 seconds
         private const val ANIMATION_INTERVAL = 80L // Audio visualization update interval (faster)
         private const val CANCEL_THRESHOLD = 100f // Swipe up threshold to cancel recording
         private const val PREPARE_DELAY = 200L // Delay before starting recording
@@ -63,13 +59,8 @@ class CovRecordingView @JvmOverloads constructor(
     private val handler = Handler(Looper.getMainLooper())
     private val random = Random()
 
-    // State management
+    // UI State management (recording logic moved to ViewModel)
     private var currentState = RecordViewState.NORMAL
-    private var isRecording = false
-    private var recordingStartTime = 0L
-    private var recordingDuration = 0L
-    private var mediaRecorder: MediaRecorder? = null
-    private var recordingFile: File? = null
 
     // Touch handling
     private var startY = 0f
@@ -88,12 +79,10 @@ class CovRecordingView @JvmOverloads constructor(
         }
     }
 
-    // Callbacks
-    var onRecordingStart: (() -> Unit)? = null
-    var onRecordingFinish: ((File, Long, Boolean) -> Unit)? = null
-    var onRecordingCancel: (() -> Unit)? = null
-    var onRecordingTooShort: (() -> Unit)? = null
-    var onRecordingError: ((String) -> Unit)? = null
+    // UI Event Callbacks (business logic handled by ViewModel)
+    var onStartRecording: (() -> Unit)? = null
+    var onStopRecording: (() -> Unit)? = null
+    var onCancelRecording: (() -> Unit)? = null
     var onRequestPermission: (() -> Unit)? = null
 
     init {
@@ -221,7 +210,12 @@ class CovRecordingView @JvmOverloads constructor(
             }
 
             RecordViewState.RECORDING, RecordViewState.CANCELLING -> {
-                finishRecording()
+                // Notify ViewModel to finish recording
+                if (isCancelled) {
+                    onCancelRecording?.invoke()
+                } else {
+                    onStopRecording?.invoke()
+                }
             }
 
             else -> {
@@ -230,13 +224,6 @@ class CovRecordingView @JvmOverloads constructor(
         }
     }
 
-    private fun startRecording() {
-        if (currentState != RecordViewState.PREPARE) return
-        
-        // Permission is already checked, start recording directly
-        startRecordingInternal()
-    }
-    
     /**
      * Called when permission is granted
      */
@@ -244,10 +231,12 @@ class CovRecordingView @JvmOverloads constructor(
         // Start prepare state when permission is granted
         updateUIForState(RecordViewState.PREPARE)
         
-        // Delay before starting recording
+        // Delay before starting recording (UI feedback)
         prepareRunnable = Runnable {
             if (currentState == RecordViewState.PREPARE) {
-                startRecordingInternal()
+                // Notify ViewModel to start recording
+                updateUIForState(RecordViewState.RECORDING)
+                onStartRecording?.invoke()
             }
         }
         handler.postDelayed(prepareRunnable!!, PREPARE_DELAY)
@@ -261,127 +250,31 @@ class CovRecordingView @JvmOverloads constructor(
         updateUIForState(RecordViewState.NORMAL)
     }
     
-    private fun startRecordingInternal() {
-        recordingStartTime = System.currentTimeMillis()
-        try {
-            setupMediaRecorder()
-            mediaRecorder?.start()
-            isRecording = true
-            updateUIForState(RecordViewState.RECORDING)
-            startRecordingTimer()
-            onRecordingStart?.invoke()
-        } catch (e: Exception) {
-            onRecordingError?.invoke("Failed to start recording: ${e.message}")
-            CovLogger.d(TAG, "Failed to start recording ${e.message}")
-            updateUIForState(RecordViewState.NORMAL)
-        }
+    /**
+     * Update recording time display (called from outside, e.g., by ViewModel observers)
+     */
+    fun updateRecordingTime(duration: Long) {
+        val seconds = (duration / 1000).toInt()
+        binding.tvRecordingTime.text = context.getString(R.string.cov_voiceprint_duration, "${seconds}s", "10s")
     }
-
-    private fun setupMediaRecorder() {
-        mediaRecorder = MediaRecorder().apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setAudioEncodingBitRate(128000)
-            setAudioSamplingRate(44100)
-
-            recordingFile = createRecordingFile()
-            setOutputFile(recordingFile?.absolutePath)
-            prepare()
-        }
-    }
-
-    private fun createRecordingFile(): File {
-        return VoiceprintManager.createRecordingFile(context)
-    }
-
-    private fun finishRecording(autoEnd: Boolean = false) {
-        if (!isRecording) return
-
-        isRecording = false
-        recordingDuration = System.currentTimeMillis() - recordingStartTime
-
-        // Stop recording
-        try {
-            mediaRecorder?.apply {
-                stop()
-                release()
-            }
-            mediaRecorder = null
-        } catch (e: Exception) {
-            Log.e(TAG, "Error stopping recording", e)
-        }
-
+    
+    /**
+     * Notify recording finished externally (from ViewModel)
+     */
+    fun onRecordingFinished() {
         // Stop animations
         handler.removeCallbacks(animationRunnable)
-
-        // Handle recording result
-        when {
-            isCancelled -> {
-                handleRecordingCancelled()
-            }
-
-            recordingDuration < MIN_RECORDING_TIME -> {
-                handleRecordingTooShort()
-            }
-
-            else -> {
-                handleRecordingFinish(autoEnd)
-            }
-        }
-
         updateUIForState(RecordViewState.NORMAL)
     }
     
-    private fun handleRecordingCancelled() {
-        recordingFile?.let { file ->
-            // Delete the recording file
-            if (file.exists()) {
-                file.delete()
-            }
-        }
-        recordingFile = null
-        onRecordingCancel?.invoke()
-    }
-    
-    private fun handleRecordingTooShort() {
-        recordingFile?.let { file ->
-            // Delete the recording file
-            if (file.exists()) {
-                file.delete()
-            }
-        }
-        recordingFile = null
-        onRecordingTooShort?.invoke()
-    }
-    
-    private fun handleRecordingFinish(autoEnd: Boolean) {
-        recordingFile?.let { file ->
-            onRecordingFinish?.invoke(file, recordingDuration, autoEnd)
-        }
-    }
-    
-    private fun startRecordingTimer() {
-        val timerRunnable = object : Runnable {
-            override fun run() {
-                if (currentState == RecordViewState.RECORDING || currentState == RecordViewState.CANCELLING) {
-                    val currentDuration = System.currentTimeMillis() - recordingStartTime
-                    updateRecordingTime(currentDuration)
-
-                    if (currentDuration >= MAX_RECORDING_TIME) {
-                        finishRecording(true)
-                    } else {
-                        handler.postDelayed(this, 1000)
-                    }
-                }
-            }
-        }
-        handler.post(timerRunnable)
-    }
-
-    private fun updateRecordingTime(duration: Long) {
-        val seconds = (duration / 1000).toInt()
-        binding.tvRecordingTime.text = context.getString(R.string.cov_voiceprint_duration, "${seconds}s", "10s")
+    /**
+     * Notify recording cancelled externally (from ViewModel)
+     */
+    fun onRecordingCancelled() {
+        // Stop animations
+        handler.removeCallbacks(animationRunnable)
+        updateUIForState(RecordViewState.NORMAL)
+        onCancelRecording?.invoke()
     }
 
     private fun updateUIForState(state: RecordViewState) {
@@ -565,41 +458,26 @@ class CovRecordingView @JvmOverloads constructor(
     }
 
     /**
-     * Set callbacks for recording events
+     * Set callbacks for UI events (business logic handled by ViewModel)
      */
     fun setRecordingCallbacks(
-        onStart: (() -> Unit)? = null,
-        onFinish: ((File, Long, Boolean) -> Unit)? = null,
-        onCancel: (() -> Unit)? = null,
-        onTooShort: (() -> Unit)? = null,
-        onError: ((String) -> Unit)? = null,
+        onStartRecording: (() -> Unit)? = null,
+        onStopRecording: (() -> Unit)? = null,
+        onCancelRecording: (() -> Unit)? = null,
         onRequestPermission: (() -> Unit)? = null
     ) {
-        this.onRecordingStart = onStart
-        this.onRecordingFinish = onFinish
-        this.onRecordingCancel = onCancel
-        this.onRecordingTooShort = onTooShort
-        this.onRecordingError = onError
+        this.onStartRecording = onStartRecording
+        this.onStopRecording = onStopRecording
+        this.onCancelRecording = onCancelRecording
         this.onRequestPermission = onRequestPermission
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         handler.removeCallbacksAndMessages(null)
-
-        // Clean up recording if still active
-        if (isRecording) {
-            try {
-                mediaRecorder?.apply {
-                    stop()
-                    release()
-                }
-                mediaRecorder = null
-                recordingFile?.delete()
-            } catch (e: Exception) {
-                Log.e(TAG, "Error cleaning up recording", e)
-            }
-        }
+        
+        // Clean up UI animations only
+        // Recording cleanup is handled by ViewModel
     }
 }
 

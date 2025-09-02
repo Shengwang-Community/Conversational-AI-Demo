@@ -437,11 +437,12 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
     }
 
     /**
-     * Generate voiceprint name based on given timestamp
+     * Generate voiceprint name based on given timestamp (in seconds)
      */
     private fun generateVoiceprintNameFromTimestamp(timestamp: Long): String {
         val dateFormat =
             java.text.SimpleDateFormat(getString(R.string.cov_voiceprint_date_format), java.util.Locale.getDefault())
+        // Convert seconds to milliseconds for Date constructor
         val dateString = dateFormat.format(java.util.Date(timestamp))
         return getString(R.string.cov_voiceprint_name_format, dateString)
     }

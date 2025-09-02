@@ -23,7 +23,7 @@ enum class AgentConnectionState() {
 /**
  * Voiceprint lock modes
  */
-enum class VoiceprintMode{
+enum class VoiceprintMode {
     OFF,
     SEAMLESS,
     PERSONALIZED
@@ -74,6 +74,11 @@ object CovAgentManager {
             p.support_languages.firstOrNull { it.language_code == p.default_language_code }
         } else {
             p?.support_languages?.firstOrNull()
+        }
+        voiceprintMode = if (p?.advanced_features_enable_sal == true) {
+            VoiceprintMode.SEAMLESS
+        } else {
+            VoiceprintMode.OFF
         }
     }
 

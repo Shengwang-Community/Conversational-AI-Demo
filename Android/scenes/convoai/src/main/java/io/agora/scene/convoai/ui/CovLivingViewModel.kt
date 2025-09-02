@@ -32,6 +32,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import io.agora.scene.convoai.api.CovAvatar
 import io.agora.scene.convoai.constant.VoiceprintMode
+import io.agora.scene.convoai.ui.voiceprint.VoiceprintManager
 
 /**
  * view model
@@ -889,7 +890,7 @@ class CovLivingViewModel : ViewModel() {
     private fun resetState() {
         // Stop typing animation
         stopTypingAnimation()
-        
+
         _isShowMessageList.value = false
         _isLocalAudioMuted.value = false
         _isPublishVideo.value = false
@@ -915,6 +916,8 @@ class CovLivingViewModel : ViewModel() {
 
     private fun getConvoaiBodyMap(channel: String, dataChannel: String = "rtm"): Map<String, Any?> {
         CovLogger.d(TAG, "preset: ${CovAgentManager.convoAIParameter}")
+        val enablePersonalized = CovAgentManager.voiceprintMode == VoiceprintMode.PERSONALIZED
+        val uidStr = CovAgentManager.uid.toString()
         return mapOf(
             "graph_id" to CovAgentManager.graphId.takeIf { it.isNotEmpty() },
             "preset" to CovAgentManager.convoAIParameter.takeIf { it.isNotEmpty() },
@@ -923,7 +926,7 @@ class CovLivingViewModel : ViewModel() {
                 "channel" to channel,
                 "token" to null,
                 "agent_rtc_uid" to CovAgentManager.agentUID.toString(),
-                "remote_rtc_uids" to listOf(CovAgentManager.uid.toString()),
+                "remote_rtc_uids" to listOf(uidStr),
                 "enable_string_uid" to null,
                 "idle_timeout" to null,
                 "agent_rtm_uid" to null,
@@ -931,6 +934,7 @@ class CovLivingViewModel : ViewModel() {
                     "enable_aivad" to CovAgentManager.enableAiVad,
                     "enable_bhvs" to CovAgentManager.enableBHVS,
                     "enable_rtm" to (dataChannel == "rtm"),
+                    "enable_sal" to (CovAgentManager.voiceprintMode != VoiceprintMode.OFF)
                 ),
                 "asr" to mapOf(
                     "language" to CovAgentManager.language?.language_code,
@@ -968,6 +972,12 @@ class CovLivingViewModel : ViewModel() {
                     "silence_duration_ms" to null,
                     "threshold" to null,
                 ),
+                "sal" to mapOf(
+                    "sal_mode" to "locking",
+                    "sample_urls" to if (enablePersonalized)
+                        mapOf(uidStr to CovAgentManager.voiceprintInfo?.remoteUrl)
+                    else null,
+                ),
                 "parameters" to mapOf(
                     "data_channel" to dataChannel,
                     "enable_flexible" to null,
@@ -996,6 +1006,8 @@ class CovLivingViewModel : ViewModel() {
 
     // open source convoai parameter
     private fun getConvoaiOpenSourceBodyMap(channel: String): Map<String, Any?> {
+        val enablePersonalized = CovAgentManager.voiceprintMode == VoiceprintMode.PERSONALIZED
+        val uidStr = CovAgentManager.uid.toString()
         return mapOf(
             "graph_id" to null,
             "preset" to null,
@@ -1004,7 +1016,7 @@ class CovLivingViewModel : ViewModel() {
                 "channel" to channel,
                 "token" to null,
                 "agent_rtc_uid" to CovAgentManager.agentUID.toString(),
-                "remote_rtc_uids" to listOf(CovAgentManager.uid.toString()),
+                "remote_rtc_uids" to listOf(uidStr),
                 "enable_string_uid" to null,
                 "idle_timeout" to null,
                 "agent_rtm_uid" to null,
@@ -1012,6 +1024,7 @@ class CovLivingViewModel : ViewModel() {
                     "enable_aivad" to CovAgentManager.enableAiVad,
                     "enable_bhvs" to CovAgentManager.enableBHVS,
                     "enable_rtm" to true,
+                    "enable_sal" to (CovAgentManager.voiceprintMode != VoiceprintMode.OFF)
                 ),
                 "asr" to mapOf(
                     "language" to null,
@@ -1073,6 +1086,12 @@ class CovLivingViewModel : ViewModel() {
                     "prefix_padding_ms" to null,
                     "silence_duration_ms" to null,
                     "threshold" to null,
+                ),
+                "sal" to mapOf(
+                    "sal_mode" to "locking",
+                    "sample_urls" to if (enablePersonalized)
+                        mapOf(uidStr to CovAgentManager.voiceprintInfo?.remoteUrl)
+                    else null,
                 ),
                 "parameters" to mapOf(
                     "data_channel" to "rtm",

@@ -136,7 +136,8 @@ class CovListViewModel : ViewModel() {
                 support_languages = emptyList(),
                 call_time_limit_second = 600L,
                 call_time_limit_avatar_second = 300L,
-                is_support_vision = true
+                is_support_vision = true,
+                advanced_features_enable_sal = false
             )
         )
     }
