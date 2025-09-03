@@ -242,6 +242,11 @@ if [ -n "$toolbox_url" ]; then
     sed -i '' "s|static let TOOLBOX_SERVER_HOST: String = .*|static let TOOLBOX_SERVER_HOST: String = \"$toolbox_url\"|g" $KEYCENTER_PATH
 fi
 
+# Modify IS_OPEN_SOURCE to false
+sed -i '' "s|static var IS_OPEN_SOURCE: Bool = .*|static var IS_OPEN_SOURCE: Bool = false|g" $KEYCENTER_PATH
+echo "Check modification results："
+grep "static var IS_OPEN_SOURCE" $KEYCENTER_PATH
+
 # Archive path
 ARCHIVE_PATH="${WORKSPACE}/${TARGET_NAME}_${BUILD_VERSION}.xcarchive"
 
