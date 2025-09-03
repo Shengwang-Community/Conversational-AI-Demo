@@ -205,6 +205,7 @@ if [ ! -f "${PBXPROJ_PATH}" ]; then
     exit 1
 fi
 
+security unlock-keychain -p "123456" ~/Library/Keychains/login.keychain
 # Main project configuration
 # Debug
 sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_VERSION};|g" $PBXPROJ_PATH
