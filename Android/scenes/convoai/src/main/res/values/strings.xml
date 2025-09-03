@@ -161,9 +161,13 @@
     <string name="cov_voiceprint_no_voice">未录入声纹</string>
     <string name="cov_voiceprint_no_voice_tips">未录入有效声纹，切换有感模式失效，退出将自动切换至【上一个选择的模式】模式。</string>
     <string name="cov_voiceprint_exit">退出</string>
-    <string name="cov_voiceprint_title">请朗读</string>
+    <string name="cov_voiceprint_title">请大声朗读这首诗</string>
     <string name="cov_voiceprint_title1">录音中，请朗读…</string>
-    <string name="cov_voiceprint_content">君不见黄河之水天上来，\n奔流到海不复回。\n\n君不见高堂明镜悲白发，\n朝如青丝暮成雪。\n\n人生得意须尽欢，莫使金樽空对月。\n\n天生我材必有用，千金散尽还复来。</string>
+    <string name="cov_voiceprint_content">
+        君不见黄河之水天上来，奔流到海不复回。
+        \n\n君不见高堂明镜悲白发，朝如青丝暮成雪。
+        \n\n人生得意须尽欢，莫使金樽空对月。
+        \n\n天生我材必有用，千金散尽还复来。</string>
     <string name="cov_voiceprint_long_pressed">长按录制</string>
     <string name="cov_voiceprint_recording_only_one">只允许录入一条声纹，重新录入历史声纹将被删除</string>
     <string name="cov_voiceprint_release_to_create">松手创建，上移取消</string>

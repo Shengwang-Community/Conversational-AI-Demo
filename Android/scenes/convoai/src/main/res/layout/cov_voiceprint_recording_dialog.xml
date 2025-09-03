@@ -17,7 +17,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:tint="@color/ai_icontext1" />
 
-
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
@@ -35,10 +34,11 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="30dp"
-        android:layout_marginTop="80dp"
+        android:layout_marginTop="70dp"
         android:text="@string/cov_voiceprint_content"
         android:textColor="@color/ai_icontext1"
-        android:textSize="18sp"
+        android:textSize="20sp"
+        android:lineSpacingExtra="5dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvTitle" />
