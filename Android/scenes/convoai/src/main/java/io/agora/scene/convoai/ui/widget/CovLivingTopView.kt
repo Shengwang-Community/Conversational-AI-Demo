@@ -1,11 +1,8 @@
 package io.agora.scene.convoai.ui.widget
 
-import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.Animation
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
@@ -37,6 +34,7 @@ class CovLivingTopView @JvmOverloads constructor(
     private var onWifiClick: (() -> Unit)? = null
     private var onSettingsClick: (() -> Unit)? = null
     private var onCCClick: (() -> Unit)? = null
+    private var onMoreClick: (() -> Unit)? = null
 
     private var isTitleAnimRunning = false
     private var connectionState: AgentConnectionState = AgentConnectionState.IDLE
@@ -51,6 +49,10 @@ class CovLivingTopView @JvmOverloads constructor(
         binding.btnNet.setOnClickListener { onWifiClick?.invoke() }
         binding.btnSettings.setOnClickListener { onSettingsClick?.invoke() }
         binding.tvCc.setOnClickListener { onCCClick?.invoke() }
+
+        binding.voiceprintSettingsView.setOnMoreClickListener {
+            onMoreClick?.invoke()
+        }
 
         // Set animation listener to show tv_cc only after ll_timer is fully displayed
         binding.viewFlipper.inAnimation?.setAnimationListener(object : Animation.AnimationListener {
@@ -92,6 +94,13 @@ class CovLivingTopView @JvmOverloads constructor(
         onCCClick = listener
     }
 
+    /**
+     * Set callback for more click
+     */
+    fun setOnMoreClickListener(listener: (() -> Unit)?) {
+        onMoreClick = listener
+    }
+
     fun updateTitleName(name: String, url: String, @androidx.annotation.DrawableRes defaultImage:Int) {
         binding.tvPresetName.text = name
         if (url.isEmpty()) {
@@ -130,12 +139,11 @@ class CovLivingTopView @JvmOverloads constructor(
             if (light) {
                 tvCc.setBackgroundResource(R.drawable.btn_bg_brand_black3_selector)
                 layoutPresetName.setBackgroundResource(R.drawable.btn_bg_brand_black3_selector)
-                layoutVoicePrint.setBackgroundResource(R.drawable.btn_bg_brand_black3_selector)
             } else {
                 tvCc.setBackgroundResource(R.drawable.btn_bg_block1_selector)
                 layoutPresetName.setBackgroundResource(R.drawable.btn_bg_brand_white1_selector)
-                layoutVoicePrint.setBackgroundResource(R.drawable.btn_bg_block1_selector)
             }
+            voiceprintSettingsView.updateLightBackground(light)
         }
     }
 
@@ -173,9 +181,13 @@ class CovLivingTopView @JvmOverloads constructor(
         if (connectionState == AgentConnectionState.IDLE) {
             binding.btnBack.isVisible = true
             binding.cvCc.isVisible = false
+            binding.voiceprintSettingsView.isVisible = false
+            binding.voiceprintSettingsView.collapse()
         } else {
             binding.btnBack.isVisible = false
             binding.cvCc.isVisible = true
+
+            binding.voiceprintSettingsView.isVisible = true
         }
     }
 
@@ -186,9 +198,9 @@ class CovLivingTopView @JvmOverloads constructor(
     fun showTitleAnim(sessionLimitMode: Boolean, roomExpireTime: Long, tipsText: String? = null) {
         stopTitleAnim()
         val tips = tipsText ?: if (sessionLimitMode) {
-            context.getString(io.agora.scene.common.R.string.common_limit_time, (roomExpireTime / 60).toInt())
+            context.getString(R.string.common_limit_time, (roomExpireTime / 60).toInt())
         } else {
-            context.getString(io.agora.scene.common.R.string.common_limit_time_none)
+            context.getString(R.string.common_limit_time_none)
         }
         binding.tvLimitTips.text = tips
         isTitleAnimRunning = true
@@ -270,32 +282,18 @@ class CovLivingTopView @JvmOverloads constructor(
         countDownJob = null
     }
 
-    fun showVoicePrint() {
-        binding.cvVoicePrint.apply {
-            // Set initial state: invisible, scaled down and transparent
-            alpha = 0f
-            scaleX = 0.3f
-            scaleY = 0.3f
-            isVisible = true
-            
-            // Create scale animations
-            val scaleXAnimator = ObjectAnimator.ofFloat(this, "scaleX", 0.3f, 1.0f)
-            val scaleYAnimator = ObjectAnimator.ofFloat(this, "scaleY", 0.3f, 1.0f)
-            val alphaAnimator = ObjectAnimator.ofFloat(this, "alpha", 0f, 1f)
-            
-            // Create animator set and configure
-            val animatorSet = AnimatorSet().apply {
-                playTogether(scaleXAnimator, scaleYAnimator, alphaAnimator)
-                duration = 300 // 300ms animation
-                interpolator = AccelerateDecelerateInterpolator()
-            }
-            
-            animatorSet.start()
-        }
+    /**
+     * Update voiceprint lock status
+     */
+    fun updateVoiceprintStatus(enabled: Boolean) {
+        binding.voiceprintSettingsView.setVoiceprintEnabled(enabled)
     }
 
-    fun hideVoicePrint() {
-        binding.cvVoicePrint.isVisible = false
+    /**
+     * Update elegant interrupt status
+     */
+    fun updateElegantInterruptStatus(enabled: Boolean) {
+        binding.voiceprintSettingsView.setElegantInterruptEnabled(enabled)
     }
 
     /**

@@ -193,6 +193,7 @@
     <string name="cov_agent_activating">生效中</string>
     <string name="cov_agent_sensitive">有感</string>
     <string name="cov_agent_insensitive">无感</string>
+    <string name="cov_agent_info_more">更多…</string>
 
     <!-- Mine -->
     <string name="cov_mine_delete_account">注销账号</string>
@@ -205,12 +206,14 @@
     <string name="cov_mine_settings">设置</string>
     <string name="cov_mine_privacy">隐私</string>
     <string name="cov_mine_nickname">昵称</string>
+    <string name="cov_mine_conversational_persona">我的对话人设</string>
     <string name="cov_mine_should">称呼您为</string>
     <string name="cov_mine_mr">先生</string>
     <string name="cov_mine_ms">女士</string>
     <string name="cov_mine_your_birthday">您的生日</string>
     <string name="cov_mine_about_me">自我介绍</string>
-    <string name="cov_mine_select_your_birthday">选择您的生日</string>
+    <string name="cov_mine_select">请选择</string>
+    <string name="cov_mine_about_me_hint">设定自我介绍，让 AI agent 更了解您</string>
     <string name="cov_mine_iot_devices">我的对话式 AI 设备</string>
     <string name="cov_mine_devices">已绑定 %d 台设备</string>
 </resources>
