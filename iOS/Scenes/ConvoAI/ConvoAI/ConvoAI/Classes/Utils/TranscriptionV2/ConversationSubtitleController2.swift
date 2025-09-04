@@ -214,7 +214,7 @@ private typealias TurnState = SubtitleStatus2
 ///
 @objc public class ConversationSubtitleController2: NSObject {
     
-    public static let version: String = "1.8.0"
+    public static let version: String = "2.0.0"
     public static let localUserId: UInt = 0
     public static let remoteUserId: UInt = 99
     
