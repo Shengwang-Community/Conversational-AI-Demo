@@ -7,8 +7,8 @@ import io.agora.scene.convoai.api.CovAgentLanguage
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.api.CovAvatar
 import io.agora.scene.convoai.ui.CovRenderMode
-import io.agora.scene.convoai.ui.voiceprint.VoiceprintInfo
-import io.agora.scene.convoai.ui.voiceprint.VoiceprintManager
+import io.agora.scene.convoai.ui.living.voiceprint.VoiceprintInfo
+import io.agora.scene.convoai.ui.living.voiceprint.VoiceprintManager
 import kotlin.random.Random
 
 enum class AgentConnectionState() {

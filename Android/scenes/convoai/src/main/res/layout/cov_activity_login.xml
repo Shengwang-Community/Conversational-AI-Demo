@@ -30,7 +30,7 @@
         app:layout_constraintBottom_toTopOf="@+id/guideline2"
         app:layout_constraintDimensionRatio="375:352" />
 
-    <io.agora.scene.common.ui.widget.TypewriterTextView
+    <io.agora.scene.convoai.ui.auth.widget.TypewriterTextView
         android:id="@+id/tvTyping"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

@@ -8,8 +8,8 @@ import io.agora.agent.databinding.WelcomeActivityBinding
 import io.agora.scene.common.ui.BaseActivity
 import androidx.annotation.RequiresApi
 import io.agora.scene.common.constant.SSOUserManager
-import io.agora.scene.convoai.ui.CovLoginActivity
-import io.agora.scene.convoai.ui.CovMainActivity
+import io.agora.scene.convoai.ui.auth.CovLoginActivity
+import io.agora.scene.convoai.ui.main.CovMainActivity
 
 class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
 

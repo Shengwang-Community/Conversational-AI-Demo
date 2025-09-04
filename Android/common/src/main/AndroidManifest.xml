@@ -3,17 +3,6 @@
 
     <application>
 
-        <activity
-            android:name=".ui.TermsActivity"
-            android:screenOrientation="portrait"
-            android:configChanges="locale|layoutDirection"
-            android:exported="false" />
-
-        <activity
-            android:name=".ui.SSOWebViewActivity"
-            android:screenOrientation="portrait"
-            android:configChanges="locale|layoutDirection"
-            android:exported="false"/>
     </application>
 
 </manifest>

@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:background="@android:color/transparent"
     app:layout_constraintTop_toTopOf="parent"
-    tools:background="@color/ai_fill2">
+    tools:background="@color/ai_fill4">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cl_top"
@@ -131,14 +131,14 @@
         android:id="@+id/viewFlipper"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:inAnimation="@anim/cov_flip_in"
         android:outAnimation="@anim/cov_flip_out"
         android:visibility="gone"
-        tools:visibility="visible"
-        android:layout_marginTop="10dp"
-        app:layout_constraintTop_toBottomOf="@+id/cl_top"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cl_top"
+        tools:visibility="visible">
 
         <LinearLayout
             android:id="@+id/ll_limit_tips"
@@ -180,13 +180,14 @@
         </LinearLayout>
     </ViewFlipper>
 
-    <io.agora.scene.convoai.ui.widget.CovVoiceprintSettingsView
+    <io.agora.scene.convoai.ui.living.widget.CovVoiceprintSettingsView
         android:id="@+id/voiceprint_settings_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
-        android:visibility="gone"
         android:layout_marginTop="10dp"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cl_top" />
+        app:layout_constraintTop_toBottomOf="@id/cl_top"
+        tools:visibility="visible" />
 </androidx.constraintlayout.widget.ConstraintLayout>

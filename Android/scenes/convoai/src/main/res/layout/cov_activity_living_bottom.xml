@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="72dp"
     android:layout_gravity="bottom"
-    tools:background="@color/ai_fill2"
+    tools:background="@color/ai_fill4"
     android:background="@android:color/transparent">
 
     <LinearLayout
