@@ -15,6 +15,14 @@
 
 ## 🚀 快速开始
 
+### 📱 直接体验Demo
+|    平台    |                  链接                  |
+| -------- | ------------------------------------- |
+| 📱 Android | [Android Demo](https://www.pgyer.com/ZxQJwDEb) |
+|   📱 iOS   |   [iOS Demo](https://testflight.apple.com/join/sZu5As3w)   |
+|   🌐 Web   |   [Web Demo](https://conversational-ai.shengwang.cn)   |
+
+### 💻 源码
 |    平台    |                  示例                  |
 | -------- | ------------------------------------- |
 | 📱 Android | [Android Demo](Android/scenes/convoai) |

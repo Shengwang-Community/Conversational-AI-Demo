@@ -9,14 +9,14 @@
     "hiIN": "हिन्दी"
   },
   "metadata": {
-    "title": "对话式 AI 引擎体验",
-    "description": "对话式 AI 引擎体验"
+    "title": "声网对话式 AI 引擎",
+    "description": "声网对话式 AI 引擎"
   },
   "common": {
     "language": "语言"
   },
   "homePage": {
-    "title": "对话式 AI 引擎体验"
+    "title": "声网对话式 AI 引擎"
   },
   "status": {
     "unknown": "未知",
@@ -52,7 +52,19 @@
     "moreAction": "更多操作"
   },
   "settings": {
-    "title": "人物设定",
+    "tab": {
+      "agent": "智能体",
+      "settings": "设定"
+    },
+    "custom_agent": {
+      "title": "自定义智能体",
+      "description": "请联系声网员工获取自定义智能体ID",
+      "placeholder": "输入智能体ID获取",
+      "retrieve_button": "获取",
+      "message_success": "智能体获取成功",
+      "message_error": "智能体获取失败，当前数据库无此智能体",
+      "message_sunset": "智能体已被下线，请联系声网工作人员"
+    },
     "save": "保存",
     "options": {
       "custom": "自定义",
@@ -78,8 +90,8 @@
         "description": "背景人声抑制，屏蔽背景人声干扰，保留对话人清晰人声"
       },
       "enable_aivad": {
-        "title": "<label>启用</label> 优雅打断",
-        "description": ""
+        "title": "优雅打断",
+        "description": "优雅打断是声网自研高阶打断功能，支持让智能体临时停下逻辑推理去做其他事情，返回后继续让智能体按照打断前的节点继续的技术"
       }
     },
     "standard_avatar": {
@@ -92,20 +104,39 @@
         "cancel": "取消",
         "do-not-ask-again": "不再显示"
       }
+    },
+    "transcription": {
+      "render-mode": "字幕渲染模式",
+      "word": {
+        "title": "Word 模式",
+        "description": "逐字渲染，字幕和语音同步"
+      },
+      "chunk": {
+        "title": "Text - 同步模式",
+        "description": "字幕和语音同步展示的 Text 模式"
+      },
+      "text": {
+        "title": "Text - 字幕先出模式",
+        "description": "字幕一次性渲染"
+      }
+    },
+    "voice-lock": {
+      "title": "声纹锁定",
+      "description": "声纹锁定 TODO"
     }
   },
   "agent": {
     "greeting": {
       "hi": "你好，",
       "greeting1": "人类",
-      "greeting2": "我是对话式AI引擎",
+      "greeting2": "欢迎体验声网对话式 AI 引擎",
       "greeting3": "秒应智答，零滞畅聊",
       "connecting": "我在连接中...",
       "connected": "我已加入",
       "speakLoudly": "请你大声跟我说话，以便我更好地和你沟通",
       "failed": "我加入失败，请晚点再试"
     },
-    "getStart": "连接 AI 引擎",
+    "getStart": "连接对话式 AI 引擎",
     "subtitle": "字幕",
     "enableSubtitle": "打开字幕",
     "disableSubtitle": "关闭字幕",
@@ -200,5 +231,20 @@
     "max-image-dimensions": "图片尺寸不得超过2048x2048像素。",
     "upload-image-tooltip": "图片大小5M以内，尺寸小于2048x2048。支持JPG、PNG、WEBP、JPEG格式",
     "avatar-busy-error": "所有数字人正忙，请稍后重试。"
+  },
+  "preset": {
+    "more": "更多+"
+  },
+  "mock": {
+    "preset": {
+      "title": "智能助手",
+      "description": "通用AI智能体，你可以跟她聊任何你想了解的",
+      "mock-1": "智能助手",
+      "mock-2": "智能客服-在线通话",
+      "mock-3": "英语陪练",
+      "mock-4": "情感陪伴-男生",
+      "mock-5": "情感陪伴-女生",
+      "mock-6": "更多+"
+    }
   }
 }

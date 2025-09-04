@@ -32,3 +32,12 @@ export const remoteAgentPingReqSchema = z.object({
   preset_name: z.string(),
   channel_name: z.string()
 })
+
+export const remoteAgentCustomPresetItem = z.object({
+  name: z.string(), // consider name as ID
+  display_name: z.string(),
+  description: z.string(),
+  preset_type: z.string(),
+  call_time_limit_second: z.number(),
+  is_support_vision: z.boolean()
+})

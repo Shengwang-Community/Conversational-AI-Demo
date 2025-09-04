@@ -30,6 +30,8 @@ object SSOUserManager {
         return mToken
     }
 
+    val accountUid: String get() = mUserInfo?.accountUid ?: ""
+
     @JvmStatic
     fun logout() {
         this.mToken = ""

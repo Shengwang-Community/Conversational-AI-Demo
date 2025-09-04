@@ -328,3 +328,131 @@ export const PresetAvatarCloseIcon = (props: React.SVGProps<SVGSVGElement>) => {
     </svg>
   )
 }
+
+export const PresetPlaceholderIcon = (props: React.SVGProps<SVGSVGElement>) => {
+  return (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 54 54'
+      fill='none'
+      {...props}
+    >
+      <title className='sr-only'>Preset Placeholder</title>
+      <g clipPath='url(#clip0_44062_5615)'>
+        <rect width='54' height='54' fill='#446CFF' />
+        <circle
+          cx='27.5'
+          cy='27.5'
+          r='17.35'
+          stroke='url(#paint0_linear_44062_5615)'
+          strokeOpacity='0.15'
+          strokeWidth='0.3'
+        />
+        <circle
+          cx='27.5'
+          cy='27.5'
+          r='22.35'
+          stroke='url(#paint1_linear_44062_5615)'
+          strokeOpacity='0.15'
+          strokeWidth='0.3'
+        />
+        <path
+          d='M0 27H54'
+          stroke='white'
+          strokeOpacity='0.18'
+          strokeWidth='0.3'
+        />
+        <path
+          d='M27 53.7549L27 -0.245118'
+          stroke='white'
+          strokeOpacity='0.18'
+          strokeWidth='0.3'
+        />
+        <g filter='url(#filter0_f_44062_5615)'>
+          <ellipse
+            cx='22.5'
+            cy='26.5'
+            rx='8.5'
+            ry='12.5'
+            transform='rotate(46.6997 22.5 26.5)'
+            fill='#263CFF'
+          />
+        </g>
+        <path
+          d='M27.6497 17.3573C27.7393 17.1447 27.9437 17 28.1743 17H33.5313C34.1598 17 34.6341 17.574 34.4638 18.179C33.9922 19.8549 33.222 21.4405 32.1845 22.8602C31.078 24.3743 29.6926 25.6652 28.1046 26.6685C28.735 26.3772 29.387 26.1285 30.0564 25.925C32.0329 25.324 34.111 25.1317 36.1605 25.3564C36.6466 25.4096 37 25.8305 37 26.3196V30.9146C37 31.5895 36.342 32.0709 35.6738 31.9757C34.746 31.8433 33.797 31.8661 32.8677 32.0479C31.2602 32.3622 29.7836 33.1383 28.6247 34.2778C27.993 34.8989 27.4711 35.6128 27.0753 36.3897C26.8909 36.7516 26.5302 37 26.1241 37H21.0279C20.3914 37 19.9156 36.4122 20.101 35.8033C20.1485 35.6473 20.1986 35.4919 20.2514 35.3373C21.0097 33.1164 22.2943 31.1047 23.9991 29.4681C24.7273 28.7691 25.5232 28.1471 26.3735 27.6099C24.3794 28.5314 22.2014 29.0114 19.9937 29.013C19.2591 29.0151 18.5288 28.9636 17.8087 28.8605C17.3365 28.7929 17 28.3787 17 27.9017V23.2864C17 22.5857 17.7067 22.0989 18.3945 22.2325C18.9175 22.3341 19.4529 22.3866 19.9937 22.3871C21.6327 22.3871 23.2349 21.9093 24.5976 21.014C25.9604 20.1186 27.0225 18.8461 27.6497 17.3573Z'
+          fill='white'
+        />
+        <path
+          d='M41.5 9C41.5 9 41.8722 11.5938 42.9223 12.7616C43.8453 13.788 46 14.5 46 14.5C46 14.5 43.8457 15.2085 42.9223 16.2384C41.8762 17.4053 41.5 20 41.5 20C41.5 20 41.1278 17.4062 40.0777 16.2384C39.1547 15.212 37 14.5 37 14.5C37 14.5 39.1547 13.788 40.0777 12.7616C41.1278 11.5938 41.5 9 41.5 9Z'
+          fill='white'
+        />
+      </g>
+      <defs>
+        <filter
+          id='filter0_f_44062_5615'
+          x='1.69385'
+          y='5.92773'
+          width='41.6123'
+          height='41.1445'
+          filterUnits='userSpaceOnUse'
+          colorInterpolationFilters='sRGB'
+        >
+          <feFlood floodOpacity='0' result='BackgroundImageFix' />
+          <feBlend
+            mode='normal'
+            in='SourceGraphic'
+            in2='BackgroundImageFix'
+            result='shape'
+          />
+          <feGaussianBlur
+            stdDeviation='5'
+            result='effect1_foregroundBlur_44062_5615'
+          />
+        </filter>
+        <linearGradient
+          id='paint0_linear_44062_5615'
+          x1='38.6806'
+          y1='38.1944'
+          x2='14.375'
+          y2='15.8333'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0.00343646' stopColor='white' />
+          <stop offset='1' stopColor='white' stopOpacity='0.8' />
+        </linearGradient>
+        <linearGradient
+          id='paint1_linear_44062_5615'
+          x1='27.5'
+          y1='5'
+          x2='27.5'
+          y2='50'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop stopColor='white' />
+          <stop offset='1' stopColor='white' stopOpacity='0.5' />
+        </linearGradient>
+        <clipPath id='clip0_44062_5615'>
+          <rect width='54' height='54' fill='white' />
+        </clipPath>
+      </defs>
+    </svg>
+  )
+}
+
+export const FilledTooltipIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    viewBox='0 0 20 20'
+    fill='none'
+    {...props}
+  >
+    {/* <title className='sr-only'>Tooltip</title> */}
+    <path
+      fillRule='evenodd'
+      clipRule='evenodd'
+      d='M16.25 10C16.25 13.4518 13.4518 16.25 10 16.25C6.54822 16.25 3.75 13.4518 3.75 10C3.75 6.54822 6.54822 3.75 10 3.75C13.4518 3.75 16.25 6.54822 16.25 10ZM8.75 6.66667C8.75 6.20643 9.1231 5.83333 9.58333 5.83333H10.4167C10.8769 5.83333 11.25 6.20643 11.25 6.66667V9.58333C11.25 10.0436 10.8769 10.4167 10.4167 10.4167H9.58333C9.1231 10.4167 8.75 10.0436 8.75 9.58333V6.66667ZM9.58333 11.6667C9.1231 11.6667 8.75 12.0398 8.75 12.5V13.3333C8.75 13.7936 9.1231 14.1667 9.58333 14.1667H10.4167C10.8769 14.1667 11.25 13.7936 11.25 13.3333V12.5C11.25 12.0398 10.8769 11.6667 10.4167 11.6667H9.58333Z'
+      fill='currentColor'
+      fillOpacity='0.75'
+    />
+  </svg>
+)

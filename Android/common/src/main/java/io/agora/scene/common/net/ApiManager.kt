@@ -154,7 +154,7 @@ object ApiManager {
                 if (response.isSuccess && response.data != null) {
                     onResult(Result.success(response.data!!))
                 } else {
-                    onResult(Result.failure(Exception("Upload failed: ${response.message}")))
+                    onResult(Result.failure(Exception("Upload image failed: ${response.message}")))
                 }
             }.onFailure { exception ->
                 CommonLogger.e(TAG, "Upload image failed: ${exception.message}")
@@ -214,6 +214,49 @@ object ApiManager {
             }.onFailure { exception ->
                 CommonLogger.e(TAG, "Upload log failed: ${exception.message}")
                 onError(Exception("Upload log failed due to: ${exception.message}"))
+            }
+        }
+    }
+
+    /**
+     * Upload file
+     * @param token Authorization token
+     * @param requestId Request ID
+     * @param file  file
+     * @param onResult Result callback
+     */
+    fun uploadFile(
+        token: String,
+        requestId: String,
+        file: File,
+        onResult: (Result<UploadFile>) -> Unit
+    ) {
+        scope.launch {
+            runCatching {
+                val requestIdBody = requestId.toRequestBody("text/plain".toMediaTypeOrNull())
+                val srcBody = "Android".toRequestBody("text/plain".toMediaTypeOrNull())
+                val appIdBody = ServerConfig.rtcAppId.toRequestBody("text/plain".toMediaTypeOrNull())
+                val channelNameBody = SSOUserManager.accountUid.toRequestBody("text/plain".toMediaTypeOrNull())
+                val fileRequestBody = file.asRequestBody("application/octet-stream".toMediaTypeOrNull())
+                val filePart = MultipartBody.Part.createFormData("file", file.name, fileRequestBody)
+
+                getService(ApiManagerService::class.java).uploadFile(
+                    token = "Bearer $token",
+                    requestId = requestIdBody,
+                    src = srcBody,
+                    appId = appIdBody,
+                    channelName = channelNameBody,
+                    file = filePart
+                )
+            }.onSuccess { response ->
+                if (response.isSuccess && response.data != null) {
+                    onResult(Result.success(response.data!!))
+                } else {
+                    onResult(Result.failure(Exception("Upload file failed: ${response.message}")))
+                }
+            }.onFailure { exception ->
+                CommonLogger.e(TAG, "Upload file failed: ${exception.message}")
+                onResult(Result.failure(exception))
             }
         }
     }

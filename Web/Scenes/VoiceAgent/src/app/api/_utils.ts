@@ -29,7 +29,8 @@ export const getEndpointFromNextRequest = (request: NextRequest) => {
       authorizationHeader,
       appCert,
       basicAuthKey,
-      basicAuthSecret
+      basicAuthSecret,
+      query
     }
   }
   return {
@@ -41,6 +42,7 @@ export const getEndpointFromNextRequest = (request: NextRequest) => {
     authorizationHeader,
     appCert,
     basicAuthKey,
-    basicAuthSecret
+    basicAuthSecret,
+    query
   }
 }

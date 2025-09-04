@@ -21,12 +21,14 @@ import io.agora.scene.common.R;
 import io.agora.scene.common.util.KtExtendKt;
 
 
-@RestrictTo({RestrictTo.Scope.LIBRARY})
+//@RestrictTo({RestrictTo.Scope.LIBRARY})
 public final class InternalToast {
 
     public static final int COMMON = 0;
     public static final int TIPS = 1;
     public static final int ERROR = 2;
+    public static final int NEW_COMMON = 3;
+    public static final int NEW_TIPS = 4;
 
     @SuppressLint("StaticFieldLeak")
     private static Application mApp;
@@ -131,22 +133,37 @@ public final class InternalToast {
             }
             Toast toast = new Toast(context);
 
-            View rootView = LayoutInflater.from(context).inflate(io.agora.scene.common.R.layout.common_toast_view, null);
-            TextView textView = rootView.findViewById(R.id.tvContent);
-            ImageView imageView = rootView.findViewById(R.id.ivToast);
+            View rootView;
+            if (toastType == NEW_COMMON || toastType == NEW_TIPS) {
+                rootView = LayoutInflater.from(context).inflate(R.layout.common_new_toast_view, null);
+                TextView textView = rootView.findViewById(R.id.tvContent);
+                ImageView imageView = rootView.findViewById(R.id.ivToast);
 
-            textView.setText(title);
-            if (toastType == COMMON) {
-                imageView.setVisibility(View.GONE);
-            } else {
-                imageView.setVisibility(View.VISIBLE);
-                if (toastType == TIPS) {
-                    imageView.setImageResource(R.drawable.toast_icon_right);
+                textView.setText(title);
+                if (toastType == NEW_COMMON) {
+                    imageView.setVisibility(View.GONE);
                 } else {
-                    imageView.setImageResource(R.drawable.toast_icon_wrong);
+                    imageView.setVisibility(View.VISIBLE);
                 }
-            }
 
+            } else {
+                rootView = LayoutInflater.from(context).inflate(R.layout.common_toast_view, null);
+                TextView textView = rootView.findViewById(R.id.tvContent);
+                ImageView imageView = rootView.findViewById(R.id.ivToast);
+
+                textView.setText(title);
+                if (toastType == COMMON) {
+                    imageView.setVisibility(View.GONE);
+                } else {
+                    imageView.setVisibility(View.VISIBLE);
+                    if (toastType == TIPS) {
+                        imageView.setImageResource(R.drawable.toast_icon_right);
+                    } else {
+                        imageView.setImageResource(R.drawable.toast_icon_wrong);
+                    }
+                }
+
+            }
             toast.setView(rootView);
             toast.setGravity(gravity, 0, yOffset);
             toast.setDuration(duration);

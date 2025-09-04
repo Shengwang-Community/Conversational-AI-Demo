@@ -143,4 +143,80 @@
     <string name="cov_get_agent_offline">智能体已被下线，请联系声网工作人员</string>
     <string name="cov_retry_tips">页面加载失败，请重试</string>
 
+    <string name="cov_voiceprint_recognition">声纹锁定</string>
+    <string name="cov_voiceprint_close">关闭</string>
+    <string name="cov_voiceprint_close_tips">若不启用，智能体可能被周围其他人的声音打断或干扰。</string>
+    <string name="cov_voiceprint_seamless">无感模式</string>
+    <string name="cov_voiceprint_seamless_tips">AI 将智能学习与智能体会话的用户声纹，自动屏蔽其他用户声纹。</string>
+    <string name="cov_voiceprint_personalized">有感模式</string>
+    <string name="cov_voiceprint_personalized_tips">录入一段你的声纹，智能体将自动屏蔽其它声音</string>
+    <string name="cov_voiceprint_has">本机有声纹录入</string>
+    <string name="cov_voiceprint_create_mine_voice">创建我的声纹</string>
+    <string name="cov_voiceprint_recording">创建</string>
+    <string name="cov_voiceprint_re_recording">重新录入</string>
+    <string name="cov_voiceprint_uploading">上传中…</string>
+    <string name="cov_loading">Loading</string>
+    <string name="cov_voiceprint_upload_failed">上传失败，请重试</string>
+    <string name="cov_voiceprint_upload_success">语料上传成功</string>
+    <string name="cov_voiceprint_no_voice">未录入声纹</string>
+    <string name="cov_voiceprint_no_voice_tips">未录入有效声纹，切换有感模式失效，退出将自动切换至【上一个选择的模式】模式。</string>
+    <string name="cov_voiceprint_exit">退出</string>
+    <string name="cov_voiceprint_title">请大声朗读这首诗</string>
+    <string name="cov_voiceprint_title1">录音中，请朗读…</string>
+    <string name="cov_voiceprint_content">
+        君不见黄河之水天上来，奔流到海不复回。
+        \n\n君不见高堂明镜悲白发，朝如青丝暮成雪。
+        \n\n人生得意须尽欢，莫使金樽空对月。
+        \n\n天生我材必有用，千金散尽还复来。</string>
+    <string name="cov_voiceprint_long_pressed">长按录制</string>
+    <string name="cov_voiceprint_recording_only_one">只允许录入一条声纹，重新录入历史声纹将被删除</string>
+    <string name="cov_voiceprint_release_to_create">松手创建，上移取消</string>
+    <string name="cov_voiceprint_release_to_cancel">松手取消</string>
+    <string name="cov_voiceprint_duration">语料：%1s/%2s</string>
+    <string name="cov_voiceprint_recording_short">录制时间过短，请至少录制10s语料</string>
+    <string name="cov_voiceprint_recording_auto_end">录制自动结束</string>
+    <string name="cov_voiceprint_recording_uploading">语料录制成功上传中，请稍后</string>
+    <string name="cov_voiceprint_recording_upload_failed">语料上传失败，请重试</string>
+    <string name="cov_voiceprint_prepare_recording">准备录制中…</string>
+    <string name="cov_voiceprint_prepare">准备录制</string>
+    <string name="cov_voiceprint_name_format">%s声纹</string>
+    <string name="cov_voiceprint_date_format">yyyy年MM月dd日</string>
+    <string name="cov_voiceprint_recording_tips_title">声纹录入提示</string>
+    <string name="cov_voiceprint_recording_tips_content">您的声音默认存储在本机，声网有感声纹锁定功能需要收集您的声音，单次体验该功能完毕后会将云端声纹删除，绝对不会使用您的声音用作商业用途。</string>
+    <string name="cov_avatar_generator_by_ai">本数字人由 AI 生成</string>
+    <string name="cov_privacy_policy">个人信息保护指引</string>
+    <string name="cov_privacy_policy_content">欢迎使用声网对话式 AI 引擎！当您点击“同意”时，视为您已阅读并愿意接受《用户协议》和《隐私政策的所有内容》。当您点击“不同意”时，将无法体验本应用的完整功能。</string>
+    <string name="cov_agree">同意</string>
+    <string name="cov_disagree">不同意</string>
+    <string name="cov_user_agreement_text">《用户协议》</string>
+    <string name="cov_privacy_policy_text">《隐私政策的所有内容》</string>
+    <string name="cov_service_info">服务信息</string>
+    <string name="cov_agent_service_info">对话 AI 服务状态</string>
+    <string name="cov_agent_not_activated">未生效</string>
+    <string name="cov_agent_activating">生效中</string>
+    <string name="cov_agent_sensitive">有感</string>
+    <string name="cov_agent_insensitive">无感</string>
+    <string name="cov_agent_info_more">更多…</string>
+
+    <!-- Mine -->
+    <string name="cov_mine_delete_account">注销账号</string>
+    <string name="cov_mine_important_notice">重要提示</string>
+    <string name="cov_mine_delete_account_content">账号注销成功后将彻底删除该账号及关联的所有数据且无法恢复，请谨慎选择并操作。</string>
+    <string name="cov_mine_delete_account_tips">我已了解注销账号的各项风险</string>
+    <string name="cov_mine_confirm_deleted">确认注销</string>
+    <string name="cov_mine_delete_account_toast">您必须勾选并同意注销账号的各项风险才可以注销。</string>
+    <string name="cov_mine_filing_no">备案号</string>
+    <string name="cov_mine_settings">设置</string>
+    <string name="cov_mine_privacy">隐私</string>
+    <string name="cov_mine_nickname">昵称</string>
+    <string name="cov_mine_conversational_persona">我的对话人设</string>
+    <string name="cov_mine_should">称呼您为</string>
+    <string name="cov_mine_mr">先生</string>
+    <string name="cov_mine_ms">女士</string>
+    <string name="cov_mine_your_birthday">您的生日</string>
+    <string name="cov_mine_about_me">自我介绍</string>
+    <string name="cov_mine_select">请选择</string>
+    <string name="cov_mine_about_me_hint">设定自我介绍，让 AI agent 更了解您</string>
+    <string name="cov_mine_iot_devices">我的对话式 AI 设备</string>
+    <string name="cov_mine_devices">已绑定 %d 台设备</string>
 </resources>

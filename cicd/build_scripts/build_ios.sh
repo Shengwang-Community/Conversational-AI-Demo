@@ -205,6 +205,7 @@ if [ ! -f "${PBXPROJ_PATH}" ]; then
     exit 1
 fi
 
+security unlock-keychain -p "123456" ~/Library/Keychains/login.keychain
 # Main project configuration
 # Debug
 sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_VERSION};|g" $PBXPROJ_PATH
@@ -240,6 +241,11 @@ fi
 if [ -n "$toolbox_url" ]; then
     sed -i '' "s|static let TOOLBOX_SERVER_HOST: String = .*|static let TOOLBOX_SERVER_HOST: String = \"$toolbox_url\"|g" $KEYCENTER_PATH
 fi
+
+# Modify IS_OPEN_SOURCE to false
+sed -i '' "s|static var IS_OPEN_SOURCE: Bool = .*|static var IS_OPEN_SOURCE: Bool = false|g" $KEYCENTER_PATH
+echo "Check modification results："
+grep "static var IS_OPEN_SOURCE" $KEYCENTER_PATH
 
 # Archive path
 ARCHIVE_PATH="${WORKSPACE}/${TARGET_NAME}_${BUILD_VERSION}.xcarchive"

@@ -3,10 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="74dp"
+    android:layout_height="wrap_content"
     android:background="@android:color/transparent"
     app:layout_constraintTop_toTopOf="parent"
-    tools:background="@color/ai_fill2">
+    tools:background="@color/ai_fill4">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cl_top"
@@ -131,13 +131,14 @@
         android:id="@+id/viewFlipper"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:inAnimation="@anim/cov_flip_in"
         android:outAnimation="@anim/cov_flip_out"
         android:visibility="gone"
-        tools:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cl_top"
+        tools:visibility="visible">
 
         <LinearLayout
             android:id="@+id/ll_limit_tips"
@@ -179,44 +180,14 @@
         </LinearLayout>
     </ViewFlipper>
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cv_voice_print"
+    <io.agora.scene.convoai.ui.living.widget.CovVoiceprintSettingsView
+        android:id="@+id/voiceprint_settings_view"
         android:layout_width="wrap_content"
-        android:layout_height="32dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
-        android:backgroundTint="@android:color/transparent"
+        android:layout_marginTop="10dp"
         android:visibility="gone"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="0dp"
-        app:layout_constraintBottom_toBottomOf="@id/viewFlipper"
         app:layout_constraintStart_toStartOf="parent"
-        tools:visibility="visible"
-        app:layout_constraintTop_toTopOf="@id/viewFlipper">
-
-        <LinearLayout
-            android:id="@+id/layout_voice_print"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:background="@drawable/btn_bg_block1_selector"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:paddingHorizontal="10dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/cov_voiceprint_lock"
-                android:textColor="@color/ai_brand_white10"
-                android:textSize="11sp" />
-
-            <com.google.android.material.imageview.ShapeableImageView
-                android:layout_width="12dp"
-                android:layout_height="12dp"
-                android:layout_marginStart="4dp"
-                android:scaleType="centerCrop"
-                android:src="@drawable/agent_ai_lock" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+        app:layout_constraintTop_toBottomOf="@id/cl_top"
+        tools:visibility="visible" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -10,6 +10,7 @@ import {
   LoadingSpinner,
   UserAvatarIcon
 } from '@/components/icon'
+import { MessageLoading } from '@/components/message/message-loading'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ImageZoom } from '@/components/zoomable-image'
@@ -20,7 +21,7 @@ import {
   ETurnStatus,
   type IAgentTranscription,
   type ILocalImageTranscription,
-  type ISubtitleHelperItem,
+  type ITranscriptHelperItem,
   type IUserTranscription
 } from '@/conversational-ai-api/type'
 import { useAutoScroll } from '@/hooks/use-auto-scroll'
@@ -208,8 +209,8 @@ const ChatItem = React.forwardRef<
 
   // !SPECIAL CASE[Arabic]: align right
   const shouldAlignRightMemo = React.useMemo(() => {
-    return settings.asr.language?.startsWith('ar')
-  }, [settings.asr.language])
+    return settings?.asr?.language?.startsWith('ar')
+  }, [settings?.asr?.language])
 
   return (
     <div
@@ -245,7 +246,7 @@ const ChatItem = React.forwardRef<
       >
         {children}
         {status === ETurnStatus.IN_PROGRESS && type === EChatItemType.AGENT && (
-          <span className='text-icontext-disabled text-xs'>...</span>
+          <MessageLoading className='-mb-1 inline size-4 text-icontext' />
         )}
       </div>
       {status === ETurnStatus.INTERRUPTED && type === EChatItemType.AGENT && (
@@ -321,6 +322,8 @@ const UserChatImageBlock = (props: { item: TLocalUserInputImage }) => {
     }
   }
 
+  const src = useObjectURL(item.imageFile)
+
   return (
     <div className='flex items-center gap-2'>
       {item.status === ELocalTranscriptStatus.PENDING && (
@@ -335,12 +338,14 @@ const UserChatImageBlock = (props: { item: TLocalUserInputImage }) => {
       {item.status === ELocalTranscriptStatus.FAILED && !item?.image_url && (
         <CircleAlertIcon className='size-5 text-destructive' />
       )}
-      <ImageZoom
-        src={URL.createObjectURL(item.imageFile)}
-        alt={item.imageFile.name}
-        width={imageDimensions.width}
-        height={imageDimensions.height}
-      />
+      {src && (
+        <ImageZoom
+          src={src}
+          alt={item.imageFile.name}
+          width={imageDimensions.width}
+          height={imageDimensions.height}
+        />
+      )}
     </div>
   )
 }
@@ -385,7 +390,7 @@ export type TLocalUserInputImage = {
 export type TSubtitleItem = TRemoteTranscription | TLocalUserInputImage
 
 const transcription2subtitle = (
-  remoteTranscriptionList: ISubtitleHelperItem<
+  remoteTranscriptionList: ITranscriptHelperItem<
     Partial<IUserTranscription | IAgentTranscription>
   >[],
   userInputHistory?: ILocalImageTranscription[]
@@ -460,4 +465,17 @@ const transcription2subtitle = (
   }
 
   return mergedItems
+}
+
+function useObjectURL(file?: File | Blob) {
+  const urlRef = React.useRef<string | null>(null)
+  React.useEffect(() => {
+    if (!file) return
+    const u = URL.createObjectURL(file)
+    urlRef.current = u
+    return () => {
+      URL.revokeObjectURL(u)
+    } // release when switching file or unmount
+  }, [file])
+  return urlRef.current
 }

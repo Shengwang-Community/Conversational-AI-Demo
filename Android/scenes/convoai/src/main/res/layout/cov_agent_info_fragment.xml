@@ -7,19 +7,106 @@
     android:layout_height="wrap_content"
     android:layout_gravity="bottom"
     android:background="@color/ai_fill2"
-    android:paddingBottom="36dp"
+    android:paddingBottom="16dp"
     tools:theme="@style/Theme.AppCompat">
+
+    <TextView
+        android:id="@+id/tv_service_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="32dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/cov_agent_service_info"
+        android:textColor="@color/ai_icontext4"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/ll_service_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/settings_item_bg"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_service_title">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/mtv_voiceprint_lock"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/cov_voiceprint_lock"
+                android:textColor="@color/ai_icontext1"
+                android:textSize="14sp" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/mtv_voiceprint_lock_status"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical|end"
+                android:text="@string/cov_agent_not_activated"
+                android:textColor="@color/ai_red6"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:layout_marginStart="16dp"
+            android:background="@color/ai_line1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/mtv_ai_vad"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/cov_setting_ai_vad_high"
+                android:textColor="@color/ai_icontext1"
+                android:textSize="14sp" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/mtv_ai_vad_status"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical|end"
+                android:text="@string/cov_agent_not_activated"
+                android:textColor="@color/ai_red6"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tv_channel_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="32dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="24dp"
         android:text="@string/cov_channel_info_title"
         android:textColor="@color/ai_icontext4"
+        android:textSize="12sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/ll_service_content" />
 
     <LinearLayout
         android:id="@+id/ll_item_content"
@@ -46,7 +133,7 @@
                 android:gravity="center"
                 android:text="@string/cov_info_agent_status"
                 android:textColor="@color/ai_icontext1"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/mtv_agent_status"
@@ -57,7 +144,7 @@
                 android:gravity="center_vertical|end"
                 android:text="@string/cov_info_agent_connected"
                 android:textColor="@color/ai_green6"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
         </LinearLayout>
 
         <View
@@ -78,7 +165,7 @@
                 android:gravity="center"
                 android:text="@string/cov_info_agent_id"
                 android:textColor="@color/ai_icontext1"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/mtv_agent_id"
@@ -111,7 +198,7 @@
                 android:gravity="center"
                 android:text="@string/cov_info_room_status"
                 android:textColor="@color/ai_icontext1"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/mtv_room_status"
@@ -122,7 +209,7 @@
                 android:gravity="center_vertical|end"
                 android:text="@string/cov_info_agent_connected"
                 android:textColor="@color/ai_green6"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
         </LinearLayout>
 
         <View
@@ -143,7 +230,7 @@
                 android:gravity="center"
                 android:text="@string/cov_info_room_id"
                 android:textColor="@color/ai_icontext1"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/mtv_room_id"
@@ -154,7 +241,7 @@
                 android:gravity="center_vertical|end"
                 android:text="xxx"
                 android:textColor="@color/ai_icontext4"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
         </LinearLayout>
 
         <View
@@ -176,7 +263,7 @@
                 android:gravity="center"
                 android:text="@string/cov_info_your_id"
                 android:textColor="@color/ai_icontext1"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/mtv_uid_value"
@@ -186,7 +273,7 @@
                 android:layout_weight="1"
                 android:gravity="center_vertical|end"
                 android:textColor="@color/ai_icontext4"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 tools:text="xxx" />
         </LinearLayout>
     </LinearLayout>
@@ -200,6 +287,7 @@
         android:layout_marginTop="32dp"
         android:text="@string/cov_info_more"
         android:textColor="@color/ai_icontext4"
+        android:textSize="12sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/ll_item_content" />
 
@@ -230,7 +318,7 @@
                 android:gravity="center_vertical|start"
                 android:text="@string/cov_info_uploader"
                 android:textColor="@color/ai_icontext1"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/tv_uploader"

@@ -3,17 +3,17 @@ import { create } from 'zustand'
 import type {
   IAgentTranscription,
   ILocalImageTranscription,
-  ISubtitleHelperItem,
+  ITranscriptHelperItem,
   IUserTranscription
 } from '@/conversational-ai-api/type'
 
 export interface IChatStore {
-  history: ISubtitleHelperItem<
+  history: ITranscriptHelperItem<
     Partial<IUserTranscription | IAgentTranscription>
   >[]
   userInputHistory: ILocalImageTranscription[]
   setHistory: (
-    history: ISubtitleHelperItem<
+    history: ITranscriptHelperItem<
       Partial<IUserTranscription | IAgentTranscription>
     >[]
   ) => void

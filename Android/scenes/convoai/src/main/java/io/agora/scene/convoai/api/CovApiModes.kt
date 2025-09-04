@@ -17,6 +17,7 @@ data class CovAgentPreset(
     val is_support_vision: Boolean,
     val avatar_url: String?,
     val description: String,
+    val advanced_features_enable_sal: Boolean
 ) {
     val isIndependent: Boolean
         get() {
@@ -41,7 +42,9 @@ data class CovAgentPreset(
 
 data class CovAgentLanguage(
     val language_code: String,
-    val language_name: String
+    val language_name: String,
+    val aivad_supported: Boolean,
+    val aivad_enabled_by_default: Boolean,
 ) {
 
     val isChinese: Boolean

@@ -31,3 +31,8 @@ data class SSOUserInfo constructor(
 data class UploadImage constructor(
     val img_url: String
 ) : BaseResponse<UploadImage>()
+
+data class UploadFile constructor(
+    val file_url: String,
+    val expired_ts: Long,
+) : BaseResponse<UploadFile>()

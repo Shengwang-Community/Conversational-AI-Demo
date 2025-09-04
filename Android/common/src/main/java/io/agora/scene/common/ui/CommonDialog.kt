@@ -11,18 +11,25 @@ import io.agora.scene.common.databinding.CommonDialogLayoutBinding
 
 class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
 
-    private var title: String? = null
-    private var content: String? = null
-    private var positiveText: String? = null
-    private var negativeText: String? = null
-    private var showNegative: Boolean = true
-    private var showImage: Boolean = true
-    private var showNoMoreReminder: Boolean = false
-    private var noMoreReminderText: String? = null
-    private var imageRes: Int? = null
-    private var onPositiveClick: (() -> Unit)? = null
-    private var onNegativeClick: (() -> Unit)? = null
-    private var onPositiveClickWithReminder: ((Boolean) -> Unit)? = null
+    // Use data class for dialog configuration
+    private data class DialogConfig(
+        val title: String? = null,
+        val content: String? = null,
+        val positiveText: String? = null,
+        val negativeText: String? = null,
+        val showNegative: Boolean = true,
+        val showImage: Boolean = true,
+        val showNoMoreReminder: Boolean = false,
+        val noMoreReminderText: String? = null,
+        val imageBackgroundRes: Int? = null,
+        val image2SrcRes: Int? = null,
+        val cancelable: Boolean = true,
+        val onPositiveClick: (() -> Unit)? = null,
+        val onNegativeClick: (() -> Unit)? = null,
+        val onPositiveClickWithReminder: ((Boolean) -> Unit)? = null
+    )
+
+    private var config: DialogConfig = DialogConfig()
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): CommonDialogLayoutBinding {
         return CommonDialogLayoutBinding.inflate(inflater, container, false)
@@ -30,113 +37,105 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupDialog()
+    }
 
+    private fun setupDialog() {
         mBinding?.apply {
-            // Set dialog width to 80% of screen width
-            root.layoutParams = FrameLayout.LayoutParams(
-                (resources.displayMetrics.widthPixels * 0.84).toInt(),
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
+            // Set dialog width to 84% of screen width using extension function
+            root.setDialogWidth(0.84f)
+            
+            // Setup views using apply and let for null safety
+            setupBasicViews()
+            setupImageViews()
+            setupNoMoreReminder()
+            setupClickListeners()
+        }
+    }
 
-            // Setup views
-            tvTitle.text = title
-            tvContent.text = content
-            btnPositive.text = positiveText
-            btnNegative.text = negativeText
-            btnNegative.isVisible = showNegative
-            ivImage.isVisible = showImage
+    private fun CommonDialogLayoutBinding.setupBasicViews() {
+        tvTitle.text = config.title
+        tvContent.text = config.content
+        btnPositive.text = config.positiveText
+        btnNegative.text = config.negativeText
+        btnNegative.isVisible = config.showNegative
+        ivImage.isVisible = config.showImage
+    }
 
-            // Setup "No more reminder" checkbox
-            llNoMoreReminder.isVisible = showNoMoreReminder
-            if (showNoMoreReminder) {
-                tvNoMoreReminder.text =
-                    noMoreReminderText ?: getString(io.agora.scene.common.R.string.common_app_no_more_reminder)
-            }
+    private fun CommonDialogLayoutBinding.setupImageViews() {
+        config.imageBackgroundRes?.let { ivImage.setBackgroundResource(it) }
+        
+        ivImage2.run {
+            isVisible = config.image2SrcRes != null
+            config.image2SrcRes?.let { setImageResource(it) }
+        }
+    }
 
-            imageRes?.let {
-                ivImage.setBackgroundResource(it)
-            }
+    private fun CommonDialogLayoutBinding.setupNoMoreReminder() {
+        llNoMoreReminder.isVisible = config.showNoMoreReminder
+        if (config.showNoMoreReminder) {
+            tvNoMoreReminder.text = config.noMoreReminderText 
+                ?: getString(io.agora.scene.common.R.string.common_app_no_more_reminder)
+        }
+    }
 
-            // Click listeners
-            btnPositive.setOnClickListener {
-                if (showNoMoreReminder && onPositiveClickWithReminder != null) {
-                    // Call callback with checkbox state
-                    onPositiveClickWithReminder?.invoke(cbNoMoreReminder.isChecked)
-                } else {
-                    // Call normal callback
-                    onPositiveClick?.invoke()
+    private fun CommonDialogLayoutBinding.setupClickListeners() {
+        btnPositive.setOnClickListener {
+            handlePositiveClick()
+            dismiss()
+        }
+
+        btnNegative.setOnClickListener {
+            config.onNegativeClick?.invoke()
+            dismiss()
+        }
+    }
+
+    private fun handlePositiveClick() {
+        when {
+            config.showNoMoreReminder && config.onPositiveClickWithReminder != null -> {
+                mBinding?.cbNoMoreReminder?.isChecked?.let { isChecked ->
+                    config.onPositiveClickWithReminder?.invoke(isChecked)
                 }
-                dismiss()
             }
-
-            btnNegative.setOnClickListener {
-                onNegativeClick?.invoke()
-                dismiss()
+            else -> {
+                config.onPositiveClick?.invoke()
             }
         }
     }
 
     class Builder {
-        private var title: String? = null
-        private var content: String? = null
-        private var positiveText: String? = null
-        private var negativeText: String? = null
-        private var showNegative: Boolean = true
-        private var showImage: Boolean = true
-        private var showNoMoreReminder: Boolean = false
-        private var noMoreReminderText: String? = null
-        private var imageRes: Int? = null
-        private var cancelable: Boolean = true
-        private var onPositiveClick: (() -> Unit)? = null
-        private var onNegativeClick: (() -> Unit)? = null
-        private var onPositiveClickWithReminder: ((Boolean) -> Unit)? = null
+        private var config = DialogConfig()
 
-        fun setTitle(title: String) = apply { this.title = title }
-        fun setContent(content: String) = apply { this.content = content }
+        fun setTitle(title: String) = apply { config = config.copy(title = title) }
+        fun setContent(content: String) = apply { config = config.copy(content = content) }
+        
         fun setPositiveButton(text: String, onClick: (() -> Unit)? = null) = apply {
-            this.positiveText = text
-            this.onPositiveClick = onClick
+            config = config.copy(positiveText = text, onPositiveClick = onClick)
         }
 
         fun setPositiveButtonWithReminder(text: String, onClick: (Boolean) -> Unit) = apply {
-            this.positiveText = text
-            this.onPositiveClickWithReminder = onClick
+            config = config.copy(positiveText = text, onPositiveClickWithReminder = onClick)
         }
 
         fun setNegativeButton(text: String, onClick: (() -> Unit)? = null) = apply {
-            this.negativeText = text
-            this.onNegativeClick = onClick
-            this.showNegative = true
+            config = config.copy(negativeText = text, onNegativeClick = onClick, showNegative = true)
         }
 
-        fun setImage(resId: Int) = apply { this.imageRes = resId }
-        fun hideNegativeButton() = apply { this.showNegative = false }
-
-        fun hideTopImage() = apply { this.showImage = false }
+        fun setImageBackground(resId: Int) = apply { config = config.copy(imageBackgroundRes = resId) }
+        fun setImage2Src(resId: Int) = apply { config = config.copy(image2SrcRes = resId) }
+        fun hideNegativeButton() = apply { config = config.copy(showNegative = false) }
+        fun hideTopImage() = apply { config = config.copy(showImage = false) }
 
         fun showNoMoreReminder(text: String? = null) = apply {
-            this.showNoMoreReminder = true
-            this.noMoreReminderText = text
+            config = config.copy(showNoMoreReminder = true, noMoreReminderText = text)
         }
 
-        fun setCancelable(cancelable: Boolean) = apply { this.cancelable = cancelable }
+        fun setCancelable(cancelable: Boolean) = apply { config = config.copy(cancelable = cancelable) }
 
-        fun build(): CommonDialog {
-            return CommonDialog().apply {
-                this@apply.title = this@Builder.title
-                this@apply.content = this@Builder.content
-                this@apply.positiveText = this@Builder.positiveText
-                this@apply.negativeText = this@Builder.negativeText
-                this@apply.showNegative = this@Builder.showNegative
-                this@apply.onPositiveClick = this@Builder.onPositiveClick
-                this@apply.onNegativeClick = this@Builder.onNegativeClick
-                this@apply.onPositiveClickWithReminder = this@Builder.onPositiveClickWithReminder
-                this@apply.showImage = this@Builder.showImage
-                this@apply.showNoMoreReminder = this@Builder.showNoMoreReminder
-                this@apply.noMoreReminderText = this@Builder.noMoreReminderText
-                this@apply.imageRes = this@Builder.imageRes
-                this@apply.isCancelable = this@Builder.cancelable
-            }
+        fun build(): CommonDialog = CommonDialog().apply {
+            this@apply.config = this@Builder.config
+            this@apply.isCancelable = config.cancelable
         }
     }
 } 

@@ -1,3 +1,4 @@
+import { logger as agoraLogger } from '@agora-js/report'
 import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng'
 import type { ChannelType, RTMClient, RTMEvents } from 'agora-rtm'
 import {
@@ -8,12 +9,12 @@ import {
   EMessageType,
   ERTCEvents,
   ERTMEvents,
-  ESubtitleHelperMode,
+  ETranscriptHelperMode,
   type IAgentTranscription,
   type IChatMessageImage,
   type IChatMessageText,
   type IConversationalAIAPIEventHandlers,
-  type ISubtitleHelperItem,
+  type ITranscriptHelperItem,
   type IUserTranscription,
   NotFoundError,
   type TAgentMetric,
@@ -29,14 +30,14 @@ import { genTranceID } from '@/lib/utils'
 
 const TAG = 'ConversationalAIAPI'
 // const CONSOLE_LOG_PREFIX = `[${TAG}]`
-const VERSION = '1.7.0'
+const VERSION = '1.8.0'
 
 const formatLog = factoryFormatLog({ tag: TAG })
 
 export interface IConversationalAIAPIConfig {
   rtcEngine: IAgoraRTCClient
   rtmEngine: RTMClient
-  renderMode?: ESubtitleHelperMode
+  renderMode?: ETranscriptHelperMode
   enableLog?: boolean
 }
 
@@ -68,7 +69,7 @@ export interface IConversationalAIAPIConfig {
  * const api = ConversationalAIAPI.init({
  *   rtcEngine: rtcClient,
  *   rtmEngine: rtmClient,
- *   renderMode: ESubtitleHelperMode.REALTIME
+ *   renderMode: ETranscriptHelperMode.REALTIME
  * });
  *
  * // Subscribe to a channel
@@ -143,7 +144,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
 
   protected rtcEngine: IAgoraRTCClient | null = null
   protected rtmEngine: RTMClient | null = null
-  protected renderMode: ESubtitleHelperMode = ESubtitleHelperMode.UNKNOWN
+  protected renderMode: ETranscriptHelperMode = ETranscriptHelperMode.UNKNOWN
   protected channel: string | null = null
   protected covSubRenderController: CovSubRenderController
   protected enableLog: boolean = false
@@ -160,6 +161,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       }
       logger[type](formatLog(...args))
       this.onDebugLog?.(`[${type}] ${formatLog(...args)}`)
+      agoraLogger[type](...args)
     }
     this.callMessagePrint(
       ELoggerType.debug,
@@ -233,7 +235,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     ConversationalAIAPI._instance.rtcEngine = cfg.rtcEngine
     ConversationalAIAPI._instance.rtmEngine = cfg.rtmEngine
     ConversationalAIAPI._instance.renderMode =
-      cfg.renderMode ?? ESubtitleHelperMode.UNKNOWN
+      cfg.renderMode ?? ETranscriptHelperMode.UNKNOWN
     ConversationalAIAPI._instance.enableLog = cfg.enableLog ?? false
 
     return ConversationalAIAPI._instance
@@ -296,10 +298,13 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
   public destroy() {
     const instance = ConversationalAIAPI.getInstance()
     if (instance) {
+      instance?.rtcEngine?.removeAllListeners()
       instance.rtcEngine = null
+      instance?.rtmEngine?.removeAllListeners()
       instance.rtmEngine = null
-      instance.renderMode = ESubtitleHelperMode.UNKNOWN
+      instance.renderMode = ETranscriptHelperMode.UNKNOWN
       instance.channel = null
+      instance.removeAllEventListeners()
       ConversationalAIAPI._instance = null
     }
     this.callMessagePrint(
@@ -546,7 +551,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
   }
 
   private onChatHistoryUpdated(
-    chatHistory: ISubtitleHelperItem<
+    chatHistory: ITranscriptHelperItem<
       Partial<IUserTranscription | IAgentTranscription>
     >[]
   ) {

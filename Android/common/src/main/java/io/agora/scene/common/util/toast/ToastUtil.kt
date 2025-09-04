@@ -25,67 +25,148 @@ object ToastUtil {
     }
 
     @JvmStatic
-    fun show(msg: String, duration: Int = Toast.LENGTH_SHORT) {
-        show(msg, InternalToast.COMMON, duration)
-    }
-
-    @JvmStatic
-    fun showCenter(@StringRes resId: Int, duration: Int = Toast.LENGTH_SHORT) {
-        show(AgentApp.instance().getString(resId), InternalToast.COMMON, duration, Gravity.CENTER, 0)
-    }
-
-    @JvmStatic
-    fun showCenter(msg: String, duration: Int = Toast.LENGTH_SHORT) {
-        show(msg, InternalToast.COMMON, duration, Gravity.CENTER, 0)
-    }
-
-    @JvmStatic
-    fun showTips(@StringRes resId: Int, duration: Int = Toast.LENGTH_SHORT) {
-        show(AgentApp.instance().getString(resId), InternalToast.TIPS, duration)
-    }
-
-    @JvmStatic
-    fun showTips(msg: String, duration: Int = Toast.LENGTH_SHORT) {
-        show(msg, InternalToast.TIPS, duration)
-    }
-
-    @JvmStatic
-    fun showError(@StringRes resId: Int, duration: Int = Toast.LENGTH_SHORT) {
-        show(AgentApp.instance().getString(resId), InternalToast.ERROR, duration)
-    }
-
-    @JvmStatic
-    fun showError(msg: String, duration: Int = Toast.LENGTH_SHORT) {
-        show(msg, InternalToast.ERROR, duration)
-    }
-
-    @JvmStatic
-    fun showByPosition(
-        msg: String, gravity: Int = Gravity.BOTTOM, offsetY: Int = 200.dp.toInt(),
+    fun show(
+        msg: String,
         duration: Int = Toast.LENGTH_SHORT,
+        gravity: Int = Gravity.BOTTOM,
+        offsetY: Int = 200.dp.toInt(),
     ) {
-        show(msg = msg, duration = duration, gravity = gravity, offsetY = offsetY)
+        show(
+            msg = msg,
+            toastType = InternalToast.COMMON,
+            duration = duration,
+            gravity = gravity,
+            offsetY = offsetY
+        )
     }
 
     @JvmStatic
-    fun showByPosition(
-        @StringRes resId: Int, gravity: Int = Gravity.BOTTOM, offsetY: Int = 200.dp.toInt(),
-        duration: Int = Toast.LENGTH_SHORT
+    fun showTips(
+        @StringRes resId: Int,
+        duration: Int = Toast.LENGTH_SHORT,
+        gravity: Int = Gravity.BOTTOM,
+        offsetY: Int = 200.dp.toInt(),
     ) {
-        show(msg = AgentApp.instance().getString(resId), duration = duration, gravity = gravity, offsetY = offsetY)
+        show(
+            msg = AgentApp.instance().getString(resId),
+            toastType = InternalToast.TIPS,
+            duration = duration,
+            gravity = gravity,
+            offsetY = offsetY
+        )
     }
 
     @JvmStatic
-    private fun show(msg: String, toastType: Int = InternalToast.COMMON, duration: Int = Toast.LENGTH_SHORT) {
-        if (Looper.getMainLooper().thread == Thread.currentThread()) {
-            InternalToast.init(AgentApp.instance())
-            InternalToast.show(msg, toastType, duration, Gravity.BOTTOM, 200.dp.toInt())
-        } else {
-            mMainHandler.post {
-                InternalToast.init(AgentApp.instance())
-                InternalToast.show(msg, toastType, duration, Gravity.BOTTOM, 200.dp.toInt())
-            }
-        }
+    fun showTips(
+        msg: String,
+        duration: Int = Toast.LENGTH_SHORT,
+        gravity: Int = Gravity.BOTTOM,
+        offsetY: Int = 200.dp.toInt(),
+    ) {
+        show(
+            msg = msg,
+            toastType = InternalToast.TIPS,
+            duration = duration,
+            gravity = gravity,
+            offsetY = offsetY
+        )
+    }
+
+    @JvmStatic
+    fun showError(
+        @StringRes resId: Int,
+        duration: Int = Toast.LENGTH_SHORT,
+        gravity: Int = Gravity.BOTTOM,
+        offsetY: Int = 200.dp.toInt()
+    ) {
+        show(
+            msg = AgentApp.instance().getString(resId),
+            toastType = InternalToast.ERROR,
+            duration = duration,
+            gravity = gravity,
+            offsetY = offsetY
+        )
+    }
+
+    @JvmStatic
+    fun showError(
+        msg: String,
+        duration: Int = Toast.LENGTH_SHORT,
+        gravity: Int = Gravity.BOTTOM,
+        offsetY: Int = 200.dp.toInt()
+    ) {
+        show(
+            msg = msg,
+            toastType = InternalToast.ERROR,
+            duration = duration,
+            gravity = gravity,
+            offsetY = offsetY
+        )
+    }
+
+
+    @JvmStatic
+    fun showNew(
+        @StringRes resId: Int,
+        duration: Int = Toast.LENGTH_SHORT,
+        gravity: Int = Gravity.BOTTOM,
+        offsetY: Int = 200.dp.toInt()
+    ) {
+        show(
+            msg = AgentApp.instance().getString(resId),
+            toastType = InternalToast.NEW_COMMON,
+            duration = duration,
+            gravity = gravity,
+            offsetY = offsetY
+        )
+    }
+
+    @JvmStatic
+    fun showNew(
+        msg: String,
+        duration: Int = Toast.LENGTH_SHORT,
+        gravity: Int = Gravity.BOTTOM,
+        offsetY: Int = 200.dp.toInt()
+    ) {
+        show(
+            msg = msg,
+            toastType = InternalToast.NEW_COMMON,
+            duration = duration,
+            gravity = gravity,
+            offsetY = offsetY
+        )
+    }
+
+    @JvmStatic
+    fun showNewTips(
+        @StringRes resId: Int,
+        duration: Int = Toast.LENGTH_SHORT,
+        gravity: Int = Gravity.BOTTOM,
+        offsetY: Int = 200.dp.toInt()
+    ) {
+        show(
+            msg = AgentApp.instance().getString(resId),
+            toastType = InternalToast.NEW_TIPS,
+            duration = duration,
+            gravity = gravity,
+            offsetY = offsetY
+        )
+    }
+
+    @JvmStatic
+    fun showNewTips(
+        msg: String,
+        duration: Int = Toast.LENGTH_SHORT,
+        gravity: Int = Gravity.BOTTOM,
+        offsetY: Int = 200.dp.toInt()
+    ) {
+        show(
+            msg = msg,
+            toastType = InternalToast.NEW_TIPS,
+            duration = duration,
+            gravity = gravity,
+            offsetY = offsetY
+        )
     }
 
     @JvmStatic

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Recording state (blue background) -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ai_brand_main6" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+    
+    <!-- Default state (gray background) -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ai_btn2" />
+            <corners android:radius="12dp" />
+            <stroke 
+                android:width="0.5dp"
+                android:color="@color/ai_line1" />
+        </shape>
+    </item>
+</selector>

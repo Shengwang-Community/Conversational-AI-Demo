@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="72dp"
     android:layout_gravity="bottom"
-    tools:background="@color/ai_fill2"
+    tools:background="@color/ai_fill4"
     android:background="@android:color/transparent">
 
     <LinearLayout
@@ -132,7 +132,7 @@
         android:id="@+id/btnJoinCall"
         android:layout_width="0dp"
         android:layout_height="@dimen/ai_dp_large"
-        android:background="@drawable/selector_gradient_button_with_border999"
+        android:background="@drawable/selector_gradient_button"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:stateListAnimator="@null"
