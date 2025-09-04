@@ -9,6 +9,14 @@
 "login.terms.service.tips" = "请勾选协议";
 "login.session.expired" = "登录过期，请重新登录";
 
+// Login Terms Alert
+"login.terms.alert.title" = "个人信息保护指引";
+"login.terms.alert.content" = "欢迎使用声网对话式 AI 引擎!当您点击\"同意\"时,视为您已阅读并愿意接受<b>《用户协议》</b>和<b>《隐私政策的所有内容》</b>。当您点击\"不同意\"时,将无法体验本应用的完整功能。";
+"login.terms.alert.checkbox.text" = "我已阅读并同意《用户协议》";
+"login.terms.alert.decline.button" = "不同意";
+"login.terms.alert.accept.button" = "同意";
+"login.terms.alert.close.button" = "关闭";
+
 "logout.alert.title" = "退出登录";
 "logout.alert.description" = "您将退出当前账号，退出后需要重新登录才能使用完整功能。是否继续？";
 "logout.alert.confirm.title" = "取消";
@@ -88,7 +96,7 @@
 
 "channel.info.device.titie" = "我的设备";
 "channel.info.title" = "信息";
-"channel.info.subtitle" = "频道信息";
+"channel.info.subtitle" = "服务信息";
 "channel.network.info.title" = "网络信息";
 "channel.info.agent.status" = "智能体状态";
 "channel.info.agent.id" = "智能体 ID";
@@ -111,6 +119,15 @@
 "channel.time.limited.alert.title" = "本次对话时间到！";
 "channel.time.limited.alert.description" = "体验对话限时%d分钟，本次对话时间已到";
 "channel.time.limited.alert.confim" = "我知道了";
+"channel.serverStatus.title" = "对话 AI 服务状态";
+"channel.voiceprint.lock" = "声纹锁定";
+"channel.elegant.interrupt" = "优雅打断";
+"channel.more" = "更多...";
+"channel.seamless" = "无感";
+"channel.aware" = "有感";
+"channel.effective" = "生效中";
+"channel.not.effective" = "未生效";
+"channel.insensitive" = "不敏感";
 
 "error.network" = "请求失败：";
 "error.room.error" = "房间已经不存在了。请发起一个新的会话。";
@@ -118,13 +135,6 @@
 "error.join.error.resource.limit" = "当前预设资源超限，请稍后再试";
 "error.network.disconnect" = "网络异常，请检查网络设置";
 "error.join.error.avatar.limit" = "所有数字人正忙，请稍后重试";
-
-"error.microphone.permission.alert.title" = "没有麦克风权限";
-"error.microphone.permission.alert.description" = "请在设置中打开麦克风权限";
-"error.permission.alert.cancel" = "取消";
-"error.permission.alert.confirm" = "设置";
-"error.agent.is.not.exist" = "智能体获取失败，当前数据库无此智能体";
-"error.agent.is.offline" = "智能体已被下线，请联系声网工作人员";
 
 
 "devmode.title" = "开发者模式";
@@ -192,6 +202,7 @@
 "settings.voiceprint.setting.success" = "设置成功";
 "settings.voiceprint.recording.title" = "录音中，请朗读...";
 "settings.voiceprint.recording.time" = "语料: %ds / 10s";
+"settings.not.effective" = "未生效";
 "settings.voiceprint.recording.instruction" = "松手创建，上移取消";
 "settings.voiceprint.recording.complete" = "声纹录制完成";
 "settings.voiceprint.please.read" = "请朗读";
@@ -202,4 +213,82 @@
 "settings.voiceprint.re.record.button" = "重新录入";
 "settings.voiceprint.uploading" = "上传中...";
 "settings.voiceprint.upload.failed" = "上传失败，请重试";
+"settings.voiceprint.upload.success" = "语料上传成功";
 "settings.voiceprint.date.format" = "Voiceprint on %@";
+"settings.voiceprint.recording.too.short" = "录制时间过短，请至少录制10s语料";
+"settings.voiceprint.tip.text" = "本机有声纹录入";
+"settings.voiceprint.alert.title" = "声纹录入提示";
+"settings.voiceprint.alert.content" = "您的声音默认存储在本机，声网有感声纹锁定功能需要收集您的声音，单次体验该功能完毕后会将云端声纹删除，绝对不会使用您的声音用作商业用途。";
+"settings.voiceprint.alert.cancel" = "取消";
+"settings.voiceprint.alert.confirm" = "确认";
+"settings.voiceprint.alert.no.voiceprint.title" = "未录入声纹";
+"settings.voiceprint.alert.no.voiceprint.content" = "未录入有效声纹，切换有感模式失效，退出将自动切换至无感模式。";
+"settings.voiceprint.alert.exit" = "退出";
+
+// Voiceprint Recording Text
+"settings.voiceprint.recording.text" = "君不见黄河之水天上来，\n奔流到海不复回。\n\n君不见高堂明镜悲白发，\n朝如青丝暮成雪。\n\n人生得意须尽欢，莫使金樽空对月。\n\n天生我材必有用，千金散尽还复来。";
+
+// 频道信息状态
+"channel.info.sensitive" = "敏感";
+"channel.info.effective" = "有效";
+
+// Main Tab Navigation
+"main.chat" = "对话";
+"main.agents" = "AI助手";
+"main.digitalHuman" = "数字人";
+"main.mine" = "我的";
+
+// Mine View Controller
+"mine.user.nickname" = "用户昵称";
+"mine.user.email" = "user@example.com";
+"mine.menu.settings" = "设置";
+"mine.menu.settings.subtitle" = "应用设置和偏好";
+"mine.menu.about" = "关于";
+"mine.menu.about.subtitle" = "应用信息和版本";
+"mine.menu.help" = "帮助";
+"mine.menu.help.subtitle" = "使用帮助和反馈";
+"mine.menu.privacy" = "隐私政策";
+"mine.menu.privacy.subtitle" = "隐私保护说明";
+"mine.logout.button" = "退出登录";
+"mine.logout.alert.title" = "退出登录";
+"mine.logout.alert.message" = "确定要退出当前账号吗？";
+"mine.logout.alert.cancel" = "取消";
+"mine.logout.alert.confirm" = "退出";
+
+// Gender Setting
+"mine.gender.setting.title" = "称呼您为";
+"mine.gender.female" = "女士";
+"mine.gender.male" = "先生";
+"mine.gender.setting.saved" = "性别设置已保存";
+
+// User Logout
+"mine.deactivate.account" = "注销账号";
+"mine.deactivate.account.alert.title" = "注销账号";
+"mine.deactivate.account.alert.message" = "确定要注销当前账号吗？注销后将无法恢复。";
+"mine.cancel" = "取消";
+"mine.deactivate" = "注销";
+"mine.deactivating.account" = "正在注销账号...";
+"mine.account.deactivated" = "账号已注销";
+"mine.logging.out" = "正在退出...";
+"mine.logout.success" = "退出成功";
+
+// Nickname Setting
+"mine.nickname.setting.title" = "昵称设置";
+"mine.nickname.placeholder" = "请输入您的昵称";
+"mine.nickname.tips" = "昵称将显示在您的个人资料中，其他用户可以看到。";
+"mine.save" = "保存";
+"mine.nickname.empty" = "昵称不能为空";
+"mine.nickname.too.long" = "昵称长度超出限制";
+"mine.saving" = "保存中...";
+"mine.nickname.saved" = "昵称保存成功";
+"mine.unsaved.changes.title" = "未保存的更改";
+"mine.unsaved.changes.message" = "您有未保存的更改，确定要离开吗？";
+"mine.discard" = "放弃";
+"mine.keep.editing" = "继续编辑";
+
+// Bio Setting
+"mine.bio.setting.title" = "自我介绍";
+"mine.bio.placeholder" = "请简单介绍一下自己...";
+"mine.bio.tips" = "自我介绍将显示在您的个人资料中，让其他用户更好地了解您。";
+"mine.bio.too.long" = "自我介绍长度超出限制";
+"mine.bio.saved" = "自我介绍保存成功";

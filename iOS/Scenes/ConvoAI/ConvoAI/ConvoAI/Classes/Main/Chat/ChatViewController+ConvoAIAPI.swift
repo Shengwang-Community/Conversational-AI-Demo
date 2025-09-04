@@ -41,7 +41,7 @@ extension ChatViewController {
         }
         
         // Upload image
-        NetworkManager.shared.uploadImage(
+        toolBox.uploadImage(
             requestId: uuid,
             channelName: channelName,
             imageData: imageData
@@ -72,9 +72,9 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     public func onAgentVoiceprintStateChanged(agentUserId: String, event: VoiceprintStateChangeEvent) {
         if event.status == .registerSuccess {
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.voiceprintLockToast)
-            sideNavigationBar.voiceprintState(status: true)
+            activeFuncsView.setState(voiceprint: true, aivad: AppContext.preferenceManager()?.preference.aiVad ?? false)
         } else {
-            sideNavigationBar.voiceprintState(status: false)
+            activeFuncsView.setState(voiceprint: false, aivad: AppContext.preferenceManager()?.preference.aiVad ?? false)
         }
     }
     

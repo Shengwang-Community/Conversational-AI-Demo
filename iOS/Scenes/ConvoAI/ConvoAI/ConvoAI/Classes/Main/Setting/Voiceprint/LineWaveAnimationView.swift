@@ -45,30 +45,33 @@ class LineWaveAnimationView: UIView {
         backgroundColor = .clear
         isUserInteractionEnabled = false // Ensure not blocking user interaction
         
+        // Create horizontal stack view for Y-axis symmetry
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .fillEqually
+        stackView.spacing = lineSpacing
+        stackView.alignment = .center
+        addSubview(stackView)
+        
+        // Set stack view constraints
+        stackView.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+            make.height.equalToSuperview()
+        }
+        
         // Create line views
         for i in 0..<lineCount {
             let lineView = UIView()
             lineView.backgroundColor = .white
             lineView.layer.cornerRadius = lineWidth / 2
             lineView.isUserInteractionEnabled = false // Ensure line views not blocking user interaction
-            addSubview(lineView)
+            stackView.addArrangedSubview(lineView)
             lineViews.append(lineView)
             
-            // Set initial constraints
+            // Set line view constraints
             lineView.snp.makeConstraints { make in
-                make.centerY.equalToSuperview()
                 make.width.equalTo(lineWidth)
                 make.height.equalTo(4) // Initial height
-                
-                if i == 0 {
-                    make.left.equalToSuperview()
-                } else {
-                    make.left.equalTo(lineViews[i-1].snp.right).offset(lineSpacing)
-                }
-                
-                if i == lineCount - 1 {
-                    make.right.equalToSuperview()
-                }
             }
         }
     }
@@ -98,6 +101,20 @@ class LineWaveAnimationView: UIView {
         layoutIfNeeded()
     }
     
+    /// Update line heights to follow parent view height
+    func updateLineHeights() {
+        let maxHeight = bounds.height * 0.8 // Use 80% of parent height
+        let minHeight: CGFloat = 4
+        
+        for lineView in lineViews {
+            let randomHeight = CGFloat.random(in: minHeight...maxHeight)
+            lineView.snp.updateConstraints { make in
+                make.height.equalTo(randomHeight)
+            }
+        }
+        layoutIfNeeded()
+    }
+    
     // MARK: - Private Methods
     
     private func animateLines() {
@@ -105,7 +122,9 @@ class LineWaveAnimationView: UIView {
         
         for (index, lineView) in lineViews.enumerated() {
             let delay = calculateDelay(for: index)
-            let randomHeight = CGFloat.random(in: 4...20)
+            let maxHeight = bounds.height * 0.8 // Use 80% of parent height
+            let minHeight: CGFloat = 4
+            let randomHeight = CGFloat.random(in: minHeight...maxHeight)
             
             UIView.animate(withDuration: 0.3, delay: delay, options: [.curveEaseInOut, .autoreverse, .repeat]) {
                 lineView.snp.updateConstraints { make in
@@ -127,6 +146,17 @@ class LineWaveAnimationView: UIView {
             let centerIndex = lineCount / 2
             let distanceFromCenter = abs(index - centerIndex)
             return Double(distanceFromCenter) * 0.05
+        }
+    }
+    
+    // MARK: - Layout Override
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        // Update line heights when view size changes
+        if isAnimating {
+            updateLineHeights()
         }
     }
 }

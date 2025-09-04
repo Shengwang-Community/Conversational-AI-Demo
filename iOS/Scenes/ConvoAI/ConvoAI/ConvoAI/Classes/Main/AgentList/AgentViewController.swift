@@ -79,7 +79,6 @@ public class AgentViewController: UIViewController {
         configDevMode()
         
         AppContext.loginManager()?.addDelegate(self)
-        fetchLoginState()
     }
 
     public override func viewWillAppear(_ animated: Bool) {
@@ -89,20 +88,6 @@ public class AgentViewController: UIViewController {
     
     @objc func onClickInformationButton() {
         AgentInformationViewController.show(in: self)
-    }
-    
-    func fetchLoginState() {
-        let loginState = UserCenter.shared.isLogin()
-        if loginState {
-            LoginApiService.getUserInfo { error in
-                if let err = error {
-                    AppContext.loginManager()?.logout(reason: .sessionExpired)
-                    SVProgressHUD.showInfo(withStatus: err.localizedDescription)
-                }
-            }
-        } else {
-            LoginViewController.start(from: self)
-        }
     }
     
     func addLog(_ txt: String) {
@@ -160,7 +145,8 @@ public class AgentViewController: UIViewController {
         }
         pageViewController.view.snp.makeConstraints { make in
             make.top.equalTo(segmentedControl.snp.bottom).offset(16)
-            make.left.right.bottom.equalToSuperview()
+            make.left.right.equalToSuperview()
+            make.bottom.equalTo(self.view.safeAreaLayoutGuide)
         }
     }
     
@@ -242,25 +228,8 @@ extension AgentViewController: UIPageViewControllerDataSource, UIPageViewControl
 extension AgentViewController: LoginManagerDelegate {
     
     func userDidLogin() {
-        fetchLoginState()
         officialAgentVC.fetchData()
         customAgentVC.fetchData()
-    }
-    
-    func userDidLogout(reason: LogoutReason) {
-        addLog("[Call] userDidLogout \(reason)")
-        if reason == .userInitiated {
-            SSOWebViewController.clearWebViewCache()
-        } else {
-            SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Login.sessionExpired)
-        }
-        // Dismiss all view controllers and return to root
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first {
-            window.rootViewController?.dismiss(animated: false, completion: nil)
-        }
-        self.navigationController?.popToRootViewController(animated: false)
-        LoginViewController.start(from: self)
     }
 }
 // MARK: - DevMode

@@ -78,6 +78,8 @@ class AgentSettingsView: UIView {
         // Add avatar image
         if let avatar = AppContext.preferenceManager()?.preference.avatar, let thumbImageUrl = avatar.thumbImageUrl, let url = URL(string: thumbImageUrl) {
             avatarImageView.kf.setImage(with: url)
+        } else {
+            avatarImageView.image = nil
         }
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.layer.cornerRadius = 10
@@ -167,9 +169,16 @@ class AgentSettingsView: UIView {
     
     private lazy var voiceprintModeItem: AgentSettingTableItemView = {
         let view = AgentSettingTableItemView(frame: .zero)
-        view.titleLabel.text = ResourceManager.L10n.VoiceprintMode.title
-        // TODO: Get current voiceprint mode from preference manager
-        view.detailLabel.text = ResourceManager.L10n.VoiceprintMode.off
+        view.titleLabel.text = ResourceManager.L10n.Voiceprint.title
+        
+        // Get current voiceprint mode from preference manager
+        if let manager = AppContext.preferenceManager() {
+            let currentMode = manager.preference.voiceprintMode
+            view.detailLabel.text = currentMode.title
+        } else {
+            view.detailLabel.text = ResourceManager.L10n.Voiceprint.off
+        }
+        
         view.button.addTarget(self, action: #selector(onClickVoiceprintMode(_:)), for: .touchUpInside)
         return view
     }()
@@ -185,6 +194,9 @@ class AgentSettingsView: UIView {
     
     func loadData() {
         updateAvatar(AppContext.preferenceManager()?.preference.avatar)
+        if let voiceprintMode = AppContext.preferenceManager()?.preference.voiceprintMode {
+            voiceprintModeItem.detailLabel.text = voiceprintMode.title
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -333,6 +345,10 @@ class AgentSettingsView: UIView {
                 AppContext.preferenceManager()?.updateAiVadState(false)
             }
         }
+    }
+    
+    func updateVoiceprintMode(_ mode: VoiceprintMode) {
+        voiceprintModeItem.detailLabel.text = mode.title
     }
     
     // MARK: - Action Methods

@@ -16,6 +16,7 @@ protocol AgentPreferenceManagerDelegate: AnyObject {
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool)
     func preferenceManager(_ manager: AgentPreferenceManager, transcriptModeDidUpdated mode: TranscriptDisplayMode)
     func preferenceManager(_ manager: AgentPreferenceManager, bhvsStateDidUpdated state: Bool)
+    func preferenceManager(_ manager: AgentPreferenceManager, voiceprintModeDidUpdated mode: VoiceprintMode)
     func preferenceManager(_ manager: AgentPreferenceManager, loginStateDidUpdated state: Bool)
 
 
@@ -44,6 +45,7 @@ protocol AgentPreferenceManagerProtocol {
     func updateAiVadState(_ state: Bool)
     func updateTranscriptMode(_ mode: TranscriptDisplayMode)
     func updateForceThresholdState(_ state: Bool)
+    func updateVoiceprintMode(_ mode: VoiceprintMode)
     
     // Information Updates
     func updateNetworkState(_ state: NetworkStatus)
@@ -92,6 +94,8 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
         let defaultLanguageCode = preset.defaultLanguageCode
         let supportLanguages = preset.supportLanguages
         
+        
+        
         var resetLanguageCode = defaultLanguageCode
         if defaultLanguageCode == nil, let languageCode = supportLanguages?.first?.languageCode {
             resetLanguageCode = languageCode
@@ -104,6 +108,12 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
         }
         
         updateAvatar(nil)
+        if let enableSal = preset.enableSal {
+            updateVoiceprintMode(enableSal ? .seamless : .off)
+        } else {
+            updateVoiceprintMode(.off)
+        }
+        
         notifyDelegates { $0.preferenceManager(self, presetDidUpdated: preset) }
     }
     
@@ -131,6 +141,11 @@ class AgentPreferenceManager: AgentPreferenceManagerProtocol {
     func updateForceThresholdState(_ state: Bool) {
         preference.bhvs = state
         notifyDelegates { $0.preferenceManager(self, bhvsStateDidUpdated: state) }
+    }
+    
+    func updateVoiceprintMode(_ mode: VoiceprintMode) {
+        preference.voiceprintMode = mode
+        notifyDelegates { $0.preferenceManager(self, voiceprintModeDidUpdated: mode) }
     }
     
     // MARK: - Information Updates
@@ -296,6 +311,7 @@ class AgentPreference {
     var bhvs = true
     var isCustomPreset = false
     var transcriptMode: TranscriptDisplayMode = .words
+    var voiceprintMode: VoiceprintMode = .off
 }
 
 class AgentInfomation {
@@ -364,6 +380,7 @@ extension AgentPreferenceManagerDelegate {
     func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool) {}
     func preferenceManager(_ manager: AgentPreferenceManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {}
     func preferenceManager(_ manager: AgentPreferenceManager, bhvsStateDidUpdated state: Bool) {}
+    func preferenceManager(_ manager: AgentPreferenceManager, voiceprintModeDidUpdated mode: VoiceprintMode) {}
     func preferenceManager(_ manager: AgentPreferenceManager, loginStateDidUpdated state: Bool) {}
 
     func preferenceManager(_ manager: AgentPreferenceManager, networkDidUpdated networkState: NetworkStatus) {}

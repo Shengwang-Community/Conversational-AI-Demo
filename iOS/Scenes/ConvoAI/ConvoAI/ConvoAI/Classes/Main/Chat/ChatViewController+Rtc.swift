@@ -88,6 +88,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
             annotationView.dismiss()
             timerCoordinator.stopJoinChannelTimer()
             timerCoordinator.startUsageDurationLimitTimer()
+            activeFuncsView.isHidden = false
             AppContext.preferenceManager()?.updateAgentState(.connected)
             if !isSelfSubRender {
                 agentStateView.isHidden = false

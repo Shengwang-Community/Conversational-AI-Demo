@@ -91,6 +91,8 @@ class ChatViewController: BaseViewController {
     
     internal lazy var agentManager = AgentManager()
     
+    internal lazy var toolBox = ToolBoxApiManager()
+    
     internal lazy var navivationBar: MainNavigationBar = {
         let view = MainNavigationBar()
         view.settingButton.addTarget(self, action: #selector(onClickSettingButton), for: .touchUpInside)
@@ -103,6 +105,15 @@ class ChatViewController: BaseViewController {
     internal lazy var sideNavigationBar: SideNavigationBar = {
         let view = SideNavigationBar()
         view.isHidden = true
+        return view
+    }()
+
+    internal lazy var activeFuncsView: ActiveFuncsView = {
+        let view = ActiveFuncsView()
+        view.isHidden = true
+        view.onMoreTapped = {
+            self.showSettingDialog(at: 1)
+        }
         return view
     }()
 

@@ -438,6 +438,10 @@ extension AgentSettingViewController: AgentPreferenceManagerDelegate {
     func preferenceManager(_ manager: AgentPreferenceManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {
         agentSettingsView.updateTranscriptMode(mode)
     }
+    
+    func preferenceManager(_ manager: AgentPreferenceManager, voiceprintModeDidUpdated mode: VoiceprintMode) {
+        agentSettingsView.updateVoiceprintMode(mode)
+    }
 }
 
 extension AgentSettingViewController: UIGestureRecognizerDelegate {

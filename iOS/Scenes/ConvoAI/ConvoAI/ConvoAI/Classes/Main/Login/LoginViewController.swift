@@ -224,12 +224,23 @@ class LoginViewController: UIViewController {
     }
     
     @objc private func onClickLogin() {
-        if !termsCheckbox.isSelected {
-            warningButton.isHidden = false
-            shakeWarningLabel()
-            return
-        }
-        goToSSOViewController()
+        // Show terms alert instead of directly proceeding
+        LoginTermsAlert.show(
+            in: self.view,
+            onAccept: { [weak self] in
+                // User accepted terms, check the privacy checkbox and proceed
+                self?.termsCheckbox.isSelected = true
+                self?.warningButton.isHidden = true
+                
+                // Now proceed to SSO login
+                self?.goToSSOViewController()
+            },
+            onDecline: { [weak self] in
+                // User declined terms, uncheck the privacy checkbox
+                self?.termsCheckbox.isSelected = false
+                self?.warningButton.isHidden = false
+            }
+        )
     }
     
     @objc private func termsCheckboxTapped() {

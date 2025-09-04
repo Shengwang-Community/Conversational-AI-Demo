@@ -50,6 +50,7 @@ struct AgentPreset: Codable {
     let supportLanguages: [SupportLanguage]?
     let avatarIdsByLang: [String: [Avatar]]?
     let avatarUrl: String?
+    let enableSal: Bool?
     var defaultAvatar: String?
 
     enum CodingKeys: String, CodingKey {
@@ -66,5 +67,6 @@ struct AgentPreset: Codable {
         case avatarIdsByLang = "avatar_ids_by_lang"
         case avatarUrl = "avatar_url"
         case defaultAvatar = "default_avatar"
+        case enableSal = "advanced_features_enable_sal"
     }
 }

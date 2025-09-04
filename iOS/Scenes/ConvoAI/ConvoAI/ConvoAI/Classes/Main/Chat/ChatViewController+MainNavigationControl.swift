@@ -15,10 +15,14 @@ extension ChatViewController {
     }
     
     @objc internal func onClickWifiInfoButton() {
+        showSettingDialog(at: 1)
+    }
+
+    internal func showSettingDialog(at index: Int) {
         let settingVC = AgentSettingViewController()
         settingVC.agentManager = agentManager
         settingVC.rtcManager = rtcManager
-        settingVC.currentTabIndex = 1
+        settingVC.currentTabIndex = index
         let navigationController = UINavigationController(rootViewController: settingVC)
         navigationController.modalPresentationStyle = .overFullScreen
         present(navigationController, animated: false)

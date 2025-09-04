@@ -35,7 +35,8 @@ extension ChatViewController {
                     "advanced_features": [
                         "enable_aivad": AppContext.preferenceManager()?.preference.aiVad,
                         "enable_bhvs": AppContext.preferenceManager()?.preference.bhvs,
-                        "enable_rtm": true
+                        "enable_rtm": true,
+                        "enable_sal": AppContext.preferenceManager()?.preference.voiceprintMode != .off
                     ],
                     "asr": [
                         "language": AppContext.preferenceManager()?.preference.language?.languageCode,
@@ -69,6 +70,7 @@ extension ChatViewController {
                         "silence_duration_ms": nil,
                         "threshold": nil
                     ],
+                    "sal": getSalParams(),
                     "avatar": [
                         "enable": isEnableAvatar(),
                         "vendor": AppContext.preferenceManager()?.preference.avatar?.vendor ?? "",
@@ -128,7 +130,8 @@ extension ChatViewController {
                     "advanced_features": [
                         "enable_aivad": false,
                         "enable_bhvs": true,
-                        "enable_rtm": true
+                        "enable_rtm": true,
+                        "enable_sal": AppContext.preferenceManager()?.preference.voiceprintMode != .off
                     ],
                     "asr": [
                         "language": nil,
@@ -162,6 +165,7 @@ extension ChatViewController {
                         "silence_duration_ms": nil,
                         "threshold": nil
                     ],
+                    "sal": getSalParams(),
                     "avatar": [
                         "enable": AppContext.shared.avatarEnable,
                         "vendor": AppContext.shared.avatarVendor,
@@ -193,6 +197,31 @@ extension ChatViewController {
         ]
         
         return (removeNilValues(from: parameters) as? [String: Any]) ?? [:]
+    }
+    
+    private func getSalParams() -> [String: Any?]? {
+        guard
+            let p = AppContext.preferenceManager()?.preference.voiceprintMode,
+            let userId = UserCenter.user?.uid
+        else {
+            return nil
+        }
+        switch p {
+        case .off:
+            return nil
+        case .seamless:
+            return [
+                "sal_mode": "locking",
+                "sample_urls": nil
+            ]
+        case .aware:
+            return [
+                "sal_mode": "locking",
+                "sample_urls": [
+                    uid: VoiceprintManager.shared.getVoiceprint(forUserId: userId)?.remoteUrl
+                ]
+            ]
+        }
     }
 }
 

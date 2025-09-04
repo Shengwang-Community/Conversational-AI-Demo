@@ -9,6 +9,14 @@
 "login.terms.service.tips" = "Read me first";
 "login.session.expired" = "Your session has expired. Please log in again";
 
+// Login Terms Alert
+"login.terms.alert.title" = "Personal Information Protection Guide";
+"login.terms.alert.content" = "Welcome to Agora Conversational AI Engine! When you click \"Agree\", it means you have read and are willing to accept the <b>\"User Agreement\"</b> and <b>\"All contents of the Privacy Policy\"</b>. When you click \"Disagree\", you will not be able to experience the full functionality of this application.";
+"login.terms.alert.checkbox.text" = "I have read and agree to the Terms of Service";
+"login.terms.alert.decline.button" = "Disagree";
+"login.terms.alert.accept.button" = "Agree";
+"login.terms.alert.close.button" = "Close";
+
 "logout.alert.title" = "You will be logged out";
 "logout.alert.description" = "You'll need to sign in again to use all features. Log out now?";
 "logout.alert.confirm.title" = "Cancel";
@@ -52,6 +60,16 @@
 "conversation.alert.cancel" = "Cancel";
 "conversation.alert.confirm" = "Confirm";
 "conversation.alert.clear" = "Clear";
+
+"channel.serverStatus.title" = "Conversational AI Service Status";
+"channel.voiceprint.lock" = "Voice Lock";
+"channel.elegant.interrupt" = "Elegant Interrupt";
+"channel.more" = "More...";
+"channel.seamless" = "Seamless";
+"channel.aware" = "Aware";
+"channel.effective" = "Effective";
+"channel.not.effective" = "Not Effective";
+"channel.insensitive" = "Insensitive";
 
 // Settings View
 "settings.title" = "Agent Settings";
@@ -185,8 +203,26 @@
 "settings.voiceprint.hold.to.record" = "Hold to record";
 "settings.voiceprint.warning" = "Only one voiceprint is allowed. Re-recording will delete the historical voiceprint.";
 "settings.voiceprint.create.title" = "Create My Voiceprint";
+"settings.not.effective" = "Not Effective";
 "settings.voiceprint.create.button" = "Create";
 "settings.voiceprint.re.record.button" = "Re-record";
 "settings.voiceprint.uploading" = "Uploading...";
 "settings.voiceprint.upload.failed" = "Upload failed, please try again";
+"settings.voiceprint.upload.success" = "Voiceprint upload successful";
 "settings.voiceprint.date.format" = "Voiceprint on %@";
+"settings.voiceprint.recording.too.short" = "Recording time too short, please record at least 10s of audio";
+"settings.voiceprint.tip.text" = "Voiceprint recorded on device";
+"settings.voiceprint.alert.title" = "Voiceprint Recording Notice";
+"settings.voiceprint.alert.content" = "Your voice is stored locally by default. Agora's voiceprint lock feature needs to collect your voice. After the single experience is completed, the cloud voiceprint will be deleted and your voice will never be used for commercial purposes.";
+"settings.voiceprint.alert.cancel" = "Cancel";
+"settings.voiceprint.alert.confirm" = "Confirm";
+"settings.voiceprint.alert.no.voiceprint.title" = "No Voiceprint Recorded";
+"settings.voiceprint.alert.no.voiceprint.content" = "No valid voiceprint recorded. Switching to aware mode failed. Exiting will automatically switch to seamless mode.";
+"settings.voiceprint.alert.exit" = "Exit";
+
+// Voiceprint Recording Text
+"settings.voiceprint.recording.text" = "Do you not see the Yellow River waters descending from heaven,\nRushing to the sea and never returning?\n\nDo you not see the bright mirrors in high halls,\nGrieving over white hair,\nMorning like black silk, evening like snow?\n\nWhen life is good, enjoy it to the fullest,\nDo not let the golden goblet stand empty under the moon.\n\nHeaven gave me talents, they must be put to use,\nA thousand pieces of gold scattered, they will come back again.";
+
+// Channel Info Status
+"channel.info.sensitive" = "Sensitive";
+"channel.info.effective" = "Effective";

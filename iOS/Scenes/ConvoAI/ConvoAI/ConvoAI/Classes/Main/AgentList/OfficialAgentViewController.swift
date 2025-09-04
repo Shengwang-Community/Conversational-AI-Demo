@@ -144,12 +144,6 @@ extension OfficialAgentViewController: UITableViewDelegate, UITableViewDataSourc
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        
-        
-        let voiceprintVC = VoiceprintViewController()
-        self.navigationController?.pushViewController(voiceprintVC)
-        
-        return
         var preset = presets[indexPath.row]
         preset.defaultAvatar = "ic_default_avatar_icon"
         AppContext.preferenceManager()?.preference.isCustomPreset = false

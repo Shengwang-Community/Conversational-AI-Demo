@@ -19,6 +19,12 @@ extension ResourceManager {
             public static let agreeTo = ResourceManager.localizedString("main.agree.to")
             public static let termsOfService = ResourceManager.localizedString("main.terms.vc.title")
             public static let termsService = ResourceManager.localizedString("main.terms.service")
+            
+            // Tab Navigation
+            public static let chat = ResourceManager.localizedString("main.chat")
+            public static let agents = ResourceManager.localizedString("main.agents")
+            public static let digitalHuman = ResourceManager.localizedString("main.digitalHuman")
+            public static let mine = ResourceManager.localizedString("main.mine")
         }
 
         public enum Scene {
@@ -43,6 +49,11 @@ extension ResourceManager {
             public static let logoutAlertConfirm = ResourceManager.localizedString("logout.alert.cancel.title")
             public static let logoutAlertCancel = ResourceManager.localizedString("logout.alert.confirm.title")
 
+            // Login Terms Alert
+            public static let termsAlertTitle = ResourceManager.localizedString("login.terms.alert.title")
+            public static let termsAlertContent = ResourceManager.localizedString("login.terms.alert.content")
+            public static let termsAlertDeclineButton = ResourceManager.localizedString("login.terms.alert.decline.button")
+            public static let termsAlertAcceptButton = ResourceManager.localizedString("login.terms.alert.accept.button")
         }
 
         public enum Join {
@@ -169,6 +180,15 @@ extension ResourceManager {
             public static let timeLimitdAlertTitle = ResourceManager.localizedString("channel.time.limited.alert.title")
             public static let timeLimitdAlertDescription = ResourceManager.localizedString("channel.time.limited.alert.description")
             public static let timeLimitdAlertConfim = ResourceManager.localizedString("channel.time.limited.alert.confim")
+            public static let serverStatusTitle = ResourceManager.localizedString("channel.serverStatus.title")
+            public static let voiceprintLock = ResourceManager.localizedString("channel.voiceprint.lock")
+            public static let elegantInterrupt = ResourceManager.localizedString("channel.elegant.interrupt")
+            public static let more = ResourceManager.localizedString("channel.more")
+            public static let seamless = ResourceManager.localizedString("channel.seamless")
+            public static let aware = ResourceManager.localizedString("channel.aware")
+            public static let effective = ResourceManager.localizedString("channel.effective")
+            public static let notEffective = ResourceManager.localizedString("channel.not.effective")
+            public static let insensitive = ResourceManager.localizedString("channel.insensitive")
         }
         
         public enum DevMode {
@@ -234,7 +254,7 @@ extension ResourceManager {
             public static let retry = ResourceManager.localizedString("empty.state.retry")
         }
         
-        public enum VoiceprintMode {
+        public enum Voiceprint {
             public static let title = ResourceManager.localizedString("settings.voiceprint.mode.title")
             public static let off = ResourceManager.localizedString("settings.voiceprint.mode.off")
             public static let offDescription = ResourceManager.localizedString("settings.voiceprint.mode.off.description")
@@ -248,15 +268,82 @@ extension ResourceManager {
             public static let recordingTime = ResourceManager.localizedString("settings.voiceprint.recording.time")
             public static let recordingInstruction = ResourceManager.localizedString("settings.voiceprint.recording.instruction")
             public static let recordingComplete = ResourceManager.localizedString("settings.voiceprint.recording.complete")
-                    public static let pleaseRead = ResourceManager.localizedString("settings.voiceprint.please.read")
-        public static let holdToRecord = ResourceManager.localizedString("settings.voiceprint.hold.to.record")
-        public static let warning = ResourceManager.localizedString("settings.voiceprint.warning")
-        public static let createTitle = ResourceManager.localizedString("settings.voiceprint.create.title")
-        public static let createButton = ResourceManager.localizedString("settings.voiceprint.create.button")
-        public static let reRecordButton = ResourceManager.localizedString("settings.voiceprint.re.record.button")
-        public static let uploading = ResourceManager.localizedString("settings.voiceprint.uploading")
-        public static let uploadFailed = ResourceManager.localizedString("settings.voiceprint.upload.failed")
-        public static let dateFormat = ResourceManager.localizedString("settings.voiceprint.date.format")
+            public static let pleaseRead = ResourceManager.localizedString("settings.voiceprint.please.read")
+            public static let holdToRecord = ResourceManager.localizedString("settings.voiceprint.hold.to.record")
+            public static let warning = ResourceManager.localizedString("settings.voiceprint.warning")
+            public static let createTitle = ResourceManager.localizedString("settings.voiceprint.create.title")
+            public static let createButton = ResourceManager.localizedString("settings.voiceprint.create.button")
+            public static let reRecordButton = ResourceManager.localizedString("settings.voiceprint.re.record.button")
+            public static let uploading = ResourceManager.localizedString("settings.voiceprint.uploading")
+            public static let uploadFailed = ResourceManager.localizedString("settings.voiceprint.upload.failed")
+            public static let uploadSuccess = ResourceManager.localizedString("settings.voiceprint.upload.success")
+            public static let dateFormat = ResourceManager.localizedString("settings.voiceprint.date.format")
+            public static let recordingTooShort = ResourceManager.localizedString("settings.voiceprint.recording.too.short")
+            public static let tipText = ResourceManager.localizedString("settings.voiceprint.tip.text")
+            public static let alertTitle = ResourceManager.localizedString("settings.voiceprint.alert.title")
+            public static let alertContent = ResourceManager.localizedString("settings.voiceprint.alert.content")
+            public static let alertCancel = ResourceManager.localizedString("settings.voiceprint.alert.cancel")
+            public static let alertConfirm = ResourceManager.localizedString("settings.voiceprint.alert.confirm")
+            public static let alertNoVoiceprintTitle = ResourceManager.localizedString("settings.voiceprint.alert.no.voiceprint.title")
+            public static let alertNoVoiceprintContent = ResourceManager.localizedString("settings.voiceprint.alert.no.voiceprint.content")
+            public static let alertExit = ResourceManager.localizedString("settings.voiceprint.alert.exit")
+            public static let recordingText = ResourceManager.localizedString("settings.voiceprint.recording.text")
+        }
+        
+        public enum Mine {
+            public static let userNickname = ResourceManager.localizedString("mine.user.nickname")
+            public static let userEmail = ResourceManager.localizedString("mine.user.email")
+            public static let menuSettings = ResourceManager.localizedString("mine.menu.settings")
+            public static let menuSettingsSubtitle = ResourceManager.localizedString("mine.menu.settings.subtitle")
+            public static let menuAbout = ResourceManager.localizedString("mine.menu.about")
+            public static let menuAboutSubtitle = ResourceManager.localizedString("mine.menu.about.subtitle")
+            public static let menuHelp = ResourceManager.localizedString("mine.menu.help")
+            public static let menuHelpSubtitle = ResourceManager.localizedString("mine.menu.help.subtitle")
+            public static let menuPrivacy = ResourceManager.localizedString("mine.menu.privacy")
+            public static let menuPrivacySubtitle = ResourceManager.localizedString("mine.menu.privacy.subtitle")
+            public static let logoutButton = ResourceManager.localizedString("mine.logout.button")
+            public static let logoutAlertTitle = ResourceManager.localizedString("mine.logout.alert.title")
+            public static let logoutAlertMessage = ResourceManager.localizedString("mine.logout.alert.message")
+            public static let logoutAlertCancel = ResourceManager.localizedString("mine.logout.alert.cancel")
+            public static let logoutAlertConfirm = ResourceManager.localizedString("mine.logout.alert.confirm")
+            
+            // Gender Setting
+            public static let genderSettingTitle = ResourceManager.localizedString("mine.gender.setting.title")
+            public static let genderFemale = ResourceManager.localizedString("mine.gender.female")
+            public static let genderMale = ResourceManager.localizedString("mine.gender.male")
+            public static let genderSettingSaved = ResourceManager.localizedString("mine.gender.setting.saved")
+            
+            // User Logout
+            public static let deactivateAccount = ResourceManager.localizedString("mine.deactivate.account")
+            public static let deactivateAccountAlertTitle = ResourceManager.localizedString("mine.deactivate.account.alert.title")
+            public static let deactivateAccountAlertMessage = ResourceManager.localizedString("mine.deactivate.account.alert.message")
+            public static let cancel = ResourceManager.localizedString("mine.cancel")
+            public static let deactivate = ResourceManager.localizedString("mine.deactivate")
+            public static let deactivatingAccount = ResourceManager.localizedString("mine.deactivating.account")
+            public static let accountDeactivated = ResourceManager.localizedString("mine.account.deactivated")
+            public static let loggingOut = ResourceManager.localizedString("mine.logging.out")
+            public static let logoutSuccess = ResourceManager.localizedString("mine.logout.success")
+            
+            // Nickname Setting
+            public static let nicknameSettingTitle = ResourceManager.localizedString("mine.nickname.setting.title")
+            public static let nicknamePlaceholder = ResourceManager.localizedString("mine.nickname.placeholder")
+            public static let nicknameTips = ResourceManager.localizedString("mine.nickname.tips")
+            public static let save = ResourceManager.localizedString("mine.save")
+            public static let nicknameEmpty = ResourceManager.localizedString("mine.nickname.empty")
+            public static let nicknameTooLong = ResourceManager.localizedString("mine.nickname.too.long")
+            public static let saving = ResourceManager.localizedString("mine.saving")
+            public static let nicknameSaved = ResourceManager.localizedString("mine.nickname.saved")
+            public static let unsavedChangesTitle = ResourceManager.localizedString("mine.unsaved.changes.title")
+            public static let unsavedChangesMessage = ResourceManager.localizedString("mine.unsaved.changes.message")
+            public static let discard = ResourceManager.localizedString("mine.discard")
+            public static let keepEditing = ResourceManager.localizedString("mine.keep.editing")
+            
+            // Bio Setting
+            public static let bioSettingTitle = ResourceManager.localizedString("mine.bio.setting.title")
+            public static let bioPlaceholder = ResourceManager.localizedString("mine.bio.placeholder")
+            public static let bioTips = ResourceManager.localizedString("mine.bio.tips")
+            public static let bioTooLong = ResourceManager.localizedString("mine.bio.too.long")
+            public static let bioSaved = ResourceManager.localizedString("mine.bio.saved")
         }
     }
 }

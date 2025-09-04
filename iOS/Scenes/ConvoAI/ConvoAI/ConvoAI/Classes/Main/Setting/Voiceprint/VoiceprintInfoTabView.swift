@@ -10,11 +10,11 @@ import SnapKit
 import Common
 
 enum VoiceprintRecordStatus {
-    case notCreated      // 未创建状态
-    case uploading       // 上传中状态
-    case uploadFailed    // 上传失败状态
-    case created         // 已创建状态
-    case playing         // 播放状态
+    case notCreated      // Not created
+    case uploading       // Uploading
+    case uploadFailed    // Upload failed
+    case created         // Created
+    case playing         // Playing
 }
 
 class VoiceprintInfoTabView: UIView {
@@ -23,123 +23,110 @@ class VoiceprintInfoTabView: UIView {
     
     private var currentStatus: VoiceprintRecordStatus = .notCreated
     private var voiceprintDate: String = ""
-    private var isPlaying = false
-    
-    // MARK: - UI Components
-    
-    private lazy var voiceprintIconView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor(red: 57/255, green: 202/255, blue: 255/255, alpha: 1.0) // #39CAFF
-        view.layer.cornerRadius = 8
-        view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOffset = CGSize(width: 0, height: 2)
-        view.layer.shadowOpacity = 0.06
-        view.layer.shadowRadius = 6
-        return view
-    }()
     
     private lazy var voiceprintIcon: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage.ag_named("ic_agent_mute") // 使用现有的麦克风图标
+        imageView.image = UIImage.ag_named("ic_voiceprint_voice")
         imageView.contentMode = .scaleAspectFit
-        imageView.tintColor = .white
         return imageView
     }()
     
     private lazy var voiceprintTitleLabel: UILabel = {
         let label = UILabel()
-        label.text = ResourceManager.L10n.VoiceprintMode.createTitle
+        label.text = ResourceManager.L10n.Voiceprint.createTitle
         label.font = .systemFont(ofSize: 14, weight: .regular)
         label.textColor = .white
         return label
     }()
     
-    private lazy var voiceprintDateLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 12, weight: .regular)
-        label.textColor = UIColor.white.withAlphaComponent(0.7)
-        label.isHidden = true
-        return label
+    private lazy var uploadContainer: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.themColor(named: "ai_brand_white1")
+        view.layer.cornerRadius = 8
+        view.isHidden = true
+        return view
     }()
     
-    private lazy var statusLabel: UILabel = {
+    private lazy var uploadLabel: UILabel = {
         let label = UILabel()
+        label.text = ResourceManager.L10n.Voiceprint.uploading
         label.font = .systemFont(ofSize: 12, weight: .regular)
-        label.textColor = UIColor.white.withAlphaComponent(0.7)
-        label.isHidden = true
+        label.textColor = UIColor.themColor(named: "ai_icontext1")
         return label
     }()
     
     private lazy var loadingIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
         indicator.color = .white
-        indicator.isHidden = true
         return indicator
     }()
     
-    private lazy var errorView: UIView = {
+    private lazy var retryContainer: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor.red.withAlphaComponent(0.2)
-        view.layer.cornerRadius = 4
+        view.backgroundColor = UIColor.themColor(named: "ai_red6")
+        view.layer.cornerRadius = 12
         view.isHidden = true
         return view
     }()
     
-    private lazy var errorLabel: UILabel = {
+    private lazy var retryLabel: UILabel = {
         let label = UILabel()
-        label.text = ResourceManager.L10n.VoiceprintMode.uploadFailed
-        label.font = .systemFont(ofSize: 10, weight: .regular)
+        label.text = ResourceManager.L10n.Voiceprint.uploadFailed
+        label.font = .systemFont(ofSize: 12, weight: .regular)
         label.textColor = .white
-        label.textAlignment = .center
         return label
     }()
     
-    private lazy var retryButton: UIButton = {
+    public lazy var retryButton: UIButton = {
         let button = UIButton(type: .custom)
-        button.setImage(UIImage.ag_named("ic_agent_setting_close"), for: .normal) // 使用刷新图标
+        button.setImage(UIImage.ag_named("ic_voiceprint_retry"), for: .normal)
         button.tintColor = .white
-        button.isHidden = true
         return button
     }()
     
-    private lazy var playButton: UIButton = {
+    private lazy var playActionContainer: UIView = {
+        let view = UIView()
+        view.isHidden = true
+        return view
+    }()
+    
+    public lazy var playButton: UIButton = {
         let button = UIButton(type: .custom)
-        button.setImage(UIImage.ag_named("ic_agent_mute"), for: .normal) // 使用播放图标
-        button.tintColor = .white
-        button.isHidden = true
+        button.setImage(UIImage.ag_named("ic_voiceprint_play"), for: .normal)
+        button.backgroundColor = UIColor.themColor(named: "ai_brand_white1")
+        button.layer.cornerRadius = 8
+        button.layer.masksToBounds = true
         return button
     }()
     
     private lazy var waveformView: LineWaveAnimationView = {
-        let view = LineWaveAnimationView(lineCount: 20, lineWidth: 2, lineSpacing: 1, animationType: .fromCenter)
-        view.isHidden = true
+        let view = LineWaveAnimationView(lineCount: 4, lineWidth: 5, lineSpacing: 6, animationType: .fromLeft)
         return view
     }()
     
-    lazy var createButton: UIButton = {
+    private lazy var gotoContainer: UIView = {
+        let view = UIView()
+        return view
+    }()
+    
+    public lazy var gotoButton: UIButton = {
         let button = UIButton(type: .custom)
-        button.backgroundColor = UIColor.white.withAlphaComponent(0.15)
-        button.layer.cornerRadius = 8
-        button.setTitle(ResourceManager.L10n.VoiceprintMode.createButton, for: .normal)
-        button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 12, weight: .regular)
+        button.backgroundColor = UIColor.themColor(named: "ai_brand_white1")
+        button.layer.cornerRadius = 8
         return button
     }()
     
-    lazy var reRecordButton: UIButton = {
-        let button = UIButton(type: .custom)
-        button.backgroundColor = UIColor.white.withAlphaComponent(0.15)
-        button.layer.cornerRadius = 8
-        button.setTitle(ResourceManager.L10n.VoiceprintMode.reRecordButton, for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 12, weight: .regular)
-        button.isHidden = true
-        return button
+    private lazy var gotoLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor.themColor(named: "ai_icontext1")
+        label.font = .systemFont(ofSize: 12, weight: .regular)
+        return label
     }()
     
-    private lazy var createArrowIcon: UIImageView = {
+    private lazy var gotoIcon: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage.ag_named("ic_agent_setting_arrow")
+        imageView.image = UIImage.ag_named("ic_voiceprint_goto")
         imageView.contentMode = .scaleAspectFit
         imageView.tintColor = .white
         return imageView
@@ -162,206 +149,174 @@ class VoiceprintInfoTabView: UIView {
     private func setupViews() {
         backgroundColor = UIColor.themColor(named: "ai_brand_main6")
 
-        addSubview(voiceprintIconView)
+        addSubview(voiceprintIcon)
         addSubview(voiceprintTitleLabel)
-        addSubview(voiceprintDateLabel)
-        addSubview(statusLabel)
-        addSubview(loadingIndicator)
-        addSubview(errorView)
-        addSubview(retryButton)
-        addSubview(playButton)
-        addSubview(waveformView)
-        addSubview(createButton)
-        addSubview(reRecordButton)
-        addSubview(createArrowIcon)
-        
-        voiceprintIconView.addSubview(voiceprintIcon)
-        errorView.addSubview(errorLabel)
-        
-        // Add button actions
-        retryButton.addTarget(self, action: #selector(onRetryButtonTapped), for: .touchUpInside)
-        playButton.addTarget(self, action: #selector(onPlayButtonTapped), for: .touchUpInside)
-        reRecordButton.addTarget(self, action: #selector(onReRecordButtonTapped), for: .touchUpInside)
+        addSubview(uploadContainer)
+        uploadContainer.addSubview(uploadLabel)
+        uploadContainer.addSubview(loadingIndicator)
+        addSubview(retryContainer)
+        retryContainer.addSubview(retryLabel)
+        retryContainer.addSubview(retryButton)
+        addSubview(playActionContainer)
+        playActionContainer.addSubview(playButton)
+        playActionContainer.addSubview(waveformView)
+        addSubview(gotoContainer)
+        gotoContainer.addSubview(gotoLabel)
+        gotoContainer.addSubview(gotoIcon)
+        gotoContainer.addSubview(gotoButton)
     }
     
     private func setupConstraints() {
-        voiceprintIconView.snp.makeConstraints { make in
+        voiceprintIcon.snp.makeConstraints { make in
+            make.top.equalTo(26)
             make.left.equalTo(16)
-            make.centerY.equalToSuperview()
             make.width.height.equalTo(30)
         }
         
-        voiceprintIcon.snp.makeConstraints { make in
-            make.center.equalToSuperview()
-            make.width.height.equalTo(16)
-        }
-        
         voiceprintTitleLabel.snp.makeConstraints { make in
-            make.left.equalTo(voiceprintIconView.snp.right).offset(12)
+            make.left.equalTo(voiceprintIcon.snp.right).offset(12)
             make.centerY.equalTo(voiceprintIcon)
         }
         
-        voiceprintDateLabel.snp.makeConstraints { make in
+        uploadContainer.snp.makeConstraints { make in
             make.left.equalTo(voiceprintTitleLabel)
-            make.top.equalTo(voiceprintTitleLabel.snp.bottom).offset(2)
-        }
-        
-        statusLabel.snp.makeConstraints { make in
-            make.left.equalTo(voiceprintTitleLabel)
-            make.top.equalTo(voiceprintTitleLabel.snp.bottom).offset(2)
+            make.height.equalTo(24)
+            make.right.equalTo(uploadLabel).offset(10)
+            make.centerY.equalTo(gotoButton)
         }
         
         loadingIndicator.snp.makeConstraints { make in
-            make.left.equalTo(statusLabel.snp.right).offset(8)
-            make.centerY.equalTo(statusLabel)
+            make.left.equalTo(10)
+            make.centerY.equalToSuperview()
             make.width.height.equalTo(16)
         }
         
-        errorView.snp.makeConstraints { make in
+        uploadLabel.snp.makeConstraints { make in
+            make.left.equalTo(loadingIndicator.snp.right).offset(8)
+            make.centerY.equalToSuperview()
+        }
+                
+        retryContainer.snp.makeConstraints { make in
             make.left.equalTo(voiceprintTitleLabel)
-            make.right.equalTo(retryButton.snp.left).offset(-8)
-            make.top.equalTo(voiceprintTitleLabel.snp.bottom).offset(2)
-            make.height.equalTo(20)
+            make.height.equalTo(24)
+            make.centerY.equalTo(gotoButton)
         }
         
-        errorLabel.snp.makeConstraints { make in
-            make.center.equalToSuperview()
+        retryLabel.snp.makeConstraints { make in
+            make.left.equalTo(8)
+            make.centerY.equalToSuperview()
         }
         
         retryButton.snp.makeConstraints { make in
-            make.right.equalTo(createArrowIcon.snp.left).offset(-4)
-            make.centerY.equalTo(errorView)
-            make.width.height.equalTo(16)
+            make.left.equalTo(retryLabel.snp.right).offset(8)
+            make.top.right.bottom.equalToSuperview()
+        }
+        
+        playActionContainer.snp.makeConstraints { make in
+            make.left.equalTo(voiceprintIcon.snp.right).offset(8)
+            make.top.equalTo(voiceprintIcon.snp.bottom).offset(12)
+            make.height.equalTo(24)
+            make.width.equalTo(48)
         }
         
         playButton.snp.makeConstraints { make in
-            make.left.equalTo(voiceprintTitleLabel.snp.right).offset(8)
-            make.centerY.equalTo(voiceprintTitleLabel)
-            make.width.height.equalTo(20)
+            make.edges.equalToSuperview()
         }
         
         waveformView.snp.makeConstraints { make in
-            make.left.equalTo(voiceprintTitleLabel.snp.right).offset(8)
-            make.centerY.equalTo(voiceprintTitleLabel)
-            make.height.equalTo(20)
-            make.width.equalTo(40)
+            make.edges.equalToSuperview()
         }
         
-        createButton.snp.makeConstraints { make in
-            make.right.equalTo(createArrowIcon.snp.left).offset(-4)
+        gotoContainer.snp.makeConstraints { make in
+            make.right.equalTo(-16)
             make.bottom.equalTo(-16)
             make.height.equalTo(24)
-            make.width.greaterThanOrEqualTo(40)
+            make.left.equalTo(gotoLabel.snp.left).offset(-16)
         }
         
-        reRecordButton.snp.makeConstraints { make in
-            make.right.equalTo(createArrowIcon.snp.left).offset(-4)
+        gotoIcon.snp.makeConstraints { make in
+            make.right.equalTo(-8)
             make.centerY.equalToSuperview()
-            make.height.equalTo(24)
-            make.width.greaterThanOrEqualTo(40)
         }
         
-        createArrowIcon.snp.makeConstraints { make in
-            make.right.equalTo(-16)
+        gotoLabel.snp.makeConstraints { make in
+            make.right.equalTo(gotoIcon.snp.left).offset(-4)
             make.centerY.equalToSuperview()
-            make.width.height.equalTo(16)
+        }
+        
+        gotoButton.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
         }
     }
     
-    // MARK: - Public Methods
-    
-    func bindCreateButtonAction(target: Any, action: Selector) {
-        createButton.addTarget(target, action: action, for: .touchUpInside)
+    func getCurrentStatus() -> VoiceprintRecordStatus {
+        return currentStatus
     }
     
-    func updateStatus(_ status: VoiceprintRecordStatus, date: String = "") {
+    func updateStatus(_ status: VoiceprintRecordStatus) {
         currentStatus = status
-        voiceprintDate = date
         updateUIForStatus()
     }
     
-    func setVoiceprintInfo(date: String) {
-        voiceprintDate = date
-        voiceprintDateLabel.text = String(format: ResourceManager.L10n.VoiceprintMode.dateFormat, date)
+    func setVoiceprintDate(_ date: Date) {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        voiceprintDate = formatter.string(from: date)
+        updateUIForStatus()
+    }
+    
+    func setVoiceprintDate(timestamp: TimeInterval) {
+        if timestamp > 0 {
+            let date = Date(timeIntervalSince1970: timestamp)
+            setVoiceprintDate(date)
+        } else {
+            voiceprintDate = ""
+            updateUIForStatus()
+        }
     }
     
     // MARK: - Private Methods
     
     private func updateUIForStatus() {
-        // Reset all UI elements
-        voiceprintDateLabel.isHidden = true
-        statusLabel.isHidden = true
-        loadingIndicator.isHidden = true
-        errorView.isHidden = true
-        retryButton.isHidden = true
+        uploadContainer.isHidden = true
+        retryContainer.isHidden = true
+        playActionContainer.isHidden = true
         playButton.isHidden = true
         waveformView.isHidden = true
-        createButton.isHidden = false
-        reRecordButton.isHidden = true
+        loadingIndicator.stopAnimating()
+        waveformView.stopAnimation()
         
         switch currentStatus {
         case .notCreated:
-            voiceprintTitleLabel.text = ResourceManager.L10n.VoiceprintMode.createTitle
-            createButton.setTitle(ResourceManager.L10n.VoiceprintMode.createButton, for: .normal)
-            
+            voiceprintTitleLabel.text = ResourceManager.L10n.Voiceprint.createTitle
+            gotoLabel.text = ResourceManager.L10n.Voiceprint.createButton
+            gotoButton.backgroundColor = UIColor.themColor(named: "ai_brand_white1")
         case .uploading:
-            voiceprintTitleLabel.text = String(format: ResourceManager.L10n.VoiceprintMode.dateFormat, voiceprintDate)
-            statusLabel.text = ResourceManager.L10n.VoiceprintMode.uploading
-            statusLabel.isHidden = false
-            loadingIndicator.isHidden = false
+            voiceprintTitleLabel.text = String(format: ResourceManager.L10n.Voiceprint.dateFormat, voiceprintDate)
+            uploadContainer.isHidden = false
             loadingIndicator.startAnimating()
-            createButton.setTitle("", for: .normal)
-            
+
+            gotoLabel.text = ""
+            gotoButton.backgroundColor = .clear
         case .uploadFailed:
-            voiceprintTitleLabel.text = String(format: ResourceManager.L10n.VoiceprintMode.dateFormat, voiceprintDate)
-            errorView.isHidden = false
-            retryButton.isHidden = false
-            createButton.setTitle("", for: .normal)
-            
+            voiceprintTitleLabel.text = String(format: ResourceManager.L10n.Voiceprint.dateFormat, voiceprintDate)
+            retryContainer.isHidden = false
+            gotoButton.backgroundColor = .clear
         case .created:
-            voiceprintTitleLabel.text = String(format: ResourceManager.L10n.VoiceprintMode.dateFormat, voiceprintDate)
-            voiceprintDateLabel.text = String(format: ResourceManager.L10n.VoiceprintMode.dateFormat, voiceprintDate)
-            voiceprintDateLabel.isHidden = false
+            voiceprintTitleLabel.text = String(format: ResourceManager.L10n.Voiceprint.dateFormat, voiceprintDate)
+            playActionContainer.isHidden = false
             playButton.isHidden = false
-            createButton.isHidden = true
-            reRecordButton.isHidden = false
-            reRecordButton.setTitle(ResourceManager.L10n.VoiceprintMode.reRecordButton, for: .normal)
-            
+            gotoLabel.text = ResourceManager.L10n.Voiceprint.reRecordButton
+            gotoButton.backgroundColor = UIColor.themColor(named: "ai_brand_white1")
         case .playing:
-            voiceprintTitleLabel.text = String(format: ResourceManager.L10n.VoiceprintMode.dateFormat, voiceprintDate)
-            voiceprintDateLabel.text = String(format: ResourceManager.L10n.VoiceprintMode.dateFormat, voiceprintDate)
-            voiceprintDateLabel.isHidden = false
-            waveformView.isHidden = false
+            voiceprintTitleLabel.text = String(format: ResourceManager.L10n.Voiceprint.dateFormat, voiceprintDate)
+            playActionContainer.isHidden = false
             waveformView.startAnimation()
-            createButton.isHidden = true
-            reRecordButton.isHidden = false
-            reRecordButton.setTitle(ResourceManager.L10n.VoiceprintMode.reRecordButton, for: .normal)
+            waveformView.isHidden = false
+            gotoLabel.text = ResourceManager.L10n.Voiceprint.reRecordButton
+            gotoButton.backgroundColor = UIColor.themColor(named: "ai_brand_white1")
         }
-    }
-    
-    // MARK: - Button Actions
-    
-    @objc private func onRetryButtonTapped() {
-        // TODO: Implement retry logic
-        updateStatus(.uploading, date: voiceprintDate)
-    }
-    
-    @objc private func onPlayButtonTapped() {
-        if isPlaying {
-            // Stop playing
-            isPlaying = false
-            waveformView.stopAnimation()
-            updateStatus(.created, date: voiceprintDate)
-        } else {
-            // Start playing
-            isPlaying = true
-            updateStatus(.playing, date: voiceprintDate)
-        }
-        // TODO: Implement play/stop logic
-    }
-    
-    @objc private func onReRecordButtonTapped() {
-        // TODO: Implement re-record logic
-        updateStatus(.notCreated)
     }
 }

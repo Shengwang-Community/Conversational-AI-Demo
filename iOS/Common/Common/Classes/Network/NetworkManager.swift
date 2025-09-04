@@ -79,74 +79,6 @@ public class NetworkManager:NSObject {
         }
     }
     
-    /// Upload image
-    /// - Parameters:
-    ///   - requestId: request ID for tracking
-    ///   - channelName: channel name
-    ///   - imageData: image data to upload
-    ///   - success: success callback
-    ///   - failure: failure callback
-    public func uploadImage(requestId: String,
-                           channelName: String,
-                           imageData: Data,
-                           success: SuccessClosure?,
-                           failure: FailClosure?) {
-        let url = "\(AppContext.shared.baseServerUrl)/v1/convoai/upload/image"
-        let parameters = [
-            "request_id": requestId,
-            "src": "ios",
-            "app_id": AppContext.shared.appId,
-            "channel_name": channelName
-        ]
-        
-        DispatchQueue.global().async {
-            self.uploadRequest(urlString: url,
-                              parameters: parameters,
-                              imageData: imageData,
-                              success: success,
-                              failure: failure)
-        }
-    }
-    
-    public typealias ImageUploadSuccessClosure = (String?) -> Void
-    
-    /// Upload image with URL extraction
-    /// - Parameters:
-    ///   - requestId: request ID for tracking
-    ///   - channelName: channel name
-    ///   - imageData: image data to upload
-    ///   - success: success callback with extracted image URL
-    ///   - failure: failure callback
-    public func uploadImage(requestId: String,
-                           channelName: String,
-                           imageData: Data,
-                           success: @escaping ImageUploadSuccessClosure,
-                           failure: FailClosure?) {
-        let url = "\(AppContext.shared.baseServerUrl)/v1/convoai/upload/image"
-        let parameters = [
-            "request_id": requestId,
-            "src": "ios",
-            "app_id": AppContext.shared.appId,
-            "channel_name": channelName
-        ]
-        
-        DispatchQueue.global().async {
-            self.uploadRequest(urlString: url,
-                              parameters: parameters,
-                              imageData: imageData,
-                              success: { response in
-                                  // Extract img_url from response
-                                  var imageUrl: String? = nil
-                                  if let data = response["data"] as? [String: Any],
-                                     let imgUrl = data["img_url"] as? String {
-                                      imageUrl = imgUrl
-                                  }
-                                  success(imageUrl)
-                              },
-                              failure: failure)
-        }
-    }
-    
     public func getRequest(urlString: String, params: [String: Any]?, success: SuccessClosure?, failure: FailClosure?) {
         DispatchQueue.global().async {
             self.request(urlString: urlString, params: params, method: .GET, success: success, failure: failure)
@@ -159,9 +91,37 @@ public class NetworkManager:NSObject {
         }
     }
 
-    private func uploadRequest(urlString: String,
+    public func uploadRequest(urlString: String,
                               parameters: [String: String],
                               imageData: Data,
+                              success: SuccessClosure?,
+                              failure: FailClosure?) {
+        uploadRequest(urlString: urlString,
+                     parameters: parameters,
+                     fileData: imageData,
+                     fileName: "image.jpg",
+                     mimeType: "image/jpeg",
+                     fieldName: "image",
+                     success: success,
+                     failure: failure)
+    }
+    
+    /// Upload file with flexible format support
+    /// - Parameters:
+    ///   - urlString: API endpoint URL
+    ///   - parameters: Text parameters for the request
+    ///   - fileData: File data to upload
+    ///   - fileName: Name of the file (e.g., "voiceprint.pcm")
+    ///   - mimeType: MIME type of the file (e.g., "audio/mp4")
+    ///   - fieldName: Form field name for the file (e.g., "file", "audio")
+    ///   - success: Success callback
+    ///   - failure: Failure callback
+    public func uploadRequest(urlString: String,
+                              parameters: [String: String],
+                              fileData: Data,
+                              fileName: String,
+                              mimeType: String,
+                              fieldName: String,
                               success: SuccessClosure?,
                               failure: FailClosure?) {
         guard let url = URL(string: urlString) else {
@@ -189,11 +149,11 @@ public class NetworkManager:NSObject {
             body.append("\(value)\r\n".data(using: .utf8)!)
         }
         
-        // Add image data
+        // Add file data with flexible format
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"image\"; filename=\"image.jpg\"\r\n".data(using: .utf8)!)
-        body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
-        body.append(imageData)
+        body.append("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(fileData)
         body.append("\r\n".data(using: .utf8)!)
         
         // Close boundary
