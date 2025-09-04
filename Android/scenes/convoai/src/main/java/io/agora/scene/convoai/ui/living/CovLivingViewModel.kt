@@ -8,9 +8,12 @@ import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngineEx
 import io.agora.rtm.RtmClient
 import io.agora.scene.common.BuildConfig
+import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.net.AgoraTokenType
+import io.agora.scene.common.net.ApiManager
 import io.agora.scene.common.net.TokenGenerator
 import io.agora.scene.common.net.TokenGeneratorType
+import io.agora.scene.common.net.UploadImage
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.R
@@ -59,6 +62,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -769,6 +773,22 @@ class CovLivingViewModel : ViewModel() {
                 }
             }
         }
+    }
+
+    /**
+     * Uploads an image to the server using multipart/form-data.
+     * @param requestId Request ID
+     * @param channelName Channel name
+     * @param imageFile Image file to upload
+     * @param onResult Callback for upload result
+     */
+    fun uploadImage(
+        requestId: String,
+        channelName: String,
+        imageFile: File,
+        onResult: (Result<UploadImage>) -> Unit
+    ) {
+        ApiManager.uploadImage(SSOUserManager.getToken(), requestId, channelName, imageFile, onResult)
     }
 
     // ===== Private methods =====

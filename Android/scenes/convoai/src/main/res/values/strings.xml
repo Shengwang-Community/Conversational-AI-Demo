@@ -205,7 +205,6 @@
     <string name="cov_mine_delete_account_tips">我已了解注销账号的各项风险</string>
     <string name="cov_mine_confirm_deleted">确认注销</string>
     <string name="cov_mine_delete_account_toast">您必须勾选并同意注销账号的各项风险才可以注销。</string>
-    <string name="cov_mine_filing_no">备案号</string>
     <string name="cov_mine_settings">设置</string>
     <string name="cov_mine_privacy">隐私</string>
     <string name="cov_mine_nickname">昵称</string>
@@ -219,4 +218,11 @@
     <string name="cov_mine_about_me_hint">设定自我介绍，让 AI agent 更了解您</string>
     <string name="cov_mine_iot_devices">我的对话式 AI 设备</string>
     <string name="cov_mine_devices">已绑定 %d 台设备</string>
+    <string name="cov_settings_version_format">Version: %s</string>
+    <string name="cov_settings_agreement">用户协议</string>
+    <string name="cov_settings_privacy_policy">隐私政策</string>
+    <string name="cov_settings_third_party_data_sharing">第三方信息数据共享</string>
+    <string name="cov_settings_personal_data_checklist">个人信息收集清单</string>
+    <string name="cov_settings_filing_no">备案号</string>
+    <string name="cov_settings_filing_no_content">沪xxxxxx</string>
 </resources>

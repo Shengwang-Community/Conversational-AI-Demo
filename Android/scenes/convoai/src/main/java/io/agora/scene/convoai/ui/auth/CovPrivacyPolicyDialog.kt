@@ -97,7 +97,7 @@ class CovPrivacyPolicyDialog : BaseDialogFragment<CovPrivacyPolicyDialogBinding>
                     object : ClickableSpan() {
                         override fun onClick(widget: View) {
                             activity?.let {
-                                TermsActivity.Companion.startActivity(it, ServerConfig.termsOfServicesUrl)
+                                TermsActivity.startActivity(it, ServerConfig.termsOfServicesUrl)
                             }
                         }
 
@@ -130,7 +130,7 @@ class CovPrivacyPolicyDialog : BaseDialogFragment<CovPrivacyPolicyDialogBinding>
                     object : ClickableSpan() {
                         override fun onClick(widget: View) {
                             activity?.let {
-                                TermsActivity.Companion.startActivity(it, ServerConfig.privacyPolicyUrl)
+                                TermsActivity.startActivity(it, ServerConfig.privacyPolicyUrl)
                             }
                         }
 
