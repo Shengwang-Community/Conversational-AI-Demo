@@ -5,7 +5,7 @@ import io.agora.rtc2.RtcEngine
 import io.agora.rtm.RtmClient
 import io.agora.scene.convoai.convoaiApi.AgentState.UNKNOWN
 
-const val ConversationalAIAPI_VERSION = "1.8.0"
+const val ConversationalAIAPI_VERSION = "2.0.0"
 
 /*
  * This file defines the core interfaces, data structures, and error system for the Conversational AI API.

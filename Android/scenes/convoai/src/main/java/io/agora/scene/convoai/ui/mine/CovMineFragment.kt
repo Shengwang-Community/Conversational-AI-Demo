@@ -1,15 +1,14 @@
 package io.agora.scene.convoai.ui.mine
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.fragment.app.activityViewModels
-import io.agora.scene.common.R
 import io.agora.scene.common.ui.BaseFragment
-import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.databinding.CovFragmentMineBinding
 import io.agora.scene.convoai.iot.manager.CovIotDeviceManager
 import io.agora.scene.convoai.iot.ui.CovIotDeviceListActivity
+import io.agora.scene.convoai.ui.auth.GlobalUserViewModel
 import io.agora.scene.convoai.ui.auth.UserViewModel
 
 class CovMineFragment : BaseFragment<CovFragmentMineBinding>() {
@@ -18,7 +17,20 @@ class CovMineFragment : BaseFragment<CovFragmentMineBinding>() {
         private const val TAG = "CovMineFragment"
     }
 
-    private val userViewModel: UserViewModel by activityViewModels()
+    /**
+     * CRITICAL: Use GlobalUserViewModel to ensure ALL components share the SAME UserViewModel instance.
+     * 
+     * This is essential for cross-activity/fragment state synchronization:
+     * - Login/logout state must be consistent across the entire app
+     * - Fragment lifecycle is safe here: requireContext() is only called when Fragment is properly attached
+     * - DO NOT use activityViewModels() as it creates a separate instance per Activity
+     * 
+     * All components (Activities/Fragments) MUST use GlobalUserViewModel.getUserViewModel() 
+     * to maintain state consistency and avoid bugs.
+     */
+    private val userViewModel: UserViewModel by lazy {
+        GlobalUserViewModel.getUserViewModel(requireContext().applicationContext as android.app.Application)
+    }
 
     override fun getViewBinding(
         inflater: LayoutInflater,
@@ -28,12 +40,10 @@ class CovMineFragment : BaseFragment<CovFragmentMineBinding>() {
     }
 
     override fun initView() {
+        Log.d("UserViewModel","UserViewModel:$userViewModel $this")
         mBinding?.apply {
             ivUserAvatar.setOnClickListener {
-                // TODO:
-                showLogoutConfirmDialog {
-
-                }
+                ToastUtil.show("click user avatar")
             }
             tvNickname.setOnClickListener {
                 ToastUtil.show("click nickname")
@@ -59,30 +69,14 @@ class CovMineFragment : BaseFragment<CovFragmentMineBinding>() {
             updateDeviceCount()
 
             clPrivacy.setOnClickListener {
-                ToastUtil.show("click privacy")
+                val activity = activity ?: return@setOnClickListener
+                CovProfilePrivacyActivity.startActivity(activity)
             }
             clSettings.setOnClickListener {
-                ToastUtil.show("click settings")
+                val activity = activity ?: return@setOnClickListener
+                CovProfileSettingsActivity.startActivity(activity)
             }
         }
-    }
-
-    private fun showLogoutConfirmDialog(onLogout: () -> Unit) {
-        val activity = activity ?: return
-        CommonDialog.Builder()
-            .setTitle(getString(R.string.common_logout_confirm_title))
-            .setContent(getString(R.string.common_logout_confirm_text))
-            .setPositiveButton(
-                getString(R.string.common_logout_confirm_known),
-                onClick = {
-                    cleanCookie()
-                    userViewModel.logout()
-                    onLogout.invoke()
-                })
-            .setNegativeButton(getString(R.string.common_logout_confirm_cancel))
-            .hideTopImage()
-            .build()
-            .show(activity.supportFragmentManager, "logout_dialog_tag")
     }
 
     override fun onResume() {

@@ -135,7 +135,7 @@ class CovLoginActivity : DebugSupportActivity<CovActivityLoginBinding>() {
         // Terms of services span
         spannable.setSpan(object : ClickableSpan() {
             override fun onClick(widget: View) {
-                TermsActivity.Companion.startActivity(this@CovLoginActivity, ServerConfig.termsOfServicesUrl)
+                TermsActivity.startActivity(this@CovLoginActivity, ServerConfig.termsOfServicesUrl)
             }
 
             override fun updateDrawState(ds: TextPaint) {
@@ -148,7 +148,7 @@ class CovLoginActivity : DebugSupportActivity<CovActivityLoginBinding>() {
         // Privacy policy span
         spannable.setSpan(object : ClickableSpan() {
             override fun onClick(widget: View) {
-                TermsActivity.Companion.startActivity(this@CovLoginActivity, ServerConfig.privacyPolicyUrl)
+                TermsActivity.startActivity(this@CovLoginActivity, ServerConfig.privacyPolicyUrl)
             }
 
             override fun updateDrawState(ds: TextPaint) {

@@ -1,5 +1,6 @@
 package io.agora.scene.common.ui
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -21,12 +22,14 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         val showImage: Boolean = true,
         val showNoMoreReminder: Boolean = false,
         val noMoreReminderText: String? = null,
+        val noMoreReminderTextColor: Int? = null,
         val imageBackgroundRes: Int? = null,
         val image2SrcRes: Int? = null,
         val cancelable: Boolean = true,
-        val onPositiveClick: (() -> Unit)? = null,
-        val onNegativeClick: (() -> Unit)? = null,
-        val onPositiveClickWithReminder: ((Boolean) -> Unit)? = null
+        val positiveBackgroundTint: Int? = null,
+        val positiveAutoDismiss: Boolean = true,
+        val onPositiveClick: ((Boolean?) -> Unit)? = null,
+        val onNegativeClick: (() -> Unit)? = null
     )
 
     private var config: DialogConfig = DialogConfig()
@@ -60,6 +63,11 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         btnNegative.text = config.negativeText
         btnNegative.isVisible = config.showNegative
         ivImage.isVisible = config.showImage
+        
+        // Set positive button background tint if provided
+        config.positiveBackgroundTint?.let { colorRes ->
+            btnPositive.backgroundTintList = ColorStateList.valueOf(root.context.getColor(colorRes))
+        }
     }
 
     private fun CommonDialogLayoutBinding.setupImageViews() {
@@ -76,31 +84,41 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         if (config.showNoMoreReminder) {
             tvNoMoreReminder.text = config.noMoreReminderText 
                 ?: getString(io.agora.scene.common.R.string.common_app_no_more_reminder)
+            
+            // Set text color if provided
+            config.noMoreReminderTextColor?.let { colorRes ->
+                tvNoMoreReminder.setTextColor(root.context.getColor(colorRes))
+            }
         }
     }
 
     private fun CommonDialogLayoutBinding.setupClickListeners() {
         btnPositive.setOnClickListener {
             handlePositiveClick()
-            dismiss()
+            if (config.positiveAutoDismiss) {
+                dismiss()
+            }
         }
 
         btnNegative.setOnClickListener {
             config.onNegativeClick?.invoke()
             dismiss()
         }
+        
+        // Allow clicking on the entire reminder area to toggle checkbox
+        llNoMoreReminder.setOnClickListener {
+            cbNoMoreReminder.isChecked = !cbNoMoreReminder.isChecked
+        }
     }
 
     private fun handlePositiveClick() {
-        when {
-            config.showNoMoreReminder && config.onPositiveClickWithReminder != null -> {
-                mBinding?.cbNoMoreReminder?.isChecked?.let { isChecked ->
-                    config.onPositiveClickWithReminder?.invoke(isChecked)
-                }
+        config.onPositiveClick?.let { callback ->
+            val reminderChecked = if (config.showNoMoreReminder) {
+                mBinding?.cbNoMoreReminder?.isChecked
+            } else {
+                null
             }
-            else -> {
-                config.onPositiveClick?.invoke()
-            }
+            callback.invoke(reminderChecked)
         }
     }
 
@@ -110,12 +128,18 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         fun setTitle(title: String) = apply { config = config.copy(title = title) }
         fun setContent(content: String) = apply { config = config.copy(content = content) }
         
-        fun setPositiveButton(text: String, onClick: (() -> Unit)? = null) = apply {
-            config = config.copy(positiveText = text, onPositiveClick = onClick)
-        }
-
-        fun setPositiveButtonWithReminder(text: String, onClick: (Boolean) -> Unit) = apply {
-            config = config.copy(positiveText = text, onPositiveClickWithReminder = onClick)
+        fun setPositiveButton(
+            text: String, 
+            backgroundTint: Int? = null,
+            autoDismiss: Boolean = true,
+            onClick: ((Boolean?) -> Unit)? = null
+        ) = apply {
+            config = config.copy(
+                positiveText = text, 
+                onPositiveClick = onClick,
+                positiveBackgroundTint = backgroundTint,
+                positiveAutoDismiss = autoDismiss
+            )
         }
 
         fun setNegativeButton(text: String, onClick: (() -> Unit)? = null) = apply {
@@ -127,8 +151,8 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         fun hideNegativeButton() = apply { config = config.copy(showNegative = false) }
         fun hideTopImage() = apply { config = config.copy(showImage = false) }
 
-        fun showNoMoreReminder(text: String? = null) = apply {
-            config = config.copy(showNoMoreReminder = true, noMoreReminderText = text)
+        fun showNoMoreReminder(text: String? = null, textColor: Int? = null) = apply {
+            config = config.copy(showNoMoreReminder = true, noMoreReminderText = text, noMoreReminderTextColor = textColor)
         }
 
         fun setCancelable(cancelable: Boolean) = apply { config = config.copy(cancelable = cancelable) }

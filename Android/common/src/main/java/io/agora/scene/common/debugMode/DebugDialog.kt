@@ -271,19 +271,6 @@ class DebugDialog constructor(val agentScene: AgentScenes) : BaseSheetDialog<Com
         }
     }
 
-    private fun showPreConfig(text: String) {
-        CommonDialog.Builder()
-            .setTitle(getString(R.string.common_preview))
-            .setContent(text)
-            .hideTopImage()
-            .hideNegativeButton()
-            .setPositiveButton(getString(R.string.common_close), {
-
-            })
-            .build()
-            .show(childFragmentManager, "pre_tag")
-    }
-
     inner class OptionsAdapter : RecyclerView.Adapter<OptionsAdapter.ViewHolder>() {
 
         private var options: Array<String> = emptyArray()

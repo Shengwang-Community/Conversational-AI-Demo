@@ -288,14 +288,16 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
             .setNegativeButton(getString(R.string.common_cancel)) {
                 // User cancelled, no action needed
             }
-            .setPositiveButtonWithReminder(getString(io.agora.scene.convoai.R.string.cov_preset_change_dialog_confirm)) { dontShowAgain ->
+            .setPositiveButton(
+                text = getString(io.agora.scene.convoai.R.string.cov_preset_change_dialog_confirm),
+                onClick = { dontShowAgain ->
                 // User confirmed switch
-                if (dontShowAgain) {
+                if (dontShowAgain == true) {
                     // User checked "Don't show again", save preference
                     CovAgentManager.setShowPresetChangeReminder(false)
                 }
                 updateLanguage(language)
-            }
+            })
             .showNoMoreReminder() // Show checkbox, default unchecked
             .hideTopImage()
             .build()
