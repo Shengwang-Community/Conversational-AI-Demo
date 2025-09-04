@@ -111,8 +111,8 @@ class ChatViewController: BaseViewController {
     internal lazy var activeFuncsView: ActiveFuncsView = {
         let view = ActiveFuncsView()
         view.isHidden = true
-        view.onMoreTapped = {
-            self.showSettingDialog(at: 1)
+        view.onMoreTapped = { [weak self] in
+            self?.showSettingDialog(at: 1)
         }
         return view
     }()
