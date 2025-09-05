@@ -159,7 +159,7 @@
     <string name="cov_voiceprint_upload_failed">上传失败，请重试</string>
     <string name="cov_voiceprint_upload_success">语料上传成功</string>
     <string name="cov_voiceprint_no_voice">未录入声纹</string>
-    <string name="cov_voiceprint_no_voice_tips">未录入有效声纹，切换有感模式失效，退出将自动切换至上一个选择的模式。</string>
+    <string name="cov_voiceprint_no_voice_tips">未录入有效声纹，切换有感模式失效，退出将自动切换至【上一个选择的模式】模式。</string>
     <string name="cov_voiceprint_exit">退出</string>
     <string name="cov_voiceprint_title">请大声朗读这首诗</string>
     <string name="cov_voiceprint_title1">录音中，请朗读…</string>

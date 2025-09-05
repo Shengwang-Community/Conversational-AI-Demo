@@ -32,7 +32,8 @@ enum class VoiceprintUIState {
     NO_VOICEPRINT,    // No voiceprint exists
     HAS_VOICEPRINT,   // Voiceprint exists
     UPLOADING,        // Uploading voiceprint
-    UPLOAD_FAILED     // Upload failed
+    UPLOAD_FAILED,     // Upload failed
+    UPLOAD_SUCCESS,     // Upload success
 }
 
 /**
@@ -402,7 +403,7 @@ class VoiceprintViewModel : ViewModel() {
                         onSuccess = { uploadFile ->
                             CovLogger.d(TAG, "Upload successful: ${uploadFile.file_url}")
                             // Upload successful - save voiceprint info and clean up old files
-                            handleUploadSuccess(filePath, uploadFile.file_url)
+                            handleUploadSuccess(filePath, uploadFile)
                         },
                         onFailure = { exception ->
                             CovLogger.e(TAG, "Upload failed: ${exception.message}")
@@ -426,7 +427,7 @@ class VoiceprintViewModel : ViewModel() {
      * - For new recordings: Delete old voiceprint files and save new ones
      * - For re-uploads: Only update URL and timestamp, keep existing local file
      */
-    private fun handleUploadSuccess(filePath: String, remoteUrl: String) {
+    private fun handleUploadSuccess(filePath: String, uploadFile: UploadFile) {
         val userId = SSOUserManager.accountUid
         val existingVoiceprint = VoiceprintManager.getVoiceprint(userId)
         
@@ -439,16 +440,16 @@ class VoiceprintViewModel : ViewModel() {
 
         // Save new/updated voiceprint info
         val voiceprintInfo = VoiceprintInfo(
-            remoteUrl = remoteUrl,
+            remoteUrl = uploadFile.file_url,
             localUrl = filePath,  // Keep the local file for future re-uploads
-            timestamp = System.currentTimeMillis()
+            timestamp = uploadFile.expired_ts  // Use server time in seconds
         )
         VoiceprintManager.saveVoiceprint(voiceprintInfo, userId)
         
         // Clear temporary file path since upload succeeded
         tempVoiceprintFilePath = null
         
-        setVoiceprintState(VoiceprintUIState.HAS_VOICEPRINT)
+        setVoiceprintState(VoiceprintUIState.UPLOAD_SUCCESS)
         CovLogger.d(TAG, "Upload successful, voiceprint saved with local file: $filePath")
     }
 
@@ -764,7 +765,7 @@ class VoiceprintViewModel : ViewModel() {
                             val userId = SSOUserManager.accountUid
                             VoiceprintManager.saveVoiceprint(updatedVoiceprintInfo, userId)
                             
-                            setVoiceprintState(VoiceprintUIState.HAS_VOICEPRINT)
+                            setVoiceprintState(VoiceprintUIState.UPLOAD_SUCCESS)
                             CovLogger.d(TAG, "Voiceprint re-upload completed successfully")
                         },
                         onFailure = { exception ->

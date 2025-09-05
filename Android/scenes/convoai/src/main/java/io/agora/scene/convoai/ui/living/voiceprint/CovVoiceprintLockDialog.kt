@@ -22,6 +22,7 @@ import io.agora.scene.common.ui.BaseDialogFragment
 import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.util.dp
+import io.agora.scene.common.util.TimeUtils
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.R
@@ -325,7 +326,7 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
                     voiceprintCreate.isVisible = false
                 }
 
-                VoiceprintUIState.HAS_VOICEPRINT -> {
+                VoiceprintUIState.HAS_VOICEPRINT, VoiceprintUIState.UPLOAD_SUCCESS -> {
                     // Show create button and play button, hide others
                     voiceprintCreateWithText.isVisible = true
                     voiceprintCreateWithText.setText(R.string.cov_voiceprint_re_recording)
@@ -337,8 +338,15 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
                     // Generate name from VoiceprintInfo.timestamp
                     val voiceprintInfo = CovAgentManager.voiceprintInfo
                     if (voiceprintInfo != null) {
-                        val voiceprintName = generateVoiceprintNameFromTimestamp(voiceprintInfo.timestamp)
+                        val voiceprintName = generateVoiceprintNameFromTimestamp(TimeUtils.currentTimeMillis())
                         tvVoiceprintName.text = voiceprintName
+                    }
+                    if (state == VoiceprintUIState.UPLOAD_SUCCESS) {
+                        ToastUtil.showNew(
+                            resId = R.string.cov_voiceprint_upload_success,
+                            gravity = Gravity.TOP,
+                            offsetY = 100.dp.toInt()
+                        )
                     }
                 }
 
@@ -360,7 +368,7 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
                     layoutPlay.isVisible = false
 
                     // Generate name from current time for upload failed
-                    val voiceprintName = generateVoiceprintNameFromTimestamp(System.currentTimeMillis())
+                    val voiceprintName = generateVoiceprintNameFromTimestamp(TimeUtils.currentTimeMillis())
                     tvVoiceprintName.text = voiceprintName
 
                     ToastUtil.showNew(
@@ -499,15 +507,17 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
             fun bind(modeItem: VoiceprintModeItem, isSelected: Boolean) {
                 binding.apply {
                     val mode = modeItem.mode
-                    when(mode){
+                    when (mode) {
                         VoiceprintMode.OFF -> {
                             tvTitle.setText(R.string.cov_voiceprint_close)
                             tvDescription.setText(R.string.cov_voiceprint_close_tips)
                         }
+
                         VoiceprintMode.SEAMLESS -> {
                             tvTitle.setText(R.string.cov_voiceprint_seamless)
                             tvDescription.setText(R.string.cov_voiceprint_seamless_tips)
                         }
+
                         VoiceprintMode.PERSONALIZED -> {
                             tvTitle.setText(R.string.cov_voiceprint_personalized)
                             tvDescription.setText(R.string.cov_voiceprint_personalized_tips)
@@ -516,7 +526,8 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
                     // Set checkbox selection state
                     ivCheckbox.isSelected = isSelected
 
-                    tvVoiceprintTag.isVisible = mode == VoiceprintMode.PERSONALIZED && CovAgentManager.voiceprintInfo != null
+                    tvVoiceprintTag.isVisible =
+                        mode == VoiceprintMode.PERSONALIZED && CovAgentManager.voiceprintInfo != null
 
                     // Set click listener
                     card.setOnClickListener(object : OnFastClickListener() {
