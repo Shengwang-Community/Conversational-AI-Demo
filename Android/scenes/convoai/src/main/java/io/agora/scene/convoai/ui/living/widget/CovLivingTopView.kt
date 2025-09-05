@@ -31,7 +31,8 @@ class CovLivingTopView @JvmOverloads constructor(
     private val binding: CovActivityLivingTopBinding =
         CovActivityLivingTopBinding.inflate(LayoutInflater.from(context), this, true)
 
-    private var onbackClick: (() -> Unit)? = null
+    private var onBackClick: (() -> Unit)? = null
+    private var onTitleClick: (() -> Unit)? = null
     private var onWifiClick: (() -> Unit)? = null
     private var onSettingsClick: (() -> Unit)? = null
     private var onCCClick: (() -> Unit)? = null
@@ -46,7 +47,8 @@ class CovLivingTopView @JvmOverloads constructor(
     private var isPublishCamera: Boolean = false
 
     init {
-        binding.btnBack.setOnClickListener { onbackClick?.invoke() }
+        binding.btnBack.setOnClickListener { onBackClick?.invoke() }
+        binding.cvPresetName.setOnClickListener { onTitleClick?.invoke() }
         binding.btnNet.setOnClickListener { onWifiClick?.invoke() }
         binding.btnSettings.setOnClickListener { onSettingsClick?.invoke() }
         binding.tvCc.setOnClickListener { onCCClick?.invoke() }
@@ -71,7 +73,14 @@ class CovLivingTopView @JvmOverloads constructor(
      * Set callback for back button click.
      */
     fun setOnBackClickListener(listener: (() -> Unit)?) {
-        onbackClick = listener
+        onBackClick = listener
+    }
+
+    /**
+     * Set callback for title click.
+     */
+    fun setOnTitleClickListener(listener: (() -> Unit)?) {
+        onTitleClick = listener
     }
 
     /**

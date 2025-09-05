@@ -176,7 +176,6 @@ class SSOWebViewActivity : BaseActivity<CovActivitySsoBinding>() {
                     // Add a delay before clearing cookies and reloading
                     mainHandler.postDelayed({
                         // Clear cookies and reload to allow re-login
-                        cleanCookie()
                         mBinding?.webView?.loadUrl(ssoUrl)
                     }, 1500) // 1.5-second delay
                 }

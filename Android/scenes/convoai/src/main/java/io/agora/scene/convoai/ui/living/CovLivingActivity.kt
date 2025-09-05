@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import io.agora.rtc2.Constants
 import io.agora.rtc2.video.VideoCanvas
 import io.agora.scene.common.R
+import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.common.debugMode.DebugSupportActivity
 import io.agora.scene.common.debugMode.DebugTabDialog
 import io.agora.scene.common.ui.CommonDialog
@@ -201,6 +202,9 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             }
             clTop.setOnBackClickListener {
                 finish()
+            }
+            clTop.setOnTitleClickListener {
+                DebugConfigSettings.checkClickDebug()
             }
             clTop.setOnCCClickListener {
                 viewModel.toggleMessageList()
