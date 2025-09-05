@@ -29,6 +29,13 @@ object ServerConfig {
         }
 
     @JvmStatic
+    val thirdPartyUrl : String
+        get() {
+            // TODO: env
+            return "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/libraries.html "
+        }
+
+    @JvmStatic
     var appVersionName: String = ""
         private set
 

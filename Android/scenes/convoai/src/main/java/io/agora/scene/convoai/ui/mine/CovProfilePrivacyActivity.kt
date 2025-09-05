@@ -2,23 +2,15 @@ package io.agora.scene.convoai.ui.mine
 
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.util.Log
-import android.view.Gravity
 import android.view.ViewGroup
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.ui.BaseActivity
-import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
-import io.agora.scene.convoai.R
-import io.agora.scene.convoai.databinding.CovProfilePrivacyActivityBinding
-import io.agora.scene.convoai.databinding.CovProfileSettingsActivityBinding
-import io.agora.scene.convoai.ui.auth.GlobalUserViewModel
-import io.agora.scene.convoai.ui.auth.UserViewModel
+import io.agora.scene.convoai.databinding.CovActivityProfilePrivacyBinding
 
-class CovProfilePrivacyActivity : BaseActivity<CovProfilePrivacyActivityBinding>() {
+class CovProfilePrivacyActivity : BaseActivity<CovActivityProfilePrivacyBinding>() {
 
     companion object Companion {
         fun startActivity(activity: Activity) {
@@ -27,8 +19,8 @@ class CovProfilePrivacyActivity : BaseActivity<CovProfilePrivacyActivityBinding>
         }
     }
 
-    override fun getViewBinding(): CovProfilePrivacyActivityBinding {
-        return CovProfilePrivacyActivityBinding.inflate(layoutInflater)
+    override fun getViewBinding(): CovActivityProfilePrivacyBinding {
+        return CovActivityProfilePrivacyBinding.inflate(layoutInflater)
     }
 
     override fun initView() {
@@ -52,7 +44,7 @@ class CovProfilePrivacyActivity : BaseActivity<CovProfilePrivacyActivityBinding>
             }
 
             clThirdParty.setOnClickListener {
-                ToastUtil.show("click third party!")
+                TermsActivity.startActivity(this@CovProfilePrivacyActivity, ServerConfig.thirdPartyUrl)
             }
 
             clPersonalDataChecklist.setOnClickListener {
