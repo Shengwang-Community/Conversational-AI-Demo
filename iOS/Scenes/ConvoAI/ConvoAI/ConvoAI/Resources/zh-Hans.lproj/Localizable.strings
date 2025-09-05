@@ -228,7 +228,7 @@
 "settings.voiceprint.alert.cancel" = "取消";
 "settings.voiceprint.alert.confirm" = "确认";
 "settings.voiceprint.alert.no.voiceprint.title" = "未录入声纹";
-"settings.voiceprint.alert.no.voiceprint.content" = "未录入有效声纹，切换有感模式失效，退出将自动切换至无感模式。";
+"settings.voiceprint.alert.no.voiceprint.content" = "未录入有效声纹，切换有感模式失效，退出将自动切换至【上一个选择的模式】模式";
 "settings.voiceprint.alert.exit" = "退出";
 
 // Voiceprint Recording Text

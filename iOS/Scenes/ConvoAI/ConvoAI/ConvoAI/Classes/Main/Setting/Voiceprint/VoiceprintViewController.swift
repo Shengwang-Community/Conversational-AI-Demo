@@ -142,7 +142,6 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
                             VoiceprintManager.shared.saveVoiceprint(p, forUserId: userId)
                         }
                     }
-                    AppContext.preferenceManager()?.updateVoiceprintMode(.seamless)
                     self?.navigationController?.popViewController(animated: true)
                 }
             )

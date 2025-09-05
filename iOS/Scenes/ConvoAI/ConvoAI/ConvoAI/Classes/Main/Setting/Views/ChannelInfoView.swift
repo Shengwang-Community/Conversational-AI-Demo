@@ -207,7 +207,7 @@ class ChannelInfoView: UIView {
             make.left.equalTo(20)
             make.right.equalTo(-20)
         }
-
+        
         for (index, item) in channelInfoItems.enumerated() {
             item.snp.makeConstraints { make in
                 make.left.right.equalToSuperview()
@@ -236,7 +236,7 @@ class ChannelInfoView: UIView {
             make.right.equalTo(-20)
             make.bottom.lessThanOrEqualToSuperview().offset(-20)
         }
-
+        
         for (index, item) in moreItems.enumerated() {
             item.snp.makeConstraints { make in
                 make.left.right.equalToSuperview()
@@ -318,19 +318,19 @@ class ChannelInfoView: UIView {
     func updateVoiceprintMode(_ mode: VoiceprintMode) {
         let statusText: String
         let statusColor: UIColor
-
+        
         switch mode {
-                 case .off:
-             statusText = ResourceManager.L10n.ChannelInfo.notEffective
-             statusColor = UIColor.themColor(named: "ai_icontext3")
-         case .seamless:
-             statusText = ResourceManager.L10n.ChannelInfo.seamless
-             statusColor = UIColor.themColor(named: "ai_green6")
-         case .aware:
-             statusText = ResourceManager.L10n.ChannelInfo.aware
-             statusColor = UIColor.themColor(named: "ai_green6")
+        case .off:
+            statusText = ResourceManager.L10n.ChannelInfo.notEffective
+            statusColor = UIColor.themColor(named: "ai_red6")
+        case .seamless:
+            statusText = ResourceManager.L10n.ChannelInfo.seamless
+            statusColor = UIColor.themColor(named: "ai_green6")
+        case .aware:
+            statusText = ResourceManager.L10n.ChannelInfo.aware
+            statusColor = UIColor.themColor(named: "ai_green6")
         }
-
+        
         voiceprintLockItem.detailLabel.text = statusText
         voiceprintLockItem.detailLabel.textColor = statusColor
     }
@@ -338,7 +338,7 @@ class ChannelInfoView: UIView {
     func updateAiVadState(_ state: Bool) {
         let interruptStatus = state ? ResourceManager.L10n.ChannelInfo.effective : ResourceManager.L10n.ChannelInfo.notEffective
         elegantInterruptItem.detailLabel.text = interruptStatus
-        elegantInterruptItem.detailLabel.textColor = state ? UIColor.themColor(named: "ai_green6") : UIColor.themColor(named: "ai_icontext3")
+        elegantInterruptItem.detailLabel.textColor = state ? UIColor.themColor(named: "ai_green6") : UIColor.themColor(named: "ai_red6")
     }
     
     // MARK: - Private Methods
@@ -353,7 +353,7 @@ class ChannelInfoView: UIView {
             return
         }
         let agentId = AppContext.preferenceManager()?.information.agentId
-        feedbackItem.startLoading()        
+        feedbackItem.startLoading()
         rtcManager.generatePreDumpFile {
             self.feedBackPresenter.feedback(isSendLog: true, channel: channelName, agentId: agentId) { [weak self] error, result in
                 if error == nil {
