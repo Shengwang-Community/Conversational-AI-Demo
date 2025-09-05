@@ -253,11 +253,11 @@ enum ConnectionStatus: String {
     var color: UIColor {
         switch self {
         case .connected:
-            return UIColor(hex: 0x36B37E) // Green
+            return UIColor.themColor(named: "ai_green6")
         case .disconnected:
-            return UIColor(hex: 0xFF5630) // Red
+            return UIColor.themColor(named: "ai_red6")
         case .unload:
-            return UIColor(hex: 0x8F92A1) // Gray
+            return UIColor.themColor(named: "ai_icontext4")
         }
     }
 }
