@@ -258,15 +258,10 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
            let ts = info.timestamp {
             voiceprintInfoTab.setVoiceprintDate(timestamp: ts)
             voiceprintTipView.isHidden = false
-            if let _ = info.remoteUrl, info.needToUpdate() == false {
+            if info.remoteUrl != nil {
                 voiceprintInfoTab.updateStatus(.created)
             } else {
-                // set remote url is null and update remote
-                self.voiceprintInfo?.remoteUrl = nil
-                if let p = self.voiceprintInfo {
-                    VoiceprintManager.shared.saveVoiceprint(p, forUserId: userId)
-                }
-                uploadVoiceprint()
+                voiceprintInfoTab.updateStatus(.uploadFailed)
             }
         } else {
             voiceprintInfoTab.updateStatus(.notCreated)
@@ -275,8 +270,23 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
         // Set initial state based on current mode
         if currentMode == .aware {
             showvoiceprintInfoTab(animated: false)
+            checkNeedUpdateRemote()
         } else {
             hidevoiceprintInfoTab(animated: false)
+        }
+    }
+    
+    private func checkNeedUpdateRemote() {
+        guard
+            let userId = UserCenter.user?.uid,
+            let info = voiceprintInfo, let ts = info.timestamp
+        else {
+            // no local file
+            return
+        }
+        if info.remoteUrl == nil ||
+            info.needToUpdate() == true {
+            uploadVoiceprint()
         }
     }
     
@@ -357,6 +367,7 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
         // Show/hide voiceprint creation tab based on mode
         if newMode == .aware {
             showvoiceprintInfoTab()
+            checkNeedUpdateRemote()
         } else {
             hidevoiceprintInfoTab()
             stopVoiceprintPlayback()
