@@ -127,9 +127,6 @@ class CovVoiceprintRecordingDialog : BaseSheetDialog<CovVoiceprintRecordingDialo
                         binding?.recordingView?.onPermissionDenied()
                         checkMicrophonePermission { granted ->
                             CovLogger.d(TAG, "Permission check completed: $granted")
-                            if (granted) {
-                                binding?.recordingView?.onPermissionGranted()
-                            }
                         }
                     }
                 }
