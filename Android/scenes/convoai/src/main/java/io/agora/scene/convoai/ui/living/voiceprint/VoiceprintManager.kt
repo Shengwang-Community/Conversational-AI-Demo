@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import io.agora.scene.common.util.LocalStorageUtil
+import io.agora.scene.common.util.TimeUtils
 import io.agora.scene.convoai.CovLogger
 import java.io.File
 import java.text.SimpleDateFormat
@@ -30,7 +31,8 @@ data class VoiceprintInfo(
 
     // Check if voiceprint needs to be updated
     fun needToUpdate(): Boolean {
-        val currentTime = System.currentTimeMillis() / 1000
+        // Use server synchronized time for accurate comparison
+        val currentTime = TimeUtils.currentTimeMillis() / 1000
         return currentTime - timestamp > UPDATE_INTERVAL
     }
 }

@@ -11,7 +11,6 @@ import androidx.multidex.MultiDex
 import com.tencent.mmkv.MMKV
 import io.agora.scene.common.constant.AgentConstant
 import io.agora.scene.common.constant.ServerConfig
-import io.agora.scene.common.debugMode.DebugButton
 import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.common.debugMode.DebugManager
 import io.agora.scene.common.util.AgoraLogger
