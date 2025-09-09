@@ -10,7 +10,6 @@ import Common
 import SnapKit
 
 class MineViewController: UIViewController {
-    
     // MARK: - UI Components
     private lazy var topInfoView: MineTopInfoView = {
         let view = MineTopInfoView()
@@ -128,6 +127,12 @@ extension MineViewController: MineTabListViewDelegate {
     
     func mineTabListViewDidTapSettings() {
         // Navigate to app settings page
+//        let webViewVC = BaseWebViewController()
+//        let token = UserCenter.user?.token ?? ""
+//        let appId = AppContext.shared.appId
+//        let sceneId = ConvoAIEntrance.kSceneName
+//        webViewVC.url = "\(AppContext.shared.personalReportInfoUrl)?token=\(token)&app_id=\(appId)&scene_id=\(sceneId)"
+//        self.navigationController?.pushViewController(webViewVC)
         print("Settings tapped")
     }
     
