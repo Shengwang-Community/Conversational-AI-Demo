@@ -10,6 +10,7 @@
     <string name="common_debug_mode_enable">开发者模式已开</string>
     <string name="common_debug_mode_disable">开发者模式已关闭</string>
     <string name="common_debug_setting">开发者模式</string>
+    <string name="common_debug_app_version">App 版本</string>
     <string name="common_debug_rtc_version">Rtc 版本</string>
     <string name="common_debug_rtm_version">Rtm 版本</string>
     <string name="common_debug_switch_server">切换服务器</string>
@@ -30,6 +31,7 @@
     <string name="common_close">关闭</string>
     <string name="common_preview">预览</string>
     <string name="common_confirm">确定</string>
+    <string name="common_confirm1">确认</string>
     <string name="common_cancel">取消</string>
 
     <string name="common_login_chat">一键登录</string>

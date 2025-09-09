@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.isVisible
 import io.agora.scene.common.databinding.CommonDialogLayoutBinding
+import io.agora.scene.common.ui.BaseActivity.ImmersiveMode
 
 class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
 
@@ -24,15 +25,17 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         val noMoreReminderText: String? = null,
         val noMoreReminderTextColor: Int? = null,
         val imageBackgroundRes: Int? = null,
-        val image2SrcRes: Int? = null,
         val cancelable: Boolean = true,
         val positiveBackgroundTint: Int? = null,
         val positiveAutoDismiss: Boolean = true,
+        val immersiveMode: ImmersiveMode = ImmersiveMode.SEMI_IMMERSIVE,
         val onPositiveClick: ((Boolean?) -> Unit)? = null,
         val onNegativeClick: (() -> Unit)? = null
     )
 
     private var config: DialogConfig = DialogConfig()
+
+    override fun immersiveMode(): ImmersiveMode = config.immersiveMode
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): CommonDialogLayoutBinding {
         return CommonDialogLayoutBinding.inflate(inflater, container, false)
@@ -72,11 +75,6 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
 
     private fun CommonDialogLayoutBinding.setupImageViews() {
         config.imageBackgroundRes?.let { ivImage.setBackgroundResource(it) }
-        
-        ivImage2.run {
-            isVisible = config.image2SrcRes != null
-            config.image2SrcRes?.let { setImageResource(it) }
-        }
     }
 
     private fun CommonDialogLayoutBinding.setupNoMoreReminder() {
@@ -147,7 +145,7 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         }
 
         fun setImageBackground(resId: Int) = apply { config = config.copy(imageBackgroundRes = resId) }
-        fun setImage2Src(resId: Int) = apply { config = config.copy(image2SrcRes = resId) }
+
         fun hideNegativeButton() = apply { config = config.copy(showNegative = false) }
         fun hideTopImage() = apply { config = config.copy(showImage = false) }
 
@@ -156,6 +154,10 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         }
 
         fun setCancelable(cancelable: Boolean) = apply { config = config.copy(cancelable = cancelable) }
+
+        fun setImmersiveMode(mode: ImmersiveMode) = apply { 
+            config = config.copy(immersiveMode = mode) 
+        }
 
         fun build(): CommonDialog = CommonDialog().apply {
             this@apply.config = this@Builder.config

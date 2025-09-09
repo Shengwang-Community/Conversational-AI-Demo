@@ -190,6 +190,7 @@
     <string name="cov_disagree">不同意</string>
     <string name="cov_user_agreement_text">《用户协议》</string>
     <string name="cov_privacy_policy_text">《隐私政策的所有内容》</string>
+    <string name="cov_privacy_policy_text1">隐私协议</string>
     <string name="cov_service_info">服务信息</string>
     <string name="cov_agent_service_info">对话 AI 服务状态</string>
     <string name="cov_agent_not_activated">未生效</string>
@@ -197,6 +198,9 @@
     <string name="cov_agent_sensitive">有感</string>
     <string name="cov_agent_insensitive">无感</string>
     <string name="cov_agent_info_more">更多…</string>
+    <string
+        name="cov_voiceprint_recording_tips_content1">您的声音默认存储在本机，声网无感声纹锁定功能需要收集您的声音，单次体验该功能完毕后会讲云端声纹删除，绝对不会使用您的声音用作商业用途，详情请查看隐私协议。
+    </string>
 
     <!-- Mine -->
     <string name="cov_mine_delete_account">注销账号</string>
@@ -214,6 +218,7 @@
     <string name="cov_mine_ms">女士</string>
     <string name="cov_mine_your_birthday">您的生日</string>
     <string name="cov_mine_about_me">自我介绍</string>
+    <string name="cov_mine_no_nickname">未设置昵称</string>
     <string name="cov_mine_select">请选择</string>
     <string name="cov_mine_about_me_hint">设定自我介绍，让 AI agent 更了解您</string>
     <string name="cov_mine_iot_devices">我的对话式 AI 设备</string>
