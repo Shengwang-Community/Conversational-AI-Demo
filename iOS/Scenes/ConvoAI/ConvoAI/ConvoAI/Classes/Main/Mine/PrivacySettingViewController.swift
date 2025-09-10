@@ -36,7 +36,7 @@ class PrivacySettingViewController: BaseViewController {
         let item = PrivacyListItemView()
         item.configure(
             icon: "ic_privacy_setting_useragreement",
-            title: "用户协议",
+            title: ResourceManager.L10n.Mine.privacyUserAgreement,
             hasArrow: true
         )
         item.addTarget(self, action: #selector(userAgreementTapped), for: .touchUpInside)
@@ -47,7 +47,7 @@ class PrivacySettingViewController: BaseViewController {
         let item = PrivacyListItemView()
         item.configure(
             icon: "ic_privacy_setting_privacypolicy",
-            title: "隐私政策",
+            title: ResourceManager.L10n.Mine.privacyPrivacyPolicy,
             hasArrow: true
         )
         item.addTarget(self, action: #selector(privacyPolicyTapped), for: .touchUpInside)
@@ -58,7 +58,7 @@ class PrivacySettingViewController: BaseViewController {
         let item = PrivacyListItemView()
         item.configure(
             icon: "ic_privacy_setting_disclaimer",
-            title: "第三方信息数据共享",
+            title: ResourceManager.L10n.Mine.privacyDataSharing,
             hasArrow: true
         )
         item.addTarget(self, action: #selector(dataSharingTapped), for: .touchUpInside)
@@ -69,7 +69,7 @@ class PrivacySettingViewController: BaseViewController {
         let item = PrivacyListItemView()
         item.configure(
             icon: "ic_privacy_setting_personal",
-            title: "个人信息收集清单",
+            title: ResourceManager.L10n.Mine.privacyPersonalInfo,
             hasArrow: true
         )
         item.addTarget(self, action: #selector(personalInfoTapped), for: .touchUpInside)
@@ -80,8 +80,8 @@ class PrivacySettingViewController: BaseViewController {
         let item = PrivacyListItemView()
         item.configure(
             icon: "ic_privacy_setting_global",
-            title: "备案号",
-            subtitle: "沪xxxxxx请看prd",
+            title: ResourceManager.L10n.Mine.privacyRecordNumber,
+            subtitle: "",
             hasArrow: true
         )
         item.addTarget(self, action: #selector(recordNumberTapped), for: .touchUpInside)
@@ -105,7 +105,7 @@ class PrivacySettingViewController: BaseViewController {
         view.backgroundColor = UIColor.themColor(named: "ai_fill2")
         
         // Configure navigation bar
-        naviBar.title = "隐私"
+        naviBar.title = ResourceManager.L10n.Mine.privacyTitle
         
         view.addSubview(scrollView)
         scrollView.addSubview(settingsListContainer)
@@ -171,10 +171,8 @@ class PrivacySettingViewController: BaseViewController {
     }
     
     @objc private func recordNumberTapped() {
-        // Show record number info
-        SVProgressHUD.showInfo(withStatus: "备案号：沪xxxxxx请看prd")
+        
     }
-    
 }
 
 // MARK: - PrivacyListItemView

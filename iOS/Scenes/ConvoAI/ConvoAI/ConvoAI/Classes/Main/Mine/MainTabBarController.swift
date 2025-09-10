@@ -153,9 +153,14 @@ extension MainTabBarController: LoginManagerDelegate {
            let window = windowScene.windows.first {
             window.rootViewController?.dismiss(animated: false, completion: nil)
         }
-        self.navigationController?.popToRootViewController(animated: false)
-        
-        // Only show login view if this view controller is in the window hierarchy
+        // Pop all view controllers in each tab's navigation stack to root
+        if let viewControllers = self.viewControllers {
+            for case let nav as UINavigationController in viewControllers {
+                nav.popToRootViewController(animated: false)
+            }
+        }
+        // Return to the first tab before showing the login view
+        self.selectedIndex = 0
         DispatchQueue.main.async { [weak self] in
             if let self = self, self.view.window != nil {
                 LoginViewController.start(from: self)

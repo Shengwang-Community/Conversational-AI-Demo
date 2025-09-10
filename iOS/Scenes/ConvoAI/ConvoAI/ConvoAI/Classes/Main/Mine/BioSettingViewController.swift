@@ -43,6 +43,15 @@ class BioSettingViewController: BaseViewController {
         return textView
     }()
     
+    private lazy var placeholderLabel: UILabel = {
+        let label = UILabel()
+        label.text = ResourceManager.L10n.Mine.bioInputPlaceholder
+        label.textColor = UIColor.themColor(named: "ai_icontext3")
+        label.font = UIFont.systemFont(ofSize: 13, weight: .regular)
+        label.numberOfLines = 0
+        return label
+    }()
+    
     private lazy var examplesStackView: UIStackView = {
         let stack = UIStackView()
         stack.axis = .vertical
@@ -84,6 +93,7 @@ class BioSettingViewController: BaseViewController {
         
         contentView.addSubview(bioInputContainerView)
         bioInputContainerView.addSubview(bioTextView)
+        bioInputContainerView.addSubview(placeholderLabel)
         
         contentView.addSubview(examplesStackView)
         
@@ -116,6 +126,12 @@ class BioSettingViewController: BaseViewController {
             make.edges.equalToSuperview()
         }
         
+        placeholderLabel.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(18)
+            make.left.equalToSuperview().offset(22)
+            make.right.equalToSuperview().offset(-18)
+        }
+        
         examplesStackView.snp.makeConstraints { make in
             make.top.equalTo(bioInputContainerView.snp.bottom).offset(20)
             make.left.right.equalToSuperview().inset(16)
@@ -146,7 +162,12 @@ class BioSettingViewController: BaseViewController {
         if let user = UserCenter.user {
             originalBio = user.bio
             bioTextView.text = originalBio
+            updatePlaceholderVisibility()
         }
+    }
+    
+    private func updatePlaceholderVisibility() {
+        placeholderLabel.isHidden = !bioTextView.text.isEmpty
     }
     
     // MARK: - Actions
@@ -203,6 +224,10 @@ extension BioSettingViewController: UITextViewDelegate {
         }
         
         return true
+    }
+    
+    func textViewDidChange(_ textView: UITextView) {
+        updatePlaceholderVisibility()
     }
 }
 

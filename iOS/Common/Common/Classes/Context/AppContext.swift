@@ -15,6 +15,7 @@ import Bugly
     public let privacyUrl: String = "https://conversational-ai.shengwang.cn/terms/privacy"
     public let personalReportInfoUrl: String = "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/manifest-dev/ConvoAI/index.html"
     public let sharedInfoUrl: String = "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/libraries.html"
+    public let logoffUrl: String = "https://console.shengwang.cn/settings/security"
     
     private var _isOpenSource: Bool = false
     private var _appId: String = ""

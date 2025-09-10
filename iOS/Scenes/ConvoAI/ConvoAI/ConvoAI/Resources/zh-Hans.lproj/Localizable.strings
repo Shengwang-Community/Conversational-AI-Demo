@@ -240,10 +240,6 @@
 "main.digitalHuman" = "数字人";
 "main.mine" = "我的";
 
-// Mine View Controller
-
-
-
 // Bio Setting
 "mine.bio.setting.title" = "自我介绍";
 "mine.bio.placeholder.display" = "设定自我介绍，让 AI agent 更了解您";
@@ -251,6 +247,7 @@
 "mine.bio.example.2" = "互联网运营 er 一枚，日常跟数据、文案死磕，擅长抓热点做内容。闲了爱撸代码解压，奶茶续命党，生椰拿铁是本命，求搭子聊运营干货～";
 "mine.bio.example.3" = "前端开发仔报道，沉迷调样式、优化交互，追新技术像追更。爱喝冰美式提效，周末宅家肝游戏，求技术搭子交流 bug 解决方案～";
 "mine.bio.example.4" = "产品经理一枚，天天画原型、盯迭代，擅长抠需求细节。咖啡不离手，偏爱冷萃，闲了刷行业报告，求同频小伙伴唠产品思路～";
+"mine.bio.input.placeholder" = "输入对您的介绍，让AI agent 更了解您 ❤";
 
 // Mine Module
 "mine.persona.title" = "我的对话人设";
@@ -259,7 +256,6 @@
 "mine.bio.title" = "自我介绍";
 "mine.iot.devices.title" = "我的对话式 AI 设备";
 "mine.iot.devices.count" = "已绑定%d个设备";
-"mine.privacy.title" = "隐私";
 "mine.settings.title" = "设置";
 
 // Nickname Setting
@@ -280,3 +276,25 @@
 "mine.birthday.select.title" = "选择您的生日";
 "mine.birthday.cancel" = "取消";
 "mine.birthday.confirm" = "确定";
+
+// Privacy Settings
+"mine.privacy.title" = "隐私";
+"mine.privacy.userAgreement" = "用户协议";
+"mine.privacy.privacyPolicy" = "隐私政策";
+"mine.privacy.dataSharing" = "第三方信息数据共享";
+"mine.privacy.personalInfo" = "个人信息收集清单";
+"mine.privacy.recordNumber" = "备案号";
+
+// Account Settings
+"mine.account.deactivateWarning.message" = "您必须勾选并同意注销账号的各项风险才可以注销";
+"mine.account.deactivateAccount" = "注销账号";
+"mine.account.logout" = "退出登录";
+"mine.account.importantNotice" = "重要提示";
+"mine.account.deactivateMessage" = "账号注销成功后将彻底删除该账号及关联的所有数据且无法恢复，请谨慎选择并操作。";
+"mine.account.understandRisks" = "我已了解注销账号的各项风险";
+"mine.account.cancel" = "取消";
+"mine.account.confirmDeactivate" = "确认注销";
+
+// Nickname Generation
+"mine.nickname.adjectives" = "暖,柔,轻,淡,微,浅,软,绵,净,纯,空,寂,默,幻,谜,韵,绪,念,思,忆,春,夏,秋,冬,昼,夜,晨,昏,岁,月";
+"mine.nickname.nouns" = "云,星,月,日,霞,虹,风,雨,雪,雾,龙,凤,鹤,鹿,蝶,蝉,萤,雁,鸥,鹭,光,影,晨,昏,昼,夜,秒,分,时,季";

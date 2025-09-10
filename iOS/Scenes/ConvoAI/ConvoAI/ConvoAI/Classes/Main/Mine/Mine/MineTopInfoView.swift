@@ -19,14 +19,19 @@ protocol MineTopInfoViewDelegate: AnyObject {
 
 class MineTopInfoView: UIView {
     
-    // MARK: - Properties
     weak var delegate: MineTopInfoViewDelegate?
-    
-    // MARK: - UI Components
-    
-    private lazy var backgroundImageView: UIImageView = {
+        
+    private lazy var imageView1: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage.ag_named("ic_mine_background")
+        imageView.image = UIImage.ag_named("img_mine_top_bg")
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        return imageView
+    }()
+
+    private lazy var titleCycleImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage.ag_named("ic_mine_title_cycle")
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         return imageView
@@ -160,7 +165,7 @@ class MineTopInfoView: UIView {
         backgroundColor = .clear
         clipsToBounds = true
         
-        addSubview(backgroundImageView)
+        addSubview(imageView1)
         addSubview(backBoardImageView)
         addSubview(bigAvatarImageView)
         addSubview(avatarImageView)
@@ -170,6 +175,7 @@ class MineTopInfoView: UIView {
         addSubview(personaCardView)
         personaCardView.addSubview(personaCardBGView)
         personaCardView.addSubview(cardTitleLabel)
+        personaCardView.addSubview(titleCycleImageView)
         personaCardView.addSubview(addressingButton)
         personaCardView.addSubview(addressingLabel)
         personaCardView.addSubview(birthdayLabel)
@@ -182,9 +188,8 @@ class MineTopInfoView: UIView {
     
     private func setupConstraints() {
         // Header constraints
-        
-        backgroundImageView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
+        imageView1.snp.makeConstraints { make in
+            make.top.right.equalToSuperview()
         }
         
         backBoardImageView.snp.makeConstraints { make in
@@ -193,9 +198,8 @@ class MineTopInfoView: UIView {
         }
         
         bigAvatarImageView.snp.makeConstraints { make in
-            make.centerX.equalTo(backBoardImageView)
-            make.centerY.equalTo(backBoardImageView).offset(-10)
-            make.width.height.equalTo(60)
+            make.top.equalTo(personaCardView).offset(-76)
+            make.right.equalToSuperview()
         }
         
         avatarImageView.snp.makeConstraints { make in
@@ -224,6 +228,11 @@ class MineTopInfoView: UIView {
         cardTitleLabel.snp.makeConstraints { make in
             make.top.equalTo(12)
             make.left.equalTo(17)
+        }
+        
+        titleCycleImageView.snp.makeConstraints { make in
+            make.top.equalTo(cardTitleLabel)
+            make.right.equalTo(cardTitleLabel)
         }
         
         addressingLabel.snp.makeConstraints { make in
@@ -267,13 +276,9 @@ class MineTopInfoView: UIView {
     }
     
     // MARK: - Public Methods
-    func updateUserInfo(nickname: String?, addressing: String?, birthday: String?, bio: String?) {
+    func updateUserInfo(nickname: String?, birthday: String?, bio: String?, gender: String?) {
         if let nickname = nickname {
             profileInfoButton.configure(title: nickname)
-        }
-        
-        if let addressing = addressing {
-            addressingButton.configure(title: addressing)
         }
         
         if let birthday = birthday {
@@ -283,10 +288,34 @@ class MineTopInfoView: UIView {
         if let bio = bio {
             bioValueButton.configure(title: bio)
         }
+        
+        // Update addressing and avatars based on gender
+        updateAddressingAndAvatarsBasedOnGender(gender)
     }
     
-    func updateBigAvatar(_ image: UIImage?) {
-        bigAvatarImageView.image = image ?? UIImage.ag_named("ic_default_avatar_icon")
+    private func updateAddressingAndAvatarsBasedOnGender(_ gender: String?) {
+        guard let gender = gender else {
+            // Default values if gender is nil
+            addressingButton.configure(title: ResourceManager.L10n.Mine.genderFemale) // Default to female
+            avatarImageView.image = UIImage.ag_named("ic_default_avatar_icon")
+            bigAvatarImageView.image = UIImage.ag_named("img_mine_gender_male_big")
+            return
+        }
+        
+        if gender == "female" {
+            addressingButton.configure(title: ResourceManager.L10n.Mine.genderFemale)
+            avatarImageView.image = UIImage.ag_named("img_mine_avatar_female")
+            bigAvatarImageView.image = UIImage.ag_named("img_mine_gender_female_big")
+        } else if gender == "male" {
+            addressingButton.configure(title: ResourceManager.L10n.Mine.genderMale)
+            avatarImageView.image = UIImage.ag_named("img_mine_avatar_male")
+            bigAvatarImageView.image = UIImage.ag_named("img_mine_gender_male_big")
+        } else {
+            // Default values if gender is not recognized
+            addressingButton.configure(title: ResourceManager.L10n.Mine.genderFemale) // Default to female
+            avatarImageView.image = UIImage.ag_named("ic_default_avatar_icon")
+            bigAvatarImageView.image = UIImage.ag_named("img_mine_gender_female_big")
+        }
     }
     
     // MARK: - Actions

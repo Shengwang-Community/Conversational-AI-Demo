@@ -27,10 +27,9 @@ class MineTabListView: UIView {
     // Settings Container View
     private lazy var settingsContainerView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor.themColor(named: "ai_block2")
-        view.layerCornerRadius = 10
-        view.layer.borderWidth = 1.0
-        view.layer.borderColor = UIColor.themColor(named: "ai_line1").cgColor
+        view.backgroundColor = UIColor.themColor(named: "ai_fill2")
+        view.layer.cornerRadius = 10
+        view.layer.masksToBounds = true
         return view
     }()
     
@@ -162,7 +161,7 @@ class MineSettingItemView: UIView {
     
     // MARK: - Setup Methods
     private func setupUI() {
-        backgroundColor = UIColor.themColor(named: "ai_block2")
+        backgroundColor = UIColor.themColor(named: "ai_fill2")
         
         addSubview(iconImageView)
         addSubview(titleLabel)

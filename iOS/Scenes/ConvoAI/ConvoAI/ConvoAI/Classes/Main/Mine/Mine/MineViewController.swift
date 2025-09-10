@@ -74,26 +74,16 @@ class MineViewController: UIViewController {
     }
     
     private func loadUserInfo() {
-        // Get user info from UserCenter (local cache)
         if let user = UserCenter.user {
-            // Map gender string to localized string
-            let addressing: String
-            switch user.gender {
-            case "female":
-                addressing = ResourceManager.L10n.Mine.genderFemale
-            case "male":
-                addressing = ResourceManager.L10n.Mine.genderMale
-            default:
-                addressing = ""
-            }
-            // Handle bio placeholder for empty string
+            let nickname = user.nickname.isEmpty ? MineViewController.generateRandomNickname() : user.nickname
+            let gender = user.gender.isEmpty ? "female" : user.gender
+            let birthday = user.birthday.isEmpty ? "1990/01/01" : user.birthday
             let bioText = user.bio.isEmpty ? ResourceManager.L10n.Mine.bioPlaceholderDisplay : user.bio
-            
             topInfoView.updateUserInfo(
-                nickname: user.nickname,
-                addressing: addressing,
-                birthday: user.birthday,
-                bio: bioText
+                nickname: nickname,
+                birthday: birthday,
+                bio: bioText,
+                gender: gender
             )
         }
         // Update IoT device count
@@ -101,23 +91,15 @@ class MineViewController: UIViewController {
     }
     
     private func updateIoTDeviceCount() {
-        SVProgressHUD.show()
+        let deviceCount = IoTEntrance.deviceCount()
+        iotView.updateDeviceCount(deviceCount)
         IoTEntrance.fetchPresetIfNeed { [weak self] error in
-            SVProgressHUD.dismiss()
-            if let error = error {
-                ConvoAILogger.info("fetch preset error: \(error.localizedDescription)")
+            if let _ = error {
                 return
             }
-            
             let deviceCount = IoTEntrance.deviceCount()
             self?.iotView.updateDeviceCount(deviceCount)
         }
-    }
-    
-    // MARK: - Public Methods
-    public func refreshData() {
-        loadUserInfo()
-        tabListView.reloadData()
     }
 }
 
@@ -174,7 +156,7 @@ extension MineViewController: MineTabListViewDelegate {
     }
     
     func mineTabListViewDidTapSettings() {
-        let logoutVC = UserLogoutViewController()
+        let logoutVC = AccountViewController()
         logoutVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(logoutVC, animated: true)
     }
@@ -183,5 +165,22 @@ extension MineViewController: MineTabListViewDelegate {
 extension MineViewController: LoginManagerDelegate {
     func loginManager(_ manager: LoginManager, userInfoDidChange userInfo: LoginModel) {
         loadUserInfo()
+    }
+}
+
+// MARK: - Name Generation
+extension MineViewController {
+    
+    /// Generate a random nickname using adjective + noun combination
+    /// Used when user first logs in and has no nickname
+    static func generateRandomNickname() -> String {
+        // Use localized strings for adjectives and nouns, split by comma
+        let adjectives = ResourceManager.L10n.Mine.nicknameAdjectives.components(separatedBy: ",")
+        let nouns = ResourceManager.L10n.Mine.nicknameNouns.components(separatedBy: ",")
+        
+        let randomAdjective = adjectives.randomElement() ?? ""
+        let randomNoun = nouns.randomElement() ?? ""
+        
+        return "\(randomAdjective)\(randomNoun)"
     }
 }

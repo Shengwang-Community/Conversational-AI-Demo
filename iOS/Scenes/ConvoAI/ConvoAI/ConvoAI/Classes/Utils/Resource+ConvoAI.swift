@@ -297,7 +297,6 @@ extension ResourceManager {
             public static let bioTitle = ResourceManager.localizedString("mine.bio.title")
             public static let iotDevicesTitle = ResourceManager.localizedString("mine.iot.devices.title")
             public static let iotDevicesCount = ResourceManager.localizedString("mine.iot.devices.count")
-            public static let privacyTitle = ResourceManager.localizedString("mine.privacy.title")
             public static let settingsTitle = ResourceManager.localizedString("mine.settings.title")
             
             // Nickname Setting
@@ -321,10 +320,33 @@ extension ResourceManager {
             // Bio Setting
             public static let bioSettingTitle = ResourceManager.localizedString("mine.bio.setting.title")
             public static let bioPlaceholderDisplay = ResourceManager.localizedString("mine.bio.placeholder.display")
+            public static let bioInputPlaceholder = ResourceManager.localizedString("mine.bio.input.placeholder")
             public static let bioExample1 = ResourceManager.localizedString("mine.bio.example.1")
             public static let bioExample2 = ResourceManager.localizedString("mine.bio.example.2")
             public static let bioExample3 = ResourceManager.localizedString("mine.bio.example.3")
             public static let bioExample4 = ResourceManager.localizedString("mine.bio.example.4")
+            
+            // Privacy Settings
+            public static let privacyTitle = ResourceManager.localizedString("mine.privacy.title")
+            public static let privacyUserAgreement = ResourceManager.localizedString("mine.privacy.userAgreement")
+            public static let privacyPrivacyPolicy = ResourceManager.localizedString("mine.privacy.privacyPolicy")
+            public static let privacyDataSharing = ResourceManager.localizedString("mine.privacy.dataSharing")
+            public static let privacyPersonalInfo = ResourceManager.localizedString("mine.privacy.personalInfo")
+            public static let privacyRecordNumber = ResourceManager.localizedString("mine.privacy.recordNumber")
+            
+            // Account Settings
+            public static let accountDeactivateWarningMessage = ResourceManager.localizedString("mine.account.deactivateWarning.message")
+            public static let accountDeactivateAccount = ResourceManager.localizedString("mine.account.deactivateAccount")
+            public static let accountLogout = ResourceManager.localizedString("mine.account.logout")
+            public static let accountImportantNotice = ResourceManager.localizedString("mine.account.importantNotice")
+            public static let accountDeactivateMessage = ResourceManager.localizedString("mine.account.deactivateMessage")
+            public static let accountUnderstandRisks = ResourceManager.localizedString("mine.account.understandRisks")
+            public static let accountCancel = ResourceManager.localizedString("mine.account.cancel")
+            public static let accountConfirmDeactivate = ResourceManager.localizedString("mine.account.confirmDeactivate")
+            
+            // Nickname Generation
+            public static let nicknameAdjectives = ResourceManager.localizedString("mine.nickname.adjectives")
+            public static let nicknameNouns = ResourceManager.localizedString("mine.nickname.nouns")
         }
     }
 }

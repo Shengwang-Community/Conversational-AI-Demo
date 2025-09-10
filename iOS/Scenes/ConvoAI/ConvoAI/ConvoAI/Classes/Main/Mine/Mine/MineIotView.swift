@@ -36,7 +36,7 @@ class MineIotView: UIView {
     
     private lazy var devicesStatusLabel: UILabel = {
         let label = UILabel()
-        label.text = String(format: ResourceManager.L10n.Mine.iotDevicesCount, 2)
+        label.text = String(format: ResourceManager.L10n.Mine.iotDevicesCount, 0)
         label.textColor = UIColor.themColor(named: "ai_brand_black8")
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         label.textAlignment = .left
@@ -64,10 +64,9 @@ class MineIotView: UIView {
     
     // MARK: - Setup Methods
     private func setupUI() {
-        backgroundColor = UIColor.themColor(named: "ai_block2")
+        backgroundColor = UIColor.themColor(named: "ai_fill2")
         layer.cornerRadius = 10
-        layer.borderWidth = 1.0
-        layer.borderColor = UIColor.themColor(named: "ai_line1").cgColor
+        layer.masksToBounds = true
         
         addSubview(devicesTitleLabel)
         addSubview(devicesCardView)

@@ -24,12 +24,13 @@ enum Gender: String, CaseIterable {
         }
     }
     
-    var gradientColors: [UIColor] {
+    
+    var avatarImage: UIImage? {
         switch self {
         case .female:
-            return [GenderColors.femaleGradientStart, GenderColors.femaleGradientEnd]
+            return UIImage.ag_named("img_mine_avatar_female")
         case .male:
-            return [GenderColors.maleGradientStart, GenderColors.maleGradientEnd]
+            return UIImage.ag_named("img_mine_avatar_male")
         }
     }
     
@@ -40,14 +41,6 @@ enum Gender: String, CaseIterable {
 
 // MARK: - Gender Colors
 struct GenderColors {
-    // Female gradient colors
-    static let femaleGradientStart = UIColor(red: 0.8, green: 1.0, blue: 0.8, alpha: 1.0)
-    static let femaleGradientEnd = UIColor(red: 1.0, green: 0.99, blue: 0.59, alpha: 1.0)
-    
-    // Male gradient colors
-    static let maleGradientStart = UIColor(red: 0.51, green: 0.82, blue: 1.0, alpha: 1.0)
-    static let maleGradientEnd = UIColor(red: 0.8, green: 0.8, blue: 1.0, alpha: 1.0)
-    
     // Common colors
     static let selectionBorder = UIColor(red: 0.27, green: 0.42, blue: 1.0, alpha: 1.0)
     static let confirmButton = UIColor(red: 0.27, green: 0.42, blue: 1.0, alpha: 1.0)
@@ -65,7 +58,7 @@ class GenderSettingViewController: BaseViewController {
             view.configure(
                 title: gender.localizedTitle,
                 isSelected: gender == .defaultValue,
-                gradientColors: gender.gradientColors
+                avatarImage: gender.avatarImage
             )
             // Use individual methods for now
             if gender == .female {
@@ -313,19 +306,11 @@ class GenderOptionView: UIView {
         }
     }
     
-    func configure(title: String, isSelected: Bool, gradientColors: [UIColor]) {
+    func configure(title: String, isSelected: Bool, avatarImage: UIImage?) {
         titleLabel.text = title
         
-        // Apply gradient background
-        let gradientLayer = CAGradientLayer()
-        gradientLayer.frame = containerView.bounds
-        gradientLayer.colors = gradientColors.map { $0.cgColor }
-        gradientLayer.startPoint = CGPoint(x: 0, y: 0.5)
-        gradientLayer.endPoint = CGPoint(x: 1, y: 0.5)
-        containerView.layer.insertSublayer(gradientLayer, at: 0)
-        
-        // Set placeholder avatar image
-        avatarImageView.image = UIImage.ag_named("ic_default_avatar_icon")
+        // Set avatar image
+        avatarImageView.image = avatarImage ?? UIImage.ag_named("ic_default_avatar_icon")
         
         setSelected(isSelected)
     }
