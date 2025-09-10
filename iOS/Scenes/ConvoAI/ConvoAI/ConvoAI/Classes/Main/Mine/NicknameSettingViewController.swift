@@ -8,6 +8,7 @@
 import UIKit
 import Common
 import SnapKit
+import SVProgressHUD
 
 class NicknameSettingViewController: BaseViewController {
     
@@ -22,7 +23,7 @@ class NicknameSettingViewController: BaseViewController {
     
     private lazy var nicknameTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "您希望AI agent 怎么称呼您？"
+        textField.placeholder = ResourceManager.L10n.Mine.nicknamePlaceholder
         textField.textColor = .white
         textField.font = UIFont.systemFont(ofSize: 16, weight: .regular)
         textField.backgroundColor = .clear
@@ -32,9 +33,9 @@ class NicknameSettingViewController: BaseViewController {
         textField.delegate = self
         return textField
     }()
-    
+    let toolBox = ToolBoxApiManager()
     // MARK: - Properties
-    private let maxCharacterCount = 20
+    private let maxCharacterCount = 15
     private var originalNickname: String = ""
     
     // MARK: - Lifecycle
@@ -59,7 +60,7 @@ class NicknameSettingViewController: BaseViewController {
         view.backgroundColor = UIColor.themColor(named: "ai_fill2")
         
         // Configure navigation bar
-        naviBar.title = "昵称"
+        naviBar.title = ResourceManager.L10n.Mine.nicknameTitle
         
         view.addSubview(inputContainerView)
         inputContainerView.addSubview(nicknameTextField)
@@ -86,40 +87,78 @@ class NicknameSettingViewController: BaseViewController {
     }
     
     private func loadCurrentNickname() {
-        // Load current nickname from UserCenter or other sources
-//        if let userInfo = UserCenter.shared.getUserInfo() {
-//            originalNickname = userInfo.nickname ?? ""
-//            nicknameTextField.text = originalNickname
-//        }
+        // Load current nickname from UserCenter
+        if let user = UserCenter.user {
+            originalNickname = user.nickname
+            nicknameTextField.text = originalNickname
+        }
     }
     
     // MARK: - Action Methods
     
     @objc private func dismissKeyboard() {
+        saveNicknameIfChanged()
         view.endEditing(true)
     }
     
     private func saveNickname(_ nickname: String) {
-        // Update local storage
-//        UserCenter.shared.updateUserNickname(nickname)
-        self.originalNickname = nickname
+        guard let user = UserCenter.user else { return }
+        user.nickname = nickname
+        SVProgressHUD.show()
+        toolBox.updateUserInfo(
+            nickname: nickname,
+            gender: user.gender,
+            birthday: user.birthday,
+            bio: user.bio,
+            success: { [weak self] response in
+                SVProgressHUD.dismiss()
+                self?.originalNickname = nickname
+                AppContext.loginManager()?.updateUserInfo(userInfo: user)
+                SVProgressHUD.showSuccess(withStatus: ResourceManager.L10n.Mine.nicknameUpdateSuccess)
+            },
+            failure: { error in
+                SVProgressHUD.dismiss()
+                SVProgressHUD.showError(withStatus: ResourceManager.L10n.Mine.nicknameUpdateFailed)
+            }
+        )
     }
     
     private func saveNicknameIfChanged() {
         guard let newNickname = nicknameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
               !newNickname.isEmpty else {
-            // Empty nickname, do nothing
+            // Empty nickname, restore original
+            nicknameTextField.text = originalNickname
             return
         }
         
         if newNickname.count > maxCharacterCount {
-            // Nickname too long, do nothing
+            // Truncate nickname to maxCharacterCount and continue
+            let truncatedNickname = String(newNickname.prefix(maxCharacterCount))
+            nicknameTextField.text = truncatedNickname
+        }
+        
+        if !isValidNickname(newNickname) {
+            // Invalid characters, restore original
+            nicknameTextField.text = originalNickname
+            SVProgressHUD.showError(withStatus: ResourceManager.L10n.Mine.nicknameInvalidCharacters)
             return
         }
         
         if newNickname != originalNickname {
             saveNickname(newNickname)
         }
+    }
+    
+    private func isValidNickname(_ nickname: String) -> Bool {
+        let allowedCharacterSet = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+        let chineseCharacterSet = CharacterSet(charactersIn: "\u{4e00}"..."\u{9fff}")
+        
+        for char in nickname.unicodeScalars {
+            if !allowedCharacterSet.contains(char) && !chineseCharacterSet.contains(char) {
+                return false
+            }
+        }
+        return true
     }
 }
 
@@ -134,19 +173,28 @@ extension NicknameSettingViewController: UITextFieldDelegate {
             return false
         }
         
+        // Allow only Chinese characters, English letters, and numbers
+        if string.isEmpty {
+            // Allow deletion
+            return true
+        }
+        
+        // Check if the input character is valid (Chinese, English, or number)
+        let allowedCharacterSet = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+        let chineseCharacterSet = CharacterSet(charactersIn: "\u{4e00}"..."\u{9fff}")
+        
+        for char in string.unicodeScalars {
+            if !allowedCharacterSet.contains(char) && !chineseCharacterSet.contains(char) {
+                return false
+            }
+        }
+        
         return true
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
-        return true
-    }
-    
-    func textFieldDidEndEditing(_ textField: UITextField) {
         saveNicknameIfChanged()
-    }
-    
-    func textFieldDidChangeSelection(_ textField: UITextField) {
-        // Text change monitoring for future enhancements
+        return true
     }
 }

@@ -26,7 +26,7 @@ class BioSettingViewController: BaseViewController {
     
     private lazy var bioInputContainerView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.24, green: 0.24, blue: 0.30, alpha: 1.0) // #3E3E4D
+        view.backgroundColor = UIColor.themColor(named: "ai_fill5")
         view.layer.cornerRadius = 16
         return view
     }()
@@ -53,6 +53,7 @@ class BioSettingViewController: BaseViewController {
     // MARK: - Properties
     private let maxCharacterCount = 500
     private var originalBio: String = ""
+    private let toolBox = ToolBoxApiManager()
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -73,10 +74,10 @@ class BioSettingViewController: BaseViewController {
     
     // MARK: - Setup Methods
     private func setupUI() {
-        view.backgroundColor = UIColor(red: 0.16, green: 0.16, blue: 0.18, alpha: 1.0) // #292A2D
+        view.backgroundColor = UIColor.themColor(named: "ai_fill2")
         
         // Configure navigation bar
-        naviBar.title = "自我介绍"
+        naviBar.title = ResourceManager.L10n.Mine.bioSettingTitle
         
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
@@ -124,10 +125,10 @@ class BioSettingViewController: BaseViewController {
     
     private func setupExampleCards() {
         let examples = [
-            "我宅家养多肉、学做菜，细心又爱帮朋友。妈妈做的番茄炒蛋是本命，夏天的冰镇荔枝，清甜劲儿超治愈～",
-            "互联网运营 er 一枚，日常跟数据、文案死磕，擅长抓热点做内容。闲了爱撸代码解压，奶茶续命党，生椰拿铁是本命，求搭子聊运营干货～",
-            "前端开发仔报道，沉迷调样式、优化交互，追新技术像追更。爱喝冰美式提效，周末宅家肝游戏，求技术搭子交流 bug 解决方案～",
-            "产品经理一枚，天天画原型、盯迭代，擅长抠需求细节。咖啡不离手，偏爱冷萃，闲了刷行业报告，求同频小伙伴唠产品思路～"
+            ResourceManager.L10n.Mine.bioExample1,
+            ResourceManager.L10n.Mine.bioExample2,
+            ResourceManager.L10n.Mine.bioExample3,
+            ResourceManager.L10n.Mine.bioExample4
         ]
         
         for example in examples {
@@ -140,42 +141,53 @@ class BioSettingViewController: BaseViewController {
         }
     }
     
-    
     private func loadCurrentBio() {
-        // Load current bio from UserCenter or other sources
-//        if let userInfo = UserCenter.shared.getUserInfo() {
-//            originalBio = userInfo.bio ?? ""
-//            bioTextView.text = originalBio
-//        }
-    }
-    
-    // MARK: - Actions
-    override func viewWillDisappearAndPop() {
-        super.viewWillDisappearAndPop()
-        if bioTextView.text != originalBio {
-            showUnsavedChangesAlert()
+        // Load current bio from UserCenter
+        if let user = UserCenter.user {
+            originalBio = user.bio
+            bioTextView.text = originalBio
         }
     }
     
+    // MARK: - Actions
+    
     @objc private func dismissKeyboard() {
+        saveBioIfChanged()
         view.endEditing(true)
     }
     
-    
-    private func showUnsavedChangesAlert() {
-        let alert = UIAlertController(
-            title: "未保存的更改",
-            message: "您有未保存的更改，确定要离开吗？",
-            preferredStyle: .alert
+    private func saveBio(_ bio: String) {
+        guard let user = UserCenter.user else { return }
+        user.bio = bio
+        SVProgressHUD.show()
+        toolBox.updateUserInfo(
+            nickname: user.nickname,
+            gender: user.gender,
+            birthday: user.birthday,
+            bio: bio,
+            success: { [weak self] response in
+                SVProgressHUD.dismiss()
+                self?.originalBio = bio
+                AppContext.loginManager()?.updateUserInfo(userInfo: user)
+            },
+            failure: { error in
+                SVProgressHUD.dismiss()
+            }
         )
+    }
+    
+    private func saveBioIfChanged() {
+        let newBio = bioTextView.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         
-        alert.addAction(UIAlertAction(title: "放弃", style: .destructive) { _ in
-            self.navigationController?.popViewController(animated: true)
-        })
+        if newBio.count > maxCharacterCount {
+            // Truncate bio to maxCharacterCount and continue
+            let truncatedBio = String(newBio.prefix(maxCharacterCount))
+            bioTextView.text = truncatedBio
+        }
         
-        alert.addAction(UIAlertAction(title: "继续编辑", style: .cancel))
-        
-        present(alert, animated: true)
+        if newBio != originalBio {
+            saveBio(newBio)
+        }
     }
 }
 

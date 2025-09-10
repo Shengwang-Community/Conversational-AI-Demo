@@ -10,37 +10,88 @@ import Common
 import SnapKit
 import SVProgressHUD
 
+// MARK: - Gender Enum
+enum Gender: String, CaseIterable {
+    case female = "female"
+    case male = "male"
+    
+    var localizedTitle: String {
+        switch self {
+        case .female:
+            return ResourceManager.L10n.Mine.genderFemale
+        case .male:
+            return ResourceManager.L10n.Mine.genderMale
+        }
+    }
+    
+    var gradientColors: [UIColor] {
+        switch self {
+        case .female:
+            return [GenderColors.femaleGradientStart, GenderColors.femaleGradientEnd]
+        case .male:
+            return [GenderColors.maleGradientStart, GenderColors.maleGradientEnd]
+        }
+    }
+    
+    static var defaultValue: Gender {
+        return .female
+    }
+}
+
+// MARK: - Gender Colors
+struct GenderColors {
+    // Female gradient colors
+    static let femaleGradientStart = UIColor(red: 0.8, green: 1.0, blue: 0.8, alpha: 1.0)
+    static let femaleGradientEnd = UIColor(red: 1.0, green: 0.99, blue: 0.59, alpha: 1.0)
+    
+    // Male gradient colors
+    static let maleGradientStart = UIColor(red: 0.51, green: 0.82, blue: 1.0, alpha: 1.0)
+    static let maleGradientEnd = UIColor(red: 0.8, green: 0.8, blue: 1.0, alpha: 1.0)
+    
+    // Common colors
+    static let selectionBorder = UIColor(red: 0.27, green: 0.42, blue: 1.0, alpha: 1.0)
+    static let confirmButton = UIColor(red: 0.27, green: 0.42, blue: 1.0, alpha: 1.0)
+}
+
 class GenderSettingViewController: BaseViewController {
     
     // MARK: - UI Components
     
-    private lazy var femaleOptionView: GenderOptionView = {
-        let view = GenderOptionView()
-        view.configure(
-            title: "女士",
-            isSelected: true,
-            gradientColors: [UIColor(red: 0.8, green: 1.0, blue: 0.8, alpha: 1.0), UIColor(red: 1.0, green: 0.99, blue: 0.59, alpha: 1.0)]
-        )
-        view.addTarget(self, action: #selector(femaleOptionSelected), for: .touchUpInside)
-        return view
+    private lazy var genderOptionViews: [Gender: GenderOptionView] = {
+        var views: [Gender: GenderOptionView] = [:]
+        
+        for gender in Gender.allCases {
+            let view = GenderOptionView()
+            view.configure(
+                title: gender.localizedTitle,
+                isSelected: gender == .defaultValue,
+                gradientColors: gender.gradientColors
+            )
+            // Use individual methods for now
+            if gender == .female {
+                view.addTarget(self, action: #selector(femaleOptionSelected), for: .touchUpInside)
+            } else {
+                view.addTarget(self, action: #selector(maleOptionSelected), for: .touchUpInside)
+            }
+            views[gender] = view
+        }
+        
+        return views
     }()
     
-    private lazy var maleOptionView: GenderOptionView = {
-        let view = GenderOptionView()
-        view.configure(
-            title: "男士",
-            isSelected: false,
-            gradientColors: [UIColor(red: 0.51, green: 0.82, blue: 1.0, alpha: 1.0), UIColor(red: 0.8, green: 0.8, blue: 1.0, alpha: 1.0)]
-        )
-        view.addTarget(self, action: #selector(maleOptionSelected), for: .touchUpInside)
-        return view
-    }()
+    private var femaleOptionView: GenderOptionView {
+        return genderOptionViews[.female]!
+    }
+    
+    private var maleOptionView: GenderOptionView {
+        return genderOptionViews[.male]!
+    }
     
     private lazy var confirmButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("确定", for: .normal)
+        button.setTitle(ResourceManager.L10n.Mine.genderConfirm, for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor(red: 0.27, green: 0.42, blue: 1.0, alpha: 1.0) // #446CFF
+        button.backgroundColor = GenderColors.confirmButton
         button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .regular)
         button.layer.cornerRadius = 12
         button.addTarget(self, action: #selector(confirmButtonTapped), for: .touchUpInside)
@@ -48,12 +99,8 @@ class GenderSettingViewController: BaseViewController {
     }()
     
     // MARK: - Properties
-    private var selectedGender: Gender = .female
-    
-    enum Gender {
-        case female
-        case male
-    }
+    private var selectedGender: Gender = .defaultValue
+    private let toolBox = ToolBoxApiManager()
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -70,7 +117,7 @@ class GenderSettingViewController: BaseViewController {
     // MARK: - Setup Methods
     private func setupUI() {
         view.backgroundColor = UIColor.themColor(named: "ai_fill2")
-        naviBar.title = "称呼您为"
+        naviBar.title = ResourceManager.L10n.Mine.genderTitle
         
         view.addSubview(femaleOptionView)
         view.addSubview(maleOptionView)
@@ -99,9 +146,12 @@ class GenderSettingViewController: BaseViewController {
     }
     
     private func loadCurrentGender() {
-        // Load current gender setting from UserCenter or other sources
-        // For now, default to female
-        selectedGender = .female
+        // Load current gender setting from UserCenter
+        if let user = UserCenter.user, !user.gender.isEmpty {
+            selectedGender = Gender(rawValue: user.gender) ?? .defaultValue
+        } else {
+            selectedGender = .defaultValue
+        }
         updateSelection()
     }
     
@@ -115,6 +165,18 @@ class GenderSettingViewController: BaseViewController {
         navigationController?.popViewController(animated: true)
     }
     
+    @objc private func genderOptionSelected(_ sender: UIButton) {
+        // Find the gender based on the button's tag
+        for (gender, view) in genderOptionViews {
+            if view.tapButton == sender {
+                selectedGender = gender
+                updateSelection()
+                break
+            }
+        }
+    }
+    
+    // Keep individual methods for backward compatibility
     @objc private func femaleOptionSelected() {
         selectedGender = .female
         updateSelection()
@@ -128,19 +190,28 @@ class GenderSettingViewController: BaseViewController {
     @objc private func confirmButtonTapped() {
         // Save gender setting
         saveGenderSetting()
-        
-        // Show success message
-        SVProgressHUD.showSuccess(withStatus: "性别设置已保存")
-        
-        // Pop back to previous view
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.navigationController?.popViewController(animated: true)
-        }
     }
     
     private func saveGenderSetting() {
-        // Save gender setting to UserCenter or other storage
-        // UserCenter.shared.setGender(selectedGender == .female ? "female" : "male")
+        guard let user = UserCenter.user else { return }
+        SVProgressHUD.show()
+        toolBox.updateUserInfo(
+            nickname: user.nickname,
+            gender: selectedGender.rawValue,
+            birthday: user.birthday,
+            bio: user.bio,
+            success: { [weak self] response in
+                SVProgressHUD.dismiss()
+                // Update local user info
+                user.gender = self?.selectedGender.rawValue ?? Gender.defaultValue.rawValue
+                AppContext.loginManager()?.updateUserInfo(userInfo: user)
+                self?.navigationController?.popViewController(animated: true)
+            },
+            failure: { error in
+                SVProgressHUD.dismiss()
+                SVProgressHUD.showError(withStatus: error)
+            }
+        )
     }
 }
 
@@ -165,7 +236,7 @@ class GenderOptionView: UIView {
     
     private lazy var titleContentView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.27, green: 0.42, blue: 1.0, alpha: 1.0)
+        view.backgroundColor = GenderColors.selectionBorder
         view.layer.cornerRadius = 12
         view.layer.masksToBounds = true
         return view
@@ -184,13 +255,13 @@ class GenderOptionView: UIView {
         let view = UIView()
         view.backgroundColor = .clear
         view.layer.borderWidth = 5
-        view.layer.borderColor = UIColor(red: 0.27, green: 0.42, blue: 1.0, alpha: 1.0).cgColor
+        view.layer.borderColor = GenderColors.selectionBorder.cgColor
         view.layer.cornerRadius = 100
         view.isHidden = true
         return view
     }()
     
-    private lazy var tapButton: UIButton = {
+    lazy var tapButton: UIButton = {
         let button = UIButton(type: .custom)
         button.backgroundColor = .clear
         return button

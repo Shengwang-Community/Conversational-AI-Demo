@@ -8,7 +8,6 @@
 import UIKit
 import Common
 import SnapKit
-import SVProgressHUD
 
 class BirthdaySettingViewController: UIViewController {
     
@@ -21,7 +20,7 @@ class BirthdaySettingViewController: UIViewController {
     
     private lazy var containerView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor(red: 0.16, green: 0.16, blue: 0.18, alpha: 1.0) // #292A2D
+        view.backgroundColor = UIColor.themColor(named: "ai_block2")
         view.layer.cornerRadius = 16
         view.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         return view
@@ -29,7 +28,7 @@ class BirthdaySettingViewController: UIViewController {
     
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "选择您的生日"
+        label.text = ResourceManager.L10n.Mine.birthdayTitle
         label.textColor = .white
         label.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         label.textAlignment = .center
@@ -53,7 +52,7 @@ class BirthdaySettingViewController: UIViewController {
     
     private lazy var cancelButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("取消", for: .normal)
+        button.setTitle(ResourceManager.L10n.Mine.birthdayCancel, for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.backgroundColor = UIColor(red: 0.25, green: 0.25, blue: 0.27, alpha: 1.0)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
@@ -64,7 +63,7 @@ class BirthdaySettingViewController: UIViewController {
     
     private lazy var confirmButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("确定", for: .normal)
+        button.setTitle(ResourceManager.L10n.Mine.birthdayConfirm, for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.backgroundColor = UIColor(red: 0.27, green: 0.42, blue: 1.0, alpha: 1.0) // #446CFF
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
@@ -74,7 +73,6 @@ class BirthdaySettingViewController: UIViewController {
     }()
     
     // MARK: - Properties
-    private var originalBirthday: Date?
     private var selectedBirthday: Date = Date()
     private var completion: ((Date?) -> Void)?
     
@@ -83,7 +81,7 @@ class BirthdaySettingViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
-        loadCurrentBirthday()
+        datePicker.setDate(selectedBirthday, animated: false)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -153,23 +151,10 @@ class BirthdaySettingViewController: UIViewController {
         }
     }
     
-    private func loadCurrentBirthday() {
-        // Load current birthday from UserCenter or other sources
-        // For now, set a default date
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy/MM/dd"
-        if let date = formatter.date(from: "1998/02/02") {
-            originalBirthday = date
-            selectedBirthday = date
-            datePicker.date = date
-        }
-    }
-    
     // MARK: - Public Methods
-    static func show(in viewController: UIViewController, currentBirthday: Date? = nil, completion: @escaping (Date?) -> Void) {
+    static func show(in viewController: UIViewController, currentBirthday: Date, completion: @escaping (Date?) -> Void) {
         let birthdayVC = BirthdaySettingViewController()
-        birthdayVC.originalBirthday = currentBirthday
-        birthdayVC.selectedBirthday = currentBirthday ?? Date()
+        birthdayVC.selectedBirthday = currentBirthday
         birthdayVC.completion = completion
         
         birthdayVC.modalPresentationStyle = .overFullScreen
@@ -187,31 +172,7 @@ class BirthdaySettingViewController: UIViewController {
     
     @objc private func confirmButtonTapped() {
         selectedBirthday = datePicker.date
-        saveBirthday(selectedBirthday)
-    }
-    
-    private func saveBirthday(_ birthday: Date) {
-        // Show loading
-        SVProgressHUD.show(withStatus: "保存中...")
-        
-        // Simulate save process
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            SVProgressHUD.dismiss()
-            
-            // Save to UserCenter
-            // UserCenter.shared.setBirthday(birthday)
-            
-            // Update original birthday
-            self.originalBirthday = birthday
-            
-            // Show success message
-            SVProgressHUD.showSuccess(withStatus: "生日保存成功")
-            
-            // Dismiss with completion
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                self.dismissWithAnimation(confirmed: true)
-            }
-        }
+        dismissWithAnimation(confirmed: true)
     }
     
     private func animateIn() {

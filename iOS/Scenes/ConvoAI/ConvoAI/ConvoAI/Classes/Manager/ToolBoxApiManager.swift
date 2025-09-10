@@ -165,7 +165,21 @@ class ToolBoxApiManager: NSObject {
         ]
         
         NetworkManager.shared.postRequest(urlString: url,
-                                         parameters: parameters,
+                                           params: parameters,
+                                           success: success,
+                                           failure: failure)
+    }
+    
+    /// Get user information
+    /// - Parameters:
+    ///   - success: success callback with user data
+    ///   - failure: failure callback
+    public func getUserInfo(success: NetworkManager.SuccessClosure?,
+                            failure: NetworkManager.FailClosure?) {
+        let url = "\(AppContext.shared.baseServerUrl)/v1/convoai/sso/userInfo"
+        
+        NetworkManager.shared.getRequest(urlString: url,
+                                         params: nil,
                                          success: success,
                                          failure: failure)
     }

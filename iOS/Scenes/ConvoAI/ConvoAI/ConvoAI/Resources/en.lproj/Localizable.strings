@@ -223,12 +223,6 @@
 "mine.logout.alert.cancel" = "Cancel";
 "mine.logout.alert.confirm" = "Log Out";
 
-// Gender Setting
-"mine.gender.setting.title" = "How should we address you?";
-"mine.gender.female" = "Ms.";
-"mine.gender.male" = "Mr.";
-"mine.gender.setting.saved" = "Gender setting saved";
-
 // User Logout
 "mine.deactivate.account" = "Delete Account";
 "mine.deactivate.account.alert.title" = "Important Notice";
@@ -241,25 +235,21 @@
 "mine.logout.success" = "Logged out successfully";
 
 // Nickname Setting
-"mine.nickname.setting.title" = "Nickname Settings";
-"mine.nickname.placeholder" = "Please enter your nickname";
 "mine.nickname.tips" = "Your nickname will be displayed in your profile and visible to other users.";
 "mine.save" = "Save";
 "mine.nickname.empty" = "Nickname cannot be empty";
-"mine.nickname.too.long" = "Nickname is too long";
 "mine.saving" = "Saving...";
 "mine.nickname.saved" = "Nickname saved successfully";
-"mine.unsaved.changes.title" = "Unsaved Changes";
-"mine.unsaved.changes.message" = "You have unsaved changes. Are you sure you want to leave?";
-"mine.discard" = "Discard";
-"mine.keep.editing" = "Keep Editing";
 
 // Bio Setting
 "mine.bio.setting.title" = "About Me";
 "mine.bio.placeholder" = "Please briefly introduce yourself...";
-"mine.bio.tips" = "Your bio will be displayed in your profile to help other users get to know you better.";
 "mine.bio.too.long" = "Bio is too long";
-"mine.bio.saved" = "Bio saved successfully";
+"mine.bio.placeholder.display" = "Set your bio to help AI agent understand you better";
+"mine.bio.example.1" = "I love staying home, growing succulents and learning to cook. I'm caring and love helping friends. Mom's tomato scrambled eggs are my favorite, and chilled lychees in summer are super refreshing~";
+"mine.bio.example.2" = "Internet operations specialist here, daily wrestling with data and copywriting, good at catching trends and creating content. Love coding for stress relief, milk tea addict, coconut latte is my go-to, looking for buddies to chat about operations~";
+"mine.bio.example.3" = "Frontend developer reporting in, obsessed with styling and optimizing interactions, chasing new tech like following updates. Love iced Americano for efficiency, weekend gamer, looking for tech buddies to discuss bug solutions~";
+"mine.bio.example.4" = "Product manager here, daily drawing prototypes and monitoring iterations, good at digging into requirement details. Coffee never leaves my hand, prefer cold brew, love reading industry reports, looking for like-minded friends to discuss product ideas~";
 
 // Settings
 "settings.not.effective" = "Not Effective";
@@ -312,3 +302,23 @@
 "mine.iot.devices.count" = "%d devices connected";
 "mine.privacy.title" = "Privacy";
 "mine.settings.title" = "Settings";
+
+// Nickname Setting
+"mine.nickname.title" = "Nickname";
+"mine.nickname.placeholder" = "How would you like the AI agent to address you?";
+"mine.nickname.update.success" = "Nickname updated successfully";
+"mine.nickname.update.failed" = "Failed to update nickname";
+"mine.nickname.too.long" = "Nickname cannot exceed %d characters";
+"mine.nickname.invalid.characters" = "Nickname can only contain Chinese characters, English letters, and numbers";
+"mine.nickname.user.info.failed" = "Failed to get user information";
+
+// Gender Setting
+"mine.gender.title" = "Address You As";
+"mine.gender.female" = "Female";
+"mine.gender.male" = "Male";
+"mine.gender.confirm" = "Confirm";
+
+// Birthday Setting
+"mine.birthday.select.title" = "Select Your Birthday";
+"mine.birthday.cancel" = "Cancel";
+"mine.birthday.confirm" = "Confirm";

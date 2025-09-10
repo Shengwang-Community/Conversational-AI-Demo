@@ -306,11 +306,6 @@ extension ResourceManager {
             public static let logoutAlertCancel = ResourceManager.localizedString("mine.logout.alert.cancel")
             public static let logoutAlertConfirm = ResourceManager.localizedString("mine.logout.alert.confirm")
             
-            public static let genderSettingTitle = ResourceManager.localizedString("mine.gender.setting.title")
-            public static let genderFemale = ResourceManager.localizedString("mine.gender.female")
-            public static let genderMale = ResourceManager.localizedString("mine.gender.male")
-            public static let genderSettingSaved = ResourceManager.localizedString("mine.gender.setting.saved")
-            
             public static let deactivateAccount = ResourceManager.localizedString("mine.deactivate.account")
             public static let deactivateAccountAlertTitle = ResourceManager.localizedString("mine.deactivate.account.alert.title")
             public static let deactivateAccountAlertMessage = ResourceManager.localizedString("mine.deactivate.account.alert.message")
@@ -321,7 +316,6 @@ extension ResourceManager {
             public static let loggingOut = ResourceManager.localizedString("mine.logging.out")
             public static let logoutSuccess = ResourceManager.localizedString("mine.logout.success")
             
-            public static let nicknameSettingTitle = ResourceManager.localizedString("mine.nickname.setting.title")
             public static let nicknamePlaceholder = ResourceManager.localizedString("mine.nickname.placeholder")
             public static let nicknameTips = ResourceManager.localizedString("mine.nickname.tips")
             public static let save = ResourceManager.localizedString("mine.save")
@@ -329,15 +323,16 @@ extension ResourceManager {
             public static let nicknameTooLong = ResourceManager.localizedString("mine.nickname.too.long")
             public static let saving = ResourceManager.localizedString("mine.saving")
             public static let nicknameSaved = ResourceManager.localizedString("mine.nickname.saved")
-            public static let unsavedChangesTitle = ResourceManager.localizedString("mine.unsaved.changes.title")
-            public static let unsavedChangesMessage = ResourceManager.localizedString("mine.unsaved.changes.message")
-            public static let discard = ResourceManager.localizedString("mine.discard")
             public static let keepEditing = ResourceManager.localizedString("mine.keep.editing")
             public static let bioSettingTitle = ResourceManager.localizedString("mine.bio.setting.title")
             public static let bioPlaceholder = ResourceManager.localizedString("mine.bio.placeholder")
-            public static let bioTips = ResourceManager.localizedString("mine.bio.tips")
             public static let bioTooLong = ResourceManager.localizedString("mine.bio.too.long")
             public static let bioSaved = ResourceManager.localizedString("mine.bio.saved")
+            public static let bioPlaceholderDisplay = ResourceManager.localizedString("mine.bio.placeholder.display")
+            public static let bioExample1 = ResourceManager.localizedString("mine.bio.example.1")
+            public static let bioExample2 = ResourceManager.localizedString("mine.bio.example.2")
+            public static let bioExample3 = ResourceManager.localizedString("mine.bio.example.3")
+            public static let bioExample4 = ResourceManager.localizedString("mine.bio.example.4")
             
             // Mine Module UI
             public static let personaTitle = ResourceManager.localizedString("mine.persona.title")
@@ -348,6 +343,24 @@ extension ResourceManager {
             public static let iotDevicesCount = ResourceManager.localizedString("mine.iot.devices.count")
             public static let privacyTitle = ResourceManager.localizedString("mine.privacy.title")
             public static let settingsTitle = ResourceManager.localizedString("mine.settings.title")
+            
+            // Nickname Setting
+            public static let nicknameTitle = ResourceManager.localizedString("mine.nickname.title")
+            public static let nicknameUpdateSuccess = ResourceManager.localizedString("mine.nickname.update.success")
+            public static let nicknameUpdateFailed = ResourceManager.localizedString("mine.nickname.update.failed")
+            public static let nicknameInvalidCharacters = ResourceManager.localizedString("mine.nickname.invalid.characters")
+            public static let nicknameUserInfoFailed = ResourceManager.localizedString("mine.nickname.user.info.failed")
+            
+            // Gender Setting
+            public static let genderTitle = ResourceManager.localizedString("mine.gender.title")
+            public static let genderFemale = ResourceManager.localizedString("mine.gender.female")
+            public static let genderMale = ResourceManager.localizedString("mine.gender.male")
+            public static let genderConfirm = ResourceManager.localizedString("mine.gender.confirm")
+            
+            // Birthday Setting
+            public static let birthdaySelectTitle = ResourceManager.localizedString("mine.birthday.select.title")
+            public static let birthdayCancel = ResourceManager.localizedString("mine.birthday.cancel")
+            public static let birthdayConfirm = ResourceManager.localizedString("mine.birthday.confirm")
         }
     }
 }

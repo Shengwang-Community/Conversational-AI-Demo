@@ -256,12 +256,6 @@
 "mine.logout.alert.cancel" = "取消";
 "mine.logout.alert.confirm" = "退出";
 
-// Gender Setting
-"mine.gender.setting.title" = "称呼您为";
-"mine.gender.female" = "女士";
-"mine.gender.male" = "先生";
-"mine.gender.setting.saved" = "性别设置已保存";
-
 // User Logout
 "mine.deactivate.account" = "注销账号";
 "mine.deactivate.account.alert.title" = "注销账号";
@@ -274,25 +268,21 @@
 "mine.logout.success" = "退出成功";
 
 // Nickname Setting
-"mine.nickname.setting.title" = "昵称设置";
-"mine.nickname.placeholder" = "请输入您的昵称";
-"mine.nickname.tips" = "昵称将显示在您的个人资料中，其他用户可以看到。";
 "mine.save" = "保存";
 "mine.nickname.empty" = "昵称不能为空";
-"mine.nickname.too.long" = "昵称长度超出限制";
 "mine.saving" = "保存中...";
 "mine.nickname.saved" = "昵称保存成功";
-"mine.unsaved.changes.title" = "未保存的更改";
-"mine.unsaved.changes.message" = "您有未保存的更改，确定要离开吗？";
-"mine.discard" = "放弃";
-"mine.keep.editing" = "继续编辑";
 
 // Bio Setting
 "mine.bio.setting.title" = "自我介绍";
 "mine.bio.placeholder" = "请简单介绍一下自己...";
-"mine.bio.tips" = "自我介绍将显示在您的个人资料中，让其他用户更好地了解您。";
 "mine.bio.too.long" = "自我介绍长度超出限制";
 "mine.bio.saved" = "自我介绍保存成功";
+"mine.bio.placeholder.display" = "设定自我介绍，让 AI agent 更了解您";
+"mine.bio.example.1" = "我宅家养多肉、学做菜，细心又爱帮朋友。妈妈做的番茄炒蛋是本命，夏天的冰镇荔枝，清甜劲儿超治愈～";
+"mine.bio.example.2" = "互联网运营 er 一枚，日常跟数据、文案死磕，擅长抓热点做内容。闲了爱撸代码解压，奶茶续命党，生椰拿铁是本命，求搭子聊运营干货～";
+"mine.bio.example.3" = "前端开发仔报道，沉迷调样式、优化交互，追新技术像追更。爱喝冰美式提效，周末宅家肝游戏，求技术搭子交流 bug 解决方案～";
+"mine.bio.example.4" = "产品经理一枚，天天画原型、盯迭代，擅长抠需求细节。咖啡不离手，偏爱冷萃，闲了刷行业报告，求同频小伙伴唠产品思路～";
 
 // Mine Module
 "mine.persona.title" = "我的对话人设";
@@ -303,3 +293,23 @@
 "mine.iot.devices.count" = "已绑定%d个设备";
 "mine.privacy.title" = "隐私";
 "mine.settings.title" = "设置";
+
+// Nickname Setting
+"mine.nickname.title" = "昵称";
+"mine.nickname.placeholder" = "您希望AI agent 怎么称呼您？";
+"mine.nickname.update.success" = "昵称更新成功";
+"mine.nickname.update.failed" = "昵称更新失败";
+"mine.nickname.too.long" = "昵称长度不能超过%d个字符";
+"mine.nickname.invalid.characters" = "昵称只能包含中文、英文和数字";
+"mine.nickname.user.info.failed" = "用户信息获取失败";
+
+// Gender Setting
+"mine.gender.title" = "称呼您为";
+"mine.gender.female" = "女士";
+"mine.gender.male" = "男士";
+"mine.gender.confirm" = "确定";
+
+// Birthday Setting
+"mine.birthday.select.title" = "选择您的生日";
+"mine.birthday.cancel" = "取消";
+"mine.birthday.confirm" = "确定";

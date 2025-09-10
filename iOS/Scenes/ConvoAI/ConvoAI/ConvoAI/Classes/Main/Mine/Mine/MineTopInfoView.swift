@@ -118,7 +118,6 @@ class MineTopInfoView: UIView {
     
     private lazy var birthdayValueButton: MineInfoButton = {
         let button = MineInfoButton()
-        button.configure(title: "1998/02/02")
         button.tapButton.addTarget(self, action: #selector(birthdayButtonTapped), for: .touchUpInside)
         return button
     }()
@@ -133,7 +132,6 @@ class MineTopInfoView: UIView {
     
     private lazy var bioValueButton: MineInfoButton = {
         let button = MineInfoButton()
-        button.configure(title: "sdksdhjksdjssdhsxcsdksdhjksdjssdhsxcx...")
         button.tapButton.addTarget(self, action: #selector(bioButtonTapped), for: .touchUpInside)
         return button
     }()
@@ -258,7 +256,7 @@ class MineTopInfoView: UIView {
         bioValueButton.snp.makeConstraints { make in
             make.top.equalTo(bioLabel.snp.bottom).offset(8)
             make.left.equalTo(bioLabel)
-            make.right.equalToSuperview().offset(-20)
+            make.right.lessThanOrEqualToSuperview().offset(-20)
             make.height.equalTo(20)
         }
 

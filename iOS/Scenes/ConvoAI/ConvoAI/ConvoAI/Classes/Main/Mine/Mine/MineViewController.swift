@@ -38,6 +38,7 @@ class MineViewController: UIViewController {
         setupUI()
         setupConstraints()
         loadUserInfo()
+        AppContext.loginManager()?.addDelegate(self)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -73,16 +74,28 @@ class MineViewController: UIViewController {
     }
     
     private func loadUserInfo() {
-        // Load user information from UserCenter or other sources
+        // Get user info from UserCenter (local cache)
         if let user = UserCenter.user {
+            // Map gender string to localized string
+            let addressing: String
+            switch user.gender {
+            case "female":
+                addressing = ResourceManager.L10n.Mine.genderFemale
+            case "male":
+                addressing = ResourceManager.L10n.Mine.genderMale
+            default:
+                addressing = ""
+            }
+            // Handle bio placeholder for empty string
+            let bioText = user.bio.isEmpty ? ResourceManager.L10n.Mine.bioPlaceholderDisplay : user.bio
+            
             topInfoView.updateUserInfo(
-                nickname: "尹希尔",
-                addressing: "先生",
-                birthday: "1998/02/02",
-                bio: "sdksdhjksdjssdhsxcsdksdhjksdjssdhsxcx..."
+                nickname: user.nickname,
+                addressing: addressing,
+                birthday: user.birthday,
+                bio: bioText
             )
         }
-        
         // Update IoT device count
         updateIoTDeviceCount()
     }
@@ -123,18 +136,16 @@ extension MineViewController: MineTopInfoViewDelegate {
     }
     
     func mineTopInfoViewDidTapBirthday() {
-        BirthdaySettingViewController.show(in: self, currentBirthday: nil) { [weak self] selectedDate in
+        guard let user = UserCenter.user else { return }
+        let birthday = user.birthday.isEmpty ? "1990/01/01" : user.birthday
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd"
+        let birthdayDate = formatter.date(from: birthday)
+        BirthdaySettingViewController.show(in: self, currentBirthday: birthdayDate ?? Date()) { selectedDate in
             if let date = selectedDate {
-                // Update UI with selected birthday
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy/MM/dd"
                 let birthdayString = formatter.string(from: date)
-                self?.topInfoView.updateUserInfo(
-                    nickname: "尹希尔",
-                    addressing: "先生",
-                    birthday: birthdayString,
-                    bio: "sdksdhjksdjssdhsxcsdksdhjksdjssdhsxcx..."
-                )
+                user.birthday = birthdayString
+                AppContext.loginManager()?.updateUserInfo(userInfo: user)
             }
         }
     }
@@ -166,5 +177,11 @@ extension MineViewController: MineTabListViewDelegate {
         let logoutVC = UserLogoutViewController()
         logoutVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(logoutVC, animated: true)
+    }
+}
+
+extension MineViewController: LoginManagerDelegate {
+    func loginManager(_ manager: LoginManager, userInfoDidChange userInfo: LoginModel) {
+        loadUserInfo()
     }
 }

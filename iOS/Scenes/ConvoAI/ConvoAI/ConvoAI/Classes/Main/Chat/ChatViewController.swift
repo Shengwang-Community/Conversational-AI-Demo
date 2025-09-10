@@ -256,20 +256,11 @@ class ChatViewController: BaseViewController {
         if !isLogin {
             return
         }
-
-        LoginApiService.getUserInfo { [weak self] error in
-            guard let self = self else { return }
-            
-            if let error = error {
-                self.addLog("[PreloadData error - userInfo]: \(error)")
-            }
-            
-            Task {
-                do {
-                    try await self.fetchTokenIfNeeded()
-                } catch {
-                    self.addLog("[PreloadData error - token]: \(error)")
-                }
+        Task {
+            do {
+                try await self.fetchTokenIfNeeded()
+            } catch {
+                self.addLog("[PreloadData error - token]: \(error)")
             }
         }
     }
