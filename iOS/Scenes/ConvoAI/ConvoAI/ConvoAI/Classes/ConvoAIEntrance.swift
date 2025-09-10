@@ -12,6 +12,7 @@ import SVProgressHUD
 @objcMembers
 public class ConvoAIEntrance: NSObject {
     public static let kSceneName = "ConvoAI"
+    public static let reportSceneId = "ConvoAI_iOS"
 //    public static func voiceAgentScene(viewController: UIViewController) {
 //        let vc = ChatViewController()
 //        viewController.navigationController?.pushViewController(vc, animated: true)
