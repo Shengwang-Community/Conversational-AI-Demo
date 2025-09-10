@@ -815,9 +815,6 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
         )
     }
 
-
-
-
     private fun showRoomEndDialog() {
         if (isFinishing || isDestroyed) return
         val mins: String = (CovAgentManager.roomExpireTime / 60).toInt().toString()

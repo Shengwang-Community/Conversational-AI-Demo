@@ -62,7 +62,7 @@
             android:screenOrientation="portrait" />
 
         <activity
-            android:name=".ui.mine.CovProfileAddressActivity"
+            android:name=".ui.mine.CovProfileGenderActivity"
             android:configChanges="locale|layoutDirection"
             android:exported="false"
             android:screenOrientation="portrait" />

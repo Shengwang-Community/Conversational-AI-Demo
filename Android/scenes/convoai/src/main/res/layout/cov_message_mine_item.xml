@@ -20,7 +20,7 @@
             android:layout_marginEnd="6dp"
             android:scaleType="centerCrop"
             app:shapeAppearance="@style/CommonRoundShape"
-            android:src="@drawable/scene_detail_message_list_user" />
+            android:src="@drawable/common_default_user_avatar" />
 
         <TextView
             android:id="@+id/tv_message_title"

@@ -2,7 +2,6 @@ package io.agora.scene.convoai.ui.main
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.util.Log
 import android.view.View
 import androidx.activity.viewModels
@@ -10,6 +9,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.debugMode.DebugSupportActivity
 import io.agora.scene.common.debugMode.DebugTabDialog
 import io.agora.scene.common.util.TimeUtils
@@ -61,6 +61,9 @@ class CovMainActivity : DebugSupportActivity<CovActivityMainBinding>() {
                 when (state) {
                     is LoginState.Success -> {
                         initializeFragments()
+                        if (state.user.nickname.isEmpty()) {
+                            autoGenerateNickname()
+                        }
                     }
 
                     is LoginState.LoggedOut -> {
@@ -89,6 +92,22 @@ class CovMainActivity : DebugSupportActivity<CovActivityMainBinding>() {
         setupViewPager()
         setupBottomNavigation()
         hideLoadingState()
+    }
+
+    private fun autoGenerateNickname() {
+        // Since user can access this fragment, they must be logged in
+        val userInfo = SSOUserManager.userInfo
+        if (userInfo != null) {
+            // Check if user has no nickname and auto-generate one
+            if (userInfo.nickname.isEmpty()) {
+                userViewModel.autoGenerateNickname { result ->
+                    result.onSuccess { generatedNickname ->
+
+                    }.onFailure { exception ->
+                    }
+                }
+            }
+        }
     }
 
     private fun showLoadingState() {

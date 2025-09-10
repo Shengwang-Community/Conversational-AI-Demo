@@ -30,7 +30,14 @@ object SSOUserManager {
         return mToken
     }
 
-    val accountUid: String get() = mUserInfo?.accountUid ?: ""
+    val accountUid: String get() = userInfo?.accountUid ?: ""
+
+    val userInfo: SSOUserInfo? get() {
+        if (mUserInfo == null) {
+            loadUserFromLocal()
+        }
+        return mUserInfo
+    }
 
     @JvmStatic
     fun logout() {
@@ -48,5 +55,17 @@ object SSOUserManager {
             ""
         }
         LocalStorageUtil.putString(CURRENT_SSO_USER, userString)
+    }
+
+    private fun loadUserFromLocal() {
+        val userString = LocalStorageUtil.getString(CURRENT_SSO_USER, "")
+        if (userString.isNotEmpty()) {
+            try {
+                mUserInfo = GsonTools.toBean(userString, SSOUserInfo::class.java)
+            } catch (e: Exception) {
+                CommonLogger.e(TAG, "Failed to load user info from local storage: ${e.message}")
+                mUserInfo = null
+            }
+        }
     }
 }

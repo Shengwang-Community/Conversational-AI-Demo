@@ -3,7 +3,9 @@ package io.agora.scene.convoai.ui.mine
 import android.app.Activity
 import android.content.Intent
 import android.view.ViewGroup
+import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
+import io.agora.scene.common.net.ApiReport
 import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getStatusBarHeight
@@ -48,7 +50,13 @@ class CovProfilePrivacyActivity : BaseActivity<CovActivityProfilePrivacyBinding>
             }
 
             clPersonalDataChecklist.setOnClickListener {
-                ToastUtil.show("click personal data checklist!")
+                val stringBuilder =
+                    StringBuilder(ServerConfig.personalDataUrl)
+                        .append("?token=").append(SSOUserManager.getToken())
+                        .append("&app_id=").append(ServerConfig.rtcAppId)
+                        .append("&scene_id=").append(ApiReport.SCENE_ID)
+
+                TermsActivity.startActivity(this@CovProfilePrivacyActivity, stringBuilder.toString())
             }
 
             clFilingNo.setOnClickListener {
