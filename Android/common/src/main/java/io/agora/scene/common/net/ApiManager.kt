@@ -116,6 +116,69 @@ object ApiManager {
         }
     }
 
+    /**
+     * Update user information
+     * @param nickname User nickname (optional, will use current value if empty)
+     * @param gender User gender (male/female, optional, will use current value if empty)
+     * @param birthday User birthday (format: 1990/2/14, optional, will use current value if empty)
+     * @param bio User bio (optional, will use current value if empty)
+     * @param onResult Result callback
+     */
+    fun updateUserInfo(
+        nickname: String = "",
+        gender: String = "",
+        birthday: String = "",
+        bio: String = "",
+        onResult: (Result<Unit>) -> Unit
+    ) {
+        val token = SSOUserManager.getToken()
+        if (token.isEmpty()) {
+            onResult(Result.failure(Exception("No valid token found")))
+            return
+        }
+
+        val currentUser = SSOUserManager.userInfo
+        
+        // Use provided values or fallback to current user info, then to empty string
+        val finalNickname = nickname.ifEmpty { currentUser?.nickname ?: "" }
+        val finalGender = gender.ifEmpty { currentUser?.gender ?: "" }
+        val finalBirthday = birthday.ifEmpty { currentUser?.birthday ?: "" }
+        val finalBio = bio.ifEmpty { currentUser?.bio ?: "" }
+
+        scope.launch {
+            runCatching {
+                getService(ApiManagerService::class.java).updateUserInfo(
+                    token = "Bearer $token",
+                    request = UpdateUserInfoRequest(
+                        nickname = finalNickname,
+                        gender = finalGender,
+                        birthday = finalBirthday,
+                        bio = finalBio
+                    )
+                )
+            }.onSuccess { response ->
+                if (response.isSuccess) {
+                    // Update local user info with new values
+                    currentUser?.let { user ->
+                        val updatedUser = user.copy(
+                            nickname = finalNickname,
+                            gender = finalGender,
+                            birthday = finalBirthday,
+                            bio = finalBio
+                        )
+                        SSOUserManager.saveUser(updatedUser)
+                    }
+                    onResult(Result.success(Unit))
+                } else {
+                    onResult(Result.failure(Exception("Update user info failed: ${response.message}")))
+                }
+            }.onFailure { exception ->
+                CommonLogger.e(TAG, "Update user info failed: ${exception.message}")
+                onResult(Result.failure(exception))
+            }
+        }
+    }
+
     // ==================== Upload Related APIs ====================
 
     /**

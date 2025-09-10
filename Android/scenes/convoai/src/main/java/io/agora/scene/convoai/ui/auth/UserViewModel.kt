@@ -110,4 +110,74 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
         SSOUserManager.logout()
         _loginState.value = LoginState.LoggedOut
     }
+
+    private fun generateRandomNickname(): String {
+        val adjectives =
+            getApplication<Application>().resources.getStringArray(io.agora.scene.convoai.R.array.cov_nickname_adjectives)
+        val nouns =
+            getApplication<Application>().resources.getStringArray(io.agora.scene.convoai.R.array.cov_nickname_nouns)
+
+        val randomAdjective = adjectives.random()
+        val randomNoun = nouns.random()
+        return "$randomAdjective$randomNoun"
+    }
+
+    /**
+     * Auto generate nickname for new users and update via API
+     * @param onResult Result callback
+     */
+    fun autoGenerateNickname(onResult: (Result<String>) -> Unit) {
+        val randomNickname = generateRandomNickname()
+        updateUserInfo(
+            nickname = randomNickname,
+            onResult = { result ->
+                result.onSuccess {
+                    onResult(Result.success(randomNickname))
+                }.onFailure { exception ->
+                    onResult(Result.failure(exception))
+                }
+            }
+        )
+    }
+
+    /**
+     * Update user information
+     * @param nickname User nickname
+     * @param gender User gender (male/female)
+     * @param birthday User birthday (format: 1990/2/14)
+     * @param bio User bio
+     * @param onResult Result callback
+     */
+    fun updateUserInfo(
+        nickname: String = "",
+        gender: String = "",
+        birthday: String = "",
+        bio: String = "",
+        onResult: (Result<Unit>) -> Unit
+    ) {
+        ApiManager.updateUserInfo(
+            nickname = nickname,
+            gender = gender,
+            birthday = birthday,
+            bio = bio
+        ) { result ->
+            result.onSuccess {
+                // Update local user info after successful API call
+                val currentUser = SSOUserManager.userInfo
+                currentUser?.let { user ->
+                    val updatedUser = user.copy(
+                        nickname = nickname.ifEmpty { user.nickname },
+                        gender = gender.ifEmpty { user.gender },
+                        birthday = birthday.ifEmpty { user.birthday },
+                        bio = bio.ifEmpty { user.bio }
+                    )
+                    SSOUserManager.saveUser(updatedUser)
+                    // Don't update _loginState to avoid triggering MainActivity refresh
+                }
+                onResult(Result.success(Unit))
+            }.onFailure { exception ->
+                onResult(Result.failure(exception))
+            }
+        }
+    }
 }

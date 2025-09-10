@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Random nickname adjectives -->
+    <string-array name="cov_nickname_adjectives">
+        <item>暖</item>
+        <item>柔</item>
+        <item>轻</item>
+        <item>淡</item>
+        <item>微</item>
+        <item>浅</item>
+        <item>软</item>
+        <item>绵</item>
+        <item>净</item>
+        <item>纯</item>
+        <item>空</item>
+        <item>寂</item>
+        <item>默</item>
+        <item>幻</item>
+        <item>谜</item>
+        <item>韵</item>
+        <item>绪</item>
+        <item>念</item>
+        <item>思</item>
+        <item>忆</item>
+        <item>春</item>
+        <item>夏</item>
+        <item>秋</item>
+        <item>冬</item>
+        <item>昼</item>
+        <item>夜</item>
+        <item>晨</item>
+        <item>昏</item>
+        <item>岁</item>
+        <item>月</item>
+    </string-array>
+
+    <!-- Random nickname nouns -->
+    <string-array name="cov_nickname_nouns">
+        <item>云</item>
+        <item>星</item>
+        <item>月</item>
+        <item>日</item>
+        <item>霞</item>
+        <item>虹</item>
+        <item>风</item>
+        <item>雨</item>
+        <item>雪</item>
+        <item>雾</item>
+        <item>龙</item>
+        <item>凤</item>
+        <item>鹤</item>
+        <item>鹿</item>
+        <item>蝶</item>
+        <item>蝉</item>
+        <item>萤</item>
+        <item>雁</item>
+        <item>鸥</item>
+        <item>鹭</item>
+        <item>光</item>
+        <item>影</item>
+        <item>晨</item>
+        <item>昏</item>
+        <item>昼</item>
+        <item>夜</item>
+        <item>秒</item>
+        <item>分</item>
+        <item>时</item>
+        <item>季</item>
+    </string-array>
+</resources>

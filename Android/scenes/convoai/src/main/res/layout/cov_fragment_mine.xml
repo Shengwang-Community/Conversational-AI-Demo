@@ -22,9 +22,8 @@
             android:id="@+id/iv_user_avatar"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="@drawable/app_bg_mine_avatar"
             android:padding="1dp"
-            android:src="@drawable/common_default_boy" />
+            android:src="@drawable/common_default_user_avatar" />
 
         <TextView
             android:id="@+id/tv_nickname"
@@ -33,7 +32,7 @@
             android:layout_marginStart="12dp"
             android:drawableEnd="@drawable/icon_dropleft"
             android:drawableTint="@color/ai_icontext2"
-            android:text="xxxxxx"
+            android:text="@string/cov_mine_not_set"
             android:textColor="@color/ai_icontext1"
             android:textSize="15sp" />
     </LinearLayout>
@@ -75,6 +74,7 @@
         android:layout_marginBottom="30dp"
         android:background="@drawable/app_avatar_boy_cn"
         android:visibility="gone"
+        tools:visibility="visible"
         app:layout_constraintBottom_toBottomOf="@+id/view_blue"
         app:layout_constraintDimensionRatio="194:239"
         app:layout_constraintEnd_toEndOf="parent"

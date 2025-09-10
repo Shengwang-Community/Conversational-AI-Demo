@@ -1,8 +1,12 @@
 package io.agora.scene.convoai.ui.mine
 
+import android.graphics.Color
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.isVisible
+import io.agora.scene.common.R
+import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.common.ui.BaseFragment
 import io.agora.scene.common.util.toast.ToastUtil
@@ -42,6 +46,12 @@ class CovMineFragment : BaseFragment<CovFragmentMineBinding>() {
 
     override fun initView() {
         Log.d("UserViewModel", "UserViewModel:$userViewModel $this")
+        setupClickListeners()
+        updateDeviceCount()
+        updateUserInfoFromManager()
+    }
+
+    private fun setupClickListeners() {
         mBinding?.apply {
             layoutPersona.setOnClickListener {
                 DebugConfigSettings.checkClickDebug()
@@ -53,7 +63,7 @@ class CovMineFragment : BaseFragment<CovFragmentMineBinding>() {
 
             tvSelectAddress.setOnClickListener {
                 val activity = activity ?: return@setOnClickListener
-                CovProfileAddressActivity.startActivity(activity)
+                CovProfileGenderActivity.startActivity(activity)
             }
 
             tvSelectBirthday.setOnClickListener {
@@ -69,7 +79,6 @@ class CovMineFragment : BaseFragment<CovFragmentMineBinding>() {
                 val activity = activity ?: return@setOnClickListener
                 CovIotDeviceListActivity.startActivity(activity)
             }
-            updateDeviceCount()
 
             clPrivacy.setOnClickListener {
                 val activity = activity ?: return@setOnClickListener
@@ -82,9 +91,64 @@ class CovMineFragment : BaseFragment<CovFragmentMineBinding>() {
         }
     }
 
+    private fun updateUserInfo(userInfo: io.agora.scene.common.net.SSOUserInfo) {
+        mBinding?.apply {
+            // Update nickname
+            tvNickname.text = userInfo.nickname.ifEmpty {
+                getString(io.agora.scene.convoai.R.string.cov_mine_not_set)
+            }
+
+            // Update birthday
+            tvSelectBirthday.text =
+                userInfo.birthday.ifEmpty { getString(io.agora.scene.convoai.R.string.cov_mine_select) }
+
+            // Update bio/introduction
+            tvIntroduction.text =
+                userInfo.bio.ifEmpty { getString(io.agora.scene.convoai.R.string.cov_mine_about_me_hint) }
+
+            // Update gender display
+            when (userInfo.gender.lowercase()) {
+                "male" -> {
+                    ivUserAvatar.setImageResource(R.drawable.common_default_male)
+                    ivUserAvatar.setBackgroundResource(R.drawable.app_bg_mine_avatar)
+                    tvSelectAddress.text = getString(io.agora.scene.convoai.R.string.cov_mine_mr)
+                    viewGotoCreate.isVisible = false
+                    viewAvatar.isVisible = true
+                    viewAvatar.setBackgroundResource(R.drawable.app_avatar_boy_cn)
+                }
+
+                "female" -> {
+                    ivUserAvatar.setImageResource(R.drawable.common_default_female)
+                    ivUserAvatar.setBackgroundResource(R.drawable.app_bg_mine_avatar)
+                    tvSelectAddress.text = getString(io.agora.scene.convoai.R.string.cov_mine_ms)
+                    viewGotoCreate.isVisible = false
+                    viewAvatar.isVisible = true
+                    viewAvatar.setBackgroundResource(R.drawable.app_avatar_gril_cn)
+                }
+
+                else -> {
+                    ivUserAvatar.setImageResource(R.drawable.common_default_user_avatar)
+                    ivUserAvatar.setBackgroundColor(Color.TRANSPARENT)
+                    tvSelectAddress.text = getString(io.agora.scene.convoai.R.string.cov_mine_select)
+                    viewGotoCreate.isVisible = true
+                    viewAvatar.isVisible = false
+                }
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         updateDeviceCount()
+        // Update user info when returning from other activities
+        updateUserInfoFromManager()
+    }
+
+    private fun updateUserInfoFromManager() {
+        val userInfo = SSOUserManager.userInfo
+        if (userInfo != null) {
+            updateUserInfo(userInfo)
+        }
     }
 
     private fun updateDeviceCount() {

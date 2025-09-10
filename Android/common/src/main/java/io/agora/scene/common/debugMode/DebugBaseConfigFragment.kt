@@ -1,5 +1,6 @@
 package io.agora.scene.common.debugMode
 
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.rtc2.RtcEngine
 import io.agora.rtm.RtmClient
+import io.agora.scene.common.BuildConfig
 import io.agora.scene.common.R
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.databinding.CommonDebugBaseConfigFragmentBinding
@@ -60,6 +62,7 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
             divider.setDrawable(resources.getDrawable(R.drawable.shape_divider_line, null))
             rcOptions.addItemDecoration(divider)
 
+            mtvAppVersion.text = ServerConfig.appVersionName + "-" + ServerConfig.appBuildNo
             mtvRtcVersion.text = RtcEngine.getSdkVersion()
             mtvRtmVersion.text = RtmClient.getVersion()
 

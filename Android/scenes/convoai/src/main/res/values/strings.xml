@@ -218,7 +218,7 @@
     <string name="cov_mine_ms">女士</string>
     <string name="cov_mine_your_birthday">您的生日</string>
     <string name="cov_mine_about_me">自我介绍</string>
-    <string name="cov_mine_no_nickname">未设置昵称</string>
+    <string name="cov_mine_not_set">点击设置</string>
     <string name="cov_mine_select">请选择</string>
     <string name="cov_mine_about_me_hint">设定自我介绍，让 AI agent 更了解您</string>
     <string name="cov_mine_iot_devices">我的对话式 AI 设备</string>
@@ -230,4 +230,8 @@
     <string name="cov_settings_personal_data_checklist">个人信息收集清单</string>
     <string name="cov_settings_filing_no">备案号</string>
     <string name="cov_settings_filing_no_content">沪xxxxxx</string>
+    <string name="cov_settings_update_success">更新成功</string>
+    <string name="cov_settings_update_failed">更新失败</string>
+    <string name="cov_mine_nickname_hint">您希望 AI agent 怎么称呼您？</string>
+    <string name="cov_mine_nickname_tips">昵称不能超过15个字符</string>
 </resources>

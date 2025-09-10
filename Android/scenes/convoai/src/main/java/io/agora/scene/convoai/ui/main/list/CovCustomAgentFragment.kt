@@ -16,6 +16,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.agora.scene.common.net.ApiReport
 import io.agora.scene.common.ui.BaseFragment
 import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.util.GlideImageLoader
@@ -318,6 +319,7 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
                         adapter.updateDataToTop(selectedPreset)
                         CovAgentManager.setPreset(selectedPreset)
                         context?.let {
+                            ApiReport.report(selectedPreset.display_name)
                             it.startActivity(Intent(it, CovLivingActivity::class.java))
                         }
                     } else {

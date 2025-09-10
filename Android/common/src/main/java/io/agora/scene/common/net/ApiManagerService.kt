@@ -10,12 +10,11 @@ import okhttp3.RequestBody
 
 interface ApiManagerService {
 
-    companion object{
+    companion object {
         const val requestUploadLog = "v1/convoai/upload/log"
-        const val ssoUserInfo = "v1/convoai/sso/userInfo"
     }
 
-    @GET(ssoUserInfo)
+    @GET("v1/convoai/sso/userInfo")
     suspend fun ssoUserInfo(@Header("Authorization") token: String): BaseResponse<SSOUserInfo>
 
     @Multipart
@@ -47,4 +46,10 @@ interface ApiManagerService {
         @Part("channel_name") channelName: RequestBody,
         @Part file: MultipartBody.Part
     ): BaseResponse<UploadFile>
+
+    @POST("v1/convoai/sso/user/update")
+    suspend fun updateUserInfo(
+        @Header("Authorization") token: String,
+        @retrofit2.http.Body request: UpdateUserInfoRequest
+    ): BaseResponse<Unit>
 }

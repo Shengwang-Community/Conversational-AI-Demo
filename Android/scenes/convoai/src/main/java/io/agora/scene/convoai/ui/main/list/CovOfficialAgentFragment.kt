@@ -9,6 +9,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.common.R
+import io.agora.scene.common.net.ApiReport
 import io.agora.scene.common.ui.BaseFragment
 import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.convoai.CovLogger
@@ -123,6 +124,7 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
         CovAgentManager.setPreset(preset)
         CovLogger.d(TAG, "Selected preset: ${preset.name}")
         context?.let {
+            ApiReport.report(preset.display_name)
             it.startActivity(Intent(it, CovLivingActivity::class.java))
         }
     }
