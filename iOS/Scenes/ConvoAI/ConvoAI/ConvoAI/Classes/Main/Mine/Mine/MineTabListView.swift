@@ -37,7 +37,7 @@ class MineTabListView: UIView {
     // Privacy Item
     private lazy var privacyItem: MineSettingItemView = {
         let view = MineSettingItemView(frame: .zero)
-        view.titleLabel.text = "隐私"
+        view.titleLabel.text = ResourceManager.L10n.Mine.privacyTitle
         view.iconImageView.image = UIImage.ag_named("ic_mine_privacy")
         view.button.addTarget(self, action: #selector(onTapPrivacy(_:)), for: .touchUpInside)
         return view
@@ -46,7 +46,7 @@ class MineTabListView: UIView {
     // Settings Item
     private lazy var settingsItem: MineSettingItemView = {
         let view = MineSettingItemView(frame: .zero)
-        view.titleLabel.text = "设置"
+        view.titleLabel.text = ResourceManager.L10n.Mine.settingsTitle
         view.iconImageView.image = UIImage.ag_named("ic_mine_setting")
         view.button.addTarget(self, action: #selector(onTapSettings(_:)), for: .touchUpInside)
         view.bottomLine.isHidden = true

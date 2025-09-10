@@ -23,7 +23,7 @@ class MineIotView: UIView {
     
     private lazy var devicesTitleLabel: UILabel = {
         let label = UILabel()
-        label.text = "我的对话式 AI 设备"
+        label.text = ResourceManager.L10n.Mine.iotDevicesTitle
         label.textColor = UIColor.themColor(named: "ai_icontext1")
         label.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         return label
@@ -36,7 +36,7 @@ class MineIotView: UIView {
     
     private lazy var devicesStatusLabel: UILabel = {
         let label = UILabel()
-        label.text = "已绑定2个设备"
+        label.text = String(format: ResourceManager.L10n.Mine.iotDevicesCount, 2)
         label.textColor = UIColor.themColor(named: "ai_brand_black8")
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         label.textAlignment = .left
@@ -102,6 +102,6 @@ class MineIotView: UIView {
     
     // MARK: - Public Methods
     func updateDeviceCount(_ count: Int) {
-        devicesStatusLabel.text = "已绑定\(count)个设备"
+        devicesStatusLabel.text = String(format: ResourceManager.L10n.Mine.iotDevicesCount, count)
     }
 }

@@ -10,94 +10,48 @@ import Common
 import SnapKit
 import SVProgressHUD
 
-class BioSettingViewController: UIViewController {
+class BioSettingViewController: BaseViewController {
     
     // MARK: - UI Components
-    private lazy var headerView: UIView = {
+    private lazy var scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.showsVerticalScrollIndicator = false
+        return scrollView
+    }()
+    
+    private lazy var contentView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor.themColor(named: "ai_fill1")
         return view
     }()
     
-    private lazy var backButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-        button.tintColor = .white
-        button.addTarget(self, action: #selector(backButtonTapped), for: .touchUpInside)
-        return button
-    }()
-    
-    private lazy var titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = ResourceManager.L10n.Mine.bioSettingTitle
-        label.textColor = .white
-        label.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        label.textAlignment = .center
-        return label
-    }()
-    
-    private lazy var inputContainerView: UIView = {
+    private lazy var bioInputContainerView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor.themColor(named: "ai_fill2")
-        view.layer.cornerRadius = 12
+        view.backgroundColor = UIColor(red: 0.24, green: 0.24, blue: 0.30, alpha: 1.0) // #3E3E4D
+        view.layer.cornerRadius = 16
         return view
     }()
     
     private lazy var bioTextView: UITextView = {
         let textView = UITextView()
-        textView.textColor = UIColor.themColor(named: "ai_icontext1")
-        textView.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        textView.textColor = .white
+        textView.font = UIFont.systemFont(ofSize: 13, weight: .regular)
         textView.backgroundColor = .clear
-        textView.textContainerInset = UIEdgeInsets(top: 16, left: 12, bottom: 16, right: 12)
+        textView.textContainerInset = UIEdgeInsets(top: 18, left: 18, bottom: 18, right: 18)
         textView.delegate = self
         textView.isScrollEnabled = true
         textView.showsVerticalScrollIndicator = false
         return textView
     }()
     
-    private lazy var placeholderLabel: UILabel = {
-        let label = UILabel()
-        label.text = ResourceManager.L10n.Mine.bioPlaceholder
-        label.textColor = UIColor.themColor(named: "ai_icontext3")
-        label.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-        label.numberOfLines = 0
-        return label
-    }()
-    
-    private lazy var characterCountLabel: UILabel = {
-        let label = UILabel()
-        label.text = "0/200"
-        label.textColor = UIColor.themColor(named: "ai_icontext3")
-        label.font = UIFont.systemFont(ofSize: 12, weight: .regular)
-        label.textAlignment = .right
-        return label
-    }()
-    
-    private lazy var tipsLabel: UILabel = {
-        let label = UILabel()
-        label.text = ResourceManager.L10n.Mine.bioTips
-        label.textColor = UIColor.themColor(named: "ai_icontext3")
-        label.font = UIFont.systemFont(ofSize: 14, weight: .regular)
-        label.numberOfLines = 0
-        label.textAlignment = .left
-        return label
-    }()
-    
-    private lazy var saveButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle(ResourceManager.L10n.Mine.save, for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor.themColor(named: "ai_brand_main6")
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        button.layer.cornerRadius = 8
-        button.addTarget(self, action: #selector(saveButtonTapped), for: .touchUpInside)
-        button.isEnabled = false
-        button.alpha = 0.6
-        return button
+    private lazy var examplesStackView: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 8
+        return stack
     }()
     
     // MARK: - Properties
-    private let maxCharacterCount = 200
+    private let maxCharacterCount = 500
     private var originalBio: String = ""
     
     // MARK: - Lifecycle
@@ -106,12 +60,10 @@ class BioSettingViewController: UIViewController {
         setupUI()
         setupConstraints()
         loadCurrentBio()
-        setupTextViewObserver()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        navigationController?.setNavigationBarHidden(true, animated: true)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -121,179 +73,109 @@ class BioSettingViewController: UIViewController {
     
     // MARK: - Setup Methods
     private func setupUI() {
-        view.backgroundColor = UIColor.themColor(named: "ai_fill1")
+        view.backgroundColor = UIColor(red: 0.16, green: 0.16, blue: 0.18, alpha: 1.0) // #292A2D
         
-        view.addSubview(headerView)
-        headerView.addSubview(backButton)
-        headerView.addSubview(titleLabel)
-        view.addSubview(inputContainerView)
-        inputContainerView.addSubview(bioTextView)
-        inputContainerView.addSubview(placeholderLabel)
-        inputContainerView.addSubview(characterCountLabel)
-        view.addSubview(tipsLabel)
-        view.addSubview(saveButton)
+        // Configure navigation bar
+        naviBar.title = "自我介绍"
+        
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        
+        contentView.addSubview(bioInputContainerView)
+        bioInputContainerView.addSubview(bioTextView)
+        
+        contentView.addSubview(examplesStackView)
+        
+        // Add example bio cards
+        setupExampleCards()
+        
+        // Add tap gesture to dismiss keyboard
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        view.addGestureRecognizer(tapGesture)
     }
     
     private func setupConstraints() {
-        headerView.snp.makeConstraints { make in
-            make.top.left.right.equalToSuperview()
-            make.height.equalTo(60)
+        scrollView.snp.makeConstraints { make in
+            make.top.equalTo(naviBar.snp.bottom)
+            make.left.right.bottom.equalToSuperview()
         }
         
-        backButton.snp.makeConstraints { make in
-            make.left.equalToSuperview().offset(16)
-            make.centerY.equalToSuperview()
-            make.width.height.equalTo(44)
+        contentView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+            make.width.equalToSuperview()
         }
         
-        titleLabel.snp.makeConstraints { make in
-            make.center.equalToSuperview()
-        }
-        
-        inputContainerView.snp.makeConstraints { make in
-            make.top.equalTo(headerView.snp.bottom).offset(30)
-            make.left.equalToSuperview().offset(20)
-            make.right.equalToSuperview().offset(-20)
-            make.height.equalTo(150)
+        bioInputContainerView.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(20)
+            make.left.right.equalToSuperview().inset(16)
+            make.height.equalTo(250)
         }
         
         bioTextView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
         
-        placeholderLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(16)
-            make.left.equalToSuperview().offset(16)
-            make.right.equalToSuperview().offset(-16)
-        }
-        
-        characterCountLabel.snp.makeConstraints { make in
-            make.bottom.equalToSuperview().offset(-16)
-            make.right.equalToSuperview().offset(-16)
-            make.width.equalTo(50)
-        }
-        
-        tipsLabel.snp.makeConstraints { make in
-            make.top.equalTo(inputContainerView.snp.bottom).offset(20)
-            make.left.equalToSuperview().offset(20)
-            make.right.equalToSuperview().offset(-20)
-        }
-        
-        saveButton.snp.makeConstraints { make in
-            make.left.equalToSuperview().offset(20)
-            make.right.equalToSuperview().offset(-20)
-            make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-20)
-            make.height.equalTo(50)
+        examplesStackView.snp.makeConstraints { make in
+            make.top.equalTo(bioInputContainerView.snp.bottom).offset(20)
+            make.left.right.equalToSuperview().inset(16)
+            make.bottom.equalToSuperview().offset(-20)
         }
     }
+    
+    private func setupExampleCards() {
+        let examples = [
+            "我宅家养多肉、学做菜，细心又爱帮朋友。妈妈做的番茄炒蛋是本命，夏天的冰镇荔枝，清甜劲儿超治愈～",
+            "互联网运营 er 一枚，日常跟数据、文案死磕，擅长抓热点做内容。闲了爱撸代码解压，奶茶续命党，生椰拿铁是本命，求搭子聊运营干货～",
+            "前端开发仔报道，沉迷调样式、优化交互，追新技术像追更。爱喝冰美式提效，周末宅家肝游戏，求技术搭子交流 bug 解决方案～",
+            "产品经理一枚，天天画原型、盯迭代，擅长抠需求细节。咖啡不离手，偏爱冷萃，闲了刷行业报告，求同频小伙伴唠产品思路～"
+        ]
+        
+        for example in examples {
+            let card = BioExampleCard()
+            card.configure(text: example)
+            card.onTap = { [weak self] in
+                self?.bioTextView.text = card.text
+            }
+            examplesStackView.addArrangedSubview(card)
+        }
+    }
+    
     
     private func loadCurrentBio() {
         // Load current bio from UserCenter or other sources
 //        if let userInfo = UserCenter.shared.getUserInfo() {
 //            originalBio = userInfo.bio ?? ""
 //            bioTextView.text = originalBio
-//            updateCharacterCount()
-//            updatePlaceholderVisibility()
 //        }
     }
     
-    private func setupTextViewObserver() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(textViewDidChange),
-            name: UITextView.textDidChangeNotification,
-            object: bioTextView
-        )
-    }
-    
-    private func updateCharacterCount() {
-        let currentCount = bioTextView.text.count
-        characterCountLabel.text = "\(currentCount)/\(maxCharacterCount)"
-        
-        // Update save button state
-        let hasChanges = bioTextView.text != originalBio
-        let isValidLength = currentCount <= maxCharacterCount
-        
-        saveButton.isEnabled = hasChanges && isValidLength
-        saveButton.alpha = saveButton.isEnabled ? 1.0 : 0.6
-    }
-    
-    private func updatePlaceholderVisibility() {
-        placeholderLabel.isHidden = !bioTextView.text.isEmpty
-    }
-    
     // MARK: - Actions
-    @objc private func backButtonTapped() {
-        // Check if there are unsaved changes
+    override func viewWillDisappearAndPop() {
+        super.viewWillDisappearAndPop()
         if bioTextView.text != originalBio {
             showUnsavedChangesAlert()
-        } else {
-            navigationController?.popViewController(animated: true)
         }
     }
     
-    @objc private func textViewDidChange() {
-        updateCharacterCount()
-        updatePlaceholderVisibility()
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
     }
     
-    @objc private func saveButtonTapped() {
-        let newBio = bioTextView.text ?? ""
-        
-        if newBio.count > maxCharacterCount {
-            SVProgressHUD.showError(withStatus: ResourceManager.L10n.Mine.bioTooLong)
-            return
-        }
-        
-        // Save bio
-        saveBio(newBio)
-    }
-    
-    private func saveBio(_ bio: String) {
-        // Show loading
-        SVProgressHUD.show(withStatus: ResourceManager.L10n.Mine.saving)
-        
-        // Simulate save process
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            SVProgressHUD.dismiss()
-            
-            // Save to UserCenter
-//            UserCenter.shared.setBio(bio)
-            
-            // Update original bio
-            self.originalBio = bio
-            
-            // Show success message
-            SVProgressHUD.showSuccess(withStatus: ResourceManager.L10n.Mine.bioSaved)
-            
-            // Update save button state
-            self.updateCharacterCount()
-            
-            // Pop back to previous view
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                self.navigationController?.popViewController(animated: true)
-            }
-        }
-    }
     
     private func showUnsavedChangesAlert() {
         let alert = UIAlertController(
-            title: ResourceManager.L10n.Mine.unsavedChangesTitle,
-            message: ResourceManager.L10n.Mine.unsavedChangesMessage,
+            title: "未保存的更改",
+            message: "您有未保存的更改，确定要离开吗？",
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: ResourceManager.L10n.Mine.discard, style: .destructive) { _ in
+        alert.addAction(UIAlertAction(title: "放弃", style: .destructive) { _ in
             self.navigationController?.popViewController(animated: true)
         })
         
-        alert.addAction(UIAlertAction(title: ResourceManager.L10n.Mine.keepEditing, style: .cancel))
+        alert.addAction(UIAlertAction(title: "继续编辑", style: .cancel))
         
         present(alert, animated: true)
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
     }
 }
 
@@ -309,5 +191,86 @@ extension BioSettingViewController: UITextViewDelegate {
         }
         
         return true
+    }
+}
+
+// MARK: - BioExampleCard
+class BioExampleCard: UIView {
+    
+    // MARK: - UI Components
+    private lazy var arrowIcon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage.ag_named("ic_mine_bio_arrow")
+        imageView.tintColor = UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.75)
+        imageView.contentMode = .scaleAspectFit
+        return imageView
+    }()
+    
+    private lazy var textLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .white
+        label.font = UIFont.systemFont(ofSize: 13, weight: .regular)
+        label.numberOfLines = 0
+        return label
+    }()
+    
+    private lazy var tapButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.backgroundColor = .clear
+        button.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
+        button.setBackgroundColor(color: UIColor.themColor(named: "ai_click_app"), forState: .highlighted)
+        button.layer.cornerRadius = 12
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.themColor(named: "ai_line1").cgColor
+        return button
+    }()
+    
+    // MARK: - Properties
+    var text: String = ""
+    var onTap: (() -> Void)?
+    
+    // MARK: - Initialization
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    // MARK: - Setup Methods
+    private func setupUI() {
+        addSubview(tapButton)
+        addSubview(arrowIcon)
+        addSubview(textLabel)
+        
+        arrowIcon.snp.makeConstraints { make in
+            make.left.equalToSuperview().offset(8)
+            make.top.equalToSuperview().offset(8)
+            make.width.height.equalTo(20)
+        }
+        
+        textLabel.snp.makeConstraints { make in
+            make.left.equalTo(arrowIcon.snp.right).offset(6)
+            make.right.equalToSuperview().offset(-10)
+            make.top.equalToSuperview().offset(8)
+            make.bottom.equalToSuperview().offset(-8)
+        }
+        
+        tapButton.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+    }
+    
+    // MARK: - Configuration
+    func configure(text: String) {
+        self.text = text
+        textLabel.text = text
+    }
+    
+    // MARK: - Actions
+    @objc private func buttonTapped() {
+        onTap?()
     }
 }

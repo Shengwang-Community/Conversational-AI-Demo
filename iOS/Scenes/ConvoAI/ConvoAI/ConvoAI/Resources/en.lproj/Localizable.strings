@@ -302,3 +302,13 @@
 
 // Voiceprint Recording Text
 "settings.voiceprint.recording.text" = "It was the best of times, it was the worst of times,\nit was the age of wisdom, it was the age of foolishness,\nit was the epoch of belief, it was the epoch of incredulity,\nit was the season of Light, it was the season of Darkness,\nit was the spring of hope, it was the winter of despair,\nwe had everything before us, we had nothing before us,\nwe were all going direct to Heaven, we were all going direct the other way.";
+
+// Mine Module
+"mine.persona.title" = "My Conversation Persona";
+"mine.addressing.title" = "Address You As";
+"mine.birthday.title" = "Your Birthday";
+"mine.bio.title" = "Self Introduction";
+"mine.iot.devices.title" = "My Conversational AI Devices";
+"mine.iot.devices.count" = "%d devices connected";
+"mine.privacy.title" = "Privacy";
+"mine.settings.title" = "Settings";

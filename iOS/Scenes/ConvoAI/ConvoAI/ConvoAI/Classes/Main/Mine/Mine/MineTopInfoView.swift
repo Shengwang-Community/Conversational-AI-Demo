@@ -46,10 +46,26 @@ class MineTopInfoView: UIView {
     // Profile Info Button (combines name and arrow)
     private lazy var profileInfoButton: MineInfoButton = {
         let button = MineInfoButton()
-        button.configure(title: "尹希尔") {
-            self.delegate?.mineTopInfoViewDidTapProfile()
-        }
+        button.configure(title: ResourceManager.L10n.Mine.personaTitle)
+        button.tapButton.addTarget(self, action: #selector(profileButtonTapped), for: .touchUpInside)
         return button
+    }()
+
+    private lazy var backBoardImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage.ag_named("img_mine_back_board")
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        return imageView
+    }()
+
+    private lazy var bigAvatarImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 30
+        imageView.layer.masksToBounds = true
+        return imageView
     }()
     
     // Conversation Persona Card
@@ -71,7 +87,7 @@ class MineTopInfoView: UIView {
     
     private lazy var cardTitleLabel: UILabel = {
         let label = UILabel()
-        label.text = "我的对话人设"
+        label.text = ResourceManager.L10n.Mine.personaTitle
         label.textColor = UIColor.themColor(named: "ai_brand_white10")
         label.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         return label
@@ -79,15 +95,14 @@ class MineTopInfoView: UIView {
     
     private lazy var addressingButton: MineInfoButton = {
         let button = MineInfoButton()
-        button.configure(title: "先生") {
-            self.delegate?.mineTopInfoViewDidTapAddressing()
-        }
+        button.configure(title: ResourceManager.L10n.Mine.addressingTitle)
+        button.tapButton.addTarget(self, action: #selector(addressingButtonTapped), for: .touchUpInside)
         return button
     }()
     
     private lazy var addressingLabel: UILabel = {
         let label = UILabel()
-        label.text = "称呼您为"
+        label.text = ResourceManager.L10n.Mine.addressingTitle
         label.textColor = UIColor.themColor(named: "ai_icontext3")
         label.font = UIFont.systemFont(ofSize: 12, weight: .regular)
         return label
@@ -95,7 +110,7 @@ class MineTopInfoView: UIView {
     
     private lazy var birthdayLabel: UILabel = {
         let label = UILabel()
-        label.text = "您的生日"
+        label.text = ResourceManager.L10n.Mine.birthdayTitle
         label.textColor = UIColor.themColor(named: "ai_icontext3")
         label.font = UIFont.systemFont(ofSize: 12, weight: .regular)
         return label
@@ -103,17 +118,14 @@ class MineTopInfoView: UIView {
     
     private lazy var birthdayValueButton: MineInfoButton = {
         let button = MineInfoButton()
-        button.configure(title: "1998/02/02") {
-            self.delegate?.mineTopInfoViewDidTapBirthday()
-        }
+        button.configure(title: "1998/02/02")
+        button.tapButton.addTarget(self, action: #selector(birthdayButtonTapped), for: .touchUpInside)
         return button
     }()
     
-
-    
     private lazy var bioLabel: UILabel = {
         let label = UILabel()
-        label.text = "自我介绍"
+        label.text = ResourceManager.L10n.Mine.bioTitle
         label.textColor = UIColor.themColor(named: "ai_icontext3")
         label.font = UIFont.systemFont(ofSize: 12, weight: .regular)
         return label
@@ -121,9 +133,8 @@ class MineTopInfoView: UIView {
     
     private lazy var bioValueButton: MineInfoButton = {
         let button = MineInfoButton()
-        button.configure(title: "sdksdhjksdjssdhsxcsdksdhjksdjssdhsxcx...") {
-            self.delegate?.mineTopInfoViewDidTapBio()
-        }
+        button.configure(title: "sdksdhjksdjssdhsxcsdksdhjksdjssdhsxcx...")
+        button.tapButton.addTarget(self, action: #selector(bioButtonTapped), for: .touchUpInside)
         return button
     }()
 
@@ -152,6 +163,8 @@ class MineTopInfoView: UIView {
         clipsToBounds = true
         
         addSubview(backgroundImageView)
+        addSubview(backBoardImageView)
+        addSubview(bigAvatarImageView)
         addSubview(avatarImageView)
         addSubview(profileInfoButton)
         
@@ -174,6 +187,17 @@ class MineTopInfoView: UIView {
         
         backgroundImageView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
+        }
+        
+        backBoardImageView.snp.makeConstraints { make in
+            make.top.equalTo(personaCardView).offset(-6)
+            make.right.equalTo(personaCardView).offset(16)
+        }
+        
+        bigAvatarImageView.snp.makeConstraints { make in
+            make.centerX.equalTo(backBoardImageView)
+            make.centerY.equalTo(backBoardImageView).offset(-10)
+            make.width.height.equalTo(60)
         }
         
         avatarImageView.snp.makeConstraints { make in
@@ -245,30 +269,43 @@ class MineTopInfoView: UIView {
     }
     
     // MARK: - Public Methods
-    func updateUserInfo(nickname: String?, birthday: String?, bio: String?) {
+    func updateUserInfo(nickname: String?, addressing: String?, birthday: String?, bio: String?) {
         if let nickname = nickname {
-            profileInfoButton.configure(title: nickname) {
-                self.delegate?.mineTopInfoViewDidTapProfile()
-            }
+            profileInfoButton.configure(title: nickname)
+        }
+        
+        if let addressing = addressing {
+            addressingButton.configure(title: addressing)
         }
         
         if let birthday = birthday {
-            birthdayValueButton.configure(title: birthday) {
-                self.delegate?.mineTopInfoViewDidTapBirthday()
-            }
+            birthdayValueButton.configure(title: birthday)
         }
         
         if let bio = bio {
-            bioValueButton.configure(title: bio) {
-                self.delegate?.mineTopInfoViewDidTapBio()
-            }
+            bioValueButton.configure(title: bio)
         }
     }
     
-    func updateAddressing(_ addressing: String) {
-        addressingButton.configure(title: addressing) {
-            self.delegate?.mineTopInfoViewDidTapAddressing()
-        }
+    func updateBigAvatar(_ image: UIImage?) {
+        bigAvatarImageView.image = image ?? UIImage.ag_named("ic_default_avatar_icon")
+    }
+    
+    // MARK: - Actions
+    @objc private func profileButtonTapped() {
+        delegate?.mineTopInfoViewDidTapProfile()
+    }
+    
+    @objc private func addressingButtonTapped() {
+        delegate?.mineTopInfoViewDidTapAddressing()
+    }
+    
+    @objc private func birthdayButtonTapped() {
+        delegate?.mineTopInfoViewDidTapBirthday()
+    }
+    
+    @objc private func bioButtonTapped() {
+        delegate?.mineTopInfoViewDidTapBio()
     }
 }
 
@@ -276,7 +313,7 @@ class MineTopInfoView: UIView {
 class MineInfoButton: UIView {
     
     // MARK: - UI Components
-    private lazy var titleLabel: UILabel = {
+    let titleLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
@@ -290,15 +327,11 @@ class MineInfoButton: UIView {
         return imageView
     }()
     
-    private lazy var tapButton: UIButton = {
+    let tapButton: UIButton = {
         let button = UIButton(type: .custom)
         button.backgroundColor = .clear
-        button.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
         return button
     }()
-    
-    // MARK: - Properties
-    var onTap: (() -> Void)?
     
     // MARK: - Initialization
     override init(frame: CGRect) {
@@ -339,15 +372,9 @@ class MineInfoButton: UIView {
         }
     }
     
-    // MARK: - Actions
-    @objc private func buttonTapped() {
-        onTap?()
-    }
-    
     // MARK: - Configuration
-    func configure(title: String, onTap: @escaping () -> Void) {
+    func configure(title: String) {
         titleLabel.text = title
-        self.onTap = onTap
     }
     
     func setTitleColor(_ color: UIColor) {

@@ -293,3 +293,13 @@
 "mine.bio.tips" = "自我介绍将显示在您的个人资料中，让其他用户更好地了解您。";
 "mine.bio.too.long" = "自我介绍长度超出限制";
 "mine.bio.saved" = "自我介绍保存成功";
+
+// Mine Module
+"mine.persona.title" = "我的对话人设";
+"mine.addressing.title" = "称呼您为";
+"mine.birthday.title" = "您的生日";
+"mine.bio.title" = "自我介绍";
+"mine.iot.devices.title" = "我的对话式 AI 设备";
+"mine.iot.devices.count" = "已绑定%d个设备";
+"mine.privacy.title" = "隐私";
+"mine.settings.title" = "设置";

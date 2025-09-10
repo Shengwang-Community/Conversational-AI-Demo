@@ -87,7 +87,7 @@ public class AgentViewController: UIViewController {
     }
     
     @objc func onClickInformationButton() {
-        AgentInformationViewController.show(in: self)
+        // AgentInformationViewController removed - functionality moved to MineViewController
     }
     
     func addLog(_ txt: String) {

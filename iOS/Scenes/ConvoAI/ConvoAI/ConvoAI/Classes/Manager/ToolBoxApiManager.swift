@@ -113,4 +113,33 @@ class ToolBoxApiManager: NSObject {
             }
         }, failure: failure)
     }
+    
+    /// Update user information
+    /// - Parameters:
+    ///   - nickname: user nickname
+    ///   - gender: user gender
+    ///   - birthday: user birthday in format "1990/2/14"
+    ///   - bio: user bio/self introduction
+    ///   - success: success callback
+    ///   - failure: failure callback
+    public func updateUserInfo(nickname: String,
+                               gender: String,
+                               birthday: String,
+                               bio: String,
+                               success: NetworkManager.SuccessClosure?,
+                               failure: NetworkManager.FailClosure?) {
+        let url = "\(AppContext.shared.baseServerUrl)/v1/convoai/sso/user/update"
+        
+        let parameters = [
+            "nickname": nickname,
+            "gender": gender,
+            "birthday": birthday,
+            "bio": bio
+        ]
+        
+        NetworkManager.shared.postRequest(urlString: url,
+                                         parameters: parameters,
+                                         success: success,
+                                         failure: failure)
+    }
 }

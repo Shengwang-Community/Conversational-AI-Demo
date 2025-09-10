@@ -8,6 +8,8 @@
 import UIKit
 import Common
 import SnapKit
+import IoT
+import SVProgressHUD
 
 class MineViewController: UIViewController {
     
@@ -75,9 +77,27 @@ class MineViewController: UIViewController {
         if let user = UserCenter.user {
             topInfoView.updateUserInfo(
                 nickname: "尹希尔",
+                addressing: "先生",
                 birthday: "1998/02/02",
                 bio: "sdksdhjksdjssdhsxcsdksdhjksdjssdhsxcx..."
             )
+        }
+        
+        // Update IoT device count
+        updateIoTDeviceCount()
+    }
+    
+    private func updateIoTDeviceCount() {
+        SVProgressHUD.show()
+        IoTEntrance.fetchPresetIfNeed { [weak self] error in
+            SVProgressHUD.dismiss()
+            if let error = error {
+                ConvoAILogger.info("fetch preset error: \(error.localizedDescription)")
+                return
+            }
+            
+            let deviceCount = IoTEntrance.deviceCount()
+            self?.iotView.updateDeviceCount(deviceCount)
         }
     }
     
@@ -91,53 +111,60 @@ class MineViewController: UIViewController {
 // MARK: - MineTopInfoViewDelegate
 extension MineViewController: MineTopInfoViewDelegate {
     func mineTopInfoViewDidTapProfile() {
-        // Navigate to profile page
-        print("Profile button tapped")
+        let nicknameVC = NicknameSettingViewController()
+        nicknameVC.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(nicknameVC, animated: true)
     }
     
     func mineTopInfoViewDidTapAddressing() {
-        // Navigate to addressing settings page
-        print("Addressing button tapped")
+        let genderVC = GenderSettingViewController()
+        genderVC.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(genderVC, animated: true)
     }
     
     func mineTopInfoViewDidTapBirthday() {
-        // Navigate to birthday settings page
-        print("Birthday button tapped")
+        BirthdaySettingViewController.show(in: self, currentBirthday: nil) { [weak self] selectedDate in
+            if let date = selectedDate {
+                // Update UI with selected birthday
+                let formatter = DateFormatter()
+                formatter.dateFormat = "yyyy/MM/dd"
+                let birthdayString = formatter.string(from: date)
+                self?.topInfoView.updateUserInfo(
+                    nickname: "尹希尔",
+                    addressing: "先生",
+                    birthday: birthdayString,
+                    bio: "sdksdhjksdjssdhsxcsdksdhjksdjssdhsxcx..."
+                )
+            }
+        }
     }
     
     func mineTopInfoViewDidTapBio() {
-        // Navigate to bio settings page
-        print("Bio button tapped")
+        let bioVC = BioSettingViewController()
+        bioVC.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(bioVC, animated: true)
     }
 }
 
 // MARK: - MineIotViewDelegate
 extension MineViewController: MineIotViewDelegate {
     func mineIotViewDidTapAddDevice() {
-        // Navigate to add device page
-        print("Add device button tapped")
+        // Enter IoT scene
+        IoTEntrance.iotScene(viewController: self)
     }
 }
 
 // MARK: - MineTabListViewDelegate
 extension MineViewController: MineTabListViewDelegate {
     func mineTabListViewDidTapPrivacy() {
-        // Navigate to privacy settings page
-        print("Privacy tapped")
+        let privacyVC = PrivacySettingViewController()
+        privacyVC.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(privacyVC, animated: true)
     }
     
     func mineTabListViewDidTapSettings() {
-        // Navigate to app settings page
-        print("Settings tapped")
-    }
-    
-    func mineTabListViewDidTapAbout() {
-        // Navigate to about page
-        print("About tapped")
-    }
-    
-    func mineTabListViewDidTapHelp() {
-        // Navigate to help page
-        print("Help tapped")
+        let logoutVC = UserLogoutViewController()
+        logoutVC.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(logoutVC, animated: true)
     }
 }

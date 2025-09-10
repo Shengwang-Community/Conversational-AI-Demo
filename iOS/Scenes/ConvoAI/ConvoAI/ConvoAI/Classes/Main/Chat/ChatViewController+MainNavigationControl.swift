@@ -11,7 +11,7 @@ import SVProgressHUD
 
 extension ChatViewController {
     @objc internal func onClickInformationButton() {
-        AgentInformationViewController.show(in: self)
+        // AgentInformationViewController removed - functionality moved to MineViewController
     }
     
     @objc internal func onClickWifiInfoButton() {

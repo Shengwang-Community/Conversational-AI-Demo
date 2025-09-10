@@ -338,6 +338,16 @@ extension ResourceManager {
             public static let bioTips = ResourceManager.localizedString("mine.bio.tips")
             public static let bioTooLong = ResourceManager.localizedString("mine.bio.too.long")
             public static let bioSaved = ResourceManager.localizedString("mine.bio.saved")
+            
+            // Mine Module UI
+            public static let personaTitle = ResourceManager.localizedString("mine.persona.title")
+            public static let addressingTitle = ResourceManager.localizedString("mine.addressing.title")
+            public static let birthdayTitle = ResourceManager.localizedString("mine.birthday.title")
+            public static let bioTitle = ResourceManager.localizedString("mine.bio.title")
+            public static let iotDevicesTitle = ResourceManager.localizedString("mine.iot.devices.title")
+            public static let iotDevicesCount = ResourceManager.localizedString("mine.iot.devices.count")
+            public static let privacyTitle = ResourceManager.localizedString("mine.privacy.title")
+            public static let settingsTitle = ResourceManager.localizedString("mine.settings.title")
         }
     }
 }
