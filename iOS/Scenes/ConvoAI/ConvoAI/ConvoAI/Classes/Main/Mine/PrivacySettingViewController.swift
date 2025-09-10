@@ -142,14 +142,14 @@ class PrivacySettingViewController: BaseViewController {
     @objc private func userAgreementTapped() {
         // Navigate to user agreement page
         let webViewVC = BaseWebViewController()
-        webViewVC.url = AppContext.shared.mainlandTermsOfServiceUrl
+        webViewVC.url = AppContext.shared.termsOfServiceUrl
         self.navigationController?.pushViewController(webViewVC)
     }
     
     @objc private func privacyPolicyTapped() {
         // Navigate to privacy policy page
         let webViewVC = BaseWebViewController()
-        webViewVC.url = AppContext.shared.mainlandPrivacyUrl
+        webViewVC.url = AppContext.shared.privacyUrl
         self.navigationController?.pushViewController(webViewVC)
     }
     

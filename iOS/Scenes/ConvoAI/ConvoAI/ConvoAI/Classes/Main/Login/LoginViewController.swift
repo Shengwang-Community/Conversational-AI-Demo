@@ -286,7 +286,7 @@ class LoginViewController: UIViewController {
     
     @objc private func termsButtonTapped() {
         let vc = TermsServiceWebViewController()
-        vc.url = AppContext.shared.mainlandTermsOfServiceUrl
+        vc.url = AppContext.shared.termsOfServiceUrl
         let termsServiceVC = UINavigationController(rootViewController: vc)
         termsServiceVC.modalPresentationStyle = .fullScreen
         self.present(termsServiceVC, animated: true)
@@ -294,7 +294,7 @@ class LoginViewController: UIViewController {
     
     @objc private func privacyPolicyTapped() {
         let vc = TermsServiceWebViewController()
-        vc.url = AppContext.shared.mainlandPrivacyUrl
+        vc.url = AppContext.shared.privacyUrl
         let termsServiceVC = UINavigationController(rootViewController: vc)
         termsServiceVC.modalPresentationStyle = .fullScreen
         self.present(termsServiceVC, animated: true)
