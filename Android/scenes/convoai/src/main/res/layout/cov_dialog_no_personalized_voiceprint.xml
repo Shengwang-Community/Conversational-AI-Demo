@@ -4,28 +4,30 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_gravity="center"
     android:background="@drawable/bg_common_dialog"
     android:orientation="vertical">
 
     <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/ivImage"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="visible"
-        app:shapeAppearanceOverlay="@style/CommonTopCustomShape"
-        android:background="@drawable/common_bg_dialog" />
+        android:id="@+id/ivImage2"
+        android:layout_width="125dp"
+        android:layout_height="125dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/scene_detail_no_voiceprint"
+        app:shapeAppearanceOverlay="@style/CommonTopCustomShape" />
 
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:gravity="center"
+        android:paddingHorizontal="24dp"
+        android:text="@string/cov_voiceprint_no_voice"
         android:textColor="@color/ai_icontext1"
         android:textSize="20sp"
-        android:layout_marginTop="20dp"
-        android:paddingHorizontal="24dp"
-        android:textStyle="bold"
-        tools:text="Title" />
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/tvContent"
@@ -33,50 +35,19 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:gravity="start"
-        android:paddingHorizontal="24dp"
         android:lineSpacingExtra="5dp"
+        android:paddingHorizontal="24dp"
+        android:text="@string/cov_voiceprint_no_voice_tips"
         android:textColor="@color/ai_icontext1"
-        android:textSize="14sp"
-        tools:text="Content" />
+        android:textSize="14sp" />
 
-    <LinearLayout
-        android:id="@+id/llNoMoreReminder"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginHorizontal="24dp"
-        android:orientation="horizontal"
-        android:gravity="start|center_vertical"
-        android:visibility="gone"
-        tools:visibility="visible">
-
-        <CheckBox
-            android:id="@+id/cbNoMoreReminder"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:button="@null"
-            android:background="@drawable/common_checkbox_selector"
-            android:gravity="center"
-            android:layout_gravity="top"
-            android:checked="false" />
-
-        <TextView
-            android:id="@+id/tvNoMoreReminder"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:text="@string/common_app_no_more_reminder"
-            android:textColor="@color/ai_icontext3"
-            android:textSize="14sp" />
-
-    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="24dp"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="24dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnNegative"
@@ -100,14 +71,14 @@
             android:layout_height="@dimen/ai_dp_small"
             android:layout_marginStart="4dp"
             android:layout_weight="1"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
             android:insetLeft="0dp"
+            android:insetTop="0dp"
             android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:padding="0dp"
             android:textAllCaps="false"
             android:textColor="@color/ai_brand_white10"
             android:textSize="15sp"
-            android:padding="0dp"
             app:backgroundTint="@color/ai_brand_main6"
             app:cornerRadius="12dp"
             app:rippleColor="#1AFFFFFF"

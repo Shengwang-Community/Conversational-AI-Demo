@@ -16,6 +16,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.agora.scene.common.constant.ServerConfig
 import kotlinx.coroutines.launch
 import io.agora.scene.common.ui.BaseActivity.ImmersiveMode
 import io.agora.scene.common.ui.BaseDialogFragment
@@ -30,6 +31,7 @@ import io.agora.scene.convoai.constant.VoiceprintMode
 import io.agora.scene.convoai.databinding.CovVoiceprintOptionItemBinding
 import io.agora.scene.convoai.databinding.CovVoiceprintLockDialogBinding
 import io.agora.scene.convoai.constant.CovAgentManager
+import io.agora.scene.convoai.ui.mine.TermsActivity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -132,6 +134,7 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
                     if (it) {
                         showRecordingDialog()
                     }
+                    restoreImmersiveModeAfterChildDialog()
                 }
             }
             voiceprintCreateWithText.setOnClickListener {
@@ -139,6 +142,7 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
                     if (it) {
                         showRecordingDialog()
                     }
+                    restoreImmersiveModeAfterChildDialog()
                 }
             }
 
@@ -161,18 +165,26 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
 
     // ===================== dialog =====================
     private fun showVoiceprintRecordingTips(onResult: (Boolean) -> Unit) {
+        val activity = activity ?: return
         if (dialog?.isShowing == false) return
         CommonDialog.Builder().setTitle(getString(R.string.cov_voiceprint_recording_tips_title))
             .setContent(getString(R.string.cov_voiceprint_recording_tips_content))
             .setPositiveButton(getString(io.agora.scene.common.R.string.common_confirm)) {
                 onResult.invoke(true)
-            }.setNegativeButton(getString(io.agora.scene.common.R.string.common_cancel)) {
+            }
+            .setNegativeButton(getString(io.agora.scene.common.R.string.common_cancel)) {
                 onResult.invoke(false)
-            }.hideTopImage().setCancelable(false).build().show(childFragmentManager, "voiceprint_tips_dialog")
+            }
+            .hideTopImage()
+            .setCancelable(false)
+            .setImmersiveMode(ImmersiveMode.FULLY_IMMERSIVE)
+            .build()
+            .show(childFragmentManager, "voiceprint_tips_dialog")
     }
 
     private fun showRecordingDialog() {
         val activity = activity ?: return
+        if (dialog?.isShowing == false) return
         val recordingDialog =
             CovVoiceprintRecordingDialog.newInstance(
                 onDismiss = {
@@ -191,21 +203,65 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
         recordingDialog.show(activity.supportFragmentManager, "recording_dialog")
     }
 
-    private fun showNoVoiceprintDialog(onResult: (Boolean) -> Unit) {
+    private fun showNoPersonalizedVoiceprintDialog(onResult: (Boolean) -> Unit) {
+        val activity = activity ?: return
         if (dialog?.isShowing == false) return
-        CommonDialog.Builder().setTitle(getString(R.string.cov_voiceprint_no_voice))
-            .setContent(getString(R.string.cov_voiceprint_no_voice_tips))
-            .setPositiveButton(getString(R.string.cov_voiceprint_exit)) {
+        val dialog = CovNoPersonalizedVoiceprintDialog.newInstance(
+            onPositiveClick = {
                 onResult.invoke(true)
-            }.setNegativeButton(getString(io.agora.scene.common.R.string.common_cancel)) {
+            },
+            onNegativeClick = {
                 onResult.invoke(false)
             }
-            .hideTopImage()
-            .setImage2Src(io.agora.scene.common.R.drawable.scene_detail_no_voiceprint)
-            .setCancelable(false)
-            .build()
-            .show(childFragmentManager, "no_voiceprint_dialog")
+        )
+
+        dialog.show(childFragmentManager, "no_personalized_voiceprint_dialog")
     }
+
+    private fun showSeamlessVoiceprintDialog(onResult: (Boolean) -> Unit) {
+        val activity = activity ?: return
+        if (dialog?.isShowing == false) return
+        val dialog = CovSeamlessVoiceprintDialog.newInstance(
+            onPrivacyClick = {
+                TermsActivity.startActivity(activity, ServerConfig.privacyPolicyUrl)
+            },
+            onPositiveClick = {
+                onResult.invoke(true)
+            },
+            onNegativeClick = {
+                onResult.invoke(false)
+            }
+        )
+
+        dialog.show(childFragmentManager, "seamless_voiceprint_dialog")
+    }
+
+    /**
+     * Revert selection back to the current mode when user cancels seamless voiceprint dialog
+     */
+    private fun revertToPreviousSelection() {
+        selectedMode = currentMode
+
+        // Update adapter to reflect the reverted selection
+        voiceprintAdapter.updateSelection(currentMode)
+
+        // Update create voiceprint visibility based on reverted mode
+        updateCreateVoiceprintVisibility(currentMode)
+    }
+
+    /**
+     * Restore immersive mode after child dialog dismisses
+     * Use delayed post to ensure the child dialog is completely dismissed
+     */
+    private fun restoreImmersiveModeAfterChildDialog() {
+        // Use postDelayed to ensure child dialog is completely dismissed
+        view?.postDelayed({
+            if (isAdded && !isDetached && dialog?.isShowing == true) {
+                forceImmersiveMode()
+            }
+        }, 50) // 50ms delay to ensure child dialog is fully dismissed
+    }
+
 
     override fun onStart() {
         super.onStart()
@@ -232,8 +288,14 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
             }
 
             mode == VoiceprintMode.PERSONALIZED && CovAgentManager.voiceprintInfo == null -> {
-                showNoVoiceprintDialog {
-                    if (it) dismiss()
+                showNoPersonalizedVoiceprintDialog {
+                    if (it) {
+                        dismiss()
+                    } else {
+                        // User cancelled, revert to previous selection
+                        revertToPreviousSelection()
+                    }
+                    restoreImmersiveModeAfterChildDialog()
                 }
             }
 
@@ -253,11 +315,6 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
         handleDismiss()
     }
 
-    override fun onResume() {
-        super.onResume()
-        // Force immersive mode again to ensure it stays hidden
-        forceImmersiveMode()
-    }
 
     private fun loadVoiceprintModeData() {
         // Create voiceprint mode list
@@ -278,6 +335,14 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
 
             if (selectedMode == VoiceprintMode.PERSONALIZED) {
                 voiceprintViewModel.checkVoiceprintUpdate()
+            }
+            if (selectedMode == VoiceprintMode.SEAMLESS) {
+                showSeamlessVoiceprintDialog {
+                    if (!it) {
+                        revertToPreviousSelection()
+                    }
+                    restoreImmersiveModeAfterChildDialog()
+                }
             }
         }
 
@@ -499,6 +564,21 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
         }
 
         /**
+         * Update selection to specific mode (used when reverting selection)
+         */
+        fun updateSelection(mode: VoiceprintMode) {
+            val newPosition = modes.indexOfFirst { it.mode == mode }
+            if (newPosition != -1 && newPosition != selectedPosition) {
+                val oldPosition = selectedPosition
+                selectedPosition = newPosition
+
+                // Update selection state
+                notifyItemChanged(oldPosition)
+                notifyItemChanged(selectedPosition)
+            }
+        }
+
+        /**
          * Voiceprint mode ViewHolder
          */
         inner class VoiceprintViewHolder(private val binding: CovVoiceprintOptionItemBinding) :
@@ -548,3 +628,4 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
         }
     }
 }
+

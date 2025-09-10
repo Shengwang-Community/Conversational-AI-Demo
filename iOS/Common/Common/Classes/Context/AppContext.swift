@@ -13,7 +13,8 @@ import Bugly
     
     public let mainlandTermsOfServiceUrl: String = "https://conversational-ai.shengwang.cn/terms/service"
     public let mainlandPrivacyUrl: String = "https://conversational-ai.shengwang.cn/terms/privacy"
-
+    public let personalReportInfoUrl: String = "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/manifest-dev/ConvoAI/index.html"
+    
     private var _isOpenSource: Bool = false
     private var _appId: String = ""
     private var _certificate: String = ""

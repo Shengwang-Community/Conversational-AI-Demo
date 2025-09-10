@@ -14,6 +14,7 @@ class OfficialAgentViewController: UIViewController {
     weak var scrollDelegate: AgentScrollViewDelegate?
     let agentManager = AgentManager()
     let emptyStateView = CommonEmptyView()
+    let toolBoxApi = ToolBoxApiManager()
     
     lazy var refreshControl: UIRefreshControl = {
         let refresh = UIRefreshControl()
@@ -148,6 +149,24 @@ extension OfficialAgentViewController: UITableViewDelegate, UITableViewDataSourc
         preset.defaultAvatar = "ic_default_avatar_icon"
         AppContext.preferenceManager()?.preference.isCustomPreset = false
         AppContext.preferenceManager()?.updatePreset(preset)
+        let reportEvent = ReportEvent(appId: AppContext.shared.appId, sceneId: ConvoAIEntrance.kSceneName, action: preset.displayName, appVersion: ConversationalAIAPIImpl.version, appPlatform: "iOS", deviceModel: UIDevice.current.machineModel, deviceBrand: "Apple", osVersion: "")
+        toolBoxApi.reportEvent(event: reportEvent) { result in
+            if let code = result["code"] as? Int, code != 0 {
+                let msg = result["msg"] as? String ?? "Unknown error"
+                let error = ConvoAIError.serverError(code: code, message: msg)
+                return
+            }
+            
+            guard let data = result["data"] as? [[String: Any]] else {
+                let error = ConvoAIError.serverError(code: -1, message: "data error")
+                return
+            }
+            
+            print(data)
+        } failure: { msg in
+            print(msg)
+        }
+
         let chatViewController = ChatViewController()
         chatViewController.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(chatViewController, animated: true)

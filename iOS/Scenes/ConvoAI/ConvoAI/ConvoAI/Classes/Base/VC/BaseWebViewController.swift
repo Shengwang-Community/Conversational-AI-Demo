@@ -1,0 +1,60 @@
+//
+//  BaseWebViewController.swift
+//  ConvoAI
+//
+//  Created by qinhui on 2025/9/9.
+//
+
+import UIKit
+import WebKit
+
+class BaseWebViewController: BaseViewController {
+    var url: String = ""
+
+    private lazy var webView: WKWebView = {
+        // Config WKWebView
+        let configuration = WKWebViewConfiguration()
+        let userContentController = WKUserContentController()
+        
+        // Register JavaScript callback
+        configuration.userContentController = userContentController
+        configuration.applicationNameForUserAgent = "Version/8.0.2 Safari/600.2.5"
+
+        let view = WKWebView(frame: CGRectZero, configuration: configuration)
+        view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.navigationDelegate = self
+        return view
+    }()
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+        loadContent()
+    }
+ 
+    private func setupUI() {
+        view.addSubview(webView)
+        
+        webView.snp.makeConstraints { make in
+            make.left.right.bottom.equalTo(0)
+            make.top.equalTo(naviBar.snp.bottom)
+        }
+    }
+    
+    private func loadContent() {
+        if let url = URL(string: url) {
+            let request = URLRequest(url: url)
+            webView.load(request)
+        }
+    }
+}
+
+extension BaseViewController: WKNavigationDelegate {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        webView.evaluateJavaScript("document.title") { [weak self] (result, error) in
+            if let title = result as? String {
+                self?.naviBar.title = title
+            }
+        }
+    }
+}

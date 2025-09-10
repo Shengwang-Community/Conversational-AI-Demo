@@ -12,7 +12,34 @@ import UIKit
 class ToolBoxApiManager: NSObject {
     
     public typealias UploadSuccessClosure = (String?) -> Void
-
+    
+    func reportEvent(event: ReportEvent, success: NetworkManager.SuccessClosure?, failure: NetworkManager.FailClosure?) {
+        let url = "\(AppContext.shared.baseServerUrl)/convoai/v4/events/report"
+        let parameter = [
+            "app_id": event.appId.stringValue(),
+            "scene_id": event.sceneId.stringValue(),
+            "action": event.action.stringValue(),
+            "app_version": event.appVersion.stringValue(),
+            "app_platform": event.appPlatform.stringValue(),
+            "device_model": event.deviceModel.stringValue(),
+            "device_brand": event.deviceBrand.stringValue(),
+            "os_version": event.osVersion.stringValue()
+        ]
+        
+        NetworkManager.shared.postRequest(urlString: url, params: parameter, success: success, failure: failure)
+    }
+    
+    func getReportInfo(appId:String, sceneId: String, success: NetworkManager.SuccessClosure?, failure: NetworkManager.FailClosure?) {
+        let url = "\(AppContext.shared.baseServerUrl)/convoai/v4/events/stat"
+        let parameter = [
+            "app_id": appId,
+            "scene_id": sceneId,
+            "duration": "7d"
+        ]
+        
+        NetworkManager.shared.getRequest(urlString: url, params: parameter, success: success, failure: failure)
+    }
+    
     /// Upload image
     /// - Parameters:
     ///   - requestId: request ID for tracking

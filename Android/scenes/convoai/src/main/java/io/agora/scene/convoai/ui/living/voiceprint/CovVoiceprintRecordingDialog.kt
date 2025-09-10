@@ -94,6 +94,7 @@ class CovVoiceprintRecordingDialog : BaseSheetDialog<CovVoiceprintRecordingDialo
     private fun setupViews() {
         binding?.apply {
             setOnApplyWindowInsets(root)
+            isCancelable = false
             // Setup close button
             ivBack.setOnClickListener {
                 CovLogger.d(TAG, "Close button clicked")
