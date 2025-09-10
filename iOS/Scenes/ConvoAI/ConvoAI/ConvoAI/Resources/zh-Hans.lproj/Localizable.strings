@@ -241,43 +241,11 @@
 "main.mine" = "我的";
 
 // Mine View Controller
-"mine.user.nickname" = "用户昵称";
-"mine.menu.settings" = "设置";
-"mine.menu.settings.subtitle" = "应用设置和偏好";
-"mine.menu.about" = "关于";
-"mine.menu.about.subtitle" = "应用信息和版本";
-"mine.menu.help" = "帮助";
-"mine.menu.help.subtitle" = "使用帮助和反馈";
-"mine.menu.privacy" = "隐私政策";
-"mine.menu.privacy.subtitle" = "隐私保护说明";
-"mine.logout.button" = "退出登录";
-"mine.logout.alert.title" = "退出登录";
-"mine.logout.alert.message" = "确定要退出当前账号吗？";
-"mine.logout.alert.cancel" = "取消";
-"mine.logout.alert.confirm" = "退出";
 
-// User Logout
-"mine.deactivate.account" = "注销账号";
-"mine.deactivate.account.alert.title" = "注销账号";
-"mine.deactivate.account.alert.message" = "确定要注销当前账号吗？注销后将无法恢复。";
-"mine.cancel" = "取消";
-"mine.deactivate" = "注销";
-"mine.deactivating.account" = "正在注销账号...";
-"mine.account.deactivated" = "账号已注销";
-"mine.logging.out" = "正在退出...";
-"mine.logout.success" = "退出成功";
 
-// Nickname Setting
-"mine.save" = "保存";
-"mine.nickname.empty" = "昵称不能为空";
-"mine.saving" = "保存中...";
-"mine.nickname.saved" = "昵称保存成功";
 
 // Bio Setting
 "mine.bio.setting.title" = "自我介绍";
-"mine.bio.placeholder" = "请简单介绍一下自己...";
-"mine.bio.too.long" = "自我介绍长度超出限制";
-"mine.bio.saved" = "自我介绍保存成功";
 "mine.bio.placeholder.display" = "设定自我介绍，让 AI agent 更了解您";
 "mine.bio.example.1" = "我宅家养多肉、学做菜，细心又爱帮朋友。妈妈做的番茄炒蛋是本命，夏天的冰镇荔枝，清甜劲儿超治愈～";
 "mine.bio.example.2" = "互联网运营 er 一枚，日常跟数据、文案死磕，擅长抓热点做内容。闲了爱撸代码解压，奶茶续命党，生椰拿铁是本命，求搭子聊运营干货～";
@@ -301,7 +269,6 @@
 "mine.nickname.update.failed" = "昵称更新失败";
 "mine.nickname.too.long" = "昵称长度不能超过%d个字符";
 "mine.nickname.invalid.characters" = "昵称只能包含中文、英文和数字";
-"mine.nickname.user.info.failed" = "用户信息获取失败";
 
 // Gender Setting
 "mine.gender.title" = "称呼您为";

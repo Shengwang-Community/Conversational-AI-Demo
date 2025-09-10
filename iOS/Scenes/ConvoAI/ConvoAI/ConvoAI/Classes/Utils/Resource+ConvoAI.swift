@@ -290,50 +290,6 @@ extension ResourceManager {
         }
         
         public enum Mine {
-            public static let userNickname = ResourceManager.localizedString("mine.user.nickname")
-            public static let userEmail = ResourceManager.localizedString("mine.user.email")
-            public static let menuSettings = ResourceManager.localizedString("mine.menu.settings")
-            public static let menuSettingsSubtitle = ResourceManager.localizedString("mine.menu.settings.subtitle")
-            public static let menuAbout = ResourceManager.localizedString("mine.menu.about")
-            public static let menuAboutSubtitle = ResourceManager.localizedString("mine.menu.about.subtitle")
-            public static let menuHelp = ResourceManager.localizedString("mine.menu.help")
-            public static let menuHelpSubtitle = ResourceManager.localizedString("mine.menu.help.subtitle")
-            public static let menuPrivacy = ResourceManager.localizedString("mine.menu.privacy")
-            public static let menuPrivacySubtitle = ResourceManager.localizedString("mine.menu.privacy.subtitle")
-            public static let logoutButton = ResourceManager.localizedString("mine.logout.button")
-            public static let logoutAlertTitle = ResourceManager.localizedString("mine.logout.alert.title")
-            public static let logoutAlertMessage = ResourceManager.localizedString("mine.logout.alert.message")
-            public static let logoutAlertCancel = ResourceManager.localizedString("mine.logout.alert.cancel")
-            public static let logoutAlertConfirm = ResourceManager.localizedString("mine.logout.alert.confirm")
-            
-            public static let deactivateAccount = ResourceManager.localizedString("mine.deactivate.account")
-            public static let deactivateAccountAlertTitle = ResourceManager.localizedString("mine.deactivate.account.alert.title")
-            public static let deactivateAccountAlertMessage = ResourceManager.localizedString("mine.deactivate.account.alert.message")
-            public static let cancel = ResourceManager.localizedString("mine.cancel")
-            public static let deactivate = ResourceManager.localizedString("mine.deactivate")
-            public static let deactivatingAccount = ResourceManager.localizedString("mine.deactivating.account")
-            public static let accountDeactivated = ResourceManager.localizedString("mine.account.deactivated")
-            public static let loggingOut = ResourceManager.localizedString("mine.logging.out")
-            public static let logoutSuccess = ResourceManager.localizedString("mine.logout.success")
-            
-            public static let nicknamePlaceholder = ResourceManager.localizedString("mine.nickname.placeholder")
-            public static let nicknameTips = ResourceManager.localizedString("mine.nickname.tips")
-            public static let save = ResourceManager.localizedString("mine.save")
-            public static let nicknameEmpty = ResourceManager.localizedString("mine.nickname.empty")
-            public static let nicknameTooLong = ResourceManager.localizedString("mine.nickname.too.long")
-            public static let saving = ResourceManager.localizedString("mine.saving")
-            public static let nicknameSaved = ResourceManager.localizedString("mine.nickname.saved")
-            public static let keepEditing = ResourceManager.localizedString("mine.keep.editing")
-            public static let bioSettingTitle = ResourceManager.localizedString("mine.bio.setting.title")
-            public static let bioPlaceholder = ResourceManager.localizedString("mine.bio.placeholder")
-            public static let bioTooLong = ResourceManager.localizedString("mine.bio.too.long")
-            public static let bioSaved = ResourceManager.localizedString("mine.bio.saved")
-            public static let bioPlaceholderDisplay = ResourceManager.localizedString("mine.bio.placeholder.display")
-            public static let bioExample1 = ResourceManager.localizedString("mine.bio.example.1")
-            public static let bioExample2 = ResourceManager.localizedString("mine.bio.example.2")
-            public static let bioExample3 = ResourceManager.localizedString("mine.bio.example.3")
-            public static let bioExample4 = ResourceManager.localizedString("mine.bio.example.4")
-            
             // Mine Module UI
             public static let personaTitle = ResourceManager.localizedString("mine.persona.title")
             public static let addressingTitle = ResourceManager.localizedString("mine.addressing.title")
@@ -346,10 +302,10 @@ extension ResourceManager {
             
             // Nickname Setting
             public static let nicknameTitle = ResourceManager.localizedString("mine.nickname.title")
+            public static let nicknamePlaceholder = ResourceManager.localizedString("mine.nickname.placeholder")
             public static let nicknameUpdateSuccess = ResourceManager.localizedString("mine.nickname.update.success")
             public static let nicknameUpdateFailed = ResourceManager.localizedString("mine.nickname.update.failed")
             public static let nicknameInvalidCharacters = ResourceManager.localizedString("mine.nickname.invalid.characters")
-            public static let nicknameUserInfoFailed = ResourceManager.localizedString("mine.nickname.user.info.failed")
             
             // Gender Setting
             public static let genderTitle = ResourceManager.localizedString("mine.gender.title")
@@ -361,6 +317,14 @@ extension ResourceManager {
             public static let birthdaySelectTitle = ResourceManager.localizedString("mine.birthday.select.title")
             public static let birthdayCancel = ResourceManager.localizedString("mine.birthday.cancel")
             public static let birthdayConfirm = ResourceManager.localizedString("mine.birthday.confirm")
+            
+            // Bio Setting
+            public static let bioSettingTitle = ResourceManager.localizedString("mine.bio.setting.title")
+            public static let bioPlaceholderDisplay = ResourceManager.localizedString("mine.bio.placeholder.display")
+            public static let bioExample1 = ResourceManager.localizedString("mine.bio.example.1")
+            public static let bioExample2 = ResourceManager.localizedString("mine.bio.example.2")
+            public static let bioExample3 = ResourceManager.localizedString("mine.bio.example.3")
+            public static let bioExample4 = ResourceManager.localizedString("mine.bio.example.4")
         }
     }
 }

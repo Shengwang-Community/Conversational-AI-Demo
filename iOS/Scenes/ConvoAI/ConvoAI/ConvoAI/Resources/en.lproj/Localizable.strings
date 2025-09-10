@@ -208,43 +208,11 @@
 "main.mine" = "Mine";
 
 // Mine View Controller
-"mine.user.nickname" = "Nickname";
-"mine.menu.settings" = "Settings";
-"mine.menu.settings.subtitle" = "App settings and preferences";
-"mine.menu.about" = "About";
-"mine.menu.about.subtitle" = "App information and version";
-"mine.menu.help" = "Help";
-"mine.menu.help.subtitle" = "Usage help and feedback";
-"mine.menu.privacy" = "Privacy";
-"mine.menu.privacy.subtitle" = "Privacy protection information";
-"mine.logout.button" = "Log Out";
-"mine.logout.alert.title" = "Log Out";
-"mine.logout.alert.message" = "Are you sure you want to log out of your current account?";
-"mine.logout.alert.cancel" = "Cancel";
-"mine.logout.alert.confirm" = "Log Out";
 
-// User Logout
-"mine.deactivate.account" = "Delete Account";
-"mine.deactivate.account.alert.title" = "Important Notice";
-"mine.deactivate.account.alert.message" = "Once deleted, your account and all its data will be permanently erased and cannot be recovered. Please proceed with caution.";
-"mine.cancel" = "Cancel";
-"mine.deactivate" = "Confirm Deletion";
-"mine.deactivating.account" = "I understand the risks of deleting my account";
-"mine.account.deactivated" = "To continue, you must check the box to confirm you understand the risks.";
-"mine.logging.out" = "Logging out...";
-"mine.logout.success" = "Logged out successfully";
 
-// Nickname Setting
-"mine.nickname.tips" = "Your nickname will be displayed in your profile and visible to other users.";
-"mine.save" = "Save";
-"mine.nickname.empty" = "Nickname cannot be empty";
-"mine.saving" = "Saving...";
-"mine.nickname.saved" = "Nickname saved successfully";
 
 // Bio Setting
 "mine.bio.setting.title" = "About Me";
-"mine.bio.placeholder" = "Please briefly introduce yourself...";
-"mine.bio.too.long" = "Bio is too long";
 "mine.bio.placeholder.display" = "Set your bio to help AI agent understand you better";
 "mine.bio.example.1" = "I love staying home, growing succulents and learning to cook. I'm caring and love helping friends. Mom's tomato scrambled eggs are my favorite, and chilled lychees in summer are super refreshing~";
 "mine.bio.example.2" = "Internet operations specialist here, daily wrestling with data and copywriting, good at catching trends and creating content. Love coding for stress relief, milk tea addict, coconut latte is my go-to, looking for buddies to chat about operations~";
