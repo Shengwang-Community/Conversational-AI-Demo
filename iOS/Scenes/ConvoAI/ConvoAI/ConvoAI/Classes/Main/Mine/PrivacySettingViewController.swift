@@ -141,22 +141,33 @@ class PrivacySettingViewController: BaseViewController {
     // MARK: - Actions
     @objc private func userAgreementTapped() {
         // Navigate to user agreement page
-        SVProgressHUD.showInfo(withStatus: "用户协议页面开发中")
+        let webViewVC = BaseWebViewController()
+        webViewVC.url = AppContext.shared.mainlandTermsOfServiceUrl
+        self.navigationController?.pushViewController(webViewVC)
     }
     
     @objc private func privacyPolicyTapped() {
         // Navigate to privacy policy page
-        SVProgressHUD.showInfo(withStatus: "隐私政策页面开发中")
+        let webViewVC = BaseWebViewController()
+        webViewVC.url = AppContext.shared.mainlandPrivacyUrl
+        self.navigationController?.pushViewController(webViewVC)
     }
     
     @objc private func dataSharingTapped() {
         // Navigate to data sharing page
-        SVProgressHUD.showInfo(withStatus: "第三方数据共享页面开发中")
+        let webViewVC = BaseWebViewController()
+        webViewVC.url = AppContext.shared.sharedInfoUrl
+        self.navigationController?.pushViewController(webViewVC)
     }
     
     @objc private func personalInfoTapped() {
         // Navigate to personal info collection page
-        SVProgressHUD.showInfo(withStatus: "个人信息收集清单页面开发中")
+        let webViewVC = BaseWebViewController()
+        let token = UserCenter.user?.token ?? ""
+        let appId = AppContext.shared.appId
+        let sceneId = ConvoAIEntrance.reportSceneId
+        webViewVC.url = "\(AppContext.shared.personalReportInfoUrl)?token=\(token)&app_id=\(appId)&scene_id=\(sceneId)"
+        self.navigationController?.pushViewController(webViewVC)
     }
     
     @objc private func recordNumberTapped() {
