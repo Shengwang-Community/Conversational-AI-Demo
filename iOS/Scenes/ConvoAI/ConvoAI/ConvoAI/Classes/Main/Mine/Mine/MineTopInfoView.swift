@@ -50,7 +50,7 @@ class MineTopInfoView: UIView {
         imageView.image = UIImage.ag_named("ic_default_avatar_icon")
         imageView.contentMode = .scaleAspectFill
         imageView.layer.cornerRadius = 20
-        imageView.layer.masksToBounds = true
+        imageView.layer.borderWidth = 1
         return imageView
     }()
     

@@ -56,6 +56,24 @@ class DigitalHumanCell: UICollectionViewCell {
         return imageView
     }()
     
+    private lazy var vendorView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.themColor(named: "ai_brand_white1")
+        view.layer.cornerRadius = 6
+        view.layer.masksToBounds = true
+        return view
+    }()
+    
+    private lazy var vendorLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 10, weight: .medium)
+        label.textColor = UIColor.white
+        label.textAlignment = .center
+        label.numberOfLines = 1
+        label.isUserInteractionEnabled = false
+        return label
+    }()
+    
     // MARK: - Properties
     private var digitalHuman: DigitalHuman?
     var onSelectionChanged: ((DigitalHuman) -> Void)?
@@ -79,6 +97,10 @@ class DigitalHumanCell: UICollectionViewCell {
         containerButton.addSubview(nameBackgroundView)
         nameBackgroundView.addSubview(nameLabel)
         nameBackgroundView.addSubview(selectionIndicatorView)
+        
+        // Add vendor view to container button
+        contentView.addSubview(vendorView)
+        vendorView.addSubview(vendorLabel)
     }
     
     private func setupConstraints() {
@@ -108,6 +130,18 @@ class DigitalHumanCell: UICollectionViewCell {
             make.centerY.equalToSuperview()
             make.width.height.equalTo(24)
         }
+        
+        vendorView.snp.makeConstraints { make in
+            make.top.equalTo(4)
+            make.right.equalTo(-4)
+            make.height.equalTo(20)
+        }
+        
+        vendorLabel.snp.makeConstraints { make in
+            make.left.equalTo(6)
+            make.right.equalTo(-6)
+            make.centerY.equalToSuperview()
+        }
     }
     
     private func setupActions() {
@@ -121,8 +155,16 @@ class DigitalHumanCell: UICollectionViewCell {
         // Set name
         nameLabel.text = digitalHuman.avatar.avatarName
         
+        if let vendor = digitalHuman.avatar.vendor {
+            vendorView.isHidden = false
+            vendorLabel.text = vendor
+        } else {
+            vendorView.isHidden = true
+        }
         // Load avatar image
-        if let url = URL(string: digitalHuman.avatar.thumbImageUrl ?? "") {
+        if let thumbImageUrl = digitalHuman.avatar.thumbImageUrl,
+           !thumbImageUrl.isEmpty,
+           let url = URL(string: thumbImageUrl) {
             avatarImageView.kf.setImage(with: url)
         } else {
             avatarImageView.image = nil
