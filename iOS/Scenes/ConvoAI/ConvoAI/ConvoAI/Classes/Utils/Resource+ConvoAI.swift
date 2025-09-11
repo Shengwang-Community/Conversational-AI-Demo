@@ -143,6 +143,7 @@ extension ResourceManager {
             public static let agentDisconnected = ResourceManager.localizedString("settings.agent.disconnected")
             public static let digitalHuman = ResourceManager.localizedString("settings.digital.human")
             public static let digitalHumanClosed = ResourceManager.localizedString("settings.digital.human.closed")
+            public static let digitalHumanAll = ResourceManager.localizedString("settings.digital.human.all")
             public static let digitalHumanPresetAlertTitle = ResourceManager.localizedString("settings.digital.human.preset.alert.title")
             public static let digitalHumanPresetAlertDescription = ResourceManager.localizedString("settings.digital.human.preset.alert.description")
             public static let digitalHumanLanguageAlertTitle = ResourceManager.localizedString("settings.digital.human.language.alert.title")

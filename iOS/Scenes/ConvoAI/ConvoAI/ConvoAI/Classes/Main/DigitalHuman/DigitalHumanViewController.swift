@@ -93,7 +93,7 @@ class DigitalHumanViewController: BaseViewController {
         let currentAvatar = AppContext.preferenceManager()?.preference.avatar
         let hasSelectedAvatar = currentAvatar != nil
         let closeDigitalHuman = DigitalHuman(
-            avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "关闭", thumbImageUrl: nil, bgImageUrl: nil),
+            avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "close", thumbImageUrl: nil, bgImageUrl: nil),
             isAvailable: true,
             isSelected: !hasSelectedAvatar
         )
@@ -110,7 +110,7 @@ class DigitalHumanViewController: BaseViewController {
         // Add close option as first item in "All" group
         let allGroupDigitalHumans = [closeDigitalHuman] + allDigitalHumans
         let allGroup = DigitalHumanGroup(
-            groupName: "全部",
+            groupName: ResourceManager.L10n.Settings.digitalHumanAll,
             vendor: "all",
             digitalHumans: allGroupDigitalHumans,
             isDefaultGroup: false
@@ -149,14 +149,14 @@ class DigitalHumanViewController: BaseViewController {
     private func createDefaultGroup() {
         // Create close digital human
         let closeDigitalHuman = DigitalHuman(
-            avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "关闭", thumbImageUrl: nil, bgImageUrl: nil),
+            avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "close", thumbImageUrl: nil, bgImageUrl: nil),
             isAvailable: true,
             isSelected: true
         )
         
         // Create "All" group with only close option
         let allGroup = DigitalHumanGroup(
-            groupName: "全部",
+            groupName: ResourceManager.L10n.Settings.digitalHumanAll,
             vendor: "all",
             digitalHumans: [closeDigitalHuman],
             isDefaultGroup: false
@@ -205,7 +205,6 @@ class DigitalHumanViewController: BaseViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
-        // Only update constraints if scroll view has a valid frame and constraints haven't been setup yet
         if scrollView.frame.width > 0 && !isScrollViewConstraintsSetup {
             updateScrollViewContentSize()
             isScrollViewConstraintsSetup = true
@@ -256,7 +255,7 @@ class DigitalHumanViewController: BaseViewController {
         contentView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
             make.height.equalToSuperview()
-            make.width.equalTo(scrollView) // Set initial width constraint
+            make.width.equalTo(scrollView)
         }
     }
 }
@@ -313,13 +312,10 @@ extension DigitalHumanViewController {
                 digitalHuman.isSelected = (digitalHuman.avatar.avatarId == selectedDigitalHuman.avatar.avatarId)
             }
         }
-        
         // Update all group views to reflect the changes
         for groupView in groupViews {
             groupView.collectionView.reloadData()
         }
-        
-        print("Selected digital human: \(selectedDigitalHuman.avatar.avatarName), avatar id: \(selectedDigitalHuman.avatar.avatarId)")
         if selectedDigitalHuman.avatar.avatarId == DigitalHuman.closeTag {
             AppContext.preferenceManager()?.updateAvatar(nil)
         } else {
