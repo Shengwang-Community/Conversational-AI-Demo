@@ -217,6 +217,7 @@
     <string name="cov_mine_mr">先生</string>
     <string name="cov_mine_ms">女士</string>
     <string name="cov_mine_your_birthday">您的生日</string>
+    <string name="cov_mine_select_your_birthday">请选择您的生日</string>
     <string name="cov_mine_about_me">自我介绍</string>
     <string name="cov_mine_not_set">点击设置</string>
     <string name="cov_mine_select">请选择</string>
@@ -232,6 +233,11 @@
     <string name="cov_settings_filing_no_content">沪xxxxxx</string>
     <string name="cov_settings_update_success">更新成功</string>
     <string name="cov_settings_update_failed">更新失败</string>
-    <string name="cov_mine_nickname_hint">您希望 AI agent 怎么称呼您？</string>
-    <string name="cov_mine_nickname_tips">昵称不能超过15个字符</string>
+    <string name="cov_settings_confirm">确认</string>
+    <string name="cov_mine_nickname_input_hint">您希望 AI agent 怎么称呼您？</string>
+    <string name="cov_mine_about_me_input_hint">输入对您的介绍，让 AI agent 更了解您 ❤️</string>
+    <string name="cov_mine_about_me_official1">我宅家养多肉、学做菜，细心又爱帮朋友。妈妈做的番茄炒蛋是本命，夏天的冰镇荔枝，清甜劲儿超治愈～</string>
+    <string name="cov_mine_about_me_official2">互联网运营 er 一枚，日常跟数据、文案死磕，擅长抓热点做内容。闲了爱撸代码解压，奶茶续命党，生椰拿铁是本命，求搭子聊运营干货～</string>
+    <string name="cov_mine_about_me_official3">前端开发仔报道，沉迷调样式、优化交互，追新技术像追更。爱喝冰美式提效，周末宅家肝游戏，求技术搭子交流 bug 解决方案～</string>
+    <string name="cov_mine_about_me_official4">产品经理一枚，天天画原型、盯迭代，擅长抠需求细节。咖啡不离手，偏爱冷萃，闲了刷行业报告，求同频小伙伴唠产品思路～</string>
 </resources>

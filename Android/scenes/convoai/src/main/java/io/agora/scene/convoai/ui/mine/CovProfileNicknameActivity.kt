@@ -181,11 +181,6 @@ class CovProfileNicknameActivity : BaseActivity<CovActivityProfileNicknameBindin
             return
         }
 
-        if (nickname.length > 15) {
-            ToastUtil.show(R.string.cov_mine_nickname_tips)
-            return
-        }
-
         userViewModel.updateUserInfo(
             nickname = nickname
         ) { result ->

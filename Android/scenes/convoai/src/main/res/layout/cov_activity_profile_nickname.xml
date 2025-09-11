@@ -56,7 +56,7 @@
             android:layout_marginStart="14dp"
             android:layout_weight="1"
             android:background="@null"
-            android:hint="@string/cov_mine_nickname_hint"
+            android:hint="@string/cov_mine_nickname_input_hint"
             android:inputType="text"
             android:maxLength="15"
             android:textColor="@color/ai_icontext1"
