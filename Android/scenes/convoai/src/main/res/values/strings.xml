@@ -53,6 +53,7 @@
     <string name="cov_setting_model">模型</string>
     <string name="cov_setting_language">语言</string>
     <string name="cov_setting_avatar">数字人</string>
+    <string name="cov_setting_avatar_all">全部</string>
     <string name="cov_setting_device">设备</string>
     <string name="cov_setting_advanced_settings">高级设置</string>
     <string name="cov_setting_microphone">麦克风</string>

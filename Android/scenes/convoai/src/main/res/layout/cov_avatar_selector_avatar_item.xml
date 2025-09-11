@@ -69,6 +69,19 @@
                     android:layout_marginStart="4dp"
                     android:background="@drawable/cov_avatar_checkbox_selector" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvVendor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_margin="4dp"
+                android:background="@drawable/cov_avatar_vendor_bg"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="5dp"
+                android:textColor="@color/ai_brand_white8"
+                android:textSize="11sp"
+                tools:text="Sensetime" />
         </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

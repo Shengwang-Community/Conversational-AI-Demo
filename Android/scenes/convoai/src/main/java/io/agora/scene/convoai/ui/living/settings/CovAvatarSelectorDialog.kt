@@ -2,49 +2,53 @@ package io.agora.scene.convoai.ui.living.settings
 
 import android.content.DialogInterface
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import io.agora.scene.common.R
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
 import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.common.ui.BaseDialogFragment
-import io.agora.scene.common.ui.OnFastClickListener
-import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.convoai.CovLogger
+import io.agora.scene.convoai.R
 import io.agora.scene.convoai.api.CovAvatar
 import io.agora.scene.convoai.constant.CovAgentManager
-import io.agora.scene.convoai.databinding.CovAvatarSelectorAvatarItemBinding
-import io.agora.scene.convoai.databinding.CovAvatarSelectorCloseItemBinding
 import io.agora.scene.convoai.databinding.CovAvatarSelectorDialogBinding
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
- * Avatar selector dialog - full screen display
+ * Avatar selector dialog - full screen display with category tabs
  */
 class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBinding>() {
 
     private var onDismissCallback: (() -> Unit)? = null
     private var onAvatarSelectedCallback: ((AvatarItem) -> Unit)? = null
 
-    private val avatarAdapter = AvatarAdapter()
+    private var tabLayoutMediator: TabLayoutMediator? = null
 
     // Input parameters
     private var currentAvatar: CovAvatar? = null
 
-    private var selectedAvatar: AvatarItem? = null
+    var selectedAvatar: AvatarItem? = null
+
+    // Dynamic categories
+    private var categories: List<String> = emptyList()
+    
+    // Track all fragments for selection sync
+    private val fragments = mutableMapOf<Int, CovAvatarSelectFragment>()
 
     companion object {
         private const val TAG = "CovAvatarSelectorDialog"
         private const val ARG_AVATAR = "arg_avatar"
 
-        // ViewType constants for different item types
-        private const val VIEW_TYPE_CLOSE = 0
-        private const val VIEW_TYPE_AVATAR = 1
+        // Category constants
+        private const val CATEGORY_ALL = 0
 
         fun newInstance(
             currentAvatar: CovAvatar? = null,
@@ -64,8 +68,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
     override fun immersiveMode(): BaseActivity.ImmersiveMode = BaseActivity.ImmersiveMode.FULLY_IMMERSIVE
 
     override fun getViewBinding(
-        inflater: LayoutInflater,
-        container: ViewGroup?
+        inflater: LayoutInflater, container: ViewGroup?
     ): CovAvatarSelectorDialogBinding? {
         return CovAvatarSelectorDialogBinding.inflate(inflater, container, false)
     }
@@ -78,19 +81,19 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
             currentAvatar = it.getParcelable(ARG_AVATAR) as? CovAvatar
         }
 
-        mBinding?.apply {
-            // Set grid layout
-            rcAvatarGrid.layoutManager = GridLayoutManager(context, 2)
-            rcAvatarGrid.adapter = avatarAdapter
+        // Generate dynamic categories from avatars
+        generateCategories()
 
+        mBinding?.apply {
             // Set back button click listener
             ivBack.setOnClickListener {
                 CovLogger.d(TAG, "Back button clicked")
                 handleDismiss()
             }
 
-            // Load avatar data
-            loadAvatarData()
+            // Setup ViewPager2 and TabLayout
+            setupViewPager()
+            setupTabLayout()
         }
     }
 
@@ -153,39 +156,120 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
     override fun onDestroyView() {
         super.onDestroyView()
+        tabLayoutMediator?.detach()
+        tabLayoutMediator = null
     }
 
-    private fun loadAvatarData() {
-        // Create avatar list, including "close" option and real avatar data
-        val avatarList = mutableListOf<AvatarItem>()
+    private fun setupViewPager() {
+        mBinding?.vpContent?.apply {
+            // Set adapter
+            adapter = AvatarCategoryAdapter(this@CovAvatarSelectorDialog)
+        }
+    }
 
-        // Add "close" option
-        avatarList.add(
-            AvatarItem(
-                covAvatar = null,
-                isClose = true,
-                isSelected = currentAvatar == null
-            )
+    /**
+     * Generate dynamic categories from avatars
+     */
+    private fun generateCategories() {
+        val avatars = CovAgentManager.getAvatars()
+        val vendorSet = mutableSetOf<String>()
+
+        // Collect unique vendors
+        avatars.forEach { avatar: CovAvatar ->
+            if (avatar.vendor.isNotEmpty()) {
+                vendorSet.add(avatar.vendor)
+            }
+        }
+
+        // Create categories list: All + unique vendors
+        categories = listOf(getString(R.string.cov_setting_avatar_all)) + vendorSet.sorted()
+
+        CovLogger.d(TAG, "Generated categories: $categories")
+    }
+
+    private fun setupTabLayout() {
+        mBinding?.let { binding ->
+            tabLayoutMediator = TabLayoutMediator(binding.tabLayout, binding.vpContent) { tab, position ->
+                tab.text = categories[position]
+            }
+            tabLayoutMediator?.attach()
+
+            // Setup custom tab styling
+            setupTabStyling(binding.tabLayout)
+        }
+    }
+
+    private fun setupTabStyling(tabLayout: TabLayout) {
+        // Add tab selection listener to update icon visibility
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                tab?.let { selectedTab ->
+                    updateTabAppearance(selectedTab, true)
+                }
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab?) {
+                tab?.let { selectedTab ->
+                    updateTabAppearance(selectedTab, false)
+                }
+            }
+
+            override fun onTabReselected(tab: TabLayout.Tab?) {
+                // Do nothing
+            }
+        })
+
+        // Set initial styling for all tabs
+        for (i in 0 until tabLayout.tabCount) {
+            val tab = tabLayout.getTabAt(i)
+            tab?.let {
+                updateTabAppearance(it, i == tabLayout.selectedTabPosition)
+            }
+        }
+    }
+
+    /**
+     * Update tab appearance based on selection state
+     */
+    private fun updateTabAppearance(tab: TabLayout.Tab, isSelected: Boolean) {
+        val context = context ?: return
+        if (tab.text.isNullOrEmpty()) return
+        val customView = LayoutInflater.from(context).inflate(
+            R.layout.cov_custom_tab_item3, null
         )
 
-        // Get avatar data from current preset
-        val avatars = CovAgentManager.getAvatars()
+        val textView = customView.findViewById<TextView>(R.id.tab_text)
+        val divider = customView.findViewById<View>(R.id.tab_divider)
+        textView.text = tab.text
 
-        // Add real avatar options
-        avatars.forEach { covAvatar ->
-            avatarList.add(
-                AvatarItem(
-                    covAvatar = covAvatar,
-                    isClose = false,
-                    isSelected = currentAvatar?.avatar_id == covAvatar.avatar_id
-                )
-            )
+        if (isSelected) {
+            divider.visibility = View.VISIBLE
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            textView.setTextColor(ContextCompat.getColor(context, io.agora.scene.common.R.color.ai_icontext1))
+        } else {
+            divider.visibility = View.GONE
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            textView.setTextColor(ContextCompat.getColor(context, io.agora.scene.common.R.color.ai_icontext2))
         }
+        // Set custom view with proper layout params
+        tab.customView = customView
+    }
 
-        avatarAdapter.updateAvatars(avatarList) { avatar ->
-            selectedAvatar = avatar
+    /**
+     * Sync selection across all fragments
+     */
+    private fun syncSelectionAcrossFragments(selectedAvatar: AvatarItem) {
+        CovLogger.d(TAG, "Syncing selection across fragments: ${selectedAvatar.covAvatar?.avatar_name}")
+        
+        fragments.values.forEach { fragment ->
+            fragment.updateSelection(selectedAvatar)
         }
     }
+
+    /**
+     * Get fragment at specific position
+     */
+    fun getFragmentAt(position: Int): CovAvatarSelectFragment? = fragments[position]
 
     /**
      * Avatar data model
@@ -197,142 +281,31 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
     )
 
     /**
-     * Avatar grid adapter
+     * ViewPager2 adapter for avatar category fragments
      */
-    inner class AvatarAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    private inner class AvatarCategoryAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
 
-        private var avatars: List<AvatarItem> = emptyList()
-        private var onItemClickListener: ((AvatarItem) -> Unit)? = null
-        private var selectedPosition = -1
+        override fun getItemCount(): Int = categories.size
 
-        override fun getItemViewType(position: Int): Int {
-            return if (avatars[position].isClose) VIEW_TYPE_CLOSE else VIEW_TYPE_AVATAR
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-            return when (viewType) {
-                VIEW_TYPE_CLOSE -> CloseViewHolder(
-                    CovAvatarSelectorCloseItemBinding.inflate(
-                        LayoutInflater.from(parent.context),
-                        parent,
-                        false
-                    )
-                )
-                VIEW_TYPE_AVATAR -> AvatarViewHolder(
-                    CovAvatarSelectorAvatarItemBinding.inflate(
-                        LayoutInflater.from(parent.context),
-                        parent,
-                        false
-                    )
-                )
-                else -> throw IllegalArgumentException("Unknown view type: $viewType")
+        override fun createFragment(position: Int): Fragment {
+            val category =
+                if (position < categories.size) categories[position] else getString(R.string.cov_setting_avatar_all)
+            val fragment = CovAvatarSelectFragment.newInstance(
+                currentAvatar = currentAvatar, 
+                category = category, 
+                onAvatarSelected = { avatar ->
+                    selectedAvatar = avatar
+                    // Sync selection across all fragments
+                    syncSelectionAcrossFragments(avatar)
+                })
+            this@CovAvatarSelectorDialog.fragments[position] = fragment
+            
+            // If there's already a global selection, sync it to this new fragment
+            selectedAvatar?.let { globalSelection ->
+                fragment.updateSelection(globalSelection)
             }
-        }
-
-        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-            val avatar = avatars[position]
-            val isSelected = position == selectedPosition
-
-            when (holder) {
-                is CloseViewHolder -> holder.bind(avatar, isSelected)
-                is AvatarViewHolder -> holder.bind(avatar, isSelected)
-            }
-        }
-
-        override fun getItemCount(): Int = avatars.size
-
-        fun updateAvatars(newAvatars: List<AvatarItem>, clickListener: (AvatarItem) -> Unit) {
-            this.avatars = newAvatars
-            this.onItemClickListener = clickListener
-
-            // Find selected position
-            selectedPosition = newAvatars.indexOfFirst { it.isSelected }
-
-            notifyDataSetChanged()
-        }
-
-        /**
-         * Close option ViewHolder
-         */
-        inner class CloseViewHolder(private val binding: CovAvatarSelectorCloseItemBinding) : RecyclerView.ViewHolder(binding.root) {
-
-            fun bind(avatar: AvatarItem, isSelected: Boolean) {
-                binding.apply {
-                    // Set selection border visibility
-                    vSelectionBorder.visibility = if (isSelected) View.VISIBLE else View.GONE
-
-                    // Set checkbox selection state
-                    vCheckbox.isSelected = isSelected
-
-                    // Set close icon selection state
-                    ivCloseIcon.isSelected = isSelected
-
-                    if (isSelected){
-                        tvCloseText.setTextColor(root.context.getColor(R.color.ai_brand_main6))
-                    }else{
-                        tvCloseText.setTextColor(root.context.getColor(R.color.ai_icontext1))
-                    }
-
-                    // Set click listener
-                    card.setOnClickListener(object : OnFastClickListener() {
-                        override fun onClickJacking(view: View) {
-                            if (selectedPosition != adapterPosition) {
-                                val oldPosition = selectedPosition
-                                selectedPosition = adapterPosition
-
-                                // Update selection state
-                                notifyItemChanged(oldPosition)
-                                notifyItemChanged(selectedPosition)
-                                onItemClickListener?.invoke(avatar)
-                            }
-                        }
-                    })
-                }
-            }
-        }
-
-        /**
-         * Regular avatar ViewHolder
-         */
-        inner class AvatarViewHolder(private val binding: CovAvatarSelectorAvatarItemBinding) : RecyclerView.ViewHolder(binding.root) {
-
-            fun bind(avatar: AvatarItem, isSelected: Boolean) {
-                binding.apply {
-                    val covAvatar = avatar.covAvatar
-                    tvName.text = covAvatar?.avatar_name?:""
-
-                    vSelectionBorder.visibility = if (isSelected) View.VISIBLE else View.GONE
-
-                    vCheckbox.isSelected = isSelected
-
-                    GlideImageLoader.load(
-                        ivAvatar,
-                        covAvatar?.thumb_img_url,
-                        null,
-                        io.agora.scene.convoai.R.drawable.cov_default_avatar
-                    )
-
-                    // Set click listener
-                    card.setOnClickListener(object : OnFastClickListener() {
-                        override fun onClickJacking(view: View) {
-                            if (selectedPosition != adapterPosition) {
-                                val oldPosition = selectedPosition
-                                selectedPosition = adapterPosition
-
-                                // Update selection state
-                                notifyItemChanged(oldPosition)
-                                notifyItemChanged(selectedPosition)
-
-                                // Delay 500ms to show selection effect before callback
-                                lifecycleScope.launch {
-                                    delay(500)
-                                    onItemClickListener?.invoke(avatar)
-                                }
-                            }
-                        }
-                    })
-                }
-            }
+            
+            return fragment
         }
     }
 }
