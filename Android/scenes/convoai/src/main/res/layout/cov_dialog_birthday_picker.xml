@@ -6,15 +6,14 @@
     android:layout_height="wrap_content"
     android:layout_gravity="bottom"
     android:background="@drawable/bottom_dialog_bg"
-    android:orientation="vertical"
-    android:paddingVertical="24dp">
+    android:orientation="vertical">
 
     <!-- Title -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
         android:gravity="center"
+        android:paddingVertical="24dp"
         android:text="@string/cov_mine_select_your_birthday"
         android:textColor="@color/ai_icontext1"
         android:textSize="20sp"
@@ -25,7 +24,6 @@
         android:id="@+id/dateTimePicker"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
         app:dt_dividerColor="@android:color/transparent"
         app:dt_layout="@layout/cov_date_picker_custom_layout"
         app:dt_normalTextSize="18sp"
@@ -40,7 +38,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="24dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancel"

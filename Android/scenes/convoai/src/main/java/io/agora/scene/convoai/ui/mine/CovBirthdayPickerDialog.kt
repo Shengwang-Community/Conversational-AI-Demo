@@ -41,7 +41,9 @@ class CovBirthdayPickerDialog : BaseSheetDialog<CovDialogBirthdayPickerBinding>(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        binding?.apply {
+            setOnApplyWindowInsets(root)
+        }
         setupDateTimePicker()
         setupClickListeners()
     }
