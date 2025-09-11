@@ -21,7 +21,7 @@ import io.agora.scene.convoai.ui.living.CovLivingActivity
 
 class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>() {
 
-    companion object{
+    companion object {
         private const val TAG = "CovOfficialAgentFragment"
     }
 
@@ -29,8 +29,7 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
     private val listViewModel: CovListViewModel by activityViewModels()
 
     override fun getViewBinding(
-        inflater: LayoutInflater,
-        container: ViewGroup?
+        inflater: LayoutInflater, container: ViewGroup?
     ): CovFragmentOfficialAgentBinding? {
         return CovFragmentOfficialAgentBinding.inflate(inflater, container, false)
     }
@@ -87,14 +86,17 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
             CovLogger.d(TAG, "State changed: $state")
             when (state) {
                 is CovListViewModel.AgentListState.Loading -> {
-                    // Loading state is handled by SwipeRefreshLayout, no need for additional loading UI
+                    showLoadingState()
                 }
+
                 is CovListViewModel.AgentListState.Success -> {
                     showContent()
                 }
+
                 is CovListViewModel.AgentListState.Error -> {
                     showError()
                 }
+
                 is CovListViewModel.AgentListState.Empty -> {
                     showError()
                 }
@@ -108,6 +110,7 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
             llError.visibility = View.GONE
             swipeRefreshLayout.isEnabled = true
             swipeRefreshLayout.isRefreshing = false
+            pbLoading.visibility = View.GONE
         }
     }
 
@@ -117,6 +120,17 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
             llError.visibility = View.VISIBLE
             swipeRefreshLayout.isEnabled = false
             swipeRefreshLayout.isRefreshing = false
+            pbLoading.visibility = View.GONE
+        }
+    }
+
+    private fun showLoadingState() {
+        mBinding?.apply {
+            if (listViewModel.officialAgents.value.isNullOrEmpty()) {
+                pbLoading.visibility = View.VISIBLE
+            } else {
+                pbLoading.visibility = View.GONE
+            }
         }
     }
 
@@ -143,9 +157,7 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OfficialAgentViewHolder {
             return OfficialAgentViewHolder(
                 CovItemOfficialAgentBinding.inflate(
-                    LayoutInflater.from(parent.context),
-                    parent,
-                    false
+                    LayoutInflater.from(parent.context), parent, false
                 )
             )
         }
@@ -156,13 +168,13 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
 
         override fun getItemCount(): Int = presets.size
 
-        inner class OfficialAgentViewHolder(private val binding: CovItemOfficialAgentBinding) : RecyclerView.ViewHolder
-            (binding.root) {
+        inner class OfficialAgentViewHolder(private val binding: CovItemOfficialAgentBinding) :
+            RecyclerView.ViewHolder(binding.root) {
 
             fun bind(preset: CovAgentPreset) {
                 binding.apply {
                     tvTitle.text = preset.display_name
-                    tvDescription.isVisible =  preset.description.isNotEmpty()
+                    tvDescription.isVisible = preset.description.isNotEmpty()
                     tvDescription.text = preset.description
                     if (preset.avatar_url.isNullOrEmpty()) {
                         ivAvatar.setImageResource(R.drawable.common_default_agent)

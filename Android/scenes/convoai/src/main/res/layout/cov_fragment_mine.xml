@@ -295,8 +295,8 @@
                 android:layout_marginStart="28dp"
                 android:layout_marginTop="4dp"
                 android:text="@string/cov_mine_devices"
-                android:textColor="@color/ai_brand_black10"
-                android:textSize="16sp"
+                android:textColor="@color/ai_brand_black8"
+                android:textSize="14sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
