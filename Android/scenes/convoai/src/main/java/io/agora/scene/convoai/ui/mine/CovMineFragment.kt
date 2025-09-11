@@ -67,7 +67,7 @@ class CovMineFragment : BaseFragment<CovFragmentMineBinding>() {
             }
 
             tvSelectBirthday.setOnClickListener {
-                ToastUtil.show("click birthday")
+                showCustomBirthdayPicker()
             }
 
             tvIntroduction.setOnClickListener {
@@ -154,5 +154,32 @@ class CovMineFragment : BaseFragment<CovFragmentMineBinding>() {
     private fun updateDeviceCount() {
         val count = CovIotDeviceManager.Companion.getInstance(requireContext()).getDeviceCount()
         mBinding?.tvDeviceCount?.text = getString(io.agora.scene.convoai.R.string.cov_mine_devices, count)
+    }
+
+    /**
+     * Show custom birthday picker using third-party calendar library
+     */
+    private fun showCustomBirthdayPicker() {
+        val currentBirthday = mBinding?.tvSelectBirthday?.text?.toString() ?: ""
+        
+        val dialog = CovBirthdayPickerDialog.newInstance(
+            selectedDate = currentBirthday.takeIf { it.isNotEmpty() }
+        ) { selectedDate ->
+            // Update UI
+            mBinding?.tvSelectBirthday?.text = selectedDate
+            
+            // Update user info via API
+            userViewModel.updateUserInfo(
+                birthday = selectedDate
+            ) { result ->
+                result.onSuccess {
+                    ToastUtil.show(io.agora.scene.convoai.R.string.cov_settings_update_success)
+                }.onFailure { exception ->
+                    ToastUtil.show("${getString(io.agora.scene.convoai.R.string.cov_settings_update_failed)} ${exception.message}")
+                }
+            }
+        }
+        
+        dialog.show(childFragmentManager, "CustomBirthdayPicker")
     }
 }

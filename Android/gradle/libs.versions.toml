@@ -11,6 +11,7 @@ material = "1.10.0"
 activity = "1.8.0"
 constraintlayout = "2.1.4"
 photoview = "2.3.0"
+datetimepicker = "0.6.3"
 viewbinding = "8.7.3"
 navigation = "2.6.0"
 splashscreen = "1.0.1"
@@ -55,6 +56,7 @@ retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = 
 converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "converterGson" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 mmkv = { module = "com.tencent:mmkv", version.ref = "mmkv" }
+datetime-picker = { module = "com.github.loper7:DateTimePicker", version.ref = "datetimepicker" }
 xlog = { module = "com.elvishew:xlog", version.ref = "xlog" }
 bugly = { module = "com.tencent.bugly:crashreport", version.ref = "bugly" }
 multidex = { module = "androidx.multidex:multidex", version.ref = "multidex" }
