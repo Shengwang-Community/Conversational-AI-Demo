@@ -12,7 +12,6 @@ import java.util.*
 
 /**
  * Custom birthday picker dialog using DateTimePicker library
- * Supports dark theme and wheel-style date selection
  */
 class CovBirthdayPickerDialog : BaseSheetDialog<CovDialogBirthdayPickerBinding>() {
 
@@ -49,7 +48,7 @@ class CovBirthdayPickerDialog : BaseSheetDialog<CovDialogBirthdayPickerBinding>(
     }
 
     private fun setupDateTimePicker() {
-        // Set up DateTimePicker with dark theme
+        // Set up DateTimePicker
         binding?.dateTimePicker?.apply {
             // Set display type to year, month, day only
             setDisplayType(

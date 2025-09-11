@@ -53,6 +53,7 @@
     <string name="cov_setting_model">模型</string>
     <string name="cov_setting_language">语言</string>
     <string name="cov_setting_avatar">数字人</string>
+    <string name="cov_setting_avatar_all">全部</string>
     <string name="cov_setting_device">设备</string>
     <string name="cov_setting_advanced_settings">高级设置</string>
     <string name="cov_setting_microphone">麦克风</string>
@@ -224,6 +225,7 @@
     <string name="cov_mine_about_me_hint">设定自我介绍，让 AI agent 更了解您</string>
     <string name="cov_mine_iot_devices">我的对话式 AI 设备</string>
     <string name="cov_mine_devices">已绑定 %d 台设备</string>
+    <string name="cov_mine_no_devices">点击绑定</string>
     <string name="cov_settings_version_format">Version: %s</string>
     <string name="cov_settings_agreement">用户协议</string>
     <string name="cov_settings_privacy_policy">隐私政策</string>
