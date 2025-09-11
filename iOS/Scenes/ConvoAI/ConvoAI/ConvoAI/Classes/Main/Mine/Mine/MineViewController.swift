@@ -32,6 +32,8 @@ class MineViewController: UIViewController {
         return view
     }()
     
+    private lazy var toolBox = ToolBoxApiManager()
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -75,20 +77,17 @@ class MineViewController: UIViewController {
     
     private func loadUserInfo() {
         if let user = UserCenter.user {
-            let nickname = user.nickname.isEmpty ? MineViewController.generateRandomNickname() : user.nickname
-            let gender = user.gender.isEmpty ? "female" : user.gender
-            let birthday = user.birthday.isEmpty ? "1990/01/01" : user.birthday
-            let bioText = user.bio.isEmpty ? ResourceManager.L10n.Mine.bioPlaceholderDisplay : user.bio
             topInfoView.updateUserInfo(
-                nickname: nickname,
-                birthday: birthday,
-                bio: bioText,
-                gender: gender
+                nickname: user.nickname,
+                birthday: user.birthday,
+                bio: user.bio,
+                gender: user.gender
             )
         }
         // Update IoT device count
         updateIoTDeviceCount()
     }
+    
     
     private func updateIoTDeviceCount() {
         let deviceCount = IoTEntrance.deviceCount()
@@ -123,11 +122,21 @@ extension MineViewController: MineTopInfoViewDelegate {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy/MM/dd"
         let birthdayDate = formatter.date(from: birthday)
-        BirthdaySettingViewController.show(in: self, currentBirthday: birthdayDate ?? Date()) { selectedDate in
+        BirthdaySettingViewController.show(in: self, currentBirthday: birthdayDate ?? Date()) { [weak self] selectedDate in
             if let date = selectedDate {
                 let birthdayString = formatter.string(from: date)
                 user.birthday = birthdayString
-                AppContext.loginManager()?.updateUserInfo(userInfo: user)
+                self?.toolBox.updateUserInfo(
+                    nickname: user.nickname,
+                    gender: user.gender,
+                    birthday: user.birthday,
+                    bio: user.bio,
+                    success: { response in
+                        AppContext.loginManager()?.updateUserInfo(userInfo: user)
+                    },
+                    failure: { error in
+                    }
+                )
             }
         }
     }
@@ -168,19 +177,3 @@ extension MineViewController: LoginManagerDelegate {
     }
 }
 
-// MARK: - Name Generation
-extension MineViewController {
-    
-    /// Generate a random nickname using adjective + noun combination
-    /// Used when user first logs in and has no nickname
-    static func generateRandomNickname() -> String {
-        // Use localized strings for adjectives and nouns, split by comma
-        let adjectives = ResourceManager.L10n.Mine.nicknameAdjectives.components(separatedBy: ",")
-        let nouns = ResourceManager.L10n.Mine.nicknameNouns.components(separatedBy: ",")
-        
-        let randomAdjective = adjectives.randomElement() ?? ""
-        let randomNoun = nouns.randomElement() ?? ""
-        
-        return "\(randomAdjective)\(randomNoun)"
-    }
-}

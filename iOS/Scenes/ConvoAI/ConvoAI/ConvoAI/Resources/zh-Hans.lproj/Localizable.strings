@@ -225,6 +225,7 @@
 "settings.voiceprint.tip.text" = "本机有声纹录入";
 "settings.voiceprint.alert.title" = "声纹录入提示";
 "settings.voiceprint.alert.content" = "您的声音默认存储在本机，声网有感声纹锁定功能需要收集您的声音，单次体验该功能完毕后会将云端声纹删除，绝对不会使用您的声音用作商业用途。";
+"settings.voiceprint.alert.seamless.content" = "您的声音默认存储在本机，声网无感声纹锁定功能需要收集您的声音，单次体验该功能完毕后会将云端声纹删除，绝对不会使用您的声音用作商业用途。";
 "settings.voiceprint.alert.cancel" = "取消";
 "settings.voiceprint.alert.confirm" = "确认";
 "settings.voiceprint.alert.no.voiceprint.title" = "未录入声纹";
@@ -248,6 +249,7 @@
 "mine.bio.example.3" = "前端开发仔报道，沉迷调样式、优化交互，追新技术像追更。爱喝冰美式提效，周末宅家肝游戏，求技术搭子交流 bug 解决方案～";
 "mine.bio.example.4" = "产品经理一枚，天天画原型、盯迭代，擅长抠需求细节。咖啡不离手，偏爱冷萃，闲了刷行业报告，求同频小伙伴唠产品思路～";
 "mine.bio.input.placeholder" = "输入对您的介绍，让AI agent 更了解您 ❤";
+"mine.placeholder.select" = "请选择";
 
 // Mine Module
 "mine.persona.title" = "我的对话人设";

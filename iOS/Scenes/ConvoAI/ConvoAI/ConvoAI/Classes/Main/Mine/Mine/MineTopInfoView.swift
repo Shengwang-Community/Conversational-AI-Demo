@@ -28,6 +28,14 @@ class MineTopInfoView: UIView {
         imageView.clipsToBounds = true
         return imageView
     }()
+    
+    private lazy var imageView2: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage.ag_named("img_mine_gender_holder")
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        return imageView
+    }()
 
     private lazy var titleCycleImageView: UIImageView = {
         let imageView = UIImageView()
@@ -43,8 +51,6 @@ class MineTopInfoView: UIView {
         imageView.contentMode = .scaleAspectFill
         imageView.layer.cornerRadius = 20
         imageView.layer.masksToBounds = true
-        imageView.layer.borderWidth = 2
-        imageView.layer.borderColor = UIColor.themColor(named: "ai_brand_main6").cgColor
         return imageView
     }()
     
@@ -168,6 +174,7 @@ class MineTopInfoView: UIView {
         addSubview(imageView1)
         addSubview(backBoardImageView)
         addSubview(bigAvatarImageView)
+        addSubview(imageView2)
         addSubview(avatarImageView)
         addSubview(profileInfoButton)
         
@@ -201,7 +208,10 @@ class MineTopInfoView: UIView {
             make.top.equalTo(personaCardView).offset(-76)
             make.right.equalToSuperview()
         }
-        
+        imageView2.snp.makeConstraints { make in
+            make.top.equalTo(personaCardView).offset(-5)
+            make.right.equalTo(personaCardView)
+        }
         avatarImageView.snp.makeConstraints { make in
             make.left.equalToSuperview().offset(40)
             make.top.equalToSuperview().offset(40)
@@ -276,44 +286,34 @@ class MineTopInfoView: UIView {
     }
     
     // MARK: - Public Methods
-    func updateUserInfo(nickname: String?, birthday: String?, bio: String?, gender: String?) {
-        if let nickname = nickname {
-            profileInfoButton.configure(title: nickname)
-        }
-        
-        if let birthday = birthday {
-            birthdayValueButton.configure(title: birthday)
-        }
-        
-        if let bio = bio {
-            bioValueButton.configure(title: bio)
-        }
-        
-        // Update addressing and avatars based on gender
+    func updateUserInfo(nickname: String, birthday: String, bio: String, gender: String) {
+        profileInfoButton.configure(title: nickname)
+        birthdayValueButton.configure(title: birthday.isEmpty ? ResourceManager.L10n.Mine.placeholderSelect : birthday)
+        bioValueButton.configure(title: bio.isEmpty ? ResourceManager.L10n.Mine.bioPlaceholderDisplay : bio)
         updateAddressingAndAvatarsBasedOnGender(gender)
     }
     
-    private func updateAddressingAndAvatarsBasedOnGender(_ gender: String?) {
-        guard let gender = gender else {
-            // Default values if gender is nil
-            addressingButton.configure(title: ResourceManager.L10n.Mine.genderFemale) // Default to female
-            avatarImageView.image = UIImage.ag_named("ic_default_avatar_icon")
-            bigAvatarImageView.image = UIImage.ag_named("img_mine_gender_male_big")
-            return
-        }
-        
+    private func updateAddressingAndAvatarsBasedOnGender(_ gender: String) {
         if gender == "female" {
             addressingButton.configure(title: ResourceManager.L10n.Mine.genderFemale)
             avatarImageView.image = UIImage.ag_named("img_mine_avatar_female")
+            avatarImageView.layer.borderColor = UIColor.themColor(named: "ai_brand_main6").cgColor
+            imageView2.isHidden = true
+            bigAvatarImageView.isHidden = false
             bigAvatarImageView.image = UIImage.ag_named("img_mine_gender_female_big")
         } else if gender == "male" {
             addressingButton.configure(title: ResourceManager.L10n.Mine.genderMale)
             avatarImageView.image = UIImage.ag_named("img_mine_avatar_male")
+            avatarImageView.layer.borderColor = UIColor.themColor(named: "ai_brand_main6").cgColor
+            imageView2.isHidden = true
+            bigAvatarImageView.isHidden = false
             bigAvatarImageView.image = UIImage.ag_named("img_mine_gender_male_big")
         } else {
-            // Default values if gender is not recognized
-            addressingButton.configure(title: ResourceManager.L10n.Mine.genderFemale) // Default to female
-            avatarImageView.image = UIImage.ag_named("ic_default_avatar_icon")
+            addressingButton.configure(title: ResourceManager.L10n.Mine.placeholderSelect)
+            avatarImageView.image = UIImage.ag_named("img_mine_avatar_holder")
+            avatarImageView.layer.borderColor = UIColor.clear.cgColor
+            imageView2.isHidden = false
+            bigAvatarImageView.isHidden = true
             bigAvatarImageView.image = UIImage.ag_named("img_mine_gender_female_big")
         }
     }

@@ -28,7 +28,7 @@ class BirthdaySettingViewController: UIViewController {
     
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.text = ResourceManager.L10n.Mine.birthdayTitle
+        label.text = ResourceManager.L10n.Mine.birthdaySelectTitle
         label.textColor = .white
         label.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         label.textAlignment = .center
@@ -39,7 +39,6 @@ class BirthdaySettingViewController: UIViewController {
         let picker = UIDatePicker()
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .wheels
-        picker.backgroundColor = .clear
         picker.maximumDate = Date()
         picker.minimumDate = Calendar.current.date(byAdding: .year, value: -100, to: Date())
         return picker
@@ -54,7 +53,7 @@ class BirthdaySettingViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle(ResourceManager.L10n.Mine.birthdayCancel, for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor(red: 0.25, green: 0.25, blue: 0.27, alpha: 1.0)
+        button.backgroundColor = UIColor.themColor(named: "ai_btn2")
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         button.layer.cornerRadius = 8
         button.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
@@ -65,7 +64,7 @@ class BirthdaySettingViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle(ResourceManager.L10n.Mine.birthdayConfirm, for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = UIColor(red: 0.27, green: 0.42, blue: 1.0, alpha: 1.0) // #446CFF
+        button.backgroundColor = UIColor.themColor(named: "ai_brand_main6")
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         button.layer.cornerRadius = 8
         button.addTarget(self, action: #selector(confirmButtonTapped), for: .touchUpInside)
@@ -126,7 +125,7 @@ class BirthdaySettingViewController: UIViewController {
         datePicker.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(20)
             make.left.right.equalToSuperview().inset(20)
-            make.height.equalTo(200)
+            make.height.equalTo(220)
         }
         
         buttonsContainer.snp.makeConstraints { make in

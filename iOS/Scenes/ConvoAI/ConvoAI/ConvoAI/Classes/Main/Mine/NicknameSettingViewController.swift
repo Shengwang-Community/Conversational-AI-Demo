@@ -106,7 +106,7 @@ class NicknameSettingViewController: BaseViewController {
         user.nickname = nickname
         SVProgressHUD.show()
         toolBox.updateUserInfo(
-            nickname: nickname,
+            nickname: user.nickname,
             gender: user.gender,
             birthday: user.birthday,
             bio: user.bio,

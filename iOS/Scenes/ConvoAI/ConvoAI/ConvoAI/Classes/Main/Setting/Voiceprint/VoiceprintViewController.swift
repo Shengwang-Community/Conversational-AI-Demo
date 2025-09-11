@@ -90,7 +90,7 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
         label.textColor = UIColor.themColor(named: "ai_icontext1")
         return label
     }()
-        
+    
     private lazy var voiceprintInfoTab: VoiceprintInfoTabView = {
         let view = VoiceprintInfoTabView()
         view.retryButton.addTarget(self, action: #selector(onRetryButtonTapped), for: .touchUpInside)
@@ -278,8 +278,8 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
     
     private func checkNeedUpdateRemote() {
         guard
-            let userId = UserCenter.user?.uid,
-            let info = voiceprintInfo, let ts = info.timestamp
+            let info = voiceprintInfo,
+            let _ = info.timestamp
         else {
             // no local file
             return
@@ -321,11 +321,11 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
             AgentToast.showWarn(info)
         }
     }
-
+    
     @objc private func onRetryButtonTapped() {
         uploadVoiceprint()
     }
-
+    
     @objc private func onPlayButtonTapped() {
         if voiceprintInfoTab.getCurrentStatus() == .playing {
             // Stop playing
@@ -335,7 +335,7 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
             startVoiceprintPlayback()
         }
     }
-
+    
     @objc private func onGotoButtonTapped() {
         CommonAlertView.show(
             in: view,
@@ -361,6 +361,27 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
         let selectedIndex = sender.tag
         guard selectedIndex < VoiceprintMode.allCases.count else { return }
         let newMode = VoiceprintMode.allCases[selectedIndex]
+        if newMode == currentMode {
+            return
+        }
+        let previousMode = currentMode
+        updateMode(newMode)
+        if newMode == .seamless {
+            CommonAlertView.show(
+                in: view,
+                title: ResourceManager.L10n.Voiceprint.alertTitle,
+                content: ResourceManager.L10n.Voiceprint.alertSeamlessContent,
+                cancelTitle: ResourceManager.L10n.Voiceprint.alertCancel,
+                confirmTitle: ResourceManager.L10n.Voiceprint.alertConfirm,
+                onConfirm: { _ in },
+                onCancel: { [weak self] in
+                    self?.updateMode(previousMode)
+                }
+            )
+        }
+    }
+    
+    private func updateMode(_ newMode: VoiceprintMode) {
         currentMode = newMode
         updateSelectedMode()
         

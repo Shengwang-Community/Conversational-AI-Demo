@@ -187,16 +187,15 @@ class GenderSettingViewController: BaseViewController {
     
     private func saveGenderSetting() {
         guard let user = UserCenter.user else { return }
+        user.gender = selectedGender.rawValue
         SVProgressHUD.show()
         toolBox.updateUserInfo(
             nickname: user.nickname,
-            gender: selectedGender.rawValue,
+            gender: user.gender,
             birthday: user.birthday,
             bio: user.bio,
             success: { [weak self] response in
                 SVProgressHUD.dismiss()
-                // Update local user info
-                user.gender = self?.selectedGender.rawValue ?? Gender.defaultValue.rawValue
                 AppContext.loginManager()?.updateUserInfo(userInfo: user)
                 self?.navigationController?.popViewController(animated: true)
             },

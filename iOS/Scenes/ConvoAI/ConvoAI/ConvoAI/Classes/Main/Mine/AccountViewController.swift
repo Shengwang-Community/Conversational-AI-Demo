@@ -72,7 +72,7 @@ class AccountViewController: BaseViewController {
         view.backgroundColor = UIColor.themColor(named: "ai_fill2")
         
         // Configure navigation bar
-        naviBar.title = "设置"
+        naviBar.title = ResourceManager.L10n.Mine.settingsTitle
         
         view.addSubview(deactivateAccountItem)
         view.addSubview(logoutButton)
@@ -104,11 +104,6 @@ class AccountViewController: BaseViewController {
             make.centerX.equalToSuperview()
             make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-20)
         }
-    }
-    
-    // MARK: - Actions
-    @objc private func backButtonTapped() {
-        navigationController?.popViewController(animated: true)
     }
     
     @objc private func deactivateAccountTapped() {

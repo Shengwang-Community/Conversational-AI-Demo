@@ -185,7 +185,7 @@ class BioSettingViewController: BaseViewController {
             nickname: user.nickname,
             gender: user.gender,
             birthday: user.birthday,
-            bio: bio,
+            bio: user.bio,
             success: { [weak self] response in
                 SVProgressHUD.dismiss()
                 self?.originalBio = bio

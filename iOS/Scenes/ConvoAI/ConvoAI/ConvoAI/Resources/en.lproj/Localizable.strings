@@ -215,6 +215,7 @@
 "mine.bio.example.3" = "Frontend developer reporting in, obsessed with styling and optimizing interactions, chasing new tech like following updates. Love iced Americano for efficiency, weekend gamer, looking for tech buddies to discuss bug solutions~";
 "mine.bio.example.4" = "Product manager here, daily drawing prototypes and monitoring iterations, good at digging into requirement details. Coffee never leaves my hand, prefer cold brew, love reading industry reports, looking for like-minded friends to discuss product ideas~";
 "mine.bio.input.placeholder" = "Tell us about yourself to help AI agent understand you better ❤";
+"mine.placeholder.select" = "Please select";
 
 // Settings
 "settings.not.effective" = "Not Effective";
@@ -249,6 +250,7 @@
 "settings.voiceprint.tip.text" = "Voiceprint available";
 "settings.voiceprint.alert.title" = "Voiceprint Recording Notice";
 "settings.voiceprint.alert.content" = "Your voice is stored locally by default. Agora's voiceprint lock feature needs to collect your voice, and the cloud voiceprint will be deleted after the single experience is complete. Your voice will never be used for commercial purposes.";
+"settings.voiceprint.alert.seamless.content" = "Your voice is stored locally by default. Agora's seamless voiceprint lock feature needs to collect your voice, and the cloud voiceprint will be deleted after the single experience is complete. Your voice will never be used for commercial purposes.";
 "settings.voiceprint.alert.cancel" = "Cancel";
 "settings.voiceprint.alert.confirm" = "Confirm";
 "settings.voiceprint.alert.no.voiceprint.title" = "No voiceprint recorded";
