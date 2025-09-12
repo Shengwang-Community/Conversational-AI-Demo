@@ -269,7 +269,7 @@ class ChatViewController: BaseViewController {
         let rtcEngine = rtcManager.getRtcEntine()
         animateView.setupMediaPlayer(rtcEngine)
         animateView.updateAgentState(.idle)
-        sendMessageButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
+        configDevMode()
 
         guard let rtmEngine = rtmManager.getRtmEngine() else {
             return
