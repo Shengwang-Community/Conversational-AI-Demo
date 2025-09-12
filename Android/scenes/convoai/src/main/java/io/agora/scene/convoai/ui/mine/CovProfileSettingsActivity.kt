@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.util.Log
 import android.view.Gravity
 import android.view.ViewGroup
+import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.common.ui.CommonDialog
@@ -26,7 +27,7 @@ class CovProfileSettingsActivity : BaseActivity<CovActivityProfileSettingsBindin
         }
     }
 
-    private val userViewModel: UserViewModel by lazy { 
+    private val userViewModel: UserViewModel by lazy {
         GlobalUserViewModel.getUserViewModel(application)
     }
 
@@ -61,10 +62,9 @@ class CovProfileSettingsActivity : BaseActivity<CovActivityProfileSettingsBindin
         }
     }
 
+    private var deleteAccountDialog: CommonDialog? = null
     private fun showDeleteAccountConfirmDialog() {
-        var dialog: CommonDialog? = null
-        
-        dialog = CommonDialog.Builder()
+        deleteAccountDialog = CommonDialog.Builder()
             .setTitle(getString(R.string.cov_mine_important_notice))
             .setContent(getString(R.string.cov_mine_delete_account_content))
             .setNegativeButton(getString(io.agora.scene.common.R.string.common_cancel)) {
@@ -77,9 +77,8 @@ class CovProfileSettingsActivity : BaseActivity<CovActivityProfileSettingsBindin
                 onClick = { check ->
                     if (check == true) {
                         // User confirmed deletion, proceed with account deletion
-                        ToastUtil.show("click confirm delete account")
-                        dialog?.dismiss()
-                        // TODO: Implement actual account deletion logic
+                        deleteAccountDialog?.dismiss()
+                        TermsActivity.startActivity(this@CovProfileSettingsActivity, ServerConfig.ssoProfileUrl)
                     } else {
                         // User didn't check the confirmation box
                         ToastUtil.showNewTips(
@@ -97,7 +96,7 @@ class CovProfileSettingsActivity : BaseActivity<CovActivityProfileSettingsBindin
             .hideTopImage()
             .build()
 
-            dialog?.show(supportFragmentManager, "delete_account_dialog_tag")
+        deleteAccountDialog?.show(supportFragmentManager, "delete_account_dialog_tag")
     }
 
 

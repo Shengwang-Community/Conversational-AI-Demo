@@ -31,7 +31,6 @@ object ServerConfig {
     @JvmStatic
     val thirdPartyUrl : String
         get() {
-            // TODO: env
             return "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/libraries.html"
         }
 
@@ -41,6 +40,11 @@ object ServerConfig {
             return "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/manifest-dev/ConvoAI/index.html"
         }
 
+    @JvmStatic
+    val ssoProfileUrl : String
+        get() {
+            return "https://sso.shengwang.cn/profile"
+        }
 
     @JvmStatic
     var appVersionName: String = ""

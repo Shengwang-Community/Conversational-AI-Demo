@@ -244,11 +244,9 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
         if (isSelected) {
             divider.visibility = View.VISIBLE
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
             textView.setTextColor(ContextCompat.getColor(context, io.agora.scene.common.R.color.ai_icontext1))
         } else {
             divider.visibility = View.GONE
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             textView.setTextColor(ContextCompat.getColor(context, io.agora.scene.common.R.color.ai_icontext2))
         }
         // Set custom view with proper layout params

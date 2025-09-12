@@ -71,14 +71,14 @@
         android:id="@+id/view_avatar"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="30dp"
+        android:layout_marginBottom="28dp"
         android:background="@drawable/app_avatar_boy_cn"
         android:visibility="gone"
-        tools:visibility="visible"
         app:layout_constraintBottom_toBottomOf="@+id/view_blue"
         app:layout_constraintDimensionRatio="194:239"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintWidth_percent="0.464" />
+        app:layout_constraintWidth_percent="0.464"
+        tools:visibility="visible" />
 
     <View
         android:id="@+id/view_blue"
@@ -106,22 +106,22 @@
 
     <View
         android:id="@+id/view_blur"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginHorizontal="36dp"
+        android:layout_marginBottom="-36dp"
         android:background="@drawable/app_bg_create_blur"
         app:layout_constraintBottom_toBottomOf="@+id/view_blue"
-        app:layout_constraintDimensionRatio="302:42"
+        app:layout_constraintDimensionRatio="1125:303"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintWidth_percent="0.8" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <View
         android:id="@+id/view_black"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="-30dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="-28dp"
         android:background="@drawable/app_bg_create_black"
+        app:layout_constraintDimensionRatio="375:499"
         app:layout_constraintTop_toBottomOf="@+id/view_blue" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -255,6 +255,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
+
         android:background="@drawable/settings_item_bg"
         android:orientation="vertical"
         android:paddingHorizontal="16dp"
@@ -280,9 +281,9 @@
             android:layout_height="0dp"
             android:layout_marginTop="15dp"
             android:background="@drawable/cov_iot_entrance"
-            android:foreground="?android:attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
+            android:foreground="?android:attr/selectableItemBackground"
             app:layout_constraintDimensionRatio="308:72"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -320,10 +321,10 @@
             android:id="@+id/cl_privacy"
             android:layout_width="match_parent"
             android:layout_height="@dimen/ai_dp_default"
-            android:paddingHorizontal="16dp"
             android:background="?android:attr/selectableItemBackground"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:paddingHorizontal="16dp">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:layout_width="28dp"
@@ -365,10 +366,10 @@
             android:id="@+id/cl_settings"
             android:layout_width="match_parent"
             android:layout_height="@dimen/ai_dp_default"
-            android:paddingHorizontal="16dp"
             android:background="?android:attr/selectableItemBackground"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:paddingHorizontal="16dp">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:layout_width="28dp"
