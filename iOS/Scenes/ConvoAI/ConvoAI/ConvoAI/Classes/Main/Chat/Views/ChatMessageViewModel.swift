@@ -51,11 +51,7 @@ class ChatMessageViewModel: NSObject {
     override init() {
         super.init()
         registerDelegate()
-        guard let preference = AppContext.preferenceManager()?.preference else {
-            return
-        }
-        
-        displayMode = preference.transcriptMode
+        displayMode = AppContext.settingManager().transcriptMode
     }
     
     func clearMessage() {
@@ -65,12 +61,12 @@ class ChatMessageViewModel: NSObject {
     }
     
     func registerDelegate() {
-        AppContext.preferenceManager()?.addDelegate(self)
+        AppContext.settingManager().addDelegate(self)
     }
 }
 
-extension ChatMessageViewModel: AgentPreferenceManagerDelegate {
-    func preferenceManager(_ manager: AgentPreferenceManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {
+extension ChatMessageViewModel: AgentSettingDelegate {
+    func settingManager(_ manager: AgentSettingManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {
         displayMode = mode
     }
 }

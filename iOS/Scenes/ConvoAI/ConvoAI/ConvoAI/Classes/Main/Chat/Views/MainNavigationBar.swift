@@ -134,15 +134,11 @@ class MainNavigationBar: UIView {
     }
     
     func registerDelegate() {
-        if let manager = AppContext.preferenceManager() {
-            manager.addDelegate(self)
-        }
+        AppContext.stateManager().addDelegate(self)
     }
     
     func unregisterDelegate() {
-        if let manager = AppContext.preferenceManager() {
-            manager.removeDelegate(self)
-        }
+        AppContext.stateManager().removeDelegate(self)
     }
     
     public func updateCharacterInformation(icon: String, defaultIcon: String, name: String) {
@@ -165,11 +161,7 @@ class MainNavigationBar: UIView {
     }
     
     private func updateNetWorkView() {
-        guard let manager = AppContext.preferenceManager() else {
-            netStateView.isHidden = true
-            return
-        }
-        let roomState = manager.information.rtcRoomState
+        let roomState = AppContext.stateManager().rtcRoomState
         if (roomState == .unload) {
             netStateView.isHidden = true
         } else if (roomState == .connected) {
@@ -177,7 +169,7 @@ class MainNavigationBar: UIView {
             netTrackView.isHidden = false
             netRenderView.isHidden = false
             netTrackView.image = UIImage.ag_named("ic_agent_net_0")
-            let netState = manager.information.networkState
+            let netState = AppContext.stateManager().networkState
             var imageName = "ic_agent_net_1"
             switch netState {
             case .good:
@@ -256,12 +248,12 @@ class MainNavigationBar: UIView {
     }
 }
 
-extension MainNavigationBar: AgentPreferenceManagerDelegate {
-    func preferenceManager(_ manager: AgentPreferenceManager, networkDidUpdated networkState: NetworkStatus) {
+extension MainNavigationBar: AgentStateDelegate {
+    func stateManager(_ manager: AgentStateManager, networkDidUpdated networkState: NetworkStatus) {
         updateNetWorkView()
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, roomStateDidUpdated roomState: ConnectionStatus) {
+    func stateManager(_ manager: AgentStateManager, roomStateDidUpdated roomState: ConnectionStatus) {
         updateNetWorkView()
     }
 }

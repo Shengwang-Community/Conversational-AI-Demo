@@ -106,9 +106,9 @@ class ChatMessageCell: UITableViewCell {
         } else {
             setupAgentLayout()
             avatarView.backgroundColor = .clear
-            if let avatar = AppContext.preferenceManager()?.preference.avatar {
+            if let avatar = AppContext.settingManager().currentPreference.avatar {
                 avatarImageView.kf.setImage(with: URL(string: avatar.thumbImageUrl.stringValue()))
-            } else if let preset = AppContext.preferenceManager()?.preference.preset {
+            } else if let preset = AppContext.settingManager().currentPreference.preset {
                 avatarImageView.kf.setImage(
                     with: URL(string: preset.avatarUrl.stringValue()),
                     placeholder: UIImage.ag_named(preset.defaultAvatar ?? "")
@@ -116,7 +116,7 @@ class ChatMessageCell: UITableViewCell {
             } else {
                 avatarImageView.image = UIImage.ag_named("ic_agent_avatar")
             }
-            nameLabel.text = AppContext.preferenceManager()?.preference.preset?.displayName.stringValue()
+            nameLabel.text = AppContext.settingManager().currentPreference.preset?.displayName.stringValue()
             nameLabel.textColor = UIColor.themColor(named: "ai_icontext1")
             messageLabel.textColor = UIColor.themColor(named: "ai_icontext1")
             messageBubble.backgroundColor = .clear
@@ -426,9 +426,9 @@ class ChatImageMessageCell: UITableViewCell {
             avatarImageView.image = UIImage.ag_named("ic_agent_mine_avatar")
         } else {
             setupAgentLayout()
-            if let avatar = AppContext.preferenceManager()?.preference.avatar {
+            if let avatar = AppContext.settingManager().currentPreference.avatar {
                 avatarImageView.kf.setImage(with: URL(string: avatar.thumbImageUrl.stringValue()))
-            } else if let preset = AppContext.preferenceManager()?.preference.preset {
+            } else if let preset = AppContext.settingManager().currentPreference.preset {
                 avatarImageView.kf.setImage(
                     with: URL(string: preset.avatarUrl.stringValue()),
                     placeholder: UIImage.ag_named(preset.defaultAvatar ?? "")
@@ -436,7 +436,7 @@ class ChatImageMessageCell: UITableViewCell {
             } else {
                 avatarImageView.image = UIImage.ag_named("ic_agent_avatar")
             }
-            nameLabel.text = AppContext.preferenceManager()?.preference.preset?.displayName.stringValue()
+            nameLabel.text = AppContext.settingManager().currentPreference.preset?.displayName.stringValue()
         }
         
         // Configure image content

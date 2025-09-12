@@ -196,7 +196,7 @@ class GenderSettingViewController: BaseViewController {
             bio: user.bio,
             success: { [weak self] response in
                 SVProgressHUD.dismiss()
-                AppContext.loginManager()?.updateUserInfo(userInfo: user)
+                AppContext.loginManager().updateUserInfo(userInfo: user)
                 self?.navigationController?.popViewController(animated: true)
             },
             failure: { error in

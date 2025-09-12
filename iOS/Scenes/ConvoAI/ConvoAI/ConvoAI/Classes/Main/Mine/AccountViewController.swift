@@ -126,7 +126,7 @@ class AccountViewController: BaseViewController {
                            cancelTitle: ResourceManager.L10n.Login.logoutAlertCancel,
                            confirmTitle: ResourceManager.L10n.Login.logoutAlertConfirm,
                            onConfirm: {
-            AppContext.loginManager()?.logout(reason: .userInitiated)
+            AppContext.loginManager().logout(reason: .userInitiated)
         })
     }
     

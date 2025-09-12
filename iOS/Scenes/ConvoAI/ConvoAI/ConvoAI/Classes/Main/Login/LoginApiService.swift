@@ -52,7 +52,7 @@ class LoginApiService: NSObject {
                         model.bio = userInfo.bio ?? ""
                         model.birthday = userInfo.birthday ?? ""
                         model.nickname = userInfo.nickname ?? ""
-                        AppContext.loginManager()?.updateUserInfo(userInfo: model)
+                        AppContext.loginManager().updateUserInfo(userInfo: model)
                         callback?(nil)
                     } catch {
                         callback?(NSError(domain: "Failed to decode JSON", code: -1))

@@ -39,7 +39,7 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
     
     private var isVoiceprintTabVisible = false
     private var voiceprintInfo: VoiceprintInfo? = nil
-    private var currentMode = AppContext.preferenceManager()?.preference.voiceprintMode ?? .off
+    private var currentMode = AppContext.settingManager().voiceprintMode
     private var audioPlayer: AVAudioPlayer?
     private var toolBox = ToolBoxApiManager()
     
@@ -122,7 +122,7 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
     
     override func navigationBackButtonTapped() {
         if readyPop() {
-            AppContext.preferenceManager()?.updateVoiceprintMode(currentMode)
+            AppContext.settingManager().updateVoiceprintMode(currentMode)
             self.navigationController?.popViewController(animated: true)
         } else {
             VoiceprintAlertView.show(
@@ -393,8 +393,8 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
             stopVoiceprintPlayback()
         }
         
-        // Update preference manager
-        AppContext.preferenceManager()?.updateVoiceprintMode(newMode)
+        // Update setting manager
+        AppContext.settingManager().updateVoiceprintMode(newMode)
     }
     
     private func showvoiceprintInfoTab(animated: Bool = true) {

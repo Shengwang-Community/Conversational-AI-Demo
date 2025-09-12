@@ -72,20 +72,13 @@ class OfficialAgentViewController: UIViewController {
             do {
                 let presets = try JSONDecoder().decode([AgentPreset].self, from: data)
                 self.presets = presets
-                AppContext.preferenceManager()?.setPresets(presets: presets)
                 tableView.reloadData()
+                refreshControl.endRefreshing()
             } catch {
                 ConvoAILogger.error("JSON decode error: \(error)")
             }
             return
         }
-        
-        if let p = AppContext.preferenceManager()?.allPresets() {
-            presets = p
-            refreshControl.endRefreshing()
-            return
-        }
-        
         requestAgentPresets()
     }
     
@@ -109,7 +102,6 @@ class OfficialAgentViewController: UIViewController {
                 return
             }
             
-            AppContext.preferenceManager()?.setPresets(presets: result)
             self?.presets = result
             self?.tableView.reloadData()
             self?.refreshSubView()
@@ -147,8 +139,8 @@ extension OfficialAgentViewController: UITableViewDelegate, UITableViewDataSourc
         tableView.deselectRow(at: indexPath, animated: true)
         var preset = presets[indexPath.row]
         preset.defaultAvatar = "ic_default_avatar_icon"
-        AppContext.preferenceManager()?.preference.isCustomPreset = false
-        AppContext.preferenceManager()?.updatePreset(preset)
+        AppContext.settingManager().isCustomPreset = false
+        AppContext.settingManager().updatePreset(preset)
         let reportEvent = ReportEvent(appId: AppContext.shared.appId, sceneId: "\(ConvoAIEntrance.kSceneName)_iOS", action: preset.displayName, appVersion: ConversationalAIAPIImpl.version, appPlatform: "iOS", deviceModel: UIDevice.current.machineModel, deviceBrand: "Apple", osVersion: "")
         toolBoxApi.reportEvent(event: reportEvent, success: nil, failure: nil)
         let chatViewController = ChatViewController()

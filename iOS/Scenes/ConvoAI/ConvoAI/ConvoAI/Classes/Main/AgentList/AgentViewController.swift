@@ -40,7 +40,7 @@ public class AgentViewController: UIViewController {
     }()
     
     deinit {
-        AppContext.loginManager()?.removeDelegate(self)
+        AppContext.loginManager().removeDelegate(self)
     }
 
     public override func viewDidLoad() {
@@ -60,7 +60,7 @@ public class AgentViewController: UIViewController {
     }
     
     func registerDelegate() {
-        AppContext.loginManager()?.addDelegate(self)
+        AppContext.loginManager().addDelegate(self)
         DeveloperConfig.shared.add(delegate: self)
     }
     
@@ -152,8 +152,7 @@ extension AgentViewController: LoginManagerDelegate {
 extension AgentViewController: DeveloperConfigDelegate {
     public func devConfigDidSwitchServer(_ config: DeveloperConfig) {
         IoTEntrance.deleteAllPresets()
-        AppContext.preferenceManager()?.deleteAllPresets()
-        AppContext.loginManager()?.logout(reason: .sessionExpired)
+        AppContext.loginManager().logout(reason: .sessionExpired)
         NotificationCenter.default.post(name: .EnvironmentChanged, object: nil, userInfo: nil)
     }
 }

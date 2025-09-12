@@ -233,7 +233,7 @@ extension SSOWebViewController: WKScriptMessageHandler {
                     let token = response
                     let model = LoginModel()
                     model.token = token
-                    AppContext.loginManager()?.updateUserInfo(userInfo: model)
+                    AppContext.loginManager().updateUserInfo(userInfo: model)
                     self.navigationController?.dismiss(animated: true)
                 } else {
                     completionHandler?(nil)

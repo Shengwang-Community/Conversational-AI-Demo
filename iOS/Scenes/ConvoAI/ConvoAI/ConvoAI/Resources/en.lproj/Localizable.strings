@@ -79,6 +79,7 @@
 "settings.noise.bhvs" = "Background Human Voice Suppression";
 "settings.digital.human" = "AI Avatar";
 "settings.digital.human.closed" = "Closed";
+"settings.digital.human.all" = "All";
 "settings.digital.human.preset.alert.title" = "AI Avatar Will Be Reset";
 "settings.digital.human.preset.alert.description" = "Reconfigure AI avatar after changing preset.";
 "settings.digital.human.language.alert.title" = "AI Avatar Will Be Reset";
@@ -276,7 +277,6 @@
 "mine.nickname.update.failed" = "Failed to update nickname";
 "mine.nickname.too.long" = "Nickname cannot exceed %d characters";
 "mine.nickname.invalid.characters" = "Nickname can only contain Chinese characters, English letters, and numbers";
-"mine.nickname.user.info.failed" = "Failed to get user information";
 
 // Gender Setting
 "mine.gender.title" = "Address You As";

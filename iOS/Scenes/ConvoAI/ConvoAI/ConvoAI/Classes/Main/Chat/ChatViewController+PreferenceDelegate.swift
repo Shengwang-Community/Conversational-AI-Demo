@@ -8,8 +8,8 @@
 import Foundation
 import Common
 
-extension ChatViewController: AgentPreferenceManagerDelegate {
-    func preferenceManager(_ manager: AgentPreferenceManager, avatarDidUpdated avatar: Avatar?) {
+extension ChatViewController: AgentSettingDelegate {
+    func settingManager(_ manager: AgentSettingManager, avatarDidUpdated avatar: Avatar?) {
         if isEnableAvatar() {
             startShowAvatar()
         } else {
@@ -24,15 +24,10 @@ extension ChatViewController: AgentPreferenceManagerDelegate {
         if isEnableAvatar {
             return .text
         }
-        
-        guard let renderMode = AppContext.preferenceManager()?.preference.transcriptMode else {
-            return .words
-        }
-        
+        let renderMode = AppContext.settingManager().transcriptMode
         if renderMode != .words {
             return .text
         }
-        
         return .words
     }
     

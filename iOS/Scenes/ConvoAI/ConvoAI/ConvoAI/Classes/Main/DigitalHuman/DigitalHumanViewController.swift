@@ -79,8 +79,8 @@ class DigitalHumanViewController: BaseViewController {
     
     private func loadData() {
         guard
-            let language = AppContext.preferenceManager()?.preference.language,
-            let avatarIdsByLang = AppContext.preferenceManager()?.preference.preset?.avatarIdsByLang,
+            let language = AppContext.settingManager().language,
+            let avatarIdsByLang = AppContext.settingManager().preset?.avatarIdsByLang,
             let visibleAvatars = avatarIdsByLang[language.languageCode.stringValue()]
         else {
             createDefaultGroup()
@@ -90,7 +90,7 @@ class DigitalHumanViewController: BaseViewController {
         let groupedAvatars = Dictionary(grouping: visibleAvatars) { $0.vendor }
         
         // Create close digital human (shared across all groups)
-        let currentAvatar = AppContext.preferenceManager()?.preference.avatar
+        let currentAvatar = AppContext.settingManager().avatar
         let hasSelectedAvatar = currentAvatar != nil
         let closeDigitalHuman = DigitalHuman(
             avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "close", thumbImageUrl: nil, bgImageUrl: nil),
@@ -317,9 +317,9 @@ extension DigitalHumanViewController {
             groupView.collectionView.reloadData()
         }
         if selectedDigitalHuman.avatar.avatarId == DigitalHuman.closeTag {
-            AppContext.preferenceManager()?.updateAvatar(nil)
+            AppContext.settingManager().updateAvatar(nil)
         } else {
-            AppContext.preferenceManager()?.updateAvatar(selectedDigitalHuman.avatar)
+            AppContext.settingManager().updateAvatar(selectedDigitalHuman.avatar)
         }
     }
 }

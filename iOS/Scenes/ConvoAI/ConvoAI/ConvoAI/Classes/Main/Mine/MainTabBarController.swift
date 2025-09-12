@@ -14,7 +14,7 @@ public class MainTabBarController: UITabBarController {
     private lazy var toolBox = ToolBoxApiManager()
     
     deinit {
-        AppContext.loginManager()?.removeDelegate(self)
+        AppContext.loginManager().removeDelegate(self)
     }
     
     // MARK: - Lifecycle
@@ -23,7 +23,7 @@ public class MainTabBarController: UITabBarController {
         setupViewControllers()
         configureTabBarAppearance()
         
-        AppContext.loginManager()?.addDelegate(self)
+        AppContext.loginManager().addDelegate(self)
         fetchLoginState()
     }
     
@@ -32,7 +32,7 @@ public class MainTabBarController: UITabBarController {
         if loginState {
             LoginApiService.getUserInfo { [weak self] error in
                 if let err = error {
-                    AppContext.loginManager()?.logout(reason: .sessionExpired)
+                    AppContext.loginManager().logout(reason: .sessionExpired)
                     SVProgressHUD.showInfo(withStatus: err.localizedDescription)
                     return
                 }
@@ -59,7 +59,7 @@ public class MainTabBarController: UITabBarController {
             birthday: user.birthday,
             bio: user.bio,
             success: { response in
-                AppContext.loginManager()?.updateUserInfo(userInfo: user)
+                AppContext.loginManager().updateUserInfo(userInfo: user)
             },
             failure: { error in
             }

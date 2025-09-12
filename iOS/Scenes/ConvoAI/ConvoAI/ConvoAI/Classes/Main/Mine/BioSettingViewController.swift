@@ -189,7 +189,7 @@ class BioSettingViewController: BaseViewController {
             success: { [weak self] response in
                 SVProgressHUD.dismiss()
                 self?.originalBio = bio
-                AppContext.loginManager()?.updateUserInfo(userInfo: user)
+                AppContext.loginManager().updateUserInfo(userInfo: user)
             },
             failure: { error in
                 SVProgressHUD.dismiss()

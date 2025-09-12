@@ -90,11 +90,6 @@ class AgentSettingViewController: UIViewController {
         SVProgressHUD.dismiss()
     }
     
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        requestPresetsIfNeed()
-    }
-    
     private func setupTabSelector() {
         let tabItems = [
             TabSelectorView.TabItem(title: ResourceManager.L10n.Settings.title, iconName: "ic_agent_setting"),
@@ -117,36 +112,13 @@ class AgentSettingViewController: UIViewController {
     }
     
     private func registerDelegate() {
-        AppContext.preferenceManager()?.addDelegate(self)
+        AppContext.settingManager().addDelegate(self)
+        AppContext.stateManager().addDelegate(self)
     }
     
     private func unRegisterDelegate() {
-        AppContext.preferenceManager()?.removeDelegate(self)
-    }
-    
-    private func requestPresetsIfNeed() {
-        guard AppContext.preferenceManager()?.allPresets() == nil else {
-            return
-        }
-        
-        SVProgressHUD.show()
-        ConvoAILogger.info("request presets in setting page")
-        agentManager.fetchAgentPresets(appId: AppContext.shared.appId) { error, result in
-            SVProgressHUD.dismiss()
-            if let error = error {
-                SVProgressHUD.showError(withStatus: error.message)
-                ConvoAILogger.info(error.message)
-                return
-            }
-            
-            guard let result = result else {
-                ConvoAILogger.info("preset is empty")
-                SVProgressHUD.showError(withStatus: "preset is empty")
-                return
-            }
-            
-            AppContext.preferenceManager()?.setPresets(presets: result)
-        }
+        AppContext.settingManager().removeDelegate(self)
+        AppContext.stateManager().removeDelegate(self)
     }
     
     private func setupPanGesture() {
@@ -230,9 +202,9 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
     func agentSettingsViewDidTapLanguage(_ view: AgentSettingsView, sender: UIButton) {
         print("onClickLanguage")
         selectTableMask.isHidden = false
-        guard let currentPreset = AppContext.preferenceManager()?.preference.preset,
+        guard let currentPreset = AppContext.settingManager().preset,
               let allLanguages = currentPreset.supportLanguages,
-              let currentLanguage = AppContext.preferenceManager()?.preference.language
+              let currentLanguage = AppContext.settingManager().language
         else { return }
         let currentIndex = allLanguages.firstIndex { $0.languageName == currentLanguage.languageName } ?? 0
         let table = AgentSelectTableView(items: allLanguages.map { AgentSelectTableItem(title: $0.languageName.stringValue(), subTitle: "") }) { index in
@@ -241,11 +213,11 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
             self.onClickHideTable(nil)
 
             // Check if alert is already ignored
-            if AppContext.preferenceManager()?.isPresetAlertIgnored() == true {
+            if AppContext.settingManager().isPresetAlertIgnored() == true {
                 // If ignored, update language directly
-                AppContext.preferenceManager()?.updateLanguage(selected)
+                AppContext.settingManager().updateLanguage(selected)
             } else {
-                if let _ = AppContext.preferenceManager()?.preference.avatar {
+                if let _ = AppContext.settingManager().avatar {
                     // Show confirmation alert
                     CommonAlertView.show(
                         in: self.view,
@@ -257,12 +229,12 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
                         checkboxOption: CommonAlertView.CheckboxOption(text: ResourceManager.L10n.Settings.digitalHumanAlertIgnore, isChecked: false),
                         onConfirm: { isCheckboxChecked in
                             if isCheckboxChecked {
-                                AppContext.preferenceManager()?.setPresetAlertIgnored(true)
+                                AppContext.settingManager().setPresetAlertIgnored(true)
                             }
-                            AppContext.preferenceManager()?.updateLanguage(selected)
+                            AppContext.settingManager().updateLanguage(selected)
                         })
                 } else {
-                    AppContext.preferenceManager()?.updateLanguage(selected)
+                    AppContext.settingManager().updateLanguage(selected)
                 }
             }
         }
@@ -283,12 +255,12 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
     }
     
     func agentSettingsViewDidToggleAiVad(_ view: AgentSettingsView, isOn: Bool) {
-        AppContext.preferenceManager()?.updateAiVadState(isOn)
+        AppContext.settingManager().updateAiVadState(isOn)
     }
     
     func agentSettingsViewDidTapTranscriptRender(_ view: AgentSettingsView, sender: UIButton) {
         selectTableMask.isHidden = false
-        guard let preference = AppContext.preferenceManager()?.preference else { return }
+        let preference = AppContext.settingManager().currentPreference
         let currentMode = preference.transcriptMode
         let isCustomPreset = preference.isCustomPreset
         var allModes = TranscriptDisplayMode.allCases
@@ -307,7 +279,7 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
             let selected = allModes[index]
             if currentMode == selected { return }
             self.onClickHideTable(nil)
-            AppContext.preferenceManager()?.updateTranscriptMode(selected)
+            AppContext.settingManager().updateTranscriptMode(selected)
         }
         
         table.setSelectedIndex(currentIndex)
@@ -382,65 +354,58 @@ extension AgentSettingViewController {
     }
 }
 
-extension AgentSettingViewController: AgentPreferenceManagerDelegate {
-    func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset) {
-        agentSettingsView.updatePreset(preset)
-        
-        let defaultLanguageCode = preset.defaultLanguageCode
-        let supportLanguages = preset.supportLanguages
-        
-        var resetLanguageCode = defaultLanguageCode
-        if defaultLanguageCode == nil, let languageCode = supportLanguages?.first?.languageCode {
-            resetLanguageCode = languageCode
-        }
-        
-        if let language = supportLanguages?.first(where: { $0.languageCode == resetLanguageCode }) {
-            manager.updateLanguage(language)
-        }
-        
-        manager.updateAvatar(nil)
-    }
-    
-    func preferenceManager(_ manager: AgentPreferenceManager, avatarDidUpdated avatar: Avatar?) {
-        agentSettingsView.updateAvatar(avatar)
-    }
-    
-    func preferenceManager(_ manager: AgentPreferenceManager, agentStateDidUpdated agentState: ConnectionStatus) {
+extension AgentSettingViewController: AgentStateDelegate {
+    func stateManager(_ manager: AgentStateManager, agentStateDidUpdated agentState: ConnectionStatus) {
         agentSettingsView.updateAgentState(agentState)
         channelInfoView.updateAgentState(agentState)
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, roomStateDidUpdated roomState: ConnectionStatus) {
+    func stateManager(_ manager: AgentStateManager, roomStateDidUpdated roomState: ConnectionStatus) {
         channelInfoView.updateRoomState(roomState)
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, agentIdDidUpdated agentId: String) {
+    func stateManager(_ manager: AgentStateManager, agentIdDidUpdated agentId: String) {
         channelInfoView.updateAgentId(agentId)
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, roomIdDidUpdated roomId: String) {
+    func stateManager(_ manager: AgentStateManager, roomIdDidUpdated roomId: String) {
         channelInfoView.updateRoomId(roomId)
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, userIdDidUpdated userId: String) {
+    func stateManager(_ manager: AgentStateManager, userIdDidUpdated userId: String) {
         channelInfoView.updateUserId(userId)
     }
-    
-    func preferenceManager(_ manager: AgentPreferenceManager, languageDidUpdated language: SupportLanguage?) {
-        agentSettingsView.updateLanguage(language)
-        manager.updateAvatar(nil)
+}
+
+extension AgentSettingViewController: AgentSettingDelegate {
+    func settingManager(_ manager: AgentSettingManager, presetDidUpdated preset: AgentPreset?) {
+        if let preset = preset {
+            agentSettingsView.updatePreset(preset)
+        }
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, aiVadStateDidUpdated state: Bool) {
+    func settingManager(_ manager: AgentSettingManager, languageDidUpdated language: SupportLanguage?) {
+        agentSettingsView.updateLanguage(language)
+    }
+    
+    func settingManager(_ manager: AgentSettingManager, avatarDidUpdated avatar: Avatar?) {
+        agentSettingsView.updateAvatar(avatar)
+    }
+    
+    func settingManager(_ manager: AgentSettingManager, aiVadStateDidUpdated state: Bool) {
         agentSettingsView.updateAiVadState(state)
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {
+    func settingManager(_ manager: AgentSettingManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {
         agentSettingsView.updateTranscriptMode(mode)
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, voiceprintModeDidUpdated mode: VoiceprintMode) {
+    func settingManager(_ manager: AgentSettingManager, voiceprintModeDidUpdated mode: VoiceprintMode) {
         agentSettingsView.updateVoiceprintMode(mode)
+    }
+    
+    func settingManager(_ manager: AgentSettingManager, bhvsStateDidUpdated state: Bool) {
+        // Handle BHVS state update if needed
     }
 }
 

@@ -113,7 +113,7 @@ class NicknameSettingViewController: BaseViewController {
             success: { [weak self] response in
                 SVProgressHUD.dismiss()
                 self?.originalNickname = nickname
-                AppContext.loginManager()?.updateUserInfo(userInfo: user)
+                AppContext.loginManager().updateUserInfo(userInfo: user)
                 SVProgressHUD.showSuccess(withStatus: ResourceManager.L10n.Mine.nicknameUpdateSuccess)
             },
             failure: { error in

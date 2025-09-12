@@ -40,7 +40,7 @@ class MineViewController: UIViewController {
         setupUI()
         setupConstraints()
         loadUserInfo()
-        AppContext.loginManager()?.addDelegate(self)
+        AppContext.loginManager().addDelegate(self)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -132,7 +132,7 @@ extension MineViewController: MineTopInfoViewDelegate {
                     birthday: user.birthday,
                     bio: user.bio,
                     success: { response in
-                        AppContext.loginManager()?.updateUserInfo(userInfo: user)
+                        AppContext.loginManager().updateUserInfo(userInfo: user)
                     },
                     failure: { error in
                     }

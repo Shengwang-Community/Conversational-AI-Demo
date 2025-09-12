@@ -257,36 +257,34 @@ class ChannelInfoView: UIView {
     
     // MARK: - Public Methods
     func updateStatus() {
-        guard let manager = AppContext.preferenceManager() else {
-            return
-        }
+        let stateManager = AppContext.stateManager()
         
-        agentItem.detailLabel.text = manager.information.agentState == .unload ? ConnectionStatus.disconnected.rawValue : manager.information.agentState.rawValue
-        agentItem.detailLabel.textColor = manager.information.agentState == .unload ? ConnectionStatus.disconnected.color : manager.information.agentState.color
+        agentItem.detailLabel.text = stateManager.agentState == .unload ? ConnectionStatus.disconnected.rawValue : stateManager.agentState.rawValue
+        agentItem.detailLabel.textColor = stateManager.agentState == .unload ? ConnectionStatus.disconnected.color : stateManager.agentState.color
         
         // Update Room Status
-        roomItem.detailLabel.text = manager.information.rtcRoomState == .unload ? ConnectionStatus.disconnected.rawValue :  manager.information.rtcRoomState.rawValue
-        roomItem.detailLabel.textColor = manager.information.rtcRoomState == .unload ? ConnectionStatus.disconnected.color : manager.information.rtcRoomState.color
+        roomItem.detailLabel.text = stateManager.rtcRoomState == .unload ? ConnectionStatus.disconnected.rawValue :  stateManager.rtcRoomState.rawValue
+        roomItem.detailLabel.textColor = stateManager.rtcRoomState == .unload ? ConnectionStatus.disconnected.color : stateManager.rtcRoomState.color
         
         // Update Agent ID
-        agentIDItem.detailLabel.text = manager.information.agentState == .unload ? "--" : manager.information.agentId
+        agentIDItem.detailLabel.text = stateManager.agentState == .unload ? "--" : stateManager.agentId
         agentIDItem.detailLabel.textColor = UIColor.themColor(named: "ai_icontext3")
         
         // Update Room ID
-        roomIDItem.detailLabel.text = manager.information.rtcRoomState == .unload ? "--" : manager.information.roomId
+        roomIDItem.detailLabel.text = stateManager.rtcRoomState == .unload ? "--" : stateManager.roomId
         roomIDItem.detailLabel.textColor = UIColor.themColor(named: "ai_icontext3")
         
         // Update Participant ID
-        idItem.detailLabel.text = manager.information.rtcRoomState == .unload ? "--" : manager.information.userId
+        idItem.detailLabel.text = stateManager.rtcRoomState == .unload ? "--" : stateManager.userId
         idItem.detailLabel.textColor = UIColor.themColor(named: "ai_icontext3")
         
         // Update Voiceprint Lock Status
-        updateVoiceprintMode(manager.preference.voiceprintMode)
+        updateVoiceprintMode(AppContext.settingManager().voiceprintMode)
         
         // Update Elegant Interrupt Status
-        updateAiVadState(manager.preference.aiVad)
+        updateAiVadState(AppContext.settingManager().aiVad)
         // Update Feedback Item
-        feedbackItem.setEnabled(isEnabled: manager.information.agentState != .unload)
+        feedbackItem.setEnabled(isEnabled: stateManager.agentState != .unload)
     }
     
     func updateAgentState(_ agentState: ConnectionStatus) {
@@ -301,18 +299,15 @@ class ChannelInfoView: UIView {
     }
     
     func updateAgentId(_ agentId: String) {
-        guard let manager = AppContext.preferenceManager() else { return }
-        agentIDItem.detailLabel.text = manager.information.agentState == .unload ? "--" : agentId
+        agentIDItem.detailLabel.text = AppContext.stateManager().agentState == .unload ? "--" : agentId
     }
     
     func updateRoomId(_ roomId: String) {
-        guard let manager = AppContext.preferenceManager() else { return }
-        roomIDItem.detailLabel.text = manager.information.rtcRoomState == .unload ? "--" : roomId
+        roomIDItem.detailLabel.text = AppContext.stateManager().rtcRoomState == .unload ? "--" : roomId
     }
     
     func updateUserId(_ userId: String) {
-        guard let manager = AppContext.preferenceManager() else { return }
-        idItem.detailLabel.text = manager.information.rtcRoomState == .unload ? "--" : userId
+        idItem.detailLabel.text = AppContext.stateManager().rtcRoomState == .unload ? "--" : userId
     }
     
     func updateVoiceprintMode(_ mode: VoiceprintMode) {
@@ -347,12 +342,11 @@ class ChannelInfoView: UIView {
     }
     
     @objc private func onClickFeedbackItem() {
-        guard let channelName = AppContext.preferenceManager()?.information.roomId,
-              let rtcManager = rtcManager
-        else {
+        guard let rtcManager = rtcManager else {
             return
         }
-        let agentId = AppContext.preferenceManager()?.information.agentId
+        let channelName = AppContext.stateManager().roomId
+        let agentId = AppContext.stateManager().agentId
         feedbackItem.startLoading()
         rtcManager.generatePreDumpFile {
             self.feedBackPresenter.feedback(isSendLog: true, channel: channelName, agentId: agentId) { [weak self] error, result in

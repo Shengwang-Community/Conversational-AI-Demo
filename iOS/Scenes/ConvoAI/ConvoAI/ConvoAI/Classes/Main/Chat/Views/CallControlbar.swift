@@ -168,7 +168,7 @@ class CallControlbar: UIView {
     }
     
     func updateVideoButtonColor() {
-        guard let preset = AppContext.preferenceManager()?.preference.preset else {
+        guard let preset = AppContext.settingManager().preset else {
             return
         }
         
@@ -184,11 +184,11 @@ class CallControlbar: UIView {
     }
     
     func registerDelegate() {
-        AppContext.preferenceManager()?.addDelegate(self)
+        AppContext.settingManager().addDelegate(self)
     }
     
     func deregisterDelegate() {
-        AppContext.preferenceManager()?.removeDelegate(self)
+        AppContext.settingManager().removeDelegate(self)
     }
     
     deinit {
@@ -413,8 +413,10 @@ class CallControlbar: UIView {
     }
 }
 
-extension CallControlbar: AgentPreferenceManagerDelegate {
-    func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset) {
-        updateVideoButtonColor()
+extension CallControlbar: AgentSettingDelegate {
+    func settingManager(_ manager: AgentSettingManager, presetDidUpdated preset: AgentPreset?) {
+        if let preset = preset {
+            updateVideoButtonColor()
+        }
     }
 }

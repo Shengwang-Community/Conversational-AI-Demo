@@ -242,13 +242,13 @@ class ChatViewController: BaseViewController {
     }
     
     private func registerDelegate() {
-        AppContext.loginManager()?.addDelegate(self)
-        AppContext.preferenceManager()?.addDelegate(self)
+        AppContext.loginManager().addDelegate(self)
+        AppContext.settingManager().addDelegate(self)
     }
     
     private func deregisterDelegate() {
-        AppContext.loginManager()?.removeDelegate(self)
-        AppContext.preferenceManager()?.removeDelegate(self)
+        AppContext.loginManager().removeDelegate(self)
+        AppContext.settingManager().removeDelegate(self)
     }
     
     private func preloadData() {
@@ -305,6 +305,6 @@ class ChatViewController: BaseViewController {
     }
     
     func resetPreference() {
-        AppContext.preferenceManager()?.resetAgentInformation()
+        AppContext.stateManager().resetToDefaults()
     }
 }

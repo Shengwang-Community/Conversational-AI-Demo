@@ -148,11 +148,7 @@ extension AgentSettingTableItemView {
     }
     
     func updateEnableState() {
-        guard let manager = AppContext.preferenceManager() else {
-            return
-        }
-        
-        let state = manager.information.agentState == .unload
+        let state = AppContext.stateManager().agentState == .unload
         button.isEnabled = state
         detailLabel.textColor = state ? UIColor.themColor(named: "ai_icontext1") : UIColor.themColor(named: "ai_icontext1").withAlphaComponent(0.3)
     }
@@ -264,11 +260,7 @@ extension AgentSettingTextItemView {
     }
     
     func updateEnableState() {
-        guard let manager = AppContext.preferenceManager() else {
-            return
-        }
-        
-        let state = manager.information.agentState == .unload
+        let state = AppContext.stateManager().agentState == .unload
         button.isEnabled = state
         detailLabel.textColor = state ? UIColor.themColor(named: "ai_icontext1") : UIColor.themColor(named: "ai_icontext1").withAlphaComponent(0.3)
     }
