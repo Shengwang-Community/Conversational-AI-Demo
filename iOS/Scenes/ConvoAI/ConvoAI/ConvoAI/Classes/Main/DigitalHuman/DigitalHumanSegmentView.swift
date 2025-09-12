@@ -81,7 +81,7 @@ class DigitalHumanSegmentView: UIView {
         indicatorView.snp.makeConstraints { make in
             make.width.equalTo(20)
             make.height.equalTo(2)
-            make.bottom.equalToSuperview()
+            make.bottom.equalToSuperview().offset(-5)
         }
     }
     
@@ -103,8 +103,8 @@ class DigitalHumanSegmentView: UIView {
     private func createSegmentButton(text: String, isSelected: Bool, tag: Int) -> UIButton {
         let button = UIButton(type: .custom)
         button.setTitle(text, for: .normal)
-        button.titleLabel?.font = isSelected ? UIFont.systemFont(ofSize: 16, weight: .semibold) : UIFont.systemFont(ofSize: 13, weight: .regular)
-        button.setTitleColor(isSelected ? .white : UIColor.white.withAlphaComponent(0.75), for: .normal)
+        button.titleLabel?.font = isSelected ? UIFont.systemFont(ofSize: 16, weight: .semibold) : UIFont.systemFont(ofSize: 16, weight: .regular)
+        button.setTitleColor(isSelected ? UIColor.themColor(named: "ai_icontext1") : UIColor.themColor(named: "ai_icontext2"), for: .normal)
         button.titleLabel?.textAlignment = .center
         button.titleLabel?.baselineAdjustment = .alignBaselines
         button.tag = tag
@@ -140,8 +140,8 @@ class DigitalHumanSegmentView: UIView {
             let isSelected = index == selectedIndex
             
             UIView.performWithoutAnimation {
-                button.titleLabel?.font = isSelected ? UIFont.systemFont(ofSize: 16, weight: .semibold) : UIFont.systemFont(ofSize: 13, weight: .regular)
-                button.setTitleColor(isSelected ? .white : UIColor.white.withAlphaComponent(0.75), for: .normal)
+                button.titleLabel?.font = isSelected ? UIFont.systemFont(ofSize: 16, weight: .semibold) : UIFont.systemFont(ofSize: 16, weight: .regular)
+                button.setTitleColor(isSelected ? UIColor.themColor(named: "ai_icontext1") : UIColor.themColor(named: "ai_icontext2"), for: .normal)
                 button.titleLabel?.baselineAdjustment = .alignBaselines
             }
         }
@@ -163,7 +163,7 @@ class DigitalHumanSegmentView: UIView {
         indicatorView.snp.remakeConstraints { make in
             make.width.equalTo(indicatorWidth)
             make.height.equalTo(2)
-            make.bottom.equalToSuperview()
+            make.bottom.equalToSuperview().offset(-5)
             make.centerX.equalTo(selectedButton)
         }
     }

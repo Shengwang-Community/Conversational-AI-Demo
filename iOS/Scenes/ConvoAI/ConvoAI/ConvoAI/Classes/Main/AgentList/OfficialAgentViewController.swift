@@ -8,6 +8,7 @@
 import UIKit
 import Common
 import SVProgressHUD
+import Kingfisher
 
 class OfficialAgentViewController: UIViewController {
     var presets: [AgentPreset] = [AgentPreset]()
@@ -105,11 +106,81 @@ class OfficialAgentViewController: UIViewController {
             self?.presets = result
             self?.tableView.reloadData()
             self?.refreshSubView()
+            
+            // Preload preset images
+            self?.preloadPresetImages()
         }
     }
     
     private func refreshSubView() {
         emptyStateView.isHidden = presets.count != 0
+    }
+    
+    /// Preload all preset images including main avatar and digital human avatars
+    private func preloadPresetImages() {
+        var imageUrls: [URL] = []
+        
+        // Collect all image URLs from presets
+        for preset in presets {
+            // Add main preset avatar URL
+            if let avatarUrlString = preset.avatarUrl, !avatarUrlString.isEmpty,
+               let avatarUrl = URL(string: avatarUrlString) {
+                imageUrls.append(avatarUrl)
+            }
+            
+            // Add digital human avatar URLs from all languages
+            if let avatarIdsByLang = preset.avatarIdsByLang {
+                for (_, avatars) in avatarIdsByLang {
+                    for avatar in avatars {
+                        // Add thumbnail image URL
+                        if let thumbImageUrlString = avatar.thumbImageUrl, !thumbImageUrlString.isEmpty,
+                           let thumbImageUrl = URL(string: thumbImageUrlString) {
+                            imageUrls.append(thumbImageUrl)
+                        }
+                        
+                        // Add background image URL
+                        if let bgImageUrlString = avatar.bgImageUrl, !bgImageUrlString.isEmpty,
+                           let bgImageUrl = URL(string: bgImageUrlString) {
+                            imageUrls.append(bgImageUrl)
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Remove duplicate URLs
+        let uniqueUrls = Array(Set(imageUrls))
+        
+        guard !uniqueUrls.isEmpty else {
+            ConvoAILogger.info("No images to preload")
+            return
+        }
+        
+        ConvoAILogger.info("Starting to preload \(uniqueUrls.count) images")
+        
+        // Configure preloader with optimized settings
+        let prefetcher = ImagePrefetcher(
+            urls: uniqueUrls,
+            options: [
+                .processor(DefaultImageProcessor.default),
+                .cacheSerializer(DefaultCacheSerializer.default),
+                .cacheOriginalImage,
+                .backgroundDecode,
+                .scaleFactor(UIScreen.main.scale),
+                .memoryCacheExpiration(.seconds(300)),
+                .diskCacheExpiration(.days(10))
+            ]
+            , completionHandler:  { skippedResources, failedResources, completedResources in
+                ConvoAILogger.info("Image preload completed - Success: \(completedResources.count), Failed: \(failedResources.count), Skipped: \(skippedResources.count)")
+                
+                // Log failed URLs for debugging
+                if !failedResources.isEmpty {
+                    print("Failed to preload images: \(failedResources.map { $0 })")
+                }
+            }
+            
+        )
+        prefetcher.start()
     }
 }
 
@@ -117,15 +188,15 @@ extension OfficialAgentViewController: UITableViewDelegate, UITableViewDataSourc
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         scrollDelegate?.agentScrollViewDidScroll(scrollView)
     }
-
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return self.presets.count
     }
-
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 89
     }
-
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "AgentTableViewCell", for: indexPath) as! AgentTableViewCell
         let preset = presets[indexPath.row]
