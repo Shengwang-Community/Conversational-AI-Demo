@@ -58,6 +58,7 @@ class CovBirthdayPickerDialog : BaseSheetDialog<CovDialogBirthdayPickerBinding>(
                     DateTimeConfig.DAY
                 )
             )
+            setGlobal(DateTimeConfig.GLOBAL_CHINA)
 
             // Set default date to 1990-1-1
             val defaultCalendar = Calendar.getInstance()

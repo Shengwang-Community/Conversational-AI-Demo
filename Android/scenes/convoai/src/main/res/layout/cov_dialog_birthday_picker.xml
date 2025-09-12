@@ -1,45 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="bottom"
-    android:background="@drawable/bottom_dialog_bg"
+    android:background="@drawable/bottom_dialog_bg2"
     android:orientation="vertical">
 
     <!-- Title -->
     <TextView
+        android:id="@+id/tv_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
         android:gravity="center"
         android:paddingVertical="24dp"
         android:text="@string/cov_mine_select_your_birthday"
         android:textColor="@color/ai_icontext1"
         android:textSize="20sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- DateTimePicker -->
-    <com.loper7.date_time_picker.DateTimePicker
-        android:id="@+id/dateTimePicker"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_dateTimePicker"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:dt_dividerColor="@android:color/transparent"
-        app:dt_layout="@layout/cov_date_picker_custom_layout"
-        app:dt_normalTextSize="18sp"
-        app:dt_selectTextSize="20sp"
-        app:dt_selectedTextBold="true"
-        app:dt_showLabel="true"
-        app:dt_textBold="true"
-        app:dt_textColor="@color/ai_icontext2"
-        app:dt_themeColor="@color/ai_icontext1" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_title">
+
+        <View
+            android:id="@+id/view_select"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginHorizontal="16dp"
+            android:background="@drawable/cov_picker_select_bg"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHeight_percent="0.25"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- DateTimePicker -->
+        <com.loper7.date_time_picker.DateTimePicker
+            android:id="@+id/dateTimePicker"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:dt_dividerColor="@android:color/transparent"
+            app:dt_layout="@layout/cov_date_picker_custom_layout"
+            app:dt_normalTextSize="20sp"
+            app:dt_selectTextSize="20sp"
+            app:dt_selectedTextBold="true"
+            app:dt_showLabel="true"
+            app:dt_textBold="true"
+            app:dt_textColor="@color/ai_icontext2"
+            app:dt_themeColor="@color/ai_icontext1" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="24dp">
+        android:paddingVertical="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/layout_dateTimePicker">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancel"
@@ -76,4 +99,4 @@
             app:cornerRadius="12dp"
             app:rippleColor="#1AFFFFFF" />
     </LinearLayout>
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

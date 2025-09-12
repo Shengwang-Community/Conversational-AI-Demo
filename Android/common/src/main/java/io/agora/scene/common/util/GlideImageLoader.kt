@@ -73,4 +73,59 @@ object GlideImageLoader {
     fun clearMemoryCache(context: Context) {
         Glide.get(context).clearMemory()
     }
+
+    /**
+     * Preload image into cache without displaying it
+     * @param context Application context
+     * @param url The image url to preload
+     * @param onComplete Callback when preload completes (success or failure)
+     */
+    @JvmStatic
+    fun preload(context: Context, url: String?, onComplete: (Boolean) -> Unit = {}) {
+        if (url.isNullOrEmpty()) {
+            onComplete(false)
+            return
+        }
+        
+        Glide.with(context)
+            .load(url)
+            .diskCacheStrategy(DiskCacheStrategy.ALL)
+            .preload()
+    }
+
+    /**
+     * Preload multiple images in batch
+     * @param context Application context
+     * @param urls List of image URLs to preload
+     * @param onProgress Callback with current progress (loaded/total)
+     * @param onComplete Callback when all preloads complete
+     */
+    @JvmStatic
+    fun preloadBatch(
+        context: Context,
+        urls: List<String>,
+        onProgress: (Int, Int) -> Unit = { _, _ -> },
+        onComplete: (Int, Int) -> Unit = { loaded, total -> }
+    ) {
+        if (urls.isEmpty()) {
+            onComplete(0, 0)
+            return
+        }
+        
+        val totalCount = urls.size
+        var loadedCount = 0
+        
+        urls.forEach { url ->
+            if (url.isNotEmpty()) {
+                Glide.with(context)
+                    .load(url)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .preload()
+            }
+            loadedCount++
+            onProgress(loadedCount, totalCount)
+        }
+        
+        onComplete(loadedCount, totalCount)
+    }
 } 

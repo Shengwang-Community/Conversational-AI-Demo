@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.ui.main.list
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -79,6 +80,11 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
         listViewModel.officialAgents.observe(viewLifecycleOwner) { presets ->
             CovLogger.d(TAG, "Data updated: ${presets.size} items")
             adapter.updateData(presets)
+            
+            // Start preloading AI avatar images after data is loaded
+            context?.let { ctx ->
+                preloadAllAvatarImages(ctx, presets)
+            }
         }
 
         // Observe state changes
@@ -137,10 +143,50 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
     private fun onPresetSelected(preset: CovAgentPreset) {
         CovAgentManager.setPreset(preset)
         CovLogger.d(TAG, "Selected preset: ${preset.name}")
-        context?.let {
+        
+        context?.let { ctx ->
+            // Preload AI avatar images for the selected preset
+            val imageUrls = extractAvatarImageUrls(preset)
+            if (imageUrls.isNotEmpty()) {
+                CovLogger.d(TAG, "Preloading ${imageUrls.size} AI avatar images for preset: ${preset.name}")
+                GlideImageLoader.preloadBatch(ctx, imageUrls)
+            }
+
             ApiReport.report(preset.display_name)
-            it.startActivity(Intent(it, CovLivingActivity::class.java))
+            ctx.startActivity(Intent(ctx, CovLivingActivity::class.java))
         }
+    }
+    
+    /**
+     * Preload AI avatar images for all presets
+     */
+    private fun preloadAllAvatarImages(context: Context, presets: List<CovAgentPreset>) {
+        val allUrls = mutableSetOf<String>()
+        
+        presets.forEach { preset ->
+            allUrls.addAll(extractAvatarImageUrls(preset))
+        }
+        
+        if (allUrls.isNotEmpty()) {
+            CovLogger.d(TAG, "Preloading ${allUrls.size} AI avatar images for all presets")
+            GlideImageLoader.preloadBatch(context, allUrls.toList())
+        }
+    }
+    
+    /**
+     * Extract all unique avatar image URLs from a preset
+     */
+    private fun extractAvatarImageUrls(preset: CovAgentPreset): List<String> {
+        val urls = mutableSetOf<String>()
+        
+        preset.avatar_ids_by_lang?.values?.forEach { avatars ->
+            avatars.forEach { avatar ->
+                avatar.thumb_img_url.takeIf { it.isNotEmpty() }?.let { urls.add(it) }
+                avatar.bg_img_url.takeIf { it.isNotEmpty() }?.let { urls.add(it) }
+            }
+        }
+        
+        return urls.toList()
     }
 
     inner class OfficialAgentAdapter(
