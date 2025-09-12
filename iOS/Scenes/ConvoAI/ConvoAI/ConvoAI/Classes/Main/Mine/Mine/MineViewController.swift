@@ -146,6 +146,10 @@ extension MineViewController: MineTopInfoViewDelegate {
         bioVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(bioVC, animated: true)
     }
+
+    func mineTopInfoViewDidTapCardTitle() {
+        DeveloperConfig.shared.countTouch()
+    }
 }
 
 // MARK: - MineIotViewDelegate

@@ -15,6 +15,7 @@ protocol MineTopInfoViewDelegate: AnyObject {
     func mineTopInfoViewDidTapAddressing()
     func mineTopInfoViewDidTapBirthday()
     func mineTopInfoViewDidTapBio()
+    func mineTopInfoViewDidTapCardTitle()
 }
 
 class MineTopInfoView: UIView {
@@ -96,12 +97,14 @@ class MineTopInfoView: UIView {
         return imageView
     }()
     
-    private lazy var cardTitleLabel: UILabel = {
-        let label = UILabel()
-        label.text = ResourceManager.L10n.Mine.personaTitle
-        label.textColor = UIColor.themColor(named: "ai_brand_white10")
-        label.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
-        return label
+    private lazy var cardTitleButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.setTitle(ResourceManager.L10n.Mine.personaTitle, for: .normal)
+        button.setTitleColor(UIColor.themColor(named: "ai_brand_white10"), for: .normal)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        button.contentHorizontalAlignment = .left
+        button.addTarget(self, action: #selector(cardTitleButtonTapped), for: .touchUpInside)
+        return button
     }()
     
     private lazy var addressingButton: MineInfoButton = {
@@ -181,7 +184,7 @@ class MineTopInfoView: UIView {
         // Persona Card
         addSubview(personaCardView)
         personaCardView.addSubview(personaCardBGView)
-        personaCardView.addSubview(cardTitleLabel)
+        personaCardView.addSubview(cardTitleButton)
         personaCardView.addSubview(titleCycleImageView)
         personaCardView.addSubview(addressingButton)
         personaCardView.addSubview(addressingLabel)
@@ -235,18 +238,18 @@ class MineTopInfoView: UIView {
             make.edges.equalToSuperview()
         }
         
-        cardTitleLabel.snp.makeConstraints { make in
-            make.top.equalTo(12)
+        cardTitleButton.snp.makeConstraints { make in
+            make.top.equalTo(5)
             make.left.equalTo(17)
         }
         
         titleCycleImageView.snp.makeConstraints { make in
-            make.top.equalTo(cardTitleLabel)
-            make.right.equalTo(cardTitleLabel)
+            make.bottom.equalTo(cardTitleButton).offset(-4)
+            make.right.equalTo(cardTitleButton).offset(3)
         }
         
         addressingLabel.snp.makeConstraints { make in
-            make.top.equalTo(cardTitleLabel.snp.bottom).offset(25)
+            make.top.equalTo(cardTitleButton.snp.bottom).offset(20)
             make.left.equalToSuperview().offset(20)
         }
         
@@ -333,6 +336,10 @@ class MineTopInfoView: UIView {
     
     @objc private func bioButtonTapped() {
         delegate?.mineTopInfoViewDidTapBio()
+    }
+    
+    @objc private func cardTitleButtonTapped() {
+        delegate?.mineTopInfoViewDidTapCardTitle()
     }
 }
 
