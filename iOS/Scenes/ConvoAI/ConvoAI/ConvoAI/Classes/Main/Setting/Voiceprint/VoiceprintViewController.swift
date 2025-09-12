@@ -304,9 +304,8 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
         toolBox.uploadFile(filePath: audioFileURL.path) { [weak self] remoteUrl in
             guard let self = self else { return }
             if let remoteUrl = remoteUrl, !remoteUrl.isEmpty {
-                // Update local info with remote URL
                 self.voiceprintInfo?.remoteUrl = remoteUrl
-                self.voiceprintInfo?.timestamp = Date().timeIntervalSince1970
+                self.voiceprintInfo?.timestamp = TimeUtils.currentTimeMillis() / 1000
                 if let p = self.voiceprintInfo {
                     VoiceprintManager.shared.saveVoiceprint(p, forUserId: userId)
                 }

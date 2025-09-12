@@ -28,7 +28,7 @@ class VoiceprintInfo: Codable {
     /// Check if voiceprint needs to be updated
     func needToUpdate() -> Bool {
         guard let timestamp = timestamp else { return true }
-        let currentTime = Date().timeIntervalSince1970
+        let currentTime = TimeUtils.currentTimeMillis() / 1000
         return currentTime - timestamp > VoiceprintInfo.updateInterval
     }
 }

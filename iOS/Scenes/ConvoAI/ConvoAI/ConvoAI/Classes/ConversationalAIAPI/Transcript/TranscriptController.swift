@@ -143,7 +143,7 @@ extension TranscriptDelegate {
 /// Manages the processing and rendering of transcript in conversation
 ///
 @objc public class TranscriptController: NSObject {
-    public static let version: String = "2.0.0"
+    public static let version: String = "1.8.5"
     static let tag = "[Transcript]"
     static let uiTag = "[Transcript-UI]"
 

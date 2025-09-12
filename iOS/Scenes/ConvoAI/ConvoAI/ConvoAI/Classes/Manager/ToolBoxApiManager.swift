@@ -184,3 +184,68 @@ class ToolBoxApiManager: NSObject {
                                          failure: failure)
     }
 }
+
+// MARK: - TimeUtils
+class TimeUtils {
+    private static var hasSync = false
+    private static var timeDiff: TimeInterval = 0
+    private static let syncQueue = DispatchQueue(label: "TimeSyncQueue")
+    
+    static func currentTimeMillis() -> TimeInterval {
+        if !hasSync {
+            syncTimeAsync()
+        }
+        return Date().timeIntervalSince1970 * 1000 + timeDiff
+    }
+    
+    private static func syncTimeAsync() {
+        guard let url = URL(string: AppContext.shared.baseServerUrl) else { return }
+        
+        let session = URLSession(configuration: .default)
+        let request = URLRequest(url: url, timeoutInterval: 5)
+        
+        let startTime = Date().timeIntervalSince1970
+        
+        let task = session.dataTask(with: request) { _, response, error in
+            guard error == nil, let httpResponse = response as? HTTPURLResponse else {
+                print("Time sync failed, using local time")
+                hasSync = true
+                return
+            }
+            
+            if let dateString = httpResponse.allHeaderFields["Date"] as? String,
+               let serverDate = DateFormatter.rfc1123.date(from: dateString) {
+                let endTime = Date().timeIntervalSince1970
+                let networkDelay = (endTime - startTime) / 2
+                let diff = serverDate.timeIntervalSince1970 * 1000 - Date().timeIntervalSince1970 * 1000 + networkDelay * 1000
+                
+                syncQueue.sync {
+                    timeDiff = diff
+                    hasSync = true
+                }
+                
+                print("Time sync successful, serverTime=\(serverDate), diff=\(diff) ms, network delay=\(networkDelay * 1000) ms")
+            }
+        }
+        
+        task.resume()
+    }
+    
+    static func resetSync() {
+        syncQueue.sync {
+            hasSync = false
+            timeDiff = 0
+        }
+    }
+}
+
+// MARK: - DateFormatter Extension
+extension DateFormatter {
+    static let rfc1123: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        return formatter
+    }()
+}
