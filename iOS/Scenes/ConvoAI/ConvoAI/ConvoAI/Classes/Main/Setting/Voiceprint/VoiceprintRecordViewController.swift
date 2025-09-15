@@ -78,7 +78,7 @@ class VoiceprintRecordViewController: UIViewController {
     private lazy var textLabel: UILabel = {
         let label = UILabel()
         label.text = ResourceManager.L10n.Voiceprint.recordingText
-        label.font = .systemFont(ofSize: 18, weight: .regular)
+        label.font = .systemFont(ofSize: 20, weight: .regular)
         label.textColor = .white
         label.textAlignment = .left
         label.numberOfLines = 0
@@ -187,6 +187,7 @@ class VoiceprintRecordViewController: UIViewController {
         titleLabel.snp.makeConstraints { make in
             make.top.equalTo(headerView.snp.bottom)
             make.left.right.equalToSuperview().inset(14)
+            make.height.equalTo(28)
         }
         
         textLabel.snp.makeConstraints { make in

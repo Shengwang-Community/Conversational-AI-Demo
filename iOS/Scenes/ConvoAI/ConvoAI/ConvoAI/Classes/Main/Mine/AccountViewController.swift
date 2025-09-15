@@ -36,21 +36,10 @@ class AccountViewController: BaseViewController {
     
     private lazy var versionLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 18)
-        label.textColor = UIColor.themColor(named: "ai_icontext3")
-        let version = ConversationalAIAPIImpl.version
-        label.text = "V\(version)"
-        label.textAlignment = .center
-        return label
-    }()
-    
-    private lazy var buildLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 14)
+        label.font = .systemFont(ofSize: 12)
         label.textColor = UIColor.themColor(named: "ai_icontext4")
-        if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-            label.text = "Build \(build)"
-        }
+        let version = ConversationalAIAPIImpl.version
+        label.text = "Version: V\(version)"
         label.textAlignment = .center
         return label
     }()
@@ -77,7 +66,6 @@ class AccountViewController: BaseViewController {
         view.addSubview(deactivateAccountItem)
         view.addSubview(logoutButton)
         view.addSubview(versionLabel)
-        view.addSubview(buildLabel)
     }
     
     private func setupConstraints() {
@@ -96,11 +84,6 @@ class AccountViewController: BaseViewController {
         }
         
         versionLabel.snp.makeConstraints { make in
-            make.centerX.equalToSuperview()
-            make.bottom.equalTo(buildLabel.snp.top).offset(-4)
-        }
-        
-        buildLabel.snp.makeConstraints { make in
             make.centerX.equalToSuperview()
             make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-20)
         }

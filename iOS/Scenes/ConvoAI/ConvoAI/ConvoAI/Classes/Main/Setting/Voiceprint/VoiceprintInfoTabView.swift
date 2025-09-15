@@ -24,6 +24,27 @@ class VoiceprintInfoTabView: UIView {
     private var currentStatus: VoiceprintRecordStatus = .notCreated
     private var voiceprintDate: String = ""
     
+    // MARK: - Background Views
+    
+    private lazy var backgroundImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage.ag_named("ic_voiceprint_card_bg")
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        return imageView
+    }()
+    
+    private lazy var gradientLayer: CAGradientLayer = {
+        let gradient = CAGradientLayer()
+        gradient.colors = [
+            UIColor(red: 73/255, green: 112/255, blue: 255/255, alpha: 1.0).cgColor,
+            UIColor(red: 110/255, green: 127/255, blue: 255/255, alpha: 1.0).cgColor
+        ]
+        gradient.startPoint = CGPoint(x: 0, y: 0)
+        gradient.endPoint = CGPoint(x: 1, y: 0)
+        return gradient
+    }()
+    
     private lazy var voiceprintIcon: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage.ag_named("ic_voiceprint_voice")
@@ -144,11 +165,17 @@ class VoiceprintInfoTabView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        gradientLayer.frame = bounds
+    }
+    
     // MARK: - Setup Methods
     
     private func setupViews() {
-        backgroundColor = UIColor.themColor(named: "ai_brand_main6")
-
+        layer.addSublayer(gradientLayer)
+        addSubview(backgroundImageView)
+        
         addSubview(voiceprintIcon)
         addSubview(voiceprintTitleLabel)
         addSubview(uploadContainer)
@@ -164,9 +191,19 @@ class VoiceprintInfoTabView: UIView {
         gotoContainer.addSubview(gotoLabel)
         gotoContainer.addSubview(gotoIcon)
         gotoContainer.addSubview(gotoButton)
+        
+        // Set corner radius for bottom corners only
+        layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        layer.cornerRadius = 12
+        layer.masksToBounds = true
     }
     
     private func setupConstraints() {
+        backgroundImageView.snp.makeConstraints { make in
+            make.right.equalToSuperview()
+            make.centerY.equalToSuperview().offset(-10)
+        }
+        
         voiceprintIcon.snp.makeConstraints { make in
             make.top.equalTo(26)
             make.left.equalTo(16)

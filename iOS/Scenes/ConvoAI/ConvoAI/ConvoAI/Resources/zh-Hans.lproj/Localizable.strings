@@ -87,6 +87,9 @@
 "settings.digital.human" = "数字人";
 "settings.digital.human.closed" = "关闭";
 "settings.digital.human.all" = "全部";
+
+// Avatar AI Label
+"avatar.ai.generated.content" = "内容由AI生成";
 "settings.digital.human.preset.alert.title" = "更换Preset需重新设置数字人";
 "settings.digital.human.preset.alert.description" = "Preset 和数字人的性别相关，更换 Preset 后请重新设置数字人";
 "settings.digital.human.language.alert.title" = "更换Language需重新设置数字人";

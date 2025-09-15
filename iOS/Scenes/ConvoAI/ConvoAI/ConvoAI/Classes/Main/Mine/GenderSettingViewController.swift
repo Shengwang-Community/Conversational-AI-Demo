@@ -24,7 +24,6 @@ enum Gender: String, CaseIterable {
         }
     }
     
-    
     var avatarImage: UIImage? {
         switch self {
         case .female:
@@ -34,9 +33,7 @@ enum Gender: String, CaseIterable {
         }
     }
     
-    static var defaultValue: Gender {
-        return .female
-    }
+    // Remove default value - user must make a selection
 }
 
 // MARK: - Gender Colors
@@ -57,7 +54,7 @@ class GenderSettingViewController: BaseViewController {
             let view = GenderOptionView()
             view.configure(
                 title: gender.localizedTitle,
-                isSelected: gender == .defaultValue,
+                isSelected: false, // No default selection
                 avatarImage: gender.avatarImage
             )
             // Use individual methods for now
@@ -92,7 +89,7 @@ class GenderSettingViewController: BaseViewController {
     }()
     
     // MARK: - Properties
-    private var selectedGender: Gender = .defaultValue
+    private var selectedGender: Gender? = nil
     private let toolBox = ToolBoxApiManager()
     
     // MARK: - Lifecycle
@@ -141,16 +138,23 @@ class GenderSettingViewController: BaseViewController {
     private func loadCurrentGender() {
         // Load current gender setting from UserCenter
         if let user = UserCenter.user, !user.gender.isEmpty {
-            selectedGender = Gender(rawValue: user.gender) ?? .defaultValue
+            selectedGender = Gender(rawValue: user.gender)
         } else {
-            selectedGender = .defaultValue
+            selectedGender = nil // No default selection
         }
         updateSelection()
+        updateConfirmButtonState()
     }
     
     private func updateSelection() {
         femaleOptionView.setSelected(selectedGender == .female)
         maleOptionView.setSelected(selectedGender == .male)
+    }
+    
+    private func updateConfirmButtonState() {
+        let isEnabled = selectedGender != nil
+        confirmButton.isEnabled = isEnabled
+        confirmButton.alpha = isEnabled ? 1.0 : 0.5
     }
     
     // MARK: - Actions
@@ -173,11 +177,13 @@ class GenderSettingViewController: BaseViewController {
     @objc private func femaleOptionSelected() {
         selectedGender = .female
         updateSelection()
+        updateConfirmButtonState()
     }
     
     @objc private func maleOptionSelected() {
         selectedGender = .male
         updateSelection()
+        updateConfirmButtonState()
     }
     
     @objc private func confirmButtonTapped() {
@@ -186,8 +192,8 @@ class GenderSettingViewController: BaseViewController {
     }
     
     private func saveGenderSetting() {
-        guard let user = UserCenter.user else { return }
-        user.gender = selectedGender.rawValue
+        guard let user = UserCenter.user, let gender = selectedGender else { return }
+        user.gender = gender.rawValue
         SVProgressHUD.show()
         toolBox.updateUserInfo(
             nickname: user.nickname,

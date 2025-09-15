@@ -43,11 +43,10 @@ extension ChatViewController: DeveloperConfigDelegate {
     }
     
     public func devConfigDidSwitchServer(_ config: DeveloperConfig) {
-        stopLoading()
-        stopAgent()
-        animateView.releaseView()
-        rtcManager.destroy()
-        rtmManager.destroy()
+        if agentIsJoined {
+            stopLoading()
+            stopAgent()
+        }
     }
     
     public func devConfigDidCopy(_ config: DeveloperConfig) {

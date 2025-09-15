@@ -152,6 +152,7 @@ extension ResourceManager {
             public static let digitalHumanAlertCancel = ResourceManager.localizedString("settings.digital.human.alert.cancel")
             public static let digitalHumanAlertConfirm = ResourceManager.localizedString("settings.digital.human.alert.confirm")
             public static let aiVadTips = ResourceManager.localizedString("settings.noise.aiVad.tips")
+            public static let aiGeneratedContent = ResourceManager.localizedString("avatar.ai.generated.content")
         }
         
         public enum ChannelInfo {

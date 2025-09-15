@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Common
 
 class AvatarView: UIView {
     lazy var backgroundImageView: UIImageView = {
@@ -18,6 +19,17 @@ class AvatarView: UIView {
         let view = UIView()
         
         return view
+    }()
+    
+    lazy var aiGeneratedLabel: UILabel = {
+        let label = UILabel()
+        label.text = ResourceManager.L10n.Settings.aiGeneratedContent
+        label.font = UIFont.systemFont(ofSize: 10, weight: .regular)
+        label.shadowColor = UIColor(hex: 0x14142B, alpha: 0.06)
+        label.shadowOffset = CGSize(width: 0, height: 2)
+        label.textColor = UIColor.themColor(named: "ai_brand_white8")
+        label.textAlignment = .center
+        return label
     }()
 
     override init(frame: CGRect) {
@@ -33,6 +45,7 @@ class AvatarView: UIView {
     func setupSubviews() {
         addSubview(backgroundImageView)
         addSubview(renderView)
+        addSubview(aiGeneratedLabel)
     }
     
     func setupConstraints() {
@@ -42,6 +55,11 @@ class AvatarView: UIView {
         
         renderView.snp.makeConstraints { make in
             make.edges.equalTo(UIEdgeInsets.zero)
+        }
+        
+        aiGeneratedLabel.snp.makeConstraints { make in
+            make.bottom.equalToSuperview().offset(-8)
+            make.centerX.equalToSuperview()
         }
     }
 }

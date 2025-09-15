@@ -36,9 +36,9 @@ class DigitalHumanSegmentView: UIView {
         stackView.axis = .horizontal
         stackView.alignment = .leading
         stackView.distribution = .fillEqually
+        stackView.spacing = 20
         return stackView
     }()
-    
     private lazy var indicatorView: UIView = {
         let view = UIView()
         view.backgroundColor = .white

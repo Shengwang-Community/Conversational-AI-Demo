@@ -87,13 +87,13 @@ class DigitalHumanViewController: BaseViewController {
             return
         }
         // Group avatars by vendor
-        let groupedAvatars = Dictionary(grouping: visibleAvatars) { $0.vendor }
+        let groupedAvatars = Dictionary(grouping: visibleAvatars) { $0.displayVendor }
         
         // Create close digital human (shared across all groups)
         let currentAvatar = AppContext.settingManager().avatar
         let hasSelectedAvatar = currentAvatar != nil
         let closeDigitalHuman = DigitalHuman(
-            avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "close", thumbImageUrl: nil, bgImageUrl: nil),
+            avatar: Avatar(vendor: "", displayVendor: "", avatarId: DigitalHuman.closeTag, avatarName: "close", thumbImageUrl: nil, bgImageUrl: nil),
             isAvailable: true,
             isSelected: !hasSelectedAvatar
         )
@@ -149,7 +149,7 @@ class DigitalHumanViewController: BaseViewController {
     private func createDefaultGroup() {
         // Create close digital human
         let closeDigitalHuman = DigitalHuman(
-            avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "close", thumbImageUrl: nil, bgImageUrl: nil),
+            avatar: Avatar(vendor: "", displayVendor: "", avatarId: DigitalHuman.closeTag, avatarName: "close", thumbImageUrl: nil, bgImageUrl: nil),
             isAvailable: true,
             isSelected: true
         )
