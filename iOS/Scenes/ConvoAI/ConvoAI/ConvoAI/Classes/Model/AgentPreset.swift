@@ -9,7 +9,6 @@ import Foundation
 
 struct Avatar: Codable {
     let vendor: String?
-    let displayVendor: String?
     let avatarId: String?
     let avatarName: String?
     let thumbImageUrl: String?
@@ -17,7 +16,6 @@ struct Avatar: Codable {
     
     enum CodingKeys: String, CodingKey {
         case vendor = "vendor"
-        case displayVendor = "display_vendor"
         case avatarId = "avatar_id"
         case avatarName = "avatar_name"
         case thumbImageUrl = "thumb_img_url"

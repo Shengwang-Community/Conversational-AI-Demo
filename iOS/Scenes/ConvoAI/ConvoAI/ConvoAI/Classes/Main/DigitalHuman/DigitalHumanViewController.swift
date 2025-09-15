@@ -93,7 +93,7 @@ class DigitalHumanViewController: BaseViewController {
         let currentAvatar = AppContext.settingManager().avatar
         let hasSelectedAvatar = currentAvatar != nil
         let closeDigitalHuman = DigitalHuman(
-            avatar: Avatar(vendor: "", displayVendor: nil, avatarId: DigitalHuman.closeTag, avatarName: "close", thumbImageUrl: nil, bgImageUrl: nil),
+            avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "close", thumbImageUrl: nil, bgImageUrl: nil),
             isAvailable: true,
             isSelected: !hasSelectedAvatar
         )
@@ -149,7 +149,7 @@ class DigitalHumanViewController: BaseViewController {
     private func createDefaultGroup() {
         // Create close digital human
         let closeDigitalHuman = DigitalHuman(
-            avatar: Avatar(vendor: "", displayVendor: nil, avatarId: DigitalHuman.closeTag, avatarName: "close", thumbImageUrl: nil, bgImageUrl: nil),
+            avatar: Avatar(vendor: "", avatarId: DigitalHuman.closeTag, avatarName: "close", thumbImageUrl: nil, bgImageUrl: nil),
             isAvailable: true,
             isSelected: true
         )

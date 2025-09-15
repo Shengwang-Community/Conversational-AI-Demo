@@ -95,7 +95,7 @@ public class AgentViewController: UIViewController {
         segmentView.snp.makeConstraints { make in
             make.left.equalTo(26)
             make.right.equalTo(-26)
-            make.top.equalTo(self.view.safeAreaLayoutGuide).offset(25)
+            make.top.equalTo(25)
             make.height.equalTo(32)
         }
         

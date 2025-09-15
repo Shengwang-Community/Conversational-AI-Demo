@@ -155,9 +155,9 @@ class DigitalHumanCell: UICollectionViewCell {
         // Set name
         nameLabel.text = digitalHuman.avatar.avatarName
         
-        if let displayVendor = digitalHuman.avatar.displayVendor {
+        if let vendor = digitalHuman.avatar.vendor {
             vendorView.isHidden = false
-            vendorLabel.text = displayVendor
+            vendorLabel.text = vendor
         } else {
             vendorView.isHidden = true
         }
