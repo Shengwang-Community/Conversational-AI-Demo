@@ -1,336 +1,340 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/cl_content"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_gravity="bottom"
     android:background="@color/ai_fill2"
-    android:paddingBottom="12dp"
-    tools:theme="@style/Theme.AppCompat">
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/tv_service_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="32dp"
-        android:layout_marginTop="16dp"
-        android:text="@string/cov_agent_service_info"
-        android:textColor="@color/ai_icontext4"
-        android:textSize="12sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <LinearLayout
-        android:id="@+id/ll_service_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/settings_item_bg"
-        android:orientation="vertical"
-        android:paddingVertical="6dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_service_title">
+        android:background="@color/ai_fill2"
+        android:paddingBottom="12dp">
+
+        <TextView
+            android:id="@+id/tv_service_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="32dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/cov_agent_service_info"
+            android:textColor="@color/ai_icontext4"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
+            android:id="@+id/ll_service_content"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/ai_dp_default"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/settings_item_bg"
+            android:orientation="vertical"
+            android:paddingVertical="6dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_service_title">
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/mtv_voiceprint_lock"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/cov_voiceprint_lock"
-                android:textColor="@color/ai_icontext1"
-                android:textSize="14sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/ai_dp_default"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/mtv_voiceprint_lock_status"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical|end"
-                android:text="@string/cov_agent_not_activated"
-                android:textColor="@color/ai_red6"
-                android:textSize="14sp" />
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_voiceprint_lock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="@string/cov_voiceprint_lock"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_voiceprint_lock_status"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|end"
+                    android:text="@string/cov_agent_not_activated"
+                    android:textColor="@color/ai_red6"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginStart="16dp"
+                android:background="@color/ai_line1" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_ai_vad"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="@string/cov_setting_ai_vad_high"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_ai_vad_status"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|end"
+                    android:text="@string/cov_agent_not_activated"
+                    android:textColor="@color/ai_red6"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
         </LinearLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:layout_marginStart="16dp"
-            android:background="@color/ai_line1" />
+        <TextView
+            android:id="@+id/tv_channel_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="32dp"
+            android:layout_marginTop="24dp"
+            android:text="@string/cov_channel_info_title"
+            android:textColor="@color/ai_icontext4"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ll_service_content" />
 
         <LinearLayout
+            android:id="@+id/ll_item_content"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/settings_item_bg"
+            android:orientation="vertical"
+            android:paddingVertical="6dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_channel_title">
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/mtv_ai_vad"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/cov_setting_ai_vad_high"
-                android:textColor="@color/ai_icontext1"
-                android:textSize="14sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/ai_dp_default"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/mtv_ai_vad_status"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical|end"
-                android:text="@string/cov_agent_not_activated"
-                android:textColor="@color/ai_red6"
-                android:textSize="14sp" />
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_agent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="@string/cov_info_agent_status"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_agent_status"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|end"
+                    android:text="@string/cov_info_agent_connected"
+                    android:textColor="@color/ai_green6"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginStart="16dp"
+                android:background="@color/ai_line1" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/ai_dp_default"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="@string/cov_info_agent_id"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_agent_id"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|end"
+                    android:lineSpacingMultiplier="0.8"
+                    android:text="xxx"
+                    android:textColor="@color/ai_icontext4"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginStart="16dp"
+                android:background="@color/ai_line1" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/ai_dp_default"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="@string/cov_info_room_status"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_room_status"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|end"
+                    android:text="@string/cov_info_agent_connected"
+                    android:textColor="@color/ai_green6"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginStart="16dp"
+                android:background="@color/ai_line1" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/ai_dp_default"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="@string/cov_info_room_id"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_room_id"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|end"
+                    android:text="xxx"
+                    android:textColor="@color/ai_icontext4"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginStart="16dp"
+                android:background="@color/ai_line1" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/ai_dp_default"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_uid"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="@string/cov_info_your_id"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_uid_value"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|end"
+                    android:textColor="@color/ai_icontext4"
+                    android:textSize="14sp"
+                    tools:text="xxx" />
+            </LinearLayout>
         </LinearLayout>
 
-    </LinearLayout>
 
-    <TextView
-        android:id="@+id/tv_channel_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="32dp"
-        android:layout_marginTop="24dp"
-        android:text="@string/cov_channel_info_title"
-        android:textColor="@color/ai_icontext4"
-        android:textSize="12sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ll_service_content" />
-
-    <LinearLayout
-        android:id="@+id/ll_item_content"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/settings_item_bg"
-        android:orientation="vertical"
-        android:paddingVertical="6dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_channel_title">
+        <TextView
+            android:id="@+id/tv_more"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="32dp"
+            android:layout_marginTop="32dp"
+            android:text="@string/cov_info_more"
+            android:textColor="@color/ai_icontext4"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ll_item_content" />
 
         <LinearLayout
+            android:id="@+id/ll_more_content"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/ai_dp_default"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/settings_item_bg"
+            android:orientation="vertical"
+            android:paddingVertical="6dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_more">
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/mtv_agent"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/cov_info_agent_status"
-                android:textColor="@color/ai_icontext1"
-                android:textSize="14sp" />
+            <LinearLayout
+                android:id="@+id/layout_uploader"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/ai_dp_default"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/mtv_agent_status"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical|end"
-                android:text="@string/cov_info_agent_connected"
-                android:textColor="@color/ai_green6"
-                android:textSize="14sp" />
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_uploader"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|start"
+                    android:text="@string/cov_info_uploader"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="14sp" />
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/tv_uploader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|end"
+                    android:layout_marginStart="12dp"
+                    android:src="@drawable/icon_uploader"
+                    app:tint="@color/ai_icontext1" />
+            </LinearLayout>
         </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:layout_marginStart="16dp"
-            android:background="@color/ai_line1" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/ai_dp_default"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
-
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/cov_info_agent_id"
-                android:textColor="@color/ai_icontext1"
-                android:textSize="14sp" />
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/mtv_agent_id"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical|end"
-                android:lineSpacingMultiplier="0.8"
-                android:text="xxx"
-                android:textColor="@color/ai_icontext4"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:layout_marginStart="16dp"
-            android:background="@color/ai_line1" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/ai_dp_default"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
-
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/cov_info_room_status"
-                android:textColor="@color/ai_icontext1"
-                android:textSize="14sp" />
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/mtv_room_status"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical|end"
-                android:text="@string/cov_info_agent_connected"
-                android:textColor="@color/ai_green6"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:layout_marginStart="16dp"
-            android:background="@color/ai_line1" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/ai_dp_default"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
-
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/cov_info_room_id"
-                android:textColor="@color/ai_icontext1"
-                android:textSize="14sp" />
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/mtv_room_id"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical|end"
-                android:text="xxx"
-                android:textColor="@color/ai_icontext4"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:layout_marginStart="16dp"
-            android:background="@color/ai_line1" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/ai_dp_default"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/mtv_uid"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/cov_info_your_id"
-                android:textColor="@color/ai_icontext1"
-                android:textSize="14sp" />
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/mtv_uid_value"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical|end"
-                android:textColor="@color/ai_icontext4"
-                android:textSize="14sp"
-                tools:text="xxx" />
-        </LinearLayout>
-    </LinearLayout>
-
-
-    <TextView
-        android:id="@+id/tv_more"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="32dp"
-        android:layout_marginTop="32dp"
-        android:text="@string/cov_info_more"
-        android:textColor="@color/ai_icontext4"
-        android:textSize="12sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ll_item_content" />
-
-    <LinearLayout
-        android:id="@+id/ll_more_content"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/settings_item_bg"
-        android:orientation="vertical"
-        android:paddingVertical="6dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_more">
-
-        <LinearLayout
-            android:id="@+id/layout_uploader"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/ai_dp_default"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp">
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/mtv_uploader"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical|start"
-                android:text="@string/cov_info_uploader"
-                android:textColor="@color/ai_icontext1"
-                android:textSize="14sp" />
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/tv_uploader"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical|end"
-                android:layout_marginStart="12dp"
-                android:src="@drawable/icon_uploader"
-                app:tint="@color/ai_icontext1" />
-        </LinearLayout>
-    </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

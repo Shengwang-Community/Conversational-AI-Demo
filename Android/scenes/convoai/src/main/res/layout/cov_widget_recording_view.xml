@@ -51,7 +51,7 @@
     <FrameLayout
         android:id="@+id/btnRecordingContainer"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="@dimen/ai_dp_default"
         android:background="@drawable/cov_recording_button_bg"
         android:clickable="true"
         android:focusable="true"

@@ -1,18 +1,18 @@
 package io.agora.scene.convoai.ui.living.voiceprint
 
-import android.annotation.SuppressLint
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import io.agora.scene.common.ui.BaseActivity.ImmersiveMode
-import io.agora.scene.common.ui.BaseSheetDialog
+import io.agora.scene.common.ui.BaseDialogFragment
 import io.agora.scene.common.util.dp
+import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.R
@@ -25,7 +25,7 @@ import kotlin.getValue
 /**
  * Voiceprint recording dialog - bottom sheet with 85% screen height
  */
-class CovVoiceprintRecordingDialog : BaseSheetDialog<CovVoiceprintRecordingDialogBinding>() {
+class CovVoiceprintRecordingDialog : BaseDialogFragment<CovVoiceprintRecordingDialogBinding>() {
 
     private var onDismissCallback: (() -> Unit)? = null
     private var onRecordingFinishCallback: ((String) -> Unit)? = null
@@ -46,8 +46,6 @@ class CovVoiceprintRecordingDialog : BaseSheetDialog<CovVoiceprintRecordingDialo
         }
     }
 
-    override fun disableDragging(): Boolean = true
-
     override fun getViewBinding(
         inflater: LayoutInflater, container: ViewGroup?
     ): CovVoiceprintRecordingDialogBinding? {
@@ -57,90 +55,74 @@ class CovVoiceprintRecordingDialog : BaseSheetDialog<CovVoiceprintRecordingDialo
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        isCancelable = false // Disable default cancel behavior to handle it manually
         setupViews()
-        setupRecordingView()
         observeViewModel()
-    }
-
-    override fun onStart() {
-        super.onStart()
-        setupDialogHeight()
     }
 
     override fun immersiveMode(): ImmersiveMode = ImmersiveMode.FULLY_IMMERSIVE
 
-    private fun setupDialogHeight() {
-        dialog?.window?.let { window ->
-            val displayMetrics = resources.displayMetrics
-            val screenHeight = displayMetrics.heightPixels
-
-            // Also set the bottom sheet behavior to match our height
-            val bottomSheet = dialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-            bottomSheet?.let { sheet ->
-                val behavior = BottomSheetBehavior.from(sheet)
-                behavior.state = BottomSheetBehavior.STATE_EXPANDED
-                behavior.isDraggable = false
-
-                // Set the bottom sheet height directly
-                val layoutParams = sheet.layoutParams
-                layoutParams.height = screenHeight - 32.dp.toInt()
-                sheet.layoutParams = layoutParams
-                CovLogger.d(TAG, "Bottom sheet height set to: ${sheet.layoutParams.height}")
-            }
+    override fun onStart() {
+        super.onStart()
+        dialog?.window?.apply {
+            setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
+        }
+        
+        // Set dynamic top margin for content container
+        setupContentMargin()
+    }
+    
+    private fun setupContentMargin() {
+        mBinding?.contentContainer?.let { contentContainer ->
+            val statusBarHeight = context?.getStatusBarHeight() ?: 25.dp.toInt()
+            val topMargin = 42.dp.toInt() + statusBarHeight
+            
+            val layoutParams = contentContainer.layoutParams as? ViewGroup.MarginLayoutParams
+            layoutParams?.topMargin = topMargin
+            contentContainer.layoutParams = layoutParams
+            
+            CovLogger.d(TAG, "Status bar height: $statusBarHeight, Top margin: $topMargin")
         }
     }
 
     private fun setupViews() {
-        binding?.apply {
-            setOnApplyWindowInsets(root)
-            isCancelable = false
+        mBinding?.apply {
             // Setup close button
             ivBack.setOnClickListener {
                 CovLogger.d(TAG, "Close button clicked")
                 dismiss()
             }
-        }
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun setupRecordingView() {
-        binding?.recordingView?.apply {
-            setRecordingCallbacks(
-                onStartRecording = {
-                    CovLogger.d(TAG, "UI: Start recording requested")
-                    context?.let { ctx ->
-                        voiceprintViewModel.startRecording(ctx)
-                    }
-                },
-                onStopRecording = {
-                    CovLogger.d(TAG, "UI: Stop recording requested")
-                    voiceprintViewModel.stopRecording()
-                },
-                onCancelRecording = {
-                    CovLogger.d(TAG, "UI: Cancel recording requested")
-                    voiceprintViewModel.cancelRecording()
-                },
-                onRequestPermission = {
-                    if (hasMicPerm()) {
-                        binding?.recordingView?.onPermissionGranted()
-                    } else {
-                        binding?.recordingView?.onPermissionDenied()
-                        checkMicrophonePermission { granted ->
-                            CovLogger.d(TAG, "Permission check completed: $granted")
+          recordingView.apply {
+                setRecordingCallbacks(
+                    onStartRecording = {
+                        CovLogger.d(TAG, "UI: Start recording requested")
+                        context?.let { ctx ->
+                            voiceprintViewModel.startRecording(ctx)
+                        }
+                    },
+                    onStopRecording = {
+                        CovLogger.d(TAG, "UI: Stop recording requested")
+                        voiceprintViewModel.stopRecording()
+                    },
+                    onCancelRecording = {
+                        CovLogger.d(TAG, "UI: Cancel recording requested")
+                        voiceprintViewModel.cancelRecording()
+                    },
+                    onRequestPermission = {
+                        if (hasMicPerm()) {
+                            mBinding?.recordingView?.onPermissionGranted()
+                        } else {
+                            mBinding?.recordingView?.onPermissionDenied()
+                            checkMicrophonePermission { granted ->
+                                CovLogger.d(TAG, "Permission check completed: $granted")
+                            }
                         }
                     }
-                }
-            )
+                )
+            }
         }
     }
 
-    /**
-     * Check microphone permission by delegating to Activity
-     *
-     * @param granted Callback function that receives the final permission result
-     *                true: permission granted, false: permission denied
-     */
     /**
      * Observe ViewModel state changes and update UI accordingly
      */
@@ -155,14 +137,14 @@ class CovVoiceprintRecordingDialog : BaseSheetDialog<CovVoiceprintRecordingDialo
                     offsetY = 100.dp.toInt()
                 )
             }
-            binding?.recordingView?.onRecordingFinished()
+            mBinding?.recordingView?.onRecordingFinished()
             onRecordingFinishCallback?.invoke(file.absolutePath)
             dismiss()
         }
 
         voiceprintViewModel.onRecordingCancel = {
             CovLogger.d(TAG, "ViewModel: Recording cancelled")
-            binding?.recordingView?.onRecordingCancelled()
+            mBinding?.recordingView?.onRecordingCancelled()
         }
 
         voiceprintViewModel.onRecordingTooShort = {
@@ -172,18 +154,18 @@ class CovVoiceprintRecordingDialog : BaseSheetDialog<CovVoiceprintRecordingDialo
                 gravity = Gravity.TOP,
                 offsetY = 100.dp.toInt()
             )
-            binding?.recordingView?.onRecordingFinished()
+            mBinding?.recordingView?.onRecordingFinished()
         }
 
         voiceprintViewModel.onRecordingError = { error ->
             CovLogger.e(TAG, "ViewModel: Recording error - $error")
             ToastUtil.show("Recording error: $error")
-            binding?.recordingView?.onRecordingFinished()
+            mBinding?.recordingView?.onRecordingFinished()
         }
 
         // Observe recording duration for UI updates
         voiceprintViewModel.recordingDuration.onEach { duration ->
-            binding?.recordingView?.updateRecordingTime(duration)
+            mBinding?.recordingView?.updateRecordingTime(duration)
         }.launchIn(lifecycleScope)
     }
 

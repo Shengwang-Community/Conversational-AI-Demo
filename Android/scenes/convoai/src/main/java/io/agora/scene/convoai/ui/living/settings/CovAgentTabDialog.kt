@@ -15,8 +15,6 @@ import com.google.android.material.tabs.TabLayout
 import io.agora.scene.common.ui.BaseSheetDialog
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovAgentTabDialogBinding
-import io.agora.scene.convoai.ui.living.settings.CovAgentInfoFragment
-import io.agora.scene.convoai.ui.living.settings.CovAgentSettingsFragment
 import kotlin.math.abs
 
 /**
