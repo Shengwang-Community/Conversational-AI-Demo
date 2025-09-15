@@ -96,6 +96,7 @@ object CovAgentManager {
                 CovAvatar(
                     avatar_name = "Avatar",
                     vendor = "",
+                    display_vendor = "",
                     avatar_id = "",
                     thumb_img_url = "",
                     bg_img_url = "",

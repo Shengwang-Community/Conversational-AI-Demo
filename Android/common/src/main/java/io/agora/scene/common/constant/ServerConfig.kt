@@ -29,19 +29,23 @@ object ServerConfig {
         }
 
     @JvmStatic
-    val thirdPartyUrl : String
+    val thirdPartyUrl: String
         get() {
             return "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/libraries.html"
         }
 
     @JvmStatic
-    val personalDataUrl : String
+    val personalDataUrl: String
         get() {
-            return "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/manifest-dev/ConvoAI/index.html"
+            return if (toolBoxUrl.contains("service.apprtc.cn")) {
+                "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/ConvoAI/index.html"
+            } else {
+                "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/manifest-dev/ConvoAI/index.html"
+            }
         }
 
     @JvmStatic
-    val ssoProfileUrl : String
+    val ssoProfileUrl: String
         get() {
             return "https://sso.shengwang.cn/profile"
         }

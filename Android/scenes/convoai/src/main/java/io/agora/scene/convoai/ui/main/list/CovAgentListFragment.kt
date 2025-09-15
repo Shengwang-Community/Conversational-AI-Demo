@@ -110,7 +110,7 @@ class CovAgentListFragment : BaseFragment<CovFragmentAgentListBinding>() {
         } else {
             // Unselected: 13sp, hide icon
             textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-            iconView.visibility = View.GONE
+            iconView.visibility = View.INVISIBLE
         }
 
         // Set custom view with proper layout params
