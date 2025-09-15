@@ -68,12 +68,19 @@ class CovBirthdayPickerDialog : BaseSheetDialog<CovDialogBirthdayPickerBinding>(
             // Set minimum date (100 years ago from today)
             val minCalendar = Calendar.getInstance()
             minCalendar.add(Calendar.YEAR, -100) // 100 years ago
+            // Set to beginning of year to allow selection of any date in that year
+            minCalendar.set(Calendar.MONTH, Calendar.JANUARY)
+            minCalendar.set(Calendar.DAY_OF_MONTH, 1)
             setMinMillisecond(minCalendar.timeInMillis)
 
             // Set maximum date (18 years ago from today)
             val maxCalendar = Calendar.getInstance()
             maxCalendar.add(Calendar.YEAR, -18) // 18 years ago
+            // Set to end of year to allow selection of any date in that year
+            maxCalendar.set(Calendar.MONTH, Calendar.DECEMBER)
+            maxCalendar.set(Calendar.DAY_OF_MONTH, 31)
             setMaxMillisecond(maxCalendar.timeInMillis)
+            
 
             setWrapSelectorWheel(mutableListOf(DateTimeConfig.YEAR, DateTimeConfig.MONTH, DateTimeConfig.DAY), false)
 

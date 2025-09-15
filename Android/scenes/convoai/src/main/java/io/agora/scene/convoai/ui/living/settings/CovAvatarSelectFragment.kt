@@ -116,7 +116,7 @@ class CovAvatarSelectFragment : BaseFragment<CovAvatarSelectFragmentBinding>() {
             selection.isClose -> true // Close option is always valid
             selection.covAvatar == null -> false
             category == getString(CovR.string.cov_setting_avatar_all) -> true // All category contains everything
-            else -> selection.covAvatar.vendor == category // Check if vendor matches category
+            else -> selection.covAvatar.display_vendor == category // Check if vendor matches category
         }
     }
 
@@ -153,7 +153,7 @@ class CovAvatarSelectFragment : BaseFragment<CovAvatarSelectFragmentBinding>() {
         val filteredAvatars = if (category == getString(CovR.string.cov_setting_avatar_all)) {
             allAvatars
         } else {
-            allAvatars.filter { it.vendor == category }
+            allAvatars.filter { it.display_vendor == category }
         }
 
         // Add real avatar options
@@ -332,7 +332,7 @@ class CovAvatarSelectFragment : BaseFragment<CovAvatarSelectFragmentBinding>() {
                 binding.apply {
                     val covAvatar = avatar.covAvatar
                     tvName.text = covAvatar?.avatar_name ?: ""
-                    tvVendor.text = covAvatar?.vendor ?: ""
+                    tvVendor.text = covAvatar?.display_vendor ?: ""
 
                     vSelectionBorder.visibility = if (isSelected) View.VISIBLE else View.GONE
 
