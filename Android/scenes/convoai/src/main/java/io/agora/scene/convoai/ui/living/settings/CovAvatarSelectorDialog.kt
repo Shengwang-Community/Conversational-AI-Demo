@@ -104,6 +104,12 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
             setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
         }
     }
+    
+    override fun onResume() {
+        super.onResume()
+        // Ensure immersive mode is maintained
+        forceImmersiveMode()
+    }
 
     override fun onDismiss(dialog: DialogInterface) {
         CovLogger.d(TAG, "onDismiss called")
@@ -164,6 +170,23 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
         mBinding?.vpContent?.apply {
             // Set adapter
             adapter = AvatarCategoryAdapter(this@CovAvatarSelectorDialog)
+            
+            // Add page change listener to restore immersive mode after swiping
+            registerOnPageChangeCallback(object : androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+                override fun onPageSelected(position: Int) {
+                    super.onPageSelected(position)
+                    // Restore immersive mode after page change
+                    forceImmersiveMode()
+                }
+                
+                override fun onPageScrollStateChanged(state: Int) {
+                    super.onPageScrollStateChanged(state)
+                    // Restore immersive mode when scrolling ends
+                    if (state == androidx.viewpager2.widget.ViewPager2.SCROLL_STATE_IDLE) {
+                        forceImmersiveMode()
+                    }
+                }
+            })
         }
     }
 
@@ -176,8 +199,8 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
 
         // Collect unique vendors
         avatars.forEach { avatar: CovAvatar ->
-            if (avatar.vendor.isNotEmpty()) {
-                vendorSet.add(avatar.vendor)
+            if (avatar.display_vendor.isNotEmpty()) {
+                vendorSet.add(avatar.display_vendor)
             }
         }
 

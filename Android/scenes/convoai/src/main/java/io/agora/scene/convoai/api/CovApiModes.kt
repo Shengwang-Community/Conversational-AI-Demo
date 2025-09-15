@@ -54,6 +54,7 @@ data class CovAgentLanguage(
 @Parcelize
 data class CovAvatar(
     val vendor: String,
+    val display_vendor: String,
     val avatar_id: String,
     val avatar_name: String,
     val thumb_img_url: String,
