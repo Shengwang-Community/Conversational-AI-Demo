@@ -257,13 +257,14 @@ xcodebuild CODE_SIGN_STYLE="Manual" \
     -workspace "${APP_PATH}" \
     -scheme "${TARGET_NAME}" \
     clean \
-    CODE_SIGNING_REQUIRED=NO \
-    CODE_SIGNING_ALLOWED=NO \
     -configuration "${CONFIGURATION}" \
     archive \
     -archivePath "${ARCHIVE_PATH}" \
     -destination 'generic/platform=iOS' \
     DEBUG_INFORMATION_FORMAT=dwarf-with-dsym \
+    DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}" \
+    PROVISIONING_PROFILE_SPECIFIER="${PROVISIONING_PROFILE}" \
+    CODE_SIGN_IDENTITY="${CODE_SIGN_IDENTITY}" \
     -quiet || exit
 
 # Create export directory
