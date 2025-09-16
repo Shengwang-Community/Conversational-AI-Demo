@@ -257,6 +257,7 @@ class AccountDeactivateAlert: UIView {
         label.text = ResourceManager.L10n.Mine.accountUnderstandRisks
         label.textColor = .white
         label.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        label.numberOfLines = 0
         return label
     }()
     

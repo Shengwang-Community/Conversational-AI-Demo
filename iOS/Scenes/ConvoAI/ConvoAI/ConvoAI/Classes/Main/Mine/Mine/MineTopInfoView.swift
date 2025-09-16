@@ -66,7 +66,7 @@ class MineTopInfoView: UIView {
     private lazy var backBoardImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage.ag_named("img_mine_back_board")
-        imageView.contentMode = .scaleAspectFill
+        imageView.contentMode = .scaleToFill
         imageView.clipsToBounds = true
         return imageView
     }()
