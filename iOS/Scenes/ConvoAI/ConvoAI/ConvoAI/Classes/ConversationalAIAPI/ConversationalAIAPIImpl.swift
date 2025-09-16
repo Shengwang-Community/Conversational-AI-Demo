@@ -364,7 +364,11 @@ extension ConversationalAIAPIImpl {
     }
     
     private func notifyDelegatesDebugLog(_ log: String) {
-        callMessagePrint(msg: log)
+        DispatchQueue.main.async {
+            for delegate in self.delegates.allObjects {
+                delegate.onDebugLog(log: log)
+            }
+        }
     }
     
     private func setAudioConfigParameters(routing: AgoraAudioOutputRouting) {
@@ -452,7 +456,7 @@ extension ConversationalAIAPIImpl {
             let messageReceipt = MessageReceipt(moduleType: moduleType, messageType: resource_type == "picture" ? .image : .unknown, message: messageString, turnId: turnId)
             notifyDelegatesMessageReceipt(agentUserId: uid, messageReceipt: messageReceipt)
         } catch {
-            notifyDelegatesDebugLog("Failed to parse message string from image info message: \(error.localizedDescription)")
+            callMessagePrint(msg: "Failed to parse message string from image info message: \(error.localizedDescription)")
         }
     }
     
@@ -461,7 +465,7 @@ extension ConversationalAIAPIImpl {
         let metricType = ModuleType.fromValue(module)
         
         if metricType == .unknown && !module.isEmpty {
-            notifyDelegatesDebugLog("Unknown metric module: \(module)")
+            callMessagePrint(msg: "Unknown metric module: \(module)")
         }
         
         let metricName = msg["metric_name"] as? String ?? "unknown"
@@ -477,7 +481,7 @@ extension ConversationalAIAPIImpl {
         let moduleType = ModuleType.fromValue(errorTypeStr)
         
         if moduleType == .unknown && !errorTypeStr.isEmpty {
-            notifyDelegatesDebugLog("Unknown error type: \(errorTypeStr)")
+            callMessagePrint(msg: "Unknown error type: \(errorTypeStr)")
         }
         
         let code = (msg["code"] as? NSNumber)?.intValue ?? -1
@@ -493,7 +497,7 @@ extension ConversationalAIAPIImpl {
                 let messageError = MessageError(type: resourceType == "picture" ? .image : .unknown, code: code, message: message, timestamp: timestamp)
                 notifyDelegatesMessageError(agentUserId: uid, error: messageError)
             } catch {
-                notifyDelegatesDebugLog("Failed to parse context message JSON: \(error.localizedDescription)")
+                callMessagePrint(msg: "Failed to parse context message JSON: \(error.localizedDescription)")
             }
         }
         
@@ -507,6 +511,7 @@ extension ConversationalAIAPIImpl {
         if config.enableLog {
             writeLogToRTCSDK(log: log)
         }
+        notifyDelegatesDebugLog(log)
     }
     
     func writeLogToRTCSDK(log: String) {
@@ -531,12 +536,12 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
                 let messageMap = try parseJsonToMap(stringData)
                 dealMessageWithMap(uid: publisherId, msg: messageMap)
             } catch {
-                notifyDelegatesDebugLog("Process rtm string message error: \(error.localizedDescription)")
+                callMessagePrint(msg: "Process rtm string message error: \(error.localizedDescription)")
             }
         } else if let rawData = event.message.rawData {
             do {
                 guard let rawString = String(data: rawData, encoding: .utf8) else {
-                    notifyDelegatesDebugLog("Failed to convert binary data to string")
+                    callMessagePrint(msg: "Failed to convert binary data to string")
                     return
                 }
                 callMessagePrint(msg: "<<< [didReceiveMessageEvent] publishId:\(publisherId), channelName:\(event.channelName), channelType:\(event.channelType), customType: \(event.customType ?? ""), messageType:\(event.message)")
@@ -544,7 +549,7 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
                 let messageMap = try parseJsonToMap(rawString)
                 dealMessageWithMap(uid: publisherId, msg: messageMap)
             } catch {
-                notifyDelegatesDebugLog("Process rtm binary message error: \(error.localizedDescription)")
+                callMessagePrint(msg: "Process rtm binary message error: \(error.localizedDescription)")
             }
         }
     }
