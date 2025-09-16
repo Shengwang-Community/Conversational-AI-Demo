@@ -209,7 +209,7 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
         let currentIndex = allLanguages.firstIndex { $0.languageName == currentLanguage.languageName } ?? 0
         let table = AgentSelectTableView(items: allLanguages.map { AgentSelectTableItem(title: $0.languageName.stringValue(), subTitle: "") }) { index in
             let selected = allLanguages[index]
-            if currentLanguage.languageCode == selected.languageCode { return }
+            if currentLanguage == selected { return }
             self.onClickHideTable(nil)
 
             // Check if alert is already ignored

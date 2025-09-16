@@ -25,7 +25,7 @@ struct Avatar: Codable {
     }
 }
 
-struct SupportLanguage: Codable {
+struct SupportLanguage: Codable, Equatable {
     let languageCode: String?
     let languageName: String?
     let aivadEnabledByDefault: Bool?
