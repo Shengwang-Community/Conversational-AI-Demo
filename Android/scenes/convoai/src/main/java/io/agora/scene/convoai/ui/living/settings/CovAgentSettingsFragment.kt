@@ -436,7 +436,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
 
     private fun onClickVoiceprint() {
         val activity = activity ?: return
-        val voiceprintDialog = CovVoiceprintLockDialog.Companion.newInstance(
+        val voiceprintDialog = CovVoiceprintLockDialog.newInstance(
             currentMode = CovAgentManager.voiceprintMode,
             onDismiss = {
                 // Handle dialog closure
