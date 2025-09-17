@@ -48,7 +48,7 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
     private val voiceprintAdapter = VoiceprintAdapter()
 
     // Input parameters
-    private var currentMode: VoiceprintMode = VoiceprintMode.OFF
+    private var preMode: VoiceprintMode = VoiceprintMode.OFF
 
     private var selectedMode: VoiceprintMode? = null
 
@@ -88,7 +88,7 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
         isCancelable = false // Disable default cancel behavior to handle it manually
         // Get input parameters
         arguments?.let {
-            currentMode = it.getSerializable(ARG_MODE) as? VoiceprintMode ?: VoiceprintMode.OFF
+            preMode = it.getSerializable(ARG_MODE) as? VoiceprintMode ?: VoiceprintMode.OFF
         }
 
         mBinding?.apply {
@@ -237,19 +237,6 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
     }
 
     /**
-     * Revert selection back to the current mode when user cancels seamless voiceprint dialog
-     */
-    private fun revertToPreviousSelection() {
-        selectedMode = currentMode
-
-        // Update adapter to reflect the reverted selection
-        voiceprintAdapter.updateSelection(currentMode)
-
-        // Update create voiceprint visibility based on reverted mode
-        updateCreateVoiceprintVisibility(currentMode)
-    }
-
-    /**
      * Restore immersive mode after child dialog dismisses
      * Use delayed post to ensure the child dialog is completely dismissed
      */
@@ -282,31 +269,21 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
     private fun handleDismiss() {
         CovLogger.d(TAG, "handleDismiss called")
         val mode = selectedMode
-        when {
-            mode == null -> {
-                dismiss()
-            }
-
-            mode == VoiceprintMode.PERSONALIZED && CovAgentManager.voiceprintInfo == null -> {
-                showNoPersonalizedVoiceprintDialog {
-                    if (it) {
-                        dismiss()
-                    } else {
-                        // User cancelled, revert to previous selection
-                        revertToPreviousSelection()
-                    }
-                    restoreImmersiveModeAfterChildDialog()
+        if (mode == null) {
+            dismiss()
+        } else if (mode == VoiceprintMode.PERSONALIZED && CovAgentManager.voiceprintInfo == null) {
+            showNoPersonalizedVoiceprintDialog {
+                if (it) {
+                    onModeSelectedCallback?.invoke(preMode)
+                    dismiss()
+                } else {
+                    // nothing
                 }
+                restoreImmersiveModeAfterChildDialog()
             }
-
-            mode != currentMode -> {
-                onModeSelectedCallback?.invoke(mode)
-                dismiss()
-            }
-
-            else -> {
-                dismiss()
-            }
+        } else {
+            onModeSelectedCallback?.invoke(mode)
+            dismiss()
         }
     }
 
@@ -315,40 +292,50 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
         handleDismiss()
     }
 
-
     private fun loadVoiceprintModeData() {
         // Create voiceprint mode list
         val modeList = mutableListOf<VoiceprintModeItem>()
 
         // Add all voiceprint modes
         VoiceprintMode.entries.forEach { mode ->
-            modeList.add(
-                VoiceprintModeItem(
-                    mode = mode, isSelected = currentMode == mode
-                )
-            )
+            modeList.add(VoiceprintModeItem(mode = mode, isSelected = preMode == mode))
         }
 
         voiceprintAdapter.updateModes(modeList) { mode ->
-            selectedMode = mode
-            updateCreateVoiceprintVisibility(mode)
+            when (mode) {
+                VoiceprintMode.OFF -> {
+                    selectedMode = mode
+                    preMode = mode
+                    voiceprintAdapter.updateSelection(mode)
+                    updateCreateVoiceprintVisibility(mode)
+                }
 
-            if (selectedMode == VoiceprintMode.PERSONALIZED) {
-                voiceprintViewModel.checkVoiceprintUpdate()
-            }
-            if (selectedMode == VoiceprintMode.SEAMLESS) {
-                showSeamlessVoiceprintDialog {
-                    if (!it) {
-                        revertToPreviousSelection()
+                VoiceprintMode.SEAMLESS -> {
+                    showSeamlessVoiceprintDialog {
+                        if (it) {
+                            selectedMode = mode
+                            voiceprintAdapter.updateSelection(mode)
+                            preMode = mode
+                            updateCreateVoiceprintVisibility(mode)
+                        } else {
+                            // nothing
+                        }
+                        restoreImmersiveModeAfterChildDialog()
                     }
-                    restoreImmersiveModeAfterChildDialog()
+                }
+
+                VoiceprintMode.PERSONALIZED -> {
+                    voiceprintViewModel.checkVoiceprintUpdate()
+
+                    selectedMode = mode
+                    voiceprintAdapter.updateSelection(mode)
+                    updateCreateVoiceprintVisibility(mode)
                 }
             }
         }
 
         // Initialize create voiceprint visibility based on current mode
-        updateCreateVoiceprintVisibility(currentMode)
-
+        updateCreateVoiceprintVisibility(preMode)
         // Initialize voiceprint state
         setupVoiceprintStateObserver()
     }
@@ -613,12 +600,6 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
                     card.setOnClickListener(object : OnFastClickListener() {
                         override fun onClickJacking(view: View) {
                             if (selectedPosition != adapterPosition) {
-                                val oldPosition = selectedPosition
-                                selectedPosition = adapterPosition
-
-                                // Update selection state
-                                notifyItemChanged(oldPosition)
-                                notifyItemChanged(selectedPosition)
                                 onItemClickListener?.invoke(mode)
                             }
                         }
