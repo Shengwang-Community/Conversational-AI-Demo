@@ -168,14 +168,14 @@ KEYCENTER_PATH=${PROJECT_PATH}"/"${PROJECT_NAME}"/KeyCenter.swift"
 CONFIGURATION='Release'
 
 # Signing configuration
-if [[ "$bundle_id" != *"test"* ]]; then
-    # App Store release configuration
+if [[ "$bundle_id" == *"test"* ]]; then
+    # Test environment configuration
     PROVISIONING_PROFILE="shengwang_convoai_test"
     CODE_SIGN_IDENTITY="iPhone Distribution"
     DEVELOPMENT_TEAM="48TB6ZZL5S"
     PLIST_PATH="${CURRENT_PATH}/cicd/build_scripts/ios_export_store_test.plist"
 else
-    # Development environment configuration
+    # App Store release configuration
     PROVISIONING_PROFILE="shengwang_convoai_appstore"
     CODE_SIGN_IDENTITY="iPhone Distribution"
     DEVELOPMENT_TEAM="48TB6ZZL5S"
