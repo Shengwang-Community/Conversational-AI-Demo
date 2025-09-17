@@ -224,19 +224,23 @@ class LoginViewController: UIViewController {
     }
     
     @objc private func onClickLogin() {
-        LoginTermsAlert.show(
-            in: self.view,
-            onAccept: { [weak self] in
-                self?.termsCheckbox.isSelected = true
-                self?.warningButton.isHidden = true
-                
-                self?.goToSSOViewController()
-            },
-            onDecline: { [weak self] in
-                self?.termsCheckbox.isSelected = false
-                self?.warningButton.isHidden = false
-            }
-        )
+        if termsCheckbox.isSelected {
+            self.goToSSOViewController()
+        } else {
+            LoginTermsAlert.show(
+                in: self.view,
+                onAccept: { [weak self] in
+                    self?.termsCheckbox.isSelected = true
+                    self?.warningButton.isHidden = true
+                    
+                    self?.goToSSOViewController()
+                },
+                onDecline: { [weak self] in
+                    self?.termsCheckbox.isSelected = false
+                    self?.warningButton.isHidden = false
+                }
+            )
+        }
     }
     
     @objc private func termsCheckboxTapped() {

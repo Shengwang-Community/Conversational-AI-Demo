@@ -152,6 +152,7 @@ class BioSettingViewController: BaseViewController {
             card.configure(text: example)
             card.onTap = { [weak self] in
                 self?.bioTextView.text = card.text
+                self?.updatePlaceholderVisibility()
             }
             examplesStackView.addArrangedSubview(card)
         }
