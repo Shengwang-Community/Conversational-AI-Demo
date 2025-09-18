@@ -314,7 +314,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="invisible"
-            android:background="@color/ai_red6"
             tools:visibility="gone">
 
             <androidx.cardview.widget.CardView
