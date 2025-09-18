@@ -87,6 +87,10 @@ extension ChatMessageViewModel: MessageStandard {
             //do nothing now
         } else if displayMode == .chunk {
             //do nothing now
+            let key = generateMessageKey(turnId: turnId, isMine: false)
+            let message = messageMapTable[key]
+            message?.isFinal = true
+            delegate?.messageUpdated()
         }
     }
     

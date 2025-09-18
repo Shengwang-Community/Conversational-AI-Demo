@@ -173,6 +173,7 @@ extension TranscriptDelegate {
     private var lastMessage: Transcript? = nil
     private var lastPublish: String? = nil
     private var lastFinishMessage: Transcript? = nil
+    private var lastInterruptEvent: InterruptEvent? = nil
     
     private var renderConfig: TranscriptRenderConfig? = nil
     
@@ -195,6 +196,7 @@ extension TranscriptDelegate {
             let agentUserId = message.publish_id ?? "0"
             self.callMessagePrint(tag: TranscriptController.tag, msg: "<<< [onInterrupted], pts: \(self.audioTimestamp), \(agentUserId), \(message), \(interruptedEvent) ")
             self.delegate?.onInterrupted(agentUserId: agentUserId, event: interruptedEvent)
+            lastInterruptEvent = interruptedEvent
         }
         
         if message.object == MessageType.user.rawValue {
@@ -213,7 +215,7 @@ extension TranscriptDelegate {
             let renderMode = getMessageMode(message)
             if renderMode == .words {
                 handleWordsMessage(message)
-            } else if renderMode == .text && message.turn_status != TranscriptStatus.interrupted.rawValue {
+            } else if renderMode == .text {
                 handleTextMessage(message)
             }
         }
@@ -248,6 +250,11 @@ extension TranscriptDelegate {
     }
     
     private func handleTextMessage(_ message: TranscriptMessage) {
+        if lastInterruptEvent?.turnId == message.turn_id {
+            callMessagePrint(tag: TranscriptController.tag, msg: "<<< this turn had been interrupted")
+            return
+        }
+        
         guard let text = message.text, !text.isEmpty else {
             callMessagePrint(tag: TranscriptController.tag, msg: "<<< [Text Mode] text is nil")
             return
