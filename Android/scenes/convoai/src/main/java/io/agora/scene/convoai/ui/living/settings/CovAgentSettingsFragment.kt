@@ -134,7 +134,9 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
     private fun setRenderText() {
         mBinding?.apply {
             when (CovAgentManager.renderMode) {
-                CovRenderMode.Companion.WORD -> tvRenderDetail.text = getString(io.agora.scene.convoai.R.string.cov_word_mode)
+                CovRenderMode.Companion.WORD -> tvRenderDetail.text =
+                    getString(io.agora.scene.convoai.R.string.cov_word_mode)
+
                 CovRenderMode.Companion.SYNC_TEXT -> tvRenderDetail.text =
                     getString(io.agora.scene.convoai.R.string.cov_text_sync_mode)
 
@@ -291,13 +293,13 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
             .setPositiveButton(
                 text = getString(io.agora.scene.convoai.R.string.cov_preset_change_dialog_confirm),
                 onClick = { dontShowAgain ->
-                // User confirmed switch
-                if (dontShowAgain == true) {
-                    // User checked "Don't show again", save preference
-                    CovAgentManager.setShowPresetChangeReminder(false)
-                }
-                updateLanguage(language)
-            })
+                    // User confirmed switch
+                    if (dontShowAgain == true) {
+                        // User checked "Don't show again", save preference
+                        CovAgentManager.setShowPresetChangeReminder(false)
+                    }
+                    updateLanguage(language)
+                })
             .showNoMoreReminder() // Show checkbox, default unchecked
             .hideTopImage()
             .build()
@@ -347,7 +349,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
             // Calculate popup position using getDistanceFromScreenEdges
             val itemDistances = llDevice.getDistanceFromScreenEdges()
             val maskDistances = vOptionsMask.getDistanceFromScreenEdges()
-            val targetY = itemDistances.top - maskDistances.top - 30.dp
+            val targetY = itemDistances.top - maskDistances.top - 10.dp
 
             // Increase width for longer English text, but ensure it doesn't exceed screen width
             val widerWidth = 280.dp
@@ -358,13 +360,8 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
 
             // Calculate height with constraints
             val params = cvOptions.layoutParams
-            val itemHeight = 72.dp.toInt()
-            // Ensure maxHeight is at least one item height
-            val finalMaxHeight = itemDistances.bottom.coerceAtLeast(itemHeight) + 80.dp.toInt()
-            val finalHeight = (itemHeight * transcriptRenders.size).coerceIn(itemHeight, finalMaxHeight)
-
             params.width = finalWidth.toInt()
-            params.height = finalHeight
+            params.height = ViewGroup.LayoutParams.WRAP_CONTENT
             cvOptions.layoutParams = params
 
             // Update options and handle selection
