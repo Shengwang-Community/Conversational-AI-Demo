@@ -87,6 +87,7 @@ protocol AgentStateDelegate: AnyObject {
     func stateManager(_ manager: AgentStateManager, roomIdDidUpdated roomId: String)
     func stateManager(_ manager: AgentStateManager, userIdDidUpdated userId: String)
     func stateManager(_ manager: AgentStateManager, targetServerDidUpdated host: String)
+    func stateManager(_ manager: AgentStateManager, voiceprintDidUpdated enabled: Bool)
 }
 
 // MARK: - AgentInformation
@@ -98,6 +99,7 @@ class AgentInformation {
     var roomId: String = ""
     var userId: String = ""
     var targetServer: String = ""
+    var voiceprint: Bool = false
 }
 
 // MARK: - AgentStateManager
@@ -171,6 +173,12 @@ class AgentStateManager {
         set { updateTargetServer(newValue) }
     }
     
+    /// Voiceprint enabled status
+    var voiceprint: Bool {
+        get { information.voiceprint }
+        set { updateVoiceprint(newValue) }
+    }
+    
     // MARK: - State Updates
     
     /// Update network status
@@ -215,6 +223,12 @@ class AgentStateManager {
         notifyDelegates { $0.stateManager(self, targetServerDidUpdated: server) }
     }
     
+    /// Update voiceprint enabled status
+    func updateVoiceprint(_ enabled: Bool) {
+        information.voiceprint = enabled
+        notifyDelegates { $0.stateManager(self, voiceprintDidUpdated: enabled) }
+    }
+    
     /// Reset all state information to default values
     func resetToDefaults() {
         information = AgentInformation() // Create new instance with default values
@@ -240,4 +254,5 @@ extension AgentStateDelegate {
     func stateManager(_ manager: AgentStateManager, roomIdDidUpdated roomId: String) {}
     func stateManager(_ manager: AgentStateManager, userIdDidUpdated userId: String) {}
     func stateManager(_ manager: AgentStateManager, targetServerDidUpdated host: String) {}
+    func stateManager(_ manager: AgentStateManager, voiceprintDidUpdated enabled: Bool) {}
 }

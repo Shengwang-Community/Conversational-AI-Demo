@@ -24,7 +24,7 @@
 
 "join.start.title" = "声网对话式AI引擎";
 "join.start.state" = "未加入";
-"join.start.button.title" = "连接 AI 引擎";
+"join.start.button.title" = "连接对话式AI引擎";
 "join.start.agent.name" = "智能体";
 "join.start.tips" = "本次体验对话限制%d分钟";
 "join.start.tips.no.limit" = "本次体验对话无限制时长";
@@ -62,7 +62,7 @@
 "conversation.alert.clear" = "清除";
 "conversation.agent.voiceprint.lock.toast" = "引擎将学习您说话的声纹，过滤周围其他人的声音和噪音";
 
-"settings.title" = "人物设定";
+"settings.title" = "智能体设定";
 "settings.connected.tips" = "(连接中不可修改)";
 "settings.preset" = "预设";
 "settings.advanced" = "高级设置";
@@ -140,7 +140,7 @@
 "error.network.disconnect" = "网络异常，请检查网络设置";
 "error.join.error.avatar.limit" = "所有数字人正忙，请稍后重试";
 "error.agent.is.not.exist" = "智能体不存在";
-"error.agent.is.offline" = "智能体离线";
+"error.agent.is.offline" = "智能体已离线，请联系声网工作人员";
 "error.agent.list.fetch.failed" = "获取智能体列表失败";
 "error.microphone.permission.alert.description" = "麦克风权限被拒绝，请在设置中开启麦克风权限以继续使用语音功能。";
 "error.microphone.permission.alert.title" = "麦克风权限未开启";
@@ -201,7 +201,7 @@
 "empty.state.retry" = "重试";
 
 // Voiceprint Mode Settings
-"settings.voiceprint.mode.title" = "声纹模式";
+"settings.voiceprint.mode.title" = "声纹锁定";
 "settings.voiceprint.mode.off" = "关闭";
 "settings.voiceprint.mode.off.description" = "若不启用，智能体可能被周围其他人的声音打断或干扰。";
 "settings.voiceprint.mode.seamless" = "无感模式";

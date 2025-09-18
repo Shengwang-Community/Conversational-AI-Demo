@@ -73,8 +73,10 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
         if event.status == .registerSuccess {
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.voiceprintLockToast)
             activeFuncsView.setState(voiceprint: true, aivad: AppContext.settingManager().aiVad)
+            AppContext.stateManager().updateVoiceprint(true)
         } else {
             activeFuncsView.setState(voiceprint: false, aivad: AppContext.settingManager().aiVad)
+            AppContext.stateManager().updateVoiceprint(false)
         }
     }
     

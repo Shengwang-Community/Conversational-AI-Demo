@@ -45,7 +45,6 @@ extension ChatViewController: AgoraRtcEngineDelegate {
             dismissErrorToast()
         } else if reason == .reasonLeaveChannel {
             dismissErrorToast()
-            resetPreference()
         }
         
         if state == .failed {

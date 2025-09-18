@@ -375,6 +375,10 @@ extension AgentSettingViewController: AgentStateDelegate {
     func stateManager(_ manager: AgentStateManager, userIdDidUpdated userId: String) {
         channelInfoView.updateUserId(userId)
     }
+    
+    func stateManager(_ manager: AgentStateManager, voiceprintDidUpdated enabled: Bool) {
+        channelInfoView.updateVoiceprintState()
+    }
 }
 
 extension AgentSettingViewController: AgentSettingDelegate {
@@ -394,6 +398,7 @@ extension AgentSettingViewController: AgentSettingDelegate {
     
     func settingManager(_ manager: AgentSettingManager, aiVadStateDidUpdated state: Bool) {
         agentSettingsView.updateAiVadState(state)
+        channelInfoView.updateAiVadState()
     }
     
     func settingManager(_ manager: AgentSettingManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {
