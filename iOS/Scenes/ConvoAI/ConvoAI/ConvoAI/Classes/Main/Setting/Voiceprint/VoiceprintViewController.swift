@@ -40,6 +40,7 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
     private var isVoiceprintTabVisible = false
     private var voiceprintInfo: VoiceprintInfo? = nil
     private var currentMode = AppContext.settingManager().voiceprintMode
+    private var preMode = AppContext.settingManager().voiceprintMode
     private var audioPlayer: AVAudioPlayer?
     private var toolBox = ToolBoxApiManager()
     
@@ -141,6 +142,9 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
                         if let p = self?.voiceprintInfo {
                             VoiceprintManager.shared.saveVoiceprint(p, forUserId: userId)
                         }
+                    }
+                    if let premode = self?.preMode {
+                        AppContext.settingManager().updateVoiceprintMode(premode)
                     }
                     self?.navigationController?.popViewController(animated: true)
                 }
@@ -381,6 +385,7 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
     }
     
     private func updateMode(_ newMode: VoiceprintMode) {
+        preMode = currentMode
         currentMode = newMode
         updateSelectedMode()
         

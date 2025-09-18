@@ -36,7 +36,7 @@ class CovProfileSettingsActivity : BaseActivity<CovActivityProfileSettingsBindin
     }
 
     override fun initView() {
-        Log.d("UserViewModel","UserViewModel:$userViewModel $this")
+        Log.d("UserViewModel", "UserViewModel:$userViewModel $this")
         mBinding?.apply {
             // Adjust top margin for status bar
             val statusBarHeight = getStatusBarHeight() ?: 25.dp.toInt()
@@ -90,8 +90,9 @@ class CovProfileSettingsActivity : BaseActivity<CovActivityProfileSettingsBindin
                     }
                 })
             .showNoMoreReminder(
-                getString(R.string.cov_mine_delete_account_tips),
-                io.agora.scene.common.R.color.ai_icontext1
+                text = getString(R.string.cov_mine_delete_account_tips),
+                textColor = io.agora.scene.common.R.color.ai_icontext1,
+                defaultCheck = true
             )
             .hideTopImage()
             .build()

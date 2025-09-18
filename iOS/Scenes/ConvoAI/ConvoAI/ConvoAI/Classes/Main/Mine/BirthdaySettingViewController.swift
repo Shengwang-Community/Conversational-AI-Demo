@@ -114,25 +114,26 @@ class BirthdaySettingViewController: UIViewController {
         
         containerView.snp.makeConstraints { make in
             make.left.right.bottom.equalToSuperview()
-            make.height.equalTo(400)
-        }
-        
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(20)
-            make.left.right.equalToSuperview().inset(20)
-        }
-        
-        datePicker.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(20)
-            make.left.right.equalToSuperview().inset(20)
-            make.height.equalTo(220)
+            make.top.greaterThanOrEqualTo(view.safeAreaLayoutGuide.snp.top).offset(50)
         }
         
         buttonsContainer.snp.makeConstraints { make in
-            make.top.equalTo(datePicker.snp.bottom).offset(30)
             make.left.right.equalToSuperview().inset(20)
             make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-20)
             make.height.equalTo(50)
+        }
+        
+        datePicker.snp.makeConstraints { make in
+            make.top.greaterThanOrEqualToSuperview().offset(20)
+            make.left.right.equalToSuperview().inset(20)
+            make.bottom.equalTo(buttonsContainer.snp.top).offset(-30)
+            make.height.lessThanOrEqualTo(220)
+        }
+        
+        titleLabel.snp.makeConstraints { make in
+            make.top.equalTo(40)
+            make.left.right.equalToSuperview().inset(20)
+            make.bottom.equalTo(datePicker.snp.top).offset(-20)
         }
         
         cancelButton.snp.makeConstraints { make in

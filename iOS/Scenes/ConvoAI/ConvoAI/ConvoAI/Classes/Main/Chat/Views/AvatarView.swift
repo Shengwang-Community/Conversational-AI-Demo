@@ -58,7 +58,7 @@ class AvatarView: UIView {
         }
         
         aiGeneratedLabel.snp.makeConstraints { make in
-            make.bottom.equalToSuperview().offset(-8)
+            make.bottom.equalTo(self.safeAreaLayoutGuide).offset(-8)
             make.centerX.equalToSuperview()
         }
     }

@@ -30,7 +30,7 @@
 "join.start.tips.no.limit" = "本次体验对话无限制时长";
 "join.timeout.tips" = "智能体加入超时，请稍后重试。";
 
-"conversation.ai.welcome.title" = "欢迎体验声网实时对话式AI引擎";
+"conversation.ai.welcome.title" = "欢迎体验声网对话式AI引擎";
 "conversation.ai.welcome.description" = "秒应智答，零滞畅聊";
 "conversation.ai.app.name" = "声网对话式AI引擎";
 "conversation.agent.name" = "智能体";
@@ -205,7 +205,7 @@
 "settings.voiceprint.mode.off" = "关闭";
 "settings.voiceprint.mode.off.description" = "若不启用，智能体可能被周围其他人的声音打断或干扰。";
 "settings.voiceprint.mode.seamless" = "无感模式";
-"settings.voiceprint.mode.seamless.description" = "AI 将智能学习与智能体会话的用户声纹，自动屏蔽其他用户声纹。AI 将智能学习与智能体会话的用户声纹，自动屏蔽其他用户声纹。";
+"settings.voiceprint.mode.seamless.description" = "AI 将智能学习与智能体会话的用户声纹，自动屏蔽其他用户声纹。";
 "settings.voiceprint.mode.aware" = "有感模式";
 "settings.voiceprint.mode.aware.description" = "录入一段你的声纹，智能体将自动屏蔽其它声音";
 "settings.voiceprint.lock.title" = "声纹锁定";

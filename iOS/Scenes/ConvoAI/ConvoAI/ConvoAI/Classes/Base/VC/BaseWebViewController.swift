@@ -27,17 +27,6 @@ class BaseWebViewController: BaseViewController {
         return view
     }()
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        SVProgressHUD.setOffsetFromCenter(UIOffset(horizontal: 0, vertical: 0))
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        SVProgressHUD.dismiss()
-        SVProgressHUD.setOffsetFromCenter(UIOffset(horizontal: 0, vertical: 180))
-    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()

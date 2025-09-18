@@ -22,6 +22,7 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         val showNegative: Boolean = true,
         val showImage: Boolean = true,
         val showNoMoreReminder: Boolean = false,
+        val defaultCheck: Boolean = false,
         val noMoreReminderText: String? = null,
         val noMoreReminderTextColor: Int? = null,
         val imageBackgroundRes: Int? = null,
@@ -79,6 +80,7 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
 
     private fun CommonDialogLayoutBinding.setupNoMoreReminder() {
         llNoMoreReminder.isVisible = config.showNoMoreReminder
+        cbNoMoreReminder.isChecked = config.defaultCheck
         if (config.showNoMoreReminder) {
             tvNoMoreReminder.text = config.noMoreReminderText 
                 ?: getString(io.agora.scene.common.R.string.common_app_no_more_reminder)
@@ -149,8 +151,13 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
         fun hideNegativeButton() = apply { config = config.copy(showNegative = false) }
         fun hideTopImage() = apply { config = config.copy(showImage = false) }
 
-        fun showNoMoreReminder(text: String? = null, textColor: Int? = null) = apply {
-            config = config.copy(showNoMoreReminder = true, noMoreReminderText = text, noMoreReminderTextColor = textColor)
+        fun showNoMoreReminder(text: String? = null, textColor: Int? = null, defaultCheck: Boolean = false) = apply {
+            config = config.copy(
+                showNoMoreReminder = true,
+                noMoreReminderText = text,
+                noMoreReminderTextColor = textColor,
+                defaultCheck = defaultCheck
+            )
         }
 
         fun setCancelable(cancelable: Boolean) = apply { config = config.copy(cancelable = cancelable) }
