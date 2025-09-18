@@ -52,8 +52,6 @@
             android:textSize="14sp"
             app:backgroundTint="@color/ai_red6"
             app:cornerRadius="12dp"
-            app:iconGravity="textStart"
-            app:iconTint="@color/ai_brand_white10"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"

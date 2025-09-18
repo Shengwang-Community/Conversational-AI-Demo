@@ -9,15 +9,14 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="80dp">
+        android:layout_height="wrap_content">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/cl_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:paddingBottom="15dp">
+            android:paddingBottom="80dp">
 
             <LinearLayout
                 android:id="@+id/ll_agent"
@@ -315,6 +314,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="invisible"
+            android:background="@color/ai_red6"
             tools:visibility="gone">
 
             <androidx.cardview.widget.CardView
