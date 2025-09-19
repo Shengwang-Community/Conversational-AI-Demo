@@ -370,18 +370,54 @@ class VoiceprintViewController: BaseViewController, VoiceprintRecordViewControll
         let previousMode = currentMode
         updateMode(newMode)
         if newMode == .seamless {
-            CommonAlertView.show(
+            let content = ResourceManager.L10n.Voiceprint.alertSeamlessContent
+            
+            let attributedString = NSMutableAttributedString(
+                string: content,
+                attributes: [
+                    .paragraphStyle: {
+                        let style = NSMutableParagraphStyle()
+                        style.lineSpacing = 4
+                        style.alignment = .center
+                        return style
+                    }(),
+                    .font: UIFont.systemFont(ofSize: 16),
+                    .foregroundColor: UIColor.themColor(named: "ai_icontext2")
+                ]
+            )
+            
+            if content.count >= 4 {
+                let endIndex = content.endIndex
+                let startIndex = content.index(endIndex, offsetBy: -4)
+                let range = startIndex..<endIndex
+                let nsRange = NSRange(range, in: content)
+                attributedString.addAttributes([
+                    .link: AppContext.shared.privacyUrl,
+                    .underlineStyle: NSUnderlineStyle.single.rawValue
+                ], range: nsRange)
+            }
+            
+            AttributeStringAlertView.show(
                 in: view,
                 title: ResourceManager.L10n.Voiceprint.alertTitle,
-                content: ResourceManager.L10n.Voiceprint.alertSeamlessContent,
+                attributedContent: attributedString,
                 cancelTitle: ResourceManager.L10n.Voiceprint.alertCancel,
                 confirmTitle: ResourceManager.L10n.Voiceprint.alertConfirm,
-                onConfirm: { _ in },
+                onConfirm: { },
                 onCancel: { [weak self] in
                     self?.updateMode(previousMode)
+                },
+                onLinkTapped: {[weak self] url in
+                    self?.goToPrivacyVC(url: url.absoluteString)
                 }
             )
         }
+    }
+    
+    private func goToPrivacyVC(url: String) {
+        let webVC = BaseWebViewController()
+        webVC.url = url
+        self.navigationController?.pushViewController(webVC)
     }
     
     private func updateMode(_ newMode: VoiceprintMode) {

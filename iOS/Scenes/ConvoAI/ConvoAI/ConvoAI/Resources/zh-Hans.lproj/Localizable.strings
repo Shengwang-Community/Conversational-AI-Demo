@@ -24,7 +24,7 @@
 
 "join.start.title" = "声网对话式AI引擎";
 "join.start.state" = "未加入";
-"join.start.button.title" = "连接 AI 引擎";
+"join.start.button.title" = "连接对话式 AI 引擎";
 "join.start.agent.name" = "智能体";
 "join.start.tips" = "本次体验对话限制%d分钟";
 "join.start.tips.no.limit" = "本次体验对话无限制时长";
@@ -229,7 +229,7 @@
 "settings.voiceprint.tip.text" = "本机有声纹录入";
 "settings.voiceprint.alert.title" = "声纹录入提示";
 "settings.voiceprint.alert.content" = "您的声音默认存储在本机，声网有感声纹锁定功能需要收集您的声音，单次体验该功能完毕后会将云端声纹删除，绝对不会使用您的声音用作商业用途。";
-"settings.voiceprint.alert.seamless.content" = "您的声音默认存储在本机，声网无感声纹锁定功能需要收集您的声音，单次体验该功能完毕后会将云端声纹删除，绝对不会使用您的声音用作商业用途。";
+"settings.voiceprint.alert.seamless.content" = "您的声音默认存储在本机，声网无感声纹锁定功能需要收集您的声音，单次体验该功能完毕后会将云端声纹删除，绝对不会使用您的声音用作商业用途，详情请查看隐私协议";
 "settings.voiceprint.alert.cancel" = "取消";
 "settings.voiceprint.alert.confirm" = "确认";
 "settings.voiceprint.alert.no.voiceprint.title" = "未录入声纹";

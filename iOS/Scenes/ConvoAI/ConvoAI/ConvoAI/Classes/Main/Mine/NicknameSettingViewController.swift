@@ -42,6 +42,11 @@ class NicknameSettingViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        
+        NotificationCenter.default.addObserver(self,
+            selector: #selector(textFieldDidChange(_:)), 
+            name: UITextField.textDidChangeNotification, 
+            object: nicknameTextField)
         setupConstraints()
         loadCurrentNickname()
     }
@@ -164,27 +169,56 @@ class NicknameSettingViewController: BaseViewController {
 
 // MARK: - UITextFieldDelegate
 extension NicknameSettingViewController: UITextFieldDelegate {
-    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        let currentText = textField.text ?? ""
-        let newText = (currentText as NSString).replacingCharacters(in: range, with: string)
-        
-        // Check if new text exceeds character limit
-        if newText.count > maxCharacterCount {
-            return false
+    @objc private func textFieldDidChange(_ notification: Notification) {
+        guard let textField = notification.object as? UITextField else {
+            return
         }
         
-        // Allow only Chinese characters, English letters, and numbers
+        guard let text = textField.text else {
+            return
+        }
+
+        if let markedRange = textField.markedTextRange {
+            let markedText = textField.text(in: markedRange) ?? ""
+            return
+        }
+    }
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         if string.isEmpty {
-            // Allow deletion
             return true
         }
         
-        // Check if the input character is valid (Chinese, English, or number)
-        let allowedCharacterSet = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-        let chineseCharacterSet = CharacterSet(charactersIn: "\u{4e00}"..."\u{9fff}")
+        let currentText = textField.text ?? ""
+        let text = (currentText as NSString).replacingCharacters(in: range, with: string)
         
-        for char in string.unicodeScalars {
-            if !allowedCharacterSet.contains(char) && !chineseCharacterSet.contains(char) {
+        if text.count > maxCharacterCount {
+            return false
+        }
+        
+        // Check if it is a special character from the Jiugongge input method.
+        let isNumberKeypadChar = string.unicodeScalars.first.map { scalar in
+            (scalar >= "\u{2789}" && scalar <= "\u{2791}")
+        } ?? false
+        
+        if isNumberKeypadChar {
+            return true
+        }
+        
+        if textField.markedTextRange != nil {
+            return true
+        }
+        
+        for char in string {
+            let scalar = String(char).unicodeScalars.first!
+            
+            let isValidChar = (
+                (scalar >= "a" && scalar <= "z") ||
+                (scalar >= "A" && scalar <= "Z") ||
+                (scalar >= "0" && scalar <= "9") ||
+                (scalar >= "\u{4e00}" && scalar <= "\u{9fa5}")
+            )
+                        
+            if !isValidChar {
                 return false
             }
         }

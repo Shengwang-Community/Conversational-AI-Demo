@@ -131,6 +131,7 @@ paths = [
     '''(go.mod|go.sum)$''',
     '''iOS/.*\.strings''',
     '''iOS/.*\.lproj/.*''',
+    '''iOS/.*\.xcodeproj/.*''',
     '''iOS/.cursor/rules/.*''',
     '''.*\.md''',
     '''.*\.strings$''',

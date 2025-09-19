@@ -488,6 +488,7 @@ extension TranscriptController {
         renderMode = nil
         lastMessage = nil
         lastFinishMessage = nil
+        lastInterruptEvent = nil
         stateMessage = nil
         audioTimestamp = 0
         messageQueue.removeAll()
