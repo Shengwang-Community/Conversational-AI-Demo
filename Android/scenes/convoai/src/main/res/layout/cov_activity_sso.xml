@@ -8,35 +8,12 @@
     android:background="@color/ai_fill1"
     android:orientation="vertical">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/layoutTitle"
+    <io.agora.scene.common.ui.widget.CommonTitleBar
+        android:id="@+id/customTitleBar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/iv_back_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="9dp"
-            android:src="@drawable/app_icon_back"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tvTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/common_app_name"
-            android:textColor="@color/ai_icontext1"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        android:layout_height="wrap_content"
+        app:titleText="@string/common_app_title"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <WebView
         android:id="@+id/webView"
@@ -44,23 +21,22 @@
         android:layout_height="0dp"
         android:background="@color/ai_fill1"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/layoutTitle" />
+        app:layout_constraintTop_toBottomOf="@+id/customTitleBar" />
 
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="4dp"
-        android:layout_below="@id/layoutTitle"
         android:max="100"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@+id/layoutTitle" />
+        app:layout_constraintTop_toBottomOf="@+id/customTitleBar" />
 
     <View
         android:id="@+id/emptyView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@+id/layoutTitle"
+        app:layout_constraintTop_toBottomOf="@+id/customTitleBar"
         app:layout_constraintBottom_toBottomOf="parent"
         android:visibility="gone"
         tools:visibility="visible"

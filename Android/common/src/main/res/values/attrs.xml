@@ -8,4 +8,12 @@
         <attr name="cornerRadius" format="dimension"/>
         <attr name="gradientColors" format="reference"/>
     </declare-styleable>
+
+    <declare-styleable name="CommonTitleBar">
+        <attr name="titleText" format="reference" />
+        <attr name="backIcon" format="reference" />
+        <attr name="backButtonVisible" format="boolean" />
+        <attr name="titleTextColor" format="color" />
+        <attr name="titleTextSize" format="dimension" />
+    </declare-styleable>
 </resources> 

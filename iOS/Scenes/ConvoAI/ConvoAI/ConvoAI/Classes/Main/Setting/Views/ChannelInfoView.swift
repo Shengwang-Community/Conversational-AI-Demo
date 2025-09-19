@@ -279,10 +279,10 @@ class ChannelInfoView: UIView {
         idItem.detailLabel.textColor = UIColor.themColor(named: "ai_icontext3")
         
         // Update Voiceprint Lock Status
-        updateVoiceprintMode(AppContext.settingManager().voiceprintMode)
+        updateVoiceprintState()
         
         // Update Elegant Interrupt Status
-        updateAiVadState(AppContext.settingManager().aiVad)
+        updateAiVadState()
         // Update Feedback Item
         feedbackItem.setEnabled(isEnabled: stateManager.agentState != .unload)
     }
@@ -310,27 +310,37 @@ class ChannelInfoView: UIView {
         idItem.detailLabel.text = AppContext.stateManager().rtcRoomState == .unload ? "--" : userId
     }
     
-    func updateVoiceprintMode(_ mode: VoiceprintMode) {
+    func updateVoiceprintState() {
+        let isVoiceprintEnabled = AppContext.stateManager().voiceprint
         let statusText: String
         let statusColor: UIColor
         
-        switch mode {
-        case .off:
+        if isVoiceprintEnabled {
+            // If voiceprint is enabled, show the current mode
+            let mode = AppContext.settingManager().voiceprintMode
+            switch mode {
+            case .seamless:
+                statusText = ResourceManager.L10n.ChannelInfo.seamless
+                statusColor = UIColor.themColor(named: "ai_green6")
+            case .aware:
+                statusText = ResourceManager.L10n.ChannelInfo.aware
+                statusColor = UIColor.themColor(named: "ai_green6")
+            case .off:
+                statusText = ResourceManager.L10n.ChannelInfo.notEffective
+                statusColor = UIColor.themColor(named: "ai_red6")
+            }
+        } else {
+            // If voiceprint is disabled, show not effective
             statusText = ResourceManager.L10n.ChannelInfo.notEffective
             statusColor = UIColor.themColor(named: "ai_red6")
-        case .seamless:
-            statusText = ResourceManager.L10n.ChannelInfo.seamless
-            statusColor = UIColor.themColor(named: "ai_green6")
-        case .aware:
-            statusText = ResourceManager.L10n.ChannelInfo.aware
-            statusColor = UIColor.themColor(named: "ai_green6")
         }
         
         voiceprintLockItem.detailLabel.text = statusText
         voiceprintLockItem.detailLabel.textColor = statusColor
     }
     
-    func updateAiVadState(_ state: Bool) {
+    func updateAiVadState() {
+        let state = AppContext.settingManager().aiVad
         let interruptStatus = state ? ResourceManager.L10n.ChannelInfo.effective : ResourceManager.L10n.ChannelInfo.notEffective
         elegantInterruptItem.detailLabel.text = interruptStatus
         elegantInterruptItem.detailLabel.textColor = state ? UIColor.themColor(named: "ai_green6") : UIColor.themColor(named: "ai_red6")

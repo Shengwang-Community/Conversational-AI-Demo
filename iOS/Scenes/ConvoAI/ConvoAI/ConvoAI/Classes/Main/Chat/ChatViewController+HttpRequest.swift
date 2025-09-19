@@ -382,7 +382,7 @@ extension ChatViewController {
         leaveChannel()
         stopRenderLocalVideoStream()
         resetUIDisplay()
-        resetPreference()
+        AppContext.stateManager().resetToDefaults()
     }
     
     internal func handleStartError() {

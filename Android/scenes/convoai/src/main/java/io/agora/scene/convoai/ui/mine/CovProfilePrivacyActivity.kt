@@ -2,13 +2,10 @@ package io.agora.scene.convoai.ui.mine
 
 import android.app.Activity
 import android.content.Intent
-import android.view.ViewGroup
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.net.ApiReport
 import io.agora.scene.common.ui.BaseActivity
-import io.agora.scene.common.util.dp
-import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.databinding.CovActivityProfilePrivacyBinding
 
@@ -28,12 +25,8 @@ class CovProfilePrivacyActivity : BaseActivity<CovActivityProfilePrivacyBinding>
     override fun initView() {
         mBinding?.apply {
             // Adjust top margin for status bar
-            val statusBarHeight = getStatusBarHeight() ?: 25.dp.toInt()
-            val layoutParams = layoutTitle.layoutParams as ViewGroup.MarginLayoutParams
-            layoutParams.topMargin = statusBarHeight
-            layoutTitle.layoutParams = layoutParams
-
-            ivBackIcon.setOnClickListener {
+            customTitleBar.setDefaultMargin(this@CovProfilePrivacyActivity)
+            customTitleBar.setOnBackClickListener {
                 onHandleOnBackPressed()
             }
 

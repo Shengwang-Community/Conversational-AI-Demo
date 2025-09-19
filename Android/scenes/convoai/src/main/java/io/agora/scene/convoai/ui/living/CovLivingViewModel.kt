@@ -264,15 +264,6 @@ class CovLivingViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Handle agent interruption
-     */
-    fun handleAgentInterruption(interruptEvent: InterruptEvent) {
-        if (interruptEvent.turnId == currentTypingTurnId) {
-            stopTypingAnimation()
-        }
-    }
-
     fun initializeAPIs(rtcEngine: RtcEngineEx, rtmClient: RtmClient) {
         conversationalAIAPI = ConversationalAIAPIImpl(
             ConversationalAIAPIConfig(
@@ -296,7 +287,17 @@ class CovLivingViewModel : ViewModel() {
         override fun onAgentInterrupted(agentUserId: String, event: InterruptEvent) {
             // Handle interruption
             _interruptEvent.value = event
-            handleAgentInterruption(event)
+            if (CovAgentManager.renderMode == CovRenderMode.Companion.SYNC_TEXT) {
+                if (event.turnId == currentTypingTurnId) {
+                    stopTypingAnimation()
+                }
+            } else if (CovAgentManager.renderMode == CovRenderMode.Companion.TEXT) {
+                // In non-sync mode, directly update transcript
+                if (event.turnId == _transcriptUpdate.value?.turnId) {
+                    val transcriptUpdate = _transcriptUpdate.value?.copy(status = TranscriptStatus.END)
+                    _transcriptUpdate.value = transcriptUpdate
+                }
+            }
         }
 
         override fun onAgentMetrics(agentUserId: String, metrics: Metric) {

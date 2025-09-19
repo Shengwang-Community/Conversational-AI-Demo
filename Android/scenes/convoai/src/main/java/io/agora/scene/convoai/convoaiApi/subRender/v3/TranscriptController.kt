@@ -123,8 +123,6 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
         set(value) {
             field = value
             if (mRenderMode == TranscriptRenderMode.Word) {
-                mLastDequeuedTurn = null
-                mCurrentTranscript = null
                 startSubtitleTicker()
             } else {
                 stopSubtitleTicker()
@@ -149,26 +147,36 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
             super.onMessageEvent(event)
             event ?: return
             val rtmMessage = event.message
+            val publisherId = event.publisherId ?: ""
+            var messageMap: Map<String, Any>? = null
             if (rtmMessage.type == RtmConstants.RtmMessageType.BINARY) {
                 val bytes = rtmMessage.data as? ByteArray ?: return
                 val rawString = String(bytes, Charsets.UTF_8)
-                val messageMap = mMessageParser.parseJsonToMap(rawString)
-                callMessagePrint(
-                    TAG,
-                    "<<< [onMessageEvent] publisherId:${event.publisherId}, channelName:${event.channelName}, channelType:${event.channelType}, customType:${event.customType}, messageType:${rtmMessage.type} $messageMap "
-                )
-                messageMap?.let { map ->
-                    dealMessageWithMap(event.publisherId ?: "", map)
-                }
+                messageMap = mMessageParser.parseJsonToMap(rawString)
             } else {
                 val rawString = rtmMessage.data as? String ?: return
-                val messageMap = mMessageParser.parseJsonToMap(rawString)
-                callMessagePrint(
-                    TAG,
-                    "<<< [onMessageEvent] publisherId:${event.publisherId}, channelName:${event.channelName}, channelType:${event.channelType}, customType:${event.customType}, messageType:${rtmMessage.type} $messageMap "
-                )
-                messageMap?.let { map ->
-                    dealMessageWithMap(event.publisherId ?: "", map)
+                messageMap = mMessageParser.parseJsonToMap(rawString)
+            }
+            callMessagePrint(
+                TAG,
+                "<<< [onMessageEvent] publisherId:$publisherId, channelName:${event.channelName}, channelType:${event.channelType}, customType:${event.customType}, messageType:${rtmMessage.type} $messageMap "
+            )
+            messageMap?.let { msgMap ->
+                try {
+                    val agentUserId = publisherId
+                    val transcriptObj = msgMap["object"] as? String ?: return
+                    val messageType = MessageType.fromValue(transcriptObj)
+                    when (messageType) {
+                        // interrupt message
+                        MessageType.INTERRUPT -> handleInterruptMessage(agentUserId, msgMap)
+                        // user message
+                        MessageType.USER -> handleUserMessage(agentUserId, msgMap)
+                        // agent message
+                        MessageType.ASSISTANT -> handleAgentMessage(agentUserId, msgMap)
+                        else -> {}
+                    }
+                } catch (e: Exception) {
+                    callMessagePrint(TAG, "[!] dealMessageWithMap Exception: ${e.message}")
                 }
             }
         }
@@ -251,7 +259,9 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
                 presentationMs: Long
             ): Boolean {
                 // Pass render time to transcript controller
-                mPresentationMs = presentationMs
+                if (presentationMs != 0L) {
+                    mPresentationMs = presentationMs
+                }
                 return false
             }
 
@@ -292,118 +302,6 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
         config.callback?.onDebugLog(tag, message)
     }
 
-    private fun dealMessageWithMap(publisherId: String, msg: Map<String, Any>) {
-        try {
-
-            val agentUserId = publisherId
-            val transcriptObj = msg["object"] as? String ?: return
-            val moduleType = MessageType.fromValue(transcriptObj)
-            var isInterrupt = false
-            val isUserMsg: Boolean
-            when (moduleType) {
-                MessageType.ASSISTANT -> {   // agent message
-                    isUserMsg = false
-                }
-
-                MessageType.USER -> {    // user message
-                    isUserMsg = true
-                }
-
-                MessageType.INTERRUPT -> {   // interrupt message
-                    isUserMsg = false
-                    isInterrupt = true
-                }
-
-                else -> return
-            }
-            val turnId = (msg["turn_id"] as? Number)?.toLong() ?: 0L
-            val text = msg["text"] as? String ?: ""
-            val userId = msg["user_id"]?.toString() ?: ""
-
-            val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
-            // deal with interrupt message
-            if (isInterrupt) {
-                val interruptEvent = InterruptEvent(turnId, startMs)
-                config.callback?.onAgentInterrupted(agentUserId, interruptEvent)
-                callMessagePrint(TAG, "<<< [onInterrupted] pts:$mPresentationMs $agentUserId $interruptEvent")
-                onAgentMessageReceived(
-                    agentUserId = agentUserId,
-                    userId = userId,
-                    turnId = turnId,
-                    startMs = startMs,
-                    text = text,
-                    words = null,
-                    status = TranscriptStatus.INTERRUPTED
-                )
-                return
-            }
-
-            if (text.isNotEmpty()) {
-                if (isUserMsg) {
-                    val isFinal = msg["final"] as? Boolean ?: false
-                    val transcript = Transcript(
-                        turnId = turnId,
-                        userId = userId,
-                        text = text,
-                        status = if (isFinal) TranscriptStatus.END else TranscriptStatus.IN_PROGRESS,
-                        type = TranscriptType.USER
-                    )
-                    // Local user messages are directly callbacked out
-                    callMessagePrint(
-                        TAG_UI, "<<< [onTranscriptUpdated] pts:$mPresentationMs $agentUserId $transcript"
-                    )
-                    runOnMainThread {
-                        config.callback?.onTranscriptUpdated(agentUserId, transcript)
-                    }
-                } else {
-                    // 0: in-progress, 1: end gracefully, 2: interrupted, otherwise undefined
-                    val turnStatusInt = (msg["turn_status"] as? Number)?.toLong() ?: 0L
-                    val status: TranscriptStatus = when ((msg["turn_status"] as? Number)?.toLong() ?: 0L) {
-                        0L -> TranscriptStatus.IN_PROGRESS
-                        1L -> TranscriptStatus.END
-                        2L -> TranscriptStatus.INTERRUPTED
-                        else -> TranscriptStatus.UNKNOWN
-                    }
-                    // Discarding and not processing the message with Unknown status.
-                    if (status == TranscriptStatus.UNKNOWN) {
-                        callMessagePrint(TAG, "unknown turn_status:$turnStatusInt")
-                        return
-                    }
-                    val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
-                    // Parse words array
-                    val wordsArray = msg["words"] as? List<Map<String, Any>>
-                    val words = parseWords(wordsArray)
-                    onAgentMessageReceived(
-                        agentUserId = agentUserId,
-                        userId = userId,
-                        turnId = turnId,
-                        startMs = startMs,
-                        text = text,
-                        words = words,
-                        status = status
-                    )
-                }
-            }
-        } catch (e: Exception) {
-            callMessagePrint(TAG, "[!] dealMessageWithMap Exception: ${e.message}")
-        }
-    }
-
-    private fun parseWords(wordsArray: List<Map<String, Any>>?): List<TurnWordInfo>? {
-        if (wordsArray.isNullOrEmpty()) return null
-
-        // Convert words array to WordInfo list and sort by startMs in ascending order
-        val wordsList = wordsArray.map { wordMap ->
-            TurnWordInfo(
-                word = wordMap["word"] as? String ?: "",
-                startMs = (wordMap["start_ms"] as? Number)?.toLong() ?: 0L,
-            )
-        }.toMutableList()
-
-        // Return an immutable list to ensure thread safety
-        return wordsList.toList()
-    }
-
     fun enable(enable: Boolean) {
         callMessagePrint(TAG, ">>> [enable] $enable")
         this.enable = enable
@@ -423,6 +321,9 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
 
     private fun startSubtitleTicker() {
         callMessagePrint(TAG, "startSubtitleTicker")
+        mLastDequeuedTurn = null
+        mCurrentTranscript = null
+        mLastInterruptEvent = null
         tickerJob?.cancel()
         tickerJob = coroutineScope.launch {
             val ticker = ticker(delayMillis = 200)
@@ -440,13 +341,167 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
         callMessagePrint(TAG, "stopSubtitleTicker")
         mCurrentTranscript = null
         mLastDequeuedTurn = null
+        mLastInterruptEvent = null
         agentTurnQueue.clear()
         tickerJob?.cancel()
         tickerJob = null
         mPresentationMs = 0
     }
 
-    private fun onAgentMessageReceived(
+    @Volatile
+    private var mLastInterruptEvent: InterruptEvent? = null
+    private fun handleInterruptMessage(agentUserId: String, msg: Map<String, Any>) {
+        val turnId = (msg["turn_id"] as? Number)?.toLong() ?: 0L
+        val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
+
+        val interruptEvent = InterruptEvent(turnId, startMs)
+        mLastInterruptEvent = interruptEvent
+        runOnMainThread {
+            config.callback?.onAgentInterrupted(agentUserId, interruptEvent)
+        }
+        callMessagePrint(TAG, "<<< [onInterrupted] pts:$mPresentationMs $agentUserId $interruptEvent")
+        if (mRenderMode == TranscriptRenderMode.Word) {
+            handleAgentWordMessage(
+                agentUserId = agentUserId,
+                userId = "",
+                turnId = turnId,
+                startMs = startMs,
+                text = "",
+                words = null,
+                status = TranscriptStatus.INTERRUPTED
+            )
+        }
+    }
+
+    private fun handleUserMessage(agentUserId: String, msg: Map<String, Any>) {
+        val text = msg["text"] as? String ?: ""
+        if (text.isEmpty()) {
+            callMessagePrint(TAG, "user message but text is null")
+            return
+        }
+        val turnId = (msg["turn_id"] as? Number)?.toLong() ?: 0L
+        val userId = msg["user_id"]?.toString() ?: ""
+        val isFinal = msg["final"] as? Boolean ?: false
+
+        val transcript = Transcript(
+            turnId = turnId,
+            userId = userId,
+            text = text,
+            status = if (isFinal) TranscriptStatus.END else TranscriptStatus.IN_PROGRESS,
+            type = TranscriptType.USER
+        )
+        // Local user messages are directly callbacked out
+        callMessagePrint(
+            TAG_UI, "<<< [onTranscriptUpdated] pts:$mPresentationMs $agentUserId $transcript"
+        )
+        runOnMainThread {
+            config.callback?.onTranscriptUpdated(agentUserId, transcript)
+        }
+    }
+
+    private fun handleAgentMessage(agentUserId: String, msg: Map<String, Any>) {
+        val text = msg["text"] as? String ?: ""
+        if (text.isEmpty()) {
+            callMessagePrint(TAG, "agent message but text is null")
+            return
+        }
+        val turnId = (msg["turn_id"] as? Number)?.toLong() ?: 0L
+        val startMs = (msg["start_ms"] as? Number)?.toLong() ?: 0L
+        val userId = msg["user_id"]?.toString() ?: ""
+        // 0: in-progress, 1: end gracefully, 2: interrupted, otherwise undefined
+        val turnStatusInt = (msg["turn_status"] as? Number)?.toLong() ?: 0L
+        val status: TranscriptStatus = when ((msg["turn_status"] as? Number)?.toLong() ?: 0L) {
+            0L -> TranscriptStatus.IN_PROGRESS
+            1L -> TranscriptStatus.END
+            2L -> TranscriptStatus.INTERRUPTED
+            else -> TranscriptStatus.UNKNOWN
+        }
+        // Discarding and not processing the message with Unknown status.
+        if (status == TranscriptStatus.UNKNOWN) {
+            callMessagePrint(TAG, "unknown turn_status:$turnStatusInt")
+            return
+        }
+        // Parse words array
+        val wordsArray = msg["words"] as? List<Map<String, Any>>
+        val words = parseWords(wordsArray)
+        autoTranscriptRenderMode(words)
+
+        if (mRenderMode == TranscriptRenderMode.Text) {
+            handleAgentTextMessage(
+                agentUserId = agentUserId,
+                userId = userId,
+                turnId = turnId,
+                text = text,
+                status = status
+            )
+        } else {
+            handleAgentWordMessage(
+                agentUserId = agentUserId,
+                userId = userId,
+                turnId = turnId,
+                startMs = startMs,
+                text = text,
+                words = words,
+                status = status
+            )
+        }
+    }
+
+    private fun parseWords(wordsArray: List<Map<String, Any>>?): List<TurnWordInfo>? {
+        if (wordsArray.isNullOrEmpty()) return null
+        // Convert words array to WordInfo list and sort by startMs in ascending order
+        val wordsList = wordsArray.map { wordMap ->
+            TurnWordInfo(
+                word = wordMap["word"] as? String ?: "",
+                startMs = (wordMap["start_ms"] as? Number)?.toLong() ?: 0L,
+            )
+        }.toMutableList()
+
+        // Return an immutable list to ensure thread safety
+        return wordsList.toList()
+    }
+
+    private fun autoTranscriptRenderMode(words: List<TurnWordInfo>?) {
+        if (mRenderMode == null) {
+            agentTurnQueue.clear()
+            mRenderMode = if (config.renderMode == TranscriptRenderMode.Word) {
+                if (words != null) {
+                    TranscriptRenderMode.Word
+                } else {
+                    TranscriptRenderMode.Text
+                }
+            } else {
+                TranscriptRenderMode.Text
+            }
+            callMessagePrint(
+                TAG,
+                "this:0x${this.hashCode().toString(16)} version:$ConversationalAIAPI_VERSION RenderMode:$mRenderMode"
+            )
+        }
+    }
+
+    private fun handleAgentTextMessage(
+        agentUserId: String, userId: String, turnId: Long, text: String, status: TranscriptStatus
+    ) {
+        if (mLastInterruptEvent?.turnId == turnId) {
+            callMessagePrint(TAG, "agent message but turn:$turnId is Interrupted")
+            return
+        }
+        val transcript = Transcript(
+            turnId = turnId,
+            userId = userId,
+            text = text,
+            status = status,
+            type = TranscriptType.AGENT,
+        )
+        // Agent text mode messages are directly callback out
+        callMessagePrint(TAG_UI, "<<< [Text Mode] pts:$mPresentationMs $agentUserId $transcript")
+        runOnMainThread {
+            config.callback?.onTranscriptUpdated(agentUserId, transcript)
+        }
+    }
+
+    private fun handleAgentWordMessage(
         agentUserId: String,
         userId: String,
         turnId: Long,
@@ -455,42 +510,6 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
         words: List<TurnWordInfo>?,
         status: TranscriptStatus
     ) {
-        // Auto detect mode
-        if (mRenderMode == null) {
-            // fixs TEN-1790
-            agentTurnQueue.clear()
-            if (config.renderMode == TranscriptRenderMode.Word) {
-                if (status == TranscriptStatus.INTERRUPTED) return
-                mRenderMode = if (words != null) {
-                    TranscriptRenderMode.Word
-                } else {
-                    TranscriptRenderMode.Text
-                }
-            } else {
-                mRenderMode = TranscriptRenderMode.Text
-            }
-            callMessagePrint(
-                TAG,
-                "this:0x${this.hashCode().toString(16)} version:$ConversationalAIAPI_VERSION RenderMode:$mRenderMode"
-            )
-        }
-
-        if (mRenderMode == TranscriptRenderMode.Text && status != TranscriptStatus.INTERRUPTED) {
-            val transcript = Transcript(
-                turnId = turnId,
-                userId = userId,
-                text = text,
-                status = status,
-                type = TranscriptType.AGENT,
-            )
-            // Agent text mode messages are directly callback out
-            callMessagePrint(TAG_UI, "<<< [Text Mode] pts:$mPresentationMs $agentUserId $transcript")
-            runOnMainThread {
-                config.callback?.onTranscriptUpdated(agentUserId, transcript)
-            }
-            return
-        }
-
         // Word mode processing
         val newWords = words?.toList() ?: emptyList()
 
@@ -524,7 +543,10 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
                 if (status == TranscriptStatus.INTERRUPTED) {
                     // The actual effective timestamp for interruption, using the minimum of startMs and mPresentationMs
                     val interruptMarkMs = minOf(startMs, mPresentationMs)
-                    callMessagePrint(TAG, "interruptMarkMs:$interruptMarkMs startMs:$startMs mPresentationMs:$mPresentationMs")
+                    callMessagePrint(
+                        TAG,
+                        "interruptMarkMs:$interruptMarkMs startMs:$startMs mPresentationMs:$mPresentationMs"
+                    )
                     // Interrupt all words from the last one before interruptMarkMs to the end of the word list
                     var lastBeforeStartMs: TurnWordInfo? = null
                     val mergedWords = existingInfo.words.toMutableList()

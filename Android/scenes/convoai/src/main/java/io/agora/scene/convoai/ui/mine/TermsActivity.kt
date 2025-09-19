@@ -6,17 +6,14 @@ import android.graphics.Color
 import android.os.Build
 import android.text.TextUtils
 import android.view.View
-import android.view.ViewGroup
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import io.agora.scene.common.ui.BaseActivity
-import io.agora.scene.common.util.dp
-import io.agora.scene.common.util.getStatusBarHeight
-import io.agora.scene.convoai.databinding.CovTermsActivityBinding
+import io.agora.scene.convoai.databinding.CovActivityTermsBinding
 
-class TermsActivity : BaseActivity<CovTermsActivityBinding>() {
+class TermsActivity : BaseActivity<CovActivityTermsBinding>() {
 
     companion object {
         private const val URL_KEY = "url_key"
@@ -29,18 +26,15 @@ class TermsActivity : BaseActivity<CovTermsActivityBinding>() {
         }
     }
 
-    override fun getViewBinding(): CovTermsActivityBinding {
-        return CovTermsActivityBinding.inflate(layoutInflater)
+    override fun getViewBinding(): CovActivityTermsBinding {
+        return CovActivityTermsBinding.inflate(layoutInflater)
     }
 
     override fun initView() {
         mBinding?.apply {
-            val statusBarHeight = getStatusBarHeight() ?: 25.dp.toInt()
-            val layoutParams = layoutTitle.layoutParams as ViewGroup.MarginLayoutParams
-            layoutParams.topMargin = statusBarHeight
-            layoutTitle.layoutParams = layoutParams
-
-            ivBackIcon.setOnClickListener {
+            // Adjust top margin for status bar
+            customTitleBar.setDefaultMargin(this@TermsActivity)
+            customTitleBar.setOnBackClickListener {
                 onHandleOnBackPressed()
             }
 
@@ -84,7 +78,7 @@ class TermsActivity : BaseActivity<CovTermsActivityBinding>() {
                 override fun onReceivedTitle(view: WebView, title: String) {
                     super.onReceivedTitle(view, title)
                     if (!TextUtils.isEmpty(title) && view.url?.contains(title) == false) {
-                        mBinding?.tvTitle?.text = title
+                        mBinding?.customTitleBar?.setTitle(title)
                     }
                 }
             }

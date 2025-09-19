@@ -11,8 +11,6 @@ import android.view.inputmethod.InputMethodManager
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.ui.BaseActivity
-import io.agora.scene.common.util.dp
-import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovActivityProfileAboutMeBinding
@@ -54,22 +52,19 @@ class CovProfileAboutMeActivity : BaseActivity<CovActivityProfileAboutMeBinding>
     override fun initView() {
         mBinding?.apply {
             // Adjust top margin for status bar
-            val statusBarHeight = getStatusBarHeight() ?: 25.dp.toInt()
-            val layoutParams = layoutTitle.layoutParams as ViewGroup.MarginLayoutParams
-            layoutParams.topMargin = statusBarHeight
-            layoutTitle.layoutParams = layoutParams
-
-            // Initialize with current user info
-            val userInfo = SSOUserManager.userInfo
-            originalBio = userInfo?.bio ?: ""
-            etAboutMe.setText(originalBio)
-
-            ivBackIcon.setOnClickListener {
+            customTitleBar.setDefaultMargin(this@CovProfileAboutMeActivity)
+            // Setup custom title bar click listener
+            customTitleBar.setOnBackClickListener {
                 // Mark as back button clicked, no API call needed
                 isBackButtonClicked = true
                 hideKeyboard()
                 onHandleOnBackPressed()
             }
+
+            // Initialize with current user info
+            val userInfo = SSOUserManager.userInfo
+            originalBio = userInfo?.bio ?: ""
+            etAboutMe.setText(originalBio)
 
             // Setup click listener for root layout to close input when clicking outside
             root.setOnClickListener {

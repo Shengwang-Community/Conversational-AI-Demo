@@ -19,6 +19,10 @@ extension ChatViewController: AgentSettingDelegate {
         updateCharacterInformation()
     }
     
+    func settingManager(_ manager: AgentSettingManager, aiVadStateDidUpdated state: Bool) {
+        activeFuncsView.setState(voiceprint: AppContext.stateManager().voiceprint, aivad: state)
+    }
+    
     private func getTranscriptRenderMode() -> TranscriptRenderMode {
         let isEnableAvatar = isEnableAvatar()
         if isEnableAvatar {

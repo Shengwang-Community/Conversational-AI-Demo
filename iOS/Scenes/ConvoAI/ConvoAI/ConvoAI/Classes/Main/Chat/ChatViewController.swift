@@ -233,6 +233,7 @@ class ChatViewController: BaseViewController {
     }
     
     override func viewWillDisappearAndPop() {
+        AppContext.settingManager().resetToDefaults()
         rtcManager.destroy()
     }
     
@@ -302,9 +303,5 @@ class ChatViewController: BaseViewController {
         messageMaskView.isHidden = !state
         windowState.showTranscription = state
         updateWindowContent()
-    }
-    
-    func resetPreference() {
-        AppContext.stateManager().resetToDefaults()
     }
 }

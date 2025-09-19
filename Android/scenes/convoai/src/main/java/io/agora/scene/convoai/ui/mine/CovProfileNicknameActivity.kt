@@ -5,14 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Rect
 import android.text.InputFilter
-import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.inputmethod.InputMethodManager
 import androidx.core.widget.doAfterTextChanged
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.ui.BaseActivity
-import io.agora.scene.common.util.dp
-import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovActivityProfileNicknameBinding
@@ -51,11 +48,7 @@ class CovProfileNicknameActivity : BaseActivity<CovActivityProfileNicknameBindin
     override fun initView() {
         mBinding?.apply {
             // Adjust top margin for status bar
-            val statusBarHeight = getStatusBarHeight() ?: 25.dp.toInt()
-            val layoutParams = layoutTitle.layoutParams as ViewGroup.MarginLayoutParams
-            layoutParams.topMargin = statusBarHeight
-            layoutTitle.layoutParams = layoutParams
-
+            customTitleBar.setDefaultMargin(this@CovProfileNicknameActivity)
             // Initialize with current user info
             val userInfo = SSOUserManager.userInfo
             originalNickname = userInfo?.nickname ?: ""
@@ -75,7 +68,7 @@ class CovProfileNicknameActivity : BaseActivity<CovActivityProfileNicknameBindin
                 }
             )
 
-            ivBackIcon.setOnClickListener {
+            customTitleBar.setOnBackClickListener {
                 // Mark as back button clicked, no API call needed
                 isBackButtonClicked = true
                 hideKeyboard()
