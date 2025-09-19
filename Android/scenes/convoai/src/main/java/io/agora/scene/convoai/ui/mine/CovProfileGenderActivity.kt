@@ -4,13 +4,10 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.app.Activity
 import android.content.Intent
-import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.ui.BaseActivity
-import io.agora.scene.common.util.dp
-import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovActivityProfileGenderBinding
@@ -39,11 +36,7 @@ class CovProfileGenderActivity : BaseActivity<CovActivityProfileGenderBinding>()
     override fun initView() {
         mBinding?.apply {
             // Adjust top margin for status bar
-            val statusBarHeight = getStatusBarHeight() ?: 25.dp.toInt()
-            val layoutParams = layoutTitle.layoutParams as ViewGroup.MarginLayoutParams
-            layoutParams.topMargin = statusBarHeight
-            layoutTitle.layoutParams = layoutParams
-
+            customTitleBar.setDefaultMargin(this@CovProfileGenderActivity)
             // Initialize gender selection based on user info
             initializeGenderSelection()
 
@@ -78,7 +71,7 @@ class CovProfileGenderActivity : BaseActivity<CovActivityProfileGenderBinding>()
 
     private fun setupClickListeners() {
         mBinding?.apply {
-            ivBackIcon.setOnClickListener {
+            customTitleBar.setOnBackClickListener {
                 onHandleOnBackPressed()
             }
 

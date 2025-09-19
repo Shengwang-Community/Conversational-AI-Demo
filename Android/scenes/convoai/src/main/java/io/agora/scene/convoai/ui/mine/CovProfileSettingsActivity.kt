@@ -5,13 +5,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
 import android.view.Gravity
-import android.view.ViewGroup
-import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.util.dp
-import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovActivityProfileSettingsBinding
@@ -39,12 +36,8 @@ class CovProfileSettingsActivity : BaseActivity<CovActivityProfileSettingsBindin
         Log.d("UserViewModel", "UserViewModel:$userViewModel $this")
         mBinding?.apply {
             // Adjust top margin for status bar
-            val statusBarHeight = getStatusBarHeight() ?: 25.dp.toInt()
-            val layoutParams = layoutTitle.layoutParams as ViewGroup.MarginLayoutParams
-            layoutParams.topMargin = statusBarHeight
-            layoutTitle.layoutParams = layoutParams
-
-            ivBackIcon.setOnClickListener {
+            customTitleBar.setDefaultMargin(this@CovProfileSettingsActivity)
+            customTitleBar.setOnBackClickListener {
                 onHandleOnBackPressed()
             }
 

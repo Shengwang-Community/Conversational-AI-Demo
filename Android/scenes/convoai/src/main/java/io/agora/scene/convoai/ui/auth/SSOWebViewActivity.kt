@@ -6,7 +6,6 @@ import android.os.Handler
 import android.os.Looper
 import android.text.TextUtils
 import android.view.View
-import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
@@ -19,8 +18,6 @@ import io.agora.scene.common.constant.ServerConfig.toolBoxUrl
 import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.common.ui.LoadingDialog
 import io.agora.scene.common.util.CommonLogger
-import io.agora.scene.common.util.dp
-import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.databinding.CovActivitySsoBinding
 
@@ -44,13 +41,9 @@ class SSOWebViewActivity : BaseActivity<CovActivitySsoBinding>() {
 
     override fun initView() {
         mBinding?.apply {
-            val statusBarHeight = getStatusBarHeight() ?: 25.dp.toInt()
-            val layoutParams = layoutTitle.layoutParams as ViewGroup.MarginLayoutParams
-            layoutParams.topMargin = statusBarHeight
-            layoutTitle.layoutParams = layoutParams
-
+            customTitleBar.setDefaultMargin(this@SSOWebViewActivity)
             mLoadingDialog = LoadingDialog(this@SSOWebViewActivity)
-            ivBackIcon.setOnClickListener {
+            customTitleBar.setOnBackClickListener {
                 onHandleOnBackPressed()
             }
             webView.settings.apply {
@@ -81,7 +74,7 @@ class SSOWebViewActivity : BaseActivity<CovActivitySsoBinding>() {
                 override fun onReceivedTitle(view: WebView, title: String) {
                     super.onReceivedTitle(view, title)
                     if (!TextUtils.isEmpty(title) && view.url?.contains(title) == false) {
-                        mBinding?.tvTitle?.text = title
+                        mBinding?.customTitleBar?.setTitle(title)
                     }
                 }
             })

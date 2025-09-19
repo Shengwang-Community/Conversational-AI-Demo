@@ -1,5 +1,5 @@
 <resources>
-    <string name="common_app_name">声网对话式 AI 引擎</string>
+    <string name="common_app_title">声网对话式 AI 引擎</string>
     <string name="common_detail_message_list_you">你</string>
     <string name="common_debug_base_config">基础配置</string>
     <string name="common_debug_cov_config">ConvoAI 配置</string>
