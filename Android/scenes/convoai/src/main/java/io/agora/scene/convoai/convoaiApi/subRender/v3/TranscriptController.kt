@@ -259,7 +259,9 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
                 presentationMs: Long
             ): Boolean {
                 // Pass render time to transcript controller
-                mPresentationMs = presentationMs
+                if (presentationMs != 0L) {
+                    mPresentationMs = presentationMs
+                }
                 return false
             }
 
