@@ -454,9 +454,12 @@ extension TranscriptDelegate {
 
 // MARK: - AgoraAudioFrameDelegate
 extension TranscriptController: AgoraAudioFrameDelegate {
-    
     public func onPlaybackAudioFrame(beforeMixing frame: AgoraAudioFrame, channelId: String, uid: UInt) -> Bool {
-        audioTimestamp = frame.presentationMs
+        if frame.presentationMs != 0 {
+            audioTimestamp = frame.presentationMs
+        } else {
+            callMessagePrint(tag: TranscriptController.tag, msg: "<<<<<<onPlaybackAudioFrame pts is 0")
+        }
         return true
     }
     
