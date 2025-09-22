@@ -259,8 +259,10 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
                 presentationMs: Long
             ): Boolean {
                 // Pass render time to transcript controller
-                if (presentationMs != 0L) {
+                if (presentationMs > 0L) {
                     mPresentationMs = presentationMs
+                } else {
+                    callMessagePrint(TAG, "<<< [!][onPlaybackAudioFrameBeforeMixing] pts is $presentationMs")
                 }
                 return false
             }
