@@ -233,6 +233,10 @@ extension ResourceManager {
             public static let loadingFailed = ResourceManager.localizedString("empty.state.loading.failed")
             public static let retry = ResourceManager.localizedString("empty.state.retry")
         }
+
+        public enum Sip {
+            public static let sipCallInTips = ResourceManager.localizedString("agent.sip.tips")
+        }
     }
 }
 

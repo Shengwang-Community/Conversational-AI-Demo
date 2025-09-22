@@ -167,4 +167,7 @@
 "agent.list.get" = "Get";
 "agent.list.get.agent" = "Get Your AI Assistant";
 
+"empty.state.loading.failed" = "Page failed to load. Please try again.";
+"empty.state.retry" = "Retry";
 
+"agent.sip.tips" = "Please use your mobile phone to dial this number to experience communicating with an AI intelligent customer service via phone call.";

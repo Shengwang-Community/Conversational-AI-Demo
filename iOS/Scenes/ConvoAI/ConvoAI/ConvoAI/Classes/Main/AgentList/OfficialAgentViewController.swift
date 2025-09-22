@@ -148,7 +148,8 @@ extension OfficialAgentViewController: UITableViewDelegate, UITableViewDataSourc
         preset.defaultAvatar = "ic_default_avatar_icon"
         AppContext.preferenceManager()?.preference.isCustomPreset = false
         AppContext.preferenceManager()?.updatePreset(preset)
-        let chatViewController = ChatViewController()
+//        let chatViewController = ChatViewController()
+        let chatViewController = CallInSipViewController()
         chatViewController.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(chatViewController, animated: true)
     }
