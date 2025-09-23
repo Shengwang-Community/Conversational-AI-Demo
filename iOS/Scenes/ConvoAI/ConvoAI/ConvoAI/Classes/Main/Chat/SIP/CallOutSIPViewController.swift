@@ -11,10 +11,14 @@ import Common
 import SVProgressHUD
 
 class CallOutSipViewController: SIPViewController {
-    private var agentManager = AgentManager()
-    private var phoneNumber = ""
-    let uid = "\(RtcEnum.getUid())"
+    internal var agentManager = AgentManager()
+    internal var phoneNumber = ""
+    internal let uid = "\(RtcEnum.getUid())"
     internal var token = ""
+    internal var timeout = 30
+    internal var agentState: AgentState = .idle
+    internal var convoAIAPI: ConversationalAIAPI!
+    internal var timer: Timer?
     internal var traceId: String {
         get {
             return "\(UUID().uuidString.prefix(8))"
@@ -27,11 +31,11 @@ class CallOutSipViewController: SIPViewController {
     }()
     
     // MARK: - UI Components
-    private let sipInputView = SIPInputView()
+    internal let sipInputView = SIPInputView()
     
-    private let phoneAreaListView = SIPPhoneAreaListView()
+    internal let phoneAreaListView = SIPPhoneAreaListView()
     
-    private lazy var callButton: UIButton = {
+    internal lazy var callButton: UIButton = {
         let button = UIButton()
         button.setBackgroundImage(UIImage.ag_named("ic_sip_call_icon"), for: .normal)
         button.addTarget(self, action: #selector(startCall), for: .touchUpInside)
@@ -39,14 +43,14 @@ class CallOutSipViewController: SIPViewController {
         return button
     }()
     
-    private let tipsView: SIPCallTipsView = {
+    internal let tipsView: SIPCallTipsView = {
         let view = SIPCallTipsView()
         view.infoLabel.text = ResourceManager.L10n.Sip.sipCallOutTips
         view.infoLabel.font = UIFont.systemFont(ofSize: 12)
         return view
     }()
     
-    private lazy var prepareCallContentView: UIView = {
+    internal lazy var prepareCallContentView: UIView = {
         let view = UIView()
         view.isUserInteractionEnabled = true
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(prepareContentTouched))
@@ -110,7 +114,7 @@ class CallOutSipViewController: SIPViewController {
         return button
     }()
     
-    private lazy var callingContentView: UIView = {
+    internal lazy var callingContentView: UIView = {
         let view = UIView()
         [callingPhoneNumberButton, callingTipsLabel, closeButton].forEach { view.addSubview($0) }
         closeButton.snp.makeConstraints { make in
@@ -135,267 +139,74 @@ class CallOutSipViewController: SIPViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        initConvoAIAPI()
         setupKeyboardObservers()
         showPrepareCallView()
+    }
+    
+    override func setupViews() {
+        super.setupViews()
+        setupSIPViews()
+    }
+    
+    override func setupConstraints() {
+        super.setupConstraints()
+        setupSIPConstraints()
+    }
+    
+    func initConvoAIAPI() {
+        let rtcEngine = rtcManager.getRtcEntine()
+        guard let rtmEngine = rtmManager.getRtmEngine() else {
+            return
+        }
+        let config = ConversationalAIAPIConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words, enableLog: true)
+        convoAIAPI = ConversationalAIAPIImpl(config: config)
+        convoAIAPI.addHandler(handler: self)
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
     
-    override func setupViews() {
-        super.setupViews()
-        sipInputView.delegate = self
-        phoneAreaListView.delegate = self
-        
-        [prepareCallContentView, callingContentView, phoneAreaListView].forEach { view.addSubview($0) }
-    }
-    
-    override func setupConstraints() {
-        super.setupConstraints()
-        
-        prepareCallContentView.snp.makeConstraints { make in
-            make.left.right.bottom.equalTo(0)
-            make.top.equalTo(self.navivationBar.snp.bottom)
-        }
-        
-        phoneAreaListView.snp.makeConstraints { make in
-            make.top.equalTo(sipInputView.snp.bottom).offset(8)
-            make.left.right.equalTo(sipInputView)
-            make.height.equalTo(90) // Maximum height for the list
-        }
-        
-        callingContentView.snp.makeConstraints { make in
-            make.left.right.bottom.equalTo(0)
-            make.top.equalTo(self.navivationBar.snp.bottom)
-        }
-    }
-    
-    @objc func prepareContentTouched() {
-        hideKeyboard()
-    }
-    
-    // MARK: - Keyboard Handling
-    private func setupKeyboardObservers() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(keyboardWillShow(_:)),
-            name: UIResponder.keyboardWillShowNotification,
-            object: nil
-        )
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(keyboardWillHide(_:)),
-            name: UIResponder.keyboardWillHideNotification,
-            object: nil
-        )
-    }
-    
-    @objc private func keyboardWillShow(_ notification: Notification) {
-        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
-              let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double else {
-            return
-        }
-        
-        let keyboardHeight = keyboardFrame.height
-        let safeAreaBottom = view.safeAreaInsets.bottom
-        
-        UIView.animate(withDuration: duration) {
-            self.prepareCallContentView.snp.updateConstraints { make in
-                make.bottom.equalTo(-keyboardHeight - safeAreaBottom - 20)
-            }
-            self.view.layoutIfNeeded()
-        }
-    }
-    
-    @objc private func keyboardWillHide(_ notification: Notification) {
-        guard let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double else {
-            return
-        }
-        
-        UIView.animate(withDuration: duration) {
-            self.prepareCallContentView.snp.updateConstraints { make in
-                make.bottom.equalTo(-53)
-            }
-            self.view.layoutIfNeeded()
-        }
-    }
-    
-    @objc func startCall() {
-        hideKeyboard()
-        SVProgressHUD.show()
-        Task {
-            do {
-                if !rtmManager.isLogin {
-                    try await loginRTM()
-                    try await startRequest()
-                }
-                await MainActor.run {
-                    SVProgressHUD.dismiss()
-                    showCallingView()
-                }
-            } catch {
-                addLog("Failed to login rtm: \(error)")
-                SVProgressHUD.showError(withStatus: error.localizedDescription)
-            }
-        }
-        
-    }
-    
-    @objc func closeConnect() {
-        showPrepareCallView()
-        logoutRTM()
-    }
-    
-    private func startRequest() async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            let parameter: [String: Any?] = [
-                "app_id": nil,
-                "app_cert": nil,
-                "uibasic_auth_usernamed": nil,
-                "basic_auth_password": nil,
-                "preset_name": nil,
-                "preset_type": nil,
-                "convoai_body": [
-                    "name": phoneNumber,
-                    "parameters": [
-                        "phone_number": phoneNumber,
-                    ]
-                ]
-            ]
-            let param = (CommonFeature.removeNilValues(from: parameter) as? [String: Any]) ?? [:]
-            agentManager.callSIP(parameter: param, completion: { err in
-                if let error = err {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                continuation.resume()
-            })
-        }
-    }
-    
-    private func hideKeyboard() {
-        view.endEditing(true)
-    }
-    
-    private func showCallingView() {
-        callingContentView.isHidden = false
-        prepareCallContentView.isHidden = true
-        callingPhoneNumberButton.setTitle(phoneNumber, for: .normal)
-    }
-    
-    private func showPrepareCallView() {
-        callingContentView.isHidden = true
-        prepareCallContentView.isHidden = false
-    }
-}
-
-extension CallOutSipViewController {
-    internal func logoutRTM() {
-        rtmManager.logout(completion: nil)
-    }
-    
-    internal func loginRTM() async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            if !self.token.isEmpty {
-                self.rtmManager.login(token: token, completion: {err in
-                    if let error = err {
-                        continuation.resume(throwing: error)
-                        return
-                    }
-                    
-                    continuation.resume()
-                })
+    func startTimer() {
+        stopTimer()
+        var timeout = self.timeout
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { [weak self] timer in
+            guard let self = self else { return }
+            if self.agentState != .idle {
+                self.stopTimer()
                 return
             }
             
-            NetworkManager.shared.generateToken(
-                channelName: "",
-                uid: uid,
-                types: [.rtm]
-            ) { [weak self] token in
-                guard let token = token else {
-                    continuation.resume(throwing: ConvoAIError.serverError(code: -1, message: "token is empty"))
-                    return
-                }
-                
-                print("rtm token is : \(token)")
-                self?.token = token
-                self?.rtmManager.login(token: token, completion: {err in
-                    if let error = err {
-                        continuation.resume(throwing: error)
-                        return
-                    }
-                    
-                    continuation.resume()
-                })
-            }
-        }
-    }
-}
-
-// MARK: - SIPInputViewDelegate
-extension CallOutSipViewController: SIPInputViewDelegate {
-    func sipInputView(_ inputView: SIPInputView, didChangePhoneNumber phoneNumber: String, countryCode: String) {
-        callButton.isEnabled = !phoneNumber.isEmpty
-        self.phoneNumber = "\(countryCode)\(phoneNumber)"
-    }
-    
-    func sipInputViewDidTapCountryButton(_ inputView: SIPInputView) {
-        // Toggle the area list view
-        if phoneAreaListView.isHidden {
-            phoneAreaListView.show()
-        } else {
-            phoneAreaListView.hide()
-        }
-    }
-}
-
-// MARK: - SIPPhoneAreaListViewDelegate  
-extension CallOutSipViewController: SIPPhoneAreaListViewDelegate {
-    func phoneAreaListView(_ listView: SIPPhoneAreaListView, didSelectCountry country: Country) {
-        sipInputView.setSelectedCountry(country)
-        print("Selected country: \(country.name) (\(country.dialCode))")
-    }
-}
-
-
-extension CallOutSipViewController: RTMManagerDelegate {
-    func onDebuLog(_ log: String) {
-        addLog(log)
-    }
-    
-    func onConnected() {
-        addLog("<<< onConnected")
-    }
-    
-    func onDisconnected() {
-        addLog("<<< onDisconnected")
-    }
-    
-    func onFailed() {
-        addLog("<<< onFailed")
-        if !rtmManager.isLogin {
-            
-        }
-    }
-    
-    func onTokenPrivilegeWillExpire(channelName: String) {
-        addLog("[traceId: \(traceId)] <<< onTokenPrivilegeWillExpire")
-        NetworkManager.shared.generateToken(
-            channelName: "",
-            uid: uid,
-            types: [.rtm]
-        ) { [weak self] token in
-            guard let self = self, let newToken = token else {
+            if timeout <= 0 {
+                sipTimeout()
+                self.stopTimer()
                 return
             }
             
-            self.addLog("[traceId: \(traceId)] token regenerated")
-            self.rtmManager.renewToken(token: newToken)
-            self.token = newToken
+            timeout -= 1
+        })
+        
+        if let timer = self.timer {
+            RunLoop.current.add(timer, forMode: .common)
         }
     }
+    
+    func sipTimeout() {
+        SVProgressHUD.showInfo(withStatus: "time out ")
+        closeConnect()
+    }
+    
+    func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+    }
+    
+    override func onCloseButton() {
+        super.onCloseButton()
+        
+        stopTimer()
+    }
 }
+
+
