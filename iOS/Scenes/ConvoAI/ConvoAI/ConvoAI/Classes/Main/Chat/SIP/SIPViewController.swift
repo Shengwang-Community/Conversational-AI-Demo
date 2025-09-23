@@ -9,12 +9,13 @@ import UIKit
 import AgoraRtcKit
 import Common
 
-class SIPViewController: UIViewController, AgoraRtcEngineDelegate {
+class SIPViewController: BaseViewController, AgoraRtcEngineDelegate {
     lazy var navivationBar: MainNavigationBar = {
         let view = MainNavigationBar()
         view.settingButton.isHidden = true
         view.wifiInfoButton.isHidden = true
         view.transcriptionButton.isHidden = true
+        view.closeButton.addTarget(self, action: #selector(onCloseButton), for: .touchUpInside)
         return view
     }()
 
@@ -95,6 +96,7 @@ class SIPViewController: UIViewController, AgoraRtcEngineDelegate {
     }
 
     func setupViews() {
+        naviBar.isHidden = true
         [animateContentView, upperBackgroundView, lowerBackgroundView, navivationBar].forEach { view.addSubview($0) }
     }
     
@@ -129,10 +131,10 @@ class SIPViewController: UIViewController, AgoraRtcEngineDelegate {
             )
         }
     }
-}
-
-class CallOutSipViewController: SIPViewController {
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    
+    @objc func onCloseButton() {
+        self.navigationController?.popViewController(animated: true)
     }
 }
+
+

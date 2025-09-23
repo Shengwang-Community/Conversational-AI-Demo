@@ -170,4 +170,7 @@
 "empty.state.loading.failed" = "Page failed to load. Please try again.";
 "empty.state.retry" = "Retry";
 
-"agent.sip.tips" = "Please use your mobile phone to dial this number to experience communicating with an AI intelligent customer service via phone call.";
+"agent.sip.in.call.tips" = "Dial this number from your phone to start a conversation with our AI Agent.";
+"agent.sip.out.call.tips" = "Enter your number below, and our AI Agent will call you.";
+"agent.sip.calling.tips" = "Calling now... please answer on your phone.";
+"agent.sip.input.placeholder" = "Enter your mobile or landline number";

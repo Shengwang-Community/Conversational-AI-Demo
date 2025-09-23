@@ -1,16 +1,16 @@
 //
-//  CallInSIPViewController.swift
+//  SIPCallTipsView.swift
 //  ConvoAI
 //
-//  Created by qinhui on 2025/9/22.
+//  Created by qinhui on 2025/9/23.
 //
 
 import UIKit
+import SnapKit
 import Common
 
-class CallInSIPViewController: SIPViewController {
-    let sipView = SIPPhoneListView()
-
+class SIPCallTipsView: UIView {
+    
     // MARK: - UI Components
     private lazy var infoIcon: UIImageView = {
         let imageView = UIImageView()
@@ -20,9 +20,9 @@ class CallInSIPViewController: SIPViewController {
         return imageView
     }()
     
-    private lazy var infoLabel: UILabel = {
+    lazy var infoLabel: UILabel = {
         let label = UILabel()
-        label.text = ResourceManager.L10n.Sip.sipCallInTips
+        label.text = ""
         label.textColor = UIColor.themColor(named: "ai_icontext2")
         label.font = UIFont.systemFont(ofSize: 10)
         label.numberOfLines = 0
@@ -42,29 +42,29 @@ class CallInSIPViewController: SIPViewController {
         return stackView
     }()
     
-    // MARK: - Lifecycle
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    // MARK: - Initialization
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
     }
     
-    override func setupViews() {
-        super.setupViews()
-        view.addSubview(infoStackView)
-        view.addSubview(sipView)
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupUI()
     }
     
-    override func setupConstraints() {
-        super.setupConstraints()
-        infoStackView.snp.makeConstraints { make in
-            make.bottom.equalTo(-112)
-            make.left.equalToSuperview().offset(41)
-            make.right.equalToSuperview().offset(-41)
+    // MARK: - Setup
+    private func setupUI() {
+        backgroundColor = .clear
+        
+        addSubview(infoStackView)
+        
+        infoIcon.snp.makeConstraints { make in
+            make.width.height.equalTo(20)
         }
         
-        sipView.snp.makeConstraints { make in
-            make.bottom.equalTo(infoStackView.snp.top).offset(-10)
-            make.left.equalTo(44)
-            make.right.equalTo(-44)
+        infoStackView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
         }
     }
 }

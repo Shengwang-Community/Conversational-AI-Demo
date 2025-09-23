@@ -149,7 +149,7 @@ extension OfficialAgentViewController: UITableViewDelegate, UITableViewDataSourc
         AppContext.preferenceManager()?.preference.isCustomPreset = false
         AppContext.preferenceManager()?.updatePreset(preset)
 //        let chatViewController = ChatViewController()
-        let chatViewController = CallInSipViewController()
+        let chatViewController = CallOutSipViewController()
         chatViewController.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(chatViewController, animated: true)
     }

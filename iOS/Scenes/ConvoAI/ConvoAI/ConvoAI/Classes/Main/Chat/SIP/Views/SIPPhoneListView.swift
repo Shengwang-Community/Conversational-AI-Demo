@@ -11,7 +11,7 @@ import Common
 // MARK: - Phone Number Model
 struct PhoneNumber {
     let countryCode: String
-    let flagImageName: String?  // Flag image name field
+    let flagEmoji: String?  // Flag emoji field
     let phoneNumber: String     // For dialing (clean format)
     
     // Computed property for display format
@@ -67,10 +67,25 @@ class SIPPhoneListView: UIView {
     }
     
     private func setupData() {
-        phoneNumbers = [
-            PhoneNumber(countryCode: "IN", flagImageName: "ic_flag_india_icon", phoneNumber: "+91-22-47790159"),
-            PhoneNumber(countryCode: "CL", flagImageName: "ic_flag_chile_icon", phoneNumber: "+54-911-52465127"),
+        let phoneConfigs = [
+            ("IN", "22-47790159"),
+            ("CL", "911-52465127")
         ]
+        
+        phoneNumbers = phoneConfigs.compactMap { (countryCode, phoneNumber) in
+            guard let countryConfig = CountryConfigManager.shared.getCountryByCode(countryCode) else {
+                return nil
+            }
+            
+            let fullPhoneNumber = "\(countryConfig.dialCode)-\(phoneNumber)"
+            
+            return PhoneNumber(
+                countryCode: countryConfig.countryCode,
+                flagEmoji: countryConfig.flagEmoji,
+                phoneNumber: fullPhoneNumber
+            )
+        }
+        
         tableView.reloadData()
     }
     
@@ -87,9 +102,6 @@ class SIPPhoneListView: UIView {
         if let phoneURL = URL(string: "tel://\(cleanedNumber)") {
             if UIApplication.shared.canOpenURL(phoneURL) {
                 UIApplication.shared.open(phoneURL, options: [:], completionHandler: nil)
-            } else {
-                // Show a prompt on the simulator
-                showCallAlert(phoneNumber: phoneNumber)
             }
         }
     }
@@ -139,12 +151,13 @@ extension SIPPhoneListView: UITableViewDelegate {
 // MARK: - Phone Number Cell
 class PhoneNumberCell: UITableViewCell {
     
-    private lazy var flagImageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFit
-        imageView.layer.cornerRadius = 4
-        imageView.layer.masksToBounds = true
-        return imageView
+    private lazy var flagEmojiLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 35)
+        label.textAlignment = .center
+        label.backgroundColor = UIColor.clear
+        label.isHidden = false
+        return label
     }()
     
     private lazy var countryCodeLabel: UILabel = {
@@ -164,7 +177,7 @@ class PhoneNumberCell: UITableViewCell {
     }()
     
     private lazy var stackView: UIStackView = {
-        let stack = UIStackView(arrangedSubviews: [flagImageView, countryCodeLabel, phoneNumberLabel])
+        let stack = UIStackView(arrangedSubviews: [flagEmojiLabel, countryCodeLabel, phoneNumberLabel])
         stack.axis = .horizontal
         stack.alignment = .center
         stack.spacing = 8
@@ -186,7 +199,7 @@ class PhoneNumberCell: UITableViewCell {
         
         contentView.addSubview(stackView)
         
-        flagImageView.snp.makeConstraints { make in
+        flagEmojiLabel.snp.makeConstraints { make in
             make.width.equalTo(44)
             make.height.equalTo(44)
         }
@@ -203,34 +216,8 @@ class PhoneNumberCell: UITableViewCell {
     }
     
     func configure(with phoneNumber: PhoneNumber) {
-        // Load flag image - try multiple methods
-        if let imageName = phoneNumber.flagImageName {
-            var image: UIImage?
-            
-            // Try ag_named first
-            image = UIImage.ag_named(imageName)
-            
-            // If ag_named fails, try standard UIImage(named:)
-            if image == nil {
-                image = UIImage(named: imageName)
-                print("UIImage(named: \(imageName)): \(image != nil ? "SUCCESS" : "FAILED")")
-            }
-            
-            // If still no image, try without potential file extension
-            if image == nil {
-                let nameWithoutExtension = imageName.replacingOccurrences(of: ".png", with: "").replacingOccurrences(of: ".jpg", with: "")
-                image = UIImage(named: nameWithoutExtension)
-            }
-            
-            flagImageView.image = image
-            
-            // If no image loaded, set a background color to show the space
-            if image == nil {
-                flagImageView.backgroundColor = UIColor.gray.withAlphaComponent(0.5)
-            } else {
-                flagImageView.backgroundColor = UIColor.clear
-            }
-        }
+        // Set flag emoji
+        flagEmojiLabel.text = phoneNumber.flagEmoji ?? "🏳️"
         
         // Set country code
         countryCodeLabel.text = phoneNumber.countryCode
