@@ -152,7 +152,7 @@ extension AgentViewController: LoginManagerDelegate {
 extension AgentViewController: DeveloperConfigDelegate {
     public func devConfigDidSwitchServer(_ config: DeveloperConfig) {
         IoTEntrance.deleteAllPresets()
-        AppContext.loginManager().logout(reason: .sessionExpired)
+        AppContext.loginManager().logout(reason: .resetScene)
         NotificationCenter.default.post(name: .EnvironmentChanged, object: nil, userInfo: nil)
     }
 }

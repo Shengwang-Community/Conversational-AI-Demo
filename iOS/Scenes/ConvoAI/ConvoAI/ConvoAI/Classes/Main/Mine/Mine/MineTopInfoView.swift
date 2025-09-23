@@ -38,6 +38,14 @@ class MineTopInfoView: UIView {
         return imageView
     }()
 
+    private lazy var imageView3: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage.ag_named("img_mine_top_bg_2")
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        return imageView
+    }()
+
     private lazy var titleCycleImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage.ag_named("ic_mine_title_cycle")
@@ -67,7 +75,6 @@ class MineTopInfoView: UIView {
         let imageView = UIImageView()
         imageView.image = UIImage.ag_named("img_mine_back_board")
         imageView.contentMode = .scaleToFill
-        imageView.clipsToBounds = true
         return imageView
     }()
 
@@ -92,8 +99,7 @@ class MineTopInfoView: UIView {
     private lazy var personaCardBGView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage.ag_named("img_mine_info_card")
-        imageView.contentMode = .scaleAspectFill
-        imageView.clipsToBounds = true
+        imageView.contentMode = .scaleToFill
         return imageView
     }()
     
@@ -175,6 +181,7 @@ class MineTopInfoView: UIView {
         clipsToBounds = true
         
         addSubview(imageView1)
+        addSubview(imageView3)
         addSubview(backBoardImageView)
         addSubview(bigAvatarImageView)
         addSubview(imageView2)
@@ -215,9 +222,15 @@ class MineTopInfoView: UIView {
             make.top.equalTo(personaCardView).offset(-5)
             make.right.equalTo(personaCardView)
         }
+        
+        imageView3.snp.makeConstraints { make in
+            make.left.equalToSuperview()
+            make.bottom.equalTo(60)
+        }
+        
         avatarImageView.snp.makeConstraints { make in
             make.left.equalToSuperview().offset(40)
-            make.top.equalToSuperview().offset(40)
+            make.top.equalTo(self.safeAreaLayoutGuide.snp.top).offset(20)
             make.width.height.equalTo(40)
         }
         

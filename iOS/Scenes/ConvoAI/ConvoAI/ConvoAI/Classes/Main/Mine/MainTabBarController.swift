@@ -165,10 +165,13 @@ extension MainTabBarController: LoginManagerDelegate {
     
     func userDidLogout(reason: LogoutReason) {
         ConvoAILogger.info("[Call] userDidLogout \(reason)")
-        if reason == .userInitiated {
+        switch reason {
+        case .userInitiated:
             SSOWebViewController.clearWebViewCache()
-        } else {
+        case .sessionExpired:
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Login.sessionExpired)
+            SSOWebViewController.clearWebViewCache()
+        case .resetScene:
         }
         // Dismiss all view controllers and return to root
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,

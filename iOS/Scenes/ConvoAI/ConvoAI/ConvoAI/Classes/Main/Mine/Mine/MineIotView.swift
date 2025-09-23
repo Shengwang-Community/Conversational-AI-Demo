@@ -46,7 +46,6 @@ class MineIotView: UIView {
     private lazy var iotCardButton: UIButton = {
         let button = UIButton(type: .custom)
         button.setBackgroundImage(UIImage.ag_named("img_mine_iot_card"), for: .normal)
-        button.contentMode = .scaleAspectFill
         button.addTarget(self, action: #selector(iotCardButtonTapped), for: .touchUpInside)
         return button
     }()
@@ -82,11 +81,12 @@ class MineIotView: UIView {
         devicesCardView.snp.makeConstraints { make in
             make.top.equalTo(devicesTitleLabel.snp.bottom).offset(15)
             make.bottom.equalToSuperview().offset(-16)
-            make.left.right.equalToSuperview()
+            make.left.equalTo(16)
+            make.right.equalTo(-16)
         }
         iotCardButton.snp.makeConstraints { make in
-            make.top.bottom.equalToSuperview()
-            make.centerX.equalToSuperview()
+            make.width.equalToSuperview()
+            make.center.equalToSuperview()
         }
         devicesStatusLabel.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
