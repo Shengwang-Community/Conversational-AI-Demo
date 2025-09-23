@@ -184,6 +184,7 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
 
     private fun showRecordingDialog() {
         val activity = activity ?: return
+        voiceprintViewModel.stopPlayback()
         if (dialog?.isShowing == false) return
         val recordingDialog =
             CovVoiceprintRecordingDialog.newInstance(
@@ -259,6 +260,7 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
 
     override fun onDismiss(dialog: DialogInterface) {
         CovLogger.d(TAG, "onDismiss called")
+        voiceprintViewModel.stopPlayback()
         super.onDismiss(dialog)
         onDismissCallback?.invoke()
     }
@@ -360,6 +362,12 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
 
         // Initialize state
         voiceprintViewModel.updateVoiceprintState()
+    }
+
+    override fun onDestroyView() {
+        // Ensure playback is stopped when view is destroyed
+        voiceprintViewModel.stopPlayback()
+        super.onDestroyView()
     }
 
     /**
