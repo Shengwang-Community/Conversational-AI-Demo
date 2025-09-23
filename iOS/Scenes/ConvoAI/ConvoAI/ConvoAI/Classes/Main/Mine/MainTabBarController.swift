@@ -171,7 +171,7 @@ extension MainTabBarController: LoginManagerDelegate {
         case .sessionExpired:
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Login.sessionExpired)
             SSOWebViewController.clearWebViewCache()
-        case .resetScene:
+        case .resetScene: break
         }
         // Dismiss all view controllers and return to root
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
