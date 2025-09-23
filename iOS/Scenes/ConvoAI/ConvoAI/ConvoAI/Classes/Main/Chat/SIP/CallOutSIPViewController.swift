@@ -11,6 +11,7 @@ import Common
 import SVProgressHUD
 
 class CallOutSipViewController: SIPViewController {
+    private var agentManager = AgentManager()
     private var phoneNumber = ""
     let uid = "\(RtcEnum.getUid())"
     internal var token = ""
@@ -249,7 +250,29 @@ class CallOutSipViewController: SIPViewController {
     
     private func startRequest() async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            continuation.resume()
+            let parameter: [String: Any?] = [
+                "app_id": nil,
+                "app_cert": nil,
+                "uibasic_auth_usernamed": nil,
+                "basic_auth_password": nil,
+                "preset_name": nil,
+                "preset_type": nil,
+                "convoai_body": [
+                    "name": phoneNumber,
+                    "parameters": [
+                        "phone_number": phoneNumber,
+                    ]
+                ]
+            ]
+            let param = (CommonFeature.removeNilValues(from: parameter) as? [String: Any]) ?? [:]
+            agentManager.callSIP(parameter: param, completion: { err in
+                if let error = err {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                
+                continuation.resume()
+            })
         }
     }
     

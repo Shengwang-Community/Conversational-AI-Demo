@@ -101,7 +101,7 @@ extension ChatViewController {
                 ]
             ]
         ]
-        return (removeNilValues(from: parameters) as? [String: Any]) ?? [:]
+        return (CommonFeature.removeNilValues(from: parameters) as? [String: Any]) ?? [:]
     }
     
     private func getStartAgentParametersForOpenSouce() -> [String: Any] {
@@ -192,7 +192,7 @@ extension ChatViewController {
             ]
         ]
         
-        return (removeNilValues(from: parameters) as? [String: Any]) ?? [:]
+        return (CommonFeature.removeNilValues(from: parameters) as? [String: Any]) ?? [:]
     }
 }
 
@@ -205,33 +205,9 @@ extension ChatViewController {
             return getStartAgentParametersForConvoAI()
         }
     }
-    
-    private func removeNilValues(from value: Any?) -> Any? {
-        guard let value = value else { return nil }
-        if let dict = value as? [String: Any?] {
-            var result: [String: Any] = [:]
-            for (key, val) in dict {
-                if let processedVal = removeNilValues(from: val) {
-                    result[key] = processedVal
-                }
-            }
-            return result.isEmpty ? nil : result
-        }
-        if let array = value as? [[String: Any?]] {
-            let processedArray = array.compactMap { removeNilValues(from: $0) as? [String: Any] }
-            return processedArray.isEmpty ? nil : processedArray
-        }
-        if let array = value as? [Any?] {
-            let processedArray = array.compactMap { removeNilValues(from: $0) }
-            return processedArray.isEmpty ? nil : processedArray
-        }
-        return value
-    }
 }
 
 extension ChatViewController {
-    
-    
     internal func fetchTokenIfNeeded() async throws {
         return try await withCheckedThrowingContinuation { continuation in
             if !self.token.isEmpty {
