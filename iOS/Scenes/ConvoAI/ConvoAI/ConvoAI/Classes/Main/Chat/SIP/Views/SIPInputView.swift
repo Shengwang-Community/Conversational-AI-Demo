@@ -80,13 +80,11 @@ class SIPInputView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
-        setDefaultCountry()
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupUI()
-        setDefaultCountry()
     }
     
     // MARK: - Setup
@@ -143,19 +141,13 @@ class SIPInputView: UIView {
         }
     }
     
-    private func setDefaultCountry() {
-        let regions = RegionConfigManager.shared.allRegions
-        selectedRegion = regions.first
-        updateCountryButton()
-    }
-    
     private func updateCountryButton() {
-        if let countryConfig = RegionConfigManager.shared.getRegionByCode(selectedRegion.regionCode) {
+        if let countryConfig = RegionConfigManager.shared.getRegionConfigByName(selectedRegion.regionName) {
             flagEmojiLabel.text = countryConfig.flagEmoji
         } else {
             flagEmojiLabel.text = "🏳️" 
         }
-        countryCodeLabel.text = selectedRegion.dialCode
+        countryCodeLabel.text = selectedRegion.regionCode
     }
     
     @objc private func countryButtonTapped() {
@@ -170,7 +162,7 @@ class SIPInputView: UIView {
     
     func getFullPhoneNumber() -> String {
         let number = phoneTextField.text ?? ""
-        return "\(selectedRegion.dialCode)\(number)"
+        return "\(selectedRegion.regionCode)\(number)"
     }
     
     func setPhoneNumber(_ number: String) {
@@ -197,7 +189,7 @@ extension SIPInputView: UITextFieldDelegate {
             return false
         }
         
-        delegate?.sipInputView(self, didChangePhoneNumber: newText, dialCode: selectedRegion.dialCode)
+        delegate?.sipInputView(self, didChangePhoneNumber: newText, dialCode: selectedRegion.regionCode)
         return true
     }
     

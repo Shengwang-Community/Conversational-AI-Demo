@@ -259,9 +259,20 @@ extension CustomAgentViewController: UITableViewDelegate, UITableViewDataSource 
                 preset.defaultAvatar = "ic_custom_agent_head"
                 AppContext.preferenceManager()?.preference.isCustomPreset = true
                 AppContext.preferenceManager()?.updatePreset(preset)
-                let chatViewController = ChatViewController()
-                chatViewController.hidesBottomBarWhenPushed = true
-                self.navigationController?.pushViewController(chatViewController, animated: true)
+                let presetType = preset.presetType.stringValue()
+                if presetType == "sip_call_in" {
+                    let chatViewController = CallInSIPViewController()
+                    chatViewController.hidesBottomBarWhenPushed = true
+                    navigationController?.pushViewController(chatViewController, animated: true)
+                } else if presetType == "sip_call_out" {
+                    let chatViewController = CallOutSipViewController()
+                    chatViewController.hidesBottomBarWhenPushed = true
+                    navigationController?.pushViewController(chatViewController, animated: true)
+                } else {
+                    let chatViewController = ChatViewController()
+                    chatViewController.hidesBottomBarWhenPushed = true
+                    navigationController?.pushViewController(chatViewController, animated: true)
+                }
             } else {
                 SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Error.agentNotFound)
                 ConvoAILogger.error(ResourceManager.L10n.Error.agentNotFound)

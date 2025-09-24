@@ -33,7 +33,10 @@ class CallOutSipViewController: SIPViewController {
     // MARK: - UI Components
     internal let sipInputView = SIPInputView()
     
-    internal let phoneAreaListView = SIPPhoneAreaListView()
+    internal lazy var phoneAreaListView: SIPPhoneAreaListView = {
+        let listView = SIPPhoneAreaListView()
+        return listView
+    }()
     
     internal lazy var callButton: UIButton = {
         let button = UIButton()
@@ -142,6 +145,7 @@ class CallOutSipViewController: SIPViewController {
         initConvoAIAPI()
         setupKeyboardObservers()
         showPrepareCallView()
+        setupUIData()
     }
     
     override func setupViews() {
@@ -162,6 +166,30 @@ class CallOutSipViewController: SIPViewController {
         let config = ConversationalAIAPIConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words, enableLog: true)
         convoAIAPI = ConversationalAIAPIImpl(config: config)
         convoAIAPI.addHandler(handler: self)
+    }
+    
+    func setupUIData() {
+        guard let preset = AppContext.preferenceManager()?.preference.preset, let vendorCalleeNumbers = preset.sipVendorCalleeNumbers else {
+            return
+        }
+        
+        let regionConfigs = vendorCalleeNumbers.compactMap { (vendor) -> RegionConfig? in
+            guard let regionName = vendor.regionName, let regionCode = vendor.regionCode else {
+                return nil
+            }
+            
+            guard let regionConfig = RegionConfigManager.shared.getRegionConfigByName(regionName) else {
+                return nil
+            }
+            
+            return RegionConfig(regionName: regionName, flagEmoji: regionConfig.flagEmoji, regionCode: regionCode)
+        }
+        
+        if let defaultConfig = regionConfigs.first {
+            sipInputView.setSelectedRegionConfig(defaultConfig)
+        }
+        
+        phoneAreaListView.setupRegions(regions: regionConfigs)
     }
     
     deinit {

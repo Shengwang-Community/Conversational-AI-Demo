@@ -148,10 +148,20 @@ extension OfficialAgentViewController: UITableViewDelegate, UITableViewDataSourc
         preset.defaultAvatar = "ic_default_avatar_icon"
         AppContext.preferenceManager()?.preference.isCustomPreset = false
         AppContext.preferenceManager()?.updatePreset(preset)
-//        let chatViewController = ChatViewController()
-        let chatViewController = CallOutSipViewController()
-        chatViewController.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(chatViewController, animated: true)
+        let presetType = preset.presetType.stringValue()
+        if presetType == "sip_call_in" {
+            let chatViewController = CallInSIPViewController()
+            chatViewController.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(chatViewController, animated: true)
+        } else if presetType == "sip_call_out" {
+            let chatViewController = CallOutSipViewController()
+            chatViewController.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(chatViewController, animated: true)
+        } else {
+            let chatViewController = ChatViewController()
+            chatViewController.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(chatViewController, animated: true)
+        }
     }
 }
 

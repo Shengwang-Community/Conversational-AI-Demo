@@ -40,13 +40,11 @@ class SIPPhoneAreaListView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
-        setupCountries()
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupUI()
-        setupCountries()
     }
     
     // MARK: - Setup
@@ -62,10 +60,8 @@ class SIPPhoneAreaListView: UIView {
         }
     }
     
-    private func setupCountries() {
-        let regionCodes = ["IN", "CL"]
-        
-        regions = RegionConfigManager.shared.allRegions
+    func setupRegions(regions: [RegionConfig]) {
+        self.regions = regions
     }
     
     // MARK: - Public Methods
@@ -182,7 +178,7 @@ class CountryCell: UITableViewCell {
     
     func configure(with region: RegionConfig) {
         flagEmojiLabel.text = region.flagEmoji
-        nameLabel.text = region.regionCode
-        dialCodeLabel.text = region.dialCode
+        nameLabel.text = region.regionName
+        dialCodeLabel.text = region.regionCode
     }
 }

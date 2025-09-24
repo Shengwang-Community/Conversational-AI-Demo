@@ -150,6 +150,6 @@ extension CallOutSipViewController: SIPInputViewDelegate {
 extension CallOutSipViewController: SIPPhoneAreaListViewDelegate {
     func phoneAreaListView(_ listView: SIPPhoneAreaListView, didSelectCountry region: RegionConfig) {
         sipInputView.setSelectedRegionConfig(region)
-        print("Selected country: \(region.regionCode) (\(region.dialCode))")
+        print("Selected country: \(region.regionName) (\(region.regionCode))")
     }
 }

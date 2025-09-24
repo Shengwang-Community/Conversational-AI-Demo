@@ -10,7 +10,6 @@ import Common
 import SVProgressHUD
 
 extension ChatViewController: LoginManagerDelegate {
-    
     func userDidLogout(reason: LogoutReason) {
         stopLoading()
         stopAgent()

@@ -10,7 +10,7 @@ import Common
 
 // MARK: - Phone Number Model
 struct PhoneNumber {
-    let countryCode: String
+    let regionName: String
     let flagEmoji: String?  // Flag emoji field
     let phoneNumber: String     // For dialing (clean format)
     
@@ -41,13 +41,11 @@ class SIPPhoneListView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
-        setupData()
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupUI()
-        setupData()
     }
     
     // MARK: - Setup
@@ -64,29 +62,6 @@ class SIPPhoneListView: UIView {
         self.snp.makeConstraints { make in
             make.height.equalTo(90)
         }
-    }
-    
-    private func setupData() {
-        let phoneConfigs = [
-            ("IN", "22-47790159"),
-            ("CL", "911-52465127")
-        ]
-        
-        phoneNumbers = phoneConfigs.compactMap { (regionCode, phoneNumber) -> PhoneNumber? in
-            guard let regionConfig = RegionConfigManager.shared.getRegionByCode(regionCode) else {
-                return nil
-            }
-            
-            let fullPhoneNumber = "\(regionConfig.dialCode)-\(phoneNumber)"
-            
-            return PhoneNumber(
-                countryCode: regionConfig.regionCode,
-                flagEmoji: regionConfig.flagEmoji,
-                phoneNumber: fullPhoneNumber
-            )
-        }
-        
-        tableView.reloadData()
     }
     
     // MARK: - Public Methods
@@ -220,7 +195,7 @@ class PhoneNumberCell: UITableViewCell {
         flagEmojiLabel.text = phoneNumber.flagEmoji ?? "🏳️"
         
         // Set country code
-        countryCodeLabel.text = phoneNumber.countryCode
+        countryCodeLabel.text = phoneNumber.regionName
         
         // Set phone number with underline
         let attributedString = NSMutableAttributedString(string: phoneNumber.displayNumber)

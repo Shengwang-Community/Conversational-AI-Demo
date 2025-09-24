@@ -22,6 +22,28 @@ class CallInSIPViewController: SIPViewController {
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupPhoneData()
+    }
+    
+    // MARK: - Private Methods
+    private func setupPhoneData() {
+        guard let preset = AppContext.preferenceManager()?.preference.preset, let vendorCalleeNumbers = preset.sipVendorCalleeNumbers else {
+            return
+        }
+        
+        let phoneNumbers = vendorCalleeNumbers.compactMap { (vendor) -> PhoneNumber? in
+            guard let regionName = vendor.regionName, let phoneNumber = vendor.phoneNumber else {
+                return nil
+            }
+            
+            guard let regionConfig = RegionConfigManager.shared.getRegionConfigByName(regionName) else {
+                return nil
+            }
+            
+            return PhoneNumber(regionName: regionConfig.regionName, flagEmoji: regionConfig.flagEmoji, phoneNumber: phoneNumber)
+        }
+        
+        sipView.updatePhoneNumbers(phoneNumbers)
     }
     
     override func setupViews() {
