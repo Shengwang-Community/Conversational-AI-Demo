@@ -101,6 +101,10 @@ class MineIotView: UIView {
     
     // MARK: - Public Methods
     func updateDeviceCount(_ count: Int) {
-        devicesStatusLabel.text = String(format: ResourceManager.L10n.Mine.iotDevicesCount, count)
+        if count == 0 {
+            devicesStatusLabel.text = ResourceManager.L10n.Mine.iotDevicesClickToBind
+        } else {
+            devicesStatusLabel.text = String(format: ResourceManager.L10n.Mine.iotDevicesCount, count)
+        }
     }
 }

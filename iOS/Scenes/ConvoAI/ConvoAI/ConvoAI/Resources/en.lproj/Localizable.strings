@@ -24,7 +24,7 @@
 
 "conversation.ai.welcome.title" = "Hey, I'm Conversational AI Engine.";
 "conversation.ai.welcome.description" = "Have you ever questioned the nature of your reality?";
-"conversation.ai.app.name" = "Convo AI";
+"conversation.ai.app.name" = "Agora Convo AI";
 "conversation.agent.name" = "Agent";
 "conversation.button.end.call" = "End Call";
 "conversation.agent.loading" = "Joining";
@@ -267,8 +267,9 @@
 "mine.addressing.title" = "Call me";
 "mine.birthday.title" = "Your Birthday";
 "mine.bio.title" = "About Me";
-"mine.iot.devices.title" = "My Conversational AI Devices";
+"mine.iot.devices.title" = "My iot Devices";
 "mine.iot.devices.count" = "%d devices linked";
+"mine.iot.devices.click.to.bind" = "Click to bind";
 "mine.settings.title" = "Settings";
 
 // Nickname Setting

@@ -21,14 +21,6 @@ protocol MineTopInfoViewDelegate: AnyObject {
 class MineTopInfoView: UIView {
     
     weak var delegate: MineTopInfoViewDelegate?
-        
-    private lazy var imageView1: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage.ag_named("img_mine_top_bg")
-        imageView.contentMode = .scaleAspectFill
-        imageView.clipsToBounds = true
-        return imageView
-    }()
     
     private lazy var imageView2: UIImageView = {
         let imageView = UIImageView()
@@ -180,7 +172,6 @@ class MineTopInfoView: UIView {
         backgroundColor = .clear
         clipsToBounds = true
         
-        addSubview(imageView1)
         addSubview(imageView3)
         addSubview(backBoardImageView)
         addSubview(bigAvatarImageView)
@@ -203,12 +194,7 @@ class MineTopInfoView: UIView {
         addSubview(bottomMaskView)
     }
     
-    private func setupConstraints() {
-        // Header constraints
-        imageView1.snp.makeConstraints { make in
-            make.top.right.equalToSuperview()
-        }
-        
+    private func setupConstraints() {        
         backBoardImageView.snp.makeConstraints { make in
             make.top.equalTo(personaCardView).offset(-6)
             make.right.equalTo(personaCardView).offset(16)
@@ -230,7 +216,7 @@ class MineTopInfoView: UIView {
         
         avatarImageView.snp.makeConstraints { make in
             make.left.equalToSuperview().offset(40)
-            make.top.equalTo(self.safeAreaLayoutGuide.snp.top).offset(20)
+            make.top.equalTo(20)
             make.width.height.equalTo(40)
         }
         

@@ -262,6 +262,7 @@
 "mine.bio.title" = "自我介绍";
 "mine.iot.devices.title" = "我的对话式 AI 设备";
 "mine.iot.devices.count" = "已绑定%d个设备";
+"mine.iot.devices.click.to.bind" = "点击绑定";
 "mine.settings.title" = "设置";
 
 // Nickname Setting

@@ -10,11 +10,12 @@ import Common
 import SVProgressHUD
 
 class AgentSettingViewController: UIViewController {
-    
+    private let backgroundViewHeight: CGFloat = 480
     private var initialCenter: CGPoint = .zero
     private var panGesture: UIPanGestureRecognizer?
     weak var agentManager: AgentManager!
     weak var rtcManager: RTCManager!
+    var channelName = ""
     
     var currentTabIndex = 0
     
@@ -30,30 +31,10 @@ class AgentSettingViewController: UIViewController {
     
     private lazy var scrollView: UIScrollView = {
         let view = UIScrollView()
-        view.showsVerticalScrollIndicator = false
-        view.showsHorizontalScrollIndicator = false
-        view.bounces = false
-        view.decelerationRate = UIScrollView.DecelerationRate.fast
-        view.delegate = self
         return view
     }()
     
-    private lazy var contentView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .clear
-        return view
-    }()
-    
-    private lazy var topView: UIView = {
-        let view = UIView()
-        // Add tap gesture to dismiss view
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(topViewTapped))
-        view.addGestureRecognizer(tapGesture)
-        view.isUserInteractionEnabled = true
-        return view
-    }()
-    
-    private lazy var settingContentView: UIView = {
+    private lazy var backgroundView: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor.themColor(named: "ai_fill2")
         view.layer.cornerRadius = 16
@@ -90,20 +71,18 @@ class AgentSettingViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationController?.setNavigationBarHidden(true, animated: false)
-
+        
         registerDelegate()
         createViews()
         createConstrains()
+        setupPanGesture()
         setupTabSelector()
         initChannelInfoStatus()
-        
-        animateViewIn()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+        animateBackgroundViewIn()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -142,25 +121,50 @@ class AgentSettingViewController: UIViewController {
         AppContext.stateManager().removeDelegate(self)
     }
     
-    private func animateViewIn() {
-        // Set initial position - move the entire scrollView down by screen height
-        scrollView.transform = CGAffineTransform(translationX: 0, y: UIScreen.main.bounds.height)
-        
-        // Animate to normal position
-        UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5) {
-            self.scrollView.transform = .identity
+    private func setupPanGesture() {
+        panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+        backgroundView.addGestureRecognizer(panGesture!)
+    }
+    
+    private func animateBackgroundViewIn() {
+        backgroundView.transform = CGAffineTransform(translationX: 0, y: backgroundViewHeight)
+        UIView.animate(withDuration: 0.3) {
+            self.backgroundView.transform = .identity
         }
     }
     
-    private func animateViewOut() {
-        UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5, animations: {
-            self.scrollView.transform = CGAffineTransform(translationX: 0, y: UIScreen.main.bounds.height)
+    private func animateBackgroundViewOut() {
+        UIView.animate(withDuration: 0.3, animations: {
+            self.backgroundView.transform = CGAffineTransform(translationX:0, y: self.backgroundViewHeight)
         }) { _ in
             self.dismiss(animated: false)
         }
     }
     
-    // Remove pan gesture handler since we're using native scroll view scrolling
+    @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: view)
+        
+        switch gesture.state {
+        case .began:
+            initialCenter = backgroundView.center
+        case .changed:
+            let newY = max(translation.y, 0)
+            backgroundView.transform = CGAffineTransform(translationX:0, y: newY)
+        case .ended:
+            let velocity = gesture.velocity(in: view)
+            let shouldDismiss = translation.y > backgroundViewHeight / 2 || velocity.y > 500
+            
+            if shouldDismiss {
+                animateBackgroundViewOut()
+            } else {
+                UIView.animate(withDuration: 0.3) {
+                    self.backgroundView.transform = .identity
+                }
+            }
+        default:
+            break
+        }
+    }
     
     @objc func onClickHideTable(_ sender: UIButton?) {
         selectTable?.removeFromSuperview()
@@ -168,8 +172,8 @@ class AgentSettingViewController: UIViewController {
         selectTableMask.isHidden = true
     }
     
-    @objc private func topViewTapped() {
-        animateViewOut()
+    @objc func handleTapGesture(_: UIGestureRecognizer) {
+        animateBackgroundViewOut()
     }
     
     private func initChannelInfoStatus() {
@@ -299,68 +303,49 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
 extension AgentSettingViewController {
     private func createViews() {
         view.backgroundColor = UIColor(white: 0, alpha: 0.5)
-        // Add scrollView directly to view
-        view.addSubview(scrollView)
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTapGesture(_:)))
+        tapGesture.delegate = self
+        view.addGestureRecognizer(tapGesture)
         
-        // Add contentView to scrollView
-        scrollView.addSubview(contentView)
+        view.addSubview(backgroundView)
         
-        // Add topView and settingContentView to contentView
-        contentView.addSubview(topView)
-        contentView.addSubview(settingContentView)
+        backgroundView.addSubview(tabSelectorView)
+        backgroundView.addSubview(scrollView)
         
-        // Add setting-related content to settingContentView
-        settingContentView.addSubview(tabSelectorView)
-        settingContentView.addSubview(channelInfoView)
-        settingContentView.addSubview(agentSettingsView)
+        scrollView.addSubview(channelInfoView)
+        scrollView.addSubview(agentSettingsView)
         
         view.addSubview(selectTableMask)
     }
     
     private func createConstrains() {
-        // ScrollView constraints - full screen
-        scrollView.snp.makeConstraints { make in
-            make.top.left.right.bottom.equalToSuperview()
-        }
-        
-        // ContentView constraints - this contains all the actual content
-        contentView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
-            make.width.equalToSuperview()
-        }
-        
-        // TopView constraints - fixed height at the top (half screen height)
-        topView.snp.makeConstraints { make in
-            make.top.left.right.equalToSuperview()
-            make.height.equalTo(UIScreen.main.bounds.height - 500)
-        }
-        
-        // SettingContentView constraints - below topView
-        settingContentView.snp.makeConstraints { make in
-            make.top.equalTo(topView.snp.bottom)
+        backgroundView.snp.makeConstraints { make in
             make.left.right.bottom.equalToSuperview()
+            make.height.equalTo(backgroundViewHeight)
         }
         
-        // Tab selector inside settingContentView
         tabSelectorView.snp.makeConstraints { make in
-            make.top.equalTo(16)
+            make.top.equalTo(20)
             make.left.equalTo(18)
             make.right.equalTo(-18)
             make.height.equalTo(42)
         }
         
-        // Channel info view inside settingContentView
-        channelInfoView.snp.makeConstraints { make in
-            make.top.equalTo(tabSelectorView.snp.bottom).offset(16)
-            make.left.right.equalToSuperview()
-            make.bottom.equalToSuperview().offset(-16)
+        scrollView.snp.makeConstraints { make in
+            make.top.equalTo(tabSelectorView.snp.bottom)
+            make.left.right.bottom.equalToSuperview()
         }
         
-        // Agent settings view inside settingContentView
+        channelInfoView.snp.makeConstraints { make in
+            make.width.equalTo(self.view)
+            make.left.right.bottom.equalToSuperview()
+            make.top.equalToSuperview()
+        }
+        
         agentSettingsView.snp.makeConstraints { make in
-            make.top.equalTo(tabSelectorView.snp.bottom).offset(16)
-            make.left.right.equalToSuperview()
-            make.bottom.equalToSuperview().offset(-16)
+            make.width.equalTo(self.view)
+            make.left.right.bottom.equalToSuperview()
+            make.top.equalToSuperview()
         }
         
         selectTableMask.snp.makeConstraints { make in
@@ -432,13 +417,6 @@ extension AgentSettingViewController: AgentSettingDelegate {
 extension AgentSettingViewController: UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
         return touch.view == view
-    }
-}
-
-extension AgentSettingViewController: UIScrollViewDelegate {
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        // Handle scroll view scrolling if needed
-        // This can be used for additional scroll-based interactions
     }
 }
 

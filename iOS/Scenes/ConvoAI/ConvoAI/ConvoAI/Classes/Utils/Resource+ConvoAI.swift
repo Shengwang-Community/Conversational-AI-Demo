@@ -300,6 +300,7 @@ extension ResourceManager {
             public static let bioTitle = ResourceManager.localizedString("mine.bio.title")
             public static let iotDevicesTitle = ResourceManager.localizedString("mine.iot.devices.title")
             public static let iotDevicesCount = ResourceManager.localizedString("mine.iot.devices.count")
+            public static let iotDevicesClickToBind = ResourceManager.localizedString("mine.iot.devices.click.to.bind")
             public static let settingsTitle = ResourceManager.localizedString("mine.settings.title")
             
             // Nickname Setting
