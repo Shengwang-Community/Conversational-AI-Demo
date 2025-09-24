@@ -72,16 +72,16 @@ class SIPPhoneListView: UIView {
             ("CL", "911-52465127")
         ]
         
-        phoneNumbers = phoneConfigs.compactMap { (countryCode, phoneNumber) in
-            guard let countryConfig = CountryConfigManager.shared.getCountryByCode(countryCode) else {
+        phoneNumbers = phoneConfigs.compactMap { (regionCode, phoneNumber) -> PhoneNumber? in
+            guard let regionConfig = RegionConfigManager.shared.getRegionByCode(regionCode) else {
                 return nil
             }
             
-            let fullPhoneNumber = "\(countryConfig.dialCode)-\(phoneNumber)"
+            let fullPhoneNumber = "\(regionConfig.dialCode)-\(phoneNumber)"
             
             return PhoneNumber(
-                countryCode: countryConfig.countryCode,
-                flagEmoji: countryConfig.flagEmoji,
+                countryCode: regionConfig.regionCode,
+                flagEmoji: regionConfig.flagEmoji,
                 phoneNumber: fullPhoneNumber
             )
         }

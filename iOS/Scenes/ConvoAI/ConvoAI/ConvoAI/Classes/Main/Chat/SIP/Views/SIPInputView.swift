@@ -8,15 +8,8 @@
 import UIKit
 import Common
 
-// MARK: - Country Model
-struct Country {
-    let code: String
-    let dialCode: String
-    let name: String
-}
-
 protocol SIPInputViewDelegate: AnyObject {
-    func sipInputView(_ inputView: SIPInputView, didChangePhoneNumber phoneNumber: String, countryCode: String)
+    func sipInputView(_ inputView: SIPInputView, didChangePhoneNumber phoneNumber: String, dialCode: String)
     func sipInputViewDidTapCountryButton(_ inputView: SIPInputView)
 }
 
@@ -81,7 +74,7 @@ class SIPInputView: UIView {
     }()
     
     // MARK: - Properties
-    private var selectedCountry: Country!
+    private var selectedRegion: RegionConfig!
     
     // MARK: - Initialization
     override init(frame: CGRect) {
@@ -151,17 +144,18 @@ class SIPInputView: UIView {
     }
     
     private func setDefaultCountry() {
-        selectedCountry = Country(code: "IN", dialCode: "+91", name: "India")
+        let regions = RegionConfigManager.shared.allRegions
+        selectedRegion = regions.first
         updateCountryButton()
     }
     
     private func updateCountryButton() {
-        if let countryConfig = CountryConfigManager.shared.getCountryByCode(selectedCountry.code) {
+        if let countryConfig = RegionConfigManager.shared.getRegionByCode(selectedRegion.regionCode) {
             flagEmojiLabel.text = countryConfig.flagEmoji
         } else {
             flagEmojiLabel.text = "🏳️" 
         }
-        countryCodeLabel.text = selectedCountry.dialCode
+        countryCodeLabel.text = selectedRegion.dialCode
     }
     
     @objc private func countryButtonTapped() {
@@ -176,20 +170,20 @@ class SIPInputView: UIView {
     
     func getFullPhoneNumber() -> String {
         let number = phoneTextField.text ?? ""
-        return "\(selectedCountry.dialCode)\(number)"
+        return "\(selectedRegion.dialCode)\(number)"
     }
     
     func setPhoneNumber(_ number: String) {
         phoneTextField.text = number
     }
     
-    func setSelectedCountry(_ country: Country) {
-        selectedCountry = country
+    func setSelectedRegionConfig(_ config: RegionConfig) {
+        selectedRegion = config
         updateCountryButton()
     }
     
-    func getSelectedCountry() -> Country {
-        return selectedCountry
+    func getSelectedRegion() -> RegionConfig {
+        return selectedRegion
     }
 }
 
@@ -203,7 +197,7 @@ extension SIPInputView: UITextFieldDelegate {
             return false
         }
         
-        delegate?.sipInputView(self, didChangePhoneNumber: newText, countryCode: selectedCountry.dialCode)
+        delegate?.sipInputView(self, didChangePhoneNumber: newText, dialCode: selectedRegion.dialCode)
         return true
     }
     

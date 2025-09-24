@@ -131,9 +131,9 @@ extension CallOutSipViewController {
 
 // MARK: - SIPInputViewDelegate
 extension CallOutSipViewController: SIPInputViewDelegate {
-    func sipInputView(_ inputView: SIPInputView, didChangePhoneNumber phoneNumber: String, countryCode: String) {
+    func sipInputView(_ inputView: SIPInputView, didChangePhoneNumber phoneNumber: String, dialCode: String) {
         callButton.isEnabled = !phoneNumber.isEmpty
-        self.phoneNumber = "\(countryCode)\(phoneNumber)"
+        self.phoneNumber = "\(dialCode)\(phoneNumber)"
     }
     
     func sipInputViewDidTapCountryButton(_ inputView: SIPInputView) {
@@ -148,8 +148,8 @@ extension CallOutSipViewController: SIPInputViewDelegate {
 
 // MARK: - SIPPhoneAreaListViewDelegate
 extension CallOutSipViewController: SIPPhoneAreaListViewDelegate {
-    func phoneAreaListView(_ listView: SIPPhoneAreaListView, didSelectCountry country: Country) {
-        sipInputView.setSelectedCountry(country)
-        print("Selected country: \(country.name) (\(country.dialCode))")
+    func phoneAreaListView(_ listView: SIPPhoneAreaListView, didSelectCountry region: RegionConfig) {
+        sipInputView.setSelectedRegionConfig(region)
+        print("Selected country: \(region.regionCode) (\(region.dialCode))")
     }
 }

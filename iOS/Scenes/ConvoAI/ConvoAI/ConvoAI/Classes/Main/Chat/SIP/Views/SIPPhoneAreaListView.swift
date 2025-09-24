@@ -10,7 +10,7 @@ import SnapKit
 import Common
 
 protocol SIPPhoneAreaListViewDelegate: AnyObject {
-    func phoneAreaListView(_ listView: SIPPhoneAreaListView, didSelectCountry country: Country)
+    func phoneAreaListView(_ listView: SIPPhoneAreaListView, didSelectCountry region: RegionConfig)
 }
 
 class SIPPhoneAreaListView: UIView {
@@ -33,7 +33,7 @@ class SIPPhoneAreaListView: UIView {
     }()
     
     // MARK: - Properties
-    private var countries: [Country] = []
+    private var regions: [RegionConfig] = []
     private var isVisible = false
     
     // MARK: - Initialization
@@ -63,19 +63,9 @@ class SIPPhoneAreaListView: UIView {
     }
     
     private func setupCountries() {
-        let countryCodes = ["IN", "CL"]
+        let regionCodes = ["IN", "CL"]
         
-        countries = countryCodes.compactMap { countryCode in
-            guard let countryConfig = CountryConfigManager.shared.getCountryByCode(countryCode) else {
-                return nil
-            }
-            
-            return Country(
-                code: countryConfig.countryCode,
-                dialCode: countryConfig.dialCode,
-                name: countryConfig.countryCode
-            )
-        }
+        regions = RegionConfigManager.shared.allRegions
     }
     
     // MARK: - Public Methods
@@ -104,12 +94,12 @@ class SIPPhoneAreaListView: UIView {
 // MARK: - UITableViewDataSource
 extension SIPPhoneAreaListView: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return countries.count
+        return regions.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CountryCell", for: indexPath) as! CountryCell
-        cell.configure(with: countries[indexPath.row])
+        cell.configure(with: regions[indexPath.row])
         return cell
     }
 }
@@ -122,7 +112,7 @@ extension SIPPhoneAreaListView: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let selectedCountry = countries[indexPath.row]
+        let selectedCountry = regions[indexPath.row]
         delegate?.phoneAreaListView(self, didSelectCountry: selectedCountry)
         hide()
     }
@@ -190,14 +180,9 @@ class CountryCell: UITableViewCell {
         }
     }
     
-    func configure(with country: Country) {
-        if let countryConfig = CountryConfigManager.shared.getCountryByCode(country.code) {
-            flagEmojiLabel.text = countryConfig.flagEmoji
-        } else {
-            flagEmojiLabel.text = "🏳️" 
-        }
-        
-        nameLabel.text = country.name
-        dialCodeLabel.text = country.dialCode
+    func configure(with region: RegionConfig) {
+        flagEmojiLabel.text = region.flagEmoji
+        nameLabel.text = region.regionCode
+        dialCodeLabel.text = region.dialCode
     }
 }
