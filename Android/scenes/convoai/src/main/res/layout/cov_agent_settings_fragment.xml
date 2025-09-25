@@ -15,8 +15,7 @@
             android:id="@+id/cl_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:paddingBottom="80dp">
+            android:paddingVertical="16dp">
 
             <LinearLayout
                 android:id="@+id/ll_agent"

@@ -68,9 +68,24 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
         }
     }
 
-    override fun disableDragging(): Boolean {
-        // Disable swipe to dismiss
-        return true
+    override fun onStart() {
+        super.onStart()
+        // Set peek height to 2/3 of screen height for BottomSheetDialog
+        dialog?.let { dialog ->
+            val bottomSheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(bottomSheet)
+            
+            val displayMetrics = resources.displayMetrics
+            val screenHeight = displayMetrics.heightPixels
+            val peekHeight = (screenHeight * 2 / 3)
+
+            // Set the height to allow content scrolling
+            bottomSheet.layoutParams.height = peekHeight
+            
+            behavior.peekHeight = peekHeight
+            behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+            behavior.isDraggable = false
+        }
     }
 
     override fun onDismiss(dialog: DialogInterface) {

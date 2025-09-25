@@ -11,14 +11,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/ai_fill2"
-        android:paddingBottom="12dp">
+        android:paddingVertical="16dp">
 
         <TextView
             android:id="@+id/tv_service_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="32dp"
-            android:layout_marginTop="16dp"
             android:text="@string/cov_agent_service_info"
             android:textColor="@color/ai_icontext4"
             android:textSize="12sp"
