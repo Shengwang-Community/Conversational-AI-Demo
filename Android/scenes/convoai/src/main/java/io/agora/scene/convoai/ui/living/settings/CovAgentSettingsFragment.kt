@@ -6,6 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CompoundButton
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -29,7 +31,6 @@ import io.agora.scene.convoai.databinding.CovSettingOptionItem2Binding
 import io.agora.scene.convoai.databinding.CovSettingOptionItemBinding
 import io.agora.scene.convoai.ui.CovRenderMode
 import io.agora.scene.convoai.ui.CovTranscriptRender
-import io.agora.scene.convoai.ui.living.settings.CovAvatarSelectorDialog
 import io.agora.scene.convoai.ui.living.CovLivingViewModel
 import io.agora.scene.convoai.ui.living.voiceprint.CovVoiceprintLockDialog
 import kotlinx.coroutines.launch
@@ -146,15 +147,13 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         }
     }
 
-    private val isIdle get() = livingViewModel.connectionState.value == AgentConnectionState.IDLE
-
     // The non-English overseas version must disable AiVad.
     private fun setAiVadBySelectLanguage() {
         mBinding?.apply {
             tvLanguageDetail.text = CovAgentManager.language?.language_name
             // AI-VAD - Only update UI state, preserve user settings
             if (CovAgentManager.language?.aivad_supported == true) {
-                cbAiVad.isEnabled = isIdle
+                cbAiVad.isEnabled = livingViewModel.connectionState.value == AgentConnectionState.IDLE
                 cbAiVad.isChecked = CovAgentManager.enableAiVad
             } else {
                 // Language doesn't support AI-VAD, force disable
@@ -166,60 +165,45 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
     }
 
     private fun updatePageEnable() {
-        val context = context ?: return
-        if (isIdle) {
-            mBinding?.apply {
-                tvLanguageDetail.setTextColor(context.getColor(R.color.ai_icontext1))
-                ivLanguageArrow.setColorFilter(
-                    context.getColor(R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
-                )
-                tvRenderDetail.setTextColor(context.getColor(R.color.ai_icontext1))
-                ivRenderArrow.setColorFilter(
-                    context.getColor(R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
-                )
-                clLanguage.isEnabled = true
-                clRenderMode.isEnabled = true
-                cbAiVad.isEnabled = CovAgentManager.language?.aivad_supported ?: false
-
-                clAvatar.isEnabled = true
-                tvAvatarDetail.setTextColor(context.getColor(R.color.ai_icontext1))
-                ivAvatarArrow.setColorFilter(
-                    context.getColor(R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
-                )
-
-                clVoiceprintMode.isEnabled = true
-                tvVoiceprintDetail.setTextColor(context.getColor(R.color.ai_icontext1))
-                ivVoiceprintArrow.setColorFilter(
-                    context.getColor(R.color.ai_icontext1), PorterDuff.Mode.SRC_IN
-                )
+        val isIdle = livingViewModel.connectionState.value == AgentConnectionState.IDLE
+        mBinding?.apply {
+            // Language section
+            setViewState(clLanguage, tvLanguageDetail, ivLanguageArrow,  isIdle)
+            
+            // Avatar section  
+            setViewState(clAvatar, tvAvatarDetail, ivAvatarArrow,  isIdle)
+            
+            // AI VAD section
+            cbAiVad.isEnabled = if (isIdle) {
+                CovAgentManager.language?.aivad_supported ?: false
+            } else {
+                false
             }
-        } else {
-            mBinding?.apply {
-                tvLanguageDetail.setTextColor(context.getColor(R.color.ai_icontext4))
-                ivLanguageArrow.setColorFilter(
-                    context.getColor(R.color.ai_icontext4), PorterDuff.Mode.SRC_IN
-                )
-                tvRenderDetail.setTextColor(context.getColor(R.color.ai_icontext4))
-                ivRenderArrow.setColorFilter(
-                    context.getColor(R.color.ai_icontext4), PorterDuff.Mode.SRC_IN
-                )
-                clLanguage.isEnabled = false
-                clRenderMode.isEnabled = false
-                cbAiVad.isEnabled = false
-
-                clAvatar.isEnabled = false
-                tvAvatarDetail.setTextColor(context.getColor(R.color.ai_icontext4))
-                ivAvatarArrow.setColorFilter(
-                    context.getColor(R.color.ai_icontext4), PorterDuff.Mode.SRC_IN
-                )
-
-                clVoiceprintMode.isEnabled = false
-                tvVoiceprintDetail.setTextColor(context.getColor(R.color.ai_icontext4))
-                ivVoiceprintArrow.setColorFilter(
-                    context.getColor(R.color.ai_icontext4), PorterDuff.Mode.SRC_IN
-                )
+            
+            // Render mode section
+            setViewState(clRenderMode, tvRenderDetail, ivRenderArrow, isIdle)
+            
+            // Voiceprint section (special logic)
+            val isVoiceprintEnabled = if (isIdle) {
+                CovAgentManager.getPreset()?.is_support_sal ?: true
+            } else {
+                false
             }
+            setViewState(clVoiceprintMode, tvVoiceprintDetail, ivVoiceprintArrow,  isVoiceprintEnabled)
         }
+    }
+
+    /**
+     * Helper method to set UI state for view group with text and arrow
+     */
+    private fun setViewState(container: View, textView: TextView, arrowView: ImageView, isEnabled: Boolean) {
+        val context = context ?: return
+        val colorRes = if (isEnabled) R.color.ai_icontext1 else R.color.ai_icontext4
+        val color = context.getColor(colorRes)
+
+        container.isEnabled = isEnabled
+        textView.setTextColor(color)
+        arrowView.setColorFilter(color, PorterDuff.Mode.SRC_IN)
     }
 
     private fun onClickLanguage() {
