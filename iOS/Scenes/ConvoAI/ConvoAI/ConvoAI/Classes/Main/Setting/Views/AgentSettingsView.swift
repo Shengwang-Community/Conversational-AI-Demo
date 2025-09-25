@@ -44,6 +44,7 @@ class AgentSettingsView: UIView {
             view.detailLabel.text = settingManager.preset?.defaultLanguageName
         }
         view.button.addTarget(self, action: #selector(onClickLanguage(_:)), for: .touchUpInside)
+        view.setEnable(AppContext.stateManager().agentState == .unload)
         return view
     }()
     
@@ -80,6 +81,7 @@ class AgentSettingsView: UIView {
         } else {
             avatarImageView.image = nil
         }
+        view.setEnable(AppContext.stateManager().agentState == .unload)
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.layer.cornerRadius = 10
         avatarImageView.layer.masksToBounds = true
@@ -161,7 +163,7 @@ class AgentSettingsView: UIView {
         let transcriptMode = settingManager.transcriptMode
         view.detailLabel.text = transcriptMode.renderDisplayName
         view.button.addTarget(self, action: #selector(onClickTranscriptRender(_:)), for: .touchUpInside)
-        view.bottomLine.isHidden = true
+        view.setEnable(AppContext.stateManager().agentState == .unload)
         return view
     }()
     
@@ -173,8 +175,18 @@ class AgentSettingsView: UIView {
         let settingManager = AppContext.settingManager()
         let currentMode = settingManager.voiceprintMode
         view.detailLabel.text = currentMode.title
-        
         view.button.addTarget(self, action: #selector(onClickVoiceprintMode(_:)), for: .touchUpInside)
+        view.bottomLine.isHidden = true
+        if AppContext.stateManager().agentState == .unload {
+            if let preset = AppContext.settingManager().preset,
+               preset.supportSal ?? true {
+                view.setEnable(true)
+            } else {
+                view.setEnable(false)
+            }
+        } else {
+            view.setEnable(false)
+        }
         return view
     }()
 
