@@ -15,7 +15,9 @@ class CallOutSipViewController: SIPViewController {
     internal var phoneNumber = ""
     internal let uid = "\(RtcEnum.getUid())"
     internal var token = ""
-    internal var timeout = 30
+    internal var timeout = 60
+    internal var channelName = ""
+    internal var agentUid = 0
     internal var agentState: AgentState = .idle
     internal var convoAIAPI: ConversationalAIAPI!
     internal var timer: Timer?
@@ -232,7 +234,11 @@ class CallOutSipViewController: SIPViewController {
     
     override func onCloseButton() {
         super.onCloseButton()
-        
+        channelName = ""
+        agentUid = 0
+        convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
+            
+        }
         stopTimer()
     }
 }

@@ -6,21 +6,34 @@
 //
 
 import Foundation
+import Common
 
 extension CallOutSipViewController {
     func startRequest() async throws {
         return try await withCheckedThrowingContinuation { continuation in
             let parameter: [String: Any?] = [
-                "app_id": nil,
+                "app_id": AppContext.shared.appId,
                 "app_cert": nil,
-                "uibasic_auth_usernamed": nil,
+                "basic_auth_username": nil,
                 "basic_auth_password": nil,
-                "preset_name": nil,
-                "preset_type": nil,
+                "preset_name": AppContext.preferenceManager()?.preference.preset?.name,
+                "preset_type": AppContext.preferenceManager()?.preference.preset?.presetType,
                 "convoai_body": [
-                    "name": phoneNumber,
-                    "parameters": [
-                        "phone_number": phoneNumber,
+                    "name": nil,
+                    "pipeline_id": nil,
+                    "properties": [
+                        "channel": channelName,
+                        "token": nil,
+                        "agent_rtc_uid": "\(agentUid)",
+                        "sip": [
+                            "callee": phoneNumber,
+                            "caller": [
+                                "params": [
+                                    "token": nil,
+                                    "uid": nil
+                                ]
+                            ]
+                        ]
                     ]
                 ]
             ]

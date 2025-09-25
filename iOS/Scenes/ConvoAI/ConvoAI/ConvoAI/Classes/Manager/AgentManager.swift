@@ -241,7 +241,7 @@ class AgentManager: AgentAPI {
 
 enum AgentServiceUrl {
     static let retryCount = 1
-    static let version = "v4"
+    static let version = "v5"
     var baseUrl: String {
         return AppContext.shared.baseServerUrl + "/"
     }

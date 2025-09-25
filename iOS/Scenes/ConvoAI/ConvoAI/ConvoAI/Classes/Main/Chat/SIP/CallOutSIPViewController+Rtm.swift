@@ -71,6 +71,11 @@ extension CallOutSipViewController: RTMManagerDelegate {
         }
     }
     
+    func remoteLeave() {
+        addLog("<<< remoteLeave")
+        callingTipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips
+    }
+    
     func onTokenPrivilegeWillExpire(channelName: String) {
         addLog("[traceId: \(traceId)] <<< onTokenPrivilegeWillExpire")
         NetworkManager.shared.generateToken(

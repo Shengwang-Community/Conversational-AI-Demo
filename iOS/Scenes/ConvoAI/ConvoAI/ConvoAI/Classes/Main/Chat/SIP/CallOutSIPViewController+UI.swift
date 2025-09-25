@@ -8,6 +8,7 @@
 import Foundation
 import SnapKit
 import SVProgressHUD
+import Common
 
 extension CallOutSipViewController {
     func setupSIPViews() {
@@ -92,13 +93,26 @@ extension CallOutSipViewController {
     
     @objc func startCall() {
         hideKeyboard()
+        if phoneNumber.count < 4 {
+            SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Sip.sipPhoneInvalid)
+            return
+        }
         SVProgressHUD.show()
+        channelName = "agent_\(UUID().uuidString.prefix(8))"
+        agentUid = AppContext.agentUid
         Task {
             do {
                 if !rtmManager.isLogin {
                     try await loginRTM()
-                    try await startRequest()
                 }
+                await MainActor.run {
+                    convoAIAPI.subscribeMessage(channelName: channelName) { [weak self] err in
+                        if let error = err {
+                            self?.addLog("[subscribeMessage] <<<< error: \(error.message)")
+                        }
+                    }
+                }
+                try await startRequest()
                 await MainActor.run {
                     SVProgressHUD.dismiss()
                     showCallingView()

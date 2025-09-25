@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Common
 
 extension CallOutSipViewController: ConversationalAIAPIEventHandler {
     public func onAgentVoiceprintStateChanged(agentUserId: String, event: VoiceprintStateChangeEvent) {
@@ -24,7 +25,12 @@ extension CallOutSipViewController: ConversationalAIAPIEventHandler {
     }
     
     public func onAgentStateChanged(agentUserId: String, event: StateChangeEvent) {
-        addLog("onAgentStateChanged")
+        addLog("<<< [onAgentStateChanged]: \(event.state)")
+        
+        if event.state != .idle {
+            callingTipsLabel.text = ResourceManager.L10n.Sip.sipOnCallTips
+        }
+        
         if self.agentState != .idle {
             return
         }

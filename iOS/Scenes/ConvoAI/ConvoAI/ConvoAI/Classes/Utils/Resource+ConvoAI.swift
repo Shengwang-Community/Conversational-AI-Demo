@@ -239,6 +239,9 @@ extension ResourceManager {
             public static let sipCallOutTips = ResourceManager.localizedString("agent.sip.out.call.tips")
             public static let sipCallingTips = ResourceManager.localizedString("agent.sip.calling.tips")
             public static let sipInputPlaceholder = ResourceManager.localizedString("agent.sip.input.placeholder")
+            public static let sipOnCallTips = ResourceManager.localizedString("agent.sip.on.call.tips")
+            public static let sipEndCallTips = ResourceManager.localizedString("agent.sip.end.call.tips")
+            public static let sipPhoneInvalid = ResourceManager.localizedString("agent.sip.phone.invalid")
         }
     }
 }

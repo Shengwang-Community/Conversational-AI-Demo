@@ -174,3 +174,6 @@
 "agent.sip.out.call.tips" = "Enter your number below, and our AI Agent will call you.";
 "agent.sip.calling.tips" = "Calling now... please answer on your phone.";
 "agent.sip.input.placeholder" = "Enter your mobile or landline number";
+"agent.sip.on.call.tips" = "On the call";
+"agent.sip.end.call.tips" = "The call has ended, please exit.";
+"agent.sip.phone.invalid" = "Please enter the correct number."
