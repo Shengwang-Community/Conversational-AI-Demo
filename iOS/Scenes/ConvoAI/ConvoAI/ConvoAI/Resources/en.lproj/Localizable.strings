@@ -176,4 +176,4 @@
 "agent.sip.input.placeholder" = "Enter your mobile or landline number";
 "agent.sip.on.call.tips" = "On the call";
 "agent.sip.end.call.tips" = "The call has ended, please exit.";
-"agent.sip.phone.invalid" = "Please enter the correct number."
+"agent.sip.phone.invalid" = "Please enter the correct number.";
