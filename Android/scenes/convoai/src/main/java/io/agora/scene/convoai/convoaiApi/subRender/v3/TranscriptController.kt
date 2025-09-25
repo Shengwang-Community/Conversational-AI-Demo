@@ -390,7 +390,8 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
             userId = userId,
             text = text,
             status = if (isFinal) TranscriptStatus.END else TranscriptStatus.IN_PROGRESS,
-            type = TranscriptType.USER
+            type = TranscriptType.USER,
+            renderMode = mRenderMode ?: config.renderMode
         )
         // Local user messages are directly callbacked out
         callMessagePrint(
@@ -495,6 +496,7 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
             text = text,
             status = status,
             type = TranscriptType.AGENT,
+            renderMode = TranscriptRenderMode.Text
         )
         // Agent text mode messages are directly callback out
         callMessagePrint(TAG_UI, "<<< [Text Mode] pts:$mPresentationMs $agentUserId $transcript")
@@ -673,6 +675,7 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
                             text = interruptedText,
                             status = TranscriptStatus.INTERRUPTED,
                             type = TranscriptType.AGENT,
+                            renderMode = TranscriptRenderMode.Word
                         )
                         val agentUserId = turn.agentUserId
                         callMessagePrint(
@@ -733,6 +736,7 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
                 text = if (targetIsEnd) targetTurn.text else targetWords.joinToString("") { it.word },
                 status = if (targetIsEnd) TranscriptStatus.END else TranscriptStatus.IN_PROGRESS,
                 type = TranscriptType.AGENT,
+                renderMode = TranscriptRenderMode.Word
             )
             if (targetIsEnd) {
                 callMessagePrint(TAG_UI, "<<< [end] pts:$mPresentationMs $agentUserId $newTranscript")

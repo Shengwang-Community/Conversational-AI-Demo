@@ -41,6 +41,7 @@ import io.agora.scene.convoai.convoaiApi.Priority
 import io.agora.scene.convoai.convoaiApi.StateChangeEvent
 import io.agora.scene.convoai.convoaiApi.TextMessage
 import io.agora.scene.convoai.convoaiApi.Transcript
+import io.agora.scene.convoai.convoaiApi.TranscriptRenderMode
 import io.agora.scene.convoai.convoaiApi.TranscriptStatus
 import io.agora.scene.convoai.convoaiApi.TranscriptType
 import io.agora.scene.convoai.convoaiApi.VoiceprintStateChangeEvent
@@ -215,7 +216,8 @@ class CovLivingViewModel : ViewModel() {
                 text = displayText,
                 status = TranscriptStatus.END,
                 type = TranscriptType.AGENT,
-                userId = CovAgentManager.agentUID.toString()
+                userId = CovAgentManager.agentUID.toString(),
+                renderMode = TranscriptRenderMode.Text
             )
         }
 
@@ -241,7 +243,8 @@ class CovLivingViewModel : ViewModel() {
                     text = displayText,
                     status = TranscriptStatus.IN_PROGRESS,
                     type = TranscriptType.AGENT,
-                    userId = CovAgentManager.agentUID.toString()
+                    userId = CovAgentManager.agentUID.toString(),
+                    renderMode = TranscriptRenderMode.Text
                 )
 
                 typingProgress++
@@ -255,7 +258,8 @@ class CovLivingViewModel : ViewModel() {
                     text = currentTypingText,
                     status = TranscriptStatus.END,
                     type = TranscriptType.AGENT,
-                    userId = CovAgentManager.agentUID.toString()
+                    userId = CovAgentManager.agentUID.toString(),
+                    renderMode = TranscriptRenderMode.Text
                 )
             }
 
@@ -287,15 +291,25 @@ class CovLivingViewModel : ViewModel() {
         override fun onAgentInterrupted(agentUserId: String, event: InterruptEvent) {
             // Handle interruption
             _interruptEvent.value = event
-            if (CovAgentManager.renderMode == CovRenderMode.Companion.SYNC_TEXT) {
+            if (CovAgentManager.renderMode == CovRenderMode.SYNC_TEXT) {
                 if (event.turnId == currentTypingTurnId) {
                     stopTypingAnimation()
                 }
-            } else if (CovAgentManager.renderMode == CovRenderMode.Companion.TEXT) {
-                // In non-sync mode, directly update transcript
-                if (event.turnId == _transcriptUpdate.value?.turnId) {
-                    val transcriptUpdate = _transcriptUpdate.value?.copy(status = TranscriptStatus.END)
-                    _transcriptUpdate.value = transcriptUpdate
+            } else {
+                val realRenderMode = if (_transcriptUpdate.value?.renderMode == TranscriptRenderMode.Text) {
+                    CovRenderMode.TEXT
+                } else {
+                    CovAgentManager.renderMode
+                }
+                if(realRenderMode == CovRenderMode.TEXT) {
+                    // In non-sync mode, directly update transcript
+                    if (event.turnId == _transcriptUpdate.value?.turnId) {
+                        val transcriptUpdate = _transcriptUpdate.value?.copy(status = TranscriptStatus.END)
+                        CovLogger.d(TAG, "[Text Mode] onAgentInterrupted turn：${event.turnId}")
+                        _transcriptUpdate.value = transcriptUpdate
+                    } else {
+                        CovLogger.d(TAG, "[Text Mode] onAgentInterrupted but not current turn：${event.turnId}")
+                    }
                 }
             }
         }

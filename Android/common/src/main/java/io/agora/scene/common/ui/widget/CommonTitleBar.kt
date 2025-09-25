@@ -79,6 +79,13 @@ class CommonTitleBar @JvmOverloads constructor(
     }
 
     /**
+     *  Set click listener for title
+     */
+    fun setOnTitleClickListener(listener: () -> Unit) {
+        binding.tvTitle.setOnClickListener { listener() }
+    }
+
+    /**
      * Set click listener for back button
      */
     fun setOnBackClickListener(listener: () -> Unit) {
