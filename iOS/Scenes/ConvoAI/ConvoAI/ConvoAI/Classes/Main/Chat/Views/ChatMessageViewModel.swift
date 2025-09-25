@@ -29,7 +29,6 @@ class Message {
     var local_turn: Int = 0
     var index: Int = 0
     var transcript: String = ""
-
     var isImage: Bool {
         return imageSource != nil
     }
@@ -47,7 +46,8 @@ class ChatMessageViewModel: NSObject {
     weak var delegate: ChatMessageViewModelDelegate?
     var timer: Timer?
     var displayMode: TranscriptDisplayMode = .words
-    
+    var realRenderMode: TranscriptRenderMode = .text
+
     override init() {
         super.init()
         registerDelegate()
