@@ -35,6 +35,12 @@ object ServerConfig {
         }
 
     @JvmStatic
+    val filingNoRecordQueryUrl: String
+        get() {
+            return "https://beian.miit.gov.cn/#/Integrated/recordQuery"
+        }
+
+    @JvmStatic
     val personalDataUrl: String
         get() {
             return if (toolBoxUrl.contains("service.apprtc.cn")) {

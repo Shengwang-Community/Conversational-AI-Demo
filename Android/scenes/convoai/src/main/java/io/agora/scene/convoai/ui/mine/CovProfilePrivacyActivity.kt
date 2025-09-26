@@ -2,12 +2,14 @@ package io.agora.scene.convoai.ui.mine
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.net.ApiReport
 import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.databinding.CovActivityProfilePrivacyBinding
+import androidx.core.net.toUri
 
 class CovProfilePrivacyActivity : BaseActivity<CovActivityProfilePrivacyBinding>() {
 
@@ -53,7 +55,12 @@ class CovProfilePrivacyActivity : BaseActivity<CovActivityProfilePrivacyBinding>
             }
 
             clFilingNo.setOnClickListener {
-                ToastUtil.show("click filing no!")
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, ServerConfig.filingNoRecordQueryUrl.toUri())
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    ToastUtil.show("Unable to open browser")
+                }
             }
         }
     }
