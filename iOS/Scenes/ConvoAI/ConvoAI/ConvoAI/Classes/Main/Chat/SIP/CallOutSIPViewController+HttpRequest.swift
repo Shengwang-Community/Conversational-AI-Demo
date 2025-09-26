@@ -38,12 +38,16 @@ extension CallOutSipViewController {
                 ]
             ]
             let param = (CommonFeature.removeNilValues(from: parameter) as? [String: Any]) ?? [:]
-            agentManager.callSIP(parameter: param, completion: { err in
+            agentManager.callSIP(parameter: param, completion: { err, res in
                 if let error = err {
                     continuation.resume(throwing: error)
                     return
                 }
-                
+                if let agentId = res?.agentId {
+                    AppContext.preferenceManager()?.updateRoomState(.connected)
+                    AppContext.preferenceManager()?.updateAgentState(.connected)
+                    AppContext.preferenceManager()?.updateAgentId(agentId)
+                }
                 continuation.resume()
             })
         }

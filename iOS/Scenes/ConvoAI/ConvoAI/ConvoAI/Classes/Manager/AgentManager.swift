@@ -50,7 +50,7 @@ protocol AgentAPI {
     /// - Parameters:
     ///   - parameter: The parameters for calling the SIP phone number
     ///   - completion: Callback with optional error
-    func callSIP(parameter: [String: Any], completion: @escaping ((ConvoAIError?) -> Void))
+    func callSIP(parameter: [String: Any], completion: @escaping ((ConvoAIError?, SIPResponseModel?) -> Void))
 }
 
 class AgentManager: AgentAPI {
@@ -219,7 +219,7 @@ class AgentManager: AgentAPI {
         }
     }
     
-    func callSIP(parameter: [String: Any], completion: @escaping ((ConvoAIError?) -> Void)) {
+    func callSIP(parameter: [String: Any], completion: @escaping ((ConvoAIError?, SIPResponseModel?) -> Void)) {
         let url = AgentServiceUrl.callSIPPath("convoai/\(AgentServiceUrl.version)/call").toHttpUrlSting()
         ConvoAILogger.info("request call SIP api: \(url) parameter: \(parameter)")
         NetworkManager.shared.postRequest(urlString: url, params: parameter) { result in
@@ -227,13 +227,29 @@ class AgentManager: AgentAPI {
             if let code = result["code"] as? Int, code != 0 {
                 let msg = result["msg"] as? String ?? "Unknown error"
                 let error = ConvoAIError.serverError(code: code, message: msg)
-                completion(error)
+                completion(error, nil)
                 return
             }
-            completion(nil)
+            guard let data = result["data"] as? [String: Any] else {
+                let error = ConvoAIError.serverError(code: -1, message: "data error")
+                completion(error, nil)
+                return
+            }
+            
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: data)
+                let res = try JSONDecoder().decode(SIPResponseModel.self, from: jsonData)
+                //Temporary requirement: Remove custom settings.
+                completion(nil, res)
+            } catch {
+                ConvoAILogger.error("JSON decode error: \(error)")
+                ConvoAILogger.error("Raw data: \(data)")
+                let decodeError = ConvoAIError.serverError(code: -1, message: "JSON decode error: \(error.localizedDescription)")
+                completion(decodeError, nil)
+            }
         } failure: { msg in
             let error = ConvoAIError.serverError(code: -1, message: msg)
-            completion(error)
+            completion(error, nil)
         }
     }
     

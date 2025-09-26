@@ -71,9 +71,14 @@ extension CallOutSipViewController: RTMManagerDelegate {
         }
     }
     
+    func remoteJoin() {
+        addLog("remoteJoin")
+    }
+    
     func remoteLeave() {
         addLog("<<< remoteLeave")
         callingTipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips
+        AppContext.preferenceManager()?.updateAgentState(.disconnected)
     }
     
     func onTokenPrivilegeWillExpire(channelName: String) {

@@ -12,6 +12,9 @@ import Common
 
 extension CallOutSipViewController {
     func setupSIPViews() {
+        navivationBar.settingButton.isHidden = false
+        navivationBar.settingButton.addTarget(self, action: #selector(onClickSettingButton), for: .touchUpInside)
+
         sipInputView.delegate = self
         phoneAreaListView.delegate = self
         
@@ -114,9 +117,12 @@ extension CallOutSipViewController {
                 }
                 try await startRequest()
                 await MainActor.run {
+                    AppContext.preferenceManager()?.updateRoomId(channelName)
+                    AppContext.preferenceManager()?.updateUserId(uid)
                     SVProgressHUD.dismiss()
                     showCallingView()
                     startTimer()
+                    navivationBar.netStateView.isHidden = true
                 }
             } catch {
                 addLog("Failed to login rtm: \(error)")
@@ -129,6 +135,21 @@ extension CallOutSipViewController {
     @objc func closeConnect() {
         showPrepareCallView()
         logoutRTM()
+        resetPreference()
+    }
+    
+    @objc func onClickSettingButton() {
+        let settingVC = SipSettingViewController()
+        settingVC.agentManager = agentManager
+        settingVC.rtcManager = rtcManager
+        settingVC.currentTabIndex = 0
+        let navigationController = UINavigationController(rootViewController: settingVC)
+        navigationController.modalPresentationStyle = .overFullScreen
+        present(navigationController, animated: false)
+    }
+    
+    func resetPreference() {
+        AppContext.preferenceManager()?.resetAgentInformation()
     }
     
     func showCallingView() {
