@@ -31,6 +31,7 @@ import io.agora.scene.convoai.constant.VoiceprintMode
 import io.agora.scene.convoai.databinding.CovVoiceprintOptionItemBinding
 import io.agora.scene.convoai.databinding.CovVoiceprintLockDialogBinding
 import io.agora.scene.convoai.constant.CovAgentManager
+import io.agora.scene.convoai.ui.living.settings.CovAvatarSelectorDialog
 import io.agora.scene.convoai.ui.mine.TermsActivity
 import java.text.SimpleDateFormat
 import java.util.Date

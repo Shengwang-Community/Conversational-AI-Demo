@@ -18,10 +18,9 @@
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:padding="16dp"
-            android:src="@drawable/app_icon_close"
+            android:src="@drawable/app_icon_close_grey"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/ai_icontext1" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tvTitle"

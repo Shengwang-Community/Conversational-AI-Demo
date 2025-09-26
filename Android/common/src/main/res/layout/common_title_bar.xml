@@ -25,9 +25,10 @@
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:textColor="@color/ai_icontext1"
         android:textSize="16sp"
+        android:gravity="center"
         android:text="@string/common_app_title"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

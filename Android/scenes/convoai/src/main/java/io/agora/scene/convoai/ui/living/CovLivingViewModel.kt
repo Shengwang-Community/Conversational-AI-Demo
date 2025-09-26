@@ -498,6 +498,7 @@ class CovLivingViewModel : ViewModel() {
             ) {}
         }
 
+        CovAgentManager.channelName = ""
         resetState()
     }
 
