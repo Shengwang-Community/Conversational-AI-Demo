@@ -23,7 +23,7 @@
         android:layout_height="24dp"
         android:layout_gravity="center"
         android:layout_marginHorizontal="6dp"
-        android:gravity="bottom"
+        android:gravity="center"
         android:orientation="horizontal"
         android:textColor="@color/ai_icontext1"
         android:textSize="16sp"

@@ -144,7 +144,7 @@ class CovAgentListFragment : BaseFragment<CovFragmentAgentListBinding>() {
             val currentTextSize = textView.textSize / context.resources.displayMetrics.density
 
             val textSizeAnimator = ValueAnimator.ofFloat(currentTextSize, targetTextSize).apply {
-                duration = 300
+                duration = 200
                 setInterpolator(interpolator)
                 addUpdateListener { animation ->
                     val animatedValue = animation.animatedValue as Float
@@ -157,7 +157,7 @@ class CovAgentListFragment : BaseFragment<CovFragmentAgentListBinding>() {
             val currentAlpha = iconView.alpha
 
             val iconAlphaAnimator = ObjectAnimator.ofFloat(iconView, "alpha", currentAlpha, targetAlpha).apply {
-                duration = 300
+                duration = 200
                 setInterpolator(interpolator)
                 addListener(object : android.animation.AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: android.animation.Animator) {
