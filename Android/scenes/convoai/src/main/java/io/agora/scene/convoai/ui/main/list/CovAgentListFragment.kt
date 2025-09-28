@@ -1,9 +1,13 @@
 package io.agora.scene.convoai.ui.main.list
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -13,7 +17,6 @@ import com.google.android.material.tabs.TabLayoutMediator
 import io.agora.scene.common.ui.BaseFragment
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovFragmentAgentListBinding
-import io.agora.scene.convoai.ui.main.list.CovOfficialAgentFragment
 
 class CovAgentListFragment : BaseFragment<CovFragmentAgentListBinding>() {
 
@@ -24,6 +27,9 @@ class CovAgentListFragment : BaseFragment<CovFragmentAgentListBinding>() {
     }
 
     private var tabLayoutMediator: TabLayoutMediator? = null
+    private val tabViews = mutableMapOf<Int, View>()
+    private val tabTextViews = mutableMapOf<Int, TextView>()
+    private val tabIconViews = mutableMapOf<Int, View>()
 
     override fun getViewBinding(
         inflater: LayoutInflater,
@@ -39,8 +45,6 @@ class CovAgentListFragment : BaseFragment<CovFragmentAgentListBinding>() {
 
     private fun setupViewPager() {
         mBinding?.vpContent?.apply {
-            // Disable swiping
-
             // Set adapter
             adapter = AgentListAdapter(this@CovAgentListFragment)
         }
@@ -57,24 +61,26 @@ class CovAgentListFragment : BaseFragment<CovFragmentAgentListBinding>() {
             }
             tabLayoutMediator?.attach()
 
-            // Setup custom tab styling
+            // Setup custom tab styling with smooth animations
             setupTabStyling(binding.tabLayout)
         }
     }
 
     private fun setupTabStyling(tabLayout: TabLayout) {
-        // Add tab selection listener to handle text size and icon changes
+        // Initialize tab views first
+        initializeTabViews(tabLayout)
+
+        // Add tab selection listener to handle smooth animations
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 tab?.let { selectedTab ->
-                    updateTabAppearance(selectedTab, true)
+                    // Animate all tabs
+                    animateAllTabs(tabLayout, selectedTab.position)
                 }
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab?) {
-                tab?.let { unselectedTab ->
-                    updateTabAppearance(unselectedTab, false)
-                }
+                // Do nothing - handled in onTabSelected
             }
 
             override fun onTabReselected(tab: TabLayout.Tab?) {
@@ -83,44 +89,121 @@ class CovAgentListFragment : BaseFragment<CovFragmentAgentListBinding>() {
         })
 
         // Set initial styling for all tabs
+        updateAllTabsAppearance(tabLayout)
+    }
+
+    private fun initializeTabViews(tabLayout: TabLayout) {
+        val context = context ?: return
+
         for (i in 0 until tabLayout.tabCount) {
             val tab = tabLayout.getTabAt(i)
             tab?.let {
-                updateTabAppearance(it, i == tabLayout.selectedTabPosition)
+                val customView = LayoutInflater.from(context).inflate(R.layout.cov_custom_tab_item2, null)
+
+                val textView = customView.findViewById<TextView>(R.id.tab_text)
+                val iconView = customView.findViewById<View>(R.id.tab_icon)
+
+                textView.text = it.text
+                textView.setTextColor(ContextCompat.getColor(context, io.agora.scene.common.R.color.ai_icontext1))
+
+                // Store references for animation
+                tabViews[i] = customView
+                tabTextViews[i] = textView
+                tabIconViews[i] = iconView
+
+                // Set custom view
+                it.customView = customView
             }
         }
     }
 
-    private fun updateTabAppearance(tab: TabLayout.Tab, isSelected: Boolean) {
-        val context = context?:return
-        val customView = LayoutInflater.from(context).inflate(
-            R.layout.cov_custom_tab_item2, null
-        )
+    private fun updateAllTabsAppearance(tabLayout: TabLayout) {
+        for (i in 0 until tabLayout.tabCount) {
+            val tab = tabLayout.getTabAt(i)
+            tab?.let {
+                val isSelected = i == tabLayout.selectedTabPosition
+                // Only update appearance without recreating views
+                updateTabAppearanceWithoutRecreate(it, isSelected)
+            }
+        }
+    }
 
-        val textView = customView.findViewById<TextView>(R.id.tab_text)
-        val iconView = customView.findViewById<View>(R.id.tab_icon)
+    private fun animateAllTabs(tabLayout: TabLayout, selectedPosition: Int) {
+        val context = context ?: return
+        val interpolator = DecelerateInterpolator(1.5f)
+        val animatorSet = AnimatorSet()
+        val animators = mutableListOf<android.animation.Animator>()
 
-        textView.text = tab.text
-        textView.setTextColor(ContextCompat.getColor(context, io.agora.scene.common.R.color.ai_icontext1))
+        for (i in 0 until tabLayout.tabCount) {
+            val textView = tabTextViews[i] ?: continue
+            val iconView = tabIconViews[i] ?: continue
+            val isSelected = i == selectedPosition
+
+            // Text size animation
+            val targetTextSize = if (isSelected) 16f else 13f
+            val currentTextSize = textView.textSize / context.resources.displayMetrics.density
+
+            val textSizeAnimator = ValueAnimator.ofFloat(currentTextSize, targetTextSize).apply {
+                duration = 200
+                setInterpolator(interpolator)
+                addUpdateListener { animation ->
+                    val animatedValue = animation.animatedValue as Float
+                    textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, animatedValue)
+                }
+            }
+
+            // Icon alpha animation
+            val targetAlpha = if (isSelected) 1f else 0f
+            val currentAlpha = iconView.alpha
+
+            val iconAlphaAnimator = ObjectAnimator.ofFloat(iconView, "alpha", currentAlpha, targetAlpha).apply {
+                duration = 200
+                setInterpolator(interpolator)
+                addListener(object : android.animation.AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: android.animation.Animator) {
+                        super.onAnimationEnd(animation)
+                        // Ensure final state is correct
+                        iconView.visibility = if (isSelected) View.VISIBLE else View.INVISIBLE
+                    }
+                })
+            }
+
+            animators.add(textSizeAnimator)
+            animators.add(iconAlphaAnimator)
+        }
+
+        // Play all animations together
+        animatorSet.playTogether(animators)
+        animatorSet.start()
+    }
+
+    private fun updateTabAppearanceWithoutRecreate(tab: TabLayout.Tab, isSelected: Boolean) {
+        val position = tab.position
+        val textView = tabTextViews[position] ?: return
+        val iconView = tabIconViews[position] ?: return
 
         if (isSelected) {
             // Selected: 16sp, show icon
             textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
             iconView.visibility = View.VISIBLE
+            iconView.alpha = 1f
         } else {
             // Unselected: 13sp, hide icon
             textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             iconView.visibility = View.INVISIBLE
+            iconView.alpha = 0f
         }
-
-        // Set custom view with proper layout params
-        tab.customView = customView
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         tabLayoutMediator?.detach()
         tabLayoutMediator = null
+
+        // Clear references to prevent memory leaks
+        tabViews.clear()
+        tabTextViews.clear()
+        tabIconViews.clear()
     }
 
     // Custom adapter to avoid Fragment state issues

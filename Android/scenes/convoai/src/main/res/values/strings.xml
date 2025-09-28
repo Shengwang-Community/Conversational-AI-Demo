@@ -232,7 +232,7 @@
     <string name="cov_settings_third_party_data_sharing">第三方信息数据共享</string>
     <string name="cov_settings_personal_data_checklist">个人信息收集清单</string>
     <string name="cov_settings_filing_no">备案号</string>
-    <string name="cov_settings_filing_no_content">沪xxxxxx</string>
+    <string name="cov_settings_filing_no_content">沪ICP备14053584号-27A</string>
     <string name="cov_settings_update_success">更新成功</string>
     <string name="cov_settings_update_failed">更新失败</string>
     <string name="cov_settings_confirm">确认</string>

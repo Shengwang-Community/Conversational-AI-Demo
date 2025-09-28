@@ -132,7 +132,7 @@
         android:id="@+id/btnJoinCall"
         android:layout_width="0dp"
         android:layout_height="@dimen/ai_dp_large"
-        android:background="@drawable/selector_gradient_button"
+        android:background="@drawable/selector_gradient_button_r99"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:stateListAnimator="@null"

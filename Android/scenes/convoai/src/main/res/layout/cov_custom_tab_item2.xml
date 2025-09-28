@@ -8,18 +8,6 @@
     android:orientation="horizontal"
     tools:background="@color/ai_fill7">
 
-    <TextView
-        android:id="@+id/tab_text"
-        android:layout_width="wrap_content"
-        android:layout_height="24dp"
-        android:layout_gravity="center"
-        android:layout_marginHorizontal="6dp"
-        android:gravity="bottom"
-        android:orientation="horizontal"
-        android:textColor="@color/ai_icontext1"
-        android:textSize="16sp"
-        tools:text="@string/cov_official_agent_title" />
-
     <ImageView
         android:id="@+id/tab_icon"
         android:layout_width="24dp"
@@ -28,4 +16,16 @@
         android:layout_marginBottom="4dp"
         android:visibility="invisible"
         android:src="@drawable/app_icon_subtract" />
+
+    <TextView
+        android:id="@+id/tab_text"
+        android:layout_width="wrap_content"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:layout_marginHorizontal="6dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:textColor="@color/ai_icontext1"
+        android:textSize="16sp"
+        tools:text="@string/cov_official_agent_title" />
 </FrameLayout>
