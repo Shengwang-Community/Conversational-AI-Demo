@@ -92,8 +92,8 @@ class AgentSettingViewController: UIViewController {
     
     private func setupTabSelector() {
         let tabItems = [
-            TabSelectorView.TabItem(title: ResourceManager.L10n.Settings.title, iconName: "ic_agent_setting"),
-            TabSelectorView.TabItem(title: ResourceManager.L10n.ChannelInfo.subtitle, iconName: "ic_wifi_setting_icon")
+            TabSelectorView.TabItem(title: ResourceManager.L10n.Settings.title),
+            TabSelectorView.TabItem(title: ResourceManager.L10n.ChannelInfo.subtitle)
         ]
         tabSelectorView.configure(with: tabItems, selectedIndex: currentTabIndex)
         switchToTab(index: currentTabIndex)

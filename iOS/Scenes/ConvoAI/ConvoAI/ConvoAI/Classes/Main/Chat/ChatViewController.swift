@@ -235,6 +235,7 @@ class ChatViewController: BaseViewController {
     override func viewWillDisappearAndPop() {
         AppContext.settingManager().resetToDefaults()
         rtcManager.destroy()
+        rtmManager.destroy()
     }
     
     public override func viewDidLayoutSubviews() {

@@ -124,18 +124,11 @@ class AgentSettingsView: UIView {
     private lazy var aiVadItem: AgentSettingSwitchItemView = {
         let view = AgentSettingSwitchItemView(frame: .zero)
         view.titleLabel.text = ResourceManager.L10n.Settings.aiVadLight
-        view.addtarget(self, action: #selector(onClickAiVad(_:)), for: .touchUpInside)
-        let button = UIButton()
-        button.imageView?.contentMode = .scaleAspectFit
-        button.setImage(UIImage.ag_named("ic_aivad_tips_icon"), for: .normal)
-        button.addTarget(self, action: #selector(onClickAIVadTips), for: .touchUpInside)
-        view.addSubview(button)
+        view.switcher.addTarget(self, action: #selector(onClickAiVad(_:)), for: .touchUpInside)
         
-        button.snp.makeConstraints { make in
-            make.left.equalTo(view.titleLabel.snp.right).offset(8)
-            make.centerY.equalTo(view.titleLabel)
-            make.width.height.equalTo(16)
-        }
+        view.tipsButton.setImage(UIImage.ag_named("ic_aivad_tips_icon"), for: .normal)
+        view.tipsButton.addTarget(self, action: #selector(onClickAIVadTips), for: .touchUpInside)
+        view.tipsButton.isHidden = false
         
         let settingManager = AppContext.settingManager()
         if let language = settingManager.language,
@@ -152,7 +145,6 @@ class AgentSettingsView: UIView {
             view.setEnable(false)
             view.setOn(false)
         }
-        view.updateLayout()
         return view
     }()
     

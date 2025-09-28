@@ -268,9 +268,4 @@ extension ChatViewController {
         avatarIsJoined = false
         rtcManager.leaveChannel()
     }
-    
-    internal func destoryRtc() {
-        leaveChannel()
-        rtcManager.destroy()
-    }
 }

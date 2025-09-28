@@ -81,7 +81,7 @@ class PrivacySettingViewController: BaseViewController {
         item.configure(
             icon: "ic_privacy_setting_global",
             title: ResourceManager.L10n.Mine.privacyRecordNumber,
-            subtitle: "",
+            subtitle: "沪ICP备14053584号-27A",
             hasArrow: true
         )
         item.addTarget(self, action: #selector(recordNumberTapped), for: .touchUpInside)
@@ -171,7 +171,9 @@ class PrivacySettingViewController: BaseViewController {
     }
     
     @objc private func recordNumberTapped() {
-        
+        if let url = URL(string: "https://beian.miit.gov.cn/#/Integrated/recordQuery") {
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+        }
     }
 }
 
