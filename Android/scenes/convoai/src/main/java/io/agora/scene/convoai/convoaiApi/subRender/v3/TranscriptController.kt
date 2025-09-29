@@ -262,7 +262,9 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
                 if (presentationMs > 0L) {
                     mPresentationMs = presentationMs
                 } else {
-                    callMessagePrint(TAG, "<<< [!][onPlaybackAudioFrameBeforeMixing] pts is $presentationMs")
+                    if (mRenderMode == TranscriptRenderMode.Word) {
+                        callMessagePrint(TAG, "<<< [!][onPlaybackAudioFrameBeforeMixing] pts is $presentationMs")
+                    }
                 }
                 return false
             }
