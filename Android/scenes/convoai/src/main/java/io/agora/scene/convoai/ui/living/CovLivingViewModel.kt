@@ -1139,7 +1139,9 @@ class CovLivingViewModel : ViewModel() {
                     "vendor" to BuildConfig.AVATAR_VENDOR.takeIf { it.isNotEmpty() },
                     "params" to try {
                         BuildConfig.AVATAR_PARAMS.takeIf { it.isNotEmpty() }?.let {
-                            JSONObject(it)
+                            JSONObject(it).apply {
+                                put("agora_uid", CovAgentManager.avatarUID.toString())
+                            }
                         }
                     } catch (e: Exception) {
                         CovLogger.e(TAG, "Failed to parse AVATAR params as JSON: ${e.message}")

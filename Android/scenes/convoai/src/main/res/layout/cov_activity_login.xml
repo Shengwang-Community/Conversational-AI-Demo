@@ -132,10 +132,11 @@
 
     <View
         android:id="@+id/view_top"
-        android:layout_width="80dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="25dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintWidth_percent="0.5"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="@id/iv_agent_sample" />
 </androidx.constraintlayout.widget.ConstraintLayout>
