@@ -466,7 +466,9 @@ extension TranscriptController: AgoraAudioFrameDelegate {
         if frame.presentationMs != 0 {
             audioTimestamp = frame.presentationMs
         } else {
-            callMessagePrint(tag: TranscriptController.tag, msg: "<<<<<<onPlaybackAudioFrame pts is 0")
+            if renderMode == .words {
+                callMessagePrint(tag: TranscriptController.tag, msg: "<<<<<<onPlaybackAudioFrame pts is 0")
+            }
         }
         return true
     }
