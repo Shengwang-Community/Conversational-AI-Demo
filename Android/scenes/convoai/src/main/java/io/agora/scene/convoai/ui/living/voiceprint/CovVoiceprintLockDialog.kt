@@ -24,6 +24,7 @@ import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.TimeUtils
+import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.R
@@ -93,6 +94,14 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
         }
 
         mBinding?.apply {
+            activity?.let {
+                val statusBarHeight = it.getStatusBarHeight() ?: 25.dp.toInt()
+                CovLogger.d(TAG, "statusBarHeight $statusBarHeight")
+                val layoutParams = customTitleBar.layoutParams as ViewGroup.MarginLayoutParams
+                layoutParams.topMargin = statusBarHeight
+                customTitleBar.layoutParams = layoutParams
+            }
+
             rcVoiceprintOptions.layoutManager = LinearLayoutManager(context)
             rcVoiceprintOptions.adapter = voiceprintAdapter
 
@@ -126,7 +135,7 @@ class CovVoiceprintLockDialog : BaseDialogFragment<CovVoiceprintLockDialogBindin
                 }
             })
 
-            ivBack.setOnClickListener {
+            customTitleBar.setOnBackClickListener {
                 handleDismiss()
             }
 

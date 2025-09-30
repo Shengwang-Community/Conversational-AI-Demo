@@ -15,6 +15,8 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import io.agora.scene.common.ui.BaseFragment
+import io.agora.scene.common.util.dp
+import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovFragmentAgentListBinding
 
@@ -39,6 +41,11 @@ class CovAgentListFragment : BaseFragment<CovFragmentAgentListBinding>() {
     }
 
     override fun initView() {
+        mBinding?.apply {
+            val activity = activity?:return
+            val statusBarHeight = activity.getStatusBarHeight() ?: 32.dp.toInt()
+            root.setPaddingRelative(0, statusBarHeight, 0, 0)
+        }
         setupViewPager()
         setupTabLayout()
     }

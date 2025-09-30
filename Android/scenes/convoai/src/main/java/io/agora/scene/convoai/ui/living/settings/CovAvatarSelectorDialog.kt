@@ -16,6 +16,8 @@ import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.common.ui.BaseDialogFragment
+import io.agora.scene.common.util.dp
+import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.api.CovAvatar
@@ -85,8 +87,15 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
         generateCategories()
 
         mBinding?.apply {
+            activity?.let {
+                val statusBarHeight = it.getStatusBarHeight() ?: 25.dp.toInt()
+                CovLogger.d(TAG, "statusBarHeight $statusBarHeight")
+                val layoutParams = customTitleBar.layoutParams as ViewGroup.MarginLayoutParams
+                layoutParams.topMargin = statusBarHeight
+                customTitleBar.layoutParams = layoutParams
+            }
             // Set back button click listener
-            ivBack.setOnClickListener {
+            customTitleBar.setOnClickListener {
                 CovLogger.d(TAG, "Back button clicked")
                 handleDismiss()
             }

@@ -4,43 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/ai_fill2"
-    android:paddingTop="25dp">
+    android:background="@color/ai_fill2">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/layout_title"
+    <io.agora.scene.common.ui.widget.CommonTitleBar
+        android:id="@+id/customTitleBar"
         android:layout_width="match_parent"
-        android:layout_height="42dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageView
-            android:id="@+id/ivBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="12dp"
-            android:src="@drawable/cov_back"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/ai_icontext1" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="@string/cov_voiceprint_recognition"
-            android:textColor="@color/ai_icontext1"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        android:layout_height="wrap_content"
+        app:titleText="@string/cov_voiceprint_lock"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layout_create_voiceprint"
@@ -239,7 +210,7 @@
         android:clipToPadding="false"
         android:paddingVertical="6dp"
         android:layout_marginTop="20dp"
-        app:layout_constraintTop_toBottomOf="@+id/layout_title"
+        app:layout_constraintTop_toBottomOf="@+id/customTitleBar"
         tools:itemCount="3"
         tools:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         tools:listitem="@layout/cov_voiceprint_option_item" />
