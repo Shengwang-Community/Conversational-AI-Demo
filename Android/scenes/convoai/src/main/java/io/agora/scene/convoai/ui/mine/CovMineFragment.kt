@@ -94,20 +94,22 @@ class CovMineFragment : BaseFragment<CovFragmentMineBinding>() {
     private fun updateUserInfo(userInfo: io.agora.scene.common.net.SSOUserInfo) {
         mBinding?.apply {
             // Update nickname
-            tvNickname.text = userInfo.nickname.ifEmpty {
-                getString(io.agora.scene.convoai.R.string.cov_mine_not_set)
-            }
+            tvNickname.text =
+                userInfo.nickname?.ifEmpty { getString(io.agora.scene.convoai.R.string.cov_mine_not_set) }
+                    ?:getString(io.agora.scene.convoai.R.string.cov_mine_not_set)
 
             // Update birthday
             tvSelectBirthday.text =
-                userInfo.birthday.ifEmpty { getString(io.agora.scene.convoai.R.string.cov_mine_select) }
+                userInfo.birthday?.ifEmpty { getString(io.agora.scene.convoai.R.string.cov_mine_select) }
+                    ?: getString(io.agora.scene.convoai.R.string.cov_mine_select)
 
             // Update bio/introduction
             tvIntroduction.text =
-                userInfo.bio.ifEmpty { getString(io.agora.scene.convoai.R.string.cov_mine_about_me_hint) }
+                userInfo.bio?.ifEmpty { getString(io.agora.scene.convoai.R.string.cov_mine_about_me_hint) }
+                    ?:getString(io.agora.scene.convoai.R.string.cov_mine_about_me_hint)
 
             // Update gender display
-            when (userInfo.gender.lowercase()) {
+            when (userInfo.gender?.lowercase()) {
                 "male" -> {
                     ivUserAvatar.setImageResource(R.drawable.common_default_male)
                     ivUserAvatar.setBackgroundResource(R.drawable.app_bg_mine_avatar)

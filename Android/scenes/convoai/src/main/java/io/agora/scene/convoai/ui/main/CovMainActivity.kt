@@ -61,9 +61,7 @@ class CovMainActivity : DebugSupportActivity<CovActivityMainBinding>() {
                 when (state) {
                     is LoginState.Success -> {
                         initializeFragments()
-                        if (state.user.nickname.isEmpty()) {
-                            autoGenerateNickname()
-                        }
+                        autoGenerateNickname()
                     }
 
                     is LoginState.LoggedOut -> {
@@ -98,8 +96,9 @@ class CovMainActivity : DebugSupportActivity<CovActivityMainBinding>() {
         // Since user can access this fragment, they must be logged in
         val userInfo = SSOUserManager.userInfo
         if (userInfo != null) {
+            val nickname = userInfo.nickname ?: ""
             // Check if user has no nickname and auto-generate one
-            if (userInfo.nickname.isEmpty()) {
+            if (nickname.isEmpty()) {
                 userViewModel.autoGenerateNickname { result ->
                     result.onSuccess { generatedNickname ->
 

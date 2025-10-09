@@ -26,10 +26,10 @@ data class SSOUserInfo constructor(
     var displayName: String = "",
     val companyName: String = "",
     val companyCountry: String = "",
-    val nickname: String = "",
-    val gender: String = "",
-    val birthday: String = "",
-    val bio: String = "",
+    val nickname: String? = "",
+    val gender: String? = "",
+    val birthday: String? = "",
+    val bio: String? = "",
 ) : BaseResponse<SSOUserInfo>()
 
 data class UploadImage constructor(
