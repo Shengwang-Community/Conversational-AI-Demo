@@ -117,8 +117,8 @@ extension CallOutSipViewController {
                 }
                 try await startRequest()
                 await MainActor.run {
-                    AppContext.preferenceManager()?.updateRoomId(channelName)
-                    AppContext.preferenceManager()?.updateUserId(uid)
+                    AppContext.stateManager().updateRoomId(channelName)
+                    AppContext.stateManager().updateUserId(uid)
                     SVProgressHUD.dismiss()
                     showCallingView()
                     startTimer()
@@ -149,7 +149,7 @@ extension CallOutSipViewController {
     }
     
     func resetPreference() {
-        AppContext.preferenceManager()?.resetAgentInformation()
+        AppContext.stateManager().resetToDefaults()
     }
     
     func showCallingView() {

@@ -13,7 +13,7 @@ import Kingfisher
 extension ChatViewController {
     internal func startShowAvatar() {
         windowState.showAvatar = true
-        if let avatar = AppContext.preferenceManager()?.preference.avatar, let url = URL(string: avatar.bgImageUrl.stringValue()) {
+        if let avatar = AppContext.settingManager().avatar, let url = URL(string: avatar.bgImageUrl.stringValue()) {
             remoteAvatarView.backgroundImageView.kf.setImage(with: url)
         }
         updateWindowContent()
@@ -30,6 +30,6 @@ extension ChatViewController {
     }
     
     internal func isEnableAvatar() -> Bool {
-        return AppContext.shared.avatarEnable || AppContext.preferenceManager()?.preference.avatar != nil
+        return AppContext.shared.avatarEnable || AppContext.settingManager().avatar != nil
     }
 }

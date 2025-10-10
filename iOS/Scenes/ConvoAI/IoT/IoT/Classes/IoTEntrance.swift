@@ -15,6 +15,7 @@ public class IoTEntrance: NSObject {
     
     public static func iotScene(viewController: UIViewController) {
         let vc = IOTListViewController()
+        vc.hidesBottomBarWhenPushed = true
         viewController.navigationController?.pushViewController(vc, animated: true)
     }
     

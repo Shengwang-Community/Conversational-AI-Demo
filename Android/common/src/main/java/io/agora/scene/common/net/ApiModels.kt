@@ -26,8 +26,24 @@ data class SSOUserInfo constructor(
     var displayName: String = "",
     val companyName: String = "",
     val companyCountry: String = "",
+    val nickname: String? = "",
+    val gender: String? = "",
+    val birthday: String? = "",
+    val bio: String? = "",
 ) : BaseResponse<SSOUserInfo>()
 
 data class UploadImage constructor(
     val img_url: String
 ) : BaseResponse<UploadImage>()
+
+data class UploadFile constructor(
+    val file_url: String,
+    val expired_ts: Long,
+) : BaseResponse<UploadFile>()
+
+data class UpdateUserInfoRequest constructor(
+    val nickname: String,
+    val gender: String,
+    val birthday: String,
+    val bio: String
+) : Serializable

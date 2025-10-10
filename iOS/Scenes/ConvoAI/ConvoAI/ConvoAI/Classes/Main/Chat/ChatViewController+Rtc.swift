@@ -26,29 +26,25 @@ extension ChatViewController: AgoraRtcEngineDelegate {
         addLog("[RTC Call Back] connectionChangedToState: \(state), reason: \(reason)")
         if reason == .reasonInterrupted {
             animateView.updateAgentState(.idle)
-            AppContext.preferenceManager()?.updateAgentState(.disconnected)
-            AppContext.preferenceManager()?.updateRoomState(.disconnected)
+            AppContext.stateManager().updateAgentState(.disconnected)
+            AppContext.stateManager().updateRoomState(.disconnected)
             showErrorToast(text: ResourceManager.L10n.Error.networkDisconnected)
             agentStateView.isHidden = true
         } else if reason == .reasonRejoinSuccess {
-            guard let manager = AppContext.preferenceManager() else {
-                dismissErrorToast()
+            let stateManager = AppContext.stateManager()
+            
+            if stateManager.rtcRoomState == .connected {
                 return
             }
             
-            if manager.information.rtcRoomState == .connected {
-                return
-            }
-            
-            manager.updateAgentState(.connected)
-            manager.updateRoomState(.connected)
+            stateManager.updateAgentState(.connected)
+            stateManager.updateRoomState(.connected)
             if !isSelfSubRender {
                 agentStateView.isHidden = false
             }
             dismissErrorToast()
         } else if reason == .reasonLeaveChannel {
             dismissErrorToast()
-            resetPreference()
         }
         
         if state == .failed {
@@ -88,7 +84,8 @@ extension ChatViewController: AgoraRtcEngineDelegate {
             annotationView.dismiss()
             timerCoordinator.stopJoinChannelTimer()
             timerCoordinator.startUsageDurationLimitTimer()
-            AppContext.preferenceManager()?.updateAgentState(.connected)
+            activeFuncsView.isHidden = false
+            AppContext.stateManager().updateAgentState(.connected)
             if !isSelfSubRender {
                 agentStateView.isHidden = false
             }
@@ -113,7 +110,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
         }
         
         animateView.updateAgentState(.idle)
-        AppContext.preferenceManager()?.updateAgentState(.disconnected)
+        AppContext.stateManager().updateAgentState(.disconnected)
         showErrorToast(text: ResourceManager.L10n.Conversation.agentLeave)
         agentStateView.isHidden = true
     }
@@ -138,9 +135,9 @@ extension ChatViewController: AgoraRtcEngineDelegate {
     }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, networkQuality uid: UInt, txQuality: AgoraNetworkQuality, rxQuality: AgoraNetworkQuality) {
-        if AppContext.preferenceManager()?.information.agentState == .unload { return }
+        if AppContext.stateManager().agentState == .unload { return }
         addLog("[RTC Call Back] networkQuality: \(rxQuality)")
-        AppContext.preferenceManager()?.updateNetworkState(NetworkStatus(agoraQuality: rxQuality))
+        AppContext.stateManager().updateNetworkState(NetworkStatus(agoraQuality: rxQuality))
     }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, reportAudioVolumeIndicationOfSpeakers speakers: [AgoraRtcAudioVolumeInfo], totalVolume: Int) {
@@ -148,7 +145,7 @@ extension ChatViewController: AgoraRtcEngineDelegate {
             if (info.uid == agentUid) {
                 var currentVolume: CGFloat = 0
                 currentVolume = CGFloat(info.volume)
-                let agentState = AppContext.preferenceManager()?.information.agentState ?? .unload
+                let agentState = AppContext.stateManager().agentState
                 if (agentState != .unload) {
                     if currentVolume > 0 {
                         animateView.updateAgentState(.speaking, volume: Int(currentVolume))
@@ -243,7 +240,7 @@ extension ChatViewController {
             addLog("cancel to join channel")
             return
         }
-        let independent = (AppContext.preferenceManager()?.preference.preset?.presetType?.hasPrefix("independent") == true)
+        let independent = (AppContext.settingManager().preset?.presetType?.hasPrefix("independent") == true)
         let secnario: AgoraAudioScenario = {
             if isEnableAvatar() {
                 return .default
@@ -252,8 +249,8 @@ extension ChatViewController {
         }()
         convoAIAPI.loadAudioSettings(secnario: secnario)
         rtcManager.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
-        AppContext.preferenceManager()?.updateRoomState(.connected)
-        AppContext.preferenceManager()?.updateRoomId(channelName)
+        AppContext.stateManager().updateRoomState(.connected)
+        AppContext.stateManager().updateRoomId(channelName)
         
         // set debug params
         DeveloperConfig.shared.sdkParams.forEach {
@@ -270,10 +267,5 @@ extension ChatViewController {
         agentIsJoined = false
         avatarIsJoined = false
         rtcManager.leaveChannel()
-    }
-    
-    internal func destoryRtc() {
-        leaveChannel()
-        rtcManager.destroy()
     }
 }

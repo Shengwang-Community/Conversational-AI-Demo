@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp">
+
+    <!-- Year Picker -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <com.loper7.date_time_picker.number_picker.NumberPicker
+            android:id="@+id/np_datetime_year"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:np_dividerColor="@android:color/transparent"
+            app:np_itemSpacing="10dp"
+            app:np_value="5"
+            app:np_wheelItemCount="5" />
+    </LinearLayout>
+
+    <!-- Month Picker -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <com.loper7.date_time_picker.number_picker.NumberPicker
+            android:id="@+id/np_datetime_month"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:np_dividerColor="@android:color/transparent"
+            app:np_itemSpacing="10dp"
+            app:np_value="5"
+            app:np_wheelItemCount="5" />
+    </LinearLayout>
+
+    <!-- Day Picker -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <com.loper7.date_time_picker.number_picker.NumberPicker
+            android:id="@+id/np_datetime_day"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:np_dividerColor="@android:color/transparent"
+            app:np_itemSpacing="10dp"
+            app:np_value="5"
+            app:np_wheelItemCount="5" />
+    </LinearLayout>
+
+</LinearLayout>

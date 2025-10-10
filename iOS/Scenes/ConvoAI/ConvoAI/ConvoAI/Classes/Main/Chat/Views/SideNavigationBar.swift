@@ -36,36 +36,6 @@ class SideNavigationBar: UIView {
         return label
     }()
     
-    private var voiceprintFlag: UIView = {
-        let view = UIView()
-        let titleLabel = UILabel()
-        titleLabel.font = UIFont.systemFont(ofSize: 10)
-        titleLabel.textColor = UIColor.themColor(named: "ai_icontext1")
-        titleLabel.text = ResourceManager.L10n.Conversation.voiceLockTips
-        
-        let imageView = UIImageView()
-        imageView.image = UIImage.ag_named("ic_voice_lock_icon")
-        
-        let stack = UIStackView()
-        stack.axis = .horizontal
-        stack.spacing = 5
-        stack.alignment = .center
-        view.addSubview(stack)
-        [titleLabel, imageView].forEach { stack.addArrangedSubview($0) }
-        
-        stack.snp.makeConstraints { make in
-            make.top.bottom.equalTo(0)
-            make.left.equalTo(10)
-            make.right.equalTo(-10)
-        }
-        
-        view.layer.cornerRadius = 11
-        view.layer.masksToBounds = true
-        view.backgroundColor = UIColor.themColor(named: "ai_block1")
-        view.isHidden = true
-        return view
-    }()
-    
     private let centerTitleView = UIView()
     private var isShowTips: Bool = false
     private var isAnimationInprogerss = false
@@ -82,7 +52,7 @@ class SideNavigationBar: UIView {
     }
     
     func setupViews() {
-        [voiceprintFlag, titleContentView, countDownLabel].forEach { addSubview($0) }
+        [titleContentView, countDownLabel].forEach { addSubview($0) }
         [centerTipsLabel, centerTitleView, centerTitleButton].forEach { titleContentView.addSubview($0) }
         let titleImageView = UIImageView()
         titleImageView.image = UIImage.ag_named("ic_agent_detail_logo")
@@ -105,12 +75,6 @@ class SideNavigationBar: UIView {
     }
     
     func setupConstraints() {
-        voiceprintFlag.snp.makeConstraints { make in
-            make.left.equalTo(10)
-            make.centerY.equalToSuperview()
-            make.height.equalTo(22)
-        }
-        
         titleContentView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
@@ -248,13 +212,5 @@ class SideNavigationBar: UIView {
         }
         
         self.isHidden = true
-    }
-    
-    func setButtonColorTheme(showLight: Bool) {
-        voiceprintFlag.backgroundColor = showLight ? UIColor.themColor(named: "ai_brand_black4") : UIColor.themColor(named: "ai_block1")
-    }
-    
-    func voiceprintState(status: Bool) {
-        voiceprintFlag.isHidden = !status
     }
 }

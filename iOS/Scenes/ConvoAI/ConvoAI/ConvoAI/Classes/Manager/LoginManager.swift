@@ -11,6 +11,7 @@ import Common
 enum LogoutReason {
     case userInitiated
     case sessionExpired
+    case resetScene
 }
 
 protocol LoginManagerDelegate: AnyObject {

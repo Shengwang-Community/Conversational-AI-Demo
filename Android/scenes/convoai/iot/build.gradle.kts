@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "io.agora.scene.convoai.iot"
-    compileSdk = 35
+    compileSdk = rootProject.extra["compileSdkVersion"] as Int
 
     defaultConfig {
-        minSdk = 24
+        minSdk = rootProject.extra["minSdkVersion"] as Int
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -37,9 +37,6 @@ android {
 dependencies {
     implementation(project(":common"))
     implementation(project(":scenes:convoai:bleManager"))
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

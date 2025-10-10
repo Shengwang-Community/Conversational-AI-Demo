@@ -168,14 +168,12 @@ KEYCENTER_PATH=${PROJECT_PATH}"/"${PROJECT_NAME}"/KeyCenter.swift"
 CONFIGURATION='Release'
 
 # Signing configuration
-if [[ "$bundle_id" != *"test"* ]]; then
-    # App Store release configuration
+if [[ "$bundle_id" == *"test"* ]]; then
     PROVISIONING_PROFILE="shengwang_convoai_test"
     CODE_SIGN_IDENTITY="iPhone Distribution"
     DEVELOPMENT_TEAM="48TB6ZZL5S"
     PLIST_PATH="${CURRENT_PATH}/cicd/build_scripts/ios_export_store_test.plist"
 else
-    # Development environment configuration
     PROVISIONING_PROFILE="shengwang_convoai_appstore"
     CODE_SIGN_IDENTITY="iPhone Distribution"
     DEVELOPMENT_TEAM="48TB6ZZL5S"
@@ -205,6 +203,7 @@ if [ ! -f "${PBXPROJ_PATH}" ]; then
     exit 1
 fi
 
+security unlock-keychain -p "123456" ~/Library/Keychains/login.keychain
 # Main project configuration
 # Debug
 sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_VERSION};|g" $PBXPROJ_PATH
@@ -240,6 +239,11 @@ fi
 if [ -n "$toolbox_url" ]; then
     sed -i '' "s|static let TOOLBOX_SERVER_HOST: String = .*|static let TOOLBOX_SERVER_HOST: String = \"$toolbox_url\"|g" $KEYCENTER_PATH
 fi
+
+# Modify IS_OPEN_SOURCE to false
+sed -i '' "s|static var IS_OPEN_SOURCE: Bool = .*|static var IS_OPEN_SOURCE: Bool = false|g" $KEYCENTER_PATH
+echo "Check modification results："
+grep "static var IS_OPEN_SOURCE" $KEYCENTER_PATH
 
 # Archive path
 ARCHIVE_PATH="${WORKSPACE}/${TARGET_NAME}_${BUILD_VERSION}.xcarchive"
@@ -356,4 +360,3 @@ rm -rf ${PACKAGE_DIR}
 rm -rf ${EXPORT_PATH}
 
 echo 'Build completed'
-

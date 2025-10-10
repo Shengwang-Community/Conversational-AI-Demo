@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.iot.ui
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -7,7 +8,6 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.agora.scene.common.ui.BaseActivity
-import io.agora.scene.common.ui.LoadingDialog
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getStatusBarHeight
@@ -34,7 +34,7 @@ class CovIotDeviceListActivity : BaseActivity<CovActivityIotDeviceListBinding>()
     companion object {
         private const val TAG = "CovIotDeviceListActivity"
 
-        fun startActivity(activity: BaseActivity<*>) {
+        fun startActivity(activity: Activity) {
             val intent = Intent(activity, CovIotDeviceListActivity::class.java)
             activity.startActivity(intent)
         }

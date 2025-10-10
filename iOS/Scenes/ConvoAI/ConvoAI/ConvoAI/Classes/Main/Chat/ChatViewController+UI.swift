@@ -15,7 +15,7 @@ class ChatWindowState {
     
     func reset() {
         showTranscription = false
-        if AppContext.shared.avatarEnable || AppContext.preferenceManager()?.preference.avatar != nil {
+        if AppContext.shared.avatarEnable || AppContext.settingManager().avatar != nil {
             showAvatar = true
         } else {
             showAvatar = false
@@ -28,7 +28,7 @@ extension ChatViewController {
     internal func setupViews() {
         view.backgroundColor = .black
         naviBar.isHidden = true
-        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, navivationBar, sideNavigationBar, callControlBar, volumeAnimateView, annotationView, sendMessageButton].forEach { view.addSubview($0) }
+        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, navivationBar, sideNavigationBar, activeFuncsView, callControlBar, volumeAnimateView, annotationView, sendMessageButton].forEach { view.addSubview($0) }
 
         [miniView].forEach { smallSizeContainerView.addSubview($0) }
         [remoteAvatarView].forEach { miniView.addSubview($0) }
@@ -46,6 +46,11 @@ extension ChatViewController {
             make.left.right.equalToSuperview()
             make.height.equalTo(32)
             make.top.equalTo(navivationBar.snp.bottom)
+        }
+
+        activeFuncsView.snp.makeConstraints { make in
+            make.top.equalTo(navivationBar.snp.bottom).offset(10)
+            make.left.equalTo(10)
         }
         
         volumeAnimateView.snp.makeConstraints { make in
@@ -172,7 +177,8 @@ extension ChatViewController {
         callControlBar.resetState()
         timerCoordinator.stopAllTimer()
         agentStateView.isHidden = true
-        sideNavigationBar.voiceprintState(status: false)
+        activeFuncsView.isHidden = true
+        activeFuncsView.resetState()
         updateWindowContent()
     }
     
@@ -280,7 +286,7 @@ extension ChatViewController {
         let isLight = !fullSizeContainerView.isHidden && !showTranscription
         callControlBar.setButtonColorTheme(showLight: isLight)
         navivationBar.setButtonColorTheme(showLight: isLight)
-        sideNavigationBar.setButtonColorTheme(showLight: isLight)
+        activeFuncsView.setButtonColorTheme(showLight: isLight)
     }
     
     @objc func smallWindowClicked() {

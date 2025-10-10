@@ -11,10 +11,9 @@ import SVProgressHUD
 
 extension ChatViewController: LoginManagerDelegate {
     func userDidLogout(reason: LogoutReason) {
-        stopLoading()
-        stopAgent()
-        animateView.releaseView()
-        rtcManager.destroy()
-        rtmManager.destroy()
+        if agentIsJoined {
+            stopLoading()
+            stopAgent()
+        }
     }
 }

@@ -1,5 +1,6 @@
 package io.agora.scene.common.ui
 
+import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
@@ -11,6 +12,7 @@ import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
+import android.widget.FrameLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -36,10 +38,10 @@ abstract class BaseDialogFragment<B : ViewBinding> : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupSystemBarsAndCutout(immersiveMode(), usesDarkStatusBarIcons())
         dialog?.window?.let {
             it.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         }
-        setupSystemBarsAndCutout(immersiveMode(), usesDarkStatusBarIcons())
         activity?.onBackPressedDispatcher?.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 onHandleOnBackPressed()
@@ -60,7 +62,7 @@ abstract class BaseDialogFragment<B : ViewBinding> : DialogFragment() {
 
     protected fun setOnApplyWindowInsets(root: View) {
         dialog?.window?.let {
-            ViewCompat.setOnApplyWindowInsetsListener(root) { v: View?, insets: WindowInsetsCompat ->
+            ViewCompat.setOnApplyWindowInsetsListener(it.decorView) { v: View?, insets: WindowInsetsCompat ->
                 val inset = insets.getInsets(WindowInsetsCompat.Type.systemBars())
                 root.setPadding(inset.left, 0, inset.right, inset.bottom + root.paddingBottom)
                 WindowInsetsCompat.CONSUMED
@@ -95,30 +97,31 @@ abstract class BaseDialogFragment<B : ViewBinding> : DialogFragment() {
                 var flags = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
-                
+
                 if (lightStatusBar && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     flags = flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                 }
-                
+
                 decorView.systemUiVisibility = flags
             }
-            
+
             // Step 2: Set system bar transparency
             statusBarColor = Color.TRANSPARENT
             navigationBarColor = Color.TRANSPARENT
-            
+
             // Step 3: Handle notch screens
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 attributes.layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             }
-            
+
             // Step 4: Set system UI visibility based on immersive mode
-            when(immersiveMode) {
+            when (immersiveMode) {
                 ImmersiveMode.EDGE_TO_EDGE -> {
                     // Do not hide any system bars, only extend content to full screen
                     // Already set in step 1
                 }
+
                 ImmersiveMode.SEMI_IMMERSIVE -> {
                     // Hide navigation bar, show status bar
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -134,6 +137,7 @@ abstract class BaseDialogFragment<B : ViewBinding> : DialogFragment() {
                                 or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
                     }
                 }
+
                 ImmersiveMode.FULLY_IMMERSIVE -> {
                     // Hide all system bars
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -151,5 +155,36 @@ abstract class BaseDialogFragment<B : ViewBinding> : DialogFragment() {
                 }
             }
         }
+    }
+
+    /**
+     * Force stronger immersive mode to prevent navigation bar from showing during user interaction
+     */
+    fun forceImmersiveMode() {
+        dialog?.window?.decorView?.let { decorView ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                // Android 11+: Use stronger immersive mode
+                decorView.windowInsetsController?.apply {
+                    hide(WindowInsets.Type.systemBars())
+                    systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
+            } else {
+                // Android 10 and below: Use deprecated flags with stronger settings
+                @Suppress("DEPRECATION")
+                decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+            }
+        }
+    }
+
+    fun View.setDialogWidth(widthRatio: Float) {
+        layoutParams = FrameLayout.LayoutParams(
+            (resources.displayMetrics.widthPixels * widthRatio).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
     }
 }

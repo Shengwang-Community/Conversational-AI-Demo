@@ -91,6 +91,8 @@ class ChatViewController: BaseViewController {
     
     internal lazy var agentManager = AgentManager()
     
+    internal lazy var toolBox = ToolBoxApiManager()
+    
     internal lazy var navivationBar: MainNavigationBar = {
         let view = MainNavigationBar()
         view.settingButton.addTarget(self, action: #selector(onClickSettingButton), for: .touchUpInside)
@@ -103,6 +105,15 @@ class ChatViewController: BaseViewController {
     internal lazy var sideNavigationBar: SideNavigationBar = {
         let view = SideNavigationBar()
         view.isHidden = true
+        return view
+    }()
+
+    internal lazy var activeFuncsView: ActiveFuncsView = {
+        let view = ActiveFuncsView()
+        view.isHidden = true
+        view.onMoreTapped = { [weak self] in
+            self?.showSettingDialog(at: 1)
+        }
         return view
     }()
 
@@ -222,7 +233,9 @@ class ChatViewController: BaseViewController {
     }
     
     override func viewWillDisappearAndPop() {
+        AppContext.settingManager().resetToDefaults()
         rtcManager.destroy()
+        rtmManager.destroy()
     }
     
     public override func viewDidLayoutSubviews() {
@@ -231,13 +244,13 @@ class ChatViewController: BaseViewController {
     }
     
     private func registerDelegate() {
-        AppContext.loginManager()?.addDelegate(self)
-        AppContext.preferenceManager()?.addDelegate(self)
+        AppContext.loginManager().addDelegate(self)
+        AppContext.settingManager().addDelegate(self)
     }
     
     private func deregisterDelegate() {
-        AppContext.loginManager()?.removeDelegate(self)
-        AppContext.preferenceManager()?.removeDelegate(self)
+        AppContext.loginManager().removeDelegate(self)
+        AppContext.settingManager().removeDelegate(self)
     }
     
     private func preloadData() {
@@ -245,20 +258,11 @@ class ChatViewController: BaseViewController {
         if !isLogin {
             return
         }
-
-        LoginApiService.getUserInfo { [weak self] error in
-            guard let self = self else { return }
-            
-            if let error = error {
-                self.addLog("[PreloadData error - userInfo]: \(error)")
-            }
-            
-            Task {
-                do {
-                    try await self.fetchTokenIfNeeded()
-                } catch {
-                    self.addLog("[PreloadData error - token]: \(error)")
-                }
+        Task {
+            do {
+                try await self.fetchTokenIfNeeded()
+            } catch {
+                self.addLog("[PreloadData error - token]: \(error)")
             }
         }
     }
@@ -267,7 +271,7 @@ class ChatViewController: BaseViewController {
         let rtcEngine = rtcManager.getRtcEntine()
         animateView.setupMediaPlayer(rtcEngine)
         animateView.updateAgentState(.idle)
-        sendMessageButton.isHidden = !DeveloperConfig.shared.isDeveloperMode
+        configDevMode()
 
         guard let rtmEngine = rtmManager.getRtmEngine() else {
             return
@@ -300,9 +304,5 @@ class ChatViewController: BaseViewController {
         messageMaskView.isHidden = !state
         windowState.showTranscription = state
         updateWindowContent()
-    }
-    
-    func resetPreference() {
-        AppContext.preferenceManager()?.resetAgentInformation()
     }
 }

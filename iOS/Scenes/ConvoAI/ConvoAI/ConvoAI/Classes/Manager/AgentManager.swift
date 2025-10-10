@@ -63,7 +63,7 @@ class AgentManager: AgentAPI {
         ]
         
         NetworkManager.shared.getRequest(urlString: url, params: requesetBody) { result in
-            ConvoAILogger.info("search custom presets request response: \(result)")
+            ConvoAILogger.info("search custom presets request response: \(result.prettyPrinted())")
             if let code = result["code"] as? Int, code != 0 {
                 let msg = result["msg"] as? String ?? "Unknown error"
                 let error = ConvoAIError.serverError(code: code, message: msg)
@@ -100,7 +100,7 @@ class AgentManager: AgentAPI {
             "app_id": appId
         ]
         NetworkManager.shared.postRequest(urlString: url, params: requesetBody) { result in
-            ConvoAILogger.info("presets request response: \(result)")
+            ConvoAILogger.info("presets request response: \(result.prettyPrinted())")
             if let code = result["code"] as? Int, code != 0 {
                 let msg = result["msg"] as? String ?? "Unknown error"
                 let error = ConvoAIError.serverError(code: code, message: msg)

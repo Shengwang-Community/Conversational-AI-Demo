@@ -69,11 +69,11 @@ class SipSettingViewController: UIViewController {
     }
     
     private func registerDelegate() {
-        AppContext.preferenceManager()?.addDelegate(self)
+        AppContext.stateManager().addDelegate(self)
     }
     
     private func unRegisterDelegate() {
-        AppContext.preferenceManager()?.removeDelegate(self)
+        AppContext.stateManager().removeDelegate(self)
     }
     
     private func setupPanGesture() {
@@ -190,24 +190,24 @@ extension SipSettingViewController: UIGestureRecognizerDelegate {
     }
 }
 
-extension SipSettingViewController: AgentPreferenceManagerDelegate {
-    func preferenceManager(_ manager: AgentPreferenceManager, agentStateDidUpdated agentState: ConnectionStatus) {
+extension SipSettingViewController: AgentStateDelegate {
+    func preferenceManager(_ manager: AgentStateManager, agentStateDidUpdated agentState: ConnectionStatus) {
         channelInfoView.updateAgentState(agentState)
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, roomStateDidUpdated roomState: ConnectionStatus) {
+    func preferenceManager(_ manager: AgentStateManager, roomStateDidUpdated roomState: ConnectionStatus) {
         channelInfoView.updateRoomState(roomState)
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, agentIdDidUpdated agentId: String) {
+    func preferenceManager(_ manager: AgentStateManager, agentIdDidUpdated agentId: String) {
         channelInfoView.updateAgentId(agentId)
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, roomIdDidUpdated roomId: String) {
+    func preferenceManager(_ manager: AgentStateManager, roomIdDidUpdated roomId: String) {
         channelInfoView.updateRoomId(roomId)
     }
     
-    func preferenceManager(_ manager: AgentPreferenceManager, userIdDidUpdated userId: String) {
+    func preferenceManager(_ manager: AgentStateManager, userIdDidUpdated userId: String) {
         channelInfoView.updateUserId(userId)
     }
 }

@@ -83,10 +83,12 @@ extension ChatMessageViewModel: MessageStandard {
             let key = generateMessageKey(turnId: turnId, isMine: false)
             let message = messageMapTable[key]
             message?.isFinal = true
-        } else if displayMode == .words {
+        }  else if displayMode == .chunk || realRenderMode == .text {
             //do nothing now
-        } else if displayMode == .chunk {
-            //do nothing now
+            let key = generateMessageKey(turnId: turnId, isMine: false)
+            let message = messageMapTable[key]
+            message?.isFinal = true
+            delegate?.messageUpdated()
         }
     }
     

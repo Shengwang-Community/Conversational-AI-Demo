@@ -131,6 +131,7 @@ paths = [
     '''(go.mod|go.sum)$''',
     '''iOS/.*\.strings''',
     '''iOS/.*\.lproj/.*''',
+    '''iOS/.*\.xcodeproj/.*''',
     '''iOS/.cursor/rules/.*''',
     '''.*\.md''',
     '''.*\.strings$''',
@@ -140,5 +141,7 @@ paths = [
     '''.*\/zh\.lproj\/.*''',
     '''iOS/Pods/.*''',
     '''README\.md''',
-    '''Android/.*/res/values(-zh)?/(strings|arrays)\.xml'''
+    '''Android/.*/res/values(-zh)?/(strings|arrays)\.xml''',
+    '''Android/app/build.gradle''',
+    '''Web/.*'''
 ]

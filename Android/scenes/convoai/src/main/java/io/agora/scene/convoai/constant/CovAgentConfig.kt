@@ -1,11 +1,14 @@
 package io.agora.scene.convoai.constant
 
 import io.agora.scene.common.BuildConfig
+import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.convoai.api.CovAgentLanguage
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.api.CovAvatar
 import io.agora.scene.convoai.ui.CovRenderMode
+import io.agora.scene.convoai.ui.living.voiceprint.VoiceprintInfo
+import io.agora.scene.convoai.ui.living.voiceprint.VoiceprintManager
 import kotlin.random.Random
 
 enum class AgentConnectionState() {
@@ -16,6 +19,16 @@ enum class AgentConnectionState() {
     ERROR
 }
 
+
+/**
+ * Voiceprint lock modes
+ */
+enum class VoiceprintMode {
+    OFF,
+    SEAMLESS,
+    PERSONALIZED
+}
+
 object CovAgentManager {
 
     private val TAG = "CovAgentManager"
@@ -24,6 +37,9 @@ object CovAgentManager {
     private var preset: CovAgentPreset? = null
     var language: CovAgentLanguage? = null
     var avatar: CovAvatar? = null
+
+    var voiceprintMode: VoiceprintMode = VoiceprintMode.OFF
+
     var renderMode: Int = CovRenderMode.WORD
 
     var enableAiVad = false
@@ -59,6 +75,11 @@ object CovAgentManager {
         } else {
             p?.support_languages?.firstOrNull()
         }
+        voiceprintMode = if (p?.advanced_features_enable_sal == true) {
+            VoiceprintMode.SEAMLESS
+        } else {
+            VoiceprintMode.OFF
+        }
     }
 
     fun getLanguages(): List<CovAgentLanguage>? {
@@ -75,6 +96,7 @@ object CovAgentManager {
                 CovAvatar(
                     avatar_name = "Avatar",
                     vendor = "",
+                    display_vendor = "",
                     avatar_id = "",
                     thumb_img_url = "",
                     bg_img_url = "",
@@ -106,11 +128,19 @@ object CovAgentManager {
         language = null
         avatar = null
         renderMode = CovRenderMode.WORD
+        voiceprintMode = VoiceprintMode.OFF
     }
 
     val isOpenSource: Boolean get() = BuildConfig.IS_OPEN_SOURCE
 
     val channelPrefix: String get() = if (isDebugging) "agent_debug_" else "agent_"
+
+    val voiceprintInfo: VoiceprintInfo?
+        get() {
+            val accountUid = SSOUserManager.accountUid
+            return if (accountUid.isEmpty()) null
+            else VoiceprintManager.getVoiceprint(accountUid)
+        }
 
     // debug config =================================
     val isDebugging: Boolean get() = DebugConfigSettings.isDebug

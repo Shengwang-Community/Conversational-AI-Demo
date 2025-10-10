@@ -41,7 +41,7 @@ extension ChatViewController {
         }
         
         // Upload image
-        NetworkManager.shared.uploadImage(
+        toolBox.uploadImage(
             requestId: uuid,
             channelName: channelName,
             imageData: imageData
@@ -72,9 +72,11 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     public func onAgentVoiceprintStateChanged(agentUserId: String, event: VoiceprintStateChangeEvent) {
         if event.status == .registerSuccess {
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.voiceprintLockToast)
-            sideNavigationBar.voiceprintState(status: true)
+            activeFuncsView.setState(voiceprint: true, aivad: AppContext.settingManager().aiVad)
+            AppContext.stateManager().updateVoiceprint(true)
         } else {
-            sideNavigationBar.voiceprintState(status: false)
+            activeFuncsView.setState(voiceprint: false, aivad: AppContext.settingManager().aiVad)
+            AppContext.stateManager().updateVoiceprint(false)
         }
     }
     
@@ -145,11 +147,12 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             print("receive transcription: \(transcript.status)")
+            self.messageView.viewModel.realRenderMode = transcript.renderMode
             self.messageView.viewModel.reduceStandardMessage(turnId: transcript.turnId, message: transcript.text, timestamp: 0, owner: transcript.type, isInterrupted: transcript.status == .interrupted, isFinal: transcript.status == .end)
         }
     }
     
-    public func onDebugLog(_ log: String) {
+    public func onDebugLog(log: String) {
         addLog(log)
     }
 }

@@ -45,6 +45,9 @@ dependencies {
     implementation libs.camerax.lifecycle
     implementation libs.camerax.view
     
+    // Third-party date time picker library
+    implementation libs.datetime.picker
+    
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core

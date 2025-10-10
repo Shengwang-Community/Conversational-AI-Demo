@@ -54,7 +54,7 @@ extension CallOutSipViewController: ConversationalAIAPIEventHandler {
         addLog("<<< [onTranscriptUpdated]")
     }
     
-    public func onDebugLog(_ log: String) {
+    public func onDebugLog(log: String) {
         addLog(log)
     }
 }

@@ -30,7 +30,7 @@
         app:layout_constraintBottom_toTopOf="@+id/guideline2"
         app:layout_constraintDimensionRatio="375:352" />
 
-    <io.agora.scene.common.ui.widget.TypewriterTextView
+    <io.agora.scene.convoai.ui.auth.widget.TypewriterTextView
         android:id="@+id/tvTyping"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -53,7 +53,7 @@
         android:layout_height="@dimen/ai_dp_large"
         android:layout_marginHorizontal="30dp"
         android:layout_marginBottom="75dp"
-        android:background="@drawable/selector_gradient_button_with_border20"
+        android:background="@drawable/selector_gradient_button_r20"
         android:insetTop="0dp"
         android:insetBottom="0dp"
         android:text="@string/common_login_with_agora_sso"
@@ -132,10 +132,11 @@
 
     <View
         android:id="@+id/view_top"
-        android:layout_width="80dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="25dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintWidth_percent="0.5"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="@id/iv_agent_sample" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -171,7 +171,7 @@ class CallOutSipViewController: SIPViewController {
     }
     
     func setupUIData() {
-        guard let preset = AppContext.preferenceManager()?.preference.preset, let vendorCalleeNumbers = preset.sipVendorCalleeNumbers else {
+        guard let preset = AppContext.settingManager().preset, let vendorCalleeNumbers = preset.sipVendorCalleeNumbers else {
             return
         }
         

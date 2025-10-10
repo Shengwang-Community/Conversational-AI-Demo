@@ -224,12 +224,23 @@ class LoginViewController: UIViewController {
     }
     
     @objc private func onClickLogin() {
-        if !termsCheckbox.isSelected {
-            warningButton.isHidden = false
-            shakeWarningLabel()
-            return
+        if termsCheckbox.isSelected {
+            self.goToSSOViewController()
+        } else {
+            LoginTermsAlert.show(
+                in: self.view,
+                onAccept: { [weak self] in
+                    self?.termsCheckbox.isSelected = true
+                    self?.warningButton.isHidden = true
+                    
+                    self?.goToSSOViewController()
+                },
+                onDecline: { [weak self] in
+                    self?.termsCheckbox.isSelected = false
+                    self?.warningButton.isHidden = false
+                }
+            )
         }
-        goToSSOViewController()
     }
     
     @objc private func termsCheckboxTapped() {
@@ -275,7 +286,7 @@ class LoginViewController: UIViewController {
     
     @objc private func termsButtonTapped() {
         let vc = TermsServiceWebViewController()
-        vc.url = AppContext.shared.mainlandTermsOfServiceUrl
+        vc.url = AppContext.shared.termsOfServiceUrl
         let termsServiceVC = UINavigationController(rootViewController: vc)
         termsServiceVC.modalPresentationStyle = .fullScreen
         self.present(termsServiceVC, animated: true)
@@ -283,7 +294,7 @@ class LoginViewController: UIViewController {
     
     @objc private func privacyPolicyTapped() {
         let vc = TermsServiceWebViewController()
-        vc.url = AppContext.shared.mainlandPrivacyUrl
+        vc.url = AppContext.shared.privacyUrl
         let termsServiceVC = UINavigationController(rootViewController: vc)
         termsServiceVC.modalPresentationStyle = .fullScreen
         self.present(termsServiceVC, animated: true)

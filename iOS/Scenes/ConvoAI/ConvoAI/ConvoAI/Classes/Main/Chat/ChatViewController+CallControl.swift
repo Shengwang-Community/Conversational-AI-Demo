@@ -12,7 +12,7 @@ import Common
 // MARK: - AgentControlToolbarDelegate
 extension ChatViewController: CallControlbarDelegate {
     func openPhotoLibrary() {
-        guard let preset = AppContext.preferenceManager()?.preference.preset else {
+        guard let preset = AppContext.settingManager().preset else {
             return
         }
 
@@ -74,12 +74,12 @@ extension ChatViewController: CallControlbarDelegate {
     
     func switchPublishVideoStream(state: Bool) {
         // if the agent is not connected, reset the state
-        if AppContext.preferenceManager()?.information.agentState != .connected {
+        if AppContext.stateManager().agentState != .connected {
             callControlBar.videoButton.isSelected = false
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.retryAfterConnect)
             return
         }
-        if  let preset = AppContext.preferenceManager()?.preference.preset,
+        if  let preset = AppContext.settingManager().preset,
             !preset.isSupportVision.boolValue() {
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.visionUnsupportMessage)
             return
@@ -113,7 +113,7 @@ extension ChatViewController {
     
     private func clickTheCloseButton() {
         addLog("[Call] clickTheCloseButton()")
-        if AppContext.preferenceManager()?.information.agentState == .connected {
+        if AppContext.stateManager().agentState == .connected {
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.endCallLeave)
         }
         stopLoading()

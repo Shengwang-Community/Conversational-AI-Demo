@@ -50,13 +50,11 @@ class AgentTimerCoordinator: NSObject {
     
     // MARK: - Duration Limit Timer
     private func initDurationLimitTimer() {
-        guard let manager = AppContext.preferenceManager(),
-              let preset = manager.preference.preset else {
-            return
-        }
+        let settingManager = AppContext.settingManager()
+        guard let preset = settingManager.preset else { return }
         
         var duration = preset.callTimeLimitSecond.intValue()
-        if let _ = manager.preference.avatar,
+        if let _ = settingManager.avatar,
            let avatarDuration = preset.callTimeLimitAvatarSecond {
             duration = avatarDuration
         }

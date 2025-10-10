@@ -57,6 +57,7 @@
             android:button="@null"
             android:background="@drawable/common_checkbox_selector"
             android:gravity="center"
+            android:layout_gravity="top"
             android:checked="false" />
 
         <TextView
@@ -74,6 +75,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="24dp"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
@@ -100,9 +102,12 @@
             android:layout_weight="1"
             android:insetTop="0dp"
             android:insetBottom="0dp"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
             android:textAllCaps="false"
             android:textColor="@color/ai_brand_white10"
-            android:textSize="14sp"
+            android:textSize="15sp"
+            android:padding="0dp"
             app:backgroundTint="@color/ai_brand_main6"
             app:cornerRadius="12dp"
             app:rippleColor="#1AFFFFFF"

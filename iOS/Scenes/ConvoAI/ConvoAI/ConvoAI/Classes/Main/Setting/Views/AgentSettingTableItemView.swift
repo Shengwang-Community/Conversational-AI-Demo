@@ -29,7 +29,6 @@ class AgentSettingTableItemView: UIView {
         
         createViews()
         createConstrains()
-        updateEnableState()
         setupLongPressGesture()
     }
     
@@ -86,6 +85,15 @@ class AgentSettingTableItemView: UIView {
                 feedback.notificationOccurred(.success)
                 SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.ChannelInfo.copyToast)
             }
+        }
+    }
+    
+    func setEnable(_ enable: Bool) {
+        button.isEnabled = enable
+        if enable {
+            detailLabel.textColor = UIColor.white
+        } else {
+            detailLabel.textColor = UIColor.themColor(named: "ai_icontext4")
         }
     }
 }
@@ -145,16 +153,6 @@ extension AgentSettingTableItemView {
             make.height.equalTo(1)
             make.bottom.equalToSuperview()
         }
-    }
-    
-    func updateEnableState() {
-        guard let manager = AppContext.preferenceManager() else {
-            return
-        }
-        
-        let state = manager.information.agentState == .unload
-        button.isEnabled = state
-        detailLabel.textColor = state ? UIColor.themColor(named: "ai_icontext1") : UIColor.themColor(named: "ai_icontext1").withAlphaComponent(0.3)
     }
 }
 // MARK: - AgentSettingTextItemView
@@ -264,11 +262,7 @@ extension AgentSettingTextItemView {
     }
     
     func updateEnableState() {
-        guard let manager = AppContext.preferenceManager() else {
-            return
-        }
-        
-        let state = manager.information.agentState == .unload
+        let state = AppContext.stateManager().agentState == .unload
         button.isEnabled = state
         detailLabel.textColor = state ? UIColor.themColor(named: "ai_icontext1") : UIColor.themColor(named: "ai_icontext1").withAlphaComponent(0.3)
     }

@@ -11,9 +11,19 @@ import Bugly
 @objc public class AppContext: NSObject {
     @objc public static let shared: AppContext = .init()
     
-    public let mainlandTermsOfServiceUrl: String = "https://conversational-ai.shengwang.cn/terms/service"
-    public let mainlandPrivacyUrl: String = "https://conversational-ai.shengwang.cn/terms/privacy"
-
+    public let termsOfServiceUrl: String = "https://conversational-ai.shengwang.cn/terms/service"
+    public let privacyUrl: String = "https://conversational-ai.shengwang.cn/terms/privacy"
+    
+    public var personalReportInfoUrl: String {
+        if _baseServerUrl.contains("service.apprtc.cn") {
+            return "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/manifest-dev/ConvoAI/index.html"
+        } else {
+            return "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/ConvoAI/index.html"
+        }
+    }
+    public let sharedInfoUrl: String = "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/libraries.html"
+    public let logoffUrl: String = "https://console.shengwang.cn/settings/security"
+    
     private var _isOpenSource: Bool = false
     private var _appId: String = ""
     private var _certificate: String = ""

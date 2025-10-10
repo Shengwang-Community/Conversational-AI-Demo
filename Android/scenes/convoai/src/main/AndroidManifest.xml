@@ -5,13 +5,25 @@
     <application>
 
         <activity
-            android:name="io.agora.scene.convoai.ui.CovLoginActivity"
+            android:name="io.agora.scene.convoai.ui.auth.CovLoginActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateHidden|adjustPan" />
 
         <activity
-            android:name="io.agora.scene.convoai.ui.CovAgentListActivity"
+            android:name=".ui.auth.SSOWebViewActivity"
+            android:configChanges="locale|layoutDirection"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".ui.mine.TermsActivity"
+            android:configChanges="locale|layoutDirection"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name="io.agora.scene.convoai.ui.main.CovMainActivity"
             android:configChanges="locale|layoutDirection"
             android:exported="false"
             android:keepScreenOn="true"
@@ -19,7 +31,7 @@
             android:windowSoftInputMode="stateHidden|adjustResize" />
 
         <activity
-            android:name="io.agora.scene.convoai.ui.CovLivingActivity"
+            android:name="io.agora.scene.convoai.ui.living.CovLivingActivity"
             android:configChanges="locale|layoutDirection"
             android:exported="false"
             android:keepScreenOn="true"
@@ -34,7 +46,37 @@
             android:theme="@style/TransparentAppCompatTheme" />
 
         <service
-            android:name=".ui.CovLocalRecordingService"
-            android:foregroundServiceType="microphone|mediaPlayback"/>
+            android:name=".service.CovLocalRecordingService"
+            android:foregroundServiceType="microphone|mediaPlayback" />
+
+        <activity
+            android:name=".ui.mine.CovProfileSettingsActivity"
+            android:configChanges="locale|layoutDirection"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".ui.mine.CovProfilePrivacyActivity"
+            android:configChanges="locale|layoutDirection"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".ui.mine.CovProfileGenderActivity"
+            android:configChanges="locale|layoutDirection"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".ui.mine.CovProfileNicknameActivity"
+            android:configChanges="locale|layoutDirection"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".ui.mine.CovProfileAboutMeActivity"
+            android:configChanges="locale|layoutDirection"
+            android:exported="false"
+            android:screenOrientation="portrait" />
     </application>
 </manifest>

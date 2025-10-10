@@ -143,7 +143,7 @@ extension TranscriptDelegate {
 /// Manages the processing and rendering of transcript in conversation
 ///
 @objc public class TranscriptController: NSObject {
-    public static let version: String = "1.8.0"
+    public static let version: String = "1.8.5"
     static let tag = "[Transcript]"
     static let uiTag = "[Transcript-UI]"
 
@@ -173,6 +173,7 @@ extension TranscriptDelegate {
     private var lastMessage: Transcript? = nil
     private var lastPublish: String? = nil
     private var lastFinishMessage: Transcript? = nil
+    private var lastInterruptEvent: InterruptEvent? = nil
     
     private var renderConfig: TranscriptRenderConfig? = nil
     
@@ -195,6 +196,7 @@ extension TranscriptDelegate {
             let agentUserId = message.publish_id ?? "0"
             self.callMessagePrint(tag: TranscriptController.tag, msg: "<<< [onInterrupted], pts: \(self.audioTimestamp), \(agentUserId), \(message), \(interruptedEvent) ")
             self.delegate?.onInterrupted(agentUserId: agentUserId, event: interruptedEvent)
+            lastInterruptEvent = interruptedEvent
         }
         
         if message.object == MessageType.user.rawValue {
@@ -202,9 +204,11 @@ extension TranscriptDelegate {
             let userId = message.user_id ?? "0"
             let turnId = message.turn_id ?? 0
             let transcriptMessage = Transcript(turnId: turnId,
-                                                     userId: userId,
-                                                  text: text,
-                                                     status: (message.final == true) ? .end : .inprogress, type: .user)
+                                               userId: userId,
+                                               text: text,
+                                               status: (message.final == true) ? .end : .inprogress,
+                                               type: .user,
+                                               renderMode: renderMode ?? .text)
             let agentUserId = message.publish_id ?? "-1"
             callMessagePrint(tag: TranscriptController.uiTag, msg: "<<< [user message] pts: \(audioTimestamp), \(transcriptMessage), publisher:\(agentUserId)")
 
@@ -213,7 +217,7 @@ extension TranscriptDelegate {
             let renderMode = getMessageMode(message)
             if renderMode == .words {
                 handleWordsMessage(message)
-            } else if renderMode == .text && message.turn_status != TranscriptStatus.interrupted.rawValue {
+            } else if renderMode == .text {
                 handleTextMessage(message)
             }
         }
@@ -248,6 +252,11 @@ extension TranscriptDelegate {
     }
     
     private func handleTextMessage(_ message: TranscriptMessage) {
+        if lastInterruptEvent?.turnId == message.turn_id {
+            callMessagePrint(tag: TranscriptController.tag, msg: "<<< this turn had been interrupted")
+            return
+        }
+        
         guard let text = message.text, !text.isEmpty else {
             callMessagePrint(tag: TranscriptController.tag, msg: "<<< [Text Mode] text is nil")
             return
@@ -266,7 +275,8 @@ extension TranscriptDelegate {
                                                  userId: userId,
                                                    text: text,
                                                  status: messageState,
-                                                   type: .agent)
+                                                   type: .agent,
+                                           renderMode: renderMode ?? .text)
         let agentUserId = message.publish_id ?? "-1"
         callMessagePrint(tag: TranscriptController.uiTag, msg: "[Text Mode] pts: \(audioTimestamp), \(agentUserId), \(transcriptMessage)")
         self.delegate?.onTranscriptUpdated(agentUserId: agentUserId, transcript: transcriptMessage)
@@ -409,28 +419,33 @@ extension TranscriptDelegate {
                 var transcriptMessage: Transcript
                 if lastWord.status == .interrupted {
                     transcriptMessage = Transcript(turnId: buffer.turnId,
-                                                         userId: buffer.userId,
-                                                         text: availableWords.map { $0.text }.joined(),
-                                                         status: .interrupted,
-                                                         type: .agent)
+                                                   userId: buffer.userId,
+                                                   text: availableWords.map { $0.text }.joined(),
+                                                   status: .interrupted,
+                                                   type: .agent,
+                                                   renderMode: renderMode ?? .text)
                     // remove finished turn
                     self.messageQueue.remove(at: index)
                     lastFinishMessage = transcriptMessage
                     callMessagePrint(tag: TranscriptController.uiTag, msg: "<<< [interrupt1] pts: \(audioTimestamp), message: \(transcriptMessage), publisher:\(buffer.agentUserId)")
                 } else if lastWord.status == .end {
                     transcriptMessage = Transcript(turnId: buffer.turnId,
-                                                      userId: buffer.userId,
-                                                      text: buffer.text,
-                                                         status: .end, type: .agent)
+                                                   userId: buffer.userId,
+                                                   text: buffer.text,
+                                                   status: .end,
+                                                   type: .agent,
+                                                   renderMode: renderMode ?? .text)
                     // remove finished turn
                     self.messageQueue.remove(at: index)
                     lastFinishMessage = transcriptMessage
                     callMessagePrint(tag: TranscriptController.uiTag, msg: "[end] pts: \(audioTimestamp), message: \(transcriptMessage), publisher:\(buffer.agentUserId)")
                 } else {
                     transcriptMessage = Transcript(turnId: buffer.turnId,
-                                                      userId: buffer.userId,
-                                                      text: availableWords.map { $0.text }.joined(),
-                                                         status: .inprogress, type: .agent)
+                                                   userId: buffer.userId,
+                                                   text: availableWords.map { $0.text }.joined(),
+                                                   status: .inprogress,
+                                                   type: .agent,
+                                                   renderMode: renderMode ?? .text)
                     callMessagePrint(tag: TranscriptController.uiTag, msg: "<<< [progress] pts: \(audioTimestamp), message: \(transcriptMessage), publisher:\(buffer.agentUserId)")
                 }
                 
@@ -447,9 +462,14 @@ extension TranscriptDelegate {
 
 // MARK: - AgoraAudioFrameDelegate
 extension TranscriptController: AgoraAudioFrameDelegate {
-    
     public func onPlaybackAudioFrame(beforeMixing frame: AgoraAudioFrame, channelId: String, uid: UInt) -> Bool {
-        audioTimestamp = frame.presentationMs
+        if frame.presentationMs != 0 {
+            audioTimestamp = frame.presentationMs
+        } else {
+            if renderMode == .words {
+                callMessagePrint(tag: TranscriptController.tag, msg: "<<<<<<onPlaybackAudioFrame pts is 0")
+            }
+        }
         return true
     }
     
@@ -481,6 +501,7 @@ extension TranscriptController {
         renderMode = nil
         lastMessage = nil
         lastFinishMessage = nil
+        lastInterruptEvent = nil
         stateMessage = nil
         audioTimestamp = 0
         messageQueue.removeAll()

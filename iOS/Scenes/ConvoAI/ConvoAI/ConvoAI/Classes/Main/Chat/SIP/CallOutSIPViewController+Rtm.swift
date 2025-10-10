@@ -78,7 +78,7 @@ extension CallOutSipViewController: RTMManagerDelegate {
     func remoteLeave() {
         addLog("<<< remoteLeave")
         callingTipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips
-        AppContext.preferenceManager()?.updateAgentState(.disconnected)
+        AppContext.stateManager().updateAgentState(.disconnected)
     }
     
     func onTokenPrivilegeWillExpire(channelName: String) {

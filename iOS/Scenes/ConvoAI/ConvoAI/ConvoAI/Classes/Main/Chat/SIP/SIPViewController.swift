@@ -123,7 +123,7 @@ class SIPViewController: BaseViewController, AgoraRtcEngineDelegate {
     }
     
     func updateCharacterInformation() {
-        if let preset = AppContext.preferenceManager()?.preference.preset {
+        if let preset = AppContext.settingManager().preset {
             navivationBar.updateCharacterInformation(
                 icon: preset.avatarUrl.stringValue(),
                 defaultIcon: preset.defaultAvatar ?? "",

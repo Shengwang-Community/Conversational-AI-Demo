@@ -3,11 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/bottom_dialog_bg"
-    android:layout_gravity="bottom"
-    android:paddingBottom="50dp">
+    android:layout_gravity="bottom">
 
     <!-- Header with tabs -->
     <FrameLayout
@@ -52,5 +51,6 @@
         android:id="@+id/vpContent"
         android:layout_marginTop="6dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="0dp"
+        android:layout_weight="1"  />
 </LinearLayout>

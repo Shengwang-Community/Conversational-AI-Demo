@@ -15,11 +15,11 @@ extension ChatViewController {
         let parameters: [String: Any?] = [
             // Basic parameters
             "app_id": AppContext.shared.appId,
-            "preset_name": AppContext.preferenceManager()?.preference.preset?.name,
+            "preset_name": AppContext.settingManager().preset?.name,
             "app_cert": nil,
             "basic_auth_username": nil,
             "basic_auth_password": nil,
-            "preset_type": AppContext.preferenceManager()?.preference.preset?.presetType,
+            "preset_type": AppContext.settingManager().preset?.presetType,
             // ConvoAI request body
             "convoai_body": [
                 "graph_id": DeveloperConfig.shared.graphId,
@@ -33,12 +33,13 @@ extension ChatViewController {
                     "enable_string_uid": nil,
                     "idle_timeout": nil,
                     "advanced_features": [
-                        "enable_aivad": AppContext.preferenceManager()?.preference.aiVad,
-                        "enable_bhvs": AppContext.preferenceManager()?.preference.bhvs,
-                        "enable_rtm": true
+                        "enable_aivad": AppContext.settingManager().aiVad,
+                        "enable_bhvs": AppContext.settingManager().bhvs,
+                        "enable_rtm": true,
+                        "enable_sal": AppContext.settingManager().voiceprintMode != .off
                     ],
                     "asr": [
-                        "language": AppContext.preferenceManager()?.preference.language?.languageCode,
+                        "language": AppContext.settingManager().language?.languageCode,
                         "vendor": nil,
                         "vendor_model": nil
                     ],
@@ -69,12 +70,13 @@ extension ChatViewController {
                         "silence_duration_ms": nil,
                         "threshold": nil
                     ],
+                    "sal": getSalParams(),
                     "avatar": [
                         "enable": isEnableAvatar(),
-                        "vendor": AppContext.preferenceManager()?.preference.avatar?.vendor ?? "",
+                        "vendor": AppContext.settingManager().avatar?.vendor ?? "",
                         "params": [
                             "agora_uid": "\(avatarUid)",
-                            "avatar_id": AppContext.preferenceManager()?.preference.avatar?.avatarId
+                            "avatar_id": AppContext.settingManager().avatar?.avatarId
                         ]
                     ],
                     "parameters": [
@@ -128,7 +130,8 @@ extension ChatViewController {
                     "advanced_features": [
                         "enable_aivad": false,
                         "enable_bhvs": true,
-                        "enable_rtm": true
+                        "enable_rtm": true,
+                        "enable_sal": AppContext.settingManager().voiceprintMode != .off
                     ],
                     "asr": [
                         "language": nil,
@@ -162,6 +165,7 @@ extension ChatViewController {
                         "silence_duration_ms": nil,
                         "threshold": nil
                     ],
+                    "sal": getSalParams(),
                     "avatar": [
                         "enable": AppContext.shared.avatarEnable,
                         "vendor": AppContext.shared.avatarVendor,
@@ -193,6 +197,28 @@ extension ChatViewController {
         ]
         
         return (CommonFeature.removeNilValues(from: parameters) as? [String: Any]) ?? [:]
+    }
+    
+    private func getSalParams() -> [String: Any?]? {
+        guard let userId = UserCenter.user?.uid else {
+            return nil
+        }
+        switch AppContext.settingManager().voiceprintMode {
+        case .off:
+            return nil
+        case .seamless:
+            return [
+                "sal_mode": "locking",
+                "sample_urls": nil
+            ]
+        case .aware:
+            return [
+                "sal_mode": "locking",
+                "sample_urls": [
+                    uid: VoiceprintManager.shared.getVoiceprint(forUserId: userId)?.remoteUrl
+                ]
+            ]
+        }
     }
 }
 
@@ -235,11 +261,7 @@ extension ChatViewController {
     
     internal func startAgentRequest() {
         addLog("[Call] startAgentRequest()")
-        guard let manager = AppContext.preferenceManager() else {
-            addLog("preference manager is nil")
-            return
-        }
-        manager.updateAgentState(.disconnected)
+        AppContext.stateManager().updateAgentState(.disconnected)
         agentStateView.isHidden = true
         if DeveloperConfig.shared.isDeveloperMode {
             channelName = "agent_debug_\(UUID().uuidString.prefix(8))"
@@ -258,7 +280,7 @@ extension ChatViewController {
         }
         
         let parameters = getStartAgentParameters()
-        isSelfSubRender = (AppContext.preferenceManager()?.preference.preset?.presetType?.hasPrefix("independent") == true)
+        isSelfSubRender = (AppContext.settingManager().preset?.presetType?.hasPrefix("independent") == true)
 
         if isEnableAvatar() {
             addLog("will start avatar, avatar id: \(avatarUid)")
@@ -276,9 +298,9 @@ extension ChatViewController {
                 if let remoteAgentId = remoteAgentId,
                      let targetServer = targetServer {
                     self.remoteAgentId = remoteAgentId
-                    AppContext.preferenceManager()?.updateAgentId(remoteAgentId)
-                    AppContext.preferenceManager()?.updateUserId(self.uid)
-                    AppContext.preferenceManager()?.updateTargetServer(targetServer)
+                    AppContext.stateManager().updateAgentId(remoteAgentId)
+                    AppContext.stateManager().updateUserId(self.uid)
+                    AppContext.stateManager().updateTargetServer(targetServer)
                 }
                 addLog("start agent success, agent id is: \(self.remoteAgentId)")
                 self.timerCoordinator.startPingTimer()
@@ -302,7 +324,7 @@ extension ChatViewController {
     
     internal func stopAgentRequest() {
         var presetName = ""
-        if let preset = AppContext.preferenceManager()?.preference.preset {
+        if let preset = AppContext.settingManager().preset {
             presetName = preset.name.stringValue()
         }
         
@@ -314,7 +336,7 @@ extension ChatViewController {
     
     internal func startPingRequest() {
         addLog("[Call] startPingRequest()")
-        let presetName = AppContext.preferenceManager()?.preference.preset?.name ?? ""
+        let presetName = AppContext.settingManager().preset?.name ?? ""
         agentManager.ping(appId: AppContext.shared.appId, channelName: channelName, presetName: presetName) { [weak self] err, res in
             guard let self = self else { return }
             guard let error = err else {
@@ -336,7 +358,7 @@ extension ChatViewController {
         leaveChannel()
         stopRenderLocalVideoStream()
         resetUIDisplay()
-        resetPreference()
+        AppContext.stateManager().resetToDefaults()
     }
     
     internal func handleStartError() {

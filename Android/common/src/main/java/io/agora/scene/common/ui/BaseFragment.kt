@@ -162,4 +162,4 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
             }
         }
     }
-} 
+}

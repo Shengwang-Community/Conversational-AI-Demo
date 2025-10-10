@@ -17,8 +17,8 @@ extension CallOutSipViewController {
                 "app_cert": nil,
                 "basic_auth_username": nil,
                 "basic_auth_password": nil,
-                "preset_name": AppContext.preferenceManager()?.preference.preset?.name,
-                "preset_type": AppContext.preferenceManager()?.preference.preset?.presetType,
+                "preset_name": AppContext.settingManager().preset?.name,
+                "preset_type": AppContext.settingManager().preset?.presetType,
                 "convoai_body": [
                     "name": nil,
                     "pipeline_id": nil,
@@ -45,9 +45,9 @@ extension CallOutSipViewController {
                     return
                 }
                 if let agentId = res?.agentId {
-                    AppContext.preferenceManager()?.updateRoomState(.connected)
-                    AppContext.preferenceManager()?.updateAgentState(.connected)
-                    AppContext.preferenceManager()?.updateAgentId(agentId)
+                    AppContext.stateManager().updateRoomState(.connected)
+                    AppContext.stateManager().updateAgentState(.connected)
+                    AppContext.stateManager().updateAgentId(agentId)
                 }
                 continuation.resume()
             })

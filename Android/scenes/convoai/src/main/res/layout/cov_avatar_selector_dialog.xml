@@ -5,53 +5,35 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/ai_fill2"
-    android:orientation="vertical"
-    android:paddingTop="32dp">
+    android:orientation="vertical">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <io.agora.scene.common.ui.widget.CommonTitleBar
+        android:id="@+id/customTitleBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingBottom="12dp">
+        app:titleText="@string/cov_setting_avatar"
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:id="@+id/ivBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="12dp"
-            android:src="@drawable/cov_back"
-            android:paddingVertical="6dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/ai_icontext1" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/cov_setting_avatar"
-            android:textColor="@color/ai_icontext1"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rcAvatarGrid"
+    <!-- Category Tabs -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="44dp"
         android:layout_marginHorizontal="12dp"
-        android:clipToPadding="false"
-        android:layout_marginBottom="32dp"
-        tools:itemCount="6"
-        tools:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-        tools:listitem="@layout/cov_avatar_selector_avatar_item"
-        tools:spanCount="2" />
+        android:background="@color/ai_fill2"
+        android:paddingBottom="8dp"
+        app:tabGravity="start"
+        app:tabIndicator="@android:color/transparent"
+        app:tabMinWidth="0dp"
+        app:tabMode="scrollable"
+        app:tabPaddingStart="12dp"
+        app:tabRippleColor="@android:color/transparent" />
+
+    <!-- Content ViewPager -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/vpContent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingBottom="32dp" />
 </LinearLayout>

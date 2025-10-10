@@ -27,7 +27,7 @@ class CallInSIPViewController: SIPViewController {
     
     // MARK: - Private Methods
     private func setupPhoneData() {
-        guard let preset = AppContext.preferenceManager()?.preference.preset, let vendorCalleeNumbers = preset.sipVendorCalleeNumbers else {
+        guard let preset = AppContext.settingManager().preset, let vendorCalleeNumbers = preset.sipVendorCalleeNumbers else {
             return
         }
         

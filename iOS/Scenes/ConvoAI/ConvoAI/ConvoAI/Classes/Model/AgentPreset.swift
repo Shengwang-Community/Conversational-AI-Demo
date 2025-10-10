@@ -9,6 +9,7 @@ import Foundation
 
 struct Avatar: Codable {
     let vendor: String?
+    let displayVendor: String?
     let avatarId: String?
     let avatarName: String?
     let thumbImageUrl: String?
@@ -16,6 +17,7 @@ struct Avatar: Codable {
     
     enum CodingKeys: String, CodingKey {
         case vendor = "vendor"
+        case displayVendor = "display_vendor"
         case avatarId = "avatar_id"
         case avatarName = "avatar_name"
         case thumbImageUrl = "thumb_img_url"
@@ -35,7 +37,7 @@ struct VendorCalleeNumber: Codable {
     }
 }
 
-struct SupportLanguage: Codable {
+struct SupportLanguage: Codable, Equatable {
     let languageCode: String?
     let languageName: String?
     let aivadEnabledByDefault: Bool?
@@ -62,6 +64,8 @@ struct AgentPreset: Codable {
     let supportLanguages: [SupportLanguage]?
     let avatarIdsByLang: [String: [Avatar]]?
     let avatarUrl: String?
+    let enableSal: Bool?
+    let supportSal: Bool?
     var defaultAvatar: String?
     let sipVendorCalleeNumbers:[VendorCalleeNumber]?
 
@@ -80,5 +84,7 @@ struct AgentPreset: Codable {
         case avatarUrl = "avatar_url"
         case defaultAvatar = "default_avatar"
         case sipVendorCalleeNumbers = "sip_vendor_callee_numbers"
+        case enableSal = "advanced_features_enable_sal"
+        case supportSal = "is_support_sal"
     }
 }

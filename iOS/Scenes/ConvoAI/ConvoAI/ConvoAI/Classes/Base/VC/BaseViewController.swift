@@ -31,6 +31,13 @@ class BaseViewController: UIViewController {
         }
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = true
+        navigationController?.interactivePopGestureRecognizer?.delegate = self
+    }
+    
     private func configCustomNaviBar() {
         naviBar.backgroundColor = UIColor.themColor(named: "ai_fill2")
         view.addSubview(naviBar)
@@ -46,9 +53,6 @@ class BaseViewController: UIViewController {
                 image: UIImage.ag_named("ic_agora_back")
             )
         }
-        
-        // Configure interactive pop gesture recognizer
-        configurePopGestureRecognizer()
     }
     
     func addLog(_ txt: String) {
@@ -60,13 +64,6 @@ class BaseViewController: UIViewController {
     }
     
     @objc func navigationRightButtonTapped() {}
-    
-    // MARK: - Pop Gesture Configuration
-    private func configurePopGestureRecognizer() {
-        // Enable interactive pop gesture recognizer even when navigation bar is hidden
-        navigationController?.interactivePopGestureRecognizer?.isEnabled = true
-        navigationController?.interactivePopGestureRecognizer?.delegate = self
-    }
     
     // MARK: - Override Methods for Subclasses
     /// Override this method to customize pop gesture behavior
