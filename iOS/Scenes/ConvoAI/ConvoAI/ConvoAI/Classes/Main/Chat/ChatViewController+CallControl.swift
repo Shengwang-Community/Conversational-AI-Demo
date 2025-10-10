@@ -146,13 +146,16 @@ extension ChatViewController {
     @MainActor
     func prepareToStartAgent() async {
         startLoading()
-    
+        generateUid()
+        
         Task {
             do {
                 if !rtmManager.isLogin {
                     try await loginRTM()
                 }
+                
                 try await fetchTokenIfNeeded()
+                try await fetchOpenSourceAvatarTokenIfNeeded()
                 await MainActor.run {
                     if callControlBar.style == .startButton { return }
                     startAgentRequest()
@@ -163,6 +166,11 @@ extension ChatViewController {
                 handleStartError()
             }
         }
+    }
+    
+    private func generateUid() {
+        agentUid = AppContext.agentUid
+        avatarUid = AppContext.avatarUid
     }
     
     private func showMicroPhonePermissionAlert() {
