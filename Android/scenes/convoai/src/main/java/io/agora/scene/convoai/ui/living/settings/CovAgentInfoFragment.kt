@@ -7,7 +7,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.activity.viewModels
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import io.agora.scene.common.ui.BaseFragment
 import io.agora.scene.common.ui.OnFastClickListener
@@ -26,7 +28,10 @@ import io.agora.scene.convoai.ui.ConnectionStatus
 import io.agora.scene.convoai.ui.VoiceprintUIStatus
 import io.agora.scene.convoai.ui.living.settings.CovAgentInfoViewModel
 import io.agora.scene.convoai.ui.living.CovLivingViewModel
+import io.agora.scene.convoai.ui.sip.CallState
+import io.agora.scene.convoai.ui.sip.CovLivingSipViewModel
 import kotlinx.coroutines.launch
+import kotlin.getValue
 
 /**
  * Fragment for Channel Info tab
@@ -44,6 +49,7 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
     }
 
     private val livingViewModel: CovLivingViewModel by activityViewModels()
+    private val livingSipViewModel: CovLivingSipViewModel by viewModels()
     private val agentInfoViewModel: CovAgentInfoViewModel by activityViewModels()
 
     private var uploadAnimation: Animation? = null
@@ -114,6 +120,25 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
             livingViewModel.connectionState.collect { state ->
                 agentInfoViewModel.updateConnectionState(state)
                 updateUploadingStatus(disable = state != AgentConnectionState.CONNECTED)
+            }
+        }
+
+        lifecycleScope.launch {
+            livingSipViewModel.callState.collect { state ->
+                when (state) {
+                    CallState.IDLE -> {
+                        agentInfoViewModel.updateConnectionState(AgentConnectionState.IDLE)
+                    }
+
+                    CallState.CALLING -> {
+                        agentInfoViewModel.updateConnectionState(AgentConnectionState.CONNECTING)
+                    }
+
+                    CallState.CALLED -> {
+                        agentInfoViewModel.updateConnectionState(AgentConnectionState.CONNECTED)
+                    }
+                }
+                updateUploadingStatus(disable = state != CallState.IDLE)
             }
         }
 

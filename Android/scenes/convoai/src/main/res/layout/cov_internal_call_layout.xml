@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:background="@android:color/transparent"
+    tools:background="@color/ai_fill4">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_sip_callees"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:maxHeight="200dp"
+        app:layout_constraintBottom_toTopOf="@+id/layout_tips"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.8"
+        tools:itemCount="10"
+        tools:listitem="@layout/cov_sip_callee_item" />
+
+    <LinearLayout
+        android:id="@+id/layout_tips"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.84">
+
+        <ImageButton
+            android:id="@+id/btn_tips"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/common_ic_notice"
+            app:layout_constraintBottom_toBottomOf="@id/tv_ai_vad_high"
+            app:layout_constraintStart_toEndOf="@+id/tv_ai_vad_high"
+            app:layout_constraintTop_toTopOf="@id/tv_ai_vad_high" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
+            android:text="@string/cov_sip_internal_call_tips"
+            android:textColor="@color/ai_icontext2"
+            android:textSize="12sp" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
