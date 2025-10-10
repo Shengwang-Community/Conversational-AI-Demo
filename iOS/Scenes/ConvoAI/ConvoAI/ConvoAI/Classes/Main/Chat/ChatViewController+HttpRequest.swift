@@ -107,6 +107,8 @@ extension ChatViewController {
     }
     
     private func getStartAgentParametersForOpenSouce() -> [String: Any] {
+        AppContext.shared.avatarParams["agora_uid"] = "\(avatarUid)"
+        AppContext.shared.avatarParams["agora_token"] = openSourceAvatarToken
         let parameters: [String: Any?] = [
             // Basic parameters
             "app_id": AppContext.shared.appId,
@@ -283,6 +285,43 @@ extension ChatViewController {
         }
     }
     
+    internal func fetchOpenSourceAvatarTokenIfNeeded() async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            if !AppContext.shared.isOpenSource {
+                continuation.resume()
+                return
+            }
+            
+            if !AppContext.shared.avatarEnable {
+                continuation.resume()
+                return
+            }
+            
+            if AppContext.shared.certificate.isEmpty {
+                self.openSourceAvatarToken = AppContext.shared.appId
+                continuation.resume()
+                return
+            }
+            
+            NetworkManager.shared.generateToken(
+                channelName: "",
+                uid: "\(avatarUid)",
+                types: [.rtc, .rtm]
+            ) { [weak self] token in
+                guard let self = self else { return }
+                
+                if let token = token {
+                    print("avatar rtc token is : \(token)")
+                    self.openSourceAvatarToken = token
+                    continuation.resume()
+                } else {
+                    continuation.resume(throwing: NSError(domain: "", code: -1,
+                        userInfo: [NSLocalizedDescriptionKey: "generate avatar token error"]))
+                }
+            }
+        }
+    }
+    
     internal func startAgentRequest() {
         addLog("[Call] startAgentRequest()")
         AppContext.stateManager().updateAgentState(.disconnected)
@@ -292,8 +331,6 @@ extension ChatViewController {
         } else {
             channelName = "agent_\(UUID().uuidString.prefix(8))"
         }
-        agentUid = AppContext.agentUid
-        avatarUid = AppContext.avatarUid
         agentIsJoined = false
         avatarIsJoined = false
         

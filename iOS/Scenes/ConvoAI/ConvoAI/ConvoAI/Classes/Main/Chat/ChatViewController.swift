@@ -13,6 +13,8 @@ class ChatViewController: BaseViewController {
     internal var avatarIsJoined = false
     internal var channelName = ""
     internal var token = ""
+    internal var openSourceAvatarToken = ""
+    internal var openSourceAgentToken = ""
     internal var agentUid = 0
     internal var avatarUid = 0
     internal var remoteAgentId = ""
