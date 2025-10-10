@@ -11,15 +11,18 @@ import {
   API_AGENT_STOP,
   API_AUTH_TOKEN,
   API_TOKEN,
+  API_UPLOAD_FILE,
   API_UPLOAD_IMAGE,
   API_UPLOAD_LOG,
   API_USER_INFO,
+  API_USER_UPDATE,
   basicRemoteResSchema,
   ERROR_CODE,
   ERROR_MESSAGE,
   localOpensourceStartAgentPropertiesSchema,
   localStartAgentPropertiesSchema,
   remoteAgentCustomPresetItem,
+  remoteAgentFileUploadSchema,
   remoteAgentPingReqSchema,
   remoteAgentStartRespDataDevSchema,
   remoteAgentStartRespDataSchema,
@@ -28,7 +31,11 @@ import {
 import { generateDevModeQuery } from '@/lib/dev'
 import { useCancelableSWR } from '@/lib/request'
 import { genUUID } from '@/lib/utils'
-import type { IAgentPreset, IUploadLogInput } from '@/type/agent'
+import type {
+  IAgentPreset,
+  IUploadLogInput,
+  IUserInfoInput
+} from '@/type/agent'
 import type { TDevModeQuery } from '@/type/dev'
 
 const DEFAULT_FETCH_TIMEOUT = 10000
@@ -144,6 +151,20 @@ export const getUserInfo = async () => {
   const respData = await resp?.json()
   const resData = basicRemoteResSchema.parse(respData)
   return resData
+}
+
+export const updateUserInfo = async (payload: IUserInfoInput) => {
+  const url = `${API_USER_UPDATE}`
+  const resp = await fetchWithTimeout(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${Cookies.get('token')}`
+    },
+    body: JSON.stringify(payload)
+  })
+  const respData = await resp?.json()
+  // const resData = remoteUserInfoUpdateSchema.parse(respData)
+  return respData
 }
 
 export const uploadLog = async ({ content, file }: IUploadLogInput) => {
@@ -375,6 +396,37 @@ export const uploadImage = async ({
     throw new Error('Image upload failed')
   }
   return imgObjectStorageUrl
+}
+
+export const uploadFile = async (
+  file: Blob,
+  channel_name: string,
+  appId: string
+) => {
+  if (!appId) {
+    throw new Error('App ID is not set')
+  }
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('src', 'web')
+  formData.append('app_id', appId)
+  formData.append('channel_name', channel_name)
+  formData.append('request_id', genUUID())
+  // throw new Error("test");
+  const resp = await fetchWithTimeout(API_UPLOAD_FILE, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      Authorization: `Bearer ${Cookies.get('token')}`
+    }
+  })
+  const respData = await resp?.json()
+  const resData = remoteAgentFileUploadSchema.parse(respData)
+  const fileUrl = resData?.data?.file_url as string
+  if (!fileUrl) {
+    throw new Error('File upload failed')
+  }
+  return resData.data
 }
 
 export const retrievePresetById = async (id: string) => {

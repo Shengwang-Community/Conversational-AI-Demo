@@ -1,6 +1,7 @@
 import { logger as agoraLogger } from '@agora-js/report'
 import type { RTMEvents } from 'agora-rtm'
 import _ from 'lodash'
+
 import {
   type EAgentState,
   EChatMessageType,
@@ -14,6 +15,7 @@ import {
   type IMessageError,
   type IMessageInterrupt,
   type IMessageMetrics,
+  type IMessageSalStatus,
   type IPresenceState,
   type ITranscriptHelperItem,
   type ITranscriptionBase,
@@ -76,7 +78,7 @@ export class CovSubRenderController {
     Partial<IUserTranscription | IAgentTranscription>
   >[] = []
   public onChatHistoryUpdated:
-    | IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED]
+    | IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.TRANSCRIPT_UPDATED]
     | null = null
   public onAgentStateChanged:
     | IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.AGENT_STATE_CHANGED]
@@ -99,12 +101,15 @@ export class CovSubRenderController {
   public onMessageError:
     | IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.MESSAGE_ERROR]
     | null = null
+  public onMessageSalStatus:
+    | IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.MESSAGE_SAL_STATUS]
+    | null = null
 
   constructor(
     options: {
       messageCacheTimeout?: number
       interval?: number
-      onChatHistoryUpdated?: IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED]
+      onChatHistoryUpdated?: IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.TRANSCRIPT_UPDATED]
       onAgentStateChanged?: IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.AGENT_STATE_CHANGED]
       onAgentInterrupted?: IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.AGENT_INTERRUPTED]
       onDebugLog?: IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.DEBUG_LOG]
@@ -112,6 +117,7 @@ export class CovSubRenderController {
       onAgentError?: IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.AGENT_ERROR]
       onMessageReceipt?: IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.MESSAGE_RECEIPT_UPDATED]
       onMessageError?: IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.MESSAGE_ERROR]
+      onMessageSalStatus?: IConversationalAIAPIEventHandlers[EConversationalAIAPIEvents.MESSAGE_SAL_STATUS]
     } = {}
   ) {
     this.callMessagePrint = (
@@ -135,6 +141,7 @@ export class CovSubRenderController {
     this.onAgentError = options.onAgentError ?? null
     this.onMessageReceipt = options.onMessageReceipt ?? null
     this.onMessageError = options.onMessageError ?? null
+    this.onMessageSalStatus = options.onMessageSalStatus ?? null
   }
 
   private _preSetupInterval() {
@@ -263,7 +270,7 @@ export class CovSubRenderController {
         turn_id: queueItem.turn_id,
         uid: queueItem.uid,
         stream_id: queueItem.stream_id,
-        _time: Date.now(),
+        _time: new Date().getTime(),
         text: '',
         status: queueItem.status,
         metadata: queueItem
@@ -271,7 +278,7 @@ export class CovSubRenderController {
       this._appendChatHistory(correspondingChatHistoryItem)
     }
     // update correspondingChatHistoryItem._time for chatHistory auto-scroll
-    correspondingChatHistoryItem._time = Date.now()
+    correspondingChatHistoryItem._time = new Date().getTime()
     // update correspondingChatHistoryItem.metadata
     correspondingChatHistoryItem.metadata = queueItem
     // update correspondingChatHistoryItem.status if queueItem.status is interrupted(from message.interrupt event)
@@ -419,7 +426,8 @@ export class CovSubRenderController {
           `[Word Mode]`,
           `[${data.uid}]`,
           'Drop message with turn_id less than latestTurnId',
-          `turn_id: ${data.turn_id}, latest turn_id: ${latestTurnId}`
+          `turn_id: ${data.turn_id}, latest turn_id: ${latestTurnId}`,
+          data
         )
         return
       }
@@ -504,8 +512,7 @@ export class CovSubRenderController {
     const turn_id = message.turn_id
     const text = message.text || ''
     const stream_id = message.stream_id
-    const turn_status =
-      (message as { turn_status?: ETurnStatus }).turn_status || ETurnStatus.END
+    const turn_status = ETurnStatus.END
 
     const targetChatHistoryItem = this.chatHistory.find(
       (item) => item.turn_id === turn_id && item.stream_id === stream_id
@@ -525,7 +532,7 @@ export class CovSubRenderController {
           ? `${CovSubRenderController.self_uid}`
           : `${uid}`,
         stream_id,
-        _time: Date.now(),
+        _time: new Date().getTime(),
         text,
         status: turn_status,
         metadata: message
@@ -535,7 +542,7 @@ export class CovSubRenderController {
       targetChatHistoryItem.text = text
       targetChatHistoryItem.status = turn_status
       targetChatHistoryItem.metadata = message
-      targetChatHistoryItem._time = Date.now()
+      targetChatHistoryItem._time = new Date().getTime()
       this.callMessagePrint(
         ELoggerType.debug,
         `[Text Mode]`,
@@ -713,6 +720,11 @@ export class CovSubRenderController {
       value: latency_ms,
       timestamp: message.send_ts
     })
+  }
+
+  protected handleMessageSalStatus(uid: string, message: IMessageSalStatus) {
+    this.callMessagePrint(ELoggerType.debug, 'handleMessageSalStatus', message)
+    this.onMessageSalStatus?.(`${uid}`, message)
   }
 
   protected handleMessageError(uid: string, message: IMessageError) {
@@ -951,11 +963,16 @@ export class CovSubRenderController {
     const isMessageError = message.object === EMessageType.MSG_ERROR
     // const isMessageState = message.object === EMessageType.MSG_STATE
     const isMessageInfo = message.object === EMessageType.MESSAGE_INFO
+    const isMessageSalStatus =
+      message.object === EMessageType.MESSAGE_SAL_STATUS
 
     // set mode (only once)
     if (isAgentMessage && this._mode === ETranscriptHelperMode.UNKNOWN) {
-      // check if words is empty, and set mode
-      if (!message.words) {
+      // 2025-09-28 check if words array is empty or not undefined, and set mode
+      if (
+        !message.words ||
+        (Array.isArray(message.words) && message.words.length === 0)
+      ) {
         this.setMode(ETranscriptHelperMode.TEXT)
       } else {
         this._setupIntervalForWords({ isForce: true })
@@ -1027,6 +1044,11 @@ export class CovSubRenderController {
       )
       return
     }
+
+    if (isMessageSalStatus) {
+      this.handleMessageSalStatus(options.publisher, message as unknown as any)
+      return
+    }
   }
 
   public run() {
@@ -1034,7 +1056,7 @@ export class CovSubRenderController {
   }
 
   public setPts(pts: number) {
-    if (this._pts < pts) {
+    if (this._pts < pts && pts !== 0) {
       this._pts = pts
     }
   }

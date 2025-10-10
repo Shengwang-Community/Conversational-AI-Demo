@@ -1,11 +1,15 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ChevronRight } from 'lucide-react'
+import { motion } from 'motion/react'
 import NextImage from 'next/image'
 import NextLink from 'next/link'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
-import { useForm } from 'react-hook-form'
+import ReactDOM from 'react-dom'
+import { type UseFormSetValue, useForm } from 'react-hook-form'
+import type z from 'zod'
 import packageJson from '@/../package.json'
 import {
   AgentAvatarField,
@@ -47,12 +51,12 @@ import {
   publicAgentSettingSchema
 } from '@/constants'
 import { ETranscriptHelperMode } from '@/conversational-ai-api/type'
+import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
 import { cn, isCN } from '@/lib/utils'
 import { useAgentSettingsStore, useGlobalStore } from '@/store'
 import type { TAgentSettings } from '@/store/agent'
 import { useRTCStore } from '@/store/rtc'
 import type { IAgentPreset } from '@/type/agent'
-import { EConnectionStatus } from '@/type/rtc'
 
 export function AgentSettingsForm(props: {
   selectedPreset: IAgentPreset
@@ -64,17 +68,19 @@ export function AgentSettingsForm(props: {
     settings,
     updateSettings,
     transcriptionRenderMode,
-    updateTranscriptionRenderMode
+    updateTranscriptionRenderMode,
+    updateFormSetValue
   } = useAgentSettingsStore()
 
   const {
     isDevMode,
-    setConfirmDialog,
     isPresetDigitalReminderIgnored,
-    setIsPresetDigitalReminderIgnored
+    setConfirmDialog,
+    setIsPresetDigitalReminderIgnored,
+    setShowSALSettingSidebar
   } = useGlobalStore()
 
-  const { roomStatus } = useRTCStore()
+  const { remote_rtc_uid } = useRTCStore()
 
   const t = useTranslations('settings')
 
@@ -83,12 +89,15 @@ export function AgentSettingsForm(props: {
     defaultValues: settings
   })
 
-  const disableFormMemo = React.useMemo(() => {
-    return !(
-      roomStatus === EConnectionStatus.DISCONNECTED ||
-      roomStatus === EConnectionStatus.UNKNOWN
+  const disableFormMemo = useIsAgentCalling()
+
+  React.useEffect(() => {
+    updateFormSetValue(
+      settingsForm.setValue as UseFormSetValue<
+        z.infer<typeof publicAgentSettingSchema>
+      >
     )
-  }, [roomStatus])
+  }, [updateFormSetValue, settingsForm])
 
   // !SPECIAL CASE[independent]
   const disableAdvancedFeaturesMemo = React.useMemo(() => {
@@ -122,6 +131,14 @@ export function AgentSettingsForm(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPreset, settingsForm.watch('asr.language')])
 
+  const { advanced_features_enable_sal, is_support_sal } = React.useMemo(() => {
+    return {
+      advanced_features_enable_sal:
+        selectedPreset?.advanced_features_enable_sal,
+      is_support_sal: selectedPreset?.is_support_sal
+    }
+  }, [selectedPreset])
+
   // listen form change and update store
   React.useEffect(() => {
     console.log('settingsForm ===', settingsForm.getValues())
@@ -130,7 +147,7 @@ export function AgentSettingsForm(props: {
       updateSettings(value as TAgentSettings)
     })
     return () => subscription.unsubscribe()
-  }, [settingsForm, updateSettings])
+  }, [settingsForm, updateSettings, settings])
 
   React.useEffect(() => {
     // !SPECIAL CASE[independent]
@@ -140,6 +157,7 @@ export function AgentSettingsForm(props: {
     if (selectedPreset?.preset_type?.includes('independent')) {
       settingsForm.setValue('advanced_features.enable_bhvs', true)
       settingsForm.setValue('advanced_features.enable_aivad', false)
+      settingsForm.setValue('sal', undefined)
     }
 
     // !SPECIAL CASE[llm.style] (global only)
@@ -183,6 +201,23 @@ export function AgentSettingsForm(props: {
     target_language,
     process.env.NEXT_PUBLIC_LOCALE
   ])
+
+  React.useEffect(() => {
+    settingsForm.setValue(
+      'advanced_features.enable_sal',
+      !!advanced_features_enable_sal
+    )
+  }, [advanced_features_enable_sal])
+
+  React.useEffect(() => {
+    if (avatarList && avatarList.length > 0) {
+      for (const avatar of avatarList) {
+        ReactDOM.preload(avatar.bg_img_url, { as: 'image' })
+        ReactDOM.preload(avatar.thumb_img_url, { as: 'image' })
+        ReactDOM.preload(avatar.web_bg_img_url, { as: 'image' })
+      }
+    }
+  }, [avatarList])
 
   return (
     <Form {...settingsForm}>
@@ -315,7 +350,7 @@ export function AgentSettingsForm(props: {
                 <FormItem>
                   <div className='flex items-center justify-between gap-2'>
                     <FormLabel
-                      className={cn('flex items-center gap-1 font-normal')}
+                      className={cn('flex items-center gap-1 py-2 font-normal')}
                     >
                       {t.rich('advanced_features.enable_aivad.title', {
                         label: (chunks) => (
@@ -324,7 +359,7 @@ export function AgentSettingsForm(props: {
                       })}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <FilledTooltipIcon className='mb-0.5 inline size-4' />
+                          <FilledTooltipIcon className='inline size-4' />
                         </TooltipTrigger>
                         <TooltipContent className='max-w-xs'>
                           <p>
@@ -350,6 +385,31 @@ export function AgentSettingsForm(props: {
               </TooltipProvider>
             )}
           />
+          <div className='flex items-center justify-between gap-2 py-2'>
+            <Label className='font-normal'>
+              {t('advanced_features.enable_sal.title')}
+            </Label>
+            <motion.div
+              className={cn(
+                'flex cursor-pointer items-center gap-1 whitespace-nowrap text-icontext',
+                disableFormMemo || !is_support_sal ? 'opacity-50' : ''
+              )}
+              onClick={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                if (disableFormMemo || !is_support_sal) {
+                  return
+                }
+                setShowSALSettingSidebar(true)
+              }}
+            >
+              {t(
+                `advanced_features.enable_sal.${settings.advanced_features.enable_sal ? (settings.sal?.sample_urls?.[remote_rtc_uid] ? 'manual' : 'autoLearning') : 'off'}`
+              )}
+              <ChevronRight className='size-5' />
+            </motion.div>
+          </div>
+
           <div className='flex items-center justify-between gap-2'>
             <Label className='font-normal'>
               {t('transcription.render-mode')}

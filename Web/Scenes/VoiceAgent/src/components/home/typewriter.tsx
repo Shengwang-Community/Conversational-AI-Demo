@@ -3,14 +3,12 @@
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import Typewriter, { type TypewriterClass } from 'typewriter-effect'
+import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
 import { isCN } from '@/lib/utils'
-import { useRTCStore } from '@/store'
-import { EConnectionStatus } from '@/type/rtc'
 
 export function GreetingTypewriterCN() {
-  const { agentStatus } = useRTCStore()
   // const { history } = useChatStore()
-
+  const isAgentCalling = useIsAgentCalling()
   const typewriterRef = React.useRef<TypewriterClass>(null)
 
   const tAgentGreeting = useTranslations('agent.greeting')
@@ -84,11 +82,7 @@ export function GreetingTypewriterCN() {
   //   return null
   // }
 
-  if (
-    ![EConnectionStatus.DISCONNECTED, EConnectionStatus.UNKNOWN].includes(
-      agentStatus
-    )
-  ) {
+  if (isAgentCalling) {
     return null
   }
 
@@ -121,10 +115,10 @@ export function GreetingTypewriterCN() {
 }
 
 export function GreetingTypewriterEN() {
-  const { agentStatus } = useRTCStore()
   // const { history } = useChatStore()
 
   const typewriterRef = React.useRef<TypewriterClass>(null)
+  const isAgentCalling = useIsAgentCalling()
 
   const tAgentGreeting = useTranslations('agent.greeting')
 
@@ -194,11 +188,7 @@ export function GreetingTypewriterEN() {
   //   return null
   // }
 
-  if (
-    ![EConnectionStatus.DISCONNECTED, EConnectionStatus.UNKNOWN].includes(
-      agentStatus
-    )
-  ) {
+  if (isAgentCalling) {
     return null
   }
 
@@ -229,4 +219,27 @@ export function GreetingTypewriter() {
     return <GreetingTypewriterCN />
   }
   return <GreetingTypewriterEN />
+}
+
+export function GenerateAIInfoTypewriter() {
+  const t = useTranslations()
+  const isAgentCalling = useIsAgentCalling()
+
+  if (!isAgentCalling) {
+    return null
+  }
+
+  return (
+    <Typewriter
+      options={{ cursor: '', delay: 20, loop: true }}
+      onInit={(typewriter) => {
+        typewriter
+          .typeString(t('aiGenerateInfo'))
+          .pauseFor(10000)
+          .deleteAll('natural')
+          .pauseFor(3000)
+          .start()
+      }}
+    />
+  )
 }

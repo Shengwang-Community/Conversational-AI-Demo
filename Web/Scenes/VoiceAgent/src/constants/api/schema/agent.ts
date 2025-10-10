@@ -13,7 +13,8 @@ const convoaiBodyPropertiesSchema = z.object({
     .object({
       enable_aivad: z.boolean().optional(),
       enable_bhvs: z.boolean().optional(),
-      enable_rtm: z.boolean().optional()
+      enable_rtm: z.boolean().optional(),
+      enable_sal: z.boolean().optional()
     })
     .optional(),
 
@@ -68,6 +69,13 @@ const convoaiBodyPropertiesSchema = z.object({
       prefix_padding_ms: z.number().optional(),
       silence_duration_ms: z.number().optional(),
       threshold: z.number().optional()
+    })
+    .optional(),
+
+  sal: z
+    .object({
+      sal_mode: z.literal('locking'),
+      sample_urls: z.record(z.string(), z.string()).optional().nullable()
     })
     .optional(),
 

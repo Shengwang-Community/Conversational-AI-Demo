@@ -1,4 +1,5 @@
 import { useTranslations } from 'next-intl'
+
 import { PresetBadgeButton } from '@/components/button/preset-badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -23,6 +24,8 @@ export const PresetBadgesList = (props: { className?: string }) => {
   const {
     onClickSidebar,
     showSidebar,
+    showSALSettingSidebar,
+    setShowSALSettingSidebar,
     setConfirmDialog,
     isPresetDigitalReminderIgnored,
     setIsPresetDigitalReminderIgnored
@@ -109,7 +112,13 @@ export const PresetBadgesList = (props: { className?: string }) => {
           <li>
             <PresetBadgeButton
               isSelected={showSidebar}
-              onClick={onClickSidebar}
+              onClick={() => {
+                if (showSidebar && showSALSettingSidebar) {
+                  setShowSALSettingSidebar(false)
+                  return
+                }
+                onClickSidebar()
+              }}
             >
               <span>{t('preset.more')}</span>
             </PresetBadgeButton>

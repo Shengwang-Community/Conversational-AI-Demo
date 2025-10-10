@@ -1,4 +1,4 @@
-export { useAgentSettingsStore } from '@/store/agent'
+export { useAgentSalAudioStore, useAgentSettingsStore } from '@/store/agent'
 export { useChatStore } from '@/store/chat'
 export { useGlobalStore } from '@/store/global'
 export { useRTCStore } from '@/store/rtc'

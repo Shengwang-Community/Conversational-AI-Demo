@@ -12,7 +12,7 @@ export const Card = (props: {
     <div
       className={cn(
         'h-full w-full rounded-xl border bg-card',
-        'transition-all duration-1000',
+        'transition-all duration-300',
         'relative',
         className
       )}

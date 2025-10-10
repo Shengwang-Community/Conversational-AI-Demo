@@ -72,12 +72,12 @@ export function LoginButton(
 export function LoginPanelButton(props: ButtonProps) {
   const { className, ...rest } = props
 
-  const { setShowLoginPanel } = useGlobalStore()
+  const { setShowPrivacyDialog } = useGlobalStore()
   const tLogin = useTranslations('login')
   const { globalLoading } = useUserInfoStore()
 
   const handleClick = () => {
-    setShowLoginPanel(true)
+    setShowPrivacyDialog(true)
   }
 
   return (
