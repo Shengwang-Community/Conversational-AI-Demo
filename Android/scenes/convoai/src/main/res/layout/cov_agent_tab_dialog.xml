@@ -17,6 +17,7 @@
 
         <!-- Custom Tab Layout -->
         <FrameLayout
+            android:id="@+id/headerLayout"
             android:layout_width="match_parent"
             android:layout_height="42dp"
             android:background="@drawable/cov_tab_container_bg"

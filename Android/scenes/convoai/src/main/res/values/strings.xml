@@ -242,4 +242,13 @@
     <string name="cov_mine_about_me_official2">互联网运营 er 一枚，日常跟数据、文案死磕，擅长抓热点做内容。闲了爱撸代码解压，奶茶续命党，生椰拿铁是本命，求搭子聊运营干货～</string>
     <string name="cov_mine_about_me_official3">前端开发仔报道，沉迷调样式、优化交互，追新技术像追更。爱喝冰美式提效，周末宅家肝游戏，求技术搭子交流 bug 解决方案～</string>
     <string name="cov_mine_about_me_official4">产品经理一枚，天天画原型、盯迭代，擅长抠需求细节。咖啡不离手，偏爱冷萃，闲了刷行业报告，求同频小伙伴唠产品思路～</string>
+
+    <!-- SIP -->
+    <string name="cov_sip_internal_call_tips">Dial this number from your phone to start a conversation with our AI Agent.</string>
+    <string name="cov_sip_outbound_call_tips">Enter your number below, and our AI Agent will call you.</string>
+    <string name="cov_sip_outbound_calling">Calling now… please answer on your phone.</string>
+    <string name="cov_sip_outbound_call_hint">Enter your mobile or landline number</string>
+    <string name="cov_sip_call_in_progress">Call in progress…</string>
+    <string name="cov_sip_call_ended">Call ended, please hang up</string>
+    <string name="cov_sip_valid_number">Please enter a valid mobile or landline number</string>
 </resources>

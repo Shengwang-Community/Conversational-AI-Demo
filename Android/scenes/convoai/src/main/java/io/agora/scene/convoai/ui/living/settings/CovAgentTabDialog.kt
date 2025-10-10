@@ -14,6 +14,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import io.agora.scene.common.ui.BaseSheetDialog
 import io.agora.scene.convoai.R
+import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.databinding.CovAgentTabDialogBinding
 import kotlin.math.abs
 
@@ -26,6 +27,8 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
 
     private var onDismissCallback: (() -> Unit)? = null
     private var initialTab: Int = TAB_AGENT_SETTINGS
+
+    private var isSipMode: Boolean = false
 
     private var tabWidth: Int = 0
 
@@ -43,6 +46,17 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
             return CovAgentTabDialog().apply {
                 this.onDismissCallback = onDismiss
                 this.initialTab = initialTab
+                this.isSipMode = false
+            }
+        }
+
+        fun newSipInstance(
+            onDismiss: (() -> Unit)? = null
+        ): CovAgentTabDialog {
+            return CovAgentTabDialog().apply {
+                this.onDismissCallback = onDismiss
+                this.initialTab = TAB_CHANNEL_INFO
+                this.isSipMode = true
             }
         }
     }
@@ -173,34 +187,60 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
     private fun setupCustomTabs() {
         binding?.apply {
             tabLayout.post {
-                val tabCount = 2
-                tabWidth = tabLayout.width / tabCount
-
-                val channelInfoTab = tabLayout.newTab()
-                val agentSettingsTab = tabLayout.newTab()
-
-                val channelInfoView = createTabView(getString(R.string.cov_service_info), tabWidth)
-                val agentSettingsView = createTabView(getString(R.string.cov_setting_title), tabWidth)
-
-                channelInfoTab.customView = channelInfoView
-                agentSettingsTab.customView = agentSettingsView
-
-                tabLayout.removeAllTabs()
-                tabLayout.addTab(agentSettingsTab)
-                tabLayout.addTab(channelInfoTab)
-
-                // Remove tab padding and minWidth for each tab
-                val tabStrip = tabLayout.getChildAt(0) as? LinearLayout
-                if (tabStrip != null) {
-                    for (i in 0 until tabStrip.childCount) {
-                        val tab = tabStrip.getChildAt(i)
-                        tab.setPadding(0, 0, 0, 0)
-                        tab.minimumWidth = 0
-                    }
+                if (isSipMode) {
+                    // SIP mode: only show Channel Info tab
+                    setupSipModeTabs()
+                } else {
+                    // Normal mode: show both tabs
+                    setupNormalModeTabs()
                 }
 
                 // Initialize tab indicator
                 initializeTabIndicator()
+            }
+        }
+    }
+
+    private fun setupSipModeTabs() {
+        binding?.apply {
+            val channelInfoTab = tabLayout.newTab()
+            val channelInfoView = createTabView(getString(R.string.cov_service_info), tabLayout.width)
+            channelInfoTab.customView = channelInfoView
+
+            tabLayout.removeAllTabs()
+            tabLayout.addTab(channelInfoTab)
+
+            // Hide tab layout since we only have one tab
+            headerLayout.visibility = View.GONE
+        }
+    }
+
+    private fun setupNormalModeTabs() {
+        binding?.apply {
+            val tabCount = 2
+            tabWidth = tabLayout.width / tabCount
+
+            val channelInfoTab = tabLayout.newTab()
+            val agentSettingsTab = tabLayout.newTab()
+
+            val channelInfoView = createTabView(getString(R.string.cov_service_info), tabWidth)
+            val agentSettingsView = createTabView(getString(R.string.cov_setting_title), tabWidth)
+
+            channelInfoTab.customView = channelInfoView
+            agentSettingsTab.customView = agentSettingsView
+
+            tabLayout.removeAllTabs()
+            tabLayout.addTab(agentSettingsTab)
+            tabLayout.addTab(channelInfoTab)
+
+            // Remove tab padding and minWidth for each tab
+            val tabStrip = tabLayout.getChildAt(0) as? LinearLayout
+            if (tabStrip != null) {
+                for (i in 0 until tabStrip.childCount) {
+                    val tab = tabStrip.getChildAt(i)
+                    tab.setPadding(0, 0, 0, 0)
+                    tab.minimumWidth = 0
+                }
             }
         }
     }
@@ -263,6 +303,7 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
      * Get reference to Channel Info fragment
      */
     fun getChannelInfoFragment(): CovAgentInfoFragment? {
+        val position = if (isSipMode) 0 else TAB_CHANNEL_INFO
         return (binding?.vpContent?.adapter as? InfoTabPagerAdapter)?.getFragmentAt(TAB_CHANNEL_INFO) as? CovAgentInfoFragment
     }
 
@@ -270,7 +311,11 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
      * Get reference to Agent Settings fragment
      */
     fun getAgentSettingsFragment(): CovAgentSettingsFragment? {
-        return (binding?.vpContent?.adapter as? InfoTabPagerAdapter)?.getFragmentAt(TAB_AGENT_SETTINGS) as? CovAgentSettingsFragment
+        return if (isSipMode) {
+            null // No agent settings fragment in SIP mode
+        } else {
+            (binding?.vpContent?.adapter as? InfoTabPagerAdapter)?.getFragmentAt(TAB_AGENT_SETTINGS) as? CovAgentSettingsFragment
+        }
     }
 
     /**
@@ -280,13 +325,21 @@ class CovAgentTabDialog : BaseSheetDialog<CovAgentTabDialogBinding>() {
 
         private val fragments = mutableMapOf<Int, Fragment>()
 
-        override fun getItemCount(): Int = 2
+        override fun getItemCount(): Int = if (isSipMode) 1 else 2
 
         override fun createFragment(position: Int): Fragment {
-            val fragment = when (position) {
-                TAB_AGENT_SETTINGS -> CovAgentSettingsFragment.Companion.newInstance()
-                TAB_CHANNEL_INFO -> CovAgentInfoFragment.Companion.newInstance()
-                else -> throw IllegalArgumentException("Invalid position: $position")
+            val fragment = if (isSipMode) {
+                // SIP mode: only Channel Info fragment
+                when (position) {
+                    0 -> CovAgentInfoFragment.newInstance()
+                    else -> throw IllegalArgumentException("Invalid position for SIP mode: $position")
+                }
+            } else {
+                 when (position) {
+                    TAB_AGENT_SETTINGS -> CovAgentSettingsFragment.newInstance()
+                    TAB_CHANNEL_INFO -> CovAgentInfoFragment.newInstance()
+                    else -> throw IllegalArgumentException("Invalid position: $position")
+                }
             }
             fragments[position] = fragment
             return fragment

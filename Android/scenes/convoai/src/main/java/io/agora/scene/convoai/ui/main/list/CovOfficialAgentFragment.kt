@@ -19,6 +19,7 @@ import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.databinding.CovFragmentOfficialAgentBinding
 import io.agora.scene.convoai.databinding.CovItemOfficialAgentBinding
 import io.agora.scene.convoai.ui.living.CovLivingActivity
+import io.agora.scene.convoai.ui.sip.CovLivingSipActivity
 
 class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>() {
 
@@ -153,7 +154,11 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
             }
 
             ApiReport.report(preset.display_name)
-            ctx.startActivity(Intent(ctx, CovLivingActivity::class.java))
+            if (preset.isSip) {
+                ctx.startActivity(Intent(ctx, CovLivingSipActivity::class.java))
+            } else {
+                ctx.startActivity(Intent(ctx, CovLivingActivity::class.java))
+            }
         }
     }
     

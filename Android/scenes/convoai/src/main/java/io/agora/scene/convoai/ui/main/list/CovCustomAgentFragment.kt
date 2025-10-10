@@ -28,6 +28,7 @@ import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.databinding.CovFragmentCustomAgentBinding
 import io.agora.scene.convoai.databinding.CovItemOfficialAgentBinding
 import io.agora.scene.convoai.ui.living.CovLivingActivity
+import io.agora.scene.convoai.ui.sip.CovLivingSipActivity
 import kotlinx.coroutines.launch
 
 class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
@@ -320,7 +321,11 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
                         CovAgentManager.setPreset(selectedPreset)
                         context?.let {
                             ApiReport.report(selectedPreset.display_name)
-                            it.startActivity(Intent(it, CovLivingActivity::class.java))
+                            if (selectedPreset.isSip) {
+                                it.startActivity(Intent(it, CovLivingSipActivity::class.java))
+                            } else {
+                                it.startActivity(Intent(it, CovLivingActivity::class.java))
+                            }
                         }
                     } else {
                         // Request successful but agent not found

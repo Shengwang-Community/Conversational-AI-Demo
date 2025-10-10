@@ -18,7 +18,8 @@ data class CovAgentPreset(
     val avatar_url: String?,
     val description: String,
     val advanced_features_enable_sal: Boolean,
-    val is_support_sal: Boolean?
+    val is_support_sal: Boolean?,
+    val sip_vendor_callee_numbers: List<CovSipCallee>? = null,
 ) {
     val isIndependent: Boolean
         get() {
@@ -34,6 +35,19 @@ data class CovAgentPreset(
         get() {
             return preset_type.startsWith("custom")
         }
+
+    val isSipInternal: Boolean
+        get() {
+            return preset_type.startsWith("sip_call_in")
+        }
+
+    val isSipOutBound: Boolean
+        get() {
+            return preset_type.startsWith("sip_call_out")
+        }
+
+    val isSip: Boolean
+        get() = isSipInternal || isSipOutBound
 
     fun getAvatarsForLang(lang: String?): List<CovAvatar> {
         if (lang == null) return emptyList()
@@ -60,4 +74,11 @@ data class CovAvatar(
     val avatar_name: String,
     val thumb_img_url: String,
     val bg_img_url: String,
+) : Parcelable
+
+@Parcelize
+data class CovSipCallee(
+    val region_name: String, // CN、US
+    val region_code: String, // 86、1
+    val phone_number: String,
 ) : Parcelable
