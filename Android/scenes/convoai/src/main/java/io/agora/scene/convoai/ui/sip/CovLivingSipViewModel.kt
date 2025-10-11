@@ -58,6 +58,16 @@ class CovLivingSipViewModel : ViewModel() {
     private val _ballAnimState = MutableStateFlow(BallAnimState.STATIC)
     val ballAnimState: StateFlow<BallAnimState> = _ballAnimState.asStateFlow()
 
+    private val _isShowMessageList = MutableStateFlow(false)
+    val isShowMessageList: StateFlow<Boolean> = _isShowMessageList.asStateFlow()
+
+    private val _interruptEvent = MutableStateFlow<InterruptEvent?>(null)
+    val interruptEvent: StateFlow<InterruptEvent?> = _interruptEvent.asStateFlow()
+
+    // Transcript state
+    private val _transcriptUpdate = MutableStateFlow<Transcript?>(null)
+    val transcriptUpdate: StateFlow<Transcript?> = _transcriptUpdate.asStateFlow()
+
     // Business states
     private var integratedToken: String? = null
     private var pingJob: Job? = null
@@ -92,6 +102,7 @@ class CovLivingSipViewModel : ViewModel() {
 
         override fun onAgentInterrupted(agentUserId: String, event: InterruptEvent) {
             // Handle interruption
+            _interruptEvent.value = event
         }
 
         override fun onAgentMetrics(agentUserId: String, metrics: Metric) {
@@ -108,6 +119,7 @@ class CovLivingSipViewModel : ViewModel() {
 
         override fun onTranscriptUpdated(agentUserId: String, transcript: Transcript) {
             // Update transcript state to notify Activity
+            _transcriptUpdate.value = transcript
         }
 
         override fun onMessageReceiptUpdated(agentUserId: String, messageReceipt: MessageReceipt) {
@@ -220,6 +232,12 @@ class CovLivingSipViewModel : ViewModel() {
         conversationalAIAPI?.unsubscribeMessage(CovAgentManager.channelName) {}
         _callState.value = CallState.IDLE
         _ballAnimState.value = BallAnimState.STATIC
+        _isShowMessageList.value = false
+    }
+
+    // Toggle message list display
+    fun toggleMessageList() {
+        _isShowMessageList.value = !_isShowMessageList.value
     }
 
     // RTC event handling

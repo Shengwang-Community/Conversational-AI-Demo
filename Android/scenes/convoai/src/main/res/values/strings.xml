@@ -247,8 +247,12 @@
     <string name="cov_sip_internal_call_tips">Dial this number from your phone to start a conversation with our AI Agent.</string>
     <string name="cov_sip_outbound_call_tips">Enter your number below, and our AI Agent will call you.</string>
     <string name="cov_sip_outbound_calling">Calling now… please answer on your phone.</string>
-    <string name="cov_sip_outbound_call_hint">Enter your mobile or landline number</string>
+    <string name="cov_sip_outbound_call_hint">输入电话号码</string>
     <string name="cov_sip_call_in_progress">Call in progress…</string>
     <string name="cov_sip_call_ended">Call ended, please hang up</string>
     <string name="cov_sip_valid_number">Please enter a valid mobile or landline number</string>
+    <string name="cov_sip_call_out">呼出</string>
+    <string name="cov_sip_callee_title">呼叫提示</string>
+    <string name="cov_sip_callee_content">即将使用当前手机呼叫该号码，确认？</string>
+    <string name="cov_sip_callee">立即呼叫</string>
 </resources>

@@ -2,41 +2,31 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:gravity="center_vertical"
+    android:layout_height="32dp"
+    android:gravity="center"
     android:orientation="horizontal"
-    android:paddingVertical="8dp"
-    android:paddingHorizontal="16dp">
-
-    <TextView
-        android:id="@+id/tv_flag_emoji"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        tools:text="🇮🇳"
-        android:textSize="20sp" />
-
-    <TextView
-        android:id="@+id/tv_region_code"
-        android:layout_width="40dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        tools:text="IN"
-        android:textColor="@color/ai_icontext1"
-        android:textSize="20sp" />
+    android:paddingStart="16dp"
+    android:paddingEnd="10dp"
+    android:background="@drawable/cov_item_sip_bg_selector"
+    android:clickable="true"
+    tools:background="@color/ai_fill4"
+    android:focusable="true">
 
     <TextView
         android:id="@+id/tv_phone_number"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/cov_phone_number_background"
-        android:clickable="true"
-        android:focusable="true"
+        android:layout_marginStart="12dp"
         android:paddingHorizontal="4dp"
         android:paddingVertical="2dp"
-        android:text=""
         android:textColor="@color/ai_icontext1"
-        android:textSize="20sp"
+        android:textSize="16sp"
         android:textStyle="bold"
-        tools:text="+91-22-47790159" />
+        tools:text="+021-31265458" />
 
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/common_icon_phone" />
 </LinearLayout>

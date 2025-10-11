@@ -50,6 +50,29 @@
             app:layout_constraintHeight_percent="0.6" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_message"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <View
+            android:id="@+id/viewMessageMask"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/ai_mask1" />
+
+        <io.agora.scene.convoai.ui.living.messages.CovMessageListView
+            android:id="@+id/messageListViewV2"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="100dp"
+            android:layout_marginBottom="200dp"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <io.agora.scene.convoai.ui.sip.CovLivingTopSipView
         android:id="@+id/cl_top"
@@ -73,5 +96,6 @@
         android:layout_marginTop="20dp"
         android:layout_marginBottom="48dp"
         android:visibility="gone"
+        tools:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

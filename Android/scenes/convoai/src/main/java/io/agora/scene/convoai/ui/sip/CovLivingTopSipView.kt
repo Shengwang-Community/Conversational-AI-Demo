@@ -4,8 +4,11 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.annotation.DrawableRes
+import androidx.core.view.isVisible
 import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.convoai.databinding.CovActivityLivingTopSipBinding
 import kotlin.text.isEmpty
@@ -26,9 +29,16 @@ class CovLivingTopSipView @JvmOverloads constructor(
 
     private var onSettingsClick: (() -> Unit)? = null
 
+    private var onCCClick: (() -> Unit)? = null
+
+    private var callState: CallState = CallState.IDLE
+
     init {
         binding.btnBack.setOnClickListener { onbackClick?.invoke() }
         binding.btnSettings.setOnClickListener { onSettingsClick?.invoke() }
+        binding.tvCc.setOnClickListener {
+            onCCClick?.invoke()
+        }
     }
 
     val settingIcon: View get() = binding.btnSettings
@@ -47,10 +57,18 @@ class CovLivingTopSipView @JvmOverloads constructor(
         onSettingsClick = listener
     }
 
-    fun updateTitleName(name: String, url: String, @DrawableRes defaultImage:Int) {
+    /**
+     * Set callback for cc click
+     */
+    fun setOnCCClickListener(listener: (() -> Unit)?) {
+        onCCClick = listener
+    }
+
+    fun updateTitleName(name: String, url: String, @DrawableRes defaultImage: Int) {
         binding.tvPresetName.text = name
         if (url.isEmpty()) {
             binding.ivPreset.setImageResource(defaultImage)
+            binding.ivPhone.setImageResource(defaultImage)
         } else {
             GlideImageLoader.load(
                 binding.ivPreset,
@@ -58,6 +76,92 @@ class CovLivingTopSipView @JvmOverloads constructor(
                 defaultImage,
                 defaultImage
             )
+            GlideImageLoader.load(
+                binding.ivPhone,
+                url,
+                defaultImage,
+                defaultImage
+            )
+        }
+    }
+
+    fun updatePhoneNumber(phone: String) {
+        binding.tvPhone.text = phone
+    }
+
+    /**
+     * Set call state
+     */
+    fun updateCallState(state: CallState) {
+        callState = state
+        updateViewVisible()
+    }
+
+    private fun updateViewVisible() {
+        if (callState == CallState.IDLE) {
+            binding.btnBack.isVisible = true
+            binding.cvCc.isVisible = false
+        } else {
+            binding.btnBack.isVisible = false
+            binding.cvCc.isVisible = true
+        }
+        binding.llLimitTips.isVisible = callState == CallState.CALLED
+    }
+
+    fun updateTitleWithAnimation(isTranscriptEnable: Boolean) {
+        val cvPresetName = binding.cvPresetName
+        val cvPhone = binding.cvPhone
+        cvPresetName.clearAnimation()
+        cvPhone.clearAnimation()
+        if (isTranscriptEnable) {
+            if (cvPresetName.isVisible) {
+                cvPhone.isVisible = true
+
+                val outAnim = AnimationUtils.loadAnimation(context, io.agora.scene.convoai.R.anim.slide_up_out)
+                outAnim.setAnimationListener(object : Animation.AnimationListener {
+                    override fun onAnimationStart(animation: Animation?) {}
+                    override fun onAnimationRepeat(animation: Animation?) {}
+                    override fun onAnimationEnd(animation: Animation?) {
+                        if (isTranscriptEnable) {
+                            cvPresetName.isVisible = false
+                        }
+                    }
+                })
+
+                val inAnim = AnimationUtils.loadAnimation(context, io.agora.scene.convoai.R.anim.slide_up_in)
+
+                cvPresetName.startAnimation(outAnim)
+                cvPhone.startAnimation(inAnim)
+            } else {
+                cvPresetName.isVisible = false
+                cvPhone.isVisible = true
+            }
+        } else {
+            if (cvPhone.isVisible) {
+                cvPresetName.isVisible = true
+
+                val outAnim = AnimationUtils.loadAnimation(context, io.agora.scene.convoai.R.anim.slide_down_out)
+                outAnim.setAnimationListener(object : Animation.AnimationListener {
+                    override fun onAnimationStart(animation: Animation?) {}
+                    override fun onAnimationRepeat(animation: Animation?) {}
+                    override fun onAnimationEnd(animation: Animation?) {
+                        if (!isTranscriptEnable) {
+                            cvPhone.isVisible = false
+                        }
+                    }
+                })
+
+                val inAnim = AnimationUtils.loadAnimation(
+                    context,
+                    io.agora.scene.convoai.R.anim.slide_down_in
+                )
+
+                cvPhone.startAnimation(outAnim)
+                cvPresetName.startAnimation(inAnim)
+            } else {
+                cvPhone.isVisible = false
+                cvPresetName.isVisible = true
+            }
         }
     }
 

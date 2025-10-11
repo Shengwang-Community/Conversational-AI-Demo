@@ -551,7 +551,7 @@ class CovLivingViewModel : ViewModel() {
         }
 
         val chatMessage = TextMessage(
-            priority = Priority.INTERRUPT,
+            priority = Priority.APPEND,
             responseInterruptable = true,
             text = message ?: randomMessages.random()
         )

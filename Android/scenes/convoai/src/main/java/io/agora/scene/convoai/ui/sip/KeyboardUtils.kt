@@ -17,7 +17,7 @@ class KeyboardVisibilityHelper {
     private var keyboardListener: ViewTreeObserver.OnGlobalLayoutListener? = null
     private var keyboardAnimator: ValueAnimator? = null
     private var lastKeyboardVisible = false
-    
+
     /**
      * Start listening for keyboard visibility changes
      */
@@ -27,29 +27,29 @@ class KeyboardVisibilityHelper {
         onKeyboardVisibilityChange: ((Boolean, Int) -> Unit)? = null
     ) {
         val rootView = activity.findViewById<View>(R.id.content)
-        
+
         keyboardListener = ViewTreeObserver.OnGlobalLayoutListener {
             val rect = Rect()
             rootView.getWindowVisibleDisplayFrame(rect)
-            
+
             val screenHeight = rootView.rootView.height
             val keypadHeight = screenHeight - rect.bottom
-            
+
             // Use percentage-based detection like CovCustomAgentFragment (15% threshold)
             val isKeyboardVisible = keypadHeight > screenHeight * 0.15
-            
+
             // Only process if keyboard state changed
             if (lastKeyboardVisible != isKeyboardVisible) {
                 lastKeyboardVisible = isKeyboardVisible
-                
+
                 // Always use the provided callback
                 onKeyboardVisibilityChange?.invoke(isKeyboardVisible, keypadHeight)
             }
         }
-        
+
         rootView.viewTreeObserver.addOnGlobalLayoutListener(keyboardListener)
     }
-    
+
     /**
      * Stop listening and clean up resources
      */
@@ -62,7 +62,7 @@ class KeyboardVisibilityHelper {
         keyboardAnimator?.cancel()
         keyboardAnimator = null
     }
-    
+
 }
 
 /**
@@ -82,40 +82,43 @@ fun Activity.setupSipKeyboardListener(containerView: View, inputField: View): Ke
  * Uses translationY to move input container without affecting layout constraints
  */
 private fun adjustSipViewForInput(
-    containerView: View, 
-    inputField: View, 
-    isKeyboardVisible: Boolean, 
+    containerView: View,
+    inputField: View,
+    isKeyboardVisible: Boolean,
     keyboardHeight: Int
 ) {
+    // Handle margin animation for input container
+    animateInputContainerMargin(containerView, isKeyboardVisible)
+
     if (isKeyboardVisible) {
         // Get input field position
         val location = IntArray(2)
         inputField.getLocationOnScreen(location)
         val inputBottom = location[1] + inputField.height
-        
+
         // Calculate keyboard top position
         val rootView = containerView.rootView
         val screenHeight = rootView.height
         val keyboardTop = screenHeight - keyboardHeight
-        
+
         // Calculate needed adjustment
         val overlap = inputBottom - keyboardTop
-        
+
         CovLogger.d("KeyboardUtils", "Debug: inputBottom=$inputBottom, keyboardTop=$keyboardTop, overlap=$overlap, keyboardHeight=$keyboardHeight")
-        
+
         if (overlap > 0) {
             // Input would be obscured, move container up using translationY
             // Use simple overlap calculation like CovCustomAgentFragment
-            val translationY = -overlap.toFloat() - 24.dp.toInt()
-            
+            val translationY = -overlap.toFloat() - 8.dp.toInt()
+
             CovLogger.d("KeyboardUtils", "Debug: overlap=$overlap, translationY=$translationY")
-            
+
             containerView.animate()
                 .translationY(translationY)
                 .setDuration(250L)
                 .setInterpolator(DecelerateInterpolator())
                 .start()
-            
+
             CovLogger.d("KeyboardUtils", "Moving input container up by ${-translationY}px to avoid keyboard overlap")
         } else {
             // Input is not obscured, no adjustment needed
@@ -128,7 +131,41 @@ private fun adjustSipViewForInput(
             .setDuration(250L)
             .setInterpolator(DecelerateInterpolator())
             .start()
-        
+
         CovLogger.d("KeyboardUtils", "Restoring input container to original position")
+    }
+}
+
+/**
+ * Animate input container margin based on keyboard state
+ * Changes margin from 16dp to 40dp when keyboard is hidden, and 40dp to 16dp when keyboard is visible
+ * Uses same animation timing and interpolator as translationY animation for consistency
+ */
+private fun animateInputContainerMargin(containerView: View, isKeyboardVisible: Boolean) {
+    // Find the input container within the SIP view
+    val inputContainer = containerView.findViewById<View>(io.agora.scene.convoai.R.id.llInputContainer)
+    if (inputContainer == null) {
+        CovLogger.w("KeyboardUtils", "Input container not found")
+        return
+    }
+
+    val targetMargin = if (isKeyboardVisible) 16.dp else 40.dp
+    val currentMargin = inputContainer.layoutParams as? android.view.ViewGroup.MarginLayoutParams
+    val startMargin = currentMargin?.marginStart ?: ( if (isKeyboardVisible) 40.dp else 16.dp)
+
+    if (startMargin != targetMargin) {
+        val animator = ValueAnimator.ofInt(startMargin.toInt(), targetMargin.toInt())
+        animator.duration = 250L  // Match translationY animation duration
+        animator.interpolator = DecelerateInterpolator()  // Match translationY animation interpolator
+        animator.addUpdateListener { animation ->
+            val animatedValue = animation.animatedValue as Int
+            val layoutParams = inputContainer.layoutParams as android.view.ViewGroup.MarginLayoutParams
+            layoutParams.marginStart = animatedValue
+            layoutParams.marginEnd = animatedValue
+            inputContainer.layoutParams = layoutParams
+        }
+        animator.start()
+
+        CovLogger.d("KeyboardUtils", "Animating input container margin from ${startMargin}dp to ${targetMargin}dp")
     }
 }

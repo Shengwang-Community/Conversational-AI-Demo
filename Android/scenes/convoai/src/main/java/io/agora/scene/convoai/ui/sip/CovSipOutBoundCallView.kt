@@ -5,11 +5,8 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.view.View
 import android.widget.FrameLayout
-import android.widget.PopupWindow
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.core.content.ContextCompat
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.api.CovAgentPreset
@@ -29,13 +26,8 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
     private var currentState: CallState = CallState.IDLE
     private var phoneNumber: String = ""
 
-    // Region data
-    private var availableRegions = mutableListOf<RegionConfig>()
-    private var selectedRegion: RegionConfig? = null
-
-    // Region selector popup and adapter
-    private var regionPopup: PopupWindow? = null
-    private var regionAdapter: RegionSelectionAdapter? = null
+    // Error state management
+    private var isErrorState = false
 
     // Unified callback interface
     var onCallActionListener: ((CallAction, String) -> Unit)? = null
@@ -51,7 +43,6 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
     init {
         setupClickListeners()
         setupTextWatcher()
-        setupRegionSelector()
         updateUIForState(CallState.IDLE)
     }
 
@@ -64,10 +55,7 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
             // Convert sip callees to region configs
             val availableRegionsFromPreset = RegionConfigManager.fromSipCallees(preset.sip_vendor_callee_numbers)
 
-            if (availableRegionsFromPreset.isNotEmpty()) {
-                // Update available regions list and recreate adapter
-                updateAvailableRegions(availableRegionsFromPreset)
-            }
+            // nothing
         }
     }
 
@@ -85,46 +73,10 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
     }
 
     /**
-     * Get current phone number with region code
-     */
-    fun getFullPhoneNumber(): String {
-        val number = getPhoneNumber()
-        return if (number.isNotEmpty() && selectedRegion != null) "${selectedRegion!!.dialCode}$number" else ""
-    }
-
-    /**
      * Get current entered phone number without region code
      */
     private fun getPhoneNumber(): String {
         return binding.etPhoneNumber.text.toString().trim()
-    }
-
-    /**
-     * Get current selected region
-     */
-    fun getSelectedRegion(): RegionConfig? {
-        return selectedRegion
-    }
-
-    /**
-     * Get available regions count
-     */
-    fun getAvailableRegionsCount(): Int {
-        return availableRegions.size
-    }
-
-    /**
-     * Check if regions are available
-     */
-    fun hasAvailableRegions(): Boolean {
-        return availableRegions.isNotEmpty()
-    }
-
-    /**
-     * Check if a region is selected
-     */
-    fun hasSelectedRegion(): Boolean {
-        return selectedRegion != null
     }
 
     /**
@@ -168,13 +120,13 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
         binding.btnJoinCall.setOnClickListener {
             val phoneNumber = getPhoneNumber()
             if (phoneNumber.length < 4) {
-                ToastUtil.show(R.string.cov_sip_valid_number)
+                showErrorState()
                 return@setOnClickListener
             }
-            val fullNumber = getFullPhoneNumber()
-            if (fullNumber.isNotEmpty()) {
-                setCallState(CallState.CALLING, fullNumber)
-                onCallActionListener?.invoke(CallAction.JOIN_CALL, fullNumber)
+            clearErrorState()
+            if (phoneNumber.isNotEmpty()) {
+                setCallState(CallState.CALLING, phoneNumber)
+                onCallActionListener?.invoke(CallAction.JOIN_CALL, phoneNumber)
             }
         }
 
@@ -187,23 +139,30 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
         binding.ivClearInput.setOnClickListener {
             binding.etPhoneNumber.setText("")
         }
-
-        binding.llRegionCode.setOnClickListener {
-            showRegionSelector()
-        }
     }
 
     /**
      * Setup text watcher for phone number input
      */
     private fun setupTextWatcher() {
+        // Set initial text size to hint size
+        binding.etPhoneNumber.textSize = 14f
+
         binding.etPhoneNumber.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val hasText = !s.isNullOrEmpty()
                 binding.btnJoinCall.isEnabled = hasText && currentState == CallState.IDLE
-                binding.ivClearInput.visibility = if (hasText) VISIBLE else GONE
+                binding.ivClearInput.visibility = if (hasText) VISIBLE else INVISIBLE
+
+                // Change text size based on content
+                binding.etPhoneNumber.textSize = if (hasText) 18f else 14f
+
+                // Clear error state when user starts typing
+                if (isErrorState && !hasText) {
+                    clearErrorState()
+                }
             }
 
             override fun afterTextChanged(s: Editable?) {}
@@ -211,106 +170,31 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
     }
 
     /**
-     * Setup region selector with initial selection
+     * Show error state with red border and error message
      */
-    private fun setupRegionSelector() {
-        // Initialize with empty state - will be updated when setPhoneNumbersFromPreset is called
-        updateRegionUI()
-    }
-
-    /**
-     * Show region selector popup
-     */
-    private fun showRegionSelector() {
-        // Only show popup if there are available regions
-        if (availableRegions.isEmpty()) {
-            return
-        }
-
-        if (regionPopup?.isShowing == true) {
-            regionPopup?.dismiss()
-            return
-        }
-
-        createRegionPopup()
-        regionPopup?.showAsDropDown(binding.llRegionCode, 0, 8)
-    }
-
-    /**
-     * Create region selector popup window
-     */
-    private fun createRegionPopup() {
-        val popupView = LayoutInflater.from(context).inflate(R.layout.cov_region_selector_popup, null)
-
-        regionPopup = PopupWindow(
-            popupView,
-            LayoutParams.WRAP_CONTENT,
-            LayoutParams.WRAP_CONTENT,
-            true
-        ).apply {
-            isFocusable = true
-            isOutsideTouchable = true
-            elevation = 8f
-        }
-
-        setupRecyclerView(popupView)
-    }
-
-    /**
-     * Setup RecyclerView with region adapter
-     */
-    private fun setupRecyclerView(popupView: View) {
-        val recyclerView = popupView.findViewById<RecyclerView>(R.id.rv_countries)
-
-        regionAdapter = RegionSelectionAdapter(availableRegions) { selectedRegionConfig ->
-            selectedRegion = selectedRegionConfig
-            updateRegionUI()
-            regionPopup?.dismiss()
-        }
-
-        recyclerView.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = regionAdapter
-        }
-
-        // Update adapter selection to current region
-        selectedRegion?.let { region ->
-            regionAdapter?.updateSelection(region.dialCode)
+    private fun showErrorState() {
+        if (!isErrorState) {
+            isErrorState = true
+            binding.llInputContainer.setBackgroundResource(R.drawable.cov_sip_call_input_bg_error)
+            binding.tvErrorHint.visibility = VISIBLE
+            binding.etPhoneNumber.setTextColor(ContextCompat.getColor(context, io.agora.scene.common.R.color.ai_red6))
         }
     }
 
     /**
-     * Update available regions list and recreate adapter
+     * Clear error state and restore normal appearance
      */
-    private fun updateAvailableRegions(newRegions: List<RegionConfig>) {
-        availableRegions.clear()
-        availableRegions.addAll(newRegions)
-
-        // Set selected region to first available region if none selected or current selection is not in new list
-        if (selectedRegion == null || selectedRegion !in availableRegions) {
-            selectedRegion = availableRegions.firstOrNull()
-            updateRegionUI()
-        }
-
-        // Recreate adapter with new regions
-        regionAdapter = RegionSelectionAdapter(availableRegions) { selectedRegionConfig ->
-            selectedRegion = selectedRegionConfig
-            updateRegionUI()
-            regionPopup?.dismiss()
-        }
-    }
-
-    /**
-     * Update region UI based on current selection
-     */
-    private fun updateRegionUI() {
-        selectedRegion?.let { region ->
-            binding.tvRegionFlag.text = region.flagEmoji
-            binding.tvRegionCode.text = region.dialCode
-        } ?: run {
-            // Show default/empty state when no region is selected
-            binding.tvRegionFlag.text = "🌍"
-            binding.tvRegionCode.text = "+"
+    private fun clearErrorState() {
+        if (isErrorState) {
+            isErrorState = false
+            binding.llInputContainer.setBackgroundResource(R.drawable.cov_sip_call_input_bg)
+            binding.tvErrorHint.visibility = INVISIBLE
+            binding.etPhoneNumber.setTextColor(
+                ContextCompat.getColor(
+                    context,
+                    io.agora.scene.common.R.color.ai_brand_white10
+                )
+            )
         }
     }
 
@@ -319,7 +203,5 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
      */
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        regionPopup?.dismiss()
-        regionPopup = null
     }
 }

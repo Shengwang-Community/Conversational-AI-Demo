@@ -540,12 +540,14 @@ class CovMessageListView @JvmOverloads constructor(
      * Handles both user and agent messages, and triggers scroll logic if needed.
      * @param transcript The incoming transcript data.
      */
-    fun onTranscriptUpdated(transcript: Transcript) {
-        // Transcript for other users
-        if (transcript.type == TranscriptType.USER && transcript.userId != CovAgentManager.uid.toString()) {
+    fun onTranscriptUpdated(transcript: Transcript, filterUser: Boolean = true) {
+        // transcript for other users
+
+        if (transcript.type == TranscriptType.USER && filterUser &&
+            transcript.userId != CovAgentManager.uid.toString()
+        ) {
             return
         }
-
         handleMessage(transcript)
     }
 
