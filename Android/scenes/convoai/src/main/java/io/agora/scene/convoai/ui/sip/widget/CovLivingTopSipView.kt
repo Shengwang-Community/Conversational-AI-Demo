@@ -1,4 +1,4 @@
-package io.agora.scene.convoai.ui.sip
+package io.agora.scene.convoai.ui.sip.widget
 
 import android.content.Context
 import android.util.AttributeSet
@@ -6,12 +6,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.annotation.DrawableRes
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import io.agora.scene.common.util.GlideImageLoader
+import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovActivityLivingTopSipBinding
-import kotlin.text.isEmpty
+import io.agora.scene.convoai.ui.sip.CallState
 
 /**
  * Top bar view for living activity, encapsulating info/settings/net buttons, ViewFlipper switching, and timer logic.
@@ -97,6 +98,10 @@ class CovLivingTopSipView @JvmOverloads constructor(
         updateViewVisible()
     }
 
+    fun updateSessionLimit(tipsText: String) {
+        binding.tvLimitTips.text = tipsText
+    }
+
     private fun updateViewVisible() {
         if (callState == CallState.IDLE) {
             binding.btnBack.isVisible = true
@@ -117,7 +122,7 @@ class CovLivingTopSipView @JvmOverloads constructor(
             if (cvPresetName.isVisible) {
                 cvPhone.isVisible = true
 
-                val outAnim = AnimationUtils.loadAnimation(context, io.agora.scene.convoai.R.anim.slide_up_out)
+                val outAnim = AnimationUtils.loadAnimation(context, R.anim.slide_up_out)
                 outAnim.setAnimationListener(object : Animation.AnimationListener {
                     override fun onAnimationStart(animation: Animation?) {}
                     override fun onAnimationRepeat(animation: Animation?) {}
@@ -128,7 +133,7 @@ class CovLivingTopSipView @JvmOverloads constructor(
                     }
                 })
 
-                val inAnim = AnimationUtils.loadAnimation(context, io.agora.scene.convoai.R.anim.slide_up_in)
+                val inAnim = AnimationUtils.loadAnimation(context, R.anim.slide_up_in)
 
                 cvPresetName.startAnimation(outAnim)
                 cvPhone.startAnimation(inAnim)
@@ -140,7 +145,7 @@ class CovLivingTopSipView @JvmOverloads constructor(
             if (cvPhone.isVisible) {
                 cvPresetName.isVisible = true
 
-                val outAnim = AnimationUtils.loadAnimation(context, io.agora.scene.convoai.R.anim.slide_down_out)
+                val outAnim = AnimationUtils.loadAnimation(context, R.anim.slide_down_out)
                 outAnim.setAnimationListener(object : Animation.AnimationListener {
                     override fun onAnimationStart(animation: Animation?) {}
                     override fun onAnimationRepeat(animation: Animation?) {}
@@ -153,7 +158,7 @@ class CovLivingTopSipView @JvmOverloads constructor(
 
                 val inAnim = AnimationUtils.loadAnimation(
                     context,
-                    io.agora.scene.convoai.R.anim.slide_down_in
+                    R.anim.slide_down_in
                 )
 
                 cvPhone.startAnimation(outAnim)
@@ -168,4 +173,4 @@ class CovLivingTopSipView @JvmOverloads constructor(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
     }
-} 
+}

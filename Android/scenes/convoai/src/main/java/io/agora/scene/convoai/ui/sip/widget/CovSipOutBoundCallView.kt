@@ -1,4 +1,4 @@
-package io.agora.scene.convoai.ui.sip
+package io.agora.scene.convoai.ui.sip.widget
 
 import android.content.Context
 import android.text.Editable
@@ -11,6 +11,9 @@ import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.databinding.CovOutboundCallLayoutBinding
+import io.agora.scene.convoai.ui.sip.CallState
+import io.agora.scene.convoai.ui.sip.RegionConfigManager
+import io.agora.scene.convoai.ui.sip.fromSipCallees
 
 /**
  * SIP Outbound Call View with three states: IDLE, CALLING, CALLED
@@ -119,14 +122,14 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
     private fun setupClickListeners() {
         binding.btnJoinCall.setOnClickListener {
             val phoneNumber = getPhoneNumber()
-            if (phoneNumber.length < 4) {
+            if (phoneNumber.length >= 4 && phoneNumber.length <= 14) {
+                clearErrorState()
+                if (phoneNumber.isNotEmpty()) {
+                    setCallState(CallState.CALLING, phoneNumber)
+                    onCallActionListener?.invoke(CallAction.JOIN_CALL, phoneNumber)
+                }
+            } else {
                 showErrorState()
-                return@setOnClickListener
-            }
-            clearErrorState()
-            if (phoneNumber.isNotEmpty()) {
-                setCallState(CallState.CALLING, phoneNumber)
-                onCallActionListener?.invoke(CallAction.JOIN_CALL, phoneNumber)
             }
         }
 

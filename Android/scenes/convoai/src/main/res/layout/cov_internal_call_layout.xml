@@ -34,11 +34,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clipToPadding="false"
-                android:paddingVertical="10dp"
-                android:scrollbars="vertical"
+                android:fadeScrollbars="false"
                 android:paddingHorizontal="10dp"
+                android:paddingVertical="10dp"
+                android:scrollbarSize="6dp"
+                android:scrollbarStyle="insideInset"
+                android:scrollbarThumbVertical="@drawable/cov_scrollbar_thumb"
+                android:scrollbars="vertical"
                 tools:itemCount="10"
-                tools:listitem="@layout/cov_sip_callee_item" />
+                tools:listitem="@layout/cov_item_sip_callee" />
 
             <FrameLayout
                 android:id="@+id/btn_expand_container"

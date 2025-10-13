@@ -255,4 +255,5 @@
     <string name="cov_sip_callee_title">呼叫提示</string>
     <string name="cov_sip_callee_content">即将使用当前手机呼叫该号码，确认？</string>
     <string name="cov_sip_callee">立即呼叫</string>
+    <string name="cov_sip_limit_time">智能客服电话沟通单次体验限 %d 分钟</string>
 </resources>

@@ -183,7 +183,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="@string/common_limit_time"
+            android:text="@string/cov_sip_limit_time"
             android:textColor="@color/ai_icontext2"
             android:textSize="13sp"
             android:textStyle="bold" />

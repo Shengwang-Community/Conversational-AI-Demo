@@ -52,7 +52,7 @@
                 android:digits="0123456789"
                 android:hint="@string/cov_sip_outbound_call_hint"
                 android:inputType="number"
-                android:maxLength="12"
+                android:maxLength="14"
                 android:gravity="center"
                 android:layout_marginStart="48dp"
                 android:textColor="@color/ai_icontext1"
@@ -137,15 +137,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:background="@drawable/cov_detail_join_call"
-                app:layout_constraintBottom_toBottomOf="@id/tv_ai_vad_high"
-                app:layout_constraintStart_toEndOf="@+id/tv_ai_vad_high"
-                app:layout_constraintTop_toTopOf="@id/tv_ai_vad_high" />
-
-            <TextView
+            <io.agora.scene.convoai.ui.sip.widget.ShimmerTextView
                 android:id="@+id/tv_calling_number"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

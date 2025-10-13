@@ -18,7 +18,6 @@ import io.agora.scene.convoai.R
 import io.agora.scene.convoai.animation.CovBallAnim
 import io.agora.scene.convoai.animation.CovBallAnimCallback
 import io.agora.scene.convoai.api.CovAgentApiManager
-import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.rtm.CovRtmManager
@@ -27,6 +26,7 @@ import io.agora.scene.convoai.ui.auth.CovLoginActivity
 import io.agora.scene.convoai.ui.auth.LoginState
 import io.agora.scene.convoai.ui.auth.UserViewModel
 import io.agora.scene.convoai.ui.living.settings.CovAgentTabDialog
+import io.agora.scene.convoai.ui.sip.widget.CovSipOutBoundCallView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -141,6 +141,17 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
         lifecycleScope.launch {   // Observe connection state
             viewModel.callState.collect { state ->
                 mBinding?.outBoundCallView?.setCallState(state)
+                if (state == CallState.CALLED) {
+                    mBinding?.clTop?.updateSessionLimit(
+                        tipsText = if (CovAgentManager.isSessionLimitMode)
+                            getString(
+                                R.string.cov_sip_limit_time,
+                                (CovAgentManager.roomExpireTime / 60).toInt()
+                            )
+                        else
+                            getString(io.agora.scene.common.R.string.common_limit_time_none)
+                    )
+                }
                 mBinding?.clTop?.updateCallState(state)
             }
         }
@@ -191,13 +202,6 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
     }
 
     private fun showSettingDialog() {
-        val agentState = when (viewModel.callState.value) {
-            CallState.IDLE -> AgentConnectionState.IDLE
-
-            CallState.CALLING -> AgentConnectionState.CONNECTING
-
-            CallState.CALLED -> AgentConnectionState.CONNECTED
-        }
         appTabDialog = CovAgentTabDialog.newSipInstance(
             onDismiss = {
                 appTabDialog = null
