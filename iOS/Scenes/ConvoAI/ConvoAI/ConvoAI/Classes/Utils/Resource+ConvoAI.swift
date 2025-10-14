@@ -254,16 +254,6 @@ extension ResourceManager {
             public static let loadingFailed = ResourceManager.localizedString("empty.state.loading.failed")
             public static let retry = ResourceManager.localizedString("empty.state.retry")
         }
-
-        public enum Sip {
-            public static let sipCallInTips = ResourceManager.localizedString("agent.sip.in.call.tips")
-            public static let sipCallOutTips = ResourceManager.localizedString("agent.sip.out.call.tips")
-            public static let sipCallingTips = ResourceManager.localizedString("agent.sip.calling.tips")
-            public static let sipInputPlaceholder = ResourceManager.localizedString("agent.sip.input.placeholder")
-            public static let sipOnCallTips = ResourceManager.localizedString("agent.sip.on.call.tips")
-            public static let sipEndCallTips = ResourceManager.localizedString("agent.sip.end.call.tips")
-            public static let sipPhoneInvalid = ResourceManager.localizedString("agent.sip.phone.invalid")
-        }
         
         public enum Voiceprint {
             public static let title = ResourceManager.localizedString("settings.voiceprint.mode.title")
@@ -364,7 +354,23 @@ extension ResourceManager {
             public static let nicknameNouns = ResourceManager.localizedString("mine.nickname.nouns")
             public static let icpSubtitle = ResourceManager.localizedString("mine.icp.subtitle")
         }
+        
+        public enum Sip {
+            public static let sipCallInTips = ResourceManager.localizedString("agent.sip.in.call.tips")
+            public static let sipCallOutTips = ResourceManager.localizedString("agent.sip.out.call.tips")
+            public static let sipCallingTips = ResourceManager.localizedString("agent.sip.calling.tips")
+            public static let sipInputPlaceholder = ResourceManager.localizedString("agent.sip.input.placeholder")
+            public static let sipOnCallTips = ResourceManager.localizedString("agent.sip.on.call.tips")
+            public static let sipEndCallTips = ResourceManager.localizedString("agent.sip.end.call.tips")
+            public static let sipPhoneInvalid = ResourceManager.localizedString("agent.sip.phone.invalid")
+            public static let callout = ResourceManager.localizedString("agent.sip.callout")
+            public static let callAlertTitle = ResourceManager.localizedString("agent.sip.call.alert.title")
+            public static let callAlertMessage = ResourceManager.localizedString("agent.sip.call.alert.message")
+            public static let callAlertCancel = ResourceManager.localizedString("agent.sip.call.alert.cancel")
+            public static let callAlertConfirm = ResourceManager.localizedString("agent.sip.call.alert.confirm")
+            public static let areaCodeSearchPlaceholder = ResourceManager.localizedString("agent.sip.area.code.search.placeholder")
+            public static let areaCodeSearchButton = ResourceManager.localizedString("agent.sip.area.code.search.button")
+            public static let areaCodeNoResults = ResourceManager.localizedString("agent.sip.area.code.no.results")
+        }
     }
 }
-
-

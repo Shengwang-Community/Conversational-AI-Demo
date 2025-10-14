@@ -10,7 +10,7 @@ import Common
 
 extension CallOutSipViewController {
     func startRequest() async throws {
-        callingTipsLabel.text = ResourceManager.L10n.Sip.sipCallingTips
+        callingContentView.tipsLabel.text = ResourceManager.L10n.Sip.sipCallingTips
         return try await withCheckedThrowingContinuation { continuation in
             let parameter: [String: Any?] = [
                 "app_id": AppContext.shared.appId,

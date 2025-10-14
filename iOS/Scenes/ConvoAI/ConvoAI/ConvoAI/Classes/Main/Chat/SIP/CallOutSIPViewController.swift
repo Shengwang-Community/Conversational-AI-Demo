@@ -35,24 +35,23 @@ class CallOutSipViewController: SIPViewController {
     // MARK: - UI Components
     internal let sipInputView = SIPInputView()
     
-    internal lazy var phoneAreaListView: SIPPhoneAreaListView = {
-        let listView = SIPPhoneAreaListView()
-        return listView
-    }()
-    
-    internal lazy var callButton: UIButton = {
-        let button = UIButton()
-        button.setBackgroundImage(UIImage.ag_named("ic_sip_call_icon"), for: .normal)
+    internal lazy var callButton: AgentCallGradientButton = {
+        let button = AgentCallGradientButton()
+        button.setTitle(ResourceManager.L10n.Sip.callout, for: .normal)
+        button.setImage(UIImage.ag_named("ic_agent_phone_call"), for: .normal)
         button.addTarget(self, action: #selector(startCall), for: .touchUpInside)
         button.isEnabled = false
         return button
     }()
     
-    internal let tipsView: SIPCallTipsView = {
-        let view = SIPCallTipsView()
-        view.infoLabel.text = ResourceManager.L10n.Sip.sipCallOutTips
-        view.infoLabel.font = UIFont.systemFont(ofSize: 12)
-        return view
+    internal lazy var tipsLabel: UILabel = {
+        let label = UILabel()
+        label.text = ResourceManager.L10n.Sip.sipCallOutTips
+        label.textColor = UIColor.themColor(named: "ai_icontext2")
+        label.font = UIFont.systemFont(ofSize: 12)
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        return label
     }()
     
     internal lazy var prepareCallContentView: UIView = {
@@ -60,85 +59,32 @@ class CallOutSipViewController: SIPViewController {
         view.isUserInteractionEnabled = true
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(prepareContentTouched))
         view.addGestureRecognizer(tapGesture)
-        [sipInputView, callButton, tipsView].forEach { view.addSubview($0) }
-        tipsView.snp.makeConstraints { make in
-            make.left.equalTo(sipInputView)
-            make.right.equalTo(sipInputView)
-            make.bottom.equalTo(-53)
+        [sipInputView, callButton, tipsLabel].forEach { view.addSubview($0) }
+        tipsLabel.snp.makeConstraints { make in
+            make.width.equalTo(sipInputView)
+            make.centerX.equalToSuperview()
+            make.bottom.equalTo(-40)
         }
         
         callButton.snp.makeConstraints { make in
-            make.bottom.equalTo(tipsView.snp.top).offset(-40)
-            make.width.equalTo(64)
+            make.bottom.equalTo(tipsLabel.snp.top).offset(-20)
+            make.width.equalTo(sipInputView)
             make.height.equalTo(48)
             make.centerX.equalToSuperview()
         }
         
         sipInputView.snp.makeConstraints { make in
-            make.bottom.equalTo(callButton.snp.top).offset(-19)
-            make.left.equalTo(18)
-            make.right.equalTo(-18)
-            make.height.equalTo(60)
+            make.bottom.equalTo(callButton.snp.top).offset(-20)
+            make.width.equalTo(295)
+            make.height.equalTo(82)
+            make.centerX.equalToSuperview()
         }
-        
         return view
     }()
 
-    lazy var callingPhoneNumberButton: UIButton = {
-        let button = UIButton()
-        var config = UIButton.Configuration.plain()
-        config.image = UIImage.ag_named("ic_sip_phone_icon")
-        config.imagePadding = 8
-        config.baseForegroundColor = .white
-        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
-            var outgoing = incoming
-            outgoing.font = UIFont.systemFont(ofSize: 24, weight: .medium)
-            return outgoing
-        }
-        button.configuration = config
-        
-        return button
-    }()
-    
-    lazy var callingTipsLabel: UILabel = {
-        let label = UILabel()
-        label.text = ResourceManager.L10n.Sip.sipCallingTips
-        label.textColor = UIColor.themColor(named: "ai_icontext1")
-        label.font = UIFont.systemFont(ofSize: 16)
-        label.numberOfLines = 0
-        label.textAlignment = .center
-        return label
-    }()
-    
-    lazy var closeButton: UIButton = {
-        let button = UIButton()
-        button.setImage(UIImage.ag_named("ic_agent_close"), for: .normal)
-        button.addTarget(self, action: #selector(closeConnect), for: .touchUpInside)
-        button.backgroundColor = UIColor.themColor(named: "ai_block1")
-        button.layer.cornerRadius = 76 / 2.0
-        return button
-    }()
-    
-    internal lazy var callingContentView: UIView = {
-        let view = UIView()
-        [callingPhoneNumberButton, callingTipsLabel, closeButton].forEach { view.addSubview($0) }
-        closeButton.snp.makeConstraints { make in
-            make.bottom.equalTo(self.view.safeAreaInsets).offset(-67)
-            make.centerX.equalToSuperview()
-            make.width.height.equalTo(76)
-        }
-        
-        callingTipsLabel.snp.makeConstraints { make in
-            make.bottom.equalTo(closeButton.snp.top).offset(-31)
-            make.left.equalTo(18)
-            make.right.equalTo(-18)
-        }
-        
-        callingPhoneNumberButton.snp.makeConstraints { make in
-            make.right.left.equalTo(callingTipsLabel)
-            make.height.equalTo(32)
-            make.bottom.equalTo(callingTipsLabel.snp.top).offset(-48)
-        }
+    internal lazy var callingContentView: SIPCallingView = {
+        let view = SIPCallingView()
+        view.closeButton.addTarget(self, action: #selector(closeConnect), for: .touchUpInside)
         return view
     }()
 
@@ -190,8 +136,6 @@ class CallOutSipViewController: SIPViewController {
         if let defaultConfig = regionConfigs.first {
             sipInputView.setSelectedRegionConfig(defaultConfig)
         }
-        
-        phoneAreaListView.setupRegions(regions: regionConfigs)
     }
     
     deinit {
@@ -243,4 +187,61 @@ class CallOutSipViewController: SIPViewController {
     }
 }
 
-
+// MARK: - AgentCallGradientButton
+class AgentCallGradientButton: UIButton {
+    
+    private var gradientLayer: CAGradientLayer?
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupButton()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupButton()
+    }
+    
+    private func setupButton() {
+        layer.cornerRadius = 24
+        layer.masksToBounds = true
+        setTitleColor(UIColor.themColor(named: "ai_brand_white10"), for: .normal)
+        setTitleColor(UIColor.themColor(named: "ai_brand_white10"), for: .disabled)
+        titleLabel?.font = UIFont.systemFont(ofSize: 18)
+        if let iv = imageView {
+            bringSubviewToFront(iv)
+        }
+        // Set image and text spacing to 10pt
+        var configuration = UIButton.Configuration.plain()
+        configuration.imagePadding = 10
+        configuration.imagePlacement = .leading
+        configuration.baseForegroundColor = .white
+        self.configuration = configuration
+        
+        setupGradientLayer()
+    }
+    
+    private func setupGradientLayer() {
+        gradientLayer?.removeFromSuperlayer()
+        
+        let gradient = CAGradientLayer()
+        gradient.colors = [
+            UIColor(hex: "#17C5FF")?.cgColor ?? UIColor.blue.cgColor,
+            UIColor(hex: "#315DFF")?.cgColor ?? UIColor.blue.cgColor,
+            UIColor(hex: "#446CFF")?.cgColor ?? UIColor.blue.cgColor
+        ]
+        gradient.cornerRadius = layer.cornerRadius
+        
+        gradient.startPoint = CGPoint(x: 0, y: 0.5)
+        gradient.endPoint = CGPoint(x: 1, y: 0.5)
+        gradient.locations = [0, 0.5, 1.0]
+        
+        layer.insertSublayer(gradient, at: 0)
+        gradientLayer = gradient
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        gradientLayer?.frame = bounds
+    }
+}

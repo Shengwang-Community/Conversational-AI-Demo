@@ -16,21 +16,14 @@ extension CallOutSipViewController {
         navivationBar.settingButton.addTarget(self, action: #selector(onClickSettingButton), for: .touchUpInside)
 
         sipInputView.delegate = self
-        phoneAreaListView.delegate = self
         
-        [prepareCallContentView, callingContentView, phoneAreaListView].forEach { view.addSubview($0) }
+        [prepareCallContentView, callingContentView].forEach { view.addSubview($0) }
     }
     
     func setupSIPConstraints() {
         prepareCallContentView.snp.makeConstraints { make in
             make.left.right.bottom.equalTo(0)
             make.top.equalTo(self.navivationBar.snp.bottom)
-        }
-        
-        phoneAreaListView.snp.makeConstraints { make in
-            make.top.equalTo(sipInputView.snp.bottom).offset(8)
-            make.left.right.equalTo(sipInputView)
-            make.height.equalTo(90) // Maximum height for the list
         }
         
         callingContentView.snp.makeConstraints { make in
@@ -71,7 +64,7 @@ extension CallOutSipViewController {
         
         UIView.animate(withDuration: duration) {
             self.prepareCallContentView.snp.updateConstraints { make in
-                make.bottom.equalTo(-keyboardHeight - safeAreaBottom - 20)
+                make.bottom.equalTo(-keyboardHeight - safeAreaBottom + 150)
             }
             self.view.layoutIfNeeded()
         }
@@ -88,7 +81,7 @@ extension CallOutSipViewController {
         
         UIView.animate(withDuration: duration) {
             self.prepareCallContentView.snp.updateConstraints { make in
-                make.bottom.equalTo(-53)
+                make.bottom.equalTo(0)
             }
             self.view.layoutIfNeeded()
         }
@@ -96,11 +89,11 @@ extension CallOutSipViewController {
     
     @objc func startCall() {
         hideKeyboard()
-        if phoneNumber.count < 4 {
-            SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Sip.sipPhoneInvalid)
+        if phoneNumber.count < 8 {
+            sipInputView.showErrorWith(str: ResourceManager.L10n.Sip.sipPhoneInvalid)
             return
         }
-        SVProgressHUD.show()
+        showCallingView()
         channelName = "agent_\(UUID().uuidString.prefix(8))"
         agentUid = AppContext.agentUid
         Task {
@@ -119,13 +112,12 @@ extension CallOutSipViewController {
                 await MainActor.run {
                     AppContext.stateManager().updateRoomId(channelName)
                     AppContext.stateManager().updateUserId(uid)
-                    SVProgressHUD.dismiss()
-                    showCallingView()
                     startTimer()
                     navivationBar.netStateView.isHidden = true
                 }
             } catch {
-                addLog("Failed to login rtm: \(error)")
+                addLog("Failed to start call: \(error)")
+//                showPrepareCallView()
                 SVProgressHUD.showError(withStatus: error.localizedDescription)
             }
         }
@@ -135,7 +127,7 @@ extension CallOutSipViewController {
     @objc func closeConnect() {
         showPrepareCallView()
         logoutRTM()
-        resetPreference()
+        AppContext.stateManager().resetToDefaults()
     }
     
     @objc func onClickSettingButton() {
@@ -148,14 +140,11 @@ extension CallOutSipViewController {
         present(navigationController, animated: false)
     }
     
-    func resetPreference() {
-        AppContext.stateManager().resetToDefaults()
-    }
-    
     func showCallingView() {
         callingContentView.isHidden = false
         prepareCallContentView.isHidden = true
-        callingPhoneNumberButton.setTitle(phoneNumber, for: .normal)
+        callingContentView.phoneNumberLabel.text = phoneNumber
+        callingContentView.startShimmer()
     }
     
     func showPrepareCallView() {
@@ -166,25 +155,19 @@ extension CallOutSipViewController {
 
 // MARK: - SIPInputViewDelegate
 extension CallOutSipViewController: SIPInputViewDelegate {
-    func sipInputView(_ inputView: SIPInputView, didChangePhoneNumber phoneNumber: String, dialCode: String) {
+    func sipInputView(_ inputView: SIPInputView, didChangePhoneNumber phoneNumber: String, dialCode: String?) {
         callButton.isEnabled = !phoneNumber.isEmpty
-        self.phoneNumber = "\(dialCode)\(phoneNumber)"
+        if let dialCode = dialCode {
+            self.phoneNumber = "\(dialCode)\(phoneNumber)"
+        } else {
+            self.phoneNumber = phoneNumber
+        }
     }
     
     func sipInputViewDidTapCountryButton(_ inputView: SIPInputView) {
-        // Toggle the area list view
-        if phoneAreaListView.isHidden {
-            phoneAreaListView.show()
-        } else {
-            phoneAreaListView.hide()
+        // Show area code selection view controller
+        SIPAreaCodeViewController.show(from: self) { [weak self] region in
+            self?.sipInputView.setSelectedRegionConfig(region)
         }
-    }
-}
-
-// MARK: - SIPPhoneAreaListViewDelegate
-extension CallOutSipViewController: SIPPhoneAreaListViewDelegate {
-    func phoneAreaListView(_ listView: SIPPhoneAreaListView, didSelectCountry region: RegionConfig) {
-        sipInputView.setSelectedRegionConfig(region)
-        print("Selected country: \(region.regionName) (\(region.regionCode))")
     }
 }

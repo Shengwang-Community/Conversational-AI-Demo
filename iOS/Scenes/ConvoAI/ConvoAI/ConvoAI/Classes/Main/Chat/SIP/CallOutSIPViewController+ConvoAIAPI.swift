@@ -28,7 +28,7 @@ extension CallOutSipViewController: ConversationalAIAPIEventHandler {
         addLog("<<< [onAgentStateChanged]: \(event.state)")
         
         if event.state != .idle {
-            callingTipsLabel.text = ResourceManager.L10n.Sip.sipOnCallTips
+            callingContentView.tipsLabel.text = ResourceManager.L10n.Sip.sipOnCallTips
         }
         
         if self.agentState != .idle {

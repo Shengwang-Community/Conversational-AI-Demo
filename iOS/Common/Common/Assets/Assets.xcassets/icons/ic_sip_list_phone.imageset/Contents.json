@@ -5,12 +5,12 @@
       "scale" : "1x"
     },
     {
-      "filename" : "DownChevron.png",
+      "filename" : "ic_sip_list_phone@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "DownChevron-1.png",
+      "filename" : "ic_sip_list_phone@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

@@ -14,7 +14,7 @@ class ToolBoxApiManager: NSObject {
     public typealias UploadSuccessClosure = (String?) -> Void
     
     func reportEvent(event: ReportEvent, success: NetworkManager.SuccessClosure?, failure: NetworkManager.FailClosure?) {
-        let url = "\(AppContext.shared.baseServerUrl)/convoai/v4/events/report"
+        let url = "\(AppContext.shared.baseServerUrl)/convoai/v5/events/report"
         let parameter = [
             "app_id": event.appId.stringValue(),
             "scene_id": event.sceneId.stringValue(),
@@ -30,7 +30,7 @@ class ToolBoxApiManager: NSObject {
     }
     
     func getReportInfo(appId:String, sceneId: String, success: NetworkManager.SuccessClosure?, failure: NetworkManager.FailClosure?) {
-        let url = "\(AppContext.shared.baseServerUrl)/convoai/v4/events/stat"
+        let url = "\(AppContext.shared.baseServerUrl)/convoai/v5/events/stat"
         let parameter = [
             "app_id": appId,
             "scene_id": sceneId,
