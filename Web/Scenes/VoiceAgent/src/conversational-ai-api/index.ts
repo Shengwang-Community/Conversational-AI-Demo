@@ -1,6 +1,7 @@
 import { logger as agoraLogger } from '@agora-js/report'
 import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng'
 import type { ChannelType, RTMClient, RTMEvents } from 'agora-rtm'
+
 import {
   type EAgentState,
   EChatMessagePriority,
@@ -14,6 +15,7 @@ import {
   type IChatMessageImage,
   type IChatMessageText,
   type IConversationalAIAPIEventHandlers,
+  type IMessageSalStatus,
   type ITranscriptHelperItem,
   type IUserTranscription,
   NotFoundError,
@@ -86,7 +88,7 @@ export interface IConversationalAIAPIConfig {
  *   console.log(`Agent ${agentUserId} state changed to:`, event.state);
  * });
  *
- * conversationalAIAPI.on(EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED, (transcription) => {
+ * conversationalAIAPI.on(EConversationalAIAPIEvents.TRANSCRIPT_UPDATED, (transcription) => {
  *   console.log('Transcription updated:', transcription);
  * });
  *
@@ -116,7 +118,7 @@ export interface IConversationalAIAPIConfig {
  *
  * // Unsubscribe from events using off() method
  * conversationalAIAPI.off(EConversationalAIAPIEvents.AGENT_STATE_CHANGED, handleAgentStateChanged);
- * conversationalAIAPI.off(EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED, handleTranscriptionUpdated);
+ * conversationalAIAPI.off(EConversationalAIAPIEvents.TRANSCRIPT_UPDATED, handleTranscriptionUpdated);
  * conversationalAIAPI.off(EConversationalAIAPIEvents.AGENT_INTERRUPTED, handleAgentInterrupted);
  * conversationalAIAPI.off(EConversationalAIAPIEvents.AGENT_METRICS, handleAgentMetrics);
  * conversationalAIAPI.off(EConversationalAIAPIEvents.AGENT_ERROR, handleAgentError);
@@ -125,7 +127,7 @@ export interface IConversationalAIAPIConfig {
  * conversationalAIAPI.off(EConversationalAIAPIEvents.MESSAGE_ERROR, handleMessageError);
  * ```
  *
- * @fires {@link EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED} When chat history is updated
+ * @fires {@link EConversationalAIAPIEvents.TRANSCRIPT_UPDATED} When chat history is updated
  * @fires {@link EConversationalAIAPIEvents.AGENT_STATE_CHANGED} When agent state changes
  * @fires {@link EConversationalAIAPIEvents.AGENT_INTERRUPTED} When agent is interrupted
  * @fires {@link EConversationalAIAPIEvents.AGENT_METRICS} When agent metrics are received
@@ -176,7 +178,8 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       onAgentMetrics: this.onAgentMetrics.bind(this),
       onAgentError: this.onAgentError.bind(this),
       onMessageReceipt: this.onMessageReceiptUpdated.bind(this),
-      onMessageError: this.onMessageError.bind(this)
+      onMessageError: this.onMessageError.bind(this),
+      onMessageSalStatus: this.onMessageSalStatus.bind(this)
     })
   }
 
@@ -557,10 +560,10 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
   ) {
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> ${EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED}`,
+      `>>> ${EConversationalAIAPIEvents.TRANSCRIPT_UPDATED}`,
       chatHistory
     )
-    this.emit(EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED, chatHistory)
+    this.emit(EConversationalAIAPIEvents.TRANSCRIPT_UPDATED, chatHistory)
   }
   private onAgentStateChanged(agentUserId: string, event: TStateChangeEvent) {
     this.callMessagePrint(
@@ -642,16 +645,38 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     this.emit(EConversationalAIAPIEvents.MESSAGE_ERROR, agentUserId, error)
   }
 
+  private onMessageSalStatus(agentUserId: string, message: IMessageSalStatus) {
+    this.callMessagePrint(
+      ELoggerType.debug,
+      `>>> ${EConversationalAIAPIEvents.MESSAGE_SAL_STATUS}`,
+      agentUserId,
+      message
+    )
+    this.emit(
+      EConversationalAIAPIEvents.MESSAGE_SAL_STATUS,
+      agentUserId,
+      message
+    )
+  }
+
   private bindRtcEvents() {
+    // this.getCfg().rtcEngine.on(
+    //   ERTCEvents.AUDIO_METADATA,
+    //   this._handleRtcAudioMetadata.bind(this)
+    // )
     this.getCfg().rtcEngine.on(
-      ERTCEvents.AUDIO_METADATA,
-      this._handleRtcAudioMetadata.bind(this)
+      ERTCEvents.AUDIO_PTS,
+      this._handleRtcAudioPTS.bind(this)
     )
   }
   private unbindRtcEvents() {
+    // this.getCfg().rtcEngine.off(
+    //   ERTCEvents.AUDIO_METADATA,
+    //   this._handleRtcAudioMetadata.bind(this)
+    // )
     this.getCfg().rtcEngine.off(
-      ERTCEvents.AUDIO_METADATA,
-      this._handleRtcAudioMetadata.bind(this)
+      ERTCEvents.AUDIO_PTS,
+      this._handleRtcAudioPTS.bind(this)
     )
   }
   private bindRtmEvents() {
@@ -689,20 +714,38 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     )
   }
 
-  private _handleRtcAudioMetadata(metadata: Uint8Array) {
+  // private _handleRtcAudioMetadata(metadata: Uint8Array) {
+  //   try {
+  //     const pts64 = Number(new DataView(metadata.buffer).getBigUint64(0, true))
+  //     this.callMessagePrint(
+  //       ELoggerType.debug,
+  //       `<<< ${ERTCEvents.AUDIO_METADATA}`,
+  //       pts64
+  //     )
+  //     this.covSubRenderController.setPts(pts64)
+  //   } catch (error) {
+  //     this.callMessagePrint(
+  //       ELoggerType.error,
+  //       `<<< ${ERTCEvents.AUDIO_METADATA}`,
+  //       metadata,
+  //       error
+  //     )
+  //   }
+  // }
+
+  private _handleRtcAudioPTS(pts: number) {
     try {
-      const pts64 = Number(new DataView(metadata.buffer).getBigUint64(0, true))
       this.callMessagePrint(
         ELoggerType.debug,
-        `<<< ${ERTCEvents.AUDIO_METADATA}`,
-        pts64
+        `<<< ${ERTCEvents.AUDIO_PTS}`,
+        pts
       )
-      this.covSubRenderController.setPts(pts64)
+      this.covSubRenderController.setPts(pts)
     } catch (error) {
       this.callMessagePrint(
         ELoggerType.error,
-        `<<< ${ERTCEvents.AUDIO_METADATA}`,
-        metadata,
+        `<<< ${ERTCEvents.AUDIO_PTS}`,
+        pts,
         error
       )
     }

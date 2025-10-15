@@ -6,6 +6,7 @@ import {
   EAgentRunningStatus,
   EConnectionStatus,
   ENetworkStatus,
+  ESALSettingsMode,
   EUploadLogStatus
 } from '@/type/rtc'
 
@@ -24,6 +25,7 @@ export type RTCStore = {
   upload_log_status: EUploadLogStatus
   agentState: EAgentState
   isLocalMuted: boolean
+  salStatus: ESALSettingsMode
   isAvatarPlaying: boolean
 }
 
@@ -42,6 +44,7 @@ export interface IRTCStore extends RTCStore {
   updateAgentState: (agentState: EAgentState) => void
   updateIsLocalMuted: (isLocalMuted: boolean) => void
   updateIsAvatarPlaying: (isAvatarPlaying: boolean) => void
+  updateSalStatus: (salStatus: ESALSettingsMode) => void
 }
 
 export const useRTCStore = create<IRTCStore>()(
@@ -54,6 +57,7 @@ export const useRTCStore = create<IRTCStore>()(
     avatar_rtc_uid: genAgentId(),
     remote_rtc_uid: genUserId(),
     agent_id: undefined,
+    salStatus: ESALSettingsMode.OFF,
     /** @deprecated use agentState */
     agentRunningStatus: EAgentRunningStatus.DEFAULT,
     agentState: EAgentState.IDLE,
@@ -81,6 +85,7 @@ export const useRTCStore = create<IRTCStore>()(
       set({ upload_log_status: uploadLogStatus }),
     updateIsLocalMuted: (isLocalMuted: boolean) => set({ isLocalMuted }),
     updateIsAvatarPlaying: (isAvatarPlaying: boolean) =>
-      set({ isAvatarPlaying })
+      set({ isAvatarPlaying }),
+    updateSalStatus: (salStatus: ESALSettingsMode) => set({ salStatus })
   }))
 )

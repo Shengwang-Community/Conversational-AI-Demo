@@ -6,7 +6,7 @@ import * as React from 'react'
 import { toast } from 'sonner'
 import { InfoItemLabel, InfoItemValue } from '@/components/card/info'
 import { CheckFilledIcon, LoadingSpinner } from '@/components/icon'
-import { Button } from '@/components/ui/button'
+import { Button, type ButtonProps } from '@/components/ui/button'
 import { ERROR_MESSAGE } from '@/constants'
 import { RTCHelper } from '@/conversational-ai-api/helper/rtc'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -16,8 +16,10 @@ import { uploadLog } from '@/services/agent'
 import { useRTCStore, useUserInfoStore } from '@/store'
 import { EUploadLogStatus } from '@/type/rtc'
 
-export default function UploadLogButton(props: { className?: string }) {
-  const { className } = props
+export default function UploadLogButton(
+  props: { className?: string } & ButtonProps
+) {
+  const { className, ...buttonProps } = props
   const tLog = useTranslations('log')
   const tLogin = useTranslations('login')
 
@@ -97,6 +99,7 @@ export default function UploadLogButton(props: { className?: string }) {
   return (
     <Button
       variant='info'
+      {...buttonProps}
       className={cn(className)}
       onClick={handleClick}
       disabled={upload_log_status === EUploadLogStatus.UPLOADING}

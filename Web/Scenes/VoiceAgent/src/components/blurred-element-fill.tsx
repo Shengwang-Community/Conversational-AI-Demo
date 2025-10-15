@@ -63,6 +63,7 @@ export const BlurredImageFillTopBottom = ({
         alt={`${alt} background`}
         width={width}
         height={height}
+        unoptimized={true}
         className='absolute inset-0 z-0 h-full w-full scale-110 object-cover blur-2xl'
       />
 
@@ -73,6 +74,7 @@ export const BlurredImageFillTopBottom = ({
           alt={alt}
           width={width}
           height={height}
+          unoptimized={true}
           className='h-full w-auto object-cover'
         />
       </div>
@@ -126,6 +128,7 @@ export const BlurredBackdrop = ({
         width={posterWidth}
         height={posterHeight}
         src={poster}
+        unoptimized={true}
         alt='blurred background'
         className='absolute inset-0 z-0 h-full w-full scale-110 object-cover blur-2xl'
       />

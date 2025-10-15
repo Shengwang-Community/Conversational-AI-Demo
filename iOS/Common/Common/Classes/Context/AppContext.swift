@@ -16,9 +16,10 @@ import Bugly
     
     public var personalReportInfoUrl: String {
         if _baseServerUrl.contains("service.apprtc.cn") {
-            return "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/manifest-dev/ConvoAI/index.html"
-        } else {
             return "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/ConvoAI/index.html"
+        } else {
+            return "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/manifest-dev/ConvoAI/index.html"
+
         }
     }
     public let sharedInfoUrl: String = "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/libraries.html"

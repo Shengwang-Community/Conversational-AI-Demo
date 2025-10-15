@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.3/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
   "vcs": {
     "enabled": false,
     "clientKind": "git",
@@ -21,6 +21,13 @@
     "expand": "auto",
     "useEditorconfig": true
   },
+  "json": {
+    "formatter": {
+      "indentStyle": "space",
+      "indentWidth": 2,
+      "lineEnding": "lf"
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -31,10 +38,14 @@
           "fix": "safe",
           "options": {
             "attributes": ["className"],
-            "functions": ["cn"]
+            "functions": ["cn", "clsx", "cva"]
           }
         }
       }
+    },
+    "domains": {
+      "next": "recommended",
+      "react": "recommended"
     }
   },
   "javascript": {
@@ -48,15 +59,6 @@
       "arrowParentheses": "always",
       "bracketSameLine": false,
       "attributePosition": "auto"
-    }
-  },
-  "json": {
-    "formatter": {
-      "indentStyle": "space",
-      "indentWidth": 2,
-      "lineEnding": "lf",
-      "lineWidth": 80,
-      "trailingCommas": "none"
     }
   },
   "assist": {

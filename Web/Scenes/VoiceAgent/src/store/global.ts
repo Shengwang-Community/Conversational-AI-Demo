@@ -41,6 +41,16 @@ export interface IGlobalStore {
     onConfirm?: (() => void) | (() => Promise<void>)
     onCancel?: () => void
   }) => void
+  showSALSettingSidebar: boolean
+  setShowSALSettingSidebar: (showSALSettingSidebar: boolean) => void
+  isPrivacyPolicyAccepted: boolean
+  setIsPrivacyPolicyAccepted: (isPrivacyPolicyAccepted: boolean) => void
+  showPrivacyDialog: boolean
+  setShowPrivacyDialog: (showPrivacyDialog: boolean) => void
+  isRecordSupported: boolean
+  setIsRecordSupported: (isRecordSupported: boolean) => void
+  isRoomInfoOpen: boolean
+  setIsRoomInfoOpen: (isRoomInfoOpen: boolean) => void
 }
 
 export const useGlobalStore = create<IGlobalStore>()(
@@ -78,7 +88,21 @@ export const useGlobalStore = create<IGlobalStore>()(
         } else {
           set({ confirmDialog: undefined })
         }
-      }
+      },
+      showSALSettingSidebar: false,
+      setShowSALSettingSidebar: (showSALSettingSidebar: boolean) =>
+        set({ showSALSettingSidebar }),
+      isPrivacyPolicyAccepted: false,
+      setIsPrivacyPolicyAccepted: (isPrivacyPolicyAccepted: boolean) =>
+        set({ isPrivacyPolicyAccepted }),
+      showPrivacyDialog: false,
+      setShowPrivacyDialog: (showPrivacyDialog: boolean) =>
+        set({ showPrivacyDialog }),
+      isRecordSupported: true,
+      setIsRecordSupported: (isRecordSupported: boolean) =>
+        set({ isRecordSupported }),
+      isRoomInfoOpen: false,
+      setIsRoomInfoOpen: (isRoomInfoOpen: boolean) => set({ isRoomInfoOpen })
     }),
     {
       name: 'global-store',

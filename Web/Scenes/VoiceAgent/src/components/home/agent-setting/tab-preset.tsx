@@ -24,10 +24,10 @@ import {
   ERROR_MESSAGE,
   type remoteAgentCustomPresetItem
 } from '@/constants'
+import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
 import { cn } from '@/lib/utils'
 import { retrievePresetById } from '@/services/agent'
-import { useAgentSettingsStore, useGlobalStore, useRTCStore } from '@/store'
-import { EConnectionStatus } from '@/type/rtc'
+import { useAgentSettingsStore, useGlobalStore } from '@/store'
 
 export const Presets = (props: { className?: string }) => {
   const { className } = props
@@ -41,7 +41,6 @@ export const Presets = (props: { className?: string }) => {
     updateDisabledPresetNameList,
     settings
   } = useAgentSettingsStore()
-  const { roomStatus } = useRTCStore()
   const {
     setConfirmDialog,
     isPresetDigitalReminderIgnored,
@@ -50,12 +49,7 @@ export const Presets = (props: { className?: string }) => {
 
   const t = useTranslations()
 
-  const disableFormMemo = React.useMemo(() => {
-    return !(
-      roomStatus === EConnectionStatus.DISCONNECTED ||
-      roomStatus === EConnectionStatus.UNKNOWN
-    )
-  }, [roomStatus])
+  const disableFormMemo = useIsAgentCalling()
 
   const customPresetsMemo: (z.infer<typeof remoteAgentCustomPresetItem> & {
     deprecated: boolean
@@ -369,7 +363,7 @@ export const RetrieveCustomPreset = (props: { className?: string }) => {
               variant='default'
               disabled={isLoading || input?.length === 0}
               onClick={handleClick}
-              className='bg-icontext text-icontext-inverse'
+              className='rounded-sm bg-brand-main-6 text-icontext'
             >
               {isLoading ? (
                 <LoadingSpinner className='mx-auto' />
