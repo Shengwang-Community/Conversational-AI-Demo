@@ -1,5 +1,6 @@
 package io.agora.scene.common.ui
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -8,21 +9,34 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.isVisible
 import io.agora.scene.common.databinding.CommonDialogLayoutBinding
+import io.agora.scene.common.ui.BaseActivity.ImmersiveMode
 
 class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
 
-    private var title: String? = null
-    private var content: String? = null
-    private var positiveText: String? = null
-    private var negativeText: String? = null
-    private var showNegative: Boolean = true
-    private var showImage: Boolean = true
-    private var showNoMoreReminder: Boolean = false
-    private var noMoreReminderText: String? = null
-    private var imageRes: Int? = null
-    private var onPositiveClick: (() -> Unit)? = null
-    private var onNegativeClick: (() -> Unit)? = null
-    private var onPositiveClickWithReminder: ((Boolean) -> Unit)? = null
+    // Use data class for dialog configuration
+    private data class DialogConfig(
+        val title: String? = null,
+        val content: String? = null,
+        val positiveText: String? = null,
+        val negativeText: String? = null,
+        val showNegative: Boolean = true,
+        val showImage: Boolean = true,
+        val showNoMoreReminder: Boolean = false,
+        val defaultCheck: Boolean = false,
+        val noMoreReminderText: String? = null,
+        val noMoreReminderTextColor: Int? = null,
+        val imageBackgroundRes: Int? = null,
+        val cancelable: Boolean = true,
+        val positiveBackgroundTint: Int? = null,
+        val positiveAutoDismiss: Boolean = true,
+        val immersiveMode: ImmersiveMode = ImmersiveMode.SEMI_IMMERSIVE,
+        val onPositiveClick: ((Boolean?) -> Unit)? = null,
+        val onNegativeClick: (() -> Unit)? = null
+    )
+
+    private var config: DialogConfig = DialogConfig()
+
+    override fun immersiveMode(): ImmersiveMode = config.immersiveMode
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): CommonDialogLayoutBinding {
         return CommonDialogLayoutBinding.inflate(inflater, container, false)
@@ -30,113 +44,131 @@ class CommonDialog : BaseDialogFragment<CommonDialogLayoutBinding>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupDialog()
+    }
 
+    private fun setupDialog() {
         mBinding?.apply {
-            // Set dialog width to 80% of screen width
-            root.layoutParams = FrameLayout.LayoutParams(
-                (resources.displayMetrics.widthPixels * 0.84).toInt(),
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
+            // Set dialog width to 84% of screen width using extension function
+            root.setDialogWidth(0.84f)
+            
+            // Setup views using apply and let for null safety
+            setupBasicViews()
+            setupImageViews()
+            setupNoMoreReminder()
+            setupClickListeners()
+        }
+    }
 
-            // Setup views
-            tvTitle.text = title
-            tvContent.text = content
-            btnPositive.text = positiveText
-            btnNegative.text = negativeText
-            btnNegative.isVisible = showNegative
-            ivImage.isVisible = showImage
+    private fun CommonDialogLayoutBinding.setupBasicViews() {
+        tvTitle.text = config.title
+        tvContent.text = config.content
+        btnPositive.text = config.positiveText
+        btnNegative.text = config.negativeText
+        btnNegative.isVisible = config.showNegative
+        ivImage.isVisible = config.showImage
+        
+        // Set positive button background tint if provided
+        config.positiveBackgroundTint?.let { colorRes ->
+            btnPositive.backgroundTintList = ColorStateList.valueOf(root.context.getColor(colorRes))
+        }
+    }
 
-            // Setup "No more reminder" checkbox
-            llNoMoreReminder.isVisible = showNoMoreReminder
-            if (showNoMoreReminder) {
-                tvNoMoreReminder.text =
-                    noMoreReminderText ?: getString(io.agora.scene.common.R.string.common_app_no_more_reminder)
-            }
+    private fun CommonDialogLayoutBinding.setupImageViews() {
+        config.imageBackgroundRes?.let { ivImage.setBackgroundResource(it) }
+    }
 
-            imageRes?.let {
-                ivImage.setBackgroundResource(it)
-            }
-
-            // Click listeners
-            btnPositive.setOnClickListener {
-                if (showNoMoreReminder && onPositiveClickWithReminder != null) {
-                    // Call callback with checkbox state
-                    onPositiveClickWithReminder?.invoke(cbNoMoreReminder.isChecked)
-                } else {
-                    // Call normal callback
-                    onPositiveClick?.invoke()
-                }
-                dismiss()
-            }
-
-            btnNegative.setOnClickListener {
-                onNegativeClick?.invoke()
-                dismiss()
+    private fun CommonDialogLayoutBinding.setupNoMoreReminder() {
+        llNoMoreReminder.isVisible = config.showNoMoreReminder
+        cbNoMoreReminder.isChecked = config.defaultCheck
+        if (config.showNoMoreReminder) {
+            tvNoMoreReminder.text = config.noMoreReminderText 
+                ?: getString(io.agora.scene.common.R.string.common_app_no_more_reminder)
+            
+            // Set text color if provided
+            config.noMoreReminderTextColor?.let { colorRes ->
+                tvNoMoreReminder.setTextColor(root.context.getColor(colorRes))
             }
         }
     }
 
-    class Builder {
-        private var title: String? = null
-        private var content: String? = null
-        private var positiveText: String? = null
-        private var negativeText: String? = null
-        private var showNegative: Boolean = true
-        private var showImage: Boolean = true
-        private var showNoMoreReminder: Boolean = false
-        private var noMoreReminderText: String? = null
-        private var imageRes: Int? = null
-        private var cancelable: Boolean = true
-        private var onPositiveClick: (() -> Unit)? = null
-        private var onNegativeClick: (() -> Unit)? = null
-        private var onPositiveClickWithReminder: ((Boolean) -> Unit)? = null
-
-        fun setTitle(title: String) = apply { this.title = title }
-        fun setContent(content: String) = apply { this.content = content }
-        fun setPositiveButton(text: String, onClick: (() -> Unit)? = null) = apply {
-            this.positiveText = text
-            this.onPositiveClick = onClick
+    private fun CommonDialogLayoutBinding.setupClickListeners() {
+        btnPositive.setOnClickListener {
+            handlePositiveClick()
+            if (config.positiveAutoDismiss) {
+                dismiss()
+            }
         }
 
-        fun setPositiveButtonWithReminder(text: String, onClick: (Boolean) -> Unit) = apply {
-            this.positiveText = text
-            this.onPositiveClickWithReminder = onClick
+        btnNegative.setOnClickListener {
+            config.onNegativeClick?.invoke()
+            dismiss()
+        }
+        
+        // Allow clicking on the entire reminder area to toggle checkbox
+        llNoMoreReminder.setOnClickListener {
+            cbNoMoreReminder.isChecked = !cbNoMoreReminder.isChecked
+        }
+    }
+
+    private fun handlePositiveClick() {
+        config.onPositiveClick?.let { callback ->
+            val reminderChecked = if (config.showNoMoreReminder) {
+                mBinding?.cbNoMoreReminder?.isChecked
+            } else {
+                null
+            }
+            callback.invoke(reminderChecked)
+        }
+    }
+
+    class Builder {
+        private var config = DialogConfig()
+
+        fun setTitle(title: String) = apply { config = config.copy(title = title) }
+        fun setContent(content: String) = apply { config = config.copy(content = content) }
+        
+        fun setPositiveButton(
+            text: String, 
+            backgroundTint: Int? = null,
+            autoDismiss: Boolean = true,
+            onClick: ((Boolean?) -> Unit)? = null
+        ) = apply {
+            config = config.copy(
+                positiveText = text, 
+                onPositiveClick = onClick,
+                positiveBackgroundTint = backgroundTint,
+                positiveAutoDismiss = autoDismiss
+            )
         }
 
         fun setNegativeButton(text: String, onClick: (() -> Unit)? = null) = apply {
-            this.negativeText = text
-            this.onNegativeClick = onClick
-            this.showNegative = true
+            config = config.copy(negativeText = text, onNegativeClick = onClick, showNegative = true)
         }
 
-        fun setImage(resId: Int) = apply { this.imageRes = resId }
-        fun hideNegativeButton() = apply { this.showNegative = false }
+        fun setImageBackground(resId: Int) = apply { config = config.copy(imageBackgroundRes = resId) }
 
-        fun hideTopImage() = apply { this.showImage = false }
+        fun hideNegativeButton() = apply { config = config.copy(showNegative = false) }
+        fun hideTopImage() = apply { config = config.copy(showImage = false) }
 
-        fun showNoMoreReminder(text: String? = null) = apply {
-            this.showNoMoreReminder = true
-            this.noMoreReminderText = text
+        fun showNoMoreReminder(text: String? = null, textColor: Int? = null, defaultCheck: Boolean = false) = apply {
+            config = config.copy(
+                showNoMoreReminder = true,
+                noMoreReminderText = text,
+                noMoreReminderTextColor = textColor,
+                defaultCheck = defaultCheck
+            )
         }
 
-        fun setCancelable(cancelable: Boolean) = apply { this.cancelable = cancelable }
+        fun setCancelable(cancelable: Boolean) = apply { config = config.copy(cancelable = cancelable) }
 
-        fun build(): CommonDialog {
-            return CommonDialog().apply {
-                this@apply.title = this@Builder.title
-                this@apply.content = this@Builder.content
-                this@apply.positiveText = this@Builder.positiveText
-                this@apply.negativeText = this@Builder.negativeText
-                this@apply.showNegative = this@Builder.showNegative
-                this@apply.onPositiveClick = this@Builder.onPositiveClick
-                this@apply.onNegativeClick = this@Builder.onNegativeClick
-                this@apply.onPositiveClickWithReminder = this@Builder.onPositiveClickWithReminder
-                this@apply.showImage = this@Builder.showImage
-                this@apply.showNoMoreReminder = this@Builder.showNoMoreReminder
-                this@apply.noMoreReminderText = this@Builder.noMoreReminderText
-                this@apply.imageRes = this@Builder.imageRes
-                this@apply.isCancelable = this@Builder.cancelable
-            }
+        fun setImmersiveMode(mode: ImmersiveMode) = apply { 
+            config = config.copy(immersiveMode = mode) 
+        }
+
+        fun build(): CommonDialog = CommonDialog().apply {
+            this@apply.config = this@Builder.config
+            this@apply.isCancelable = config.cancelable
         }
     }
 } 

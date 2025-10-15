@@ -10,6 +10,8 @@ import SnapKit
 import Common
 
 public class DeveloperBasicSettingView: UIView  {
+    private let appVersionLabel = UILabel()
+    public let appVersionValueLabel = UILabel()
     private let rtcVersionLabel = UILabel()
     public let rtcVersionValueLabel = UILabel()
     private let rtmVersionLabel = UILabel()
@@ -38,6 +40,22 @@ public class DeveloperBasicSettingView: UIView  {
         stackView.snp.makeConstraints { make in
             make.edges.equalToSuperview().inset(20)
         }
+        
+        // App Version
+        appVersionLabel.text = "App Version"
+        appVersionLabel.textColor = .white
+        appVersionLabel.font = UIFont.systemFont(ofSize: 16)
+        appVersionValueLabel.textColor = .lightGray
+        appVersionValueLabel.font = UIFont.systemFont(ofSize: 16)
+        appVersionValueLabel.text = "\(ConversationalAIAPIImpl.version)(Build \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""))"
+        let appStack = UIStackView(arrangedSubviews: [appVersionLabel, appVersionValueLabel])
+        appStack.axis = .horizontal
+        appStack.distribution = .equalSpacing
+        stackView.addArrangedSubview(appStack)
+        appStack.snp.makeConstraints { make in
+            make.height.equalTo(44)
+        }
+        
         // RTC Version
         rtcVersionLabel.text = ResourceManager.L10n.DevMode.rtc
         rtcVersionLabel.textColor = .white

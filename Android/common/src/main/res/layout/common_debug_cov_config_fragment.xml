@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="bottom"
-    android:background="@color/ai_fill2"
+    tools:background="@color/ai_fill5"
     android:orientation="vertical"
     tools:theme="@style/Theme.AppCompat">
 

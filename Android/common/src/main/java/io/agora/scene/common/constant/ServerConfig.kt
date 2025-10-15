@@ -29,6 +29,34 @@ object ServerConfig {
         }
 
     @JvmStatic
+    val thirdPartyUrl: String
+        get() {
+            return "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/libraries.html"
+        }
+
+    @JvmStatic
+    val filingNoRecordQueryUrl: String
+        get() {
+            return "https://beian.miit.gov.cn/#/Integrated/recordQuery"
+        }
+
+    @JvmStatic
+    val personalDataUrl: String
+        get() {
+            return if (toolBoxUrl.contains("service.apprtc.cn")) {
+                "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/ConvoAI/index.html"
+            } else {
+                "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/personal_info/manifest-dev/ConvoAI/index.html"
+            }
+        }
+
+    @JvmStatic
+    val ssoProfileUrl: String
+        get() {
+            return "https://sso.shengwang.cn/profile"
+        }
+
+    @JvmStatic
     var appVersionName: String = ""
         private set
 

@@ -68,3 +68,27 @@ data class CovTranscriptRender(
     val text: String,
     val detail: String
 )
+
+enum class NetworkStatus {
+    Good,
+    Fail,
+    Poor
+}
+
+
+enum class ConnectionStatus {
+    Connected,
+    Disconnected,
+    Unload
+}
+
+enum class VoiceprintUIStatus {
+    NotActivated,
+    Seamless,
+    Personalized
+}
+
+enum class ActivateStatus {
+    NotActivated,
+    Activating
+}

@@ -16,7 +16,8 @@ fileprivate let kCustomPresetSave = "io.agora.customPresets"
 class CustomAgentViewController: UIViewController {
     var presets: [AgentPreset] = [AgentPreset]()
     weak var scrollDelegate: AgentScrollViewDelegate?
-    let agentManager = AgentManager()
+    private let agentManager = AgentManager()
+    private let toolBoxApi = ToolBoxApiManager()
     private let emptyStateView = CustomAgentEmptyView()
     private let inputContainerView = BottomInputView()
     
@@ -257,8 +258,10 @@ extension CustomAgentViewController: UITableViewDelegate, UITableViewDataSource 
             }
             if let presets = result, !presets.isEmpty {
                 preset.defaultAvatar = "ic_custom_agent_head"
-                AppContext.preferenceManager()?.preference.isCustomPreset = true
-                AppContext.preferenceManager()?.updatePreset(preset)
+                AppContext.settingManager().isCustomPreset = true
+                AppContext.settingManager().updatePreset(preset)
+                let reportEvent = ReportEvent(appId: AppContext.shared.appId, sceneId: ConvoAIEntrance.reportSceneId, action: preset.displayName, appVersion: ConversationalAIAPIImpl.version, appPlatform: "iOS", deviceModel: UIDevice.current.machineModel, deviceBrand: "Apple", osVersion: "")
+                toolBoxApi.reportEvent(event: reportEvent, success: nil, failure: nil)
                 let chatViewController = ChatViewController()
                 chatViewController.hidesBottomBarWhenPushed = true
                 self.navigationController?.pushViewController(chatViewController, animated: true)

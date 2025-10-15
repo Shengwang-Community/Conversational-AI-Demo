@@ -56,7 +56,7 @@ class CallControlbar: UIView {
         
         setupStartButton(button: button)
         
-        button.layer.cornerRadius = 15
+        button.layer.cornerRadius = 29
         button.addTarget(self, action: #selector(startAction), for: .touchUpInside)
         button.setImage(UIImage.ag_named("ic_agent_join_button_icon"), for: .normal)
         
@@ -154,45 +154,37 @@ class CallControlbar: UIView {
         return view
     }()
     
+    private var isSupportVision = false
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
-        registerDelegate()
         setupViews()
         setupConstraints()
         loadData()
         style = .startButton
     }
     
-    func loadData() {
-        updateVideoButtonColor()
+    func setSupportVision(isSupport: Bool) {
+        isSupportVision = isSupport
+        if isSupport {
+            videoButton.alpha = 1
+            resourceButton.alpha = 1
+        } else {
+            videoButton.alpha = 0.5
+            resourceButton.alpha = 0.5
+        }
     }
     
-    func updateVideoButtonColor() {
-        guard let preset = AppContext.preferenceManager()?.preference.preset else {
+    func loadData() {
+        guard let preset = AppContext.settingManager().preset else {
             return
         }
-        
-        if !preset.isSupportVision.boolValue() {
-            videoButton.alpha = 0.5
-        } else {
-            videoButton.alpha = 1
-        }
+        let isSupportVision = preset.isSupportVision.boolValue()
+        setSupportVision(isSupport: isSupportVision)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-    
-    func registerDelegate() {
-        AppContext.preferenceManager()?.addDelegate(self)
-    }
-    
-    func deregisterDelegate() {
-        AppContext.preferenceManager()?.removeDelegate(self)
-    }
-    
-    deinit {
-        deregisterDelegate()
     }
     
     func resetState() {
@@ -256,11 +248,9 @@ class CallControlbar: UIView {
             make.centerY.equalTo(startButtonContentView)
             make.centerX.equalToSuperview()
             make.width.equalTo(startButtonContentView).multipliedBy(0.8)
-            make.height.equalTo(startButton.snp.width).multipliedBy(1/5.8)
+            make.height.equalTo(58)
         }
-        
-        startButton.layoutIfNeeded()
-        
+                
         pointAnimateView.snp.makeConstraints { make in
             make.left.right.bottom.top.equalTo(startButton)
         }
@@ -381,9 +371,13 @@ class CallControlbar: UIView {
     }
     
     @objc func videoButtonAction(_ sender: UIButton) {
-        sender.isSelected = !sender.isSelected
-        self.delegate?.switchPublishVideoStream(state: sender.isSelected)
-        resourceButton.switchIcon(animated: true)
+        if isSupportVision {
+            sender.isSelected = !sender.isSelected
+            self.delegate?.switchPublishVideoStream(state: sender.isSelected)
+            resourceButton.switchIcon(animated: true)
+        } else {
+            self.delegate?.switchPublishVideoStream(state: true)
+        }
     }
     
     private func setTintColor(state: Bool) {
@@ -410,11 +404,5 @@ class CallControlbar: UIView {
             self.setNeedsLayout()
             self.layoutIfNeeded()
         }
-    }
-}
-
-extension CallControlbar: AgentPreferenceManagerDelegate {
-    func preferenceManager(_ manager: AgentPreferenceManager, presetDidUpdated preset: AgentPreset) {
-        updateVideoButtonColor()
     }
 }

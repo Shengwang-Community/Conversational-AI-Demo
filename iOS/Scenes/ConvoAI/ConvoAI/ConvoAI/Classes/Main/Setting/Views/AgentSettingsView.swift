@@ -15,6 +15,7 @@ protocol AgentSettingsViewDelegate: AnyObject {
     func agentSettingsViewDidTapDigitalHuman(_ view: AgentSettingsView, sender: UIButton)
     func agentSettingsViewDidToggleAiVad(_ view: AgentSettingsView, isOn: Bool)
     func agentSettingsViewDidTapTranscriptRender(_ view: AgentSettingsView, sender: UIButton)
+    func agentSettingsViewDidTapVoiceprintMode(_ view: AgentSettingsView, sender: UIButton)
 }
 
 class AgentSettingsView: UIView {
@@ -36,21 +37,22 @@ class AgentSettingsView: UIView {
     private lazy var languageItem: AgentSettingTableItemView = {
         let view = AgentSettingTableItemView(frame: .zero)
         view.titleLabel.text = ResourceManager.L10n.Settings.language
-        if let manager = AppContext.preferenceManager() {
-            if let currentLanguage = manager.preference.language {
-                view.detailLabel.text = currentLanguage.languageName
-            } else {
-                view.detailLabel.text = manager.preference.preset?.defaultLanguageName
-            }
+        let settingManager = AppContext.settingManager()
+        if let currentLanguage = settingManager.language {
+            view.detailLabel.text = currentLanguage.languageName
+        } else {
+            view.detailLabel.text = settingManager.preset?.defaultLanguageName
         }
         view.button.addTarget(self, action: #selector(onClickLanguage(_:)), for: .touchUpInside)
+        view.setEnable(AppContext.stateManager().agentState == .unload)
         return view
     }()
     
     private lazy var avatarImageView: UIImageView = {
         let imageView = UIImageView()
-        if let state = AppContext.preferenceManager()?.information.agentState, state != .unload,
-           let _ = AppContext.preferenceManager()?.preference.avatar {
+        let state = AppContext.stateManager().agentState
+        if state != .unload,
+           let _ = AppContext.settingManager().avatar {
             let view = UIView()
             view.backgroundColor = UIColor.black.withAlphaComponent(0.3)
             imageView.addSubview(view)
@@ -66,18 +68,20 @@ class AgentSettingsView: UIView {
         view.titleLabel.text = ResourceManager.L10n.Settings.digitalHuman
         view.button.addTarget(self, action: #selector(onClickDigitalHuman(_:)), for: .touchUpInside)
         view.bottomLine.isHidden = true
-        if let manager = AppContext.preferenceManager() {
-            if let currentAvatar = manager.preference.avatar {
-                view.detailLabel.text = currentAvatar.avatarName
-            } else {
-                view.detailLabel.text = ResourceManager.L10n.Settings.digitalHumanClosed
-            }
+        let settingManager = AppContext.settingManager()
+        if let currentAvatar = settingManager.avatar {
+            view.detailLabel.text = currentAvatar.avatarName
+        } else {
+            view.detailLabel.text = ResourceManager.L10n.Settings.digitalHumanClosed
         }
         
         // Add avatar image
-        if let avatar = AppContext.preferenceManager()?.preference.avatar, let thumbImageUrl = avatar.thumbImageUrl, let url = URL(string: thumbImageUrl) {
+        if let avatar = AppContext.settingManager().avatar, let thumbImageUrl = avatar.thumbImageUrl, let url = URL(string: thumbImageUrl) {
             avatarImageView.kf.setImage(with: url)
+        } else {
+            avatarImageView.image = nil
         }
+        view.setEnable(AppContext.stateManager().agentState == .unload)
         avatarImageView.contentMode = .scaleAspectFill
         avatarImageView.layer.cornerRadius = 10
         avatarImageView.layer.masksToBounds = true
@@ -120,49 +124,64 @@ class AgentSettingsView: UIView {
     private lazy var aiVadItem: AgentSettingSwitchItemView = {
         let view = AgentSettingSwitchItemView(frame: .zero)
         view.titleLabel.text = ResourceManager.L10n.Settings.aiVadLight
-        view.addtarget(self, action: #selector(onClickAiVad(_:)), for: .touchUpInside)
-        let button = UIButton()
-        button.imageView?.contentMode = .scaleAspectFit
-        button.setImage(UIImage.ag_named("ic_aivad_tips_icon"), for: .normal)
-        button.addTarget(self, action: #selector(onClickAIVadTips), for: .touchUpInside)
-        view.addSubview(button)
+        view.switcher.addTarget(self, action: #selector(onClickAiVad(_:)), for: .touchUpInside)
         
-        button.snp.makeConstraints { make in
-            make.left.equalTo(view.titleLabel.snp.right).offset(8)
-            make.centerY.equalTo(view.titleLabel)
-            make.width.height.equalTo(16)
-        }
-        if let manager = AppContext.preferenceManager(),
-           let language = manager.preference.language,
-           let presetType = manager.preference.preset?.presetType {
-            if manager.information.agentState != .unload ||
-                presetType.contains("independent")
-            // Agent-cn dont need aivadSupported
-            {
+        view.tipsButton.setImage(UIImage.ag_named("ic_aivad_tips_icon"), for: .normal)
+        view.tipsButton.addTarget(self, action: #selector(onClickAIVadTips), for: .touchUpInside)
+        view.tipsButton.isHidden = false
+        
+        let settingManager = AppContext.settingManager()
+        if let language = settingManager.language,
+           let presetType = settingManager.preset?.presetType {
+            if AppContext.stateManager().agentState != .unload ||
+                presetType.contains("independent") ||
+                language.aivadSupported == false {
                 view.setEnable(false)
             } else {
                 view.setEnable(true)
             }
-            view.setOn(manager.preference.aiVad)
+            view.setOn(settingManager.aiVad)
         } else {
-            view.setEnable(true)
+            view.setEnable(false)
             view.setOn(false)
         }
-        view.updateLayout()
         return view
     }()
     
     private lazy var transcriptRenderItem: AgentSettingTableItemView = {
         let view = AgentSettingTableItemView(frame: .zero)
         view.titleLabel.text = ResourceManager.L10n.Settings.transcriptRenderMode
-        if let manager = AppContext.preferenceManager() {
-            let transcriptMode = manager.preference.transcriptMode
-            view.detailLabel.text = transcriptMode.renderDisplayName
-        }
+        let settingManager = AppContext.settingManager()
+        let transcriptMode = settingManager.transcriptMode
+        view.detailLabel.text = transcriptMode.renderDisplayName
         view.button.addTarget(self, action: #selector(onClickTranscriptRender(_:)), for: .touchUpInside)
-        view.bottomLine.isHidden = true
+        view.setEnable(AppContext.stateManager().agentState == .unload)
         return view
     }()
+    
+    private lazy var voiceprintModeItem: AgentSettingTableItemView = {
+        let view = AgentSettingTableItemView(frame: .zero)
+        view.titleLabel.text = ResourceManager.L10n.Voiceprint.title
+        
+        // Get current voiceprint mode from setting manager
+        let settingManager = AppContext.settingManager()
+        let currentMode = settingManager.voiceprintMode
+        view.detailLabel.text = currentMode.title
+        view.button.addTarget(self, action: #selector(onClickVoiceprintMode(_:)), for: .touchUpInside)
+        view.bottomLine.isHidden = true
+        if AppContext.stateManager().agentState == .unload {
+            if let preset = AppContext.settingManager().preset,
+               preset.supportSal ?? true {
+                view.setEnable(true)
+            } else {
+                view.setEnable(false)
+            }
+        } else {
+            view.setEnable(false)
+        }
+        return view
+    }()
+
     
     // MARK: - Initialization
     override init(frame: CGRect) {
@@ -173,7 +192,9 @@ class AgentSettingsView: UIView {
     }
     
     func loadData() {
-        updateAvatar(AppContext.preferenceManager()?.preference.avatar)
+        updateAvatar(AppContext.settingManager().avatar)
+        let voiceprintMode = AppContext.settingManager().voiceprintMode
+        voiceprintModeItem.detailLabel.text = voiceprintMode.title
     }
     
     required init?(coder: NSCoder) {
@@ -185,8 +206,8 @@ class AgentSettingsView: UIView {
         backgroundColor = .clear
         
         basicSettingItems = [languageItem]
-        advancedSettingItems = [aiVadItem, transcriptRenderItem]
-        
+        advancedSettingItems = [aiVadItem, transcriptRenderItem, voiceprintModeItem]
+
         addSubview(basicSettingView)
         addSubview(digitalHumanView)
         addSubview(advancedSettingTitle)
@@ -308,20 +329,24 @@ class AgentSettingsView: UIView {
     }
     
     func updateAgentState(_ agentState: ConnectionStatus) {
-        guard let manager = AppContext.preferenceManager() else { return }
+        let settingManager = AppContext.settingManager()
         
         if agentState != .unload {
             aiVadItem.setEnable(false)
         } else {
-            if let presetType = manager.preference.preset?.presetType,
+            if let presetType = settingManager.preset?.presetType,
                presetType.contains("independent") {
                 aiVadItem.setEnable(false)
-                AppContext.preferenceManager()?.updateAiVadState(false)
+                settingManager.updateAiVadState(false)
             } else {
                 aiVadItem.setEnable(true)
-                AppContext.preferenceManager()?.updateAiVadState(false)
+                settingManager.updateAiVadState(false)
             }
         }
+    }
+    
+    func updateVoiceprintMode(_ mode: VoiceprintMode) {
+        voiceprintModeItem.detailLabel.text = mode.title
     }
     
     // MARK: - Action Methods
@@ -343,6 +368,10 @@ class AgentSettingsView: UIView {
     
     @objc private func onClickAIVadTips() {
         SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Settings.aiVadTips)
+    }
+
+    @objc private func onClickVoiceprintMode(_ sender: UIButton) {
+        delegate?.agentSettingsViewDidTapVoiceprintMode(self, sender: sender)
     }
 
 }

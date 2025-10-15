@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "io.iot.dn"
-    compileSdk = 35
+    compileSdk = rootProject.extra["compileSdkVersion"] as Int
 
     defaultConfig {
-        minSdk = 24
+        minSdk = rootProject.extra["minSdkVersion"] as Int
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -28,11 +28,8 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    api("com.google.android.material:material:1.10.0")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation("com.google.android.material:material:1.10.0")
+    implementation(project(":common"))
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }

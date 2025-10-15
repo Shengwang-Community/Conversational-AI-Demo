@@ -11,8 +11,10 @@ import Common
 class AgentSettingSwitchItemView: UIView {
     let titleLabel = UILabel()
     let detailLabel = UILabel()
-    private let switcher = UISwitch()
+    public let switcher = UISwitch()
     let bottomLine = UIView()
+    
+    public let tipsButton = UIButton()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -22,9 +24,6 @@ class AgentSettingSwitchItemView: UIView {
         updateViewState()
     }
     
-    public func addtarget(_ target: Any?, action: Selector, for controlEvents: UIControl.Event) {
-        switcher.addTarget(target, action: action, for: controlEvents)
-    }
     
     func setEnable(_ enable: Bool) {
         switcher.isEnabled = enable
@@ -43,15 +42,14 @@ class AgentSettingSwitchItemView: UIView {
     @objc func switcherValueChanged(_ sender: UISwitch) {
         updateViewState()
     }
-}
-
-extension AgentSettingSwitchItemView {
     
     private func createViews() {
         self.backgroundColor = UIColor.themColor(named: "ai_block2")
 
         titleLabel.textColor = UIColor.themColor(named: "ai_icontext1")
         titleLabel.font = UIFont.systemFont(ofSize: 14)
+        titleLabel.numberOfLines = 0
+        titleLabel.lineBreakMode = .byWordWrapping
         addSubview(titleLabel)
         
         detailLabel.textColor = UIColor.themColor(named: "ai_icontext3")
@@ -68,12 +66,17 @@ extension AgentSettingSwitchItemView {
         switcher.layer.cornerRadius = switcher.frame.height / 2
         switcher.clipsToBounds = true
         switcher.addTarget(self, action: #selector(switcherValueChanged(_:)), for: .valueChanged)
+        
+        // Setup tips button
+        addSubview(tipsButton)
+        tipsButton.isHidden = true
     }
     
     private func createConstrains() {
         titleLabel.snp.makeConstraints { make in
             make.left.equalTo(16)
             make.centerY.equalToSuperview()
+            make.right.lessThanOrEqualTo(switcher.snp.left).offset(-32)
         }
         detailLabel.snp.makeConstraints { make in
             make.left.equalTo(titleLabel)
@@ -82,6 +85,7 @@ extension AgentSettingSwitchItemView {
         switcher.snp.makeConstraints { make in
             make.right.equalTo(-16)
             make.centerY.equalToSuperview()
+            make.width.equalTo(51)
         }
         bottomLine.snp.makeConstraints { make in
             make.left.equalTo(16)
@@ -89,23 +93,13 @@ extension AgentSettingSwitchItemView {
             make.height.equalTo(1)
             make.bottom.equalToSuperview()
         }
-    }
-    
-    func updateLayout() {
-        if let text = detailLabel.text, !text.isEmpty {
-            detailLabel.isHidden = false
-            titleLabel.snp.remakeConstraints { make in
-                make.left.equalTo(16)
-                make.bottom.equalTo(self.snp.centerY)
-            }
-        } else {
-            detailLabel.isHidden = true
-            titleLabel.snp.remakeConstraints { make in
-                make.left.equalTo(16)
-                make.centerY.equalToSuperview()
-            }
+        tipsButton.snp.makeConstraints { make in
+            make.left.equalTo(titleLabel.snp.right).offset(8)
+            make.centerY.equalTo(titleLabel)
+            make.width.height.equalTo(16)
         }
     }
+   
     
     private func updateViewState() {
         let isOn = switcher.isOn
@@ -126,4 +120,3 @@ extension AgentSettingSwitchItemView {
         switcher.isOn = isOn
     }
 }
-

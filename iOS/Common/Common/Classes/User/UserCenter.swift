@@ -10,10 +10,34 @@ import Foundation
 public class LoginModel: Codable {
     public var token: String = ""
     public var uid: String = ""
+    public var accountType: String = ""
+    public var email: String = ""
+    public var companyId: Int = 0
+    public var profileId: Int = 0
+    public var displayName: String = ""
+    public var companyName: String = ""
+    public var companyCountry: String = ""
+    public var gender: String = ""
+    public var verifyPhone: String = ""
+    public var bio: String = ""
+    public var birthday: String = ""
+    public var nickname: String = ""
     
     public init() {
         self.token = ""
         self.uid = ""
+        self.accountType = ""
+        self.email = ""
+        self.companyId = 0
+        self.profileId = 0
+        self.displayName = ""
+        self.companyName = ""
+        self.companyCountry = ""
+        self.gender = ""
+        self.verifyPhone = ""
+        self.bio = ""
+        self.birthday = ""
+        self.nickname = ""
     }
 }
 

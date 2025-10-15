@@ -17,6 +17,7 @@ class ChannelInfoView: UIView {
     weak var delegate: ChannelInfoViewDelegate?
     weak var rtcManager: RTCManager?
     
+    private var serverItems: [UIView] = []
     private var moreItems: [UIView] = []
     private var channelInfoItems: [UIView] = []
     
@@ -32,6 +33,23 @@ class ChannelInfoView: UIView {
     }()
     
     private lazy var channelInfoView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.themColor(named: "ai_block2")
+        view.layerCornerRadius = 10
+        view.layer.borderWidth = 1.0
+        view.layer.borderColor = UIColor.themColor(named: "ai_line1").cgColor
+        return view
+    }()
+    
+    private lazy var serverStatusTitle: UILabel = {
+        let label = UILabel()
+        label.text = ResourceManager.L10n.ChannelInfo.serverStatusTitle
+        label.font = UIFont.boldSystemFont(ofSize: 14)
+        label.textColor = UIColor.themColor(named: "ai_icontext3")
+        return label
+    }()
+    
+    private lazy var serverStatusView: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor.themColor(named: "ai_block2")
         view.layerCornerRadius = 10
@@ -91,6 +109,23 @@ class ChannelInfoView: UIView {
         return view
     }()
     
+    private lazy var voiceprintLockItem: AgentSettingTextItemView = {
+        let view = AgentSettingTextItemView(frame: .zero)
+        view.titleLabel.text = ResourceManager.L10n.ChannelInfo.voiceprintLock
+        view.detailLabel.text = ResourceManager.L10n.ChannelInfo.seamless
+        view.detailLabel.textColor = UIColor.themColor(named: "ai_green6")
+        return view
+    }()
+    
+    private lazy var elegantInterruptItem: AgentSettingTextItemView = {
+        let view = AgentSettingTextItemView(frame: .zero)
+        view.titleLabel.text = ResourceManager.L10n.ChannelInfo.elegantInterrupt
+        view.detailLabel.text = ResourceManager.L10n.ChannelInfo.effective
+        view.detailLabel.textColor = UIColor.themColor(named: "ai_green6")
+        view.bottomLine.isHidden = true
+        return view
+    }()
+    
     private lazy var feedbackItem: AgentSettingIconItemView = {
         let view = AgentSettingIconItemView(frame: .zero)
         view.titleLabel.text = ResourceManager.L10n.ChannelInfo.feedback
@@ -117,21 +152,53 @@ class ChannelInfoView: UIView {
     private func setupViews() {
         backgroundColor = .clear
         
+        serverItems = [voiceprintLockItem, elegantInterruptItem]
         moreItems = [feedbackItem]
         channelInfoItems = [agentItem, agentIDItem, roomItem, roomIDItem, idItem]
         
+        addSubview(serverStatusTitle)
+        addSubview(serverStatusView)
         addSubview(channelInfoTitle)
         addSubview(channelInfoView)
         addSubview(moreInfoTitle)
         addSubview(moreInfoView)
         
+        serverItems.forEach { serverStatusView.addSubview($0) }
         moreItems.forEach { moreInfoView.addSubview($0) }
         channelInfoItems.forEach { channelInfoView.addSubview($0) }
     }
     
     private func setupConstraints() {
-        channelInfoTitle.snp.makeConstraints { make in
+        serverStatusTitle.snp.makeConstraints { make in
             make.top.equalTo(16)
+            make.left.equalTo(34)
+        }
+        
+        serverStatusView.snp.makeConstraints { make in
+            make.top.equalTo(serverStatusTitle.snp.bottom).offset(8)
+            make.left.equalTo(20)
+            make.right.equalTo(-20)
+        }
+        
+        for (index, item) in serverItems.enumerated() {
+            item.snp.makeConstraints { make in
+                make.left.right.equalToSuperview()
+                make.height.equalTo(60)
+                
+                if index == 0 {
+                    make.top.equalToSuperview()
+                } else {
+                    make.top.equalTo(serverItems[index - 1].snp.bottom)
+                }
+                
+                if index == serverItems.count - 1 {
+                    make.bottom.equalToSuperview()
+                }
+            }
+        }
+        
+        channelInfoTitle.snp.makeConstraints { make in
+            make.top.equalTo(serverStatusView.snp.bottom).offset(32)
             make.left.equalTo(34)
         }
         
@@ -140,7 +207,7 @@ class ChannelInfoView: UIView {
             make.left.equalTo(20)
             make.right.equalTo(-20)
         }
-
+        
         for (index, item) in channelInfoItems.enumerated() {
             item.snp.makeConstraints { make in
                 make.left.right.equalToSuperview()
@@ -169,7 +236,7 @@ class ChannelInfoView: UIView {
             make.right.equalTo(-20)
             make.bottom.lessThanOrEqualToSuperview().offset(-20)
         }
-
+        
         for (index, item) in moreItems.enumerated() {
             item.snp.makeConstraints { make in
                 make.left.right.equalToSuperview()
@@ -190,31 +257,34 @@ class ChannelInfoView: UIView {
     
     // MARK: - Public Methods
     func updateStatus() {
-        guard let manager = AppContext.preferenceManager() else {
-            return
-        }
+        let stateManager = AppContext.stateManager()
         
-        agentItem.detailLabel.text = manager.information.agentState == .unload ? ConnectionStatus.disconnected.rawValue : manager.information.agentState.rawValue
-        agentItem.detailLabel.textColor = manager.information.agentState == .unload ? ConnectionStatus.disconnected.color : manager.information.agentState.color
+        agentItem.detailLabel.text = stateManager.agentState == .unload ? ConnectionStatus.disconnected.rawValue : stateManager.agentState.rawValue
+        agentItem.detailLabel.textColor = stateManager.agentState == .unload ? ConnectionStatus.disconnected.color : stateManager.agentState.color
         
         // Update Room Status
-        roomItem.detailLabel.text = manager.information.rtcRoomState == .unload ? ConnectionStatus.disconnected.rawValue :  manager.information.rtcRoomState.rawValue
-        roomItem.detailLabel.textColor = manager.information.rtcRoomState == .unload ? ConnectionStatus.disconnected.color : manager.information.rtcRoomState.color
+        roomItem.detailLabel.text = stateManager.rtcRoomState == .unload ? ConnectionStatus.disconnected.rawValue :  stateManager.rtcRoomState.rawValue
+        roomItem.detailLabel.textColor = stateManager.rtcRoomState == .unload ? ConnectionStatus.disconnected.color : stateManager.rtcRoomState.color
         
         // Update Agent ID
-        agentIDItem.detailLabel.text = manager.information.agentState == .unload ? "--" : manager.information.agentId
+        agentIDItem.detailLabel.text = stateManager.agentState == .unload ? "--" : stateManager.agentId
         agentIDItem.detailLabel.textColor = UIColor.themColor(named: "ai_icontext3")
         
         // Update Room ID
-        roomIDItem.detailLabel.text = manager.information.rtcRoomState == .unload ? "--" : manager.information.roomId
+        roomIDItem.detailLabel.text = stateManager.rtcRoomState == .unload ? "--" : stateManager.roomId
         roomIDItem.detailLabel.textColor = UIColor.themColor(named: "ai_icontext3")
         
         // Update Participant ID
-        idItem.detailLabel.text = manager.information.rtcRoomState == .unload ? "--" : manager.information.userId
+        idItem.detailLabel.text = stateManager.rtcRoomState == .unload ? "--" : stateManager.userId
         idItem.detailLabel.textColor = UIColor.themColor(named: "ai_icontext3")
         
+        // Update Voiceprint Lock Status
+        updateVoiceprintState()
+        
+        // Update Elegant Interrupt Status
+        updateAiVadState()
         // Update Feedback Item
-        feedbackItem.setEnabled(isEnabled: manager.information.agentState != .unload)
+        feedbackItem.setEnabled(isEnabled: stateManager.agentState != .unload)
     }
     
     func updateAgentState(_ agentState: ConnectionStatus) {
@@ -229,18 +299,51 @@ class ChannelInfoView: UIView {
     }
     
     func updateAgentId(_ agentId: String) {
-        guard let manager = AppContext.preferenceManager() else { return }
-        agentIDItem.detailLabel.text = manager.information.agentState == .unload ? "--" : agentId
+        agentIDItem.detailLabel.text = AppContext.stateManager().agentState == .unload ? "--" : agentId
     }
     
     func updateRoomId(_ roomId: String) {
-        guard let manager = AppContext.preferenceManager() else { return }
-        roomIDItem.detailLabel.text = manager.information.rtcRoomState == .unload ? "--" : roomId
+        roomIDItem.detailLabel.text = AppContext.stateManager().rtcRoomState == .unload ? "--" : roomId
     }
     
     func updateUserId(_ userId: String) {
-        guard let manager = AppContext.preferenceManager() else { return }
-        idItem.detailLabel.text = manager.information.rtcRoomState == .unload ? "--" : userId
+        idItem.detailLabel.text = AppContext.stateManager().rtcRoomState == .unload ? "--" : userId
+    }
+    
+    func updateVoiceprintState() {
+        let isVoiceprintEnabled = AppContext.stateManager().voiceprint
+        let statusText: String
+        let statusColor: UIColor
+        
+        if isVoiceprintEnabled {
+            // If voiceprint is enabled, show the current mode
+            let mode = AppContext.settingManager().voiceprintMode
+            switch mode {
+            case .seamless:
+                statusText = ResourceManager.L10n.ChannelInfo.seamless
+                statusColor = UIColor.themColor(named: "ai_green6")
+            case .aware:
+                statusText = ResourceManager.L10n.ChannelInfo.aware
+                statusColor = UIColor.themColor(named: "ai_green6")
+            case .off:
+                statusText = ResourceManager.L10n.ChannelInfo.notEffective
+                statusColor = UIColor.themColor(named: "ai_red6")
+            }
+        } else {
+            // If voiceprint is disabled, show not effective
+            statusText = ResourceManager.L10n.ChannelInfo.notEffective
+            statusColor = UIColor.themColor(named: "ai_red6")
+        }
+        
+        voiceprintLockItem.detailLabel.text = statusText
+        voiceprintLockItem.detailLabel.textColor = statusColor
+    }
+    
+    func updateAiVadState() {
+        let state = AppContext.settingManager().aiVad
+        let interruptStatus = state ? ResourceManager.L10n.ChannelInfo.effective : ResourceManager.L10n.ChannelInfo.notEffective
+        elegantInterruptItem.detailLabel.text = interruptStatus
+        elegantInterruptItem.detailLabel.textColor = state ? UIColor.themColor(named: "ai_green6") : UIColor.themColor(named: "ai_red6")
     }
     
     // MARK: - Private Methods
@@ -249,13 +352,12 @@ class ChannelInfoView: UIView {
     }
     
     @objc private func onClickFeedbackItem() {
-        guard let channelName = AppContext.preferenceManager()?.information.roomId,
-              let rtcManager = rtcManager
-        else {
+        guard let rtcManager = rtcManager else {
             return
         }
-        let agentId = AppContext.preferenceManager()?.information.agentId
-        feedbackItem.startLoading()        
+        let channelName = AppContext.stateManager().roomId
+        let agentId = AppContext.stateManager().agentId
+        feedbackItem.startLoading()
         rtcManager.generatePreDumpFile {
             self.feedBackPresenter.feedback(isSendLog: true, channel: channelName, agentId: agentId) { [weak self] error, result in
                 if error == nil {
@@ -267,4 +369,4 @@ class ChannelInfoView: UIView {
             }
         }
     }
-} 
+}

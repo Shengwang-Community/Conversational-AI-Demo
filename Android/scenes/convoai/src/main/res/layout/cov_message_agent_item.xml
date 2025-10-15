@@ -39,7 +39,7 @@
         android:orientation="horizontal"
         android:gravity="start|center_vertical">
 
-        <io.agora.scene.convoai.ui.widget.TypingTextView
+        <io.agora.scene.convoai.ui.living.messages.TypingTextView
             android:id="@+id/tv_message_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -210,6 +210,11 @@ public class DeveloperModeViewController: UIViewController {
     }
     
     private func updateUI() {
+        // Set App Version
+        let version = ConversationalAIAPIImpl.version
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+        basicSettingView.appVersionValueLabel.text = "\(version)(\(build))"
+        
         basicSettingView.rtcVersionValueLabel.text = AgoraRtcEngineKit.getSdkVersion()
         basicSettingView.rtmVersionValueLabel.text = AgoraRtmClientKit.getVersion()
         

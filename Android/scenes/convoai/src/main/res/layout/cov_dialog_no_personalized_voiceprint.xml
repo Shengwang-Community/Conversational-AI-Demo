@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:background="@drawable/bg_common_dialog"
+    android:orientation="vertical">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/ivImage2"
+        android:layout_width="125dp"
+        android:layout_height="125dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/scene_detail_no_voiceprint"
+        app:shapeAppearanceOverlay="@style/CommonTopCustomShape" />
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:paddingHorizontal="24dp"
+        android:text="@string/cov_voiceprint_no_voice"
+        android:textColor="@color/ai_icontext1"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:gravity="start"
+        android:lineSpacingExtra="5dp"
+        android:paddingHorizontal="24dp"
+        android:text="@string/cov_voiceprint_no_voice_tips"
+        android:textColor="@color/ai_icontext1"
+        android:textSize="14sp" />
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="24dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnNegative"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/ai_dp_small"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:textAllCaps="false"
+            android:textColor="@color/ai_icontext2"
+            android:textSize="14sp"
+            app:backgroundTint="@color/ai_line2"
+            app:cornerRadius="12dp"
+            app:rippleColor="#1A000000"
+            tools:text="Cancel" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPositive"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/ai_dp_small"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:padding="0dp"
+            android:textAllCaps="false"
+            android:textColor="@color/ai_brand_white10"
+            android:textSize="15sp"
+            app:backgroundTint="@color/ai_brand_main6"
+            app:cornerRadius="12dp"
+            app:rippleColor="#1AFFFFFF"
+            tools:text="Confirm" />
+    </LinearLayout>
+</LinearLayout>

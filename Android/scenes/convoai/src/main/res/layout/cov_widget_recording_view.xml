@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp"
+    tools:background="@color/ai_fill2">
+
+    <!-- Title text for recording status -->
+    <TextView
+        android:id="@+id/tvRecordingTips"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:gravity="center"
+        android:text="@string/cov_voiceprint_recording_only_one"
+        android:textColor="@color/ai_icontext2"
+        android:textSize="12sp" />
+
+    <!-- Recording time display -->
+    <TextView
+        android:id="@+id/tvRecordingTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:gravity="center"
+        android:text="@string/cov_voiceprint_duration"
+        android:textColor="@color/ai_icontext2"
+        android:textSize="12sp"
+        tools:visibility="visible"
+        android:visibility="gone" />
+
+    <!-- Recording hint text -->
+    <TextView
+        android:id="@+id/tvRecordingHint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:gravity="center"
+        android:text="@string/cov_voiceprint_release_to_create"
+        android:textColor="@color/ai_icontext2"
+        android:textSize="12sp"
+        tools:visibility="visible"
+        android:visibility="gone" />
+
+    <!-- Main recording button container -->
+    <FrameLayout
+        android:id="@+id/btnRecordingContainer"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/ai_dp_default"
+        android:background="@drawable/cov_recording_button_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?android:attr/selectableItemBackground"
+        android:paddingHorizontal="16dp">
+
+
+        <!-- Recording text -->
+        <TextView
+            android:id="@+id/tvRecordingText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/cov_voiceprint_long_pressed"
+            android:layout_gravity="center"
+            android:textColor="@color/ai_icontext1"
+            android:textSize="14sp" />
+
+        <!-- Audio visualization container -->
+        <LinearLayout
+            android:id="@+id/audioVisualizationContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:visibility="gone"/>
+    </FrameLayout>
+</LinearLayout>

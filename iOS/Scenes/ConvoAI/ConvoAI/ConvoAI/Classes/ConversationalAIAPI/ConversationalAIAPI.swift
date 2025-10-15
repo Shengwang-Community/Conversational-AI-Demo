@@ -452,6 +452,8 @@ public enum MessageType: String, CaseIterable {
     @objc public var status: TranscriptStatus
     /// Current type of transcript (agent or user)
     @objc public var type: TranscriptType
+    /// real render mode
+    @objc public var renderMode: TranscriptRenderMode
      
     /// Initialize a transcript object
     /// - Parameters:
@@ -460,16 +462,18 @@ public enum MessageType: String, CaseIterable {
     ///   - text: Transcript text
     ///   - status: Transcript status
     ///   - type: Transcript type
-    @objc public init(turnId: Int, userId: String, text: String, status: TranscriptStatus, type: TranscriptType) {
+    ///   - renderMode: real render mode
+    @objc public init(turnId: Int, userId: String, text: String, status: TranscriptStatus, type: TranscriptType, renderMode: TranscriptRenderMode) {
         self.turnId = turnId
         self.userId = userId
         self.text = text
         self.status = status
         self.type = type
+        self.renderMode = renderMode
     }
     
     public override var description: String {
-        return "Transcript(turnId: \(turnId), userId: \(userId), text: \(text), status: \(status), type: \(type))"
+        return "Transcript(turnId: \(turnId), userId: \(userId), text: \(text), status: \(status), type: \(type), renderMode: \(renderMode)"
     }
 }
 
@@ -753,7 +757,12 @@ public enum MessageType: String, CaseIterable {
     ///   - agentUserId: Agent RTM user ID
     ///   - event: Voiceprint event containing send timestamp, message id, timestamp, and status
     @objc func onAgentVoiceprintStateChanged(agentUserId: String, event: VoiceprintStateChangeEvent)
-
+    
+    ///Called when write log information
+    ///This method is called when writing logs inside the component.
+    /// - Parameters:
+    /// - log: log information
+    @objc func onDebugLog(log: String)
 }
 
 /// ConversationalAI API control protocol

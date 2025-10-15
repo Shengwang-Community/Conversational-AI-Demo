@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:backgroundTint="@android:color/transparent"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="0dp">
+
+    <LinearLayout
+        android:id="@+id/layout_container_outer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/btn_bg_block1_selector"
+        android:minWidth="72dp"
+        android:orientation="vertical">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@android:color/transparent"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp">
+
+            <LinearLayout
+                android:id="@+id/layout_container_inner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/btn_bg_block1_selector"
+                android:minWidth="72dp"
+                android:orientation="vertical">
+
+                <!-- Voiceprint lock row - always visible -->
+                <LinearLayout
+                    android:id="@+id/ll_voiceprint"
+                    android:layout_width="match_parent"
+                    android:layout_height="24dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="8dp">
+
+                    <ImageView
+                        android:id="@+id/iv_voiceprint_status"
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:src="@drawable/common_icon_settings_status_off" />
+
+                    <TextView
+                        android:id="@+id/tv_voiceprint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:gravity="center_vertical"
+                        android:text="@string/cov_voiceprint_lock"
+                        android:textColor="@color/ai_brand_white10"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
+
+                <!-- Expandable content - only shown when expanded -->
+                <LinearLayout
+                    android:id="@+id/ll_expandable_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <!-- Elegant interrupt row -->
+                    <LinearLayout
+                        android:id="@+id/ll_elegant_interrupt"
+                        android:layout_width="match_parent"
+                        android:layout_height="24dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="6dp"
+                        android:paddingHorizontal="8dp">
+
+                        <ImageView
+                            android:id="@+id/iv_elegant_interrupt_status"
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:src="@drawable/common_icon_settings_status_off" />
+
+                        <TextView
+                            android:id="@+id/tv_elegant_interrupt"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:gravity="center_vertical"
+                            android:text="@string/cov_setting_ai_vad_high"
+                            android:textColor="@color/ai_brand_white10"
+                            android:textSize="11sp" />
+
+                    </LinearLayout>
+
+                    <!-- More row -->
+                    <LinearLayout
+                        android:id="@+id/ll_more"
+                        android:layout_width="match_parent"
+                        android:layout_height="24dp"
+                        android:layout_marginBottom="10dp"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="8dp">
+
+                        <TextView
+                            android:id="@+id/tv_more"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="@string/cov_agent_info_more"
+                            android:textColor="@color/ai_brand_white10"
+                            android:textSize="11sp" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Arrow row - always visible, changes direction -->
+        <LinearLayout
+            android:id="@+id/ll_arrow"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingVertical="2dp">
+
+            <ImageView
+                android:id="@+id/iv_arrow"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:src="@drawable/common_icon_down" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

@@ -8,8 +8,8 @@ import io.agora.agent.databinding.WelcomeActivityBinding
 import io.agora.scene.common.ui.BaseActivity
 import androidx.annotation.RequiresApi
 import io.agora.scene.common.constant.SSOUserManager
-import io.agora.scene.convoai.ui.CovAgentListActivity
-import io.agora.scene.convoai.ui.CovLoginActivity
+import io.agora.scene.convoai.ui.auth.CovLoginActivity
+import io.agora.scene.convoai.ui.main.CovMainActivity
 
 class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
 
@@ -36,7 +36,7 @@ class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
     private fun goScene() {
         if (SSOUserManager.getToken().isNotEmpty()) {
             initBugly()
-            startActivity(Intent(this@WelcomeActivity, CovAgentListActivity::class.java))
+            startActivity(Intent(this@WelcomeActivity, CovMainActivity::class.java))
         } else {
             startActivity(Intent(this, CovLoginActivity::class.java))
         }
