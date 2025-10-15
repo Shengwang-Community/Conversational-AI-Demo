@@ -5,15 +5,14 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
-import io.agora.scene.common.util.toast.ToastUtil
+import androidx.core.widget.doAfterTextChanged
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.databinding.CovOutboundCallLayoutBinding
 import io.agora.scene.convoai.ui.sip.CallState
-import io.agora.scene.convoai.ui.sip.RegionConfigManager
-import io.agora.scene.convoai.ui.sip.fromSipCallees
 
 /**
  * SIP Outbound Call View with three states: IDLE, CALLING, CALLED
@@ -56,8 +55,6 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
     fun setPhoneNumbersFromPreset(preset: CovAgentPreset) {
         if (!preset.sip_vendor_callee_numbers.isNullOrEmpty()) {
             // Convert sip callees to region configs
-            val availableRegionsFromPreset = RegionConfigManager.fromSipCallees(preset.sip_vendor_callee_numbers)
-
             // nothing
         }
     }
@@ -92,6 +89,7 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
                 binding.layoutJoined.visibility = GONE
                 binding.btnJoinCall.isEnabled = binding.etPhoneNumber.text.toString().trim().isNotEmpty()
                 binding.tvCalling.visibility = INVISIBLE
+                binding.tvCallingNumber.stopShimmer()
             }
 
             CallState.CALLING -> {
@@ -102,6 +100,7 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
                 binding.tvCallingNumber.text = phoneNumber
                 binding.tvCalling.visibility = VISIBLE
                 binding.tvCalling.setText(R.string.cov_sip_outbound_calling)
+                binding.tvCallingNumber.startShimmer()
             }
 
             CallState.CALLED -> {
@@ -112,6 +111,7 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
                 binding.tvCallingNumber.text = phoneNumber
                 binding.tvCalling.visibility = VISIBLE
                 binding.tvCalling.setText(R.string.cov_sip_call_in_progress)
+                binding.tvCallingNumber.stopShimmer()
             }
         }
     }
@@ -121,21 +121,11 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
      */
     private fun setupClickListeners() {
         binding.btnJoinCall.setOnClickListener {
-            val phoneNumber = getPhoneNumber()
-            if (phoneNumber.length >= 4 && phoneNumber.length <= 14) {
-                clearErrorState()
-                if (phoneNumber.isNotEmpty()) {
-                    setCallState(CallState.CALLING, phoneNumber)
-                    onCallActionListener?.invoke(CallAction.JOIN_CALL, phoneNumber)
-                }
-            } else {
-                showErrorState()
-            }
+            sendCall()
         }
 
         binding.btnEndCall.setOnClickListener {
             setCallState(CallState.IDLE)
-            ToastUtil.show(R.string.cov_sip_call_ended)
             onCallActionListener?.invoke(CallAction.END_CALL, "")
         }
 
@@ -144,18 +134,27 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
         }
     }
 
+    private fun sendCall(){
+        val phoneNumber = getPhoneNumber()
+        if (phoneNumber.length >= 4 && phoneNumber.length <= 14) {
+            clearErrorState()
+            if (phoneNumber.isNotEmpty()) {
+                setCallState(CallState.CALLING, phoneNumber)
+                onCallActionListener?.invoke(CallAction.JOIN_CALL, phoneNumber)
+            }
+        } else {
+            showErrorState()
+        }
+    }
+
     /**
      * Setup text watcher for phone number input
      */
     private fun setupTextWatcher() {
-        // Set initial text size to hint size
-        binding.etPhoneNumber.textSize = 14f
-
-        binding.etPhoneNumber.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val hasText = !s.isNullOrEmpty()
+        binding.etPhoneNumber.apply {
+            textSize = 14f
+            doAfterTextChanged { text: Editable? ->
+                val hasText = !text.isNullOrEmpty()
                 binding.btnJoinCall.isEnabled = hasText && currentState == CallState.IDLE
                 binding.ivClearInput.visibility = if (hasText) VISIBLE else INVISIBLE
 
@@ -167,9 +166,17 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
                     clearErrorState()
                 }
             }
+            setOnEditorActionListener { _, actionId, _ ->
+                if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEND) {
+                    hideKeyboard()
+                    sendCall()
+                    true
+                } else {
+                    false
+                }
 
-            override fun afterTextChanged(s: Editable?) {}
-        })
+            }
+        }
     }
 
     /**
@@ -199,6 +206,16 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
                 )
             )
         }
+    }
+
+
+    /**
+     * Hide soft keyboard
+     */
+    private fun hideKeyboard() {
+        binding.etPhoneNumber.clearFocus()
+        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        imm?.hideSoftInputFromWindow(binding.etPhoneNumber.windowToken, 0)
     }
 
     /**

@@ -29,6 +29,8 @@ object CovAgentApiManager {
     const val ERROR_RESOURCE_LIMIT_EXCEEDED = 1412
     const val ERROR_AVATAR_LIMIT = 1700
     const val ERROR_AGENT_OFFLINE = 1800
+    const val ERROR_SIP_CALL_STATUS_NOT_FOUND = 1438
+    const val ERROR_SIP_CALL_LIMIT_EXCEEDED = 1439
 
     private val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -527,6 +529,51 @@ object CovAgentApiManager {
         })
     }
 
+    fun callPing(agentId: String, completion: (error: ApiException?, callSipStatus: CallSipStatus?) -> Unit) {
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/sip/status"
+        val postBody = JSONObject()
+        try {
+            postBody.put("app_id", ServerConfig.rtcAppId)
+            postBody.put("agent_id", agentId)
+        } catch (e: JSONException) {
+            CovLogger.e(TAG, "postBody error ${e.message}")
+        }
+        val requestBody = postBody.toString().toRequestBody(null)
+        val request = buildRequest(requestURL, "POST", requestBody)
+
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val json = response.body.string()
+                try {
+                    val jsonObject = GsonTools.toBean(json, JsonObject::class.java)
+                    val code = jsonObject?.get("code")?.asInt ?: -1
+                    val msg = jsonObject?.get("msg")?.asString ?: ""
+                    runOnMainThread {
+                        if (code == 0) {
+                            val status = jsonObject?.getAsJsonObject("data")?.get("state")?.asString ?: "unknown"
+                            completion.invoke(null, CallSipStatus.fromValue(status))
+                        } else {
+                            "msg"
+                            completion.invoke(ApiException(code, msg), null)
+                            CovLogger.e(TAG, "stopAgent failed $json")
+                        }
+                    }
+                } catch (e: Exception) {
+                    CovLogger.e(TAG, "Parse ping failed: $e")
+                    runOnMainThread {
+                        completion.invoke(ApiException(-100, "${e.message}"), null)
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                CovLogger.e(TAG, "agent ping failed: $e")
+                runOnMainThread {
+                    completion.invoke(ApiException(-1, "${e.message}"), null)
+                }
+            }
+        })
+    }
 
     private fun runOnMainThread(r: Runnable) {
         mainScope.launch {
