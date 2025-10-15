@@ -155,11 +155,6 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
                 mBinding?.clTop?.updateCallState(state)
             }
         }
-        lifecycleScope.launch {   // Observe ball animation state
-            viewModel.ballAnimState.collect { animState ->
-                mCovBallAnim?.updateAgentState(animState)
-            }
-        }
         lifecycleScope.launch {    // Observe message list display state
             viewModel.isShowMessageList.collect { isShow ->
                 mBinding?.apply {

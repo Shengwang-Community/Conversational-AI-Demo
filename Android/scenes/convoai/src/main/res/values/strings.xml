@@ -244,16 +244,17 @@
     <string name="cov_mine_about_me_official4">产品经理一枚，天天画原型、盯迭代，擅长抠需求细节。咖啡不离手，偏爱冷萃，闲了刷行业报告，求同频小伙伴唠产品思路～</string>
 
     <!-- SIP -->
-    <string name="cov_sip_internal_call_tips">Dial this number from your phone to start a conversation with our AI Agent.</string>
-    <string name="cov_sip_outbound_call_tips">Enter your number below, and our AI Agent will call you.</string>
-    <string name="cov_sip_outbound_calling">Calling now… please answer on your phone.</string>
-    <string name="cov_sip_outbound_call_hint">输入电话号码</string>
-    <string name="cov_sip_call_in_progress">Call in progress…</string>
-    <string name="cov_sip_call_ended">Call ended, please hang up</string>
-    <string name="cov_sip_valid_number">Please enter a valid mobile or landline number</string>
+    <string name="cov_sip_internal_call_tips">请使用你的手机拨打该号码，即可体验电话与 AI 智能客服沟通</string>
+    <string name="cov_sip_outbound_call_tips">输入您的手机号码/固定电话号码并拨出，AI智能客服会拨打电话到您的手机与您沟通</string>
+    <string name="cov_sip_outbound_calling">电话拨打中，请在您的电话上接听</string>
+    <string name="cov_sip_outbound_call_hint">请输入你的手机号/固定电话</string>
+    <string name="cov_sip_call_in_progress">通话中…</string>
+    <string name="cov_sip_call_ended">通话已结束，请退出</string>
+    <string name="cov_sip_valid_number">请输入正确的手机号/固定电话号码</string>
     <string name="cov_sip_call_out">呼出</string>
     <string name="cov_sip_callee_title">呼叫提示</string>
     <string name="cov_sip_callee_content">即将使用当前手机呼叫该号码，确认？</string>
     <string name="cov_sip_callee">立即呼叫</string>
     <string name="cov_sip_limit_time">智能客服电话沟通单次体验限 %d 分钟</string>
+    <string name="cov_sip_call_limit_error">已超过本日呼出上限 20 次</string>
 </resources>

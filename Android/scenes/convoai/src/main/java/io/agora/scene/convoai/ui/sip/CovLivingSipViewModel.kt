@@ -6,7 +6,6 @@ import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngineEx
 import io.agora.rtm.RtmClient
 import io.agora.scene.convoai.CovLogger
-import io.agora.scene.convoai.animation.BallAnimState
 import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.convoaiApi.*
@@ -18,9 +17,8 @@ import io.agora.scene.common.net.TokenGenerator
 import io.agora.scene.common.net.TokenGeneratorType
 import io.agora.scene.common.util.toast.ToastUtil
 import android.widget.Toast
-import io.agora.rtm.PresenceEvent
-import io.agora.rtm.RtmConstants
 import io.agora.scene.convoai.R
+import io.agora.scene.convoai.api.CallSipStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,9 +52,6 @@ class CovLivingSipViewModel : ViewModel() {
     // UI states
     private val _callState = MutableStateFlow(CallState.IDLE)
     val callState: StateFlow<CallState> = _callState.asStateFlow()
-
-    private val _ballAnimState = MutableStateFlow(BallAnimState.STATIC)
-    val ballAnimState: StateFlow<BallAnimState> = _ballAnimState.asStateFlow()
 
     private val _isShowMessageList = MutableStateFlow(false)
     val isShowMessageList: StateFlow<Boolean> = _isShowMessageList.asStateFlow()
@@ -93,11 +88,7 @@ class CovLivingSipViewModel : ViewModel() {
     // ConversationalAI event handler
     private val covEventHandler = object : IConversationalAIAPIEventHandler {
         override fun onAgentStateChanged(agentUserId: String, event: StateChangeEvent) {
-            if (event.state == AgentState.IDLE) {
-//                _callState.value = CallState.IDLE
-            } else if (event.state != AgentState.UNKNOWN) {
-                _callState.value = CallState.CALLED
-            }
+           //  Handle agent state
         }
 
         override fun onAgentInterrupted(agentUserId: String, event: InterruptEvent) {
@@ -146,19 +137,6 @@ class CovLivingSipViewModel : ViewModel() {
             CovLogger.w(TAG, "RTM token will expire, renewing token")
             renewToken()
         }
-
-        override fun onPresenceEvent(event: PresenceEvent) {
-            if (event.channelType == RtmConstants.RtmChannelType.MESSAGE) {
-                if (event.eventType == RtmConstants.RtmPresenceEventType.REMOTE_LEAVE) {
-                    val agentUserId = event.publisherId
-                    if (agentUserId == CovAgentManager.agentUID.toString()) {
-                        _callState.value = CallState.IDLE
-                        ToastUtil.show(R.string.cov_sip_call_ended)
-                        CovLogger.d(TAG, "rtm agent leave: $agentUserId")
-                    }
-                }
-            }
-        }
     }
 
     fun getPresetTokenConfig() {
@@ -197,7 +175,6 @@ class CovLivingSipViewModel : ViewModel() {
                     val tokenResult = updateTokenAsync()
                     if (!tokenResult) {
                         _callState.value = CallState.IDLE
-                        _ballAnimState.value = BallAnimState.STATIC
                         ToastUtil.show(R.string.cov_detail_join_call_failed, Toast.LENGTH_LONG)
                         return@launch
                     }
@@ -232,7 +209,6 @@ class CovLivingSipViewModel : ViewModel() {
         conversationalAIAPI?.unsubscribeMessage(CovAgentManager.channelName) {}
         CovAgentManager.channelName = ""
         _callState.value = CallState.IDLE
-        _ballAnimState.value = BallAnimState.STATIC
         _isShowMessageList.value = false
         _transcriptUpdate.value = null
         _interruptEvent.value = null
@@ -260,6 +236,7 @@ class CovLivingSipViewModel : ViewModel() {
         if (errorCode == 0) {
             CovLogger.d(TAG, "Agent started successfully")
             startWaitingTimeout()
+            startPingTask()
         } else {
             stopAgentAndLeaveChannel()
             CovLogger.e(TAG, "Agent start failed: $message, code: $errorCode")
@@ -274,10 +251,60 @@ class CovLivingSipViewModel : ViewModel() {
                     Toast.LENGTH_LONG
                 )
 
+                CovAgentApiManager.ERROR_SIP_CALL_LIMIT_EXCEEDED -> ToastUtil.show(
+                    R.string.cov_sip_call_limit_error,
+                    Toast.LENGTH_LONG
+                )
+
                 else -> ToastUtil.show(R.string.cov_detail_join_call_failed, Toast.LENGTH_LONG)
             }
             _callState.value = CallState.IDLE
-            _ballAnimState.value = BallAnimState.STATIC
+        }
+    }
+
+    private fun startPingTask() {
+        // Cancel existing ping job first
+        pingJob?.cancel()
+        pingJob = viewModelScope.launch {
+            while (isActive) {
+                val agentId = CovAgentApiManager.agentId
+                if (agentId.isNullOrEmpty()) {
+                    CovLogger.w(TAG, "Agent ID is null or empty, cannot send ping")
+                    break
+                }
+
+                CovAgentApiManager.callPing(agentId) { error, callStatus ->
+                    if (error != null) {
+                        CovLogger.w(TAG, "Ping failed: ${error.message}")
+                        if (error.errorCode == CovAgentApiManager.ERROR_SIP_CALL_STATUS_NOT_FOUND) {
+                            // nothing
+                        }
+                    } else {
+                        when (callStatus) {
+                            CallSipStatus.START, CallSipStatus.CALLING, CallSipStatus.RINGING -> {
+                                _callState.value = CallState.CALLING
+                            }
+
+                            CallSipStatus.ANSWERED -> {
+                                _callState.value = CallState.CALLED
+                            }
+
+                            CallSipStatus.ERROR, CallSipStatus.HANGUP -> {
+                                stopAgentAndLeaveChannel()
+                                ToastUtil.show(R.string.cov_sip_call_ended)
+                            }
+
+                            else -> {
+                                _callState.value = CallState.IDLE
+                            }
+                        }
+
+                        CovLogger.d(TAG, "Ping successful for callStatus: $callStatus")
+                    }
+                }
+
+                delay(2000) // 2 seconds interval
+            }
         }
     }
 
@@ -394,14 +421,12 @@ class CovLivingSipViewModel : ViewModel() {
                 "channel" to channel,
                 "token" to null,
                 "agent_rtc_uid" to CovAgentManager.agentUID.toString(),
-                "sip" to mapOf(
-                    "callee" to callee,
-                    "caller" to null,
-                    "params" to mapOf(
-                        "token" to null,
-                        "uid" to null,
-                    )
-                )
+            ),
+            "sip" to mapOf(
+                "to_number" to callee,
+                "from_number" to null,
+                "rtc_token" to null,
+                "rtc_token" to null,
             )
         )
     }

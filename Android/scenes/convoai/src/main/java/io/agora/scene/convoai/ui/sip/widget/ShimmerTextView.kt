@@ -7,13 +7,10 @@ import android.graphics.LinearGradient
 import android.graphics.Matrix
 import android.graphics.Shader
 import android.util.AttributeSet
-import android.view.animation.LinearInterpolator
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.animation.doOnCancel
 import androidx.core.content.ContextCompat
 import io.agora.scene.common.R
-import kotlin.apply
-import kotlin.let
 
 /**
  * A TextView with shimmer effect
@@ -31,6 +28,7 @@ class ShimmerTextView @JvmOverloads constructor(
     private var gradientWidth = 0f
     private var translateX = 0f
     private var spread = 0f
+    private var isShimmerEnabled = false
 
     init {
         // Set default text color
@@ -74,19 +72,20 @@ class ShimmerTextView @JvmOverloads constructor(
         // Cancel existing animation
         translateXAnimator?.cancel()
 
+        isShimmerEnabled = true
+
         // Create new animation that moves from left to right
         translateXAnimator = ValueAnimator.ofFloat(0f, width.toFloat()).apply {
             duration = (1000 + spread * 50).toLong() // Slower base duration with less text length impact
             repeatCount = ValueAnimator.INFINITE
             repeatMode = ValueAnimator.RESTART
-            interpolator = LinearInterpolator() // Ensure smooth continuous motion
+            interpolator = android.view.animation.LinearInterpolator() // Ensure smooth continuous motion
 
             addUpdateListener { animator ->
                 translateX = animator.animatedValue as Float
                 val progress = animator.animatedFraction
                 updateGradient()
             }
-
             doOnCancel {
                 translateX = 0f
                 updateGradient()
@@ -106,8 +105,12 @@ class ShimmerTextView @JvmOverloads constructor(
     }
 
     override fun onDraw(canvas: Canvas) {
-        // Set text paint shader
-        paint.shader = linearGradient
+        // Only set shader when shimmer is enabled
+        if (isShimmerEnabled) {
+            paint.shader = linearGradient
+        } else {
+            paint.shader = null
+        }
         super.onDraw(canvas)
     }
 
@@ -126,9 +129,14 @@ class ShimmerTextView @JvmOverloads constructor(
     }
 
     /**
-     * Stop shimmer animation
+     * Stop shimmer animation and restore default text color
      */
     fun stopShimmer() {
+        isShimmerEnabled = false
         translateXAnimator?.cancel()
+        // Remove shader and restore default text color
+        paint.shader = null
+        setTextColor(ContextCompat.getColor(context, R.color.ai_icontext1))
+        invalidate()
     }
 }
