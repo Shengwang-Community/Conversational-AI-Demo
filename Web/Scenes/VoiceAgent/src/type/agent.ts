@@ -13,3 +13,10 @@ export type IUploadLogInput = {
   }
   file: File | null
 }
+
+export type IUserInfoInput = {
+  nickname: string
+  gender: string
+  birthday: string
+  bio: string
+}

@@ -12,6 +12,7 @@ import { TriangleAlertIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
+
 import {
   AgentActionAudio,
   AgentActionHangUp,
@@ -21,6 +22,7 @@ import {
   AgentStateIndicator,
   AgentUploadPicture
 } from '@/components/home/agent-action'
+import { PrivacyDialog } from '@/components/layout/privacy-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -51,13 +53,17 @@ import { LegacyMessageHelper } from '@/conversational-ai-api/helper/transcript'
 import {
   EAgentState,
   EConversationalAIAPIEvents,
+  EMessageSalStatus,
   ERTCCustomEvents,
   ERTCEvents,
+  ETranscriptHelperMode,
   type IAgentTranscription,
+  type IMessageSalStatus,
   type ITranscriptHelperItem,
   type IUserTranscription,
   type TStateChangeEvent
 } from '@/conversational-ai-api/type'
+import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import {
@@ -76,9 +82,11 @@ import {
 import {
   EConnectionStatus,
   ENetworkStatus,
+  ESALSettingsMode,
   type IRtcUser,
   type IUserTracks
 } from '@/type/rtc'
+import { GenerateAIInfoTypewriter } from './typewriter'
 
 export default function AgentControl(props: { className?: string }) {
   const [audioTrack, setAudioTrack] = React.useState<IMicrophoneAudioTrack>()
@@ -94,7 +102,6 @@ export default function AgentControl(props: { className?: string }) {
     agent_rtc_uid,
     avatar_rtc_uid,
     remote_rtc_uid,
-    roomStatus,
     agent_id,
     agentState,
     updateRoomStatus,
@@ -103,7 +110,8 @@ export default function AgentControl(props: { className?: string }) {
     updateNetwork,
     updateChannelName,
     updateAgentState,
-    updateIsAvatarPlaying
+    updateIsAvatarPlaying,
+    updateSalStatus
   } = useRTCStore()
   const {
     settings,
@@ -118,7 +126,7 @@ export default function AgentControl(props: { className?: string }) {
     setShowSubtitle,
     isDevMode,
     isRTCCompatible,
-    setShowLoginPanel
+    setShowPrivacyDialog
   } = useGlobalStore()
   const { setHistory, clearHistory } = useChatStore()
   const { accountUid, clearUserInfo } = useUserInfoStore()
@@ -161,7 +169,11 @@ export default function AgentControl(props: { className?: string }) {
         rtcEngine: rtcHelper.client,
         rtmEngine,
         enableLog: isDevMode || process.env.NODE_ENV === 'development',
-        renderMode: transcriptionRenderMode
+        // custom private preset mode is unknown as default and set value by ConversationalAIAPI logic
+        renderMode:
+          transcriptionRenderMode === ETranscriptHelperMode.WORD
+            ? ETranscriptHelperMode.UNKNOWN
+            : transcriptionRenderMode
       })
 
       rtcHelper.on(ERTCCustomEvents.LOCAL_TRACKS_CHANGED, onLocalTracksChanged)
@@ -172,7 +184,7 @@ export default function AgentControl(props: { className?: string }) {
       rtcHelper.on(ERTCCustomEvents.REMOTE_USER_CHANGED, onRemoteUserChanged)
 
       conversationalAIAPI.on(
-        EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED,
+        EConversationalAIAPIEvents.TRANSCRIPT_UPDATED,
         onTextChanged
       )
       conversationalAIAPI.on(
@@ -180,15 +192,22 @@ export default function AgentControl(props: { className?: string }) {
         onAgentStateChanged
       )
       conversationalAIAPI.subscribeMessage(channel_name)
+      conversationalAIAPI.on(
+        EConversationalAIAPIEvents.MESSAGE_SAL_STATUS,
+        onMessageSalStatus
+      )
 
       await rtcHelper.initDenoiserProcessor()
       await rtcHelper.createTracks()
       // !TODO: will be removed after preset_type is removed
-      const messageServiceMode = presets
-        .find((p) => p.name === settings.preset_name)
-        ?.preset_type?.startsWith('standard')
-        ? 'default'
-        : 'legacy'
+      const presetType = presets.find(
+        (p) => p.name === settings.preset_name
+      )?.preset_type
+      const messageServiceMode =
+        presetType?.startsWith('standard') ||
+        settings.preset_type === 'custom_private'
+          ? 'default'
+          : 'legacy'
 
       if (messageServiceMode === 'legacy') {
         logger.info(
@@ -199,20 +218,27 @@ export default function AgentControl(props: { className?: string }) {
           legacyMode: true
         })
         legacyMessageHelper.on(
-          EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED,
+          EConversationalAIAPIEvents.TRANSCRIPT_UPDATED,
           onTextChanged
         )
         legacyMessageHelper.on(
           EConversationalAIAPIEvents.AGENT_STATE_CHANGED,
           onAgentStateChangedLegacy
         )
-        rtcHelper.on(ERTCEvents.AUDIO_METADATA, (metadata) => {
-          logger.info({ data: metadata }, 'onAudioMetadata')
-          const pts64 = Number(
-            new DataView(metadata.buffer).getBigUint64(0, true)
-          )
-          logger.log('[audio-metadata]', pts64)
-          legacyMessageHelper.messageService.setPts(pts64)
+        // rtcHelper.on(ERTCEvents.AUDIO_METADATA, (metadata) => {
+        //   logger.info({ data: metadata }, 'onAudioMetadata')
+        //   const pts64 = Number(
+        //     new DataView(metadata.buffer).getBigUint64(0, true)
+        //   )
+        //   logger.log('[audio-metadata]', pts64)
+        //   legacyMessageHelper.messageService.setPts(pts64)
+        // })
+
+        rtcHelper.on(ERTCEvents.AUDIO_PTS, (pts) => {
+          logger.info({ data: pts }, 'onAudioPTS')
+          // const pts =  Number(new DataView(pts.buffer).getBigUint64(0, true))
+          logger.log('[audio-pts]', pts)
+          legacyMessageHelper.messageService.setPts(pts)
         })
         rtcHelper.on(
           ERTCEvents.STREAM_MESSAGE,
@@ -404,6 +430,7 @@ export default function AgentControl(props: { className?: string }) {
     updateAgentStatus(EConnectionStatus.DISCONNECTED)
     updateNetwork(ENetworkStatus.DISCONNECTED)
     updateAgentState(EAgentState.IDLE)
+    updateSalStatus(ESALSettingsMode.OFF)
     setShowSubtitle(false)
     updateIsAvatarPlaying(false)
     clearHistory()
@@ -617,6 +644,21 @@ export default function AgentControl(props: { className?: string }) {
     updateAgentState(event.state)
   }
 
+  const onMessageSalStatus = (
+    _agentUserId: string,
+    message: IMessageSalStatus
+  ) => {
+    if (message.status === EMessageSalStatus.VP_REGISTER_SUCCESS) {
+      if (settings.sal?.sample_urls?.[remote_rtc_uid]) {
+        updateSalStatus(ESALSettingsMode.MANUAL)
+      } else {
+        updateSalStatus(ESALSettingsMode.AUTO_LEARNING)
+      }
+    } else {
+      updateSalStatus(ESALSettingsMode.OFF)
+    }
+  }
+
   const handleInterrupt = async () => {
     console.info('handleInterrupt')
     const conversationalAIAPI = ConversationalAIAPI.getInstance()
@@ -628,12 +670,7 @@ export default function AgentControl(props: { className?: string }) {
     }
   }
 
-  const showActionMemo = React.useMemo(() => {
-    return !(
-      roomStatus === EConnectionStatus.DISCONNECTED ||
-      roomStatus === EConnectionStatus.UNKNOWN
-    )
-  }, [roomStatus])
+  const showActionMemo = useIsAgentCalling()
   // const showActionMemo = true
 
   const isFormValid = React.useMemo(() => {
@@ -693,6 +730,8 @@ export default function AgentControl(props: { className?: string }) {
         <AgentAudioTrack audioTrack={remoteUser.audioTrack} />
       )} */}
 
+      <PrivacyDialog />
+
       {/* Agent Control Content */}
       <div className={cn('flex flex-col items-center gap-6', props.className)}>
         {!showActionMemo && (
@@ -707,7 +746,7 @@ export default function AgentControl(props: { className?: string }) {
                 return
               }
               if (!accountUid) {
-                setShowLoginPanel(true)
+                setShowPrivacyDialog(true)
                 return
               }
               startCall()
@@ -754,6 +793,15 @@ export default function AgentControl(props: { className?: string }) {
                 disabled={disableHangUp}
                 onClick={clearAndExit}
               />
+            </div>
+            <div
+              className={cn(
+                'h-fit min-h-fit min-w-fit py-1.5',
+                '!text-icontext-4 font-semibold',
+                'md:hidden'
+              )}
+            >
+              <GenerateAIInfoTypewriter />
             </div>
           </>
         )}

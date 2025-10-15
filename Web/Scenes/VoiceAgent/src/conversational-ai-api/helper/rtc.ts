@@ -59,7 +59,8 @@ export class RTCHelper extends EventHelper<
     this.agoraRTC = AgoraRTC
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(AgoraRTC as any).setParameter('ENABLE_AUDIO_PTS_METADATA', true)
+    // ;(AgoraRTC as any).setParameter('ENABLE_AUDIO_PTS_METADATA', true)
+    ;(AgoraRTC as any).setParameter('ENABLE_AUDIO_PTS', true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(AgoraRTC as any).setParameter('{"rtc.log_external_input": true}')
     // // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -276,10 +277,11 @@ export class RTCHelper extends EventHelper<
       await this._eHandleMicrophoneChanged(info)
     }
     // audio metadata (pts)
-    this.client.on(
-      ERTCEvents.AUDIO_METADATA,
-      this._eHandleAudioMetadata.bind(this)
-    )
+    // this.client.on(
+    //   ERTCEvents.AUDIO_METADATA,
+    //   this._eHandleAudioMetadata.bind(this)
+    // )
+    this.client.on(ERTCEvents.AUDIO_PTS, this._eHandleAudioPTS.bind(this))
     // rtc network quality
     this.client.on(
       ERTCEvents.NETWORK_QUALITY,
@@ -338,16 +340,20 @@ export class RTCHelper extends EventHelper<
     }
   }
 
-  private _eHandleAudioMetadata(metadata: Uint8Array) {
-    // console.log('[audio-metadata]', metadata)
-    // try {
-    //   const pts64 = Number(new DataView(metadata.buffer).getBigUint64(0, true))
-    //   console.log('[audio-metadata]', pts64)
-    //   this.subtitle.setPts(pts64)
-    // } catch (error) {
-    //   console.error('[audio-metadata]', error, 'Failed to parse audio metadata')
-    // }
-    this.emit(ERTCEvents.AUDIO_METADATA, metadata)
+  // private _eHandleAudioMetadata(metadata: Uint8Array) {
+  //   // console.log('[audio-metadata]', metadata)
+  //   // try {
+  //   //   const pts64 = Number(new DataView(metadata.buffer).getBigUint64(0, true))
+  //   //   console.log('[audio-metadata]', pts64)
+  //   //   this.transcript.setPts(pts64)
+  //   // } catch (error) {
+  //   //   console.error('[audio-metadata]', error, 'Failed to parse audio metadata')
+  //   // }
+  //   this.emit(ERTCEvents.AUDIO_METADATA, metadata)
+  // }
+
+  private _eHandleAudioPTS(pts: number) {
+    this.emit(ERTCEvents.AUDIO_PTS, pts)
   }
 
   private async _eHandleNetworkQuality(quality: NetworkQuality) {

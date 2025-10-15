@@ -17,6 +17,7 @@ import { PresetPlaceholderIcon } from '@/components/icon/agent'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AVATAR_PLACEHOLDER_IMAGE, DEFAULT_AVATAR_DOM_ID } from '@/constants'
 import { EAgentState } from '@/conversational-ai-api/type'
+import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
 import { logger } from '@/lib/logger'
 import { cn, isCN } from '@/lib/utils'
 import {
@@ -40,13 +41,8 @@ const agentSplineCubeId = 'ae38b084-bb14-4926-ae64-00b5319e888a'
 export function AgentBlock() {
   const [isSplineInited, setIsSplineInited] = React.useState(false)
 
-  const {
-    agentStatus,
-    remote_rtc_uid,
-    agentState,
-    isAvatarPlaying,
-    roomStatus
-  } = useRTCStore()
+  const { agentStatus, remote_rtc_uid, agentState, isAvatarPlaying } =
+    useRTCStore()
   const { showSubtitle } = useGlobalStore()
   const { history } = useChatStore()
   const { settings, selectedPreset } = useAgentSettingsStore()
@@ -57,12 +53,7 @@ export function AgentBlock() {
   const isUserSubtitleExist =
     history.some((item) => item.uid === `${remote_rtc_uid}`) &&
     agentStatus === EConnectionStatus.CONNECTED
-  const disableFormMemo = React.useMemo(() => {
-    return !(
-      roomStatus === EConnectionStatus.DISCONNECTED ||
-      roomStatus === EConnectionStatus.UNKNOWN
-    )
-  }, [roomStatus])
+  const disableFormMemo = useIsAgentCalling()
 
   React.useEffect(() => {
     if (!cube.current || !splineRef.current) {
@@ -150,7 +141,7 @@ export function AgentBlock() {
         {disableFormMemo && selectedPreset?.preset && (
           <PresetBadgeButton
             readonly
-            className='absolute top-2 left-3 z-50'
+            className='absolute top-3 left-3 z-50'
             avatar={
               selectedPreset.type === 'default'
                 ? {

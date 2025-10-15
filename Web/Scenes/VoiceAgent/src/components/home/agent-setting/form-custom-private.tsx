@@ -1,11 +1,14 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ChevronRight } from 'lucide-react'
+import { motion } from 'motion/react'
 import NextImage from 'next/image'
 import NextLink from 'next/link'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
-import { useForm } from 'react-hook-form'
+import { type UseFormSetValue, useForm } from 'react-hook-form'
+import type z from 'zod'
 import packageJson from '@/../package.json'
 import { InnerCard } from '@/components/home/agent-setting/base'
 import { FilledTooltipIcon } from '@/components/icon/agent'
@@ -42,12 +45,12 @@ import {
   publicAgentSettingSchema
 } from '@/constants'
 import { ETranscriptHelperMode } from '@/conversational-ai-api/type'
+import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
 import { cn, isCN } from '@/lib/utils'
 import { useAgentSettingsStore, useGlobalStore } from '@/store'
 import type { TAgentSettings } from '@/store/agent'
 import { useRTCStore } from '@/store/rtc'
 import type { IAgentPreset } from '@/type/agent'
-import { EConnectionStatus } from '@/type/rtc'
 
 export function CustomPrivateSettingsForm(props: {
   selectedPreset: IAgentPreset
@@ -59,12 +62,13 @@ export function CustomPrivateSettingsForm(props: {
     settings,
     updateSettings,
     transcriptionRenderMode,
-    updateTranscriptionRenderMode
+    updateTranscriptionRenderMode,
+    updateFormSetValue
   } = useAgentSettingsStore()
 
-  const { isDevMode } = useGlobalStore()
+  const { isDevMode, setShowSALSettingSidebar } = useGlobalStore()
 
-  const { roomStatus } = useRTCStore()
+  const { remote_rtc_uid } = useRTCStore()
 
   const t = useTranslations('settings')
 
@@ -73,12 +77,15 @@ export function CustomPrivateSettingsForm(props: {
     defaultValues: settings
   })
 
-  const disableFormMemo = React.useMemo(() => {
-    return !(
-      roomStatus === EConnectionStatus.DISCONNECTED ||
-      roomStatus === EConnectionStatus.UNKNOWN
+  const disableFormMemo = useIsAgentCalling()
+
+  React.useEffect(() => {
+    updateFormSetValue(
+      settingsForm.setValue as UseFormSetValue<
+        z.infer<typeof publicAgentSettingSchema>
+      >
     )
-  }, [roomStatus])
+  }, [updateFormSetValue, settingsForm])
 
   // listen form change and update store
   React.useEffect(() => {
@@ -88,7 +95,7 @@ export function CustomPrivateSettingsForm(props: {
       updateSettings(value as TAgentSettings)
     })
     return () => subscription.unsubscribe()
-  }, [settingsForm, updateSettings])
+  }, [settingsForm, updateSettings, settings])
 
   return (
     <Form {...settingsForm}>
@@ -128,7 +135,7 @@ export function CustomPrivateSettingsForm(props: {
                 <FormItem>
                   <div className='flex items-center justify-between gap-2'>
                     <FormLabel
-                      className={cn('flex items-center gap-1 font-normal')}
+                      className={cn('flex items-center gap-1 py-2 font-normal')}
                     >
                       {t.rich('advanced_features.enable_aivad.title', {
                         label: (chunks) => (
@@ -137,7 +144,7 @@ export function CustomPrivateSettingsForm(props: {
                       })}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <FilledTooltipIcon className='mb-0.5 inline size-4' />
+                          <FilledTooltipIcon className='inline size-4' />
                         </TooltipTrigger>
                         <TooltipContent className='max-w-xs'>
                           <p>
@@ -159,6 +166,30 @@ export function CustomPrivateSettingsForm(props: {
               </TooltipProvider>
             )}
           />
+          <div className='flex items-center justify-between gap-2 py-2'>
+            <Label className='font-normal'>
+              {t('advanced_features.enable_sal.title')}
+            </Label>
+            <motion.div
+              className={cn(
+                'flex cursor-pointer items-center gap-1 whitespace-nowrap text-icontext',
+                disableFormMemo ? 'opacity-50' : ''
+              )}
+              onClick={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                if (disableFormMemo) {
+                  return
+                }
+                setShowSALSettingSidebar(true)
+              }}
+            >
+              {t(
+                `advanced_features.enable_sal.${settings.advanced_features.enable_sal ? (settings.sal?.sample_urls?.[remote_rtc_uid] ? 'manual' : 'autoLearning') : 'off'}`
+              )}
+              <ChevronRight className='size-5' />
+            </motion.div>
+          </div>
           <div className='flex items-center justify-between gap-2'>
             <Label className='font-normal'>
               {t('transcription.render-mode')}

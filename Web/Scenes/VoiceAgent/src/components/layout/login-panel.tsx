@@ -20,12 +20,15 @@ import { cn, isCN } from '@/lib/utils'
 import { useGlobalStore, useUserInfoStore } from '@/store'
 
 export const LoginPanel = () => {
-  const [isPrivacyPolicyAccepted, setIsPrivacyPolicyAccepted] =
-    React.useState<boolean>(false)
   const [showTermsTip, setShowTermsTip] = React.useState<boolean>(false)
 
   const tLogin = useTranslations('login')
-  const { showLoginPanel, setShowLoginPanel } = useGlobalStore()
+  const {
+    showLoginPanel,
+    setShowLoginPanel,
+    isPrivacyPolicyAccepted,
+    setIsPrivacyPolicyAccepted
+  } = useGlobalStore()
   const { accountUid } = useUserInfoStore()
   const tooltipTimerRef = React.useRef<NodeJS.Timeout | null>(null)
 

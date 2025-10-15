@@ -10,7 +10,7 @@ import {
   InfoItemValue,
   InfoLabel
 } from '@/components/card/info'
-import { WebInfo } from '@/components/icon'
+import { DropdownIcon, WebInfo } from '@/components/icon'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -25,41 +25,60 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { useGlobalStore } from '@/store'
 import { useRTCStore } from '@/store/rtc'
 import { EConnectionStatus } from '@/type/rtc'
 
 export function RoomInfo() {
   const tRoomInfo = useTranslations('roomInfo')
+  const { isRoomInfoOpen, setIsRoomInfoOpen } = useGlobalStore()
+
   return (
-    <>
-      <DropdownMenu>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button variant='info' size='icon'>
-                  <WebInfo />
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{tRoomInfo('channelInfo')}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <DropdownMenuContent className='w-fit space-y-6 rounded-lg bg-background px-4 py-8'>
-          <RoomInfoBlock />
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+    <DropdownMenu
+      open={isRoomInfoOpen}
+      onOpenChange={(open) => setIsRoomInfoOpen(open)}
+    >
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button variant='info'>
+                <WebInfo /> {tRoomInfo('channelInfo')}
+                <DropdownIcon
+                  className={cn(
+                    '!size-7 rotate-0 transform text-icontext-hover duration-500',
+                    isRoomInfoOpen && 'rotate-180'
+                  )}
+                />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{tRoomInfo('channelInfo')}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <DropdownMenuContent className='w-fit space-y-6 rounded-lg bg-background px-4 py-8'>
+        <RoomInfoBlock />
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
 export const RoomInfoBlock = () => {
   const t = useTranslations('roomInfo')
   const tStatus = useTranslations('status')
-  const { agentStatus, roomStatus, channel_name, remote_rtc_uid, agent_id } =
-    useRTCStore()
+  const {
+    agentStatus,
+    roomStatus,
+    channel_name,
+    remote_rtc_uid,
+    agent_id
+    // salStatus
+  } = useRTCStore()
+
+  // const { settings } = useAgentSettingsStore()
+  // const vadEnabled = settings.advanced_features.enable_aivad
 
   const isRoomConnectedMemo = React.useMemo(() => {
     return (
@@ -70,6 +89,38 @@ export const RoomInfoBlock = () => {
 
   return (
     <>
+      {/* <InfoBlock>
+        <InfoLabel>{t('serviceInfo')}</InfoLabel>
+        <InfoContent>
+          <InfoItem>
+            <InfoItemLabel>{t('sal')}</InfoItemLabel>
+            <InfoItemValue
+              className={cn({
+                ['text-destructive']:
+                  (salStatus || ESALSettingsMode.OFF) === ESALSettingsMode.OFF,
+                ['text-brand-green']:
+                  salStatus === ESALSettingsMode.AUTO_LEARNING ||
+                  salStatus === ESALSettingsMode.MANUAL
+              })}
+            >
+              {t(`salStatus.${salStatus || 'off'}`)}
+            </InfoItemValue>
+          </InfoItem>
+        </InfoContent>
+        <InfoContent>
+          <InfoItem>
+            <InfoItemLabel>{t('vad')}</InfoItemLabel>
+            <InfoItemValue
+              className={cn(
+                'text-icontext-disabled',
+                vadEnabled ? 'text-brand-green' : 'text-destructive'
+              )}
+            >
+              {t(`vadStatus.${vadEnabled ? 'enable' : 'disable'}`)}
+            </InfoItemValue>
+          </InfoItem>
+        </InfoContent>
+      </InfoBlock> */}
       <InfoBlock>
         <InfoLabel>{t('channelInfo')}</InfoLabel>
         <InfoContent>

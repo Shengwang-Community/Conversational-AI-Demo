@@ -7,15 +7,16 @@ import { useGlobalStore } from '@/store/global'
 
 export const BrowserInfo = () => {
   const tCompatibility = useTranslations('compatibility')
-  const { isRTCCompatible, setShowCompatibilityDialog } = useGlobalStore()
+  const { isRTCCompatible, setShowCompatibilityDialog, isRecordSupported } =
+    useGlobalStore()
 
-  if (isRTCCompatible) return null
+  if (isRTCCompatible && isRecordSupported) return null
 
   return (
     <div
       className={cn(
         'flex cursor-default items-center gap-2',
-        !isRTCCompatible && 'cursor-pointer'
+        (!isRTCCompatible || !isRecordSupported) && 'cursor-pointer'
       )}
       onClick={() => setShowCompatibilityDialog(true)}
     >

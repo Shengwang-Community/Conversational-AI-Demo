@@ -41,3 +41,19 @@ export const remoteAgentCustomPresetItem = z.object({
   call_time_limit_second: z.number(),
   is_support_vision: z.boolean()
 })
+
+export const remoteAgentFileUploadSchema = basicRemoteResSchema.extend({
+  data: z.object({
+    file_url: z.string(),
+    expired_ts: z.number()
+  })
+})
+
+export const remoteUserInfoUpdateSchema = basicRemoteResSchema.extend({
+  data: z.object({
+    nickname: z.string().optional(),
+    gender: z.enum(['male', 'female']).optional(),
+    birthday: z.date().optional(),
+    description: z.string().optional()
+  })
+})

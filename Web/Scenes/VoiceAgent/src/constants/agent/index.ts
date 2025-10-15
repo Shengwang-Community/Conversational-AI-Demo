@@ -27,3 +27,11 @@ export * from '@/constants/agent/schema'
 
 export const DEFAULT_AVATAR_DOM_ID = 'agent-avatar-player'
 export const AVATAR_PLACEHOLDER_IMAGE = '/img/avatar-placeholder.png'
+
+export const SAL_BG_IMAGE = {
+  src: '/img/bg-voice.png',
+  width: 314,
+  height: 56
+}
+
+export const SSO_DELETE_ACCOUNT_URL = `https://sso.shengwang.cn/profile`

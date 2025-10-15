@@ -39,7 +39,8 @@ export enum ERTCEvents {
   USER_JOINED = 'user-joined',
   USER_LEFT = 'user-left',
   CONNECTION_STATE_CHANGE = 'connection-state-change',
-  AUDIO_METADATA = 'audio-metadata'
+  // AUDIO_METADATA = 'audio-metadata'
+  AUDIO_PTS = 'audio-pts'
 }
 
 /** @deprecated */
@@ -140,4 +141,10 @@ export enum EUploadLogStatus {
   UPLOADING = 'UPLOADING',
   UPLOADED = 'UPLOADED',
   UPLOAD_ERROR = 'UPLOAD_ERROR'
+}
+
+export enum ESALSettingsMode {
+  OFF = 'off',
+  AUTO_LEARNING = 'autoLearning',
+  MANUAL = 'manual'
 }
