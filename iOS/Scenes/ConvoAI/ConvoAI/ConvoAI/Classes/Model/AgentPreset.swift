@@ -29,11 +29,15 @@ struct VendorCalleeNumber: Codable {
     let regionName: String?
     let regionCode: String?
     let phoneNumber: String?
+    let regionFullName: String?
+    let flagEmoji: String?
     
     enum CodingKeys: String, CodingKey {
         case regionName = "region_name"
         case regionCode = "region_code"
         case phoneNumber = "phone_number"
+        case regionFullName = "region_full_name"
+        case flagEmoji = "flag_emoji"
     }
 }
 

@@ -17,7 +17,7 @@ protocol AgentAPI {
     ///   - completion: Callback with optional error, channel name and agent ID string, and server address
     func startAgent(parameters: [String: Any],
                     channelName: String,
-                    completion: @escaping ((ConvoAIError?, String, String?, String?) -> Void))
+                    completion: @escaping ((ConvoAIError?, String, StartAgentResponseModel?) -> Void))
     
     /// Stops a running AI agent
     /// - Parameters:
@@ -51,120 +51,62 @@ protocol AgentAPI {
     ///   - parameter: The parameters for calling the SIP phone number
     ///   - completion: Callback with optional error
     func callSIP(parameter: [String: Any], completion: @escaping ((ConvoAIError?, SIPResponseModel?) -> Void))
+    
+    /// Fetches the state of a SIP call
+    /// - Parameters:
+    ///   - appId: The unique identifier for the application
+    ///   - agentId: The ID of the agent
+    ///   - completion: Callback with optional error and state response model
+    func fetchSIPState(appId: String, agentId: String, completion: @escaping ((ConvoAIError?, SIPStateResponseModel?) -> Void))
 }
 
 class AgentManager: AgentAPI {
-    
     func searchCustomPresets(customPresetIds: [String], completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void)) {
-        let url = AgentServiceUrl.searchCustomPresetsPath("convoai/\(AgentServiceUrl.version)/customPresets/search").toHttpUrlSting()
-        ConvoAILogger.info("request search custom presets api: \(url)")
-        let requesetBody: [String: Any] = [
+        let parameters: [String: Any] = [
             "customPresetIds": customPresetIds.joined(separator: ",")
         ]
         
-        NetworkManager.shared.getRequest(urlString: url, params: requesetBody) { result in
-            ConvoAILogger.info("search custom presets request response: \(result.prettyPrinted())")
-            if let code = result["code"] as? Int, code != 0 {
-                let msg = result["msg"] as? String ?? "Unknown error"
-                let error = ConvoAIError.serverError(code: code, message: msg)
+        sendRequest(endpoint: .searchCustomPresets, method: .get, parameters: parameters) { (result: Result<[AgentPreset], ConvoAIError>) in
+            switch result {
+            case .success(let response):
+                completion(nil, response)
+            case .failure(let error):
                 completion(error, nil)
-                return
             }
-            
-            guard let data = result["data"] as? [[String: Any]] else {
-                let error = ConvoAIError.serverError(code: -1, message: "data error")
-                completion(error, nil)
-                return
-            }
-            
-            do {
-                let jsonData = try JSONSerialization.data(withJSONObject: data)
-                let presets = try JSONDecoder().decode([AgentPreset].self, from: jsonData)
-                completion(nil, presets)
-            } catch {
-                ConvoAILogger.error("JSON decode error: \(error)")
-                ConvoAILogger.error("Raw data: \(data)")
-                let decodeError = ConvoAIError.serverError(code: -1, message: "JSON decode error: \(error.localizedDescription)")
-                completion(decodeError, nil)
-            }
-        } failure: { msg in
-            let error = ConvoAIError.serverError(code: -1, message: msg)
-            completion(error, nil)
         }
     }
     
     func fetchAgentPresets(appId: String, completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void)) {
-        let url = AgentServiceUrl.fetchAgentPresetsPath("convoai/\(AgentServiceUrl.version)/presets/list").toHttpUrlSting()
-        ConvoAILogger.info("request agent preset api: \(url)")
-        let requesetBody: [String: Any] = [
-            "app_id": appId
+        let parameters: [String: Any] = [
+            "app_id": appId,
         ]
-        NetworkManager.shared.postRequest(urlString: url, params: requesetBody) { result in
-            ConvoAILogger.info("presets request response: \(result.prettyPrinted())")
-            if let code = result["code"] as? Int, code != 0 {
-                let msg = result["msg"] as? String ?? "Unknown error"
-                let error = ConvoAIError.serverError(code: code, message: msg)
+        
+        sendRequest(endpoint: .fetchAgentPresets, parameters: parameters) { (result: Result<[AgentPreset], ConvoAIError>) in
+            switch result {
+            case .success(var response):
+                response.removeAll(where: { $0.presetType == "custom" })
+                completion(nil, response)
+            case .failure(let error):
                 completion(error, nil)
-                return
             }
-            
-            guard let data = result["data"] as? [[String: Any]] else {
-                let error = ConvoAIError.serverError(code: -1, message: "data error")
-                completion(error, nil)
-                return
-            }
-            
-            do {
-                let jsonData = try JSONSerialization.data(withJSONObject: data)
-                var presets = try JSONDecoder().decode([AgentPreset].self, from: jsonData)
-                //Temporary requirement: Remove custom settings.
-                presets.removeAll(where: { $0.presetType == "custom" })
-                completion(nil, presets)
-            } catch {
-                ConvoAILogger.error("JSON decode error: \(error)")
-                ConvoAILogger.error("Raw data: \(data)")
-                let decodeError = ConvoAIError.serverError(code: -1, message: "JSON decode error: \(error.localizedDescription)")
-                completion(decodeError, nil)
-            }
-        } failure: { msg in
-            let error = ConvoAIError.serverError(code: -1, message: msg)
-            completion(error, nil)
         }
     }
     
     func startAgent(parameters: [String: Any],
                     channelName: String,
-                    completion: @escaping ((ConvoAIError?, String, String?, String?) -> Void)) {
-        let url = AgentServiceUrl.startAgentPath("convoai/\(AgentServiceUrl.version)/start").toHttpUrlSting()
-        ConvoAILogger.info("request start api: \(url) convoai_body: \(String(describing: parameters["convoai_body"]))")
-        NetworkManager.shared.postRequest(urlString: url, params: parameters) { result in
-            ConvoAILogger.info("start request response: \(result)")
-            if let code = result["code"] as? Int, code != 0 {
-                let msg = result["msg"] as? String ?? "Unknown error"
-                let error = ConvoAIError.serverError(code: code, message: msg)
-                completion(error, channelName, nil, nil)
-                return
+                    completion: @escaping ((ConvoAIError?, String, StartAgentResponseModel?) -> Void)) {
+        sendRequest(endpoint: .startAgent, parameters: parameters) { (result: Result<StartAgentResponseModel, ConvoAIError>) in
+            switch result {
+            case .success(let response):
+                completion(nil, channelName, response)
+            case .failure(let error):
+                completion(error, channelName, nil)
             }
-            
-            guard let data = result["data"] as? [String: Any],
-                  let agentId = data["agent_id"] as? String,
-                  let server = data["agent_url"] as? String
-            else {
-                let error = ConvoAIError.serverError(code: -1, message: "data error")
-                completion(error, channelName, nil, nil)
-                return
-            }
-            
-            completion(nil, channelName, agentId, server)
-            
-        } failure: { msg in
-            let error = ConvoAIError.serverError(code: -1, message: msg)
-            completion(error, channelName, nil, nil)
         }
     }
     
     func stopAgent(appId:String, agentId: String, channelName: String? = nil, presetName: String? = nil, completion: @escaping ((ConvoAIError?, [String : Any]?) -> Void)) {
-        let url = AgentServiceUrl.stopAgentPath("convoai/\(AgentServiceUrl.version)/stop").toHttpUrlSting()
+        let url = AgentServiceUrl.stopAgent.toHttpUrlString()
         var parameters: [String: Any] = [:]
         parameters["app_id"] = appId
         parameters["agent_id"] = agentId
@@ -197,7 +139,7 @@ class AgentManager: AgentAPI {
     }
     
     func ping(appId: String, channelName: String, presetName: String, completion: @escaping ((ConvoAIError?, [String : Any]?) -> Void)) {
-        let url = AgentServiceUrl.stopAgentPath("convoai/\(AgentServiceUrl.version)/ping").toHttpUrlSting()
+        let url = AgentServiceUrl.stopAgent.toHttpUrlString()
         let parameters: [String: Any] = [
             "app_id": appId,
             "channel_name": channelName,
@@ -220,70 +162,69 @@ class AgentManager: AgentAPI {
     }
     
     func callSIP(parameter: [String: Any], completion: @escaping ((ConvoAIError?, SIPResponseModel?) -> Void)) {
-        let url = AgentServiceUrl.callSIPPath("convoai/\(AgentServiceUrl.version)/call").toHttpUrlSting()
-        ConvoAILogger.info("request call SIP api: \(url) parameter: \(parameter)")
-        NetworkManager.shared.postRequest(urlString: url, params: parameter) { result in
-            ConvoAILogger.info("call SIP request response: \(result)")
-            if let code = result["code"] as? Int, code != 0 {
-                let msg = result["msg"] as? String ?? "Unknown error"
-                let error = ConvoAIError.serverError(code: code, message: msg)
+        sendRequest(endpoint: .callSIP, parameters: parameter) { (result: Result<SIPResponseModel, ConvoAIError>) in
+            switch result {
+            case .success(let response):
+                completion(nil, response)
+            case .failure(let error):
                 completion(error, nil)
-                return
             }
-            guard let data = result["data"] as? [String: Any] else {
-                let error = ConvoAIError.serverError(code: -1, message: "data error")
-                completion(error, nil)
-                return
-            }
-            
-            do {
-                let jsonData = try JSONSerialization.data(withJSONObject: data)
-                let res = try JSONDecoder().decode(SIPResponseModel.self, from: jsonData)
-                //Temporary requirement: Remove custom settings.
-                completion(nil, res)
-            } catch {
-                ConvoAILogger.error("JSON decode error: \(error)")
-                ConvoAILogger.error("Raw data: \(data)")
-                let decodeError = ConvoAIError.serverError(code: -1, message: "JSON decode error: \(error.localizedDescription)")
-                completion(decodeError, nil)
-            }
-        } failure: { msg in
-            let error = ConvoAIError.serverError(code: -1, message: msg)
-            completion(error, nil)
         }
     }
     
+    func fetchSIPState(appId: String, agentId: String, completion: @escaping ((ConvoAIError?, SIPStateResponseModel?) -> Void)) {
+        let parameters: [String: Any] = [
+            "app_id": appId,
+            "agent_id": agentId
+        ]
+        
+        sendRequest(endpoint: .fetchSIPState, parameters: parameters) { (result: Result<SIPStateResponseModel, ConvoAIError>) in
+            switch result {
+            case .success(let response):
+                completion(nil, response)
+            case .failure(let error):
+                completion(error, nil)
+            }
+        }
+    }
 }
 
 enum AgentServiceUrl {
     static let retryCount = 1
     static let version = "v5"
-    var baseUrl: String {
+    static var baseUrl: String {
         return AppContext.shared.baseServerUrl + "/"
     }
     
-    case startAgentPath(String)
-    case updateAgentPath(String)
-    case stopAgentPath(String)
-    case fetchAgentPresetsPath(String)
-    case searchCustomPresetsPath(String)
-    case callSIPPath(String)
+    private static let apiPrefix = "convoai/\(version)"
     
-    public func toHttpUrlSting() -> String {
+    // MARK: - Agent Operations
+    case startAgent
+    case updateAgent
+    case stopAgent
+    
+    // MARK: - Preset Operations
+    case fetchAgentPresets
+    case searchCustomPresets
+    
+    // MARK: - SIP Operations
+    case callSIP
+    case fetchSIPState
+    
+    private var endpoint: String {
         switch self {
-        case .startAgentPath(let path):
-            return baseUrl + path
-        case .stopAgentPath(let path):
-            return baseUrl + path
-        case .updateAgentPath(let path):
-            return baseUrl + path
-        case .fetchAgentPresetsPath(let path):
-            return baseUrl + path
-        case .searchCustomPresetsPath(let path):
-            return baseUrl + path
-        case .callSIPPath(let path):
-            return baseUrl + path
+        case .startAgent: return "start"
+        case .updateAgent: return "update"
+        case .stopAgent: return "stop"
+        case .fetchAgentPresets: return "presets/list"
+        case .searchCustomPresets: return "customPresets/search"
+        case .callSIP: return "call"
+        case .fetchSIPState: return "sip/status"
         }
+    }
+    
+    public func toHttpUrlString() -> String {
+        return Self.baseUrl + Self.apiPrefix + "/" + endpoint
     }
 }
 

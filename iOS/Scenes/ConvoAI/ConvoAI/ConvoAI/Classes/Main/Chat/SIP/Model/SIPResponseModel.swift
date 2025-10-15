@@ -16,3 +16,25 @@ struct SIPResponseModel: Codable {
         case agentUrl = "agent_url"
     }
 }
+
+enum SIPState: String, Codable {
+    case start = "START"
+    case calling = "CALLING"
+    case ringing = "RINGING"
+    case answered = "ANSWERED"
+    case hangup = "HANGUP"
+}
+
+struct SIPStateResponseModel: Codable {
+    let agentId: String?
+    let channel: String?
+    let state: SIPState?
+    let ts: String
+    
+    enum CodingKeys: String, CodingKey {
+        case agentId = "agent_id"
+        case channel = "channel"
+        case state = "state"
+        case ts = "ts"
+    }
+}

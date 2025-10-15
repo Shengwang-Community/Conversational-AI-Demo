@@ -324,7 +324,7 @@ extension ChatViewController {
             startRenderRemoteVideoStream()
         }
         
-        agentManager.startAgent(parameters: parameters, channelName: channelName) { [weak self] error, channelName, remoteAgentId, targetServer in
+        agentManager.startAgent(parameters: parameters, channelName: channelName) { [weak self] error, channelName, response in
             guard let self = self else { return }
             if self.channelName != channelName {
                 self.addLog("channelName is different, current : \(self.channelName), before: \(channelName)")
@@ -332,8 +332,8 @@ extension ChatViewController {
             }
             
             guard let error = error else {
-                if let remoteAgentId = remoteAgentId,
-                     let targetServer = targetServer {
+                if let remoteAgentId = response?.agentId,
+                   let targetServer = response?.agentUrl {
                     self.remoteAgentId = remoteAgentId
                     AppContext.stateManager().updateAgentId(remoteAgentId)
                     AppContext.stateManager().updateUserId(self.uid)
