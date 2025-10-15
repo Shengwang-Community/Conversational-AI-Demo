@@ -30,7 +30,7 @@ struct SIPStateResponseModel: Codable {
     let agentId: String?
     let channel: String?
     let state: SIPState?
-    let ts: String
+    let ts: Int?
     
     enum CodingKeys: String, CodingKey {
         case agentId = "agent_id"

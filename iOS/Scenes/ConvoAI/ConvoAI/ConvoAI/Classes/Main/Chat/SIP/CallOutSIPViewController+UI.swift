@@ -110,7 +110,6 @@ extension CallOutSipViewController {
                 }
                 try await startRequest()
                 await MainActor.run {
-                    //TODO: prepare to ping ncs state
                     prepareToFetchSIPState()
                     AppContext.stateManager().updateRoomId(channelName)
                     AppContext.stateManager().updateUserId(uid)
@@ -119,8 +118,12 @@ extension CallOutSipViewController {
                 }
             } catch {
                 addLog("Failed to start call: \(error)")
-//                showPrepareCallView()
-                SVProgressHUD.showError(withStatus: error.localizedDescription)
+                if let convoError = error as? ConvoAIError, convoError.code == 1439 {
+                    //TODO: Replace the text to chinese
+                    SVProgressHUD.showError(withStatus: "The daily call limit of 20 times has been exceeded.")
+                } else {
+                    SVProgressHUD.showError(withStatus: error.localizedDescription)
+                }
             }
         }
         
