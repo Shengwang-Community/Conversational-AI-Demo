@@ -18,6 +18,7 @@ class CallOutSipViewController: SIPViewController {
     internal var timeout = 60
     internal var channelName = ""
     internal var agentUid = 0
+    internal var remoteAgentId = ""
     internal var agentState: AgentState = .idle
     internal var convoAIAPI: ConversationalAIAPI!
     internal var timer: Timer?
@@ -111,7 +112,7 @@ class CallOutSipViewController: SIPViewController {
         guard let rtmEngine = rtmManager.getRtmEngine() else {
             return
         }
-        let config = ConversationalAIAPIConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .words, enableLog: true)
+        let config = ConversationalAIAPIConfig(rtcEngine: rtcEngine, rtmEngine: rtmEngine, renderMode: .text, enableLog: true)
         convoAIAPI = ConversationalAIAPIImpl(config: config)
         convoAIAPI.addHandler(handler: self)
     }
@@ -142,23 +143,24 @@ class CallOutSipViewController: SIPViewController {
         NotificationCenter.default.removeObserver(self)
     }
     
+    func prepareToFetchSIPState() {
+        startTimer()
+    }
+    
     func startTimer() {
         stopTimer()
         var timeout = self.timeout
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { [weak self] timer in
             guard let self = self else { return }
-            if self.agentState != .idle {
-                self.stopTimer()
-                return
-            }
-            
-            if timeout <= 0 {
+            if timeout <= 0, self.callingContentView.tipsLabel.text == ResourceManager.L10n.Sip.sipOnCallTips {
                 sipTimeout()
                 self.stopTimer()
                 return
             }
             
             timeout -= 1
+            
+            self.fetchSIPState()
         })
         
         if let timer = self.timer {

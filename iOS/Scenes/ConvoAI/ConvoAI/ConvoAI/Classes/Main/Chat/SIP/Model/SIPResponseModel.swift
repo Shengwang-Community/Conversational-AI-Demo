@@ -23,6 +23,7 @@ enum SIPState: String, Codable {
     case ringing = "RINGING"
     case answered = "ANSWERED"
     case hangup = "HANGUP"
+    case error = "ERROR"
 }
 
 struct SIPStateResponseModel: Codable {
