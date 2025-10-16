@@ -16,6 +16,7 @@ class SIPViewController: BaseViewController, AgoraRtcEngineDelegate {
         view.wifiInfoButton.isHidden = true
         view.transcriptionButton.isHidden = true
         view.closeButton.addTarget(self, action: #selector(onCloseButton), for: .touchUpInside)
+
         return view
     }()
 

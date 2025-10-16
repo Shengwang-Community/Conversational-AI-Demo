@@ -146,6 +146,9 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
         
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
+            if transcript.type == .user, transcript.userId != uid {
+                return
+            }
             print("receive transcription: \(transcript.status)")
             self.messageView.viewModel.realRenderMode = transcript.renderMode
             self.messageView.viewModel.reduceStandardMessage(turnId: transcript.turnId, message: transcript.text, timestamp: 0, owner: transcript.type, isInterrupted: transcript.status == .interrupted, isFinal: transcript.status == .end)
