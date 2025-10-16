@@ -91,7 +91,6 @@ class CallOutSipViewController: SIPViewController {
     
     internal lazy var messageView: ChatView = {
         let view = ChatView()
-        view.delegate = self
         return view
     }()
     

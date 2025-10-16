@@ -193,10 +193,3 @@ extension CallOutSipViewController: SIPInputViewDelegate {
     }
 }
 
-// MARK: - ChatViewDelegate
-extension CallOutSipViewController: ChatViewDelegate {
-    func resendImage(image: UIImage, uuid: String) {
-        // TODO: Implement image resend logic if needed
-        addLog("Resend image with uuid: \(uuid)")
-    }
-}
