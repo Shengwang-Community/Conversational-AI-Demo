@@ -13,6 +13,7 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.common.R
+import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.common.util.dp
 import io.agora.scene.convoai.constant.CovAgentManager
@@ -269,6 +270,7 @@ class CovMessageListView @JvmOverloads constructor(
         inner class UserMessageViewHolder(private val binding: CovMessageMineItemBinding) :
             MessageViewHolder(binding.root) {
             override fun bind(message: Message) {
+                binding.ivMessageIcon.setImageResource(SSOUserManager.userAvatar)
                 if (message.type == MessageType.TEXT) {
                     binding.tvMessageContent.isVisible = true
                     binding.layoutImageMessage.isVisible = false

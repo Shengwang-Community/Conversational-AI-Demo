@@ -83,7 +83,7 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
      * @param showTranscript true to hide call info and show transcript, false to restore call info
      */
     fun toggleTranscriptUpdate(showTranscript: Boolean) {
-        if (currentState != CallState.CALLED && currentState != CallState.CALLING) {
+        if (currentState != CallState.CALLED) {
             // Only allow toggle during active call states
             return
         }

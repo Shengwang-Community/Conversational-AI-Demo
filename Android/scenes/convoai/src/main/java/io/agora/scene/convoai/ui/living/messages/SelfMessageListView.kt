@@ -11,6 +11,7 @@ import androidx.annotation.DrawableRes
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.common.R
+import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.common.util.dp
 import io.agora.scene.convoai.convoaiApi.subRender.v1.ISelfMessageListView
@@ -184,6 +185,7 @@ class SelfMessageListView @JvmOverloads constructor(
 
         class MineMessageViewHolder(private val binding: CovMessageMineItemBinding) : MessageViewHolder(binding.root) {
             override fun bind(message: Message) {
+                binding.ivMessageIcon.setImageResource(SSOUserManager.userAvatar)
                 binding.tvMessageContent.text = message.content
             }
         }
