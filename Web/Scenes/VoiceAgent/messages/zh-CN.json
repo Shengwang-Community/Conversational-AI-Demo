@@ -39,14 +39,28 @@
       "bad": "较差",
       "unknown": "未知"
     },
+    "salStatus": {
+      "off": "未生效",
+      "autoLearning": "无感模式",
+      "manual": "有感模式"
+    },
+    "vadStatus": {
+      "enable": "已生效",
+      "disable": "未生效"
+    },
     "channelInfo": "频道信息",
     "agentStatus": "智能体状态",
     "roomStatus": "房间状态",
     "roomId": "房间 ID",
     "yourId": "您的 ID",
     "agentId": "智能体 ID",
-    "unknown": "未知"
+    "unknown": "未知",
+    "serviceInfo": "对话 AI 服务状态",
+    "sal": "声纹锁定",
+    "vad": "优雅打断",
+    "more": "更多..."
   },
+  "aiGenerateInfo": "本数字人由 AI 生成",
   "moreInfo": {
     "title": "更多信息",
     "moreAction": "更多操作"
@@ -54,7 +68,8 @@
   "settings": {
     "tab": {
       "agent": "智能体",
-      "settings": "设定"
+      "settings": "设定",
+      "user": "用户中心"
     },
     "custom_agent": {
       "title": "自定义智能体",
@@ -92,6 +107,39 @@
       "enable_aivad": {
         "title": "优雅打断",
         "description": "优雅打断是声网自研高阶打断功能，支持让智能体临时停下逻辑推理去做其他事情，返回后继续让智能体按照打断前的节点继续的技术"
+      },
+      "enable_sal": {
+        "title": "声纹锁定",
+        "off": "关闭",
+        "off_description": "若不启用，智能体可能被周围其他人的声音打断或干扰。",
+        "autoLearning": "无感模式",
+        "autoLearning_description": "AI 将智能学习与智能体会话的用户声纹，自动屏蔽其他用户声纹。",
+        "manual": "有感模式",
+        "has_voice_print": "本机有声纹录入",
+        "voice_print_time": "声纹录入于：{time} ",
+        "manual_description": "录入一段你的声纹，智能体将自动屏蔽其它声音",
+        "create_sal_title": "创建我的声纹",
+        "create_sal_button": "创建",
+        "recreate_sal_button": "重新录入",
+        "record_title": "请大声朗读",
+        "hint": "只允许录入一条声纹，重新录入历史声纹将被删除",
+        "record_button": "点击录制",
+        "recording_time": "语料：{time}s / 10s",
+        "recording_warning": "点击停止录制并上传，最少 10s，最多 20s",
+        "recording_tooltip": "停止录制并上传",
+        "uploading_hint": "上传中...",
+        "upload_succeed": "上传成功",
+        "upload_failed": "上传失败,请重试",
+        "recording_warning_min": "录制时间过短，请至少录制10s语料",
+        "recording_warning_max": "录制自动结束",
+        "no_record_dialog_title": "未录入声纹",
+        "no_record_dialog_description": "未录入有效声纹，切换有感模式失效，退出将自动切换至【上一个选择的模式】模式",
+        "no_record_dialog_button_cancel": "取消",
+        "no_record_dialog_button_confirm": "确认",
+        "record_dialog_title": "声纹录入提示",
+        "record_dialog_description": "声网无感声纹锁定功能只会临时收集您的声音，单次体验该功能完毕后会将云端声纹删除，本地并不会存储您的声音，且绝对不会使用您的声音用作商业用途，详情请查看<link>隐私协议</link>。",
+        "record_dialog_button_cancel": "取消",
+        "record_dialog_button_confirm": "确认"
       }
     },
     "standard_avatar": {
@@ -103,6 +151,9 @@
         "confirm": "确定变更",
         "cancel": "取消",
         "do-not-ask-again": "不再显示"
+      },
+      "tags": {
+        "all": "全部"
       }
     },
     "transcription": {
@@ -135,6 +186,12 @@
       "connected": "我已加入",
       "speakLoudly": "请你大声跟我说话，以便我更好地和你沟通",
       "failed": "我加入失败，请晚点再试"
+    },
+    "privacyDialog": {
+      "title": "个人信息保护指引",
+      "description": "欢迎使用声网对话式 AI 引擎！当您点击“同意”时，视为您已阅读并愿意接受<link>《用户协议》</link> 和 <policyLink>《隐私政策的所有内容》</policyLink>。当您点击“不同意”时，将无法体验本应用的完整功能。",
+      "cancel": "不同意",
+      "confirm": "同意"
     },
     "getStart": "连接对话式 AI 引擎",
     "subtitle": "字幕",
@@ -169,7 +226,7 @@
   },
   "compatibility": {
     "errorTitle": "兼容性检查",
-    "errorDescription": "请检查浏览器是否支持 WebRTC",
+    "errorDescription": "请检查浏览器是否支持 WebRTC 和是否开启麦克风权限",
     "errorHelper": "建议在最新版本的操作系统中使用浏览器的最新版本",
     "errorButton": "我已知晓"
   },
@@ -189,7 +246,31 @@
     "copySuccess": "复制成功"
   },
   "userInfo": {
-    "logout": "退出"
+    "logout": "退出",
+    "user-center": "个人中心",
+    "my-agent": "我的对话人设",
+    "nickname": "昵称",
+    "nickname-placeholder": "智能体称呼你的昵称",
+    "gender": "称呼您为",
+    "birthday": "您的生日",
+    "bio": "自我介绍",
+    "bio-placeholder": "输入对您的介绍，让AI agent 更了解您 ❤️",
+    "call-you": "称呼您为",
+    "mr": "先生",
+    "ms": "女士",
+    "deleteAccount": {
+      "button": "注销账户",
+      "title": "重要提示",
+      "description": "账号注销成功后将彻底删除该账号及关联的所有数据且无法恢复，请谨慎选择并操作。",
+      "checkbox": "我已了解注销账号的各项风险",
+      "uncheckWarning": "您必须勾选并同意注销账号的各项风险才可以注销。",
+      "confirm": "确认注销",
+      "cancel": "取消"
+    },
+    "privacy": {
+      "userAgreement": "用户协议",
+      "privacyPolicy": "隐私政策"
+    }
   },
   "log": {
     "label": "一键上报",

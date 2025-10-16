@@ -23,7 +23,8 @@ export const agentAdvancedFeaturesSchema = z
       .describe('Enable AIVAD')
       .optional()
       .default(false),
-    enable_rtm: z.boolean().describe('Enable RTM').optional().default(true)
+    enable_rtm: z.boolean().describe('Enable RTM').optional().default(true),
+    enable_sal: z.boolean().describe('Enable SAL').optional().default(false)
   })
   .describe('Advanced Features')
 
@@ -39,11 +40,13 @@ export const agentPresetAvatarSchema = z.object({
   avatar_name: z.string(),
   thumb_img_url: z.string(),
   bg_img_url: z.string(),
-  web_bg_img_url: z.string()
+  web_bg_img_url: z.string(),
+  display_vendor: z.string()
 })
 
 export const agentPresetSchema = z.object({
   // index: z.number(),
+  advanced_features_enable_sal: z.boolean().optional(),
   name: z.string(),
   display_name: z.string(),
   preset_type: z.string(),
@@ -67,7 +70,8 @@ export const agentPresetSchema = z.object({
     .optional(),
   is_support_vision: z.boolean().optional(),
   avatar_url: z.string().optional(),
-  description: z.string().optional()
+  description: z.string().optional(),
+  is_support_sal: z.boolean().optional()
 })
 
 export const publicAgentSettingSchema = z.object({
@@ -83,6 +87,17 @@ export const publicAgentSettingSchema = z.object({
     .describe('ASR')
     .optional(),
   advanced_features: agentAdvancedFeaturesSchema,
+  sal: z
+    .object({
+      sal_mode: z.literal('locking'),
+      sample_urls: z
+        .record(z.string(), z.string())
+        .optional()
+        .nullable()
+        .describe('SAL Sample URLs')
+    })
+    .describe('SAL Params')
+    .optional(),
   llm: z
     .object({
       style: z.string().describe('llm-style').optional()
@@ -152,7 +167,68 @@ export const opensourceAgentSettingSchema = z.object({
         .describe('audio_scenario')
         .optional()
     })
-    .describe('Parameters')
+    .describe('Parameters'),
+  sal: z
+    .object({
+      sal_mode: z.enum(['locking']).default('locking'),
+      // different from publicAgentSettingSchema, here is a string
+      sample_urls: z
+        .record(z.string(), z.string())
+        .optional()
+        .nullable()
+        .describe('SAL Sample URLs')
+      // sample_urls: z.string().optional().nullable().describe('SAL Sample URLs')
+    })
+    .describe('SAL Params')
+    .optional()
+})
+
+export const opensourceAgentFormSchema = z.object({
+  asr: z
+    .object({
+      language: z
+        .string()
+        .default(isCN ? EDefaultLanguage.ZH_CN : EDefaultLanguage.EN_US)
+        .describe('Language')
+    })
+    .describe('ASR'),
+  enable_bhvs: z.boolean().describe('Enable BHVS').optional().default(true),
+  enable_aivad: z.boolean().describe('Enable AIVAD').optional().default(false),
+  enable_rtm: z.boolean().describe('Enable RTM').optional().default(true),
+  enable_sal: z.boolean().describe('Enable SAL').optional().default(false),
+  llm: z
+    .object({
+      url: z.string().url().describe('LLM URL'),
+      api_key: z.string().describe('LLM API Key').optional(),
+      system_messages: z.string().describe('LLM System Messages').optional(), // transform to object in service
+      greeting_message: z.string().describe('LLM Greeting Message').optional(),
+      params: z.string().describe('LLM Params').optional() // transform to object in service
+    })
+    .describe('LLM'),
+  tts: z
+    .object({
+      vendor: z.string().describe('TTS Vendor'),
+      params: z.string().describe('TTS Params') // transform to object in service
+    })
+    .describe('TTS'),
+  parameters: z
+    .object({
+      // !SPECIAL CASE[audio_scenario]
+      audio_scenario: z
+        .enum(['default'])
+        .default('default')
+        .describe('audio_scenario')
+        .optional()
+    })
+    .describe('Parameters'),
+  sal: z
+    .object({
+      sal_mode: z.enum(['locking']).default('locking'),
+      // different from publicAgentSettingSchema, here is a string
+      sample_urls: z.string().optional().nullable().describe('SAL Sample URLs')
+    })
+    .describe('SAL Params')
+    .optional()
 })
 
 export const localStartAgentPropertiesBaseSchema = z.object({

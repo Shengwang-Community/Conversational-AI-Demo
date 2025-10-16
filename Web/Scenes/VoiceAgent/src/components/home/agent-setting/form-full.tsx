@@ -8,18 +8,16 @@ import type * as z from 'zod'
 import { InnerCard } from '@/components/home/agent-setting/base'
 import { AutoForm } from '@/components/ui/autoform'
 import { Button } from '@/components/ui/button'
-import { opensourceAgentSettingSchema } from '@/constants'
+import { opensourceAgentFormSchema } from '@/constants'
+import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
-import { useAgentSettingsStore } from '@/store'
+import { useAgentSettingsStore, useRTCStore } from '@/store'
 import type { TAgentSettings } from '@/store/agent'
-import { useRTCStore } from '@/store/rtc'
-import { EConnectionStatus } from '@/type/rtc'
 
 export const FullAgentSettingsForm = (props: { className?: string }) => {
   const { settings, updateSettings } = useAgentSettingsStore()
-
-  const { roomStatus } = useRTCStore()
+  const { remote_rtc_uid } = useRTCStore()
 
   const t = useTranslations('settings')
 
@@ -27,24 +25,19 @@ export const FullAgentSettingsForm = (props: { className?: string }) => {
   //     resolver: zodResolver(publicAgentSettingSchema),
   //     defaultValues: settings
   //   })
-  const schemaProvider = new ZodProvider(opensourceAgentSettingSchema)
+  const schemaProvider = new ZodProvider(opensourceAgentFormSchema)
 
-  const disableFormMemo = React.useMemo(() => {
-    return !(
-      roomStatus === EConnectionStatus.DISCONNECTED ||
-      roomStatus === EConnectionStatus.UNKNOWN
-    )
-  }, [roomStatus])
+  const disableFormMemo = useIsAgentCalling()
 
   return (
     <InnerCard className={cn(props.className)}>
       <AutoForm
         schema={schemaProvider}
         defaultValues={
-          settings as unknown as z.infer<typeof opensourceAgentSettingSchema>
+          settings as unknown as z.infer<typeof opensourceAgentFormSchema>
         }
         onSubmit={(data) => {
-          const parsedData = opensourceAgentSettingSchema.safeParse(data)
+          const parsedData = opensourceAgentFormSchema.safeParse(data)
           if (!parsedData.success) {
             toast.error(`Form error: ${parsedData.error.message}`)
             logger.error(parsedData.error, '[FullAgentSettingsForm] form error')
@@ -52,7 +45,31 @@ export const FullAgentSettingsForm = (props: { className?: string }) => {
           }
           toast.success('Settings updated successfully')
           console.log(parsedData.data)
-          updateSettings(parsedData.data as unknown as TAgentSettings)
+          const { enable_sal, enable_aivad, enable_rtm, enable_bhvs, ...rest } =
+            parsedData.data
+          // handle sal
+
+          const sal = enable_sal
+            ? {
+                sal_mode: 'locking',
+                sample_urls: data.sal?.sample_urls
+                  ? {
+                      [remote_rtc_uid]: data.sal?.sample_urls
+                    }
+                  : undefined
+              }
+            : undefined
+
+          updateSettings({
+            ...rest,
+            advanced_features: {
+              enable_sal,
+              enable_aivad,
+              enable_rtm,
+              enable_bhvs
+            },
+            sal
+          } as unknown as TAgentSettings)
         }}
       >
         <Button

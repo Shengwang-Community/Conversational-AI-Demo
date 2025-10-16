@@ -1,3 +1,4 @@
+import type { UseFormSetValue } from 'react-hook-form'
 import type * as z from 'zod'
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
@@ -13,6 +14,12 @@ import { ETranscriptHelperMode } from '@/conversational-ai-api/type'
 import { isCN } from '@/lib/utils'
 
 export type TAgentSettings = z.infer<typeof publicAgentSettingSchema>
+
+export enum SelectedTab {
+  AGENT = 'agent',
+  USER = 'user',
+  SETTINGS = 'settings'
+}
 
 export interface IAgentSettings {
   presets: z.infer<typeof agentPresetSchema>[]
@@ -32,6 +39,10 @@ export interface IAgentSettings {
   conversationTimerEndTimestamp: number | null
   settings: TAgentSettings
   transcriptionRenderMode: ETranscriptHelperMode
+  onFormSetValue?: UseFormSetValue<z.infer<typeof publicAgentSettingSchema>>
+  updateFormSetValue: (
+    cb: UseFormSetValue<z.infer<typeof publicAgentSettingSchema>>
+  ) => void
   updateTranscriptionRenderMode: (mode: ETranscriptHelperMode) => void
   updateSettings: (settings: TAgentSettings) => void
   updatePresets: (
@@ -60,6 +71,8 @@ export interface IAgentSettings {
   updateDisabledPresetNameList: (disabledPresetNameList: string[]) => void
   updateConversationDuration: (conversationDuration?: number) => void
   setConversationTimerEndTimestamp: (endTimestamp: number | null) => void
+  setSelectedTab: (tab: SelectedTab) => void
+  selectedTab: SelectedTab
 }
 
 const CUSTOM_LLM_URL = process.env.NEXT_PUBLIC_CUSTOM_LLM_URL || undefined
@@ -90,7 +103,8 @@ const DEFAULT_SETTINGS = {
   advanced_features: {
     enable_bhvs: true,
     enable_aivad: false,
-    enable_rtm: true
+    enable_rtm: true,
+    enable_sal: false
   },
   // !SPECIAL CASE[audio_scenario]
   parameters: {
@@ -120,6 +134,13 @@ export const useAgentSettingsStore = create<IAgentSettings>()(
         settings: DEFAULT_SETTINGS as TAgentSettings,
         disabledPresetNameList: [],
         transcriptionRenderMode: ETranscriptHelperMode.WORD,
+        updateFormSetValue: (
+          cb: UseFormSetValue<z.infer<typeof publicAgentSettingSchema>>
+        ) => {
+          set(() => ({
+            onFormSetValue: cb
+          }))
+        },
         updateTranscriptionRenderMode: (mode: ETranscriptHelperMode) => {
           set(() => ({ transcriptionRenderMode: mode }))
         },
@@ -276,7 +297,11 @@ export const useAgentSettingsStore = create<IAgentSettings>()(
         },
         setConversationTimerEndTimestamp: (endTimestamp: number | null) => {
           set(() => ({ conversationTimerEndTimestamp: endTimestamp }))
-        }
+        },
+        setSelectedTab: (tab: SelectedTab) => {
+          set(() => ({ selectedTab: tab }))
+        },
+        selectedTab: SelectedTab.AGENT
       }),
       {
         name: 'agent-store',
@@ -286,5 +311,31 @@ export const useAgentSettingsStore = create<IAgentSettings>()(
         })
       }
     )
+  )
+)
+
+type SalAudioInfo = {
+  file_url: string
+  expired_ts: number
+}
+
+type IAgentSalAudioStore = {
+  salAudioInfo: Record<string, SalAudioInfo> | null
+  updateSalAudioInfo: (salAudioInfo: SalAudioInfo, uid: string) => void
+}
+
+export const useAgentSalAudioStore = create<IAgentSalAudioStore>()(
+  persist(
+    (set) => ({
+      salAudioInfo: null,
+      updateSalAudioInfo: (salAudioInfo: SalAudioInfo, uid: string) => {
+        set((s) => ({
+          salAudioInfo: { ...s.salAudioInfo, [uid]: salAudioInfo }
+        }))
+      }
+    }),
+    {
+      name: 'agent-sal-store'
+    }
   )
 )

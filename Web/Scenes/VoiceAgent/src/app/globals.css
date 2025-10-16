@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @plugin 'tailwindcss-animate';
 @plugin '@tailwindcss/typography';
@@ -53,6 +53,7 @@
   --color-brand-main-hover: var(--ai_mainhover);
 
   --color-brand-white-1: var(--ai_brand_white1);
+  --color-brand-white-2: var(--ai_brand_white2);
   --color-brand-white-6: var(--ai_brand_white6);
   --color-brand-white-8: var(--ai_brand_white8);
   --color-brand-white: var(--ai_brand_white10);
@@ -66,6 +67,7 @@
   --color-icontext-hover: var(--ai_icontext2);
   --color-icontext-disabled: var(--ai_icontext3);
   --color-icontext-inverse: var(--ai_icontext_inverse1);
+  --color-icontext-4: var(--ai_icontext4);
 
   --color-fill: var(--ai_fill1);
   --color-fill-popover: var(--ai_fill2);
@@ -76,6 +78,8 @@
   --color-block-4: var(--ai_block4_chat);
   --color-block-5: var(--ai_block5);
   --color-block: var(--ai_block1);
+  --color-yellow-6: var(--ai_yellow6);
+  --color-bluepurple5: var(--ai_bluepurple5);
 
   --color-line-2: var(--ai_line2);
   --color-line-3: var(--ai_line3);
@@ -88,6 +92,10 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 6px);
   --radius-xs: calc(var(--radius) - 8px);
+
+  --spacing-modal-max-width: var(--modal-max-width);
+
+  --color-secondhover: var(--ai_secondhover);
 
   --animate-rotate: rotate 3s linear infinite;
   --animate-shake: shake 0.2s ease-in-out 2;
@@ -105,7 +113,8 @@
     100% {
       transform: translateX(0);
     }
-    25% 75% {
+    25%,
+    75% {
       transform: translateX(-10px);
     }
     50% {
@@ -145,10 +154,14 @@
 @layer base {
   :root {
     --radius: 0.875rem;
+    --modal-max-width: 425px;
     --ag-header-height: 40px;
     --ag-body-padding: 20px;
     --ag-main-min-height: calc(
-      100dvh - var(--ag-header-height) - var(--ag-body-padding) * 3
+      100dvh -
+      var(--ag-header-height) -
+      var(--ag-body-padding) *
+      3
     );
     --ag-sidebar-width: 340px;
     --ag-action-height: 60px;
@@ -166,52 +179,43 @@
   }
 
   :root {
+    /* CONVO AI */
     --ai_icontext1-light: #21212b;
     --ai_icontext1-dark: #ffffff;
     --ai_icontext2-light: #8e8f9e;
     --ai_icontext2-dark: rgba(255 255 255 / 0.75);
     --ai_icontext3-light: #bbbbbb;
-    --ai_icontext3-dark: rgba(255 255 255 / 0.6);
+    --ai_icontext3-dark: rgba(255 255 255 / 0.5);
     --ai_icontext_inverse1-light: #ffffff;
     --ai_icontext_inverse1-dark: rgba(0 0 0 / 0.9);
-    --ai_icontext_inverse2-light: #ffffff;
-    --ai_icontext_inverse2-dark: rgba(0 0 0 / 0.7);
     --ai_brand_main6-light: #00c2ff;
     --ai_brand_main6-dark: #446cff;
-    --ai_brand_main7-light: #00a5d9;
-    --ai_brand_main7-dark: #3a5cd9;
     --ai_brand_main5-light: rgba(0 194 255 / 0.8);
     --ai_brand_main5-dark: rgba(68 108 255 / 0.8);
     --ai_brand_main4-light: rgba(0 194 255 / 0.6);
     --ai_brand_main4-dark: rgba(68 108 255 / 0.6);
     --ai_brand_main3-light: #b5e4ff;
-    --ai_brand_main3-dark: #b5e4ff;
+    --ai_brand_main3-dark: rgba(68 108 255 / 0.4);
     --ai_brand_white10-light: #ffffff;
     --ai_brand_white10-dark: #ffffff;
     --ai_fill1-light: #ffffff;
     --ai_fill1-dark: #121212;
-    --ai_fill2-light: #eff5ff;
+    --ai_fill2-light: #f7f7f7;
     --ai_fill2-dark: #292a2d;
-    --ai_fill3-light: #ffffff;
-    --ai_fill3-dark: #22233d;
-    --ai_fill4-light: #ffffff;
-    --ai_fill4-dark: #242439;
-    --ai_fill5-light: #ffffff;
-    --ai_fill5-dark: #3e3e4d;
-    --ai_input-light: rgba(247 247 247 / 0.4);
+    --ai_input-light: rgba(247 247 247 / 0.6);
     --ai_input-dark: rgba(38 44 55 / 0.5);
-    --ai_line1-light: rgba(227 231 239 / 0.5);
+    --ai_line1-light: rgba(227 231 239 / 0.1);
     --ai_line1-dark: rgba(80 80 81 / 0.6);
     --ai_mainhover-light: rgba(227 231 239 / 0.5);
     --ai_mainhover-dark: rgba(53 53 71 / 0.8);
     --ai_click-light: #ececf3;
     --ai_click-dark: rgba(132 135 142 / 0.8);
-    --ai_line2-light: #e2e5ea;
-    --ai_line2-dark: #555b69;
-    --ai_block2-light: rgba(255 255 255 / 0.95);
-    --ai_block2-dark: rgba(64 64 69 / 0.9);
+    --ai_line2-light: rgba(226 229 234 / 0.5);
+    --ai_line2-dark: rgba(85 91 105 / 0.9);
+    --ai_block2-light: rgba(255 255 255 / 0.98);
+    --ai_block2-dark: rgba(64 64 69 / 0.98);
     --ai_block1-light: rgba(255 255 255 / 0.7);
-    --ai_block1-dark: rgba(63, 63, 90, 0.7);
+    --ai_block1-dark: rgba(63 63 90 / 0.7);
     --ai_block4_chat-light: #f4f3ff;
     --ai_block4_chat-dark: #444549;
     --ai_icontext4-light: rgba(61 64 77 / 0.8);
@@ -262,15 +266,13 @@
     --ai_line3-dark: rgba(255 255 255 / 0.03);
     --ai_disable-light: #f8f8f8;
     --ai_disable-dark: rgba(34 34 34 / 0.2);
-    --ai_brand_white1-light: rgba(255 255 255 / 0.15);
-    --ai_brand_white1-dark: rgba(255 255 255 / 0.15);
     --ai_brand_white8-light: rgba(255 255 255 / 0.8);
     --ai_brand_white8-dark: rgba(255 255 255 / 0.8);
     --ai_brand_white6-light: rgba(255 255 255 / 0.6);
     --ai_brand_white6-dark: rgba(255 255 255 / 0.6);
     --ai_block5-light: rgba(255 255 255 / 0.95);
     --ai_block5-dark: rgba(62 62 67 / 0.9);
-    --ai_brand_lightbrand7-light: #a0faff;
+    --ai_brand_lightbrand7-light: #17f1fe;
     --ai_brand_lightbrand7-dark: #17f1fe;
     --ai_mask1-light: rgba(41 66 65 / 0.5);
     --ai_mask1-dark: rgba(36 36 57 / 0.85);
@@ -282,15 +284,68 @@
     --ai_menuicontext5-dark: #ffffff;
     --ai_red1-light: rgba(245 101 92 / 0.2);
     --ai_red1-dark: rgba(230 84 75 / 0.3);
-    --ai_brand_black3-light: rgba(0 0 0 / 0.3);
-    --ai_brand_black3-dark: rgba(0 0 0 / 0.3);
-    --ai_brand_black8-light: rgba(0 0 0 / 0.8);
-    --ai_brand_black8-dark: rgba(0 0 0 / 0.8);
     --ai_brand_black10-light: rgba(0 0 0 / 0.98);
     --ai_brand_black10-dark: rgba(0 0 0 / 0.98);
+    --ai_brand_black8-light: rgba(0 0 0 / 0.8);
+    --ai_brand_black8-dark: rgba(0 0 0 / 0.8);
     --ai_erricontext6-light: var(--ai_red6);
     --ai_erricontext6-dark: #ffffff;
-    --fcr_ui_scene_inverse2: rgba(30, 30, 30, 0.95);
+    --chamfer_l_big-light: 15px;
+    --chamfer_l_big-rem-light: 0.9375rem;
+    --chamfer_l_big-dark: 15px;
+    --chamfer_l_big-rem-dark: 0.9375rem;
+    --chamfer_4xl-light: 32px;
+    --chamfer_4xl-rem-light: 2rem;
+    --chamfer_4xl-dark: 32px;
+    --chamfer_4xl-rem-dark: 2rem;
+    --ai_fill3-light: #ffffff;
+    --ai_fill3-dark: #22233d;
+    --ai_fill4-light: #fdfdfd;
+    --ai_fill4-dark: #242439;
+    --ai_icontext_inverse2-light: #ffffff;
+    --ai_icontext_inverse2-dark: rgba(0 0 0 / 0.7);
+    --ai_fill5-light: #ffffff;
+    --ai_fill5-dark: #3e3e4d;
+    --ai_brand_white1-light: rgba(255 255 255 / 0.1);
+    --ai_brand_white1-dark: rgba(255 255 255 / 0.1);
+    --ai_brand_black3-light: rgba(0 0 0 / 0.3);
+    --ai_brand_black3-dark: rgba(0 0 0 / 0.3);
+    --ai_brand_main7-light: #00a5d9;
+    --ai_brand_main7-dark: #3a5cd9;
+    --ai_brand_black6-light: rgba(0 0 0 / 0.6);
+    --ai_brand_black6-dark: rgba(0 0 0 / 0.6);
+    --ai_blue6-light: #39caff;
+    --ai_blue6-dark: #39caff;
+    --ai_mask2-light: rgba(0 0 0 / 0.5);
+    --ai_mask2-dark: rgba(0 0 0 / 0.5);
+    --ai_brand_lightpurple-light: rgba(185 206 255 / 0.3);
+    --ai_brand_lightpurple-dark: rgba(185 206 255 / 0.4);
+    --ai_click_app-light: #ececf3;
+    --ai_click_app-dark: #30343e;
+    --ai_brand_white2-light: rgba(255 255 255 / 0.2);
+    --ai_brand_white2-dark: rgba(255 255 255 / 0.2);
+    --ai_toast-light: rgba(47 47 47 / 0.85);
+    --ai_toast-dark: rgba(255 255 255 / 0.95);
+    --ai_btn2-light: #f7f7f7;
+    --ai_btn2-dark: #555b69;
+    --ai_brand_black4-light: rgba(0 0 0 / 0.4);
+    --ai_brand_black4-dark: rgba(0 0 0 / 0.4);
+    --ai_brand_black5-light: rgba(0 0 0 / 0.5);
+    --ai_brand_black5-dark: rgba(0 0 0 / 0.5);
+    --ai_fill6-light: #ffffff;
+    --ai_fill6-dark: #282f40;
+    --ai_fill7-light: #f7f7f7;
+    --ai_fill7-dark: #1a202e;
+    --ai_mask3-light: rgba(247 247 247 / 0.8);
+    --ai_mask3-dark: rgba(41 42 45 / 0.8);
+    --ai_brand_main2-light: rgba(0 194 255 / 0.2);
+    --ai_brand_main2-dark: rgba(68 108 255 / 0.2);
+    --ai_brand_main1-light: rgba(0 194 255 / 0.1);
+    --ai_brand_main1-dark: rgba(68 108 255 / 0.1);
+    --ai_darkgreen-light: #299451;
+    --ai_darkgreen-dark: #299451;
+    --ai_bluepurple5-light: rgba(86 140 255 / 0.9);
+    --ai_bluepurple5-dark: rgba(86 140 255 / 0.9);
   }
   :root {
     --ai_block1: var(--ai_block1-light);
@@ -309,6 +364,7 @@
     --ai_brand_main6: var(--ai_brand_main6-light);
     --ai_brand_main7: var(--ai_brand_main7-light);
     --ai_brand_white1: var(--ai_brand_white1-light);
+    --ai_brand_white2: var(--ai_brand_white2-light);
     --ai_brand_white10: var(--ai_brand_white10-light);
     --ai_brand_white6: var(--ai_brand_white6-light);
     --ai_brand_white8: var(--ai_brand_white8-light);
@@ -339,6 +395,7 @@
     --ai_secondhover: var(--ai_secondhover-light);
     --ai_secondhover3: var(--ai_secondhover3-light);
     --ai_yellow6: var(--ai_yellow6-light);
+    --ai_bluepurple5: var(--ai_bluepurple5-light);
     --fcr_ui_scene_inverse2: var(--fcr_ui_scene_inverse2);
   }
 
@@ -379,6 +436,7 @@
     --ai_brand_main6: var(--ai_brand_main6-dark);
     --ai_brand_main7: var(--ai_brand_main7-dark);
     --ai_brand_white1: var(--ai_brand_white1-dark);
+    --ai_brand_white2: var(--ai_brand_white2-dark);
     --ai_brand_white10: var(--ai_brand_white10-dark);
     --ai_brand_white6: var(--ai_brand_white6-dark);
     --ai_brand_white8: var(--ai_brand_white8-dark);
@@ -409,6 +467,7 @@
     --ai_secondhover: var(--ai_secondhover-dark);
     --ai_secondhover3: var(--ai_secondhover3-dark);
     --ai_yellow6: var(--ai_yellow6-dark);
+    --ai_bluepurple5: var(--ai_bluepurple5-dark);
     --fcr_ui_scene_inverse2: var(--fcr_ui_scene_inverse2);
   }
 }
@@ -536,30 +595,30 @@
   [data-rmiz] {
     @apply block relative;
   }
-  
+
   [data-rmiz-ghost] {
     @apply pointer-events-none absolute;
   }
-  
+
   [data-rmiz-btn-zoom],
   [data-rmiz-btn-unzoom] {
     @apply hidden;
   }
-  
+
   [data-rmiz-modal][open] {
     @apply fixed inset-0 w-screen h-screen m-0 p-0 overflow-hidden;
     @apply max-w-none max-h-none bg-transparent;
   }
-  
+
   [data-rmiz-modal-overlay] {
     @apply absolute inset-0 transition-colors;
   }
-  
+
   [data-rmiz-modal-img] {
     @apply absolute transform-gpu transition-transform duration-300;
     transform-origin: 0 0;
   }
-  
+
   [data-rmiz-content="found"] img {
     @apply cursor-zoom-in;
   }

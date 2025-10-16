@@ -1,6 +1,5 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { BrandLogo } from '@/components/icon'
@@ -13,21 +12,13 @@ import { NetWorkInfo } from '@/components/layout/network-info'
 import { RoomInfo } from '@/components/layout/room-info'
 import { UserInfo } from '@/components/layout/user-info'
 import { cn } from '@/lib/utils'
-import { useRTCStore, useUserInfoStore } from '@/store'
-
-const UploadLogButtonDynamic = dynamic(
-  () => import('@/components/button/upload-log-button'),
-  {
-    ssr: false
-  }
-)
+import { useUserInfoStore } from '@/store'
 
 export const Header = (props: { className?: string }) => {
   const { className } = props
 
   const t = useTranslations('homePage')
   const { accountUid } = useUserInfoStore()
-  const { agent_id } = useRTCStore()
 
   return (
     <header
@@ -53,7 +44,6 @@ export const Header = (props: { className?: string }) => {
             <NetWorkInfo />
             <More>
               <RoomInfo />
-              {agent_id && <UploadLogButtonDynamic />}
             </More>
           </>
         )}

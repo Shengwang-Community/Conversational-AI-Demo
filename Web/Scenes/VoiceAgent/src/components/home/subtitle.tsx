@@ -1,6 +1,7 @@
 'use client'
 
 import { ChevronDownIcon, CircleAlertIcon, RotateCcwIcon } from 'lucide-react'
+import NextImage from 'next/image'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
@@ -10,6 +11,7 @@ import {
   LoadingSpinner,
   UserAvatarIcon
 } from '@/components/icon'
+import { USER_INFO_GENDER_IMAGE } from '@/components/layout/user-info/my-agent'
 import { MessageLoading } from '@/components/message/message-loading'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -204,6 +206,7 @@ const ChatItem = React.forwardRef<
   } = props
 
   const { settings } = useAgentSettingsStore()
+  const { userAgentPreference } = useUserInfoStore()
 
   const t = useTranslations('agent')
 
@@ -224,7 +227,21 @@ const ChatItem = React.forwardRef<
     >
       <div className='flex h-fit w-fit items-center gap-2'>
         {type === EChatItemType.USER ? (
-          <UserAvatarIcon className='h-6 w-6' />
+          userAgentPreference.gender === 'male' ? (
+            <NextImage
+              className='h-6 w-6 rounded-full'
+              alt='Male Avatar'
+              {...USER_INFO_GENDER_IMAGE.MALE_IMG}
+            />
+          ) : userAgentPreference.gender === 'female' ? (
+            <NextImage
+              className='h-6 w-6 rounded-full'
+              alt='Female Avatar'
+              {...USER_INFO_GENDER_IMAGE.FEMALE_IMG}
+            />
+          ) : (
+            <UserAvatarIcon className='h-6 w-6' />
+          )
         ) : (
           <AgentAvatarIcon className='h-6 w-6' />
         )}

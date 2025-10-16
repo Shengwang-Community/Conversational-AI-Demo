@@ -1,11 +1,20 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { parseAsBoolean, useQueryState } from 'nuqs'
 import * as React from 'react'
 import { AgentBlock } from '@/components/home'
 import { AgentSettings } from '@/components/home/agent-setting'
+
 import { DEV_MODE_QUERY_KEY } from '@/constants'
 import { useGlobalStore } from '@/store'
+
+const SALSettings = dynamic(
+  () => import('@/components/home/agent-setting/sal-settings'),
+  {
+    ssr: false
+  }
+)
 
 export const HomePageContent = () => {
   return (
@@ -14,9 +23,12 @@ export const HomePageContent = () => {
       <React.Suspense fallback={null}>
         <DevMode />
       </React.Suspense>
-      <div className='flex h-(--ag-main-min-height) w-full justify-center'>
-        <AgentBlock />
-        <AgentSettings />
+      <div className='relative'>
+        <div className='flex h-(--ag-main-min-height) w-full justify-center'>
+          <AgentBlock />
+          <AgentSettings />
+        </div>
+        <SALSettings />
       </div>
     </>
   )

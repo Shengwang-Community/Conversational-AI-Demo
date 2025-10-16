@@ -45,7 +45,8 @@ export enum EMessageType {
   /** @deprecated */
   MSG_STATE = 'message.state',
   IMAGE_UPLOAD = 'image.upload',
-  MESSAGE_INFO = 'message.info'
+  MESSAGE_INFO = 'message.info',
+  MESSAGE_SAL_STATUS = 'message.sal_status'
 }
 
 export enum ERTMEvents {
@@ -67,7 +68,8 @@ export enum ERTCEvents {
   USER_JOINED = 'user-joined',
   USER_LEFT = 'user-left',
   CONNECTION_STATE_CHANGE = 'connection-state-change',
-  AUDIO_METADATA = 'audio-metadata'
+  // AUDIO_METADATA = 'audio-metadata',
+  AUDIO_PTS = 'audio-pts'
 }
 
 export enum ERTCCustomEvents {
@@ -94,7 +96,7 @@ export enum ERTCCustomEvents {
  * - AGENT_INTERRUPTED: Agent interruption events
  * - AGENT_METRICS: Agent performance metrics
  * - AGENT_ERROR: Agent error events
- * - TRANSCRIPTION_UPDATED: Transcription update events
+ * - TRANSCRIPT_UPDATED: Transcription update events
  * - DEBUG_LOG: Debug logging events
  * - MESSAGE_RECEIPT_UPDATED: Message receipt update events
  * - MESSAGE_ERROR: Message error events
@@ -106,10 +108,11 @@ export enum EConversationalAIAPIEvents {
   AGENT_INTERRUPTED = 'agent-interrupted',
   AGENT_METRICS = 'agent-metrics',
   AGENT_ERROR = 'agent-error',
-  TRANSCRIPTION_UPDATED = 'transcription-updated',
+  TRANSCRIPT_UPDATED = 'transcript-updated',
   DEBUG_LOG = 'debug-log',
   MESSAGE_RECEIPT_UPDATED = 'message-receipt-updated',
-  MESSAGE_ERROR = 'message-error'
+  MESSAGE_ERROR = 'message-error',
+  MESSAGE_SAL_STATUS = 'message-sal-status'
 }
 
 /**
@@ -289,7 +292,7 @@ export interface IConversationalAIAPIEventHandlers {
     agentUserId: string,
     error: TModuleError
   ) => void
-  [EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED]: (
+  [EConversationalAIAPIEvents.TRANSCRIPT_UPDATED]: (
     transcription: ITranscriptHelperItem<
       Partial<IUserTranscription | IAgentTranscription>
     >[]
@@ -307,6 +310,10 @@ export interface IConversationalAIAPIEventHandlers {
       message: string
       timestamp: number
     }
+  ) => void
+  [EConversationalAIAPIEvents.MESSAGE_SAL_STATUS]: (
+    agentUserId: string,
+    salStatus: IMessageSalStatus
   ) => void
 }
 
@@ -336,7 +343,8 @@ export interface IHelperRTCEvents {
     reason?: ConnectionDisconnectedReason
     channel: string
   }) => void
-  [ERTCEvents.AUDIO_METADATA]: (metadata: Uint8Array) => void
+  // [ERTCEvents.AUDIO_METADATA]: (metadata: Uint8Array) => void @deprecated
+  [ERTCEvents.AUDIO_PTS]: (pts: number) => void
   [ERTCEvents.STREAM_MESSAGE]: (uid: UID, stream: Uint8Array) => void
 }
 
@@ -613,4 +621,21 @@ export interface ILocalImageTranscription extends ILocalTranscriptionBase {
     height: number
   }
   image_url?: string
+}
+
+export enum EMessageSalStatus {
+  VP_DISABLED = 'VP_DISABLED',
+  VP_UNREGISTER = 'VP_UNREGISTER',
+  VP_REGISTERING = 'VP_REGISTERING',
+  VP_REGISTER_SUCCESS = 'VP_REGISTER_SUCCESS',
+  VP_REGISTER_FAIL = 'VP_REGISTER_FAIL',
+  VP_REGISTER_DUPLICATE = 'VP_REGISTER_DUPLICATE'
+}
+export interface IMessageSalStatus {
+  object: EMessageType.MESSAGE_SAL_STATUS // "message.sal_status"
+  status: EMessageSalStatus
+  timestamp: number
+  data_type: string
+  message_id: string
+  send_ts: number
 }

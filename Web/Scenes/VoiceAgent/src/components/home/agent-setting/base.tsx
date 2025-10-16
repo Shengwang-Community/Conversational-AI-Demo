@@ -1,8 +1,10 @@
 'use client'
 
 import { XIcon } from 'lucide-react'
+import { motion } from 'motion/react'
 import NextImage from 'next/image'
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 import type * as z from 'zod'
 import {
   Card,
@@ -40,6 +42,10 @@ export const InnerCard = (props: {
   )
 }
 
+export const EAgentGroupALL = {
+  ALL: 'all'
+}
+
 export const AgentAvatarField = (props: {
   items: z.infer<typeof agentPresetAvatarSchema>[]
   value?: z.infer<typeof agentPresetAvatarSchema>
@@ -47,27 +53,73 @@ export const AgentAvatarField = (props: {
   disabled?: boolean
 }) => {
   const { items, value, onChange, disabled } = props
+  const t = useTranslations('settings')
 
   const handleChange = (value?: z.infer<typeof agentPresetAvatarSchema>) => {
     onChange?.(value)
   }
 
+  const [tag, setTag] = useState<string>(EAgentGroupALL.ALL)
+
+  const groupKeys = Array.from(new Set(items.map((item) => item.vendor)))
+  const groups = [
+    {
+      key: EAgentGroupALL.ALL,
+      label: t('standard_avatar.tags.all'),
+      value: EAgentGroupALL.ALL,
+      count: items.length
+    }
+  ].concat(
+    groupKeys.map((key) => {
+      const item = items.find((item) => item.vendor === key)
+      const count = items.filter((item) => item.vendor === key).length
+      return {
+        key,
+        label: item!.display_vendor,
+        value: item!.vendor,
+        count
+      }
+    })
+  )
+
   return (
-    <div className='grid grid-cols-2 gap-1'>
-      <AgentAvatar
-        disabled={disabled}
-        checked={value === undefined}
-        onChange={handleChange}
-      />
-      {items.map((avatar) => (
+    <div className='space-y-3'>
+      <div className='grid grid-cols-3 gap-2.5'>
+        {groups.map((group) => (
+          <motion.div
+            onClick={() => setTag(group.key)}
+            className={cn(
+              'flex cursor-pointer items-center justify-center gap-1 rounded-md px-3 py-2',
+              tag === group.key
+                ? 'bg-brand-main font-semibold text-brand-white'
+                : 'bg-line-2 text-icontext'
+            )}
+            key={group.key}
+          >
+            {group.label} {group.count}
+          </motion.div>
+        ))}
+      </div>
+      <div className='grid grid-cols-2 gap-1'>
         <AgentAvatar
-          key={avatar.avatar_id}
-          data={avatar}
-          checked={value?.avatar_id === avatar.avatar_id}
-          onChange={handleChange}
           disabled={disabled}
+          checked={value === undefined}
+          onChange={handleChange}
         />
-      ))}
+        {items
+          .filter(
+            (avatar) => tag === EAgentGroupALL.ALL || avatar.vendor === tag
+          )
+          .map((avatar) => (
+            <AgentAvatar
+              key={avatar.avatar_id}
+              data={avatar}
+              checked={value?.avatar_id === avatar.avatar_id}
+              onChange={handleChange}
+              disabled={disabled}
+            />
+          ))}
+      </div>
     </div>
   )
 }
@@ -101,6 +153,7 @@ export const AgentAvatar = (props: {
           alt={data.avatar_name}
           height={750}
           width={700}
+          priority={true}
           className='h-full w-full object-cover'
         />
       ) : (
@@ -115,6 +168,13 @@ export const AgentAvatar = (props: {
         >
           <PresetAvatarCloseIcon className='size-6' />
           <p className='text-sm'>{t('standard_avatar.close')}</p>
+        </div>
+      )}
+      {data?.display_vendor && (
+        <div className='absolute top-1 right-1'>
+          <div className='rounded-sm bg-brand-white-1 p-1 font-medium text-brand-white-8 text-xs'>
+            {data.display_vendor}
+          </div>
         </div>
       )}
       <div className={cn('absolute bottom-0 left-0', 'w-full p-1')}>
@@ -165,29 +225,46 @@ export const AgentSettingsWrapper = (props: {
 
   const isMobile = useIsMobile()
   const t = useTranslations('settings')
-  const { showSidebar, setShowSidebar } = useGlobalStore()
-
+  const {
+    showSidebar,
+    setShowSidebar,
+    showSALSettingSidebar,
+    setShowSALSettingSidebar
+  } = useGlobalStore()
+  const defaultTitle = '' //t('title')
   if (isMobile) {
     return (
       <Drawer
         open={showSidebar}
-        onOpenChange={setShowSidebar}
+        onOpenChange={(showSidebar) => {
+          if (!showSidebar && showSALSettingSidebar) {
+            setShowSALSettingSidebar(false)
+            return
+          }
+          setShowSidebar(showSidebar)
+        }}
         // https://github.com/shadcn-ui/ui/issues/5260
         repositionInputs={false}
         // dismissible={false}
       >
         <DrawerContent>
           <DrawerHeader className='hidden'>
-            <DrawerTitle>{t('title')}</DrawerTitle>
+            <DrawerTitle>{defaultTitle}</DrawerTitle>
           </DrawerHeader>
           <div className='relative h-full max-h-[calc(80vh)] w-full overflow-y-auto'>
             <CardContent className='flex flex-col gap-3'>
               <CardTitle className='flex items-center justify-between'>
-                {title || t('title')}
+                {title || defaultTitle}
                 <CardAction
                   variant='ghost'
                   size='icon'
-                  onClick={() => setShowSidebar(false)}
+                  onClick={() => {
+                    if (showSALSettingSidebar) {
+                      setShowSALSettingSidebar(false)
+                      return
+                    }
+                    setShowSidebar(false)
+                  }}
                 >
                   <XIcon className='size-4' />
                 </CardAction>
@@ -203,7 +280,7 @@ export const AgentSettingsWrapper = (props: {
   return (
     <Card
       className={cn(
-        'overflow-hidden rounded-xl border transition-all duration-1000',
+        'overflow-hidden rounded-xl border transition-all duration-300',
         showSidebar
           ? 'w-(--ag-sidebar-width) opacity-100'
           : 'w-0 overflow-hidden opacity-0'
@@ -211,11 +288,102 @@ export const AgentSettingsWrapper = (props: {
     >
       <CardContent className='flex flex-col gap-3'>
         <CardTitle>
-          {title || t('title')}
+          {title || defaultTitle}
           <CardAction
             variant='ghost'
             size='icon'
-            onClick={() => setShowSidebar(false)}
+            onClick={() => {
+              console.log('showSALSettingSidebar', showSALSettingSidebar)
+              if (showSALSettingSidebar) {
+                setShowSALSettingSidebar(false)
+                return
+              }
+              setShowSidebar(false)
+            }}
+            className='ml-auto'
+          >
+            <XIcon className='size-4' />
+          </CardAction>
+        </CardTitle>
+        {children}
+      </CardContent>
+    </Card>
+  )
+}
+
+export const SALSettingsWrapper = (props: {
+  children?: React.ReactNode
+  onClose?: () => void
+  title?: string | React.ReactNode
+}) => {
+  const { children, title, onClose } = props
+  const { showSALSettingSidebar, setShowSALSettingSidebar } = useGlobalStore()
+
+  const isMobile = useIsMobile()
+  const t = useTranslations('settings')
+  const defaultTitle = t('advanced_features.enable_sal.title')
+
+  if (isMobile) {
+    return (
+      <Drawer
+        open={showSALSettingSidebar}
+        onOpenChange={setShowSALSettingSidebar}
+        // https://github.com/shadcn-ui/ui/issues/5260
+        repositionInputs={false}
+        // dismissible={false}
+      >
+        <DrawerContent>
+          <DrawerHeader className='hidden'>
+            <DrawerTitle>{defaultTitle}</DrawerTitle>
+          </DrawerHeader>
+          <div className='relative h-full max-h-[calc(80vh)] w-full overflow-y-auto'>
+            <CardContent className='flex flex-col gap-3'>
+              <CardTitle className='flex items-center justify-between'>
+                {title || defaultTitle}
+                <CardAction
+                  variant='ghost'
+                  size='icon'
+                  onClick={() => {
+                    if (onClose) {
+                      onClose?.()
+                      return
+                    }
+                    setShowSALSettingSidebar(false)
+                  }}
+                >
+                  <XIcon className='size-4' />
+                </CardAction>
+              </CardTitle>
+              {children}
+            </CardContent>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Card
+      className={cn(
+        'absolute top-0 w-(--ag-sidebar-width) overflow-hidden rounded-xl border transition-all duration-300',
+        showSALSettingSidebar
+          ? 'right-0 z-50 opacity-100'
+          : '-right-(--ag-sidebar-width) overflow-hidden opacity-0'
+      )}
+    >
+      <CardContent className='flex flex-col gap-3'>
+        <CardTitle>
+          {title || defaultTitle}
+          <CardAction
+            variant='ghost'
+            size='icon'
+            onClick={() => {
+              if (onClose) {
+                onClose?.()
+                return
+              }
+              setShowSALSettingSidebar(false)
+            }}
             className='ml-auto'
           >
             <XIcon className='size-4' />

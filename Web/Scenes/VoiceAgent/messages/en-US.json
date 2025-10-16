@@ -9,14 +9,14 @@
     "hiIN": "हिन्दी"
   },
   "metadata": {
-    "title": "Conversational AI Engine Demo",
+    "title": "Agora Convo AI",
     "description": "Chat with a sample AI voice agent and select different voices in a live demo of Agora's Conversational AI Engine."
   },
   "common": {
     "language": "Language"
   },
   "homePage": {
-    "title": "Conversational AI Engine"
+    "title": "Agora Convo AI"
   },
   "status": {
     "unknown": "Unknown",
@@ -39,14 +39,28 @@
       "bad": "Poor",
       "unknown": "Unknown"
     },
+    "salStatus": {
+      "off": "Disable",
+      "autoLearning": "Seamless Mode",
+      "manual": "Personalized Mode"
+    },
+    "vadStatus": {
+      "enable": "Enable",
+      "disable": "Disable"
+    },
     "channelInfo": "CHANNEL INFO",
     "agentStatus": "Agent Status",
     "roomStatus": "Room Status",
     "roomId": "Room ID",
     "yourId": "Your ID",
     "agentId": "Agent ID",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "serviceInfo": "Service Info",
+    "sal": "Voiceprint Lock",
+    "vad": "IIH",
+    "more": "More..."
   },
+  "aiGenerateInfo": "AI-generated content",
   "moreInfo": {
     "title": "More INFO",
     "moreAction": "More Actions"
@@ -54,7 +68,8 @@
   "settings": {
     "tab": {
       "agent": "Agent",
-      "settings": "Settings"
+      "settings": "Settings",
+      "user": "User Center"
     },
     "custom_agent": {
       "title": "Custom Agent",
@@ -91,7 +106,40 @@
       },
       "enable_aivad": {
         "title": "Intelligent Interruption Handling",
-        "description": "Intelligent interruption is Agora's advanced interruption feature, allowing the AI agent to temporarily pause its reasoning to perform other tasks, and then resume from where it left off before the interruption."
+        "description": "This feature makes AI better understand you and reduces false interruption."
+      },
+      "enable_sal": {
+        "title": "Voiceprint Lock",
+        "off": "Off",
+        "off_description": "Without this, the agent might be interrupted or distracted by other voices nearby.",
+        "autoLearning": "Seamless Mode",
+        "autoLearning_description": "AI automatically learns your voiceprint from your conversations with the agent and will ignore other people's voices.",
+        "manual": "Personalized Mode",
+        "manual_description": "Record a short voiceprint, and the agent will focus only on your voice.",
+        "has_voice_print": "Local Personalized Voiceprint",
+        "voice_print_time": "Voiceprint recorded at: {time}",
+        "create_sal_title": "Create my voiceprint",
+        "create_sal_button": "Create",
+        "recreate_sal_button": "Record again",
+        "record_title": "Please read this clearly and aloud.",
+        "hint": "You can only save one voiceprint. Recording a new one will replace the current one.",
+        "record_button": "Click to record",
+        "recording_time": "Sample text：{time}s / 10s",
+        "recording_warning": "Click to stop recording and upload, minimum 10s, maximum 20s",
+        "recording_tooltip": "Stop recording and upload",
+        "uploading_hint": "Uploading...",
+        "upload_succeed": "Upload succeed",
+        "upload_failed": "Upload failed, please try again",
+        "recording_warning_min": "That's a bit too short. Please record for at least 10 seconds.",
+        "recording_warning_max": "Recording finished",
+        "no_record_dialog_title": "No voiceprint recorded",
+        "no_record_dialog_description": "You'll need a voiceprint to use Personalized Mode. The app will switch back to [Previous Mode] when you exit.",
+        "no_record_dialog_button_cancel": "Cancel",
+        "no_record_dialog_button_confirm": "Confirm",
+        "record_dialog_title": "Voiceprint Recording Prompt",
+        "record_dialog_description": "Your voice is stored locally by default. Agora's voiceprint locking feature needs to collect your voice. After completing a single experience of this feature, the voiceprint will be deleted from the cloud, and your voice will never be used for commercial purposes. Please refer to the <link>Privacy Policy</link> for details.",
+        "record_dialog_button_cancel": "Cancel",
+        "record_dialog_button_confirm": "Confirm"
       }
     },
     "standard_avatar": {
@@ -103,10 +151,13 @@
         "confirm": "Confirm Change",
         "cancel": "Cancel",
         "do-not-ask-again": "Do not show again"
+      },
+      "tags": {
+        "all": "All"
       }
     },
     "transcription": {
-      "render-mode": "Subtitle Render Mode",
+      "render-mode": "Transcript",
       "word": {
         "title": "Word Mode",
         "description": "Word-by-word rendering, subtitles synchronized with speech"
@@ -129,12 +180,18 @@
     "greeting": {
       "hi": "",
       "greeting1": "Greetings, Human",
-      "greeting2": "Hey, I'm Conversational AI Engine.",
+      "greeting2": "Welcome to use Agora Convo AI Engine",
       "greeting3": "Have you ever questioned the nature of your reality?",
       "connecting": "I'm connecting...",
       "connected": "I've joined",
       "speakLoudly": "I'm ready to listen. Please speak clearly to start.",
       "failed": "Failed to join. Please try again."
+    },
+    "privacyDialog": {
+      "title": "Personal Data Protection Guide",
+      "description": "Welcome to the Agora Conversational AI Engine! By tapping \"Agree,\" you confirm you’ve read and accepted our <link>Terms of Services</link> and <policyLink>Privacy Policy</policyLink>. If you don't agree, some features of the app will be unavailable. This avatar is AI-generated.",
+      "cancel": "Disagree",
+      "confirm": "Agree"
     },
     "getStart": "Call AI Engine",
     "subtitle": "Subtitles",
@@ -169,7 +226,7 @@
   },
   "compatibility": {
     "errorTitle": "Compatibility Check",
-    "errorDescription": "Please check if your browser supports WebRTC",
+    "errorDescription": "Please check if your browser supports WebRTC and whether the microphone permission is enabled",
     "errorHelper": "We recommend using the latest version of your browser on the latest operating system",
     "errorButton": "I understand"
   },
@@ -189,7 +246,31 @@
     "copySuccess": "Copied successfully"
   },
   "userInfo": {
-    "logout": "Log Out"
+    "logout": "Log Out",
+    "user-center": "User Center",
+    "my-agent": "User Center",
+    "nickname": "Nickname",
+    "nickname-placeholder": "Please enter your nickname",
+    "gender": "Gender",
+    "birthday": "Birthday",
+    "bio": "Bio",
+    "bio-placeholder": "Please enter your bio, let AI agent know you better ❤️",
+    "call-you": "Call me:",
+    "mr": "Mr.",
+    "ms": "Ms.",
+    "deleteAccount": {
+      "button": "Delete Account",
+      "title": "Important Notice",
+      "description": "Once deleted, your account and all its data will be permanently erased and cannot be recovered. Please proceed with caution.",
+      "checkbox": "I understand the risks of deleting my account",
+      "uncheckWarning": "To continue, you must check the box to confirm you understand the risks.",
+      "confirm": "Confirm Deletion",
+      "cancel": "Cancel"
+    },
+    "privacy": {
+      "userAgreement": "User Agreement",
+      "privacyPolicy": "Privacy Policy"
+    }
   },
   "log": {
     "label": "Quick Report",

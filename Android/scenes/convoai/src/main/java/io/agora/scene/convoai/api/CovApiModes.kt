@@ -1,6 +1,9 @@
 package io.agora.scene.convoai.api
 
 import android.os.Parcelable
+import io.agora.scene.convoai.convoaiApi.MessageType
+import io.agora.scene.convoai.convoaiApi.MessageType.UNKNOWN
+import io.agora.scene.convoai.convoaiApi.MessageType.entries
 import kotlinx.parcelize.Parcelize
 
 data class CovAgentPreset(
@@ -81,4 +84,23 @@ data class CovSipCallee(
     val region_name: String, // CN、US
     val region_code: String, // 86、1
     val phone_number: String,
+    val region_full_name: String,
+    val flag_emoji: String
 ) : Parcelable
+
+enum class CallSipStatus {
+    START,
+    CALLING,
+    RINGING,
+    ANSWERED,
+    HANGUP,
+    ERROR,
+    UNKNOWN;
+
+    companion object {
+
+        fun fromValue(value: String): CallSipStatus {
+            return entries.find { it.name == value } ?: UNKNOWN
+        }
+    }
+}

@@ -12,7 +12,7 @@ import {
   InfoItemLabel,
   InfoLabel
 } from '@/components/card/info'
-import { MoreIcon } from '@/components/icon'
+import { MoreIcon, TriangleRightIcon } from '@/components/icon'
 import { RoomInfoBlock } from '@/components/layout/room-info'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -24,7 +24,8 @@ import {
   SheetTrigger
 } from '@/components/ui/sheet'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { useRTCStore, useUserInfoStore } from '@/store'
+import { useGlobalStore, useRTCStore, useUserInfoStore } from '@/store'
+import { SelectedTab, useAgentSettingsStore } from '@/store/agent'
 import { EUploadLogStatus } from '@/type/rtc'
 
 const UploadLogButtonDynamic = dynamic(
@@ -89,6 +90,8 @@ const MoreBlock = () => {
   const tUserInfo = useTranslations('userInfo')
   const { clearUserInfo } = useUserInfoStore()
   const { agent_id } = useRTCStore()
+  const { setShowSidebar } = useGlobalStore()
+  const { setSelectedTab } = useAgentSettingsStore()
 
   const handleLogout = () => {
     clearUserInfo()
@@ -103,6 +106,20 @@ const MoreBlock = () => {
           {agent_id && (
             <UploadLogButtonDynamic className='h-5 w-full justify-between border-none p-0' />
           )}
+        </InfoItem>
+        <Separator />
+        <InfoItem>
+          <Button
+            variant='ghost'
+            className='h-5 w-full justify-between border-none p-0'
+            onClick={() => {
+              setShowSidebar(true)
+              setSelectedTab(SelectedTab.USER)
+            }}
+          >
+            <InfoItemLabel>{tUserInfo('my-agent')}</InfoItemLabel>
+            <TriangleRightIcon className='size-4' />
+          </Button>
         </InfoItem>
         <Separator />
         <InfoItem>

@@ -1,4 +1,5 @@
 import type { UID } from 'agora-rtc-sdk-ng'
+
 import {
   EConversationalAIAPIEvents,
   ETranscriptHelperMode as EMessageServiceMode,
@@ -340,7 +341,7 @@ export class MessageServiceV2 extends MessageService {
   }
 
   public setPts(pts: number) {
-    if (this._pts < pts) {
+    if (this._pts < pts && pts !== 0) {
       this._pts = pts
     }
   }
@@ -1009,7 +1010,7 @@ export class LegacyMessageHelper extends EventHelper<{
     state: IMessageState['state']
   ) => void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED]: (history: any[]) => void
+  [EConversationalAIAPIEvents.TRANSCRIPT_UPDATED]: (history: any[]) => void
 }> {
   private static _instance: LegacyMessageHelper
   public messageService: MessageServiceV2
@@ -1032,7 +1033,7 @@ export class LegacyMessageHelper extends EventHelper<{
       },
       onChatHistoryUpdated: (chatHistory) => {
         console.debug(CONSOLE_LOG_PREFIX, 'onChatHistoryUpdated', chatHistory)
-        this.emit(EConversationalAIAPIEvents.TRANSCRIPTION_UPDATED, chatHistory)
+        this.emit(EConversationalAIAPIEvents.TRANSCRIPT_UPDATED, chatHistory)
       }
     })
   }
