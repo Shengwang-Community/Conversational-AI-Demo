@@ -26,16 +26,6 @@ extension CallOutSipViewController: ConversationalAIAPIEventHandler {
     
     public func onAgentStateChanged(agentUserId: String, event: StateChangeEvent) {
         addLog("<<< [onAgentStateChanged]: \(event.state)")
-        
-        if event.state != .idle {
-            callingContentView.tipsLabel.text = ResourceManager.L10n.Sip.sipOnCallTips
-        }
-        
-        if self.agentState != .idle {
-            return
-        }
-        
-        self.agentState = event.state
     }
     
     public func onAgentInterrupted(agentUserId: String, event: InterruptEvent) {
@@ -52,6 +42,12 @@ extension CallOutSipViewController: ConversationalAIAPIEventHandler {
     
     public func onTranscriptUpdated(agentUserId: String, transcript: Transcript) {
         addLog("<<< [onTranscriptUpdated]")
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            print("receive transcription: \(transcript.status)")
+            self.messageView.viewModel.realRenderMode = transcript.renderMode
+            self.messageView.viewModel.reduceStandardMessage(turnId: transcript.turnId, message: transcript.text, timestamp: 0, owner: transcript.type, isInterrupted: transcript.status == .interrupted, isFinal: transcript.status == .end)
+        }
     }
     
     public func onDebugLog(log: String) {

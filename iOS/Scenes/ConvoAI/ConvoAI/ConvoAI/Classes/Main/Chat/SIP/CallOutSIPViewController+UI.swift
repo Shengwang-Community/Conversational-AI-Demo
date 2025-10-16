@@ -17,8 +17,7 @@ extension CallOutSipViewController {
         navivationBar.transcriptionButton.addTarget(self, action: #selector(onClickTranscriptionButton(_:)), for: .touchUpInside)
 
         sipInputView.delegate = self
-        
-        [prepareCallContentView, callingContentView, messageMaskView, messageView].forEach { view.addSubview($0) }
+        [prepareCallContentView, callingContentView, transcriptView].forEach { view.insertSubview($0, belowSubview: navivationBar) }
     }
     
     func setupSIPConstraints() {
@@ -32,14 +31,9 @@ extension CallOutSipViewController {
             make.top.equalTo(self.navivationBar.snp.bottom)
         }
         
-        messageMaskView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()
-        }
-        
-        messageView.snp.makeConstraints { make in
+        transcriptView.snp.makeConstraints { make in
             make.top.equalTo(navivationBar.snp.bottom).offset(22)
-            make.left.right.equalTo(0)
-            make.bottom.equalTo(callingContentView.closeButton.snp.top).offset(-20)
+            make.left.right.bottom.equalTo(0)
         }
     }
     
@@ -166,8 +160,7 @@ extension CallOutSipViewController {
     func showPrepareCallView() {
         callingContentView.isHidden = true
         prepareCallContentView.isHidden = false
-        messageView.isHidden = true
-        messageMaskView.isHidden = true
+        transcriptView.isHidden = true
     }
     
     @objc func onClickTranscriptionButton(_ sender: UIButton) {
@@ -176,8 +169,8 @@ extension CallOutSipViewController {
     }
     
     func showTranscription(state: Bool) {
-        messageView.isHidden = !state
-        messageMaskView.isHidden = !state
+        transcriptView.isHidden = !state
+        callingContentView.isHidden = state
     }
 }
 

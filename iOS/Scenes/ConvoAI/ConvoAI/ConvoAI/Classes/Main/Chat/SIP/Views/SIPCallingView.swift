@@ -38,7 +38,7 @@ class SIPCallingView: UIView {
         let button = UIButton()
         button.setImage(UIImage.ag_named("ic_agent_close"), for: .normal)
         button.backgroundColor = UIColor.themColor(named: "ai_block1")
-        button.layer.cornerRadius = 76 / 2.0
+        button.layer.cornerRadius = 70 / 2.0
         return button
     }()
     
@@ -61,9 +61,9 @@ class SIPCallingView: UIView {
         addSubview(closeButton)
         
         closeButton.snp.makeConstraints { make in
-            make.bottom.equalTo(safeAreaLayoutGuide).offset(-67)
+            make.bottom.equalTo(safeAreaLayoutGuide).offset(-40)
             make.centerX.equalToSuperview()
-            make.width.height.equalTo(76)
+            make.width.height.equalTo(70)
         }
         
         tipsLabel.snp.makeConstraints { make in
