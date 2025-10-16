@@ -118,61 +118,22 @@ class CovLivingTopSipView @JvmOverloads constructor(
     }
 
     fun updateTitleWithAnimation(isTranscriptEnable: Boolean) {
-        val cvPresetName = binding.cvPresetName
-        val cvPhone = binding.cvPhone
-        cvPresetName.clearAnimation()
-        cvPhone.clearAnimation()
+        val viewFlipper = binding.viewFlipper
+        val targetIndex = if (isTranscriptEnable) 1 else 0 // 0: preset name, 1: phone
+
+        // Skip if already showing the target view
+        if (viewFlipper.displayedChild == targetIndex) {
+            return
+        }
+
+        // Use ViewFlipper's built-in animation methods
         if (isTranscriptEnable) {
-            if (cvPresetName.isVisible) {
-                cvPhone.isVisible = true
-
-                val outAnim = AnimationUtils.loadAnimation(context, R.anim.slide_up_out)
-                outAnim.setAnimationListener(object : Animation.AnimationListener {
-                    override fun onAnimationStart(animation: Animation?) {}
-                    override fun onAnimationRepeat(animation: Animation?) {}
-                    override fun onAnimationEnd(animation: Animation?) {
-                        if (isTranscriptEnable) {
-                            cvPresetName.isVisible = false
-                        }
-                    }
-                })
-
-                val inAnim = AnimationUtils.loadAnimation(context, R.anim.slide_up_in)
-
-                cvPresetName.startAnimation(outAnim)
-                cvPhone.startAnimation(inAnim)
-            } else {
-                cvPresetName.isVisible = false
-                cvPhone.isVisible = true
-            }
+            viewFlipper.showNext()
         } else {
-            if (cvPhone.isVisible) {
-                cvPresetName.isVisible = true
-
-                val outAnim = AnimationUtils.loadAnimation(context, R.anim.slide_down_out)
-                outAnim.setAnimationListener(object : Animation.AnimationListener {
-                    override fun onAnimationStart(animation: Animation?) {}
-                    override fun onAnimationRepeat(animation: Animation?) {}
-                    override fun onAnimationEnd(animation: Animation?) {
-                        if (!isTranscriptEnable) {
-                            cvPhone.isVisible = false
-                        }
-                    }
-                })
-
-                val inAnim = AnimationUtils.loadAnimation(
-                    context,
-                    R.anim.slide_down_in
-                )
-
-                cvPhone.startAnimation(outAnim)
-                cvPresetName.startAnimation(inAnim)
-            } else {
-                cvPhone.isVisible = false
-                cvPresetName.isVisible = true
-            }
+            viewFlipper.showPrevious()
         }
     }
+
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()

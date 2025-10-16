@@ -57,100 +57,105 @@
                 android:textSize="12sp" />
         </androidx.cardview.widget.CardView>
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cv_preset_name"
+        <ViewFlipper
+            android:id="@+id/viewFlipper"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:backgroundTint="@android:color/transparent"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
+            android:layout_height="wrap_content"
+            android:inAnimation="@anim/cov_flip_in"
+            android:outAnimation="@anim/cov_flip_out"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/layout_preset_name"
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cv_preset_name"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:background="@drawable/btn_bg_brand_white1_selector">
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:backgroundTint="@android:color/transparent"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
 
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/iv_preset"
-                    android:layout_width="20dp"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="6dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/cov_default_avatar"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintDimensionRatio="1:1"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:shapeAppearance="@style/CommonRoundShape" />
-
-                <TextView
-                    android:id="@+id/tv_preset_name"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/layout_preset_name"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="10dp"
-                    android:gravity="center"
-                    android:text="hello kitty"
-                    android:textColor="@color/ai_brand_white10"
-                    android:textSize="11sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/iv_preset" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-        </androidx.cardview.widget.CardView>
+                    android:background="@drawable/btn_bg_brand_white1_selector">
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cv_phone"
-            android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:backgroundTint="@android:color/transparent"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            android:visibility="gone"
-            tools:visibility="visible"
-            app:layout_constraintTop_toTopOf="parent">
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/iv_preset"
+                        android:layout_width="20dp"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="6dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/cov_default_avatar"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintDimensionRatio="1:1"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:shapeAppearance="@style/CommonRoundShape" />
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/layout_phone"
+                    <TextView
+                        android:id="@+id/tv_preset_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="10dp"
+                        android:gravity="center"
+                        android:text="hello kitty"
+                        android:textColor="@color/ai_brand_white10"
+                        android:textSize="11sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/iv_preset" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cv_phone"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:background="@drawable/btn_bg_brand_white1_selector">
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:backgroundTint="@android:color/transparent"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                tools:visibility="visible">
 
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/iv_phone"
-                    android:layout_width="20dp"
-                    android:layout_height="0dp"
-                    android:layout_marginStart="6dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/cov_default_avatar"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintDimensionRatio="1:1"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:shapeAppearance="@style/CommonRoundShape" />
-
-                <TextView
-                    android:id="@+id/tv_phone"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/layout_phone"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="10dp"
-                    android:gravity="center"
-                    android:text="123456"
-                    android:textColor="@color/ai_brand_white10"
-                    android:textSize="11sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/iv_phone" />
+                    android:background="@drawable/btn_bg_brand_white1_selector">
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
-        </androidx.cardview.widget.CardView>
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/iv_phone"
+                        android:layout_width="20dp"
+                        android:layout_height="0dp"
+                        android:layout_marginStart="6dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/cov_default_avatar"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintDimensionRatio="1:1"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:shapeAppearance="@style/CommonRoundShape" />
+
+                    <TextView
+                        android:id="@+id/tv_phone"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="10dp"
+                        android:gravity="center"
+                        android:text="123456"
+                        android:textColor="@color/ai_brand_white10"
+                        android:textSize="11sp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/iv_phone" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.cardview.widget.CardView>
+        </ViewFlipper>
 
         <ImageButton
             android:id="@+id/btn_settings"
