@@ -226,6 +226,17 @@ class CallOutSipViewController: SIPViewController {
         }
         stopTimer()
     }
+    
+    override func updateCharacterInformation() {
+        if let preset = AppContext.settingManager().preset {
+            navivationBar.updateCharacterInformation(
+                icon: preset.avatarUrl.stringValue(),
+                defaultIcon: preset.defaultAvatar ?? "",
+                name: preset.displayName.stringValue(),
+                subtitle: phoneNumber
+            )
+        }
+    }
 }
 
 // MARK: - AgentCallGradientButton
