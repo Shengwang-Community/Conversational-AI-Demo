@@ -14,10 +14,11 @@ extension CallOutSipViewController {
     func setupSIPViews() {
         navivationBar.settingButton.isHidden = false
         navivationBar.settingButton.addTarget(self, action: #selector(onClickSettingButton), for: .touchUpInside)
+        navivationBar.transcriptionButton.addTarget(self, action: #selector(onClickTranscriptionButton(_:)), for: .touchUpInside)
 
         sipInputView.delegate = self
         
-        [prepareCallContentView, callingContentView].forEach { view.addSubview($0) }
+        [prepareCallContentView, callingContentView, messageMaskView, messageView].forEach { view.addSubview($0) }
     }
     
     func setupSIPConstraints() {
@@ -29,6 +30,16 @@ extension CallOutSipViewController {
         callingContentView.snp.makeConstraints { make in
             make.left.right.bottom.equalTo(0)
             make.top.equalTo(self.navivationBar.snp.bottom)
+        }
+        
+        messageMaskView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+        
+        messageView.snp.makeConstraints { make in
+            make.top.equalTo(navivationBar.snp.bottom).offset(22)
+            make.left.right.equalTo(0)
+            make.bottom.equalTo(callingContentView.closeButton.snp.top).offset(-20)
         }
     }
     
@@ -110,8 +121,6 @@ extension CallOutSipViewController {
                 }
                 try await startRequest()
                 await MainActor.run {
-                    //TODO: prepare to ping ncs state
-                    prepareToFetchSIPState()
                     AppContext.stateManager().updateRoomId(channelName)
                     AppContext.stateManager().updateUserId(uid)
                     startTimer()
@@ -152,6 +161,18 @@ extension CallOutSipViewController {
     func showPrepareCallView() {
         callingContentView.isHidden = true
         prepareCallContentView.isHidden = false
+        messageView.isHidden = true
+        messageMaskView.isHidden = true
+    }
+    
+    @objc func onClickTranscriptionButton(_ sender: UIButton) {
+        sender.isSelected = !sender.isSelected
+        showTranscription(state: sender.isSelected)
+    }
+    
+    func showTranscription(state: Bool) {
+        messageView.isHidden = !state
+        messageMaskView.isHidden = !state
     }
 }
 
@@ -171,5 +192,13 @@ extension CallOutSipViewController: SIPInputViewDelegate {
         SIPAreaCodeViewController.show(from: self) { [weak self] region in
             self?.sipInputView.setSelectedRegionConfig(region)
         }
+    }
+}
+
+// MARK: - ChatViewDelegate
+extension CallOutSipViewController: ChatViewDelegate {
+    func resendImage(image: UIImage, uuid: String) {
+        // TODO: Implement image resend logic if needed
+        addLog("Resend image with uuid: \(uuid)")
     }
 }

@@ -88,6 +88,20 @@ class CallOutSipViewController: SIPViewController {
         view.closeButton.addTarget(self, action: #selector(closeConnect), for: .touchUpInside)
         return view
     }()
+    
+    internal lazy var messageView: ChatView = {
+        let view = ChatView()
+        view.isHidden = true
+        view.delegate = self
+        return view
+    }()
+    
+    internal lazy var messageMaskView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.themColor(named: "ai_mask1")
+        view.isHidden = true
+        return view
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
