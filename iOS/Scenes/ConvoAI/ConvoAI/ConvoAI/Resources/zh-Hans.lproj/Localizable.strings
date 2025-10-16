@@ -311,7 +311,7 @@
 "agent.sip.calling.tips" = "电话拨打中，请在您的电话上接听...";
 "agent.sip.on.call.tips" = "通话进行中...";
 "agent.sip.end.call.tips" = "通话已结束，请挂断电话";
-"agent.sip.input.placeholder" = "请输入你的手机号/固定电话";
+"agent.sip.input.placeholder" = "输入电话号码";
 "agent.sip.phone.invalid" = "请输入有效的手机号/固定电话号码";
 "agent.sip.callout" = "呼叫";
 "agent.sip.call.alert.title" = "呼叫提示";

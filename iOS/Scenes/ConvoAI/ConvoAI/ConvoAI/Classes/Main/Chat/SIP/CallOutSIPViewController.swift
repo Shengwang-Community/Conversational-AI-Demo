@@ -34,7 +34,7 @@ class CallOutSipViewController: SIPViewController {
     }()
     
     // MARK: - UI Components
-    internal let sipInputView = SIPInputView()
+    internal let sipInputView = SIPInputView.init(style: AppContext.shared.isGlobal ? .global : .inland)
     
     internal lazy var callButton: AgentCallGradientButton = {
         let button = AgentCallGradientButton()

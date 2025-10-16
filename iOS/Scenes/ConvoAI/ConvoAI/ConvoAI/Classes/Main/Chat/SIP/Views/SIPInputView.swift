@@ -3,23 +3,14 @@
 //  ConvoAI
 //
 //  Created by qinhui on 2025/9/22.
-//
-//  Usage Examples:
-//  - With country selection: SIPInputView.withCountrySelection()
-//  - Fixed country: SIPInputView.withFixedCountry(regionName: "CN")
-//  - No country code: SIPInputView.withoutCountryCode()
-//  - Show error: inputView.showErrorWith(str: "Invalid phone number")
-//  - Reset state: inputView.resetState()
-//
 
 import UIKit
 import Common
 
 // MARK: - Input Style Configuration
 enum SIPInputStyle {
-    case withCountrySelection    // Show country code selection button
-    case fixedCountry(RegionConfig)  // Fixed country code, no selection
-    case noCountryCode          // No country code, just phone number input
+    case global
+    case inland
 }
 
 // MARK: - Input State Configuration
@@ -107,38 +98,16 @@ class SIPInputView: UIView {
     }()
     
     // MARK: - Initialization
-    init(style: SIPInputStyle = .withCountrySelection) {
+    init(style: SIPInputStyle = .global) {
         self.inputStyle = style
         super.init(frame: .zero)
-        setupInitialRegion()
-        setupUI()
-    }
-    
-    override init(frame: CGRect) {
-        self.inputStyle = .withCountrySelection
-        super.init(frame: frame)
-        setupInitialRegion()
         setupUI()
     }
     
     required init?(coder: NSCoder) {
-        self.inputStyle = .withCountrySelection
+        self.inputStyle = .global
         super.init(coder: coder)
-        setupInitialRegion()
         setupUI()
-    }
-    
-    // MARK: - Private Setup
-    private func setupInitialRegion() {
-        switch inputStyle {
-        case .withCountrySelection:
-            // Default to China if available
-            selectedRegion = RegionConfigManager.shared.getRegionConfigByName("CN")
-        case .fixedCountry(let config):
-            selectedRegion = config
-        case .noCountryCode:
-            selectedRegion = nil
-        }
     }
     
     // MARK: - Setup
@@ -150,11 +119,14 @@ class SIPInputView: UIView {
         numContainerView.addSubview(phoneTextField)
         
         // Add country button only if needed
-        if shouldShowCountryButton {
+        if inputStyle == .global {
+            phoneTextField.textAlignment = .left
             numContainerView.addSubview(countryButton)
             countryButton.addSubview(flagEmojiLabel)
             countryButton.addSubview(countryCodeLabel)
             countryButton.addSubview(dropdownIcon)
+        } else {
+            phoneTextField.textAlignment = .center
         }
         
         setupConstraints()
@@ -163,9 +135,9 @@ class SIPInputView: UIView {
     
     private var shouldShowCountryButton: Bool {
         switch inputStyle {
-        case .withCountrySelection, .fixedCountry:
+        case .global:
             return true
-        case .noCountryCode:
+        case .inland:
             return false
         }
     }
@@ -233,20 +205,16 @@ class SIPInputView: UIView {
         
         // Update dropdown icon visibility based on style
         switch inputStyle {
-        case .withCountrySelection:
-            dropdownIcon.isHidden = false
+        case .global:
             countryButton.isUserInteractionEnabled = true
-        case .fixedCountry:
-            dropdownIcon.isHidden = true
+        case .inland:
             countryButton.isUserInteractionEnabled = false
-        case .noCountryCode:
-            break // Should not reach here
         }
     }
     
     @objc private func countryButtonTapped() {
         // Only allow tapping if country selection is enabled
-        if case .withCountrySelection = inputStyle {
+        if case .global = inputStyle {
             delegate?.sipInputViewDidTapCountryButton(self)
         }
     }
@@ -271,7 +239,7 @@ class SIPInputView: UIView {
     
     func setSelectedRegionConfig(_ config: RegionConfig) {
         // Only allow setting region if country selection is enabled
-        if case .withCountrySelection = inputStyle {
+        if case .global = inputStyle {
             selectedRegion = config
             updateCountryButton()
         }
@@ -325,32 +293,6 @@ class SIPInputView: UIView {
             numContainerView.layer.borderColor = UIColor.themColor(named: "ai_red6").cgColor
             phoneTextField.textColor = UIColor.themColor(named: "ai_red6")
         }
-    }
-}
-
-// MARK: - Convenience Factory Methods
-extension SIPInputView {
-    /// Create input view with country selection enabled
-    static func withCountrySelection() -> SIPInputView {
-        return SIPInputView(style: .withCountrySelection)
-    }
-    
-    /// Create input view with fixed country code
-    static func withFixedCountry(_ regionConfig: RegionConfig) -> SIPInputView {
-        return SIPInputView(style: .fixedCountry(regionConfig))
-    }
-    
-    /// Create input view without country code selection
-    static func withoutCountryCode() -> SIPInputView {
-        return SIPInputView(style: .noCountryCode)
-    }
-    
-    /// Create input view with fixed country by region name
-    static func withFixedCountry(regionName: String) -> SIPInputView? {
-        guard let regionConfig = RegionConfigManager.shared.getRegionConfigByName(regionName) else {
-            return nil
-        }
-        return SIPInputView(style: .fixedCountry(regionConfig))
     }
 }
 
