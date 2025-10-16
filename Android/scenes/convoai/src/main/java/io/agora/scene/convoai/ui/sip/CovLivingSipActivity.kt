@@ -109,7 +109,18 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
             }
 
             clTop.setOnCCClickListener {
-                viewModel.toggleMessageList()
+                // delay 500ms
+                val isShow = viewModel.isShowMessageList.value
+                if (isShow){
+                    viewModel.toggleMessageList()
+                    outBoundCallView.toggleTranscriptUpdate(false)
+                }else{
+                    outBoundCallView.toggleTranscriptUpdate(true)
+                    lifecycleScope.launch {
+                        delay(500L)
+                        viewModel.toggleMessageList()
+                    }
+                }
             }
 
             clTop.setOnBackClickListener {
@@ -158,12 +169,7 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
         lifecycleScope.launch {    // Observe message list display state
             viewModel.isShowMessageList.collect { isShow ->
                 mBinding?.apply {
-                    if (isShow) {
-                        layoutMessage.isVisible = true
-                        messageListViewV2.isVisible = true
-                    } else {
-                        layoutMessage.isVisible = false
-                    }
+                    layoutMessage.isVisible = isShow
                     clTop.updateTitleWithAnimation(isShow)
                 }
             }
@@ -187,12 +193,13 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
 
     private fun onClickStartAgent(phoneNumber: String) {
         // Delegate to ViewModel for processing
+        mBinding?.messageListViewV2?.clearMessages()
         viewModel.startAgentConnection(phoneNumber)
         mBinding?.clTop?.updatePhoneNumber(phoneNumber)
-        mBinding?.clTop?.updatePhoneNumber("")
     }
 
     private fun onClickEndCall() {
+        mBinding?.messageListViewV2?.clearMessages()
         viewModel.stopAgentAndLeaveChannel()
     }
 
