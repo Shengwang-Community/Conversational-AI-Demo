@@ -62,8 +62,6 @@
 
     <color name="ai_block1_50">#80acacef</color>
     <color name="ai_brand_white1_50">#80ffffff</color>
-    <color name="ai_brand_main6_30">#4D446cff</color>
-    <color name="ai_brand_main6_15">#26446cff</color>
 
     <array name="gradient_border_default_colors">
         <item>#FF00C2FF</item>

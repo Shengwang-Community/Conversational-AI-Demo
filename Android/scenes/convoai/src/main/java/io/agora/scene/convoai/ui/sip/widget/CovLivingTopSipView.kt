@@ -9,6 +9,7 @@ import android.view.animation.AnimationUtils
 import androidx.annotation.DrawableRes
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
+import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.databinding.CovActivityLivingTopSipBinding
@@ -37,9 +38,12 @@ class CovLivingTopSipView @JvmOverloads constructor(
     init {
         binding.btnBack.setOnClickListener { onbackClick?.invoke() }
         binding.btnSettings.setOnClickListener { onSettingsClick?.invoke() }
-        binding.tvCc.setOnClickListener {
-            onCCClick?.invoke()
-        }
+
+        binding.tvCc.setOnClickListener(object : OnFastClickListener(delay = 500L) {
+            override fun onClickJacking(view: View) {
+                onCCClick?.invoke()
+            }
+        })
     }
 
     val settingIcon: View get() = binding.btnSettings

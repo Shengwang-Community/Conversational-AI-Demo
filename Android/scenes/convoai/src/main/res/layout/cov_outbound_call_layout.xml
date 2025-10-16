@@ -12,7 +12,8 @@
         android:id="@+id/layout_not_join"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="gone">
 
         <TextView
             android:id="@+id/tv_error_hint"
@@ -125,43 +126,38 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="visible">
 
         <LinearLayout
             android:id="@+id/layout_calling_number"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="40dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            app:layout_constraintBottom_toTopOf="@+id/tv_calling"
+            android:layout_marginBottom="72dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/cv_end_call"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 
             <io.agora.scene.convoai.ui.sip.widget.ShimmerTextView
                 android:id="@+id/tv_calling_number"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_height="72dp"
+                android:gravity="center"
                 android:textColor="@color/ai_icontext1"
                 android:textSize="24sp"
                 android:textStyle="bold"
                 tools:text="+91-22-47790159" />
-        </LinearLayout>
 
-        <TextView
-            android:id="@+id/tv_calling"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginBottom="30dp"
-            android:layout_weight="1"
-            android:text="@string/cov_sip_outbound_calling"
-            android:textColor="@color/ai_icontext2"
-            android:textSize="12sp"
-            app:layout_constraintBottom_toTopOf="@+id/cv_end_call"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            <TextView
+                android:id="@+id/tv_calling"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cov_sip_outbound_calling"
+                android:textColor="@color/ai_icontext1"
+                android:textSize="12sp" />
+        </LinearLayout>
 
         <androidx.cardview.widget.CardView
             android:id="@+id/cv_end_call"

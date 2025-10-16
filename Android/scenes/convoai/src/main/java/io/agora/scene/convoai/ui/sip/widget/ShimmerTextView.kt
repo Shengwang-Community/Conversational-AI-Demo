@@ -51,9 +51,9 @@ class ShimmerTextView @JvmOverloads constructor(
             intArrayOf(
                 ContextCompat.getColor(context, R.color.ai_icontext3), // Base color
                 ContextCompat.getColor(context, R.color.ai_icontext3), // Base color
-                ContextCompat.getColor(context, R.color.ai_brand_main6_15), // Soft highlight start
-                ContextCompat.getColor(context, R.color.ai_brand_main6_30), // Peak highlight
-                ContextCompat.getColor(context, R.color.ai_brand_main6_15), // Soft highlight end
+                ContextCompat.getColor(context, R.color.ai_icontext1), // Soft highlight start
+                ContextCompat.getColor(context, R.color.ai_icontext1), // Peak highlight
+                ContextCompat.getColor(context, R.color.ai_icontext1), // Soft highlight end
                 ContextCompat.getColor(context, R.color.ai_icontext3), // Base color
                 ContextCompat.getColor(context, R.color.ai_icontext3), // Base color
             ),
@@ -76,7 +76,7 @@ class ShimmerTextView @JvmOverloads constructor(
 
         // Create new animation that moves from left to right
         translateXAnimator = ValueAnimator.ofFloat(0f, width.toFloat()).apply {
-            duration = (1000 + spread * 50).toLong() // Slower base duration with less text length impact
+            duration = (500 + spread * 50).toLong() // Slower base duration with less text length impact
             repeatCount = ValueAnimator.INFINITE
             repeatMode = ValueAnimator.RESTART
             interpolator = android.view.animation.LinearInterpolator() // Ensure smooth continuous motion
