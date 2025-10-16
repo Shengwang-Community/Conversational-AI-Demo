@@ -153,6 +153,7 @@ extension CallOutSipViewController {
     func showCallingView() {
         callingContentView.isHidden = false
         prepareCallContentView.isHidden = true
+        transcriptView.isHidden = true
         callingContentView.phoneNumberLabel.text = phoneNumber
         callingContentView.startShimmer()
     }

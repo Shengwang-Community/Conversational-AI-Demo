@@ -25,6 +25,7 @@ extension CallOutSipViewController {
                 self.navivationBar.style = .idle
                 self.callingContentView.tipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips
                 stopTimer()
+                showCallingView()
             case .none: break
                 
             }
