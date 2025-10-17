@@ -73,6 +73,9 @@ object ServerConfig {
         private set
 
     @JvmStatic
+    val serviceVersion = "v5"
+
+    @JvmStatic
     var rtcAppId: String = ""
         private set
 

@@ -14,7 +14,8 @@ import org.json.JSONObject
 object ApiReport {
 
     const val SCENE_ID = "ConvoAI_Android"
-    private val REPORT_URL: String get() = "${ServerConfig.toolBoxUrl}/convoai/v4/events/report"
+
+    private val REPORT_URL: String get() = "${ServerConfig.toolBoxUrl}/convoai/${ServerConfig.serviceVersion}/events/report"
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val okHttpClient by lazy {

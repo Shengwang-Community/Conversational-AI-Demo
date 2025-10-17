@@ -298,12 +298,10 @@ class CovLivingSipViewModel : ViewModel() {
                                 _callState.value = CallState.IDLE
                             }
                         }
-
-                        CovLogger.d(TAG, "Ping successful for callStatus: $callStatus")
                     }
                 }
 
-                delay(2000) // 2 seconds interval
+                delay(1000) // 1 seconds interval
             }
         }
     }
