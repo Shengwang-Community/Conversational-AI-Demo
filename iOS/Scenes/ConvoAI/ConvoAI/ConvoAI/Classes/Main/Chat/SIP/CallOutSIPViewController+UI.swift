@@ -153,9 +153,9 @@ extension CallOutSipViewController {
             
         }
         stopTimer()
-        navivationBar.style = .idle
         AppContext.stateManager().resetToDefaults()
         sideNavigationBar.stop()
+        navivationBar.style = .idle
     }
     
     @objc func onClickSettingButton() {

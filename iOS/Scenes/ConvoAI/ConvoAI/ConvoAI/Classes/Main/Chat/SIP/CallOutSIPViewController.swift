@@ -205,7 +205,7 @@ class CallOutSipViewController: SIPViewController {
     }
     
     func sipTimeout() {
-        SVProgressHUD.showInfo(withStatus: "time out ")
+        SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Join.joinTimeoutTips)
         closeConnect()
     }
     
