@@ -15,7 +15,7 @@ class SIPViewController: BaseViewController, AgoraRtcEngineDelegate {
         view.settingButton.isHidden = true
         view.wifiInfoButton.isHidden = true
         view.transcriptionButton.isHidden = true
-        view.closeButton.addTarget(self, action: #selector(onCloseButton), for: .touchUpInside)
+        view.closeButton.addTarget(self, action: #selector(onNavigatBarCloseButtonAction), for: .touchUpInside)
 
         return view
     }()
@@ -133,7 +133,7 @@ class SIPViewController: BaseViewController, AgoraRtcEngineDelegate {
         }
     }
     
-    @objc func onCloseButton() {
+    @objc func onNavigatBarCloseButtonAction() {
         self.navigationController?.popViewController(animated: true)
     }
 }

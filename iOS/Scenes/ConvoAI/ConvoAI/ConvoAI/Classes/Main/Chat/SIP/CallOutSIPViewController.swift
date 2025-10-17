@@ -217,8 +217,8 @@ class CallOutSipViewController: SIPViewController {
         timer = nil
     }
     
-    override func onCloseButton() {
-        super.onCloseButton()
+    override func onNavigatBarCloseButtonAction() {
+        super.onNavigatBarCloseButtonAction()
         channelName = ""
         agentUid = 0
         convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
