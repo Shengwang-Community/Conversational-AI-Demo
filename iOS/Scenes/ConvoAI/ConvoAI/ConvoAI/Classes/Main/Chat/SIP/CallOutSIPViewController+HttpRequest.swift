@@ -21,11 +21,17 @@ extension CallOutSipViewController {
             case .answered:
                 self.callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipOnCallTips
                 self.navivationBar.style = .active
+                sideNavigationBar.isHidden = false
+                if let preset = AppContext.settingManager().preset {
+                    let duration = preset.callTimeLimitSecond.intValue()
+                    sideNavigationBar.showTips(seconds: duration, forever: true)
+                }
             case .hangup, .error:
                 self.navivationBar.style = .idle
                 self.callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips
                 stopTimer()
                 showCallingView()
+                AppContext.stateManager().resetToDefaults()
             case .none: break
                 
             }

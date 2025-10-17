@@ -97,6 +97,12 @@ class CallOutSipViewController: SIPViewController {
         return button
     }()
     
+    internal lazy var sideNavigationBar: SideNavigationBar = {
+        let view = SideNavigationBar()        
+        view.isHidden = true
+        return view
+    }()
+    
     internal lazy var messageView: ChatView = {
         let view = ChatView()
         return view

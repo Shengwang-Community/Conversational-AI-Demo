@@ -61,7 +61,7 @@ class SIPCallingView: UIView {
         phoneNumberLabel.snp.makeConstraints { make in
             make.right.left.equalTo(tipsLabel)
             make.height.equalTo(32)
-            make.bottom.equalTo(tipsLabel.snp.top).offset(-48)
+            make.bottom.equalTo(tipsLabel.snp.top).offset(-28)
         }
         
         setupShimmerEffect()

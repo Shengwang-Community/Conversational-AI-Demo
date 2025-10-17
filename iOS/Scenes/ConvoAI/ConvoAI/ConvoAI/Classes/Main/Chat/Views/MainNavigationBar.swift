@@ -110,11 +110,6 @@ class MainNavigationBar: UIView {
         return button
     }()
     
-    var showTipsTimer: Timer?
-    private var isShowTips: Bool = false
-    
-    private var isAnimationInprogerss = false
-    
     // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)

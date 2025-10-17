@@ -17,7 +17,7 @@ extension CallOutSipViewController {
         navivationBar.transcriptionButton.addTarget(self, action: #selector(onClickTranscriptionButton(_:)), for: .touchUpInside)
 
         sipInputView.delegate = self
-        [prepareCallContentView, callingView, transcriptView, closeButton].forEach { view.insertSubview($0, belowSubview: navivationBar) }
+        [prepareCallContentView, callingView, transcriptView, closeButton, sideNavigationBar].forEach { view.insertSubview($0, belowSubview: navivationBar) }
     }
     
     func setupSIPConstraints() {
@@ -40,6 +40,12 @@ extension CallOutSipViewController {
             make.bottom.equalTo(-40)
             make.centerX.equalToSuperview()
             make.width.height.equalTo(70)
+        }
+        
+        sideNavigationBar.snp.makeConstraints { make in
+            make.left.right.equalToSuperview()
+            make.height.equalTo(32)
+            make.top.equalTo(navivationBar.snp.bottom)
         }
     }
     
@@ -148,6 +154,7 @@ extension CallOutSipViewController {
         stopTimer()
         navivationBar.style = .idle
         AppContext.stateManager().resetToDefaults()
+        sideNavigationBar.stop()
     }
     
     @objc func onClickSettingButton() {
@@ -161,15 +168,17 @@ extension CallOutSipViewController {
     }
     
     func showCallingView() {
+        sideNavigationBar.isHidden = false
         callingView.isHidden = false
+        showTranscription(state: false)
         prepareCallContentView.isHidden = true
-        transcriptView.isHidden = true
         closeButton.isHidden = false
         callingView.phoneNumberLabel.text = phoneNumber
         callingView.startShimmer()
     }
     
     func showPrepareCallView() {
+        sideNavigationBar.isHidden = true
         callingView.reset()
         callingView.isHidden = true
         prepareCallContentView.isHidden = false
