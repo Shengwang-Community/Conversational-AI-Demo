@@ -80,7 +80,15 @@ class SIPInputView: UIView {
         let textField = UITextField()
         textField.font = UIFont.systemFont(ofSize: 18, weight: .medium)
         textField.textColor = UIColor.themColor(named: "ai_icontext1")
-        textField.placeholder = ResourceManager.L10n.Sip.sipInputPlaceholder
+        let placeholderText = ResourceManager.L10n.Sip.sipInputPlaceholder
+        let attributedPlaceholder = NSAttributedString(
+            string: placeholderText,
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 14),
+                .foregroundColor: UIColor.themColor(named: "ai_icontext3")
+            ]
+        )
+        textField.attributedPlaceholder = attributedPlaceholder
         textField.keyboardType = .phonePad
         textField.delegate = self
         textField.clearButtonMode = .whileEditing

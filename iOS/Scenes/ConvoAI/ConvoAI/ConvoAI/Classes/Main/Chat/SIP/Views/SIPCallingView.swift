@@ -34,13 +34,6 @@ class SIPCallingView: UIView {
         return label
     }()
     
-    lazy var closeButton: UIButton = {
-        let button = UIButton()
-        button.setImage(UIImage.ag_named("ic_agent_close"), for: .normal)
-        button.backgroundColor = UIColor.themColor(named: "ai_block1")
-        button.layer.cornerRadius = 70 / 2.0
-        return button
-    }()
     
     // MARK: - Initialization
     
@@ -58,16 +51,9 @@ class SIPCallingView: UIView {
     private func setupUI() {
         addSubview(phoneNumberLabel)
         addSubview(tipsLabel)
-        addSubview(closeButton)
-        
-        closeButton.snp.makeConstraints { make in
-            make.bottom.equalTo(safeAreaLayoutGuide).offset(-40)
-            make.centerX.equalToSuperview()
-            make.width.height.equalTo(70)
-        }
         
         tipsLabel.snp.makeConstraints { make in
-            make.bottom.equalTo(closeButton.snp.top).offset(-31)
+            make.bottom.equalTo(safeAreaLayoutGuide).offset(-170)
             make.left.equalTo(18)
             make.right.equalTo(-18)
         }

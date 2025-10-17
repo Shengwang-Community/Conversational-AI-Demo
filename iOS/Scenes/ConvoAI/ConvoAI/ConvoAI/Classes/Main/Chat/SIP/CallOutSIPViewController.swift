@@ -85,8 +85,16 @@ class CallOutSipViewController: SIPViewController {
 
     internal lazy var callingContentView: SIPCallingView = {
         let view = SIPCallingView()
-        view.closeButton.addTarget(self, action: #selector(closeConnect), for: .touchUpInside)
         return view
+    }()
+    
+    internal lazy var closeButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage.ag_named("ic_agent_close"), for: .normal)
+        button.backgroundColor = UIColor.themColor(named: "ai_block1")
+        button.layer.cornerRadius = 70 / 2.0
+        button.addTarget(self, action: #selector(closeConnect), for: .touchUpInside)
+        return button
     }()
     
     internal lazy var messageView: ChatView = {

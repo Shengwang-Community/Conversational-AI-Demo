@@ -389,6 +389,7 @@ class PhoneNumberCell: UITableViewCell {
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupSelectionStyle()
     }
     
     required init?(coder: NSCoder) {
@@ -410,7 +411,6 @@ class PhoneNumberCell: UITableViewCell {
     
     private func setupGlobalUI() {
         backgroundColor = .clear
-        selectionStyle = .none
         
         // Add all subviews
         contentView.addSubview(flagEmojiLabel)
@@ -444,7 +444,6 @@ class PhoneNumberCell: UITableViewCell {
     
     private func setupInlandUI() {
         backgroundColor = .clear
-        selectionStyle = .none
         
         // Add all subviews
         contentView.addSubview(phoneImageView)
@@ -471,6 +470,57 @@ class PhoneNumberCell: UITableViewCell {
             make.left.equalTo(phoneNumberLabel.snp.right).offset(4)
             make.centerY.equalToSuperview()
             make.width.height.equalTo(16)
+        }
+    }
+    
+    // MARK: - Selection Style Setup
+    
+    private lazy var highlightView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.themColor(named: "ai_click_app")
+        view.layer.cornerRadius = 8
+        view.isHidden = true
+        return view
+    }()
+    
+    private func setupSelectionStyle() {
+        // Add highlight view to contentView
+        contentView.insertSubview(highlightView, at: 0)
+        highlightView.snp.makeConstraints { make in
+            make.edges.equalToSuperview().inset(4)
+        }
+        
+        // Set selection style to none since we're using custom highlight
+        selectionStyle = .none
+    }
+    
+    override func setSelected(_ selected: Bool, animated: Bool) {
+        super.setSelected(selected, animated: animated)
+        
+        // Show/hide highlight view with animation
+        if animated {
+            UIView.animate(withDuration: 0.2) {
+                self.highlightView.isHidden = !selected
+                self.highlightView.alpha = selected ? 1.0 : 0.0
+            }
+        } else {
+            highlightView.isHidden = !selected
+            highlightView.alpha = selected ? 1.0 : 0.0
+        }
+    }
+    
+    override func setHighlighted(_ highlighted: Bool, animated: Bool) {
+        super.setHighlighted(highlighted, animated: animated)
+        
+        // Show/hide highlight view with animation
+        if animated {
+            UIView.animate(withDuration: 0.1) {
+                self.highlightView.isHidden = !highlighted
+                self.highlightView.alpha = highlighted ? 1.0 : 0.0
+            }
+        } else {
+            highlightView.isHidden = !highlighted
+            highlightView.alpha = highlighted ? 1.0 : 0.0
         }
     }
 }
