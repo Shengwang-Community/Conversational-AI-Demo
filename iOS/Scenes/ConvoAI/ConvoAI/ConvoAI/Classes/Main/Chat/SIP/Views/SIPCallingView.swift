@@ -168,5 +168,15 @@ class SIPCallingView: UIView {
             completion?()
         }
     }
+    
+    /// Reset view state after animateOut
+    func reset() {
+        phoneNumberLabel.isHidden = false
+        tipsLabel.isHidden = false
+        phoneNumberLabel.alpha = 1
+        tipsLabel.alpha = 1
+        phoneNumberLabel.transform = .identity
+        tipsLabel.transform = .identity
+    }
 }
 

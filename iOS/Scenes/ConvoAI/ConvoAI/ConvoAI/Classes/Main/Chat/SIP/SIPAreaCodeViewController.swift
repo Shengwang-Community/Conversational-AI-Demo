@@ -88,18 +88,6 @@ class SIPAreaCodeViewController: UIViewController {
         return searchBar
     }()
     
-    private lazy var searchButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle(ResourceManager.L10n.Sip.areaCodeSearchButton, for: .normal)
-        button.setTitleColor(UIColor.themColor(named: "ai_brand_white10"), for: .normal)
-        button.setBackgroundColor(color: UIColor.themColor(named: "ai_brand_main6"), forState: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 12)
-        button.layer.cornerRadius = 8
-        button.layer.masksToBounds = true
-        button.addTarget(self, action: #selector(searchButtonTapped), for: .touchUpInside)
-        return button
-    }()
-    
     private lazy var tableView: UITableView = {
         let table = UITableView(frame: .zero, style: .plain)
         table.backgroundColor = .clear
@@ -152,7 +140,6 @@ class SIPAreaCodeViewController: UIViewController {
         containerView.addSubview(closeButton)
         containerView.addSubview(searchContainerView)
         searchContainerView.addSubview(searchBar)
-        searchContainerView.addSubview(searchButton)
         containerView.addSubview(tableView)
         containerView.addSubview(emptyStateView)
     }
@@ -186,14 +173,6 @@ class SIPAreaCodeViewController: UIViewController {
         searchBar.snp.makeConstraints { make in
             make.top.bottom.equalToSuperview()
             make.left.equalToSuperview()
-        }
-        
-        searchButton.snp.makeConstraints { make in
-            make.left.equalTo(searchBar.snp.right).offset(8)
-            make.right.equalTo(-3)
-            make.centerY.equalToSuperview()
-            make.width.equalTo(56)
-            make.height.equalTo(30)
         }
         
         tableView.snp.makeConstraints { make in
@@ -264,10 +243,6 @@ class SIPAreaCodeViewController: UIViewController {
     
     @objc private func closeButtonTapped() {
         animateContainerViewOut()
-    }
-    
-    @objc private func searchButtonTapped() {
-        searchBar.resignFirstResponder()
     }
     
     private func loadRegions() {
@@ -437,13 +412,13 @@ class AreaCodeCell: UITableViewCell {
         // Apply highlighting to region name and code
         if !searchText.isEmpty {
             regionNameLabel.attributedText = highlightText(
-                region.regionName, 
+                region.regionName,
                 searchText: searchText,
                 defaultColor: UIColor.themColor(named: "ai_icontext1"),
                 font: UIFont.systemFont(ofSize: 16, weight: .medium)
             )
             regionCodeLabel.attributedText = highlightText(
-                region.regionCode, 
+                region.regionCode,
                 searchText: searchText,
                 defaultColor: UIColor.themColor(named: "ai_icontext2"),
                 font: UIFont.systemFont(ofSize: 16)
@@ -470,8 +445,8 @@ class AreaCodeCell: UITableViewCell {
         var searchRange = lowercasedText.startIndex..<lowercasedText.endIndex
         while let range = lowercasedText.range(of: lowercasedSearchText, range: searchRange) {
             let nsRange = NSRange(range, in: text)
-            attributedString.addAttribute(.foregroundColor, 
-                                         value: UIColor.themColor(named: "ai_brand_main6"), 
+            attributedString.addAttribute(.foregroundColor,
+                                         value: UIColor.themColor(named: "ai_brand_main6"),
                                          range: nsRange)
             searchRange = range.upperBound..<lowercasedText.endIndex
         }

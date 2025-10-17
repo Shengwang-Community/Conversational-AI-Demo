@@ -83,7 +83,7 @@ class CallOutSipViewController: SIPViewController {
         return view
     }()
 
-    internal lazy var callingContentView: SIPCallingView = {
+    internal lazy var callingView: SIPCallingView = {
         let view = SIPCallingView()
         return view
     }()
@@ -182,7 +182,7 @@ class CallOutSipViewController: SIPViewController {
         var timeout = self.timeout
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { [weak self] timer in
             guard let self = self else { return }
-            if timeout <= 0, self.callingContentView.tipsLabel.text == ResourceManager.L10n.Sip.sipCallingTips {
+            if timeout <= 0, self.callingView.tipsLabel.text == ResourceManager.L10n.Sip.sipCallingTips {
                 sipTimeout()
                 self.stopTimer()
                 return

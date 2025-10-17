@@ -17,13 +17,13 @@ extension CallOutSipViewController {
             switch result.state {
             case .start, .calling, .ringing:
                 self.navivationBar.style = .idle
-                self.callingContentView.tipsLabel.text = ResourceManager.L10n.Sip.sipCallingTips
+                self.callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipCallingTips
             case .answered:
-                self.callingContentView.tipsLabel.text = ResourceManager.L10n.Sip.sipOnCallTips
+                self.callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipOnCallTips
                 self.navivationBar.style = .active
             case .hangup, .error:
                 self.navivationBar.style = .idle
-                self.callingContentView.tipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips
+                self.callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips
                 stopTimer()
                 showCallingView()
             case .none: break
@@ -34,7 +34,7 @@ extension CallOutSipViewController {
     }
     
     func startRequest() async throws {
-        callingContentView.tipsLabel.text = ResourceManager.L10n.Sip.sipCallingTips
+        callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipCallingTips
         updateCharacterInformation()
         return try await withCheckedThrowingContinuation { continuation in
             let parameter: [String: Any?] = [

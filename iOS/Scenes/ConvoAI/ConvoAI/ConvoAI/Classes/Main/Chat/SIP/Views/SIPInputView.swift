@@ -22,6 +22,7 @@ enum SIPInputState {
 protocol SIPInputViewDelegate: AnyObject {
     func sipInputView(_ inputView: SIPInputView, didChangePhoneNumber phoneNumber: String, dialCode: String?)
     func sipInputViewDidTapCountryButton(_ inputView: SIPInputView)
+    func sipInputViewDidClickReturn(_ inputView: SIPInputView)
 }
 
 class SIPInputView: UIView {
@@ -92,6 +93,7 @@ class SIPInputView: UIView {
         textField.keyboardType = .phonePad
         textField.delegate = self
         textField.clearButtonMode = .whileEditing
+        textField.returnKeyType = .send
         return textField
     }()
     
@@ -325,9 +327,14 @@ extension SIPInputView: UITextFieldDelegate {
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        // Auto-reset error state when user starts editing
         if currentState == .error {
             resetState()
         }
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        delegate?.sipInputViewDidClickReturn(self)
+        return true
     }
 }

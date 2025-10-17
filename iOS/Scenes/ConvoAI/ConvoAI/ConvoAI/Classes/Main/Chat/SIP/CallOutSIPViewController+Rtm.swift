@@ -77,7 +77,7 @@ extension CallOutSipViewController: RTMManagerDelegate {
     
     func remoteLeave() {
         addLog("<<< remoteLeave")
-        callingContentView.tipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips
+        callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips
         AppContext.stateManager().updateAgentState(.disconnected)
     }
     

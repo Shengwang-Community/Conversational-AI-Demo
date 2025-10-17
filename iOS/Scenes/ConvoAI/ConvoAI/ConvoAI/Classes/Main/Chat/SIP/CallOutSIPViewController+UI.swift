@@ -17,7 +17,7 @@ extension CallOutSipViewController {
         navivationBar.transcriptionButton.addTarget(self, action: #selector(onClickTranscriptionButton(_:)), for: .touchUpInside)
 
         sipInputView.delegate = self
-        [prepareCallContentView, callingContentView, transcriptView, closeButton].forEach { view.insertSubview($0, belowSubview: navivationBar) }
+        [prepareCallContentView, callingView, transcriptView, closeButton].forEach { view.insertSubview($0, belowSubview: navivationBar) }
     }
     
     func setupSIPConstraints() {
@@ -26,7 +26,7 @@ extension CallOutSipViewController {
             make.top.equalTo(self.navivationBar.snp.bottom)
         }
         
-        callingContentView.snp.makeConstraints { make in
+        callingView.snp.makeConstraints { make in
             make.left.right.bottom.equalTo(0)
             make.top.equalTo(self.navivationBar.snp.bottom)
         }
@@ -161,16 +161,17 @@ extension CallOutSipViewController {
     }
     
     func showCallingView() {
-        callingContentView.isHidden = false
+        callingView.isHidden = false
         prepareCallContentView.isHidden = true
         transcriptView.isHidden = true
         closeButton.isHidden = false
-        callingContentView.phoneNumberLabel.text = phoneNumber
-        callingContentView.startShimmer()
+        callingView.phoneNumberLabel.text = phoneNumber
+        callingView.startShimmer()
     }
     
     func showPrepareCallView() {
-        callingContentView.isHidden = true
+        callingView.reset()
+        callingView.isHidden = true
         prepareCallContentView.isHidden = false
         transcriptView.isHidden = true
         closeButton.isHidden = true
@@ -185,13 +186,11 @@ extension CallOutSipViewController {
         if state {
             transcriptView.isHidden = false
             navivationBar.characterInfo.showSubtitleLabel(animated: true)
-            callingContentView.animateOut()
-            // Keep closeButton visible during transcription
+            callingView.animateOut()
         } else {
             transcriptView.isHidden = true
             navivationBar.characterInfo.showNameLabel(animated: true)
-            callingContentView.animateIn()
-            // Keep closeButton visible when returning to calling view
+            callingView.animateIn()
         }
     }
 }
@@ -212,6 +211,10 @@ extension CallOutSipViewController: SIPInputViewDelegate {
         SIPAreaCodeViewController.show(from: self) { [weak self] region in
             self?.sipInputView.setSelectedRegionConfig(region)
         }
+    }
+    
+    func sipInputViewDidClickReturn(_ inputView: SIPInputView) {
+        startCall()
     }
 }
 
