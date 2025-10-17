@@ -17,7 +17,7 @@ extension CallOutSipViewController {
         navivationBar.transcriptionButton.addTarget(self, action: #selector(onClickTranscriptionButton(_:)), for: .touchUpInside)
 
         sipInputView.delegate = self
-        [prepareCallContentView, callingContentView, transcriptView].forEach { view.insertSubview($0, belowSubview: navivationBar) }
+        [prepareCallContentView, transcriptView, callingContentView].forEach { view.insertSubview($0, belowSubview: navivationBar) }
     }
     
     func setupSIPConstraints() {
@@ -171,32 +171,13 @@ extension CallOutSipViewController {
     
     func showTranscription(state: Bool) {
         if state {
-            // Show transcript view
             transcriptView.isHidden = false
             navivationBar.characterInfo.showSubtitleLabel(animated: true)
-            
-            // Animate calling view out
-            UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseIn]) {
-                self.callingContentView.alpha = 0
-                self.callingContentView.transform = CGAffineTransform(translationX: 0, y: 50)
-            } completion: { _ in
-                self.callingContentView.isHidden = true
-                self.callingContentView.transform = .identity
-            }
+            callingContentView.animateOut()
         } else {
-            // Hide transcript view
             transcriptView.isHidden = true
             navivationBar.characterInfo.showNameLabel(animated: true)
-            
-            // Show calling view with animation
-            callingContentView.isHidden = false
-            callingContentView.alpha = 0
-            callingContentView.transform = CGAffineTransform(translationX: 0, y: 50)
-            
-            UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseOut]) {
-                self.callingContentView.alpha = 1
-                self.callingContentView.transform = .identity
-            }
+            callingContentView.animateIn()
         }
     }
 }
