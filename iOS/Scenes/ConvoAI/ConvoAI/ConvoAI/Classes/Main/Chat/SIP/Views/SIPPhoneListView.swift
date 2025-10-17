@@ -8,6 +8,12 @@
 import UIKit
 import Common
 
+// MARK: - Phone List Style Configuration
+enum SIPPhoneListStyle {
+    case global
+    case inland
+}
+
 // MARK: - Phone Number Model
 struct PhoneNumber {
     let regionName: String
@@ -29,14 +35,17 @@ class SIPPhoneListView: UIView {
     // MARK: - Delegate
     weak var delegate: SIPPhoneListViewDelegate?
     
+    // MARK: - Properties
+    private let listStyle: SIPPhoneListStyle
+    
     private lazy var singleItemView: SinglePhoneNumberView = {
-        let view = SinglePhoneNumberView()
+        let view = SinglePhoneNumberView(style: listStyle)
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(singleItemViewTapped))
         view.addGestureRecognizer(tapGesture)
         view.isUserInteractionEnabled = true
         return view
     }()
-
+    
     private lazy var tableView: UITableView = {
         let table = UITableView()
         table.delegate = self
@@ -57,16 +66,19 @@ class SIPPhoneListView: UIView {
     }()
     
     private var phoneNumbers: [PhoneNumber] = []
-
+    
     private var isExpanded = false
     private let kItemHeight: CGFloat = 44.0
     
-    override init(frame: CGRect) {
-        super.init(frame: frame)
+    // MARK: - Initialization
+    init(style: SIPPhoneListStyle = .global) {
+        self.listStyle = style
+        super.init(frame: .zero)
         setupUI()
     }
     
     required init?(coder: NSCoder) {
+        self.listStyle = .global
         super.init(coder: coder)
         setupUI()
     }
@@ -112,7 +124,7 @@ class SIPPhoneListView: UIView {
         isExpanded = !isExpanded
         updateViewExpand()
     }
-
+    
     @objc private func singleItemViewTapped() {
         guard !phoneNumbers.isEmpty else { return }
         let phoneNumber = phoneNumbers[0]
@@ -123,7 +135,7 @@ class SIPPhoneListView: UIView {
         let count = phoneNumbers.count
         let buttonHeight = 30
         let maxVisibleItems = 6
-
+        
         expandButton.isHidden = true
         singleItemView.isHidden = true
         tableView.isHidden = true
@@ -175,9 +187,20 @@ extension SIPPhoneListView: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "PhoneNumberCell", for: indexPath) as! PhoneNumberCell
         let phoneNumber = phoneNumbers[indexPath.row]
-        cell.flagEmojiLabel.text = phoneNumber.flagEmoji ?? "🏳️"
-        cell.countryCodeLabel.text = phoneNumber.regionName
-        cell.phoneNumberLabel.text = phoneNumber.displayNumber
+        
+        // Configure cell with style
+        cell.configure(with: listStyle)
+        
+        // Set data based on style
+        switch listStyle {
+        case .global:
+            cell.flagEmojiLabel.text = phoneNumber.flagEmoji ?? "🏳️"
+            cell.countryCodeLabel.text = phoneNumber.regionName
+            cell.phoneNumberLabel.text = phoneNumber.displayNumber
+        case .inland:
+            cell.phoneNumberLabel.text = phoneNumber.displayNumber
+        }
+        
         return cell
     }
 }
@@ -198,6 +221,8 @@ extension SIPPhoneListView: UITableViewDelegate {
 // MARK: - Single Phone Number View
 class SinglePhoneNumberView: UIView {
     
+    // MARK: - Properties
+    private let viewStyle: SIPPhoneListStyle
     private var dashedBorderLayer: CAShapeLayer?
     
     private lazy var flagEmojiLabel: UILabel = {
@@ -215,12 +240,15 @@ class SinglePhoneNumberView: UIView {
         return label
     }()
     
-    override init(frame: CGRect) {
-        super.init(frame: frame)
+    // MARK: - Initialization
+    init(style: SIPPhoneListStyle = .global) {
+        self.viewStyle = style
+        super.init(frame: .zero)
         setupUI()
     }
     
     required init?(coder: NSCoder) {
+        self.viewStyle = .global
         super.init(coder: coder)
         setupUI()
     }
@@ -231,16 +259,23 @@ class SinglePhoneNumberView: UIView {
         // Setup dashed border
         setupDashedBorder()
         
-        addSubview(flagEmojiLabel)
         addSubview(phoneNumberLabel)
         
-        flagEmojiLabel.snp.makeConstraints { make in
-            make.left.top.bottom.equalToSuperview()
-        }
-        
-        phoneNumberLabel.snp.makeConstraints { make in
-            make.left.equalTo(flagEmojiLabel.snp.right).offset(8)
-            make.right.top.bottom.equalToSuperview()
+        // Add flag emoji label only for global style
+        if viewStyle == .global {
+            addSubview(flagEmojiLabel)
+            flagEmojiLabel.snp.makeConstraints { make in
+                make.left.top.bottom.equalToSuperview()
+            }
+            phoneNumberLabel.snp.makeConstraints { make in
+                make.left.equalTo(flagEmojiLabel.snp.right).offset(8)
+                make.right.top.bottom.equalToSuperview()
+            }
+        } else {
+            // For inland style, phone number takes full width
+            phoneNumberLabel.snp.makeConstraints { make in
+                make.left.right.top.bottom.equalToSuperview()
+            }
         }
     }
     
@@ -261,7 +296,10 @@ class SinglePhoneNumberView: UIView {
     }
     
     func configure(with phoneNumber: PhoneNumber) {
-        flagEmojiLabel.text = phoneNumber.flagEmoji ?? ""
+        // Handle flag emoji based on style
+        if viewStyle == .global {
+            flagEmojiLabel.text = phoneNumber.flagEmoji ?? ""
+        }
         setupGradientText(phoneNumber.displayNumber)
     }
     
@@ -315,12 +353,14 @@ class SinglePhoneNumberView: UIView {
 // MARK: - Phone Number Cell
 class PhoneNumberCell: UITableViewCell {
     
+    // MARK: - Properties
+    private var cellStyle: SIPPhoneListStyle?
+    
     lazy var flagEmojiLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 20)
         label.textAlignment = .center
         label.backgroundColor = UIColor.clear
-        label.isHidden = false
         return label
     }()
     
@@ -339,7 +379,7 @@ class PhoneNumberCell: UITableViewCell {
         label.textAlignment = .left
         return label
     }()
-
+    
     lazy var phoneImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage.ag_named("ic_sip_list_phone")
@@ -349,18 +389,32 @@ class PhoneNumberCell: UITableViewCell {
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupUI()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private func setupUI() {
+    // MARK: - Configuration
+    func configure(with style: SIPPhoneListStyle) {
+        if cellStyle != style {
+            self.cellStyle = style
+            switch style {
+            case .global:
+                setupGlobalUI()
+            case .inland:
+                setupInlandUI()
+            }
+        }
+    }
+    
+    private func setupGlobalUI() {
         backgroundColor = .clear
         selectionStyle = .none
         
+        // Add all subviews
         contentView.addSubview(flagEmojiLabel)
+        contentView.addSubview(countryCodeLabel)
         contentView.addSubview(phoneImageView)
         contentView.addSubview(phoneNumberLabel)
         
@@ -370,6 +424,11 @@ class PhoneNumberCell: UITableViewCell {
             make.width.equalTo(24)
         }
         
+        countryCodeLabel.snp.makeConstraints { make in
+            make.left.equalTo(flagEmojiLabel.snp.right).offset(8)
+            make.centerY.equalToSuperview()
+        }
+        
         phoneImageView.snp.makeConstraints { make in
             make.right.equalTo(-16)
             make.centerY.equalToSuperview()
@@ -377,9 +436,41 @@ class PhoneNumberCell: UITableViewCell {
         }
         
         phoneNumberLabel.snp.makeConstraints { make in
-            make.left.equalTo(flagEmojiLabel.snp.right).offset(8)
+            make.left.equalTo(countryCodeLabel.snp.right).offset(8)
             make.right.equalTo(phoneImageView.snp.left).offset(-8)
             make.centerY.equalToSuperview()
+        }
+    }
+    
+    private func setupInlandUI() {
+        backgroundColor = .clear
+        selectionStyle = .none
+        
+        // Add all subviews
+        contentView.addSubview(phoneImageView)
+        contentView.addSubview(phoneNumberLabel)
+        
+        // Create a container view for centering
+        let containerView = UIView()
+        containerView.backgroundColor = .clear
+        contentView.addSubview(containerView)
+        
+        containerView.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+            make.height.equalToSuperview()
+        }
+        
+        containerView.addSubview(phoneNumberLabel)
+        containerView.addSubview(phoneImageView)
+        phoneNumberLabel.snp.makeConstraints { make in
+            make.left.equalToSuperview()
+            make.centerY.equalToSuperview()
+        }
+        phoneImageView.snp.makeConstraints { make in
+            make.right.equalToSuperview()
+            make.left.equalTo(phoneNumberLabel.snp.right).offset(4)
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(16)
         }
     }
 }

@@ -11,7 +11,7 @@ import SnapKit
 
 class CallInSIPViewController: SIPViewController {
     
-    private let phoneListView = SIPPhoneListView()
+    private let phoneListView = SIPPhoneListView(style: AppContext.shared.isGlobal ? .global : .inland)
     private lazy var tipsLabel: UILabel = {
         let label = UILabel()
         label.text = ResourceManager.L10n.Sip.sipCallInTips
