@@ -136,7 +136,11 @@ extension CallOutSipViewController {
     
     @objc func closeConnect() {
         showPrepareCallView()
-        logoutRTM()
+        convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
+            
+        }
+        stopTimer()
+        navivationBar.style = .idle
         AppContext.stateManager().resetToDefaults()
     }
     

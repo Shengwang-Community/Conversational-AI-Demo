@@ -207,7 +207,9 @@ class CallOutSipViewController: SIPViewController {
         convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
             
         }
+        logoutRTM()
         stopTimer()
+        AppContext.stateManager().resetToDefaults()
     }
     
     override func updateCharacterInformation() {
