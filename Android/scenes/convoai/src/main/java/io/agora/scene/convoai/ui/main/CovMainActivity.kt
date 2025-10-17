@@ -66,8 +66,7 @@ class CovMainActivity : DebugSupportActivity<CovActivityMainBinding>() {
 
                     is LoginState.LoggedOut -> {
                         CovRtmManager.logout()
-                        startActivity(Intent(this@CovMainActivity, CovLoginActivity::class.java))
-                        finish()
+                        navigateToLogin()
                     }
 
                     LoginState.Loading -> {
@@ -193,7 +192,14 @@ class CovMainActivity : DebugSupportActivity<CovActivityMainBinding>() {
     }
 
     override fun handleEnvironmentChange() {
-        startActivity(Intent(this@CovMainActivity, CovLoginActivity::class.java))
+        navigateToLogin()
+    }
+
+    private fun navigateToLogin() {
+        SSOUserManager.logout()
+        val intent = Intent(this, CovLoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
         finish()
     }
 }

@@ -147,5 +147,40 @@ class SIPCallingView: UIView {
     func stopShimmer() {
         gradientLayer?.removeAnimation(forKey: "shimmer")
     }
+    
+    /// Animate view out (for transcription view)
+    func animateOut(completion: (() -> Void)? = nil) {
+        UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseIn]) {
+            self.phoneNumberLabel.alpha = 0
+            self.phoneNumberLabel.transform = CGAffineTransform(translationX: 0, y: 50)
+            self.tipsLabel.alpha = 0
+            self.tipsLabel.transform = CGAffineTransform(translationX: 0, y: 50)
+        } completion: { _ in
+            self.phoneNumberLabel.isHidden = true
+            self.tipsLabel.isHidden = true
+            self.phoneNumberLabel.transform = .identity
+            self.tipsLabel.transform = .identity
+            completion?()
+        }
+    }
+    
+    /// Animate view in (from transcription view)
+    func animateIn(completion: (() -> Void)? = nil) {
+        phoneNumberLabel.isHidden = false
+        tipsLabel.isHidden = false
+        phoneNumberLabel.alpha = 0
+        tipsLabel.alpha = 0
+        phoneNumberLabel.transform = CGAffineTransform(translationX: 0, y: 50)
+        tipsLabel.transform = CGAffineTransform(translationX: 0, y: 50)
+        
+        UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseOut]) {
+            self.phoneNumberLabel.alpha = 1
+            self.phoneNumberLabel.transform = .identity
+            self.tipsLabel.alpha = 1
+            self.tipsLabel.transform = .identity
+        } completion: { _ in
+            completion?()
+        }
+    }
 }
 

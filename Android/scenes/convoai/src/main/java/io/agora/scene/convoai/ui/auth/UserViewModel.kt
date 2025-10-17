@@ -68,8 +68,7 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         ApiManager.setOnUnauthorizedCallback {
-            SSOUserManager.logout()
-            _loginState.value = LoginState.LoggedOut
+            logout()
             ToastUtil.show(R.string.common_login_expired)
         }
     }
@@ -100,8 +99,7 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
                 SSOUserManager.saveUser(user)
                 _loginState.value = LoginState.Success(user)
             }.onFailure { exception ->
-                SSOUserManager.logout()
-                _loginState.value = LoginState.LoggedOut
+                logout()
             }
         }
     }

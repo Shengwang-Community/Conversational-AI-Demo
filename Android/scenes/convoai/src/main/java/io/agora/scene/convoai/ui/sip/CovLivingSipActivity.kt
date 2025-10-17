@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.debugMode.DebugSupportActivity
 import io.agora.scene.common.debugMode.DebugTabDialog
 import io.agora.scene.common.util.dp
@@ -23,8 +24,6 @@ import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.rtm.CovRtmManager
 import io.agora.scene.convoai.databinding.CovActivityLivingSipBinding
 import io.agora.scene.convoai.ui.auth.CovLoginActivity
-import io.agora.scene.convoai.ui.auth.LoginState
-import io.agora.scene.convoai.ui.auth.UserViewModel
 import io.agora.scene.convoai.ui.living.settings.CovAgentTabDialog
 import io.agora.scene.convoai.ui.sip.widget.CovSipOutBoundCallView
 import kotlinx.coroutines.delay
@@ -36,7 +35,6 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
 
     // ViewModel instances
     private val viewModel: CovLivingSipViewModel by viewModels()
-    private val userViewModel: UserViewModel by viewModels()
 
     private var appTabDialog: CovAgentTabDialog? = null
 
@@ -132,23 +130,6 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
 
     // Observe ViewModel state changes
     private fun observeViewModelStates() {
-        lifecycleScope.launch {
-            userViewModel.loginState.collect { state ->
-                when (state) {
-                    is LoginState.Success -> {
-                    }
-
-                    is LoginState.Loading -> {
-                    }
-
-                    is LoginState.LoggedOut -> {
-                        viewModel.stopAgentAndLeaveChannel()
-                        CovRtmManager.logout()
-                    }
-                }
-            }
-        }
-
         lifecycleScope.launch {   // Observe connection state
             viewModel.callState.collect { state ->
                 mBinding?.outBoundCallView?.setCallState(state)
@@ -277,12 +258,12 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
     override fun handleEnvironmentChange() {
         // Clean up current session and navigate to login
         viewModel.stopAgentAndLeaveChannel()
-        userViewModel.logout()
         release()
         navigateToLogin()
     }
 
     private fun navigateToLogin() {
+        SSOUserManager.logout()
         val intent = Intent(this, CovLoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
