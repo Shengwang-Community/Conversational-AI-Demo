@@ -27,9 +27,7 @@ extension CallOutSipViewController {
                 }
             case .hangup, .error:
                 self.callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips
-                stopTimer()
-                showCallingView()
-                AppContext.stateManager().resetToDefaults()
+                dealServiceHangupAndErrorState()
             case .none: break
                 
             }
