@@ -141,6 +141,7 @@ extension CallOutSipViewController {
                 } else {
                     SVProgressHUD.showError(withStatus: error.localizedDescription)
                 }
+                closeConnect()
             }
         }
         
@@ -167,8 +168,17 @@ extension CallOutSipViewController {
         present(navigationController, animated: false)
     }
     
+    func dealServiceHangupAndErrorState() {
+        stopTimer()
+        showCallingView()
+        AppContext.stateManager().resetToDefaults()
+        convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
+        }
+    }
+    
     func showCallingView() {
         sideNavigationBar.isHidden = false
+        navivationBar.style = .active
         callingView.isHidden = false
         showTranscription(state: false)
         prepareCallContentView.isHidden = true
@@ -179,6 +189,7 @@ extension CallOutSipViewController {
     
     func showPrepareCallView() {
         sideNavigationBar.isHidden = true
+        navivationBar.style = .idle
         callingView.reset()
         callingView.isHidden = true
         prepareCallContentView.isHidden = false

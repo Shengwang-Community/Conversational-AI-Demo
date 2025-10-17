@@ -13,10 +13,9 @@ extension CallOutSipViewController {
         agentManager.fetchSIPState(appId: AppContext.shared.appId, agentId: self.remoteAgentId) {[weak self] error
             , response in
             guard let result = response, let self = self else { return }
-            
+
             switch result.state {
             case .start, .calling, .ringing:
-                self.navivationBar.style = .idle
                 self.callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipCallingTips
             case .answered:
                 self.callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipOnCallTips
@@ -27,7 +26,6 @@ extension CallOutSipViewController {
                     sideNavigationBar.showTips(seconds: duration, forever: true)
                 }
             case .hangup, .error:
-                self.navivationBar.style = .idle
                 self.callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips
                 stopTimer()
                 showCallingView()
