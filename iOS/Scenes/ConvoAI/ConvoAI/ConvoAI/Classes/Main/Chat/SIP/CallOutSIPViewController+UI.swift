@@ -136,8 +136,7 @@ extension CallOutSipViewController {
             } catch {
                 addLog("Failed to start call: \(error)")
                 if let convoError = error as? ConvoAIError, convoError.code == 1439 {
-                    //TODO: Replace the text to chinese
-                    SVProgressHUD.showError(withStatus: "The daily call limit of 20 times has been exceeded.")
+                    SVProgressHUD.showError(withStatus: ResourceManager.L10n.Sip.callLimitExceeded)
                 } else {
                     SVProgressHUD.showError(withStatus: error.localizedDescription)
                 }

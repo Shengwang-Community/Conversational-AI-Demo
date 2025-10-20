@@ -41,15 +41,10 @@ class LoginViewController: UIViewController {
     }()
     
     private lazy var phoneLoginButton: UIButton = {
-        let button = UIButton(type: .custom)
+        let button = LoginGradientButton()
         button.setTitle(ResourceManager.L10n.Login.buttonTitle, for: .normal)
         button.setImage(UIImage.ag_named("ic_agent_join_button_icon"), for: .normal)
-        button.setTitleColor(UIColor.themColor(named: "ai_brand_white10"), for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 18)
-        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 10)
-        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 0)
         button.addTarget(self, action: #selector(onClickLogin), for: .touchUpInside)
-        button.setBackgroundImage(UIImage.ag_named("btn_gradient_borderd"), for: .normal)
         return button
     }()
     
@@ -285,22 +280,76 @@ class LoginViewController: UIViewController {
     }
     
     @objc private func termsButtonTapped() {
-        let vc = TermsServiceWebViewController()
+        let vc = BaseWebViewController()
         vc.url = AppContext.shared.termsOfServiceUrl
-        let termsServiceVC = UINavigationController(rootViewController: vc)
-        termsServiceVC.modalPresentationStyle = .fullScreen
-        self.present(termsServiceVC, animated: true)
+        self.navigationController?.pushViewController(vc, animated: true)
     }
     
     @objc private func privacyPolicyTapped() {
-        let vc = TermsServiceWebViewController()
+        let vc = BaseWebViewController()
         vc.url = AppContext.shared.privacyUrl
-        let termsServiceVC = UINavigationController(rootViewController: vc)
-        termsServiceVC.modalPresentationStyle = .fullScreen
-        self.present(termsServiceVC, animated: true)
+        self.navigationController?.pushViewController(vc, animated: true)
     }
     
     @objc func onClickDevTouch() {
         DeveloperConfig.shared.countTouch()
+    }
+}
+
+// MARK: - AgentCallGradientButton
+fileprivate class LoginGradientButton: UIButton {
+    
+    private var gradientLayer: CAGradientLayer?
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupButton()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupButton()
+    }
+    
+    private func setupButton() {
+        layer.cornerRadius = 15
+        layer.masksToBounds = true
+        setTitleColor(UIColor.themColor(named: "ai_brand_white10"), for: .normal)
+        titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
+        if let iv = imageView {
+            bringSubviewToFront(iv)
+        }
+        // Set image and text spacing to 10pt
+        var configuration = UIButton.Configuration.plain()
+        configuration.imagePadding = 10
+        configuration.imagePlacement = .leading
+        configuration.baseForegroundColor = .white
+        self.configuration = configuration
+        
+        setupGradientLayer()
+    }
+    
+    private func setupGradientLayer() {
+        gradientLayer?.removeFromSuperlayer()
+        
+        let gradient = CAGradientLayer()
+        gradient.colors = [
+            UIColor(hex: "#17C5FF")?.cgColor ?? UIColor.blue.cgColor,
+            UIColor(hex: "#315DFF")?.cgColor ?? UIColor.blue.cgColor,
+            UIColor(hex: "#446CFF")?.cgColor ?? UIColor.blue.cgColor
+        ]
+        gradient.cornerRadius = layer.cornerRadius
+        
+        gradient.startPoint = CGPoint(x: 0, y: 0.5)
+        gradient.endPoint = CGPoint(x: 1, y: 0.5)
+        gradient.locations = [0, 0.5, 1.0]
+        
+        layer.insertSublayer(gradient, at: 0)
+        gradientLayer = gradient
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        gradientLayer?.frame = bounds
     }
 }

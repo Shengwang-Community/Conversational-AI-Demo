@@ -50,7 +50,7 @@ class BaseWebViewController: BaseViewController {
     }
 }
 
-extension BaseViewController: WKNavigationDelegate {
+extension BaseWebViewController: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         SVProgressHUD.show()
     }

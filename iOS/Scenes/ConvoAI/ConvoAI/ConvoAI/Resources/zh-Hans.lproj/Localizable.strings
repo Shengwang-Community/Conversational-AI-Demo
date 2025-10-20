@@ -1,6 +1,6 @@
 "login.title" = "一键登录";
 "login.description" = "解锁♾️免费畅聊";
-"login.start.button.title" = "账号登录";
+"login.start.button.title" = "登录";
 "login.start.button.signup" = "立即注册";
 "login.terms.service.prefix" = "我已阅读并同意 ";
 "login.terms.service.name" = "《用户协议》";
@@ -321,3 +321,4 @@
 "agent.sip.area.code.search.placeholder" = "搜索国家/地区号...";
 "agent.sip.area.code.search.button" = "搜索";
 "agent.sip.area.code.no.results" = "无结果";
+"agent.sip.call.limit.exceeded" = "已超过每日20次通话限制";

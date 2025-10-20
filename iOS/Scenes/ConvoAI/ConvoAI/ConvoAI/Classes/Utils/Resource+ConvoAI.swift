@@ -371,6 +371,7 @@ extension ResourceManager {
             public static let areaCodeSearchPlaceholder = ResourceManager.localizedString("agent.sip.area.code.search.placeholder")
             public static let areaCodeSearchButton = ResourceManager.localizedString("agent.sip.area.code.search.button")
             public static let areaCodeNoResults = ResourceManager.localizedString("agent.sip.area.code.no.results")
+            public static let callLimitExceeded = ResourceManager.localizedString("agent.sip.call.limit.exceeded")
         }
     }
 }

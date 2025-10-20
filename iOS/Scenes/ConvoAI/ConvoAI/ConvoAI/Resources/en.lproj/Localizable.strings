@@ -329,3 +329,4 @@
 "agent.sip.area.code.search.placeholder" = "Search country or area code";
 "agent.sip.area.code.search.button" = "Search";
 "agent.sip.area.code.no.results" = "No Results";
+"agent.sip.call.limit.exceeded" = "The daily call limit of 20 times has been exceeded.";

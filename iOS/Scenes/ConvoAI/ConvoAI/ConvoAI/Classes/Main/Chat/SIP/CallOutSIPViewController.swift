@@ -36,7 +36,7 @@ class CallOutSipViewController: SIPViewController {
     // MARK: - UI Components
     internal let sipInputView = SIPInputView.init(style: AppContext.shared.isGlobal ? .global : .inland)
     
-    internal lazy var callButton: AgentCallGradientButton = {
+    internal lazy var callButton: UIButton = {
         let button = AgentCallGradientButton()
         button.setTitle(ResourceManager.L10n.Sip.callout, for: .normal)
         button.setImage(UIImage.ag_named("ic_agent_phone_call"), for: .normal)
@@ -239,7 +239,7 @@ class CallOutSipViewController: SIPViewController {
 }
 
 // MARK: - AgentCallGradientButton
-class AgentCallGradientButton: UIButton {
+fileprivate class AgentCallGradientButton: UIButton {
     
     private var gradientLayer: CAGradientLayer?
     
