@@ -69,10 +69,23 @@ class KeyboardVisibilityHelper {
  * Extension function for Activity to setup smart SIP keyboard listening
  * This monitors the input field position and only moves the container when necessary
  */
-fun Activity.setupSipKeyboardListener(containerView: View, inputField: View): KeyboardVisibilityHelper {
+fun Activity.setupSipKeyboardListener(
+    containerView: View,
+    inputField: View,
+    overlayMask: View? = null
+): KeyboardVisibilityHelper {
     val helper = KeyboardVisibilityHelper()
+    
+    // Setup overlay mask click listener to hide keyboard
+    overlayMask?.setOnClickListener {
+        // Hide keyboard
+        inputField.clearFocus()
+        val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+        imm?.hideSoftInputFromWindow(inputField.windowToken, 0)
+    }
+    
     helper.startListening(this, containerView) { isVisible, keyboardHeight ->
-        adjustSipViewForInput(containerView, inputField, isVisible, keyboardHeight)
+        adjustSipViewForInput(containerView, inputField, isVisible, keyboardHeight, overlayMask)
     }
     return helper
 }
@@ -85,8 +98,12 @@ private fun adjustSipViewForInput(
     containerView: View,
     inputField: View,
     isKeyboardVisible: Boolean,
-    keyboardHeight: Int
+    keyboardHeight: Int,
+    overlayMask: View? = null
 ) {
+    // Handle overlay mask visibility (no animation, direct show/hide)
+    overlayMask?.visibility = if (isKeyboardVisible) View.VISIBLE else View.GONE
+    
     // Handle margin animation for input container
     animateInputContainerMargin(containerView, isKeyboardVisible)
 

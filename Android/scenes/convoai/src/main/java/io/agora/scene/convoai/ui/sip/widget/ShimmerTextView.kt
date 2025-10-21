@@ -30,11 +30,6 @@ class ShimmerTextView @JvmOverloads constructor(
     private var spread = 0f
     private var isShimmerEnabled = false
 
-    init {
-        // Set default text color
-        setTextColor(ContextCompat.getColor(context, R.color.ai_icontext1))
-    }
-
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (w == 0 || h == 0) return
@@ -111,6 +106,8 @@ class ShimmerTextView @JvmOverloads constructor(
         } else {
             paint.shader = null
         }
+        // Ensure typeface is preserved (for bold, italic, etc.)
+        paint.typeface = typeface
         super.onDraw(canvas)
     }
 
@@ -129,14 +126,14 @@ class ShimmerTextView @JvmOverloads constructor(
     }
 
     /**
-     * Stop shimmer animation and restore default text color
+     * Stop shimmer animation and restore original text appearance
      */
     fun stopShimmer() {
         isShimmerEnabled = false
         translateXAnimator?.cancel()
-        // Remove shader and restore default text color
+        // Remove shader to restore original text appearance
         paint.shader = null
-        setTextColor(ContextCompat.getColor(context, R.color.ai_icontext1))
+        // Don't change text color - keep the original color from XML
         invalidate()
     }
 }

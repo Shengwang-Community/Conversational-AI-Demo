@@ -1,6 +1,7 @@
 package io.agora.scene.convoai.ui.sip.widget
 
 import android.content.Context
+import android.graphics.Typeface
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
@@ -204,8 +205,14 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
                 binding.btnJoinCall.isEnabled = hasText && currentState == CallState.IDLE
                 binding.ivClearInput.visibility = if (hasText) VISIBLE else INVISIBLE
 
-                // Change text size based on content
-                binding.etPhoneNumber.textSize = if (hasText) 18f else 14f
+                // Change text size and font weight based on content
+                if (hasText) {
+                    binding.etPhoneNumber.textSize = 18f
+                    binding.etPhoneNumber.setTypeface(null, Typeface.BOLD)
+                } else {
+                    binding.etPhoneNumber.textSize = 14f
+                    binding.etPhoneNumber.setTypeface(null, Typeface.NORMAL)
+                }
 
                 // Clear error state when user starts typing
                 if (isErrorState && !hasText) {

@@ -115,10 +115,10 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
             clTop.setOnCCClickListener {
                 // delay 500ms
                 val isShow = viewModel.isShowMessageList.value
-                if (isShow){
+                if (isShow) {
                     viewModel.toggleMessageList()
                     outBoundCallView.toggleTranscriptUpdate(false)
-                }else{
+                } else {
                     outBoundCallView.toggleTranscriptUpdate(true)
                     lifecycleScope.launch {
                         delay(500L)
@@ -356,7 +356,11 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
 
             if (inputField != null) {
                 // Move the entire outBoundCallView to keep all elements together
-                sipKeyboardHelper = this@CovLivingSipActivity.setupSipKeyboardListener(outBoundCallView, inputField)
+                sipKeyboardHelper = this@CovLivingSipActivity.setupSipKeyboardListener(
+                    outBoundCallView,
+                    inputField,
+                    keyboardOverlayMask
+                )
             }
         }
     }
