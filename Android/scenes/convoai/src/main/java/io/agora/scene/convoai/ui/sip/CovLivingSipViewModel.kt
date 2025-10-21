@@ -39,7 +39,8 @@ import kotlin.to
 enum class CallState {
     IDLE,    // Not calling, showing input UI
     CALLING, // Dialing/connecting
-    CALLED   // Connected and in call
+    CALLED,   // Connected and in call
+    HANGUP    // hang up
 }
 
 /**
@@ -275,7 +276,6 @@ class CovLivingSipViewModel : ViewModel() {
 
                 CovAgentApiManager.callPing(agentId) { error, callStatus ->
                     if (error != null) {
-                        CovLogger.w(TAG, "Ping failed: ${error.message}")
                         if (error.errorCode == CovAgentApiManager.ERROR_SIP_CALL_STATUS_NOT_FOUND) {
                             // nothing
                         }
@@ -290,8 +290,7 @@ class CovLivingSipViewModel : ViewModel() {
                             }
 
                             CallSipStatus.ERROR, CallSipStatus.HANGUP -> {
-                                stopAgentAndLeaveChannel()
-                                ToastUtil.show(R.string.cov_sip_call_ended)
+                                _callState.value = CallState.HANGUP
                             }
 
                             else -> {

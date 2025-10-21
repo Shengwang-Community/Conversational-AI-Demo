@@ -27,7 +27,9 @@ class CovLivingTopSipView @JvmOverloads constructor(
     private val binding: CovActivityLivingTopSipBinding =
         CovActivityLivingTopSipBinding.inflate(LayoutInflater.from(context), this, true)
 
-    private var onbackClick: (() -> Unit)? = null
+    private var onBackClick: (() -> Unit)? = null
+
+    private var onTitleClick: (() -> Unit)? = null
 
     private var onSettingsClick: (() -> Unit)? = null
 
@@ -36,7 +38,8 @@ class CovLivingTopSipView @JvmOverloads constructor(
     private var callState: CallState = CallState.IDLE
 
     init {
-        binding.btnBack.setOnClickListener { onbackClick?.invoke() }
+        binding.btnBack.setOnClickListener { onBackClick?.invoke() }
+        binding.viewFlipper.setOnClickListener { onTitleClick?.invoke() }
         binding.btnSettings.setOnClickListener { onSettingsClick?.invoke() }
 
         binding.tvCc.setOnClickListener(object : OnFastClickListener(delay = 500L) {
@@ -52,7 +55,14 @@ class CovLivingTopSipView @JvmOverloads constructor(
      * Set callback for back button click.
      */
     fun setOnBackClickListener(listener: (() -> Unit)?) {
-        onbackClick = listener
+        onBackClick = listener
+    }
+
+    /**
+     * Set callback for title click.
+     */
+    fun setOnTitleClickListener(listener: (() -> Unit)?) {
+        onTitleClick = listener
     }
 
     /**

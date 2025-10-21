@@ -9,8 +9,10 @@ import androidx.activity.viewModels
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import io.agora.scene.common.constant.SSOUserManager
+import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.common.debugMode.DebugSupportActivity
 import io.agora.scene.common.debugMode.DebugTabDialog
+import io.agora.scene.common.util.copyToClipboard
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
@@ -104,6 +106,10 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
 
             clTop.setOnSettingsClickListener {
                 showSettingDialog()
+            }
+
+            clTop.setOnTitleClickListener {
+                DebugConfigSettings.checkClickDebug()
             }
 
             clTop.setOnCCClickListener {
@@ -248,10 +254,42 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
 
             override fun getConvoAiHost(): String = CovAgentApiManager.currentHost ?: ""
 
+            override fun onAudioDumpEnable(enable: Boolean) {
+                CovRtcManager.onAudioDump(enable)
+                ToastUtil.show("onAudioDumpEnable: $enable")
+            }
+
+            override fun onSeamlessPlayMode(enable: Boolean) {
+                // Handle seamless play mode toggle
+                CovLogger.d(TAG, "Seamless play mode: $enable")
+
+                ToastUtil.show("onSeamlessPlayMode: $enable")
+            }
+
+            override fun onMetricsEnable(enable: Boolean) {
+                // Handle metrics toggle
+                CovLogger.d(TAG, "Metrics enabled: $enable")
+
+                ToastUtil.show("onMetricsEnable: $enable")
+            }
+
+            override fun onClickCopy() {
+                mBinding?.apply {
+                    val messageContents =
+                        messageListViewV2.getAllMessages().filter { it.isMe }.joinToString("\n") { it.content }
+                    this@CovLivingSipActivity.copyToClipboard(messageContents)
+                    ToastUtil.show(getString(io.agora.scene.convoai.R.string.cov_copy_succeed))
+                }
+            }
+
+
             override fun onEnvConfigChange() {
                 handleEnvironmentChange()
             }
 
+            override fun onAudioParameter(parameter: String) {
+                CovRtcManager.setParameter(parameter)
+            }
         }
     }
 
