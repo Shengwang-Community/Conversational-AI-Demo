@@ -188,6 +188,7 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
     private fun onClickEndCall() {
         mBinding?.messageListViewV2?.clearMessages()
         viewModel.stopAgentAndLeaveChannel()
+        mBinding?.clTop?.updatePhoneNumber("")
     }
 
     private fun showSettingDialog() {

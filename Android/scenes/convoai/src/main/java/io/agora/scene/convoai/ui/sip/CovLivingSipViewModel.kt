@@ -274,7 +274,15 @@ class CovLivingSipViewModel : ViewModel() {
                     break
                 }
 
+                // Capture current channel to validate callback
+                val currentChannel = CovAgentManager.channelName
                 CovAgentApiManager.callPing(agentId) { error, callStatus ->
+                    // Check if we're still in the same session (channel not cleared)
+                    if (CovAgentManager.channelName.isEmpty() || CovAgentManager.channelName != currentChannel) {
+                        CovLogger.d(TAG, "Ignoring ping callback - session already stopped or changed")
+                        return@callPing
+                    }
+
                     if (error != null) {
                         if (error.errorCode == CovAgentApiManager.ERROR_SIP_CALL_STATUS_NOT_FOUND) {
                             // nothing
