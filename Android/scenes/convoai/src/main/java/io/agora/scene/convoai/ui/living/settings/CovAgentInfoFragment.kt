@@ -49,7 +49,7 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
     }
 
     private val livingViewModel: CovLivingViewModel by activityViewModels()
-    private val livingSipViewModel: CovLivingSipViewModel by viewModels()
+    private val livingSipViewModel: CovLivingSipViewModel by activityViewModels()
     private val agentInfoViewModel: CovAgentInfoViewModel by activityViewModels()
 
     private var uploadAnimation: Animation? = null
@@ -136,6 +136,9 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
 
                     CallState.CALLED -> {
                         agentInfoViewModel.updateConnectionState(AgentConnectionState.CONNECTED)
+                    }
+                    CallState.HANGUP -> {
+                        agentInfoViewModel.updateConnectionState(AgentConnectionState.IDLE)
                     }
                 }
                 updateUploadingStatus(disable = state != CallState.IDLE)

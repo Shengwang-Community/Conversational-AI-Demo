@@ -39,7 +39,8 @@ import kotlin.to
 enum class CallState {
     IDLE,    // Not calling, showing input UI
     CALLING, // Dialing/connecting
-    CALLED   // Connected and in call
+    CALLED,   // Connected and in call
+    HANGUP    // hang up
 }
 
 /**
@@ -273,9 +274,16 @@ class CovLivingSipViewModel : ViewModel() {
                     break
                 }
 
+                // Capture current channel to validate callback
+                val currentChannel = CovAgentManager.channelName
                 CovAgentApiManager.callPing(agentId) { error, callStatus ->
+                    // Check if we're still in the same session (channel not cleared)
+                    if (CovAgentManager.channelName.isEmpty() || CovAgentManager.channelName != currentChannel) {
+                        CovLogger.d(TAG, "Ignoring ping callback - session already stopped or changed")
+                        return@callPing
+                    }
+
                     if (error != null) {
-                        CovLogger.w(TAG, "Ping failed: ${error.message}")
                         if (error.errorCode == CovAgentApiManager.ERROR_SIP_CALL_STATUS_NOT_FOUND) {
                             // nothing
                         }
@@ -290,8 +298,7 @@ class CovLivingSipViewModel : ViewModel() {
                             }
 
                             CallSipStatus.ERROR, CallSipStatus.HANGUP -> {
-                                stopAgentAndLeaveChannel()
-                                ToastUtil.show(R.string.cov_sip_call_ended)
+                                _callState.value = CallState.HANGUP
                             }
 
                             else -> {

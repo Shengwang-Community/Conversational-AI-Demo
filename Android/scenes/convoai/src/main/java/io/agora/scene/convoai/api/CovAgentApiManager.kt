@@ -552,10 +552,11 @@ object CovAgentApiManager {
                         if (code == 0) {
                             val status = jsonObject?.getAsJsonObject("data")?.get("state")?.asString ?: "unknown"
                             completion.invoke(null, CallSipStatus.fromValue(status))
+                            CovLogger.d(TAG, "callPing success $json")
                         } else {
                             "msg"
                             completion.invoke(ApiException(code, msg), null)
-                            CovLogger.e(TAG, "stopAgent failed $json")
+                            CovLogger.e(TAG, "callPing failed $json")
                         }
                     }
                 } catch (e: Exception) {

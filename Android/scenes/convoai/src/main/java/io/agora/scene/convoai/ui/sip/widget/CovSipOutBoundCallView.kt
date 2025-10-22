@@ -1,6 +1,7 @@
 package io.agora.scene.convoai.ui.sip.widget
 
 import android.content.Context
+import android.graphics.Typeface
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
@@ -83,7 +84,7 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
      * @param showTranscript true to hide call info and show transcript, false to restore call info
      */
     fun toggleTranscriptUpdate(showTranscript: Boolean) {
-        if (currentState != CallState.CALLED) {
+        if (currentState != CallState.CALLED && currentState != CallState.HANGUP) {
             // Only allow toggle during active call states
             return
         }
@@ -149,6 +150,16 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
                 binding.tvCalling.setText(R.string.cov_sip_call_in_progress)
                 binding.tvCallingNumber.stopShimmer()
             }
+
+            CallState.HANGUP -> {
+                binding.layoutNotJoin.visibility = GONE
+                binding.layoutJoined.visibility = VISIBLE
+
+                // Update connected number display
+                binding.tvCallingNumber.text = phoneNumber
+                binding.tvCalling.setText(R.string.cov_sip_call_ended)
+                binding.tvCallingNumber.stopShimmer()
+            }
         }
     }
 
@@ -194,8 +205,14 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
                 binding.btnJoinCall.isEnabled = hasText && currentState == CallState.IDLE
                 binding.ivClearInput.visibility = if (hasText) VISIBLE else INVISIBLE
 
-                // Change text size based on content
-                binding.etPhoneNumber.textSize = if (hasText) 18f else 14f
+                // Change text size and font weight based on content
+                if (hasText) {
+                    binding.etPhoneNumber.textSize = 18f
+                    binding.etPhoneNumber.setTypeface(null, Typeface.BOLD)
+                } else {
+                    binding.etPhoneNumber.textSize = 14f
+                    binding.etPhoneNumber.setTypeface(null, Typeface.NORMAL)
+                }
 
                 // Clear error state when user starts typing
                 if (isErrorState && !hasText) {
