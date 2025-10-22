@@ -458,7 +458,7 @@
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "The app needs to use location to access Wi-Fi for connecting to smart home devices.";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "The app needs to use location to access Wi-Fi for connecting to smart home devices.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "The app needs to use location to access Wi-Fi for connecting to smart home devices.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "The app needs to access the microphone to send voice messages.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "The app needs to access your photo library to select images.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
@@ -509,7 +509,7 @@
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "The app needs to use location to access Wi-Fi for connecting to smart home devices.";
 				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "The app needs to use location to access Wi-Fi for connecting to smart home devices.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "The app needs to use location to access Wi-Fi for connecting to smart home devices.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "The app needs to access the microphone to send voice messages.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "The app needs to access your photo library to select images.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
