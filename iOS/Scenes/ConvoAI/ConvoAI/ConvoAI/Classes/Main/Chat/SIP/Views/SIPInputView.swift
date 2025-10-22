@@ -31,7 +31,7 @@ class SIPInputView: UIView {
     
     // MARK: - Properties
     private let inputStyle: SIPInputStyle
-    private var selectedRegion: RegionConfig?
+    private var selectedVendor: VendorCalleeNumber?
     private var currentState: SIPInputState = .normal
     
     // MARK: - UI Components
@@ -204,14 +204,10 @@ class SIPInputView: UIView {
     }
     
     private func updateCountryButton() {
-        guard shouldShowCountryButton, let region = selectedRegion else { return }
+        guard shouldShowCountryButton, let vendor = selectedVendor else { return }
         
-        if let countryConfig = RegionConfigManager.shared.getRegionConfigByName(region.regionName) {
-            flagEmojiLabel.text = countryConfig.flagEmoji
-        } else {
-            flagEmojiLabel.text = "🏳️" 
-        }
-        countryCodeLabel.text = region.regionCode
+        flagEmojiLabel.text = vendor.flagEmoji ?? "🏳️"
+        countryCodeLabel.text = vendor.regionCode ?? ""
         
         // Update dropdown icon visibility based on style
         switch inputStyle {
@@ -237,26 +233,26 @@ class SIPInputView: UIView {
     
     func getFullPhoneNumber() -> String {
         let number = phoneTextField.text ?? ""
-        guard let region = selectedRegion else {
+        guard let vendor = selectedVendor, let regionCode = vendor.regionCode else {
             return number // Return just the number if no country code
         }
-        return "\(region.regionCode)\(number)"
+        return "\(regionCode)\(number)"
     }
     
     func setPhoneNumber(_ number: String) {
         phoneTextField.text = number
     }
     
-    func setSelectedRegionConfig(_ config: RegionConfig) {
+    func setSelectedVendor(_ vendor: VendorCalleeNumber) {
         // Only allow setting region if country selection is enabled
         if case .global = inputStyle {
-            selectedRegion = config
+            selectedVendor = vendor
             updateCountryButton()
         }
     }
     
-    func getSelectedRegion() -> RegionConfig? {
-        return selectedRegion
+    func getSelectedVendor() -> VendorCalleeNumber? {
+        return selectedVendor
     }
     
     func getInputStyle() -> SIPInputStyle {
@@ -321,7 +317,7 @@ extension SIPInputView: UITextFieldDelegate {
             resetState()
         }
         
-        let dialCode = selectedRegion?.regionCode
+        let dialCode = selectedVendor?.regionCode
         delegate?.sipInputView(self, didChangePhoneNumber: newText, dialCode: dialCode)
         return true
     }

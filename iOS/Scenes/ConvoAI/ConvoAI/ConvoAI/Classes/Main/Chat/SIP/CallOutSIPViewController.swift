@@ -42,6 +42,8 @@ class CallOutSipViewController: SIPViewController {
         button.setImage(UIImage.ag_named("ic_agent_phone_call"), for: .normal)
         button.addTarget(self, action: #selector(startCall), for: .touchUpInside)
         button.isEnabled = false
+        button.layer.cornerRadius = 29
+        button.layer.masksToBounds = true
         return button
     }()
     
@@ -68,14 +70,14 @@ class CallOutSipViewController: SIPViewController {
         }
         
         callButton.snp.makeConstraints { make in
-            make.bottom.equalTo(tipsLabel.snp.top).offset(-20)
+            make.bottom.equalTo(tipsLabel.snp.top).offset(-24)
             make.width.equalTo(sipInputView)
-            make.height.equalTo(48)
+            make.height.equalTo(58)
             make.centerX.equalToSuperview()
         }
         
         sipInputView.snp.makeConstraints { make in
-            make.bottom.equalTo(callButton.snp.top).offset(-20)
+            make.bottom.equalTo(callButton.snp.top).offset(-18)
             make.width.equalTo(295)
             make.height.equalTo(82)
             make.centerX.equalToSuperview()
@@ -98,7 +100,7 @@ class CallOutSipViewController: SIPViewController {
     }()
     
     internal lazy var sideNavigationBar: SideNavigationBar = {
-        let view = SideNavigationBar()        
+        let view = SideNavigationBar()
         view.isHidden = true
         return view
     }()
@@ -154,28 +156,18 @@ class CallOutSipViewController: SIPViewController {
     }
     
     func setupUIData() {
-        guard let preset = AppContext.settingManager().preset, let vendorCalleeNumbers = preset.sipVendorCalleeNumbers else {
+        guard let preset = AppContext.settingManager().preset,
+              let vendorCalleeNumbers = preset.sipVendorCalleeNumbers,
+              let firstVendor = vendorCalleeNumbers.first else {
             return
         }
         
-        let regionConfigs = vendorCalleeNumbers.compactMap { (vendor) -> RegionConfig? in
-            guard let regionName = vendor.regionName, let regionCode = vendor.regionCode else {
-                return nil
-            }
-            
-            guard let regionConfig = RegionConfigManager.shared.getRegionConfigByName(regionName) else {
-                return nil
-            }
-            
-            return RegionConfig(regionName: regionName, flagEmoji: regionConfig.flagEmoji, regionCode: regionCode)
-        }
-        
-        if let defaultConfig = regionConfigs.first {
-            sipInputView.setSelectedRegionConfig(defaultConfig)
-        }
+        // Directly use VendorCalleeNumber from preset
+        sipInputView.setSelectedVendor(firstVendor)
     }
     
     deinit {
+        print("CallOutSipViewController deinit")
         NotificationCenter.default.removeObserver(self)
     }
     
@@ -214,15 +206,14 @@ class CallOutSipViewController: SIPViewController {
         timer = nil
     }
     
-    override func onNavigatBarCloseButtonAction() {
-        super.onNavigatBarCloseButtonAction()
-        channelName = ""
-        agentUid = 0
+    override func viewWillDisappearAndPop() {
         convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
             
         }
         logoutRTM()
         stopTimer()
+        rtcManager.destroy()
+        rtmManager.destroy()
         AppContext.stateManager().resetToDefaults()
     }
     
@@ -254,8 +245,6 @@ fileprivate class AgentCallGradientButton: UIButton {
     }
     
     private func setupButton() {
-        layer.cornerRadius = 24
-        layer.masksToBounds = true
         setTitleColor(UIColor.themColor(named: "ai_brand_white10"), for: .normal)
         setTitleColor(UIColor.themColor(named: "ai_brand_white10"), for: .disabled)
         titleLabel?.font = UIFont.systemFont(ofSize: 18)

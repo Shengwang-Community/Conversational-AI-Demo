@@ -81,7 +81,7 @@ extension CallOutSipViewController {
         
         UIView.animate(withDuration: duration) {
             self.prepareCallContentView.snp.updateConstraints { make in
-                make.bottom.equalTo(-keyboardHeight - safeAreaBottom + 150)
+                make.bottom.equalTo(-keyboardHeight - safeAreaBottom + 160)
             }
             self.view.layoutIfNeeded()
         }
@@ -189,6 +189,7 @@ extension CallOutSipViewController {
     func showPrepareCallView() {
         sideNavigationBar.isHidden = true
         navivationBar.style = .idle
+        messageView.clearMessages()
         callingView.reset()
         callingView.isHidden = true
         prepareCallContentView.isHidden = false
@@ -227,8 +228,8 @@ extension CallOutSipViewController: SIPInputViewDelegate {
     
     func sipInputViewDidTapCountryButton(_ inputView: SIPInputView) {
         // Show area code selection view controller
-        SIPAreaCodeViewController.show(from: self) { [weak self] region in
-            self?.sipInputView.setSelectedRegionConfig(region)
+        SIPAreaCodeViewController.show(from: self) { [weak self] vendor in
+            self?.sipInputView.setSelectedVendor(vendor)
         }
     }
     

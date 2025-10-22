@@ -15,22 +15,21 @@ class SIPAreaCodeViewController: UIViewController {
     /// Present the area code selector from a view controller
     /// - Parameters:
     ///   - viewController: The view controller to present from
-    ///   - completion: Callback when a region is selected
-    static func show(from viewController: UIViewController, completion: ((RegionConfig) -> Void)? = nil) {
+    ///   - completion: Callback when a vendor is selected
+    static func show(from viewController: UIViewController, completion: ((VendorCalleeNumber) -> Void)? = nil) {
         let areaCodeVC = SIPAreaCodeViewController()
-        areaCodeVC.onRegionSelected = completion
+        areaCodeVC.onVendorSelected = completion
         areaCodeVC.modalPresentationStyle = .overFullScreen
         areaCodeVC.modalTransitionStyle = .crossDissolve
         
         viewController.present(areaCodeVC, animated: true)
     }
     
-    var onRegionSelected: ((RegionConfig) -> Void)?
-    private var allRegions: [RegionConfig] = []
-    private var filteredRegions: [RegionConfig] = []
+    var onVendorSelected: ((VendorCalleeNumber) -> Void)?
+    private var allVendors: [VendorCalleeNumber] = []
+    private var filteredVendors: [VendorCalleeNumber] = []
     private let containerHeight: CGFloat = UIScreen.main.bounds.height - 150
     private var initialCenter: CGPoint = .zero
-    private var panGesture: UIPanGestureRecognizer?
     private var currentSearchText: String = ""
         
     private lazy var containerView: UIView = {
@@ -171,8 +170,7 @@ class SIPAreaCodeViewController: UIViewController {
         }
         
         searchBar.snp.makeConstraints { make in
-            make.top.bottom.equalToSuperview()
-            make.left.equalToSuperview()
+            make.top.bottom.left.right.equalToSuperview()
         }
         
         tableView.snp.makeConstraints { make in
@@ -187,8 +185,8 @@ class SIPAreaCodeViewController: UIViewController {
     }
     
     private func setupPanGesture() {
-        panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
-        containerView.addGestureRecognizer(panGesture!)
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+        containerView.addGestureRecognizer(panGesture)
     }
     
     private func animateContainerViewIn() {
@@ -246,14 +244,17 @@ class SIPAreaCodeViewController: UIViewController {
     }
     
     private func loadRegions() {
-        allRegions = RegionConfigManager.shared.allRegions
-        filteredRegions = allRegions
+        // Directly load from preset data
+        if let vendors = AppContext.settingManager().preset?.sipVendorCalleeNumbers {
+            allVendors = vendors
+            filteredVendors = allVendors
+        }
         tableView.reloadData()
         updateEmptyState()
     }
     
     private func updateEmptyState() {
-        let isEmpty = filteredRegions.isEmpty
+        let isEmpty = filteredVendors.isEmpty
         emptyStateView.isHidden = !isEmpty
         tableView.isHidden = isEmpty
     }
@@ -262,13 +263,13 @@ class SIPAreaCodeViewController: UIViewController {
 // MARK: - UITableViewDataSource
 extension SIPAreaCodeViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return filteredRegions.count
+        return filteredVendors.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "AreaCodeCell", for: indexPath) as! AreaCodeCell
-        let region = filteredRegions[indexPath.row]
-        cell.configure(with: region, searchText: currentSearchText)
+        let vendor = filteredVendors[indexPath.row]
+        cell.configure(with: vendor, searchText: currentSearchText)
         return cell
     }
 }
@@ -281,11 +282,11 @@ extension SIPAreaCodeViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let region = filteredRegions[indexPath.row]
+        let vendor = filteredVendors[indexPath.row]
         
         // Call the completion callback and dismiss
         animateContainerViewOut { [weak self] in
-            self?.onRegionSelected?(region)
+            self?.onVendorSelected?(vendor)
         }
     }
 }
@@ -295,11 +296,13 @@ extension SIPAreaCodeViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         currentSearchText = searchText
         if searchText.isEmpty {
-            filteredRegions = allRegions
+            filteredVendors = allVendors
         } else {
-            filteredRegions = allRegions.filter { region in
-                region.regionName.lowercased().contains(searchText.lowercased()) ||
-                region.regionCode.contains(searchText)
+            filteredVendors = allVendors.filter { vendor in
+                let regionName = vendor.regionName ?? ""
+                let regionCode = vendor.regionCode ?? ""
+                return regionName.lowercased().contains(searchText.lowercased()) ||
+                       regionCode.contains(searchText)
             }
         }
         tableView.reloadData()
@@ -406,26 +409,29 @@ class AreaCodeCell: UITableViewCell {
         }
     }
     
-    func configure(with region: RegionConfig, searchText: String = "") {
-        flagLabel.text = region.flagEmoji
+    func configure(with vendor: VendorCalleeNumber, searchText: String = "") {
+        flagLabel.text = vendor.flagEmoji ?? "🏳️"
+        
+        let regionName = vendor.regionName ?? ""
+        let regionCode = vendor.regionCode ?? ""
         
         // Apply highlighting to region name and code
         if !searchText.isEmpty {
             regionNameLabel.attributedText = highlightText(
-                region.regionName,
+                regionName,
                 searchText: searchText,
                 defaultColor: UIColor.themColor(named: "ai_icontext1"),
                 font: UIFont.systemFont(ofSize: 16, weight: .medium)
             )
             regionCodeLabel.attributedText = highlightText(
-                region.regionCode,
+                regionCode,
                 searchText: searchText,
                 defaultColor: UIColor.themColor(named: "ai_icontext2"),
                 font: UIFont.systemFont(ofSize: 16)
             )
         } else {
-            regionNameLabel.text = region.regionName
-            regionCodeLabel.text = region.regionCode
+            regionNameLabel.text = regionName
+            regionCodeLabel.text = regionCode
         }
     }
     

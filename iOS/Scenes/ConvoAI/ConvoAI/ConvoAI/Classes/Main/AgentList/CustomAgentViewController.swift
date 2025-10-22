@@ -107,7 +107,8 @@ class CustomAgentViewController: UIViewController {
                     }
                     
                     if !res {
-                        self.presets.append(p)
+                        // Insert at the beginning so new items appear first
+                        self.presets.insert(p, at: 0)
                     }
                 }
                 self.reloadData()
@@ -152,7 +153,12 @@ class CustomAgentViewController: UIViewController {
                 for e in presets {
                     self.save(presetId: e.name.stringValue())
                 }
-                self.presets = presets
+                
+                // Sort presets according to the saved IDs order (newest first)
+                let savedIds = self.getSavedPresetIds()
+                self.presets = savedIds.compactMap { savedId in
+                    presets.first { $0.name.stringValue() == savedId }
+                }
                 self.reloadData()
             }
         }
@@ -179,7 +185,8 @@ class CustomAgentViewController: UIViewController {
         var saved = UserDefaults.standard.dictionary(forKey: kCustomPresetSave) as? [String: [String]] ?? [:]
         var ids = saved[key] ?? []
         if !ids.contains(presetId) {
-            ids.append(presetId)
+            // Insert at the beginning so newer items appear first
+            ids.insert(presetId, at: 0)
         }
         saved[key] = ids
         UserDefaults.standard.set(saved, forKey: kCustomPresetSave)
@@ -231,12 +238,14 @@ extension CustomAgentViewController: UITableViewDelegate, UITableViewDataSource 
         let cell = tableView.dequeueReusableCell(withIdentifier: "AgentTableViewCell", for: indexPath) as! AgentTableViewCell
         let preset = presets[indexPath.row]
         cell.nameLabel.text = preset.displayName
+        cell.descriptionLabel.text = "[\(preset.name ?? String())]  \(preset.description ?? String())"
         cell.avatarImageView.kf.setImage(with: URL(string: preset.avatarUrl.stringValue()), placeholder: UIImage.ag_named("ic_custom_agent_head"))
         cell.descriptionLabel.text = preset.description ?? ""
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
         var preset = presets[indexPath.row]
         let id = preset.name.stringValue()
         SVProgressHUD.show()

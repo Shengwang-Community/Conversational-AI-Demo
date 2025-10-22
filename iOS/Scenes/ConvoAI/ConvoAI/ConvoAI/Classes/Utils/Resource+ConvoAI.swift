@@ -241,6 +241,7 @@ extension ResourceManager {
         }
 
         public enum AgentList {
+            public static let title = ResourceManager.localizedString("agentlist.title")
             public static let contact = ResourceManager.localizedString("agent.list.contact")
             public static let input = ResourceManager.localizedString("agent.list.input")
             public static let custom = ResourceManager.localizedString("agent.list.custom")
@@ -293,6 +294,9 @@ extension ResourceManager {
         }
         
         public enum Mine {
+            // Page Title
+            public static let pageTitle = ResourceManager.localizedString("mine.page.title")
+            
             // Mine Module UI
             public static let personaTitle = ResourceManager.localizedString("mine.persona.title")
             public static let addressingTitle = ResourceManager.localizedString("mine.addressing.title")

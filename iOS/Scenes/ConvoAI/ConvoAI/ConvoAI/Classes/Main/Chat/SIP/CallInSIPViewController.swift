@@ -16,7 +16,7 @@ class CallInSIPViewController: SIPViewController {
         let label = UILabel()
         label.text = ResourceManager.L10n.Sip.sipCallInTips
         label.textColor = UIColor.themColor(named: "ai_icontext2")
-        label.font = UIFont.systemFont(ofSize: 10)
+        label.font = UIFont.systemFont(ofSize: 12)
         label.numberOfLines = 0
         label.textAlignment = .center
         return label
@@ -33,19 +33,8 @@ class CallInSIPViewController: SIPViewController {
             return
         }
         
-        let phoneNumbers = vendorCalleeNumbers.compactMap { (vendor) -> PhoneNumber? in
-            guard let regionName = vendor.regionName, let phoneNumber = vendor.phoneNumber else {
-                return nil
-            }
-            
-            guard let regionConfig = RegionConfigManager.shared.getRegionConfigByName(regionName) else {
-                return nil
-            }
-            
-            return PhoneNumber(regionName: regionConfig.regionName, flagEmoji: regionConfig.flagEmoji, phoneNumber: phoneNumber)
-        }
-        
-        phoneListView.updatePhoneNumbers(phoneNumbers)
+        // Directly use VendorCalleeNumber without conversion
+        phoneListView.updateVendors(vendorCalleeNumbers)
     }
     
     override func setupViews() {
@@ -73,9 +62,9 @@ class CallInSIPViewController: SIPViewController {
 
 // MARK: - SIPPhoneListViewDelegate
 extension CallInSIPViewController: SIPPhoneListViewDelegate {
-    func sipPhoneListView(_ listView: SIPPhoneListView, didSelectPhoneNumber phoneNumber: PhoneNumber, at index: Int) {
-        print("Selected phone number: \(phoneNumber.displayNumber) at index: \(index)")
-        makePhoneCall(phoneNumber: phoneNumber.phoneNumber)
+    func sipPhoneListView(_ listView: SIPPhoneListView, didSelectVendor vendor: VendorCalleeNumber, at index: Int) {
+        print("Selected phone number: \(vendor.phoneNumber ?? "") at index: \(index)")
+        makePhoneCall(phoneNumber: vendor.phoneNumber ?? "")
     }
     
     private func makePhoneCall(phoneNumber: String) {

@@ -14,20 +14,9 @@ enum SIPPhoneListStyle {
     case inland
 }
 
-// MARK: - Phone Number Model
-struct PhoneNumber {
-    let regionName: String
-    let flagEmoji: String?
-    let phoneNumber: String
-    
-    var displayNumber: String {
-        return phoneNumber
-    }
-}
-
 // MARK: - Delegate Protocol
 protocol SIPPhoneListViewDelegate: AnyObject {
-    func sipPhoneListView(_ listView: SIPPhoneListView, didSelectPhoneNumber phoneNumber: PhoneNumber, at index: Int)
+    func sipPhoneListView(_ listView: SIPPhoneListView, didSelectVendor vendor: VendorCalleeNumber, at index: Int)
 }
 
 class SIPPhoneListView: UIView {
@@ -65,7 +54,7 @@ class SIPPhoneListView: UIView {
         return button
     }()
     
-    private var phoneNumbers: [PhoneNumber] = []
+    private var vendors: [VendorCalleeNumber] = []
     
     private var isExpanded = false
     private let kItemHeight: CGFloat = 44.0
@@ -110,11 +99,11 @@ class SIPPhoneListView: UIView {
         }
     }
     
-    func updatePhoneNumbers(_ numbers: [PhoneNumber]) {
-        phoneNumbers = numbers
+    func updateVendors(_ vendors: [VendorCalleeNumber]) {
+        self.vendors = vendors
         tableView.reloadData()
-        if numbers.count == 1, let firstNumber = numbers.first {
-            singleItemView.configure(with: firstNumber)
+        if vendors.count == 1, let firstVendor = vendors.first {
+            singleItemView.configure(with: firstVendor)
         }
         updateViewExpand()
     }
@@ -126,13 +115,13 @@ class SIPPhoneListView: UIView {
     }
     
     @objc private func singleItemViewTapped() {
-        guard !phoneNumbers.isEmpty else { return }
-        let phoneNumber = phoneNumbers[0]
-        delegate?.sipPhoneListView(self, didSelectPhoneNumber: phoneNumber, at: 0)
+        guard !vendors.isEmpty else { return }
+        let vendor = vendors[0]
+        delegate?.sipPhoneListView(self, didSelectVendor: vendor, at: 0)
     }
     
     private func updateViewExpand() {
-        let count = phoneNumbers.count
+        let count = vendors.count
         let buttonHeight = 30
         let maxVisibleItems = 6
         
@@ -181,12 +170,12 @@ class SIPPhoneListView: UIView {
 // MARK: - UITableViewDataSource
 extension SIPPhoneListView: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return phoneNumbers.count
+        return vendors.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "PhoneNumberCell", for: indexPath) as! PhoneNumberCell
-        let phoneNumber = phoneNumbers[indexPath.row]
+        let vendor = vendors[indexPath.row]
         
         // Configure cell with style
         cell.configure(with: listStyle)
@@ -194,11 +183,11 @@ extension SIPPhoneListView: UITableViewDataSource {
         // Set data based on style
         switch listStyle {
         case .global:
-            cell.flagEmojiLabel.text = phoneNumber.flagEmoji ?? "🏳️"
-            cell.countryCodeLabel.text = phoneNumber.regionName
-            cell.phoneNumberLabel.text = phoneNumber.displayNumber
+            cell.flagEmojiLabel.text = vendor.flagEmoji ?? "🏳️"
+            cell.countryCodeLabel.text = vendor.regionName ?? ""
+            cell.phoneNumberLabel.text = vendor.phoneNumber ?? ""
         case .inland:
-            cell.phoneNumberLabel.text = phoneNumber.displayNumber
+            cell.phoneNumberLabel.text = vendor.phoneNumber ?? ""
         }
         
         return cell
@@ -213,8 +202,8 @@ extension SIPPhoneListView: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let phoneNumber = phoneNumbers[indexPath.row]
-        delegate?.sipPhoneListView(self, didSelectPhoneNumber: phoneNumber, at: indexPath.row)
+        let vendor = vendors[indexPath.row]
+        delegate?.sipPhoneListView(self, didSelectVendor: vendor, at: indexPath.row)
     }
 }
 
@@ -295,12 +284,12 @@ class SinglePhoneNumberView: UIView {
         dashedBorderLayer = shapeLayer
     }
     
-    func configure(with phoneNumber: PhoneNumber) {
+    func configure(with vendor: VendorCalleeNumber) {
         // Handle flag emoji based on style
         if viewStyle == .global {
-            flagEmojiLabel.text = phoneNumber.flagEmoji ?? ""
+            flagEmojiLabel.text = vendor.flagEmoji ?? ""
         }
-        setupGradientText(phoneNumber.displayNumber)
+        setupGradientText(vendor.phoneNumber ?? "")
     }
     
     private func setupGradientText(_ text: String) {

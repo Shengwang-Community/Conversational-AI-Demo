@@ -1,6 +1,6 @@
 "login.title" = "Unlock ♾️ Free Chat";
 "login.description" = "Power your business future at once";
-"login.start.button.title" = "Log in with Agora account";
+"login.start.button.title" = "Login";
 "login.start.button.signup" = "Sign up for free";
 "login.terms.service.prefix" = " I accept the ";
 "login.terms.service.name" = "User Agreement";
@@ -209,6 +209,10 @@
 "main.digitalHuman" = "Digital Human";
 "main.mine" = "Mine";
 
+// Page Titles
+"agentlist.title" = "Agora Convo AI";
+"mine.page.title" = "Mine";
+
 // Bio Setting
 "mine.bio.setting.title" = "About Me";
 "mine.bio.placeholder.display" = "Tell us about yourself so the agent can get to know you better.";
@@ -311,13 +315,12 @@
 
 // Nickname Generation
 "mine.nickname.adjectives" = "Ezra,Pledge,Bonnie,Seeds,Shannon,Red-Haired,Montague,Primavera,Tess";
-"mine.nickname.nouns" = " ";
-"mine.icp.subtitle" = " ";
+"mine.nickname.nouns" = "";
 
 "agent.sip.in.call.tips" = "Dial this number from your phone to start a conversation with our AI Agent.";
 "agent.sip.out.call.tips" = "Enter your number below, and our AI Agent will call you.";
 "agent.sip.calling.tips" = "Calling now… please answer on your phone.";
-"agent.sip.input.placeholder" = "Enter your mobile or landline number";
+"agent.sip.input.placeholder" = "Enter your mobile";
 "agent.sip.on.call.tips" = "Call in progress…";
 "agent.sip.end.call.tips" = "Call ended, please hang up";
 "agent.sip.phone.invalid" = "Please enter a valid mobile or landline number";

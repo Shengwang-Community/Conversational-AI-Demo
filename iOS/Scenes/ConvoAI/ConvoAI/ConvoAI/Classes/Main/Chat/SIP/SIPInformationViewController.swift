@@ -11,7 +11,6 @@ import Common
 class SipSettingViewController: UIViewController {
     private let backgroundViewHeight: CGFloat = 480
     private var initialCenter: CGPoint = .zero
-    private var panGesture: UIPanGestureRecognizer?
     weak var agentManager: AgentManager!
     weak var rtcManager: RTCManager!
     var channelName = ""
@@ -78,8 +77,8 @@ class SipSettingViewController: UIViewController {
     }
     
     private func setupPanGesture() {
-        panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
-        backgroundView.addGestureRecognizer(panGesture!)
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
+        backgroundView.addGestureRecognizer(panGesture)
     }
     
     private func animateBackgroundViewIn() {

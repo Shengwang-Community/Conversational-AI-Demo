@@ -314,17 +314,25 @@ fileprivate class LoginGradientButton: UIButton {
     private func setupButton() {
         layer.cornerRadius = 15
         layer.masksToBounds = true
-        setTitleColor(UIColor.themColor(named: "ai_brand_white10"), for: .normal)
-        titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
-        if let iv = imageView {
-            bringSubviewToFront(iv)
-        }
+        
         // Set image and text spacing to 10pt
         var configuration = UIButton.Configuration.plain()
         configuration.imagePadding = 10
         configuration.imagePlacement = .leading
         configuration.baseForegroundColor = .white
+        
+        // Set bold font through titleTextAttributesTransformer
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = UIFont.boldSystemFont(ofSize: 18)
+            return outgoing
+        }
+        
         self.configuration = configuration
+        
+        if let iv = imageView {
+            bringSubviewToFront(iv)
+        }
         
         setupGradientLayer()
     }
