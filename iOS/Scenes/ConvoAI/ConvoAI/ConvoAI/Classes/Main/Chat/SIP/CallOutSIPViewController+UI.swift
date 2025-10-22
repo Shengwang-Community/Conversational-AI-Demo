@@ -152,8 +152,8 @@ extension CallOutSipViewController {
             
         }
         stopTimer()
+        timerCoordinator.stopAllTimer()
         AppContext.stateManager().resetToDefaults()
-        sideNavigationBar.stop()
         navivationBar.style = .idle
     }
     
@@ -194,6 +194,7 @@ extension CallOutSipViewController {
         callingView.isHidden = true
         prepareCallContentView.isHidden = false
         transcriptView.isHidden = true
+        navivationBar.characterInfo.showNameLabel(animated: false)
         closeButton.isHidden = true
     }
     

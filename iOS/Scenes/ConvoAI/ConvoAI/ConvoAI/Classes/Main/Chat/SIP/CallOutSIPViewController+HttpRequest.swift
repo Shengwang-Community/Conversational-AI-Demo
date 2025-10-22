@@ -20,10 +20,13 @@ extension CallOutSipViewController {
             case .answered:
                 self.callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipOnCallTips
                 self.navivationBar.style = .active
-                sideNavigationBar.isHidden = false
-                if let preset = AppContext.settingManager().preset {
-                    let duration = preset.callTimeLimitSecond.intValue()
+                callingView.stopShimmer()
+                // Display time without countdown (forever mode), but start timer for limit
+                if let duration = AppContext.settingManager().preset?.callTimeLimitSecond.intValue(),
+                   duration > 0 {
+                    sideNavigationBar.isHidden = false
                     sideNavigationBar.showTips(seconds: duration, forever: true)
+                    self.timerCoordinator.startUsageDurationLimitTimer()
                 }
             case .hangup, .error:
                 self.callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips

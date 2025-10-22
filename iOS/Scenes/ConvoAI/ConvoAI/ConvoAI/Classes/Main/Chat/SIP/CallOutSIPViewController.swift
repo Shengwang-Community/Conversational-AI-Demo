@@ -33,6 +33,13 @@ class CallOutSipViewController: SIPViewController {
         return manager
     }()
     
+    internal lazy var timerCoordinator: AgentTimerCoordinator = {
+        let coordinator = AgentTimerCoordinator()
+        coordinator.delegate = self
+        coordinator.setDurationLimit(limited: DeveloperConfig.shared.getSessionLimit())
+        return coordinator
+    }()
+    
     // MARK: - UI Components
     internal let sipInputView = SIPInputView.init(style: AppContext.shared.isGlobal ? .global : .inland)
     
@@ -212,6 +219,7 @@ class CallOutSipViewController: SIPViewController {
         }
         logoutRTM()
         stopTimer()
+        timerCoordinator.stopAllTimer()
         rtcManager.destroy()
         rtmManager.destroy()
         AppContext.stateManager().resetToDefaults()

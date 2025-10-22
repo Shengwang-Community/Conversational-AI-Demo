@@ -123,15 +123,18 @@ class SIPCallingView: UIView {
     func startShimmer() {
         guard let gradientLayer = gradientLayer,
               let shimmerAnimation = shimmerAnimation else { return }
-        
+        phoneNumberLabel.layer.mask = gradientLayer
+        phoneNumberLabel.textColor = .white
         if gradientLayer.animation(forKey: "shimmer") == nil {
             gradientLayer.add(shimmerAnimation, forKey: "shimmer")
         }
     }
     
-    /// Stop shimmer animation
+    /// Stop shimmer animation and restore solid text color
     func stopShimmer() {
         gradientLayer?.removeAnimation(forKey: "shimmer")
+        phoneNumberLabel.layer.mask = nil
+        phoneNumberLabel.textColor = UIColor.themColor(named: "ai_icontext1")
     }
     
     /// Animate view out (for transcription view)
