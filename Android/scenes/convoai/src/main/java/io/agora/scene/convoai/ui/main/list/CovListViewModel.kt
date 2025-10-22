@@ -166,16 +166,23 @@ class CovListViewModel : ViewModel() {
                         CovLogger.e(TAG, "Failed to load custom presets: ${error.message}")
                         _customState.value = AgentListState.Error("")
                     } else {
-                        _customAgents.value = presets
-                        _customState.value = if (presets.isEmpty()) {
+                        // Sort presets by the original order of customAgentIds
+                        val idList = customAgentIds.split(",").map { it.trim() }
+                        val sortedPresets = presets.sortedBy { preset ->
+                            val index = idList.indexOf(preset.name)
+                            if (index == -1) Int.MAX_VALUE else index
+                        }
+                        
+                        _customAgents.value = sortedPresets
+                        _customState.value = if (sortedPresets.isEmpty()) {
                             AgentListState.Empty
                         } else {
                             AgentListState.Success
                         }
 
                         // Update local cache with successful results
-                        if (presets.isNotEmpty()) {
-                            val successfulIds = presets.map { it.name }.joinToString(",")
+                        if (sortedPresets.isNotEmpty()) {
+                            val successfulIds = sortedPresets.map { it.name }.joinToString(",")
                             saveCustomAgentIdsToStorage(successfulIds)
                             CovLogger.d(TAG, "Updated local cache with successful agent IDs: $successfulIds")
                         }

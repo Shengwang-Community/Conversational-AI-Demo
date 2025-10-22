@@ -5,7 +5,7 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1A202E">
+    android:background="@color/ai_fill7">
 
     <!-- ViewPager2 for fragment content -->
     <androidx.viewpager2.widget.ViewPager2
