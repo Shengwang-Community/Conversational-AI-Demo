@@ -124,7 +124,7 @@ class CovLivingTopSipView @JvmOverloads constructor(
             binding.btnBack.isVisible = false
             binding.cvCc.isVisible = true
         }
-        binding.llLimitTips.isVisible = callState == CallState.CALLED
+        //binding.llLimitTips.isVisible = callState == CallState.CALLED
     }
 
     fun updateTitleWithAnimation(isTranscriptEnable: Boolean) {
