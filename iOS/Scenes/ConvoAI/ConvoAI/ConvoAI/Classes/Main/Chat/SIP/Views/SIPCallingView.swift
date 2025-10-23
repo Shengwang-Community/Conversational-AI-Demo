@@ -11,6 +11,10 @@ import SnapKit
 
 class SIPCallingView: UIView {
     
+    // MARK: - State
+    private var isShimmering: Bool = false
+    private var shouldContentBeVisible: Bool = true
+    
     // MARK: - UI Components
     
     lazy var phoneNumberLabel: UILabel = {
@@ -119,8 +123,60 @@ class SIPCallingView: UIView {
     
     // MARK: - Public Methods
     
-    /// Start shimmer animation
-    func startShimmer() {
+    /// Set shimmer state
+    /// - Parameter enabled: If true, show content with shimmer; if false, stop shimmer and apply content visibility state
+    func setShimmer(_ enabled: Bool) {
+        guard isShimmering != enabled else { return }
+        isShimmering = enabled
+        
+        if enabled {
+            // Start shimmer - content must be visible
+            shouldContentBeVisible = true
+            showContentImmediately()
+            startShimmerAnimation()
+        } else {
+            // Stop shimmer - apply content visibility state
+            stopShimmerAnimation()
+            if shouldContentBeVisible {
+                // Keep content visible without shimmer
+                showContentImmediately()
+            } else {
+                // Hide content
+                hideContentWithAnimation()
+            }
+        }
+    }
+    
+    /// Set content visibility state
+    /// - Parameter visible: Whether content should be visible
+    func setContentVisible(_ visible: Bool, animated: Bool = true) {
+        guard shouldContentBeVisible != visible else { return }
+        shouldContentBeVisible = visible
+        
+        // If shimmering, don't hide content
+        if isShimmering {
+            return
+        }
+        
+        // Apply visibility change
+        if visible {
+            if animated {
+                showContentWithAnimation()
+            } else {
+                showContentImmediately()
+            }
+        } else {
+            if animated {
+                hideContentWithAnimation()
+            } else {
+                hideContentImmediately()
+            }
+        }
+    }
+    
+    // MARK: - Private Animation Methods
+    
+    private func startShimmerAnimation() {
         guard let gradientLayer = gradientLayer,
               let shimmerAnimation = shimmerAnimation else { return }
         phoneNumberLabel.layer.mask = gradientLayer
@@ -130,31 +186,29 @@ class SIPCallingView: UIView {
         }
     }
     
-    /// Stop shimmer animation and restore solid text color
-    func stopShimmer() {
+    private func stopShimmerAnimation() {
         gradientLayer?.removeAnimation(forKey: "shimmer")
         phoneNumberLabel.layer.mask = nil
         phoneNumberLabel.textColor = UIColor.themColor(named: "ai_icontext1")
     }
     
-    /// Animate view out (for transcription view)
-    func animateOut(completion: (() -> Void)? = nil) {
-        UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseIn]) {
-            self.phoneNumberLabel.alpha = 0
-            self.phoneNumberLabel.transform = CGAffineTransform(translationX: 0, y: 50)
-            self.tipsLabel.alpha = 0
-            self.tipsLabel.transform = CGAffineTransform(translationX: 0, y: 50)
-        } completion: { _ in
-            self.phoneNumberLabel.isHidden = true
-            self.tipsLabel.isHidden = true
-            self.phoneNumberLabel.transform = .identity
-            self.tipsLabel.transform = .identity
-            completion?()
-        }
+    private func showContentImmediately() {
+        phoneNumberLabel.isHidden = false
+        tipsLabel.isHidden = false
+        phoneNumberLabel.alpha = 1
+        tipsLabel.alpha = 1
+        phoneNumberLabel.transform = .identity
+        tipsLabel.transform = .identity
     }
     
-    /// Animate view in (from transcription view)
-    func animateIn(completion: (() -> Void)? = nil) {
+    private func hideContentImmediately() {
+        phoneNumberLabel.isHidden = true
+        tipsLabel.isHidden = true
+        phoneNumberLabel.alpha = 0
+        tipsLabel.alpha = 0
+    }
+    
+    private func showContentWithAnimation() {
         phoneNumberLabel.isHidden = false
         tipsLabel.isHidden = false
         phoneNumberLabel.alpha = 0
@@ -167,19 +221,56 @@ class SIPCallingView: UIView {
             self.phoneNumberLabel.transform = .identity
             self.tipsLabel.alpha = 1
             self.tipsLabel.transform = .identity
-        } completion: { _ in
-            completion?()
         }
     }
     
-    /// Reset view state after animateOut
+    private func hideContentWithAnimation() {
+        UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseIn]) {
+            self.phoneNumberLabel.alpha = 0
+            self.phoneNumberLabel.transform = CGAffineTransform(translationX: 0, y: 50)
+            self.tipsLabel.alpha = 0
+            self.tipsLabel.transform = CGAffineTransform(translationX: 0, y: 50)
+        } completion: { _ in
+            self.phoneNumberLabel.isHidden = true
+            self.tipsLabel.isHidden = true
+            self.phoneNumberLabel.transform = .identity
+            self.tipsLabel.transform = .identity
+        }
+    }
+    
+    // MARK: - Legacy Methods (for backward compatibility)
+    
+    /// Animate view out (for transcription view)
+    /// - Note: Use setContentVisible(false, animated: true) instead
+    func animateOut() {
+        setContentVisible(false, animated: true)
+    }
+    
+    /// Animate view in (from transcription view)
+    /// - Note: Use setContentVisible(true, animated: true) instead
+    func animateIn() {
+        setContentVisible(true, animated: true)
+    }
+    
+    /// Reset view state
+    /// - Note: Use setShimmer(false) and setContentVisible(true, animated: false) instead
     func reset() {
-        phoneNumberLabel.isHidden = false
-        tipsLabel.isHidden = false
-        phoneNumberLabel.alpha = 1
-        tipsLabel.alpha = 1
-        phoneNumberLabel.transform = .identity
-        tipsLabel.transform = .identity
+        isShimmering = false
+        shouldContentBeVisible = true
+        stopShimmerAnimation()
+        showContentImmediately()
+    }
+    
+    /// Start shimmer animation (legacy method)
+    /// - Note: Use setShimmer(true) instead
+    func startShimmer() {
+        setShimmer(true)
+    }
+    
+    /// Stop shimmer animation (legacy method)
+    /// - Note: Use setShimmer(false) instead
+    func stopShimmer() {
+        setShimmer(false)
     }
 }
 

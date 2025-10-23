@@ -31,8 +31,8 @@ extension CallOutSipViewController {
             case .hangup, .error:
                 self.callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipEndCallTips
                 dealServiceHangupAndErrorState()
+                callingView.stopShimmer()
             case .none: break
-                
             }
             navivationBar.netStateView.isHidden = true
         }
