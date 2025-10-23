@@ -238,9 +238,8 @@ extension CustomAgentViewController: UITableViewDelegate, UITableViewDataSource 
         let cell = tableView.dequeueReusableCell(withIdentifier: "AgentTableViewCell", for: indexPath) as! AgentTableViewCell
         let preset = presets[indexPath.row]
         cell.nameLabel.text = preset.displayName
-        cell.descriptionLabel.text = "[\(preset.name ?? String())]  \(preset.description ?? String())"
         cell.avatarImageView.kf.setImage(with: URL(string: preset.avatarUrl.stringValue()), placeholder: UIImage.ag_named("ic_custom_agent_head"))
-        cell.descriptionLabel.text = preset.description ?? ""
+        cell.descriptionLabel.text = "[\(preset.name.stringValue())]  \(preset.description.stringValue())"
         return cell
     }
     
