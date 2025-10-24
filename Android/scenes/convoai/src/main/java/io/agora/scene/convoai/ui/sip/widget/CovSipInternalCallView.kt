@@ -96,6 +96,11 @@ class CovSipInternalCallView @JvmOverloads constructor(
      * Prepare collapsed and expanded data sources
      */
     private fun prepareDataSources() {
+        if (allCallees.size > 1) {
+            binding.tvCallTips.setText(R.string.cov_sip_internal_call_tips1)
+        } else {
+            binding.tvCallTips.setText(R.string.cov_sip_internal_call_tips)
+        }
         // Collapsed state: show up to 3 items
         collapsedCallees = allCallees.take(3)
         // Expanded state: show all items (RecyclerView will handle scrolling for more than 6)

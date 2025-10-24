@@ -54,6 +54,8 @@ class CovLivingSipViewModel : ViewModel() {
     private val _callState = MutableStateFlow(CallState.IDLE)
     val callState: StateFlow<CallState> = _callState.asStateFlow()
 
+    val isAlreadyConnected
+        get() = _callState.value == CallState.CALLED || _callState.value == CallState.HANGUP
     private val _isShowMessageList = MutableStateFlow(false)
     val isShowMessageList: StateFlow<Boolean> = _isShowMessageList.asStateFlow()
 

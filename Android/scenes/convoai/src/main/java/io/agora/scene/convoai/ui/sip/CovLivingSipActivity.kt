@@ -140,15 +140,22 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
             viewModel.callState.collect { state ->
                 mBinding?.outBoundCallView?.setCallState(state)
                 if (state == CallState.CALLED) {
-                    mBinding?.clTop?.updateSessionLimit(
-                        tipsText = if (CovAgentManager.isSessionLimitMode)
-                            getString(
-                                R.string.cov_sip_limit_time,
-                                (CovAgentManager.roomExpireTime / 60).toInt()
-                            )
-                        else
-                            getString(io.agora.scene.common.R.string.common_limit_time_none)
-                    )
+                    mBinding?.apply {
+                        clTop.updateSessionLimit(
+                            tipsText = if (CovAgentManager.isSessionLimitMode)
+                                getString(
+                                    R.string.cov_sip_limit_time,
+                                    (CovAgentManager.roomExpireTime / 60).toInt()
+                                )
+                            else
+                                getString(io.agora.scene.common.R.string.common_limit_time_none)
+                        )
+                        if (messageListViewV2.isVisible) {
+                            outBoundCallView.toggleTranscriptUpdate(true)
+                            clTop.updateTitleWithAnimation(true)
+                        }
+                    }
+
                 }
                 mBinding?.clTop?.updateCallState(state)
             }
@@ -157,7 +164,7 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
             viewModel.isShowMessageList.collect { isShow ->
                 mBinding?.apply {
                     layoutMessage.isVisible = isShow
-                    clTop.updateTitleWithAnimation(isShow)
+                    clTop.updateTitleWithAnimation(viewModel.isAlreadyConnected && isShow)
                 }
             }
         }
