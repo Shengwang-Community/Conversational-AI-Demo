@@ -14,7 +14,6 @@ class CallInSIPViewController: SIPViewController {
     private let phoneListView = SIPPhoneListView(style: AppContext.shared.isGlobal ? .global : .inland)
     private lazy var tipsLabel: UILabel = {
         let label = UILabel()
-        label.text = ResourceManager.L10n.Sip.sipCallInTips
         label.textColor = UIColor.themColor(named: "ai_icontext2")
         label.font = UIFont.systemFont(ofSize: 12)
         label.numberOfLines = 0
@@ -32,8 +31,12 @@ class CallInSIPViewController: SIPViewController {
         guard let preset = AppContext.settingManager().preset, let vendorCalleeNumbers = preset.sipVendorCalleeNumbers else {
             return
         }
-        
-        // Directly use VendorCalleeNumber without conversion
+        // Set tips text based on number count
+        if vendorCalleeNumbers.count > 1 {
+            tipsLabel.text = ResourceManager.L10n.Sip.sipCallInTipsMulti
+        } else {
+            tipsLabel.text = ResourceManager.L10n.Sip.sipCallInTips
+        }
         phoneListView.updateVendors(vendorCalleeNumbers)
     }
     

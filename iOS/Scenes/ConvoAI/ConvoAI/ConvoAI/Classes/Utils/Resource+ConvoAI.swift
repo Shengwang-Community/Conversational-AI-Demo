@@ -361,6 +361,7 @@ extension ResourceManager {
         
         public enum Sip {
             public static let sipCallInTips = ResourceManager.localizedString("agent.sip.in.call.tips")
+            public static let sipCallInTipsMulti = ResourceManager.localizedString("agent.sip.in.call.tips.multi")
             public static let sipCallOutTips = ResourceManager.localizedString("agent.sip.out.call.tips")
             public static let sipCallingTips = ResourceManager.localizedString("agent.sip.calling.tips")
             public static let sipInputPlaceholder = ResourceManager.localizedString("agent.sip.input.placeholder")

@@ -317,7 +317,8 @@
 "mine.nickname.adjectives" = "Ezra,Pledge,Bonnie,Seeds,Shannon,Red-Haired,Montague,Primavera,Tess";
 "mine.nickname.nouns" = "";
 
-"agent.sip.in.call.tips" = "Dial this number from your phone to start a conversation with our AI Agent.";
+"agent.sip.in.call.tips" = "Dial this number on your phone to try our AI customer service";
+"agent.sip.in.call.tips.multi" = "Dial any of these numbers on your phone to try our AI customer service";
 "agent.sip.out.call.tips" = "Enter your number below, and our AI Agent will call you.";
 "agent.sip.calling.tips" = "Calling now… please answer on your phone.";
 "agent.sip.input.placeholder" = "Enter your mobile";
@@ -325,11 +326,11 @@
 "agent.sip.end.call.tips" = "Call ended, please hang up";
 "agent.sip.phone.invalid" = "Please enter a valid mobile or landline number";
 "agent.sip.callout" = "Call Out";
-"agent.sip.call.alert.title" = "Call Confirmation";
-"agent.sip.call.alert.message" = "Your phone will now call this number. Confirm?";
+"agent.sip.call.alert.title" = "Call reminder";
+"agent.sip.call.alert.message" = "You're about to call this number from your phone. Continue?";
 "agent.sip.call.alert.cancel" = "Cancel";
-"agent.sip.call.alert.confirm" = "Call Now";
-"agent.sip.area.code.search.placeholder" = "Search country or area code";
+"agent.sip.call.alert.confirm" = "Call now";
+"agent.sip.area.code.search.placeholder" = "Search country/region code";
 "agent.sip.area.code.search.button" = "Search";
 "agent.sip.area.code.no.results" = "No Results";
-"agent.sip.call.limit.exceeded" = "The daily call limit of 20 times has been exceeded.";
+"agent.sip.call.limit.exceeded" = "You've reached today's call limit (20)";
