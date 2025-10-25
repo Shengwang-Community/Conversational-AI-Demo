@@ -150,7 +150,7 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
                             else
                                 getString(io.agora.scene.common.R.string.common_limit_time_none)
                         )
-                        if (messageListViewV2.isVisible) {
+                        if (layoutMessage.isVisible) {
                             outBoundCallView.toggleTranscriptUpdate(true)
                             clTop.updateTitleWithAnimation(true)
                         }

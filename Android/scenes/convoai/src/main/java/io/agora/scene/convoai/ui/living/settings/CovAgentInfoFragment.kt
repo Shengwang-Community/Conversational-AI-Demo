@@ -116,32 +116,35 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
      */
     private fun observeViewModel() {
         // Observe all state changes in a single coroutine
-        lifecycleScope.launch {
-            livingViewModel.connectionState.collect { state ->
-                agentInfoViewModel.updateConnectionState(state)
-                updateUploadingStatus(disable = state != AgentConnectionState.CONNECTED)
-            }
-        }
+        if (CovAgentManager.getPreset()?.isSip == true) {
+            lifecycleScope.launch {
+                livingSipViewModel.callState.collect { state ->
+                    when (state) {
+                        CallState.IDLE -> {
+                            agentInfoViewModel.updateConnectionState(AgentConnectionState.IDLE)
+                        }
 
-        lifecycleScope.launch {
-            livingSipViewModel.callState.collect { state ->
-                when (state) {
-                    CallState.IDLE -> {
-                        agentInfoViewModel.updateConnectionState(AgentConnectionState.IDLE)
-                    }
+                        CallState.CALLING -> {
+                            agentInfoViewModel.updateConnectionState(AgentConnectionState.CONNECTING)
+                        }
 
-                    CallState.CALLING -> {
-                        agentInfoViewModel.updateConnectionState(AgentConnectionState.CONNECTING)
-                    }
+                        CallState.CALLED -> {
+                            agentInfoViewModel.updateConnectionState(AgentConnectionState.CONNECTED)
+                        }
 
-                    CallState.CALLED -> {
-                        agentInfoViewModel.updateConnectionState(AgentConnectionState.CONNECTED)
+                        CallState.HANGUP -> {
+                            agentInfoViewModel.updateConnectionState(AgentConnectionState.IDLE)
+                        }
                     }
-                    CallState.HANGUP -> {
-                        agentInfoViewModel.updateConnectionState(AgentConnectionState.IDLE)
-                    }
+                    updateUploadingStatus(disable = (state == CallState.IDLE || state == CallState.CALLING))
                 }
-                updateUploadingStatus(disable = (state == CallState.IDLE || state == CallState.CALLING))
+            }
+        } else {
+            lifecycleScope.launch {
+                livingViewModel.connectionState.collect { state ->
+                    agentInfoViewModel.updateConnectionState(state)
+                    updateUploadingStatus(disable = state != AgentConnectionState.CONNECTED)
+                }
             }
         }
 
