@@ -60,7 +60,7 @@
     "vad": "优雅打断",
     "more": "更多..."
   },
-  "aiGenerateInfo": "本数字人由 AI 生成",
+  "aiGenerateInfo": "以下对话内容均由 AI 生成",
   "moreInfo": {
     "title": "更多信息",
     "moreAction": "更多操作"
@@ -329,11 +329,17 @@
     "IN": "印度",
     "US": "美国",
     "CN": "中国",
+    "inbound_hint": "为保障通话服务正常运行及纠纷追溯，您的通话记录（含电话号码、通话时间、通话时长）将被记录。",
     "status": {
       "idle": "空闲中",
       "calling": "电话拨打中，请在您的电话上接听",
       "connected": "通话中...",
       "disconnected": "通话已结束，请退出"
+    },
+    "dialog": {
+      "title": "为保障通话服务正常运行及纠纷追溯，您的通话记录（含电话号码、通话时间、通话时长）将被记录",
+      "confirm": "立即呼叫",
+      "cancel": "取消"
     },
     "exceed_max_calls": "已超过本日呼出上限 20 次",
     "timer": "智能客服电话沟通单次体验限 10 分钟",

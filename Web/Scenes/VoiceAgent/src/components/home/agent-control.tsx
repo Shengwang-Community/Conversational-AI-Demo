@@ -102,6 +102,7 @@ import { GenerateAIInfoTypewriter } from './typewriter'
 export default function AgentControl(props: { className?: string }) {
   const [audioTrack, setAudioTrack] = React.useState<IMicrophoneAudioTrack>()
   const [disableHangUp, setDisableHangUp] = React.useState<boolean>(false)
+  const refShowCallingPage = React.useRef<boolean>(false)
 
   const tAgent = useTranslations('agent')
   const tSip = useTranslations('sip')
@@ -640,6 +641,7 @@ export default function AgentControl(props: { className?: string }) {
     try {
       await startSipService()
       setShowCallingPage(true)
+      refShowCallingPage.current = true
     } catch (error) {
       logger.error((error as Error)?.toString(), 'startSipCall error')
       toast.error(tAgent('errorTitle'))
@@ -649,7 +651,8 @@ export default function AgentControl(props: { className?: string }) {
 
   const clearAndExitSip = async () => {
     setShowCallingPage(false)
-    // updateSipStatus(ESipStatus.IDLE)
+    refShowCallingPage.current = false
+    updateSipStatus(ESipStatus.IDLE)
     cleanUpSip()
     startAgentAbortControllerRef?.current?.abort()
     startAgentAbortControllerRef.current = null
@@ -909,7 +912,11 @@ export default function AgentControl(props: { className?: string }) {
               v.data.state === ESipCallingStatus.CALLING ||
               v.data.state === ESipCallingStatus.RINGING
             ) {
-              updateSipStatus(ESipStatus.CALLING)
+              if (refShowCallingPage.current) {
+                updateSipStatus(ESipStatus.CALLING)
+              } else {
+                console.log('not show calling page')
+              }
             }
           })
         }, 1000) // 1 second polling

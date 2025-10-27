@@ -325,6 +325,7 @@
     "region_placeholder": "Search country/region code",
     "region_not_found": "Region not found",
     "invalid_phone_number": "Please enter a valid phone number",
+    "inbound_hint": "To ensure the normal operation of the call service and dispute tracing, your call records (including phone number, call time, and call duration) will be recorded.",
     "CL": "Chile",
     "IN": "India",
     "US": "United States",
@@ -334,6 +335,11 @@
       "calling": "Calling... Please answer the phone on your end",
       "connected": "On the phone...",
       "disconnected": "Call ended. Please exit"
+    },
+    "dialog": {
+      "title": "To ensure the normal operation of the call service and dispute tracing, your call records (including phone number, call time, and call duration) will be recorded",
+      "confirm": "Call Now",
+      "cancel": "Cancel"
     },
     "exceed_max_calls": "You’ve reached today’s call limit (20)",
     "timer": "Smart Customer Service Phone Communication Single Experience Limit 10 Minutes",

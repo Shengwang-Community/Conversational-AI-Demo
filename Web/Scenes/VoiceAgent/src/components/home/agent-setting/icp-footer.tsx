@@ -17,7 +17,7 @@ export const ICPFooter = () => {
         <NextImage {...ICP_IMAGE} /> 沪公网安备31011002006829号
       </Link>
       <Link href={ICP_URL} target='_blank' rel='noreferrer noopener'>
-        沪ICP备14053584号-27A
+        沪ICP备2024090791号-1
       </Link>
     </div>
   )
