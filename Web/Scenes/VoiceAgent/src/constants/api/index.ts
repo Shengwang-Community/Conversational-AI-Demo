@@ -14,6 +14,10 @@ export enum ERROR_MESSAGE {
   AVATAR_LIMIT_EXCEEDED = 'avatar limit exceeded',
   PRESET_DEPRECATED = 'preset is deprecated'
 }
+
+export enum SIP_ERROR_CODE {
+  EXCEED_MAX_CALLS = 1439
+}
 // --- LOCAL API ---
 
 export const API_TOKEN = '/api/token'
@@ -31,16 +35,21 @@ export const API_UPLOAD_LOG = '/api/upload/log'
 export const API_UPLOAD_IMAGE = '/api/upload/image'
 export const API_UPLOAD_FILE = '/api/upload/file'
 
+export const API_SIP_CALL = '/api/sip/call'
+export const API_SIP_STATUS = `/api/sip/status`
+
 // --- REMOTE API ---
 
 export const REMOTE_TOKEN_GENERATE = '/v2/token/generate'
 
-export const REMOTE_CONVOAI_AGENT_PRESETS = '/convoai/v4/presets/list'
-export const REMOTE_CONVOAI_AGENT_START = '/convoai/v4/start'
-export const REMOTE_CONVOAI_AGENT_STOP = '/convoai/v4/stop'
-export const REMOTE_CONVOAI_AGENT_PING = '/convoai/v4/ping'
+export const REMOTE_CONVOAI_AGENT_PRESETS = '/convoai/v5/presets/list'
+export const REMOTE_CONVOAI_AGENT_START = '/convoai/v5/start'
+export const REMOTE_CONVOAI_AGENT_STOP = '/convoai/v5/stop'
+export const REMOTE_CONVOAI_AGENT_PING = '/convoai/v5/ping'
+export const REMOTE_CONVOAI_SIP_START = '/convoai/v5/call'
+export const REMOTE_CONVOAI_SIP_STATUS = '/convoai/v5/sip/status'
 export const REMOTE_CONVOAI_GET_CUSTOM_PRESET =
-  '/convoai/v4/customPresets/search'
+  '/convoai/v5/customPresets/search'
 
 export const REMOTE_SSO_LOGIN = '/v1/convoai/sso/callback'
 export const LOGIN_URL = `${process.env.NEXT_PUBLIC_SSO_LOGIN_URL}/v1/convoai/sso/login`

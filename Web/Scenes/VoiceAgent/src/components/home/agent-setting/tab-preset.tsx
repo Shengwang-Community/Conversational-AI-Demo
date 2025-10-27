@@ -1,10 +1,13 @@
+import { group } from 'console'
 import { motion } from 'motion/react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
 import type * as z from 'zod'
+
 import { CheckFilledIcon, LoadingSpinner } from '@/components/icon'
 import {
+  CircleXIcon,
   FilledTooltipIcon,
   PresetPlaceholderIcon
 } from '@/components/icon/agent'
@@ -24,7 +27,7 @@ import {
   ERROR_MESSAGE,
   type remoteAgentCustomPresetItem
 } from '@/constants'
-import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
+import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
 import { cn } from '@/lib/utils'
 import { retrievePresetById } from '@/services/agent'
 import { useAgentSettingsStore, useGlobalStore } from '@/store'
@@ -49,7 +52,7 @@ export const Presets = (props: { className?: string }) => {
 
   const t = useTranslations()
 
-  const disableFormMemo = useIsAgentCalling()
+  const disableFormMemo = useIsDemoCalling()
 
   const customPresetsMemo: (z.infer<typeof remoteAgentCustomPresetItem> & {
     deprecated: boolean
@@ -146,52 +149,64 @@ export const Presets = (props: { className?: string }) => {
         <>
           <Label className='mt-3'>{t('settings.custom_agent.title')}</Label>
           <ul className={cn('flex flex-col gap-3')}>
-            {customPresetsMemo.map((preset) => (
-              <li key={`presets-li-${preset.name}`}>
-                <PresetCardItem
-                  className=''
-                  disabled={disableFormMemo || preset.deprecated}
-                  isSelected={selectedPreset?.preset?.name === preset.name}
-                  onClick={async () => {
-                    if (disableFormMemo) return
-                    if (
-                      selectedPreset?.preset?.name !== preset.name &&
-                      !preset.deprecated
-                    ) {
-                      updateSelectedPreset({ preset, type: 'custom_private' })
-                    }
-                    try {
-                      const data = await retrievePresetById(preset.name)
-                      console.log('retrievePresetById', data)
-                      updateDisabledPresetNameList(
-                        disabledPresetNameList.filter((i) => i !== preset.name)
-                      )
-                    } catch (error: unknown) {
-                      console.error(error)
+            {customPresetsMemo
+              .sort((a, b) => {
+                if (a.updated_at && b.updated_at) {
+                  return (
+                    new Date(b.updated_at).getTime() -
+                    new Date(a.updated_at).getTime()
+                  )
+                }
+                return 0
+              })
+              .map((preset) => (
+                <li key={`presets-li-${preset.name}`}>
+                  <PresetCardItem
+                    className=''
+                    disabled={disableFormMemo || preset.deprecated}
+                    isSelected={selectedPreset?.preset?.name === preset.name}
+                    onClick={async () => {
+                      if (disableFormMemo) return
                       if (
-                        error instanceof Error &&
-                        error.message === ERROR_MESSAGE.PRESET_DEPRECATED
+                        selectedPreset?.preset?.name !== preset.name &&
+                        !preset.deprecated
                       ) {
-                        toast.warning(
-                          t('settings.custom_agent.message_sunset'),
-                          {
-                            description: `ID[${preset.name}] ${preset.display_name}`
-                          }
-                        )
-                        updateDisabledPresetNameList([
-                          ...disabledPresetNameList,
-                          preset.name
-                        ])
-                        updateSelectedPreset(null)
-                        return
+                        updateSelectedPreset({ preset, type: 'custom_private' })
                       }
-                    }
-                  }}
-                  title={preset.display_name}
-                  description={preset.description}
-                />
-              </li>
-            ))}
+                      try {
+                        const data = await retrievePresetById(preset.name)
+                        console.log('retrievePresetById', data)
+                        updateDisabledPresetNameList(
+                          disabledPresetNameList.filter(
+                            (i) => i !== preset.name
+                          )
+                        )
+                      } catch (error: unknown) {
+                        console.error(error)
+                        if (
+                          error instanceof Error &&
+                          error.message === ERROR_MESSAGE.PRESET_DEPRECATED
+                        ) {
+                          toast.warning(
+                            t('settings.custom_agent.message_sunset'),
+                            {
+                              description: `ID[${preset.name}] ${preset.display_name}`
+                            }
+                          )
+                          updateDisabledPresetNameList([
+                            ...disabledPresetNameList,
+                            preset.name
+                          ])
+                          updateSelectedPreset(null)
+                          return
+                        }
+                      }
+                    }}
+                    title={`${preset.display_name}`}
+                    description={`[${preset.name}]  ${preset.description}`}
+                  />
+                </li>
+              ))}
           </ul>
         </>
       )}
@@ -339,7 +354,7 @@ export const RetrieveCustomPreset = (props: { className?: string }) => {
             </TooltipContent>
           </Tooltip>
         </Label>
-        <div className={cn('relative')}>
+        <div className={cn('group relative')}>
           <Input
             type='number'
             placeholder={t('placeholder')}
@@ -351,6 +366,14 @@ export const RetrieveCustomPreset = (props: { className?: string }) => {
               '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
             )}
           />
+          {!!input && (
+            <CircleXIcon
+              className='-translate-y-1/2 absolute top-1/2 right-20 h-5 w-5 fill-[#FFFFFF50] transition-colors duration-300 group-hover:fill-icontext'
+              onClick={() => {
+                setInput('')
+              }}
+            />
+          )}
           <div
             className={cn(
               'absolute top-2.25 right-2.25',

@@ -94,7 +94,7 @@ export const calculateTimeLeft = (
     displayMinutes = true,
     displaySeconds = true
   } = options || {}
-  const difference = endTimestamp - +new Date()
+  const difference = endTimestamp - Date.now()
   let timeLeft: {
     days: number | null
     hours: number | null
@@ -155,4 +155,35 @@ export async function getImageDimensions(
       reject(err)
     }
   })
+}
+
+/**
+ * Format phone number to 3-4-4-3 format
+ * @param phoneNumber Original phone number string
+ * @returns Formatted phone number string
+ */
+export function formatPhoneNumber(phoneNumber: string): string {
+  // Remove all non-digit characters
+  const cleaned = phoneNumber.replace(/\D/g, '')
+
+  // Format based on length
+  if (cleaned.length <= 3) {
+    return cleaned
+  } else if (cleaned.length <= 7) {
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`
+  } else if (cleaned.length <= 11) {
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 7)} ${cleaned.slice(7)}`
+  } else {
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 7)} ${cleaned.slice(7, 11)} ${cleaned.slice(11, 14)}`
+  }
+}
+
+/**
+ * Validate whether the phone number format is correct
+ * @param phoneNumber Phone number string
+ * @returns Whether it is a valid phone number format
+ */
+export function validatePhoneNumber(phoneNumber: string): boolean {
+  const cleaned = phoneNumber.replace(/\D/g, '')
+  return /^[0-9]{4,14}$/.test(cleaned)
 }

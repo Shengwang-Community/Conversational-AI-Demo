@@ -35,3 +35,10 @@ export const SAL_BG_IMAGE = {
 }
 
 export const SSO_DELETE_ACCOUNT_URL = `https://sso.shengwang.cn/profile`
+
+export const SIP_REGION_NOT_FOUND_IMAGE = {
+  src: '/img/sip/region-not-found.png',
+  width: 154,
+  height: 160,
+  alt: 'SIP region not found'
+}

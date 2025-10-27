@@ -9,7 +9,7 @@ import { InnerCard } from '@/components/home/agent-setting/base'
 import { AutoForm } from '@/components/ui/autoform'
 import { Button } from '@/components/ui/button'
 import { opensourceAgentFormSchema } from '@/constants'
-import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
+import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import { useAgentSettingsStore, useRTCStore } from '@/store'
@@ -27,7 +27,7 @@ export const FullAgentSettingsForm = (props: { className?: string }) => {
   //   })
   const schemaProvider = new ZodProvider(opensourceAgentFormSchema)
 
-  const disableFormMemo = useIsAgentCalling()
+  const disableFormMemo = useIsDemoCalling()
 
   return (
     <InnerCard className={cn(props.className)}>
@@ -51,13 +51,13 @@ export const FullAgentSettingsForm = (props: { className?: string }) => {
 
           const sal = enable_sal
             ? {
-                sal_mode: 'locking',
-                sample_urls: data.sal?.sample_urls
-                  ? {
-                      [remote_rtc_uid]: data.sal?.sample_urls
-                    }
-                  : undefined
-              }
+              sal_mode: 'locking',
+              sample_urls: data.sal?.sample_urls
+                ? {
+                  [remote_rtc_uid]: data.sal?.sample_urls
+                }
+                : undefined
+            }
             : undefined
 
           updateSettings({

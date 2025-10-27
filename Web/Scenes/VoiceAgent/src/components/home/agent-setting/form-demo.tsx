@@ -51,7 +51,7 @@ import {
   publicAgentSettingSchema
 } from '@/constants'
 import { ETranscriptHelperMode } from '@/conversational-ai-api/type'
-import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
+import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
 import { cn, isCN } from '@/lib/utils'
 import { useAgentSettingsStore, useGlobalStore } from '@/store'
 import type { TAgentSettings } from '@/store/agent'
@@ -89,7 +89,7 @@ export function AgentSettingsForm(props: {
     defaultValues: settings
   })
 
-  const disableFormMemo = useIsAgentCalling()
+  const disableFormMemo = useIsDemoCalling()
 
   React.useEffect(() => {
     updateFormSetValue(
@@ -286,11 +286,11 @@ export function AgentSettingsForm(props: {
                           field.onChange(value)
                         }
                       }}
-                      //   disabled={
-                      //     disableFormMemo ||
-                      //     settingsForm.watch('preset_name') !==
-                      //       EAgentPresetMode.CUSTOM
-                      //   }
+                    //   disabled={
+                    //     disableFormMemo ||
+                    //     settingsForm.watch('preset_name') !==
+                    //       EAgentPresetMode.CUSTOM
+                    //   }
                     >
                       <SelectTrigger
                         className='w-2/3'
@@ -427,10 +427,10 @@ export function AgentSettingsForm(props: {
               <SelectContent>
                 {(isCN
                   ? [
-                      ETranscriptHelperMode.WORD,
-                      ETranscriptHelperMode.CHUNK,
-                      ETranscriptHelperMode.TEXT
-                    ]
+                    ETranscriptHelperMode.WORD,
+                    ETranscriptHelperMode.CHUNK,
+                    ETranscriptHelperMode.TEXT
+                  ]
                   : [ETranscriptHelperMode.WORD, ETranscriptHelperMode.TEXT]
                 ).map((item) => (
                   <SelectItem key={`render-mode-${item}`} value={item}>

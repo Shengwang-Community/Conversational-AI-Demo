@@ -42,7 +42,7 @@ import {
   SAL_BG_IMAGE
 } from '@/constants/agent'
 import { RTCHelper } from '@/conversational-ai-api/helper/rtc'
-import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
+import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
 import { encodePCM, encodeWAV } from '@/lib/pcm'
 import { cn, isCN } from '@/lib/utils'
 import { uploadFile } from '@/services/agent'
@@ -89,7 +89,7 @@ export default function SALSettings() {
   const appId = rtcHelper.appId
   const formatter = useFormatter()
 
-  const isAgentCalling = useIsAgentCalling()
+  const isDemoCalling = useIsDemoCalling()
 
   const uploadStatusRef = useRef<NodeJS.Timeout>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -297,7 +297,7 @@ export default function SALSettings() {
   return (
     <SALSettingsWrapper
       onClose={() => {
-        if (isAgentCalling) {
+        if (isDemoCalling) {
           setShowSALSettingSidebar(false)
           return
         }
@@ -317,8 +317,8 @@ export default function SALSettings() {
             <div
               className={cn(
                 index === SALSettingsMode.length - 1 &&
-                  salMode === ESALSettingsMode.MANUAL &&
-                  'bg-bluepurple5'
+                salMode === ESALSettingsMode.MANUAL &&
+                'bg-bluepurple5'
               )}
             >
               <motion.div
@@ -326,10 +326,10 @@ export default function SALSettings() {
                 className={cn(
                   'flex cursor-pointer items-center justify-between gap-4 rounded-xl bg-card p-4',
                   index === SALSettingsMode.length - 1 &&
-                    'rounded-t-none rounded-b-xl border-border border-b-1'
+                  'rounded-t-none rounded-b-xl border-border border-b-1'
                 )}
                 onClick={() => {
-                  if (isAgentCalling) {
+                  if (isDemoCalling) {
                     return
                   }
                   if (mode === ESALSettingsMode.AUTO_LEARNING) {
@@ -345,7 +345,7 @@ export default function SALSettings() {
                     mode === ESALSettingsMode.MANUAL &&
                     salAudioInfo?.[accountUid]?.file_url &&
                     salAudioInfo?.[accountUid]?.expired_ts * 1000 >
-                      new Date().getTime()
+                    new Date().getTime()
                   ) {
                     onFormSetValue?.('advanced_features.enable_sal', true)
                     onFormSetValue?.('sal', {
@@ -374,10 +374,7 @@ export default function SALSettings() {
                     {t(`${mode}_description`)}
                   </p>
                 </div>
-                <Checkbox
-                  disabled={isAgentCalling}
-                  checked={salMode === mode}
-                />
+                <Checkbox disabled={isDemoCalling} checked={salMode === mode} />
               </motion.div>
             </div>
             {index !== SALSettingsMode.length - 1 && <Separator />}
@@ -401,18 +398,18 @@ export default function SALSettings() {
                 <span className='text-brand-white text-sm'>
                   {audioUrl
                     ? t('voice_print_time', {
-                        time: formatter.dateTime(
-                          new Date(
-                            (audioUrl?.expired_ts || 0) * 1000 -
-                              MAX_VALIDATE_TIME_MILLISECOND
-                          ),
-                          {
-                            dateStyle: 'full',
-                            timeStyle: 'short',
-                            timeZone
-                          }
-                        )
-                      })
+                      time: formatter.dateTime(
+                        new Date(
+                          (audioUrl?.expired_ts || 0) * 1000 -
+                          MAX_VALIDATE_TIME_MILLISECOND
+                        ),
+                        {
+                          dateStyle: 'full',
+                          timeStyle: 'short',
+                          timeZone
+                        }
+                      )
+                    })
                     : t('create_sal_title')}
                 </span>
               </div>
@@ -422,7 +419,7 @@ export default function SALSettings() {
               className={cn(
                 'flex items-center justify-end',
                 (isUploading || uploadStatus !== 'idle' || audioUrl) &&
-                  'ml-10 justify-between'
+                'ml-10 justify-between'
               )}
             >
               {isUploading ? (
@@ -433,14 +430,14 @@ export default function SALSettings() {
               ) : uploadStatus === 'failed' ? (
                 <motion.div
                   onClick={() => {
-                    if (isAgentCalling) {
+                    if (isDemoCalling) {
                       return
                     }
                     setIsUploading(true)
                   }}
                   className={cn(
                     'flex cursor-pointer items-center gap-2 text-xs text-yellow-6 transition-colors duration-300 hover:text-brand-white',
-                    isAgentCalling && 'cursor-not-allowed'
+                    isDemoCalling && 'cursor-not-allowed'
                   )}
                 >
                   {t('upload_failed')}
@@ -449,14 +446,14 @@ export default function SALSettings() {
               ) : audioUrl ? (
                 <motion.div
                   onClick={() => {
-                    if (isAgentCalling) {
+                    if (isDemoCalling) {
                       return
                     }
                     setIsPlaying(!isPlaying)
                   }}
                   className={cn(
                     'cursor-pointer rounded-sm bg-brand-white-1 px-4 py-1 transition-colors duration-300 hover:bg-brand-white-2',
-                    isAgentCalling && 'cursor-not-allowed'
+                    isDemoCalling && 'cursor-not-allowed'
                   )}
                 >
                   {isPlaying ? (
@@ -477,7 +474,7 @@ export default function SALSettings() {
                     onClick={(e) => {
                       e.stopPropagation()
                       e.preventDefault()
-                      if (isAgentCalling) {
+                      if (isDemoCalling) {
                         return
                       }
                       setRecordDialogOpen('record')
@@ -487,7 +484,7 @@ export default function SALSettings() {
                         !isUploading
                         ? 'border border-brand-white-1 bg-brand-white-1 transition-colors duration-300 hover:bg-brand-white-2'
                         : '',
-                      isAgentCalling ? 'cursor-not-allowed' : 'cursor-pointer',
+                      isDemoCalling ? 'cursor-not-allowed' : 'cursor-pointer',
                       'flex items-center gap-1 rounded-md px-4 py-1 text-brand-white text-xs'
                     )}
                   >

@@ -24,9 +24,11 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip'
+import { useIsAgentSipCalling } from '@/hooks/use-is-agent-calling'
 import { cn } from '@/lib/utils'
 import { useGlobalStore } from '@/store'
 import { useRTCStore } from '@/store/rtc'
+import { ESipStatus, useSipStore } from '@/store/sip'
 import { EConnectionStatus } from '@/type/rtc'
 
 export function RoomInfo() {
@@ -77,6 +79,8 @@ export const RoomInfoBlock = () => {
     // salStatus
   } = useRTCStore()
 
+  const { sipStatus } = useSipStore()
+
   // const { settings } = useAgentSettingsStore()
   // const vadEnabled = settings.advanced_features.enable_aivad
 
@@ -86,6 +90,12 @@ export const RoomInfoBlock = () => {
       roomStatus === EConnectionStatus.RECONNECTING
     )
   }, [roomStatus])
+
+  const isAgentSipConnectedMemo = useIsAgentSipCalling()
+
+  const isAgentConnected = agentStatus === EConnectionStatus.CONNECTED
+  const isSipConnected = sipStatus === ESipStatus.CONNECTED
+  const isRoomConnected = roomStatus === EConnectionStatus.CONNECTED
 
   return (
     <>
@@ -128,11 +138,8 @@ export const RoomInfoBlock = () => {
             <InfoItemLabel>{t('agentStatus')}</InfoItemLabel>
             <InfoItemValue
               className={cn('text-icontext-disabled', {
-                ['text-destructive']:
-                  agentStatus === EConnectionStatus.DISCONNECTED ||
-                  agentStatus === EConnectionStatus.RECONNECTING,
-                ['text-brand-green']:
-                  agentStatus === EConnectionStatus.CONNECTED
+                ['text-destructive']: !isAgentConnected && !isSipConnected,
+                ['text-brand-green']: isAgentConnected || isSipConnected
               })}
             >
               {tStatus(agentStatus)}
@@ -142,7 +149,9 @@ export const RoomInfoBlock = () => {
           <InfoItem>
             <InfoItemLabel>{t('agentId')}</InfoItemLabel>
             <InfoItemValue>
-              {isRoomConnectedMemo ? agent_id || tStatus('na') : tStatus('na')}
+              {isRoomConnectedMemo || isAgentSipConnectedMemo
+                ? agent_id || tStatus('na')
+                : tStatus('na')}
             </InfoItemValue>
           </InfoItem>
           <Separator />
@@ -150,10 +159,8 @@ export const RoomInfoBlock = () => {
             <InfoItemLabel>{t('roomStatus')}</InfoItemLabel>
             <InfoItemValue
               className={cn('text-icontext-disabled', {
-                ['text-destructive']:
-                  roomStatus === EConnectionStatus.DISCONNECTED ||
-                  roomStatus === EConnectionStatus.RECONNECTING,
-                ['text-brand-green']: roomStatus === EConnectionStatus.CONNECTED
+                ['text-destructive']: !isRoomConnected,
+                ['text-brand-green']: isRoomConnected
               })}
             >
               {tStatus(roomStatus)}

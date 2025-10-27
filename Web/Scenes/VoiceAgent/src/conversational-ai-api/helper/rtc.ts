@@ -267,6 +267,11 @@ export class RTCHelper extends EventHelper<
     } catch (error) {
       console.error(error, 'Failed to leave channel')
     }
+    try {
+      this.client?.removeAllListeners()
+    } catch (error) {
+      console.error(error, 'Failed to remove all listeners')
+    }
   }
 
   private bindRtcEvents() {
