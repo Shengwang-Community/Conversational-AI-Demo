@@ -12,7 +12,7 @@ import { TriangleAlertIcon } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
-
+import type z from 'zod'
 import {
   AgentActionAudio,
   AgentActionHangUp,
@@ -22,7 +22,6 @@ import {
   AgentStateIndicator,
   AgentUploadPicture
 } from '@/components/home/agent-action'
-import { PrivacyDialog } from '@/components/layout/privacy-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -44,7 +43,10 @@ import {
   localOpensourceStartAgentPropertiesSchema,
   localStartAgentPropertiesSchema,
   opensourceAgentSettingSchema,
-  publicAgentSettingSchema
+  opensourceSipCallPayloadSchema,
+  publicAgentSettingSchema,
+  SIP_ERROR_CODE,
+  sipCallPayloadSchema
 } from '@/constants'
 import { ConversationalAIAPI } from '@/conversational-ai-api'
 import { RTCHelper } from '@/conversational-ai-api/helper/rtc'
@@ -63,7 +65,10 @@ import {
   type IUserTranscription,
   type TStateChangeEvent
 } from '@/conversational-ai-api/type'
-import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
+import {
+  useIsAgentCalling,
+  useIsAgentSipCalling
+} from '@/hooks/use-is-agent-calling'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import {
@@ -72,6 +77,7 @@ import {
   startAgent,
   stopAgent
 } from '@/services/agent'
+import { ESipCallingStatus, getSipStatus, startSip } from '@/services/sip'
 import {
   useAgentSettingsStore,
   useChatStore,
@@ -79,6 +85,8 @@ import {
   useRTCStore,
   useUserInfoStore
 } from '@/store'
+import { ESipStatus, useSipStore } from '@/store/sip'
+
 import {
   EConnectionStatus,
   ENetworkStatus,
@@ -86,6 +94,9 @@ import {
   type IRtcUser,
   type IUserTracks
 } from '@/type/rtc'
+import { PrivacyDialog } from '../layout/privacy-dialog'
+import { AgentSipCallOut, AgentSipDisplay } from './agent-setting/agent-sip'
+import { AgentSipCallActions } from './agent-setting/agent-sip-call-actions'
 import { GenerateAIInfoTypewriter } from './typewriter'
 
 export default function AgentControl(props: { className?: string }) {
@@ -93,6 +104,7 @@ export default function AgentControl(props: { className?: string }) {
   const [disableHangUp, setDisableHangUp] = React.useState<boolean>(false)
 
   const tAgent = useTranslations('agent')
+  const tSip = useTranslations('sip')
   const tCompatibility = useTranslations('compatibility')
   const tLogin = useTranslations('login')
   const tAgentAction = useTranslations('agent-action')
@@ -118,24 +130,33 @@ export default function AgentControl(props: { className?: string }) {
     presets,
     transcriptionRenderMode,
     conversationDuration,
+    selectedPreset,
     setConversationTimerEndTimestamp
   } = useAgentSettingsStore()
   const {
     showSubtitle,
-    onClickSubtitle,
-    setShowSubtitle,
     isDevMode,
     isRTCCompatible,
+    onClickSubtitle,
+    setShowSubtitle,
     setShowPrivacyDialog
   } = useGlobalStore()
+  const {
+    preset: sipPreset,
+    callee,
+    updateSipStatus,
+    sipStatus
+  } = useSipStore()
   const { setHistory, clearHistory } = useChatStore()
   const { accountUid, clearUserInfo } = useUserInfoStore()
 
+  const sipStatusRef = React.useRef<NodeJS.Timeout | null>(null)
   const heartBeatRef = React.useRef<NodeJS.Timeout | null>(null)
   const agentStartTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
   const startAgentAbortControllerRef = React.useRef<AbortController | null>(
     null
   )
+  const [showCallingPage, setShowCallingPage] = React.useState(false)
 
   const isSupportVision = React.useMemo(() => {
     const targetPreset = presets.find((p) => p.name === settings.preset_name)
@@ -182,20 +203,21 @@ export default function AgentControl(props: { className?: string }) {
       rtcHelper.on(ERTCEvents.NETWORK_QUALITY, onNetworkQuality)
       rtcHelper.on(ERTCEvents.CONNECTION_STATE_CHANGE, onConnectionStateChange)
       rtcHelper.on(ERTCCustomEvents.REMOTE_USER_CHANGED, onRemoteUserChanged)
+      conversationalAIAPI.on(
+        EConversationalAIAPIEvents.AGENT_STATE_CHANGED,
+        onAgentStateChanged
+      )
+      conversationalAIAPI.on(
+        EConversationalAIAPIEvents.MESSAGE_SAL_STATUS,
+        onMessageSalStatus
+      )
 
       conversationalAIAPI.on(
         EConversationalAIAPIEvents.TRANSCRIPT_UPDATED,
         onTextChanged
       )
-      conversationalAIAPI.on(
-        EConversationalAIAPIEvents.AGENT_STATE_CHANGED,
-        onAgentStateChanged
-      )
+
       conversationalAIAPI.subscribeMessage(channel_name)
-      conversationalAIAPI.on(
-        EConversationalAIAPIEvents.MESSAGE_SAL_STATUS,
-        onMessageSalStatus
-      )
 
       await rtcHelper.initDenoiserProcessor()
       await rtcHelper.createTracks()
@@ -205,7 +227,7 @@ export default function AgentControl(props: { className?: string }) {
       )?.preset_type
       const messageServiceMode =
         presetType?.startsWith('standard') ||
-        settings.preset_type === 'custom_private'
+          settings.preset_type === 'custom_private'
           ? 'default'
           : 'legacy'
 
@@ -264,6 +286,7 @@ export default function AgentControl(props: { className?: string }) {
       // await rtcService.publishTracks()
       updateAgentStatus(EConnectionStatus.CONNECTING)
       setDisableHangUp(false)
+
       await startAgentService()
     } catch (error: unknown) {
       // Don't show error toast if aborted
@@ -329,13 +352,13 @@ export default function AgentControl(props: { className?: string }) {
         // avatar releated
         avatar: settings.avatar
           ? {
-              enable: true,
-              vendor: settings.avatar.vendor,
-              params: {
-                agora_uid: `${avatar_rtc_uid}`,
-                avatar_id: settings.avatar.avatar_id
-              }
+            enable: true,
+            vendor: settings.avatar.vendor,
+            params: {
+              agora_uid: `${avatar_rtc_uid}`,
+              avatar_id: settings.avatar.avatar_id
             }
+          }
           : undefined,
         channel: channel_name,
         agent_rtc_uid: `${agent_rtc_uid}`,
@@ -436,8 +459,7 @@ export default function AgentControl(props: { className?: string }) {
     clearHistory()
   }
 
-  const clearAndExit = async () => {
-    logger.info('clearAndExit')
+  const clearCommon = () => {
     // set conversation timer end timestamp to null
     setConversationTimerEndTimestamp(null)
     // abort start agent
@@ -462,6 +484,11 @@ export default function AgentControl(props: { className?: string }) {
     const legacyMessageHelper = LegacyMessageHelper.getInstance()
     legacyMessageHelper.removeAllEventListeners()
     legacyMessageHelper.messageService.cleanup()
+  }
+
+  const clearAndExit = async () => {
+    logger.info('clearAndExit')
+    clearCommon()
 
     // force update channel name
     const prevChannelName = channel_name
@@ -496,6 +523,138 @@ export default function AgentControl(props: { className?: string }) {
         toast.error(tLogin('unauthorizedError'))
       }
     }
+  }
+
+  // SIP
+
+  const startSipService = async () => {
+    logger.info('startSipService')
+    console.log('settings', settings)
+    // updateAgentStatus(EConnectionStatus.CONNECTING)
+    // updateRoomStatus(EConnectionStatus.CONNECTING)
+    try {
+      const targetSchema =
+        presets && presets.length > 0
+          ? sipCallPayloadSchema
+          : opensourceSipCallPayloadSchema
+
+      const payloadRaw = {
+        ...sipPreset,
+        convoai_body: {
+          properties: {
+            channel: channel_name,
+            agent_rtc_uid: `${agent_rtc_uid}`
+          },
+          sip: {
+            to_number: callee
+          }
+        }
+      }
+      const payload = targetSchema ? targetSchema.parse(payloadRaw) : payloadRaw
+
+      logger.info({ payload }, 'startSipService payload')
+      const abortController = new AbortController()
+      startAgentAbortControllerRef.current = abortController
+      const res = await startSip(
+        payload as z.infer<typeof sipCallPayloadSchema>,
+        abortController
+      )
+      updateSipStatus(ESipStatus.CALLING)
+      console.log('startSipService res', res)
+      updateAgentId(res.agent_id)
+    } catch (error: unknown) {
+      logger.error({ error }, 'startSipService error')
+      console.log('startSipService error', (error as Error).message)
+      if (
+        (error as Error).message === ERROR_MESSAGE.UNAUTHORIZED_ERROR_MESSAGE
+      ) {
+        logger.log('startSipService unauthorizedError')
+        toast.error(tLogin('unauthorizedError'))
+        clearAndExit()
+        return
+      }
+      if (error instanceof ResourceLimitError) {
+        if (error.code === SIP_ERROR_CODE.EXCEED_MAX_CALLS) {
+          toast.error(tSip('exceed_max_calls'))
+        }
+        clearAndExit()
+        return
+      }
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.info('startSipService aborted')
+        updateSipStatus(ESipStatus.DISCONNECTED)
+        updateRoomStatus(EConnectionStatus.DISCONNECTED)
+        return
+      }
+      toast.error(tSip('startSipError'))
+      updateSipStatus(ESipStatus.DISCONNECTED)
+      updateRoomStatus(EConnectionStatus.DISCONNECTED)
+    }
+  }
+
+  const startSipCall = async () => {
+    updateRoomStatus(EConnectionStatus.CONNECTING)
+    // init rtc helper
+    const rtcHelper = RTCHelper.getInstance()
+    await rtcHelper.retrieveToken(`${remote_rtc_uid}`, channel_name, false, {
+      devMode: isDevMode
+    })
+    // init rtm helper
+    const rtmHelper = RTMHelper.getInstance()
+    rtmHelper.initClient({
+      app_id: rtcHelper.appId as string,
+      user_id: `${remote_rtc_uid}`
+    })
+    const rtmEngine = await rtmHelper.login(rtcHelper.token)
+    // init conversational AI API
+    const conversationalAIAPI = ConversationalAIAPI.init({
+      rtcEngine: rtcHelper.client,
+      rtmEngine,
+      enableLog: isDevMode || process.env.NODE_ENV === 'development',
+      // custom private preset mode is unknown as default and set value by ConversationalAIAPI logic
+      renderMode:
+        transcriptionRenderMode === ETranscriptHelperMode.WORD
+          ? ETranscriptHelperMode.UNKNOWN
+          : transcriptionRenderMode
+    })
+
+    // conversationalAIAPI.on(
+    //   EConversationalAIAPIEvents.AGENT_STATE_CHANGED,
+    //   onAgentStateChanged
+    // )
+    // conversationalAIAPI.on(
+    //   EConversationalAIAPIEvents.MESSAGE_SAL_STATUS,
+    //   onMessageSalStatus
+    // )
+
+    conversationalAIAPI.on(
+      EConversationalAIAPIEvents.TRANSCRIPT_UPDATED,
+      onTextChanged
+    )
+
+    conversationalAIAPI.subscribeMessage(channel_name)
+    await rtmHelper.join(channel_name)
+    updateRoomStatus(EConnectionStatus.CONNECTED)
+
+    // call service
+    try {
+      await startSipService()
+      setShowCallingPage(true)
+    } catch (error) {
+      logger.error((error as Error)?.toString(), 'startSipCall error')
+      toast.error(tAgent('errorTitle'))
+      await clearAndExitSip()
+    }
+  }
+
+  const clearAndExitSip = async () => {
+    setShowCallingPage(false)
+    // updateSipStatus(ESipStatus.IDLE)
+    cleanUpSip()
+    startAgentAbortControllerRef?.current?.abort()
+    startAgentAbortControllerRef.current = null
+    clearCommon()
+    updateChannelName()
   }
 
   const onLocalTracksChanged = (tracks: IUserTracks) => {
@@ -576,7 +735,7 @@ export default function AgentControl(props: { className?: string }) {
     if (data.curState === 'RECONNECTING' && data.revState === 'CONNECTED') {
       logger.info(
         'agent is listening -> user is offline(due to network issue) temporarily' +
-          '[onConnectionStateChange]'
+        '[onConnectionStateChange]'
       )
       toast.warning(tAgent('tmpDisconnected'))
       updateAgentStatus(EConnectionStatus.RECONNECTING)
@@ -588,7 +747,7 @@ export default function AgentControl(props: { className?: string }) {
     if (data.curState === 'CONNECTED' && data.revState === 'RECONNECTING') {
       logger.info(
         'agent is listening -> user is online again(in short time)' +
-          '[onConnectionStateChange]'
+        '[onConnectionStateChange]'
       )
       toast.success(tAgent('agentReconnected'))
       updateAgentStatus(EConnectionStatus.CONNECTED)
@@ -670,7 +829,10 @@ export default function AgentControl(props: { className?: string }) {
     }
   }
 
-  const showActionMemo = useIsAgentCalling()
+  const isAgentCalling = useIsAgentCalling()
+  const isAgentSipCalling = useIsAgentSipCalling()
+
+  const showActionMemo = isAgentCalling || isAgentSipCalling
   // const showActionMemo = true
 
   const isFormValid = React.useMemo(() => {
@@ -720,6 +882,52 @@ export default function AgentControl(props: { className?: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  function cleanUpSip() {
+    if (sipStatusRef.current) {
+      clearInterval(sipStatusRef.current)
+      sipStatusRef.current = null
+    }
+    updateSipStatus(ESipStatus.IDLE)
+  }
+
+  React.useEffect(() => {
+    if (agent_id && showCallingPage) {
+      if (!sipStatusRef.current) {
+        sipStatusRef.current = setInterval(() => {
+          getSipStatus({ agent_id }).then((v) => {
+            if (v.data.state === ESipCallingStatus.HANGUP) {
+              updateSipStatus(ESipStatus.DISCONNECTED)
+            }
+            if (
+              v.data.state === ESipCallingStatus.ANSWERED ||
+              v.data.state === ESipCallingStatus.TRANSFERED
+            ) {
+              updateSipStatus(ESipStatus.CONNECTED)
+            }
+            if (
+              v.data.state === ESipCallingStatus.START ||
+              v.data.state === ESipCallingStatus.CALLING ||
+              v.data.state === ESipCallingStatus.RINGING
+            ) {
+              updateSipStatus(ESipStatus.CALLING)
+            }
+          })
+        }, 1000) // 1 second polling
+      }
+    } else {
+      cleanUpSip()
+    }
+    return () => {
+      cleanUpSip()
+    }
+  }, [agent_id, showCallingPage, updateSipStatus])
+
+  React.useEffect(() => {
+    if (sipStatus === ESipStatus.CONNECTED) {
+      setShowSubtitle(true)
+    }
+  }, [sipStatus])
+
   return (
     <>
       {/* Compatibility Check */}
@@ -734,77 +942,95 @@ export default function AgentControl(props: { className?: string }) {
 
       {/* Agent Control Content */}
       <div className={cn('flex flex-col items-center gap-6', props.className)}>
-        {!showActionMemo && (
-          <AgentActionStart
-            disabled={accountUid ? !isFormValid : false}
-            onClick={() => {
-              if (!isRTCCompatible) {
-                toast.error(tCompatibility('errorTitle'), {
-                  description: tCompatibility('errorDescription'),
-                  duration: 10000
-                })
-                return
-              }
-              if (!accountUid) {
-                setShowPrivacyDialog(true)
-                return
-              }
-              startCall()
-            }}
-            className='relative'
-          >
-            {!accountUid && (
+        {!showActionMemo &&
+          (selectedPreset?.preset.preset_type === 'sip_call_in' ? (
+            <AgentSipDisplay
+              sips={selectedPreset.preset.sip_vendor_callee_numbers ?? []}
+            />
+          ) : selectedPreset?.preset.preset_type === 'sip_call_out' ? (
+            <AgentSipCallOut
+              presets={selectedPreset.preset.presets ?? []}
+              onClick={() => {
+                startSipCall()
+              }}
+            />
+          ) : (
+            <AgentActionStart
+              disabled={accountUid ? !isFormValid : false}
+              onClick={() => {
+                if (!isRTCCompatible) {
+                  toast.error(tCompatibility('errorTitle'), {
+                    description: tCompatibility('errorDescription'),
+                    duration: 10000
+                  })
+                  return
+                }
+                if (!accountUid) {
+                  setShowPrivacyDialog(true)
+                  return
+                }
+                startCall()
+              }}
+              className='relative'
+            >
+              {/* {!accountUid && (
+                <div
+                  className={cn(
+                    '-top-12 -translate-x-1/2 absolute left-1/2',
+                    'flex h-9 w-fit items-center justify-center px-4',
+                    'rounded-xl bg-brand-light text-icontext-inverse text-sm',
+                    'after:-translate-x-1/2 after:absolute after:top-full after:left-1/2',
+                    'after:border-8 after:border-transparent after:border-t-brand-light'
+                  )}
+                >
+                  {tLogin('buttonTip2')}
+                </div>
+              )} */}
+            </AgentActionStart>
+          ))}
+
+        {showActionMemo &&
+          (selectedPreset?.preset.preset_type.includes('sip_call') ? (
+            <AgentSipCallActions
+              onExit={clearAndExitSip}
+              showCallingPage={showCallingPage}
+            />
+          ) : (
+            <>
+              <AgentStateIndicator />
+
               <div
                 className={cn(
-                  '-top-12 -translate-x-1/2 absolute left-1/2',
-                  'flex h-9 w-fit items-center justify-center px-4',
-                  'rounded-xl bg-brand-light text-icontext-inverse text-sm',
-                  'after:-translate-x-1/2 after:absolute after:top-full after:left-1/2',
-                  'after:border-8 after:border-transparent after:border-t-brand-light'
+                  'flex items-center gap-3 md:gap-8',
+                  'h-(--ag-action-height)'
                 )}
               >
-                {tLogin('buttonTip2')}
+                <AgentActionSubtitle
+                  enabled={showSubtitle}
+                  onClick={onClickSubtitle}
+                />
+                <AgentActionAudio
+                  audioTrack={audioTrack}
+                  showInterrupt={agentState === EAgentState.SPEAKING}
+                  onInterrupt={handleInterrupt}
+                />
+                {isSupportVision && <AgentUploadPicture />}
+                <AgentActionHangUp
+                  disabled={disableHangUp}
+                  onClick={clearAndExit}
+                />
               </div>
-            )}
-          </AgentActionStart>
-        )}
-
-        {showActionMemo && (
-          <>
-            <AgentStateIndicator />
-
-            <div
-              className={cn(
-                'flex items-center gap-3 md:gap-8',
-                'h-(--ag-action-height)'
-              )}
-            >
-              <AgentActionSubtitle
-                enabled={showSubtitle}
-                onClick={onClickSubtitle}
-              />
-              <AgentActionAudio
-                audioTrack={audioTrack}
-                showInterrupt={agentState === EAgentState.SPEAKING}
-                onInterrupt={handleInterrupt}
-              />
-              {isSupportVision && <AgentUploadPicture />}
-              <AgentActionHangUp
-                disabled={disableHangUp}
-                onClick={clearAndExit}
-              />
-            </div>
-            <div
-              className={cn(
-                'h-fit min-h-fit min-w-fit py-1.5',
-                '!text-icontext-4 font-semibold',
-                'md:hidden'
-              )}
-            >
-              <GenerateAIInfoTypewriter />
-            </div>
-          </>
-        )}
+              <div
+                className={cn(
+                  'h-fit min-h-fit min-w-fit py-1.5',
+                  '!text-icontext-4 font-semibold',
+                  'md:hidden'
+                )}
+              >
+                <GenerateAIInfoTypewriter />
+              </div>
+            </>
+          ))}
       </div>
     </>
   )

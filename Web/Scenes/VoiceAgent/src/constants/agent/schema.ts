@@ -44,6 +44,14 @@ export const agentPresetAvatarSchema = z.object({
   display_vendor: z.string()
 })
 
+export const agentPresetSipSchema = z.object({
+  region_code: z.string(),
+  region_name: z.string(),
+  region_display_name: z.string().optional(),
+  flag_emoji: z.string().optional(),
+  phone_number: z.string().optional()
+})
+
 export const agentPresetSchema = z.object({
   // index: z.number(),
   advanced_features_enable_sal: z.boolean().optional(),
@@ -70,8 +78,24 @@ export const agentPresetSchema = z.object({
     .optional(),
   is_support_vision: z.boolean().optional(),
   avatar_url: z.string().optional(),
+
+  presets_avatar_url: z
+    .string()
+    .optional()
+    .describe('[Client] For SIP phone call preset only'),
   description: z.string().optional(),
-  is_support_sal: z.boolean().optional()
+  is_support_sal: z.boolean().optional(),
+  sip_vendor_callee_numbers: z.array(agentPresetSipSchema).optional(),
+  presets: z
+    .array(
+      z.object({
+        preset_type: z.string(),
+        name: z.string(),
+        sip_vendor_callee_numbers: z.array(agentPresetSipSchema)
+      })
+    )
+    .optional()
+    .describe('[Client] For SIP phone call preset only')
 })
 
 export const publicAgentSettingSchema = z.object({
@@ -260,3 +284,47 @@ export const localStartAgentPropertiesSchema =
 
 export const localOpensourceStartAgentPropertiesSchema =
   localStartAgentPropertiesBaseSchema.merge(opensourceAgentSettingSchema)
+
+export const sipCallPayloadSchema = z.object({
+  preset_name: z.string().optional(),
+  preset_type: z.string().optional(),
+  convoai_body: z.object({
+    name: z.string().optional(),
+    pipeline_id: z.string().optional(),
+    properties: z.object({
+      channel: z.string(),
+      token: z.string().optional(),
+      agent_rtc_uid: z.string()
+    }),
+    sip: z.object({
+      to_number: z.string(),
+      from_number: z.string().optional(),
+      rtc_token: z.string().optional(),
+      rtc_uid: z.string().optional()
+    })
+  })
+})
+
+export const opensourceSipCallPayloadSchema = z.object({
+  preset_name: z.string().optional(),
+  preset_type: z.string().optional(),
+  convoai_body: z.object({
+    name: z.string().optional(),
+    pipeline_id: z.string(),
+    properties: z.object({
+      channel: z.string(),
+      token: z.string().optional(),
+      agent_rtc_uid: z.string()
+    }),
+    sip: z.object({
+      to_number: z.string(),
+      from_number: z.string(),
+      rtc_token: z.string(),
+      rtc_uid: z.string()
+    })
+  })
+})
+
+export const sipStatusPayloadSchema = z.object({
+  agent_id: z.string()
+})

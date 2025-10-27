@@ -234,7 +234,9 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
    * @since 1.6.0
    */
   public static init(cfg: IConversationalAIAPIConfig) {
-    ConversationalAIAPI._instance = new ConversationalAIAPI()
+    if (!ConversationalAIAPI._instance) {
+      ConversationalAIAPI._instance = new ConversationalAIAPI()
+    }
     ConversationalAIAPI._instance.rtcEngine = cfg.rtcEngine
     ConversationalAIAPI._instance.rtmEngine = cfg.rtmEngine
     ConversationalAIAPI._instance.renderMode =

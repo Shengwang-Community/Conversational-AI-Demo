@@ -314,7 +314,30 @@
     "avatar-busy-error": "All avatars are busy now. Please try again later."
   },
   "preset": {
-    "more": "More+"
+    "more": "More+",
+    "sip_call_in": "Customer Service - Phone In",
+    "sip_call_out": "Customer Service - Phone Out",
+    "sip_call_in_description": "Customer Service - Phone In Description",
+    "sip_call_out_description": "Enter your phone number/fixed phone number and dial out, the AI smart customer service will call your phone and communicate with you"
+  },
+  "sip": {
+    "phone_number_placeholder": "enter your phone number",
+    "region_placeholder": "Search country/region code",
+    "region_not_found": "Region not found",
+    "invalid_phone_number": "Please enter a valid phone number",
+    "CL": "Chile",
+    "IN": "India",
+    "US": "United States",
+    "CN": "China",
+    "status": {
+      "idle": "Idle",
+      "calling": "Calling... Please answer the phone on your end",
+      "connected": "On the phone...",
+      "disconnected": "Call ended. Please exit"
+    },
+    "exceed_max_calls": "You’ve reached today’s call limit (20)",
+    "timer": "Smart Customer Service Phone Communication Single Experience Limit 10 Minutes",
+    "startSipError": "Failed to start phone call. Please try again later."
   },
   "mock": {
     "preset": {

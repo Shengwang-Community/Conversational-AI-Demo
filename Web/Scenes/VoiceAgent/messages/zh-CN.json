@@ -189,7 +189,7 @@
     },
     "privacyDialog": {
       "title": "个人信息保护指引",
-      "description": "欢迎使用声网对话式 AI 引擎！当您点击“同意”时，视为您已阅读并愿意接受<link>《用户协议》</link> 和 <policyLink>《隐私政策的所有内容》</policyLink>。当您点击“不同意”时，将无法体验本应用的完整功能。",
+      "description": "欢迎使用声网对话式 AI 引擎！当您点击“同意”时，视为您已阅读并愿意接受<link>《用户协议》</link> 和 <policyLink>《隐私政策》</policyLink>的所有内容。当您点击“不同意”时，将无法体验本应用的完整功能。",
       "cancel": "不同意",
       "confirm": "同意"
     },
@@ -284,7 +284,7 @@
     "buttonTip2": "请勾选协议",
     "panelTitle": "一键登录",
     "panelDescription": "解锁∞免费畅聊",
-    "panelButton": "手机号登录",
+    "panelButton": "登录",
     "panelSignupButton": "免费注册",
     "privacyPolicy": "我已阅读并同意<link>《用户协议》</link> 和 <policyLink>《隐私政策》</policyLink>",
     "termsTip": "请勾选协议",
@@ -314,7 +314,30 @@
     "avatar-busy-error": "所有数字人正忙，请稍后重试。"
   },
   "preset": {
-    "more": "更多+"
+    "more": "更多+",
+    "sip_call_in": "智能客服-电话呼入",
+    "sip_call_out": "智能客服-电话呼出",
+    "sip_call_in_description": "Customer Service - Phone In Description",
+    "sip_call_out_description": "输入您的手机号码/固定电话号码并拨出，AI 智能客服会拨打电话到您的手机与您沟通"
+  },
+  "sip": {
+    "phone_number_placeholder": "请输入你的手机号",
+    "region_placeholder": "搜索国家/地区号...",
+    "region_not_found": "未找到该地区",
+    "invalid_phone_number": "请输入正确的手机号/固定电话号码",
+    "CL": "智利",
+    "IN": "印度",
+    "US": "美国",
+    "CN": "中国",
+    "status": {
+      "idle": "空闲中",
+      "calling": "电话拨打中，请在您的电话上接听",
+      "connected": "通话中...",
+      "disconnected": "通话已结束，请退出"
+    },
+    "exceed_max_calls": "已超过本日呼出上限 20 次",
+    "timer": "智能客服电话沟通单次体验限 10 分钟",
+    "startSipError": "电话拨打失败，请稍后重试"
   },
   "mock": {
     "preset": {

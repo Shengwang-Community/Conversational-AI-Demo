@@ -4,7 +4,10 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { BrandLogo } from '@/components/icon'
 import { BrowserInfo } from '@/components/layout/browser-info'
-import { ConversationTimer } from '@/components/layout/conversation-timer'
+import {
+  ConversationTimer,
+  SipTimer
+} from '@/components/layout/conversation-timer'
 import { DevModeBadge } from '@/components/layout/dev-mode'
 import { LoginPanel } from '@/components/layout/login-panel'
 import { More } from '@/components/layout/more'
@@ -13,11 +16,13 @@ import { RoomInfo } from '@/components/layout/room-info'
 import { UserInfo } from '@/components/layout/user-info'
 import { cn } from '@/lib/utils'
 import { useUserInfoStore } from '@/store'
+import { useSipStore } from '@/store/sip'
 
 export const Header = (props: { className?: string }) => {
   const { className } = props
 
   const t = useTranslations('homePage')
+  const { showTimer } = useSipStore()
   const { accountUid } = useUserInfoStore()
 
   return (
@@ -39,9 +44,17 @@ export const Header = (props: { className?: string }) => {
       <div className='flex items-center gap-2'>
         {accountUid && (
           <>
-            <ConversationTimer />
-            <BrowserInfo />
-            <NetWorkInfo />
+            {showTimer ? // <SipTimer />
+              null : (
+                <ConversationTimer />
+              )}
+
+            {showTimer ? null : (
+              <>
+                <BrowserInfo />
+                <NetWorkInfo />
+              </>
+            )}
             <More>
               <RoomInfo />
             </More>

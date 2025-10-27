@@ -539,6 +539,15 @@
     color: var(--ai_brand_white10);
   }
 
+  .ag-sip-call-out-button {
+    background: linear-gradient(
+      114deg,
+      #17c5ff 3.21%,
+      #315dff 49.08%,
+      #446cff 93.98%
+    );
+  }
+
   .ag-warn-time-pulse {
     color: var(--ai_red6);
     animation: warn-time-pulse 2s infinite;
