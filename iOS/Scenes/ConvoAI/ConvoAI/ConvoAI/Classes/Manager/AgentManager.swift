@@ -139,7 +139,7 @@ class AgentManager: AgentAPI {
     }
     
     func ping(appId: String, channelName: String, presetName: String, completion: @escaping ((ConvoAIError?, [String : Any]?) -> Void)) {
-        let url = AgentServiceUrl.stopAgent.toHttpUrlString()
+        let url = AgentServiceUrl.ping.toHttpUrlString()
         let parameters: [String: Any] = [
             "app_id": appId,
             "channel_name": channelName,
@@ -201,6 +201,7 @@ enum AgentServiceUrl {
     // MARK: - Agent Operations
     case startAgent
     case updateAgent
+    case ping
     case stopAgent
     
     // MARK: - Preset Operations
@@ -215,6 +216,7 @@ enum AgentServiceUrl {
         switch self {
         case .startAgent: return "start"
         case .updateAgent: return "update"
+        case .ping: return "ping"
         case .stopAgent: return "stop"
         case .fetchAgentPresets: return "presets/list"
         case .searchCustomPresets: return "customPresets/search"
