@@ -15,6 +15,8 @@ typealias RTMManagerCallback = (AgoraRtmErrorInfo?) -> ()
     func onConnected()
     func onDisconnected()
     func onTokenPrivilegeWillExpire(channelName: String)
+    func remoteLeave()
+    func remoteJoin()
     func onDebuLog(_ log: String)
 }
 
@@ -139,6 +141,15 @@ extension RTMManager: AgoraRtmClientDelegate {
             self.delegate?.onFailed()
         default:
             break
+        }
+    }
+    
+    func rtmKit(_ rtmKit: AgoraRtmClientKit, didReceivePresenceEvent event: AgoraRtmPresenceEvent) {
+        print("didReceivePresenceEvent event type: \(event.type)")
+        if event.type == .remoteLeaveChannel {
+            self.delegate?.remoteLeave()
+        } else if event.type == .remoteJoinChannel {
+            self.delegate?.remoteJoin()
         }
     }
     

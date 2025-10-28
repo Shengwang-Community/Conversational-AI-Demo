@@ -1,6 +1,6 @@
 "login.title" = "一键登录";
 "login.description" = "解锁♾️免费畅聊";
-"login.start.button.title" = "账号登录";
+"login.start.button.title" = "登录";
 "login.start.button.signup" = "立即注册";
 "login.terms.service.prefix" = "我已阅读并同意 ";
 "login.terms.service.name" = "《用户协议》";
@@ -196,7 +196,6 @@
 "agent.list.get.agent" = "获取你的智能助手";
 "agent.search.success" = "智能体获取成功";
 
-/* 空状态视图 */
 "empty.state.loading.failed" = "页面加载失败，请重试";
 "empty.state.retry" = "重试";
 
@@ -305,3 +304,22 @@
 // Nickname Generation
 "mine.nickname.adjectives" = "暖,柔,轻,淡,微,浅,软,绵,净,纯,空,寂,默,幻,谜,韵,绪,念,思,忆,春,夏,秋,冬,昼,夜,晨,昏,岁,月";
 "mine.nickname.nouns" = "云,星,月,日,霞,虹,风,雨,雪,雾,龙,凤,鹤,鹿,蝶,蝉,萤,雁,鸥,鹭,光,影,晨,昏,昼,夜,秒,分,时,季";
+"mine.icp.subtitle" = "沪ICP备14053584号-27A";
+
+"agent.sip.in.call.tips" = "请使用你的手机拨打该号码，即可体验电话与 AI 智能客服沟通";
+"agent.sip.in.call.tips.multi" = "请使用你的手机拨打任一号码，即可体验电话与 AI 智能客服沟通";
+"agent.sip.out.call.tips" = "输入您的手机号码/固定电话号码并拨出，AI智能客服会拨打电话到您的手机与您沟通";
+"agent.sip.calling.tips" = "电话拨打中，请在您的电话上接听...";
+"agent.sip.on.call.tips" = "通话进行中...";
+"agent.sip.end.call.tips" = "通话已结束，请挂断电话";
+"agent.sip.input.placeholder" = "请输入你的手机号";
+"agent.sip.phone.invalid" = "请输入有效的手机号/固定电话号码";
+"agent.sip.callout" = "呼叫";
+"agent.sip.call.alert.title" = "呼叫提示";
+"agent.sip.call.alert.message" = "为保障通话服务正常运行及纠纷追溯，您的通话记录（含电话号码、通话时间、通话时长）将被记录";
+"agent.sip.call.alert.cancel" = "取消";
+"agent.sip.call.alert.confirm" = "立即呼叫";
+"agent.sip.area.code.search.placeholder" = "搜索国家/地区号...";
+"agent.sip.area.code.search.button" = "搜索";
+"agent.sip.area.code.no.results" = "无结果";
+"agent.sip.call.limit.exceeded" = "已超过每日20次通话限制";

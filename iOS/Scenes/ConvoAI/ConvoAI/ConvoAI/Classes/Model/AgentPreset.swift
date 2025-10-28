@@ -25,6 +25,22 @@ struct Avatar: Codable {
     }
 }
 
+struct VendorCalleeNumber: Codable {
+    let regionName: String?
+    let regionCode: String?
+    let phoneNumber: String?
+    let regionFullName: String?
+    let flagEmoji: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case regionName = "region_name"
+        case regionCode = "region_code"
+        case phoneNumber = "phone_number"
+        case regionFullName = "region_full_name"
+        case flagEmoji = "flag_emoji"
+    }
+}
+
 struct SupportLanguage: Codable, Equatable {
     let languageCode: String?
     let languageName: String?
@@ -55,6 +71,7 @@ struct AgentPreset: Codable {
     let enableSal: Bool?
     let supportSal: Bool?
     var defaultAvatar: String?
+    let sipVendorCalleeNumbers:[VendorCalleeNumber]?
 
     enum CodingKeys: String, CodingKey {
         case name
@@ -70,6 +87,7 @@ struct AgentPreset: Codable {
         case avatarIdsByLang = "avatar_ids_by_lang"
         case avatarUrl = "avatar_url"
         case defaultAvatar = "default_avatar"
+        case sipVendorCalleeNumbers = "sip_vendor_callee_numbers"
         case enableSal = "advanced_features_enable_sal"
         case supportSal = "is_support_sal"
     }

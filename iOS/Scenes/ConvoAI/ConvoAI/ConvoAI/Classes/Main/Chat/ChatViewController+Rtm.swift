@@ -25,6 +25,14 @@ extension ChatViewController: RTMManagerDelegate {
         }
     }
     
+    func remoteLeave() {
+        addLog("<<< onFailed")
+    }
+    
+    func remoteJoin() {
+        addLog("<<< remoteJoin")
+    }
+    
     func onTokenPrivilegeWillExpire(channelName: String) {
         addLog("[traceId: \(traceId)] <<< onTokenPrivilegeWillExpire")
         NetworkManager.shared.generateToken(

@@ -22,9 +22,10 @@ import Bugly
 
         }
     }
-    public let sharedInfoUrl: String = "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/libraries.html"
+    public let sharedInfoUrl: String = "https://conversational-ai.shengwang.cn/terms/privacy/sdk"
     public let logoffUrl: String = "https://console.shengwang.cn/settings/security"
     
+    public let isGlobal = false
     private var _isOpenSource: Bool = false
     private var _appId: String = ""
     private var _certificate: String = ""

@@ -103,7 +103,7 @@ extension ChatViewController {
                 ]
             ]
         ]
-        return (removeNilValues(from: parameters) as? [String: Any]) ?? [:]
+        return (CommonFeature.removeNilValues(from: parameters) as? [String: Any]) ?? [:]
     }
     
     private func getStartAgentParametersForOpenSouce() -> [String: Any] {
@@ -198,7 +198,7 @@ extension ChatViewController {
             ]
         ]
         
-        return (removeNilValues(from: parameters) as? [String: Any]) ?? [:]
+        return (CommonFeature.removeNilValues(from: parameters) as? [String: Any]) ?? [:]
     }
     
     private func getSalParams() -> [String: Any?]? {
@@ -233,33 +233,9 @@ extension ChatViewController {
             return getStartAgentParametersForConvoAI()
         }
     }
-    
-    private func removeNilValues(from value: Any?) -> Any? {
-        guard let value = value else { return nil }
-        if let dict = value as? [String: Any?] {
-            var result: [String: Any] = [:]
-            for (key, val) in dict {
-                if let processedVal = removeNilValues(from: val) {
-                    result[key] = processedVal
-                }
-            }
-            return result.isEmpty ? nil : result
-        }
-        if let array = value as? [[String: Any?]] {
-            let processedArray = array.compactMap { removeNilValues(from: $0) as? [String: Any] }
-            return processedArray.isEmpty ? nil : processedArray
-        }
-        if let array = value as? [Any?] {
-            let processedArray = array.compactMap { removeNilValues(from: $0) }
-            return processedArray.isEmpty ? nil : processedArray
-        }
-        return value
-    }
 }
 
 extension ChatViewController {
-    
-    
     internal func fetchTokenIfNeeded() async throws {
         return try await withCheckedThrowingContinuation { continuation in
             if !self.token.isEmpty {
@@ -348,7 +324,7 @@ extension ChatViewController {
             startRenderRemoteVideoStream()
         }
         
-        agentManager.startAgent(parameters: parameters, channelName: channelName) { [weak self] error, channelName, remoteAgentId, targetServer in
+        agentManager.startAgent(parameters: parameters, channelName: channelName) { [weak self] error, channelName, response in
             guard let self = self else { return }
             if self.channelName != channelName {
                 self.addLog("channelName is different, current : \(self.channelName), before: \(channelName)")
@@ -356,8 +332,8 @@ extension ChatViewController {
             }
             
             guard let error = error else {
-                if let remoteAgentId = remoteAgentId,
-                     let targetServer = targetServer {
+                if let remoteAgentId = response?.agentId,
+                   let targetServer = response?.agentUrl {
                     self.remoteAgentId = remoteAgentId
                     AppContext.stateManager().updateAgentId(remoteAgentId)
                     AppContext.stateManager().updateUserId(self.uid)

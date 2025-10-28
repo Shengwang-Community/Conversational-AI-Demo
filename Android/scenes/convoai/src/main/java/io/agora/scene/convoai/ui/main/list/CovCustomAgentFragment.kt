@@ -28,6 +28,7 @@ import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.databinding.CovFragmentCustomAgentBinding
 import io.agora.scene.convoai.databinding.CovItemOfficialAgentBinding
 import io.agora.scene.convoai.ui.living.CovLivingActivity
+import io.agora.scene.convoai.ui.sip.CovLivingSipActivity
 import kotlinx.coroutines.launch
 
 class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
@@ -320,7 +321,11 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
                         CovAgentManager.setPreset(selectedPreset)
                         context?.let {
                             ApiReport.report(selectedPreset.display_name)
-                            it.startActivity(Intent(it, CovLivingActivity::class.java))
+                            if (selectedPreset.isSip) {
+                                it.startActivity(Intent(it, CovLivingSipActivity::class.java))
+                            } else {
+                                it.startActivity(Intent(it, CovLivingActivity::class.java))
+                            }
                         }
                     } else {
                         // Request successful but agent not found
@@ -484,8 +489,7 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
             fun bind(preset: CovAgentPreset) {
                 binding.apply {
                     tvTitle.text = preset.display_name
-                    tvDescription.isVisible = preset.description.isNotEmpty()
-                    tvDescription.text = preset.description
+                    tvDescription.text = "[${preset.name}]  " + preset.description
                     if (preset.avatar_url.isNullOrEmpty()) {
                         ivAvatar.setImageResource(io.agora.scene.common.R.drawable.common_custom_agent)
                     } else {
@@ -503,14 +507,6 @@ class CovCustomAgentFragment : BaseFragment<CovFragmentCustomAgentBinding>() {
                             onItemClick.invoke(presets[position])
                         }
                     }
-
-//                    rootView.setOnLongClickListener {
-//                        val position = adapterPosition
-//                        if (position != RecyclerView.NO_POSITION) {
-//                            onItemLongClick.invoke(presets[position])
-//                        }
-//                        true // Return true to indicate the long click was handled
-//                    }
                 }
             }
         }

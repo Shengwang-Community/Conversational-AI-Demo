@@ -25,8 +25,7 @@ class BaseViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
-        // Clean up when view is about to disappear
-        if isMovingFromParent || isBeingDismissed {
+        if isMovingFromParent || isBeingDismissed || isBeingPopped() {
             viewWillDisappearAndPop()
         }
     }
@@ -79,6 +78,12 @@ class BaseViewController: UIViewController {
     /// Override this method to handle cleanup when view controller is about to be popped
     func viewWillDisappearAndPop() {
         // Default implementation does nothing
+    }
+    
+    /// Check if the view controller is being popped from navigation stack
+    private func isBeingPopped() -> Bool {
+        guard let navigationController = navigationController else { return false }
+        return !navigationController.viewControllers.contains(self)
     }
 }
 

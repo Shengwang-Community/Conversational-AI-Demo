@@ -1,0 +1,9 @@
+---
+alwaysApply: false
+---
+
+同步海外仓库代码到国内仓库需按以下步骤执行：
+
+- 先检查本地是否已经有国内仓库，仓库地址为：https://github.com/Shengwang-Community/Conversational-AI-Demo.git
+- 如果本地没有，需要将仓库
+  1，先基于当前分支切出临时分支

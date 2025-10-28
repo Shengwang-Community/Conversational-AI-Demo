@@ -98,27 +98,10 @@ class ChatMessageCell: UITableViewCell {
         
         if message.isMine {
             setupUserLayout()
-            nameLabel.text = ResourceManager.L10n.Conversation.messageYou
-            nameLabel.textColor = UIColor.themColor(named: "ai_icontext1")
-            avatarImageView.image = UIImage.ag_named("ic_agent_mine_avatar")
-            messageLabel.textColor = UIColor.themColor(named: "ai_icontext1")
             messageBubble.backgroundColor = UIColor.themColor(named: "ai_block4_chat")
         } else {
             setupAgentLayout()
             avatarView.backgroundColor = .clear
-            if let avatar = AppContext.settingManager().currentPreference.avatar {
-                avatarImageView.kf.setImage(with: URL(string: avatar.thumbImageUrl.stringValue()))
-            } else if let preset = AppContext.settingManager().currentPreference.preset {
-                avatarImageView.kf.setImage(
-                    with: URL(string: preset.avatarUrl.stringValue()),
-                    placeholder: UIImage.ag_named(preset.defaultAvatar ?? "")
-                )
-            } else {
-                avatarImageView.image = UIImage.ag_named("ic_agent_avatar")
-            }
-            nameLabel.text = AppContext.settingManager().currentPreference.preset?.displayName.stringValue()
-            nameLabel.textColor = UIColor.themColor(named: "ai_icontext1")
-            messageLabel.textColor = UIColor.themColor(named: "ai_icontext1")
             messageBubble.backgroundColor = .clear
         }
         
@@ -151,6 +134,20 @@ class ChatMessageCell: UITableViewCell {
         }
         
         interruptButton.isHidden = !message.isInterrupted
+    }
+    
+    func setUserProfile(nickname: String?, avatarImage: UIImage?) {
+        nameLabel.text = nickname
+        avatarImageView.image = avatarImage
+    }
+    
+    func setUserProfileWithURL(nickname: String?, avatarURLString: String?, placeholder: UIImage?) {
+        nameLabel.text = nickname
+        if let urlString = avatarURLString, let url = URL(string: urlString) {
+            avatarImageView.kf.setImage(with: url, placeholder: placeholder)
+        } else {
+            avatarImageView.image = placeholder
+        }
     }
     
     func stopLoadingAnimate() {
@@ -422,21 +419,8 @@ class ChatImageMessageCell: UITableViewCell {
         // Configure basic layout
         if message.isMine {
             setupUserLayout()
-            nameLabel.text = ResourceManager.L10n.Conversation.messageYou
-            avatarImageView.image = UIImage.ag_named("ic_agent_mine_avatar")
         } else {
             setupAgentLayout()
-            if let avatar = AppContext.settingManager().currentPreference.avatar {
-                avatarImageView.kf.setImage(with: URL(string: avatar.thumbImageUrl.stringValue()))
-            } else if let preset = AppContext.settingManager().currentPreference.preset {
-                avatarImageView.kf.setImage(
-                    with: URL(string: preset.avatarUrl.stringValue()),
-                    placeholder: UIImage.ag_named(preset.defaultAvatar ?? "")
-                )
-            } else {
-                avatarImageView.image = UIImage.ag_named("ic_agent_avatar")
-            }
-            nameLabel.text = AppContext.settingManager().currentPreference.preset?.displayName.stringValue()
         }
         
         // Configure image content
@@ -447,6 +431,20 @@ class ChatImageMessageCell: UITableViewCell {
                 messageImageView.image = nil
             }
             configureImageStatus(imageSource.imageState)
+        }
+    }
+    
+    func setUserProfile(nickname: String?, avatarImage: UIImage?) {
+        nameLabel.text = nickname
+        avatarImageView.image = avatarImage
+    }
+    
+    func setUserProfileWithURL(nickname: String?, avatarURLString: String?, placeholder: UIImage?) {
+        nameLabel.text = nickname
+        if let urlString = avatarURLString, let url = URL(string: urlString) {
+            avatarImageView.kf.setImage(with: url, placeholder: placeholder)
+        } else {
+            avatarImageView.image = placeholder
         }
     }
     
@@ -533,6 +531,21 @@ class ChatImageMessageCell: UITableViewCell {
     }
 }
 
+// MARK: - UserProfile
+struct UserProfile {
+    var nickname: String?
+    var avatarImage: UIImage?
+    var avatarURLString: String?
+    var placeholderImage: UIImage?
+    
+    init(nickname: String? = nil, avatarImage: UIImage? = nil, avatarURLString: String? = nil, placeholderImage: UIImage? = nil) {
+        self.nickname = nickname
+        self.avatarImage = avatarImage
+        self.avatarURLString = avatarURLString
+        self.placeholderImage = placeholderImage
+    }
+}
+
 // MARK: - ChatView
 protocol ChatViewDelegate: AnyObject {
     func resendImage(image: UIImage, uuid: String)
@@ -540,6 +553,11 @@ protocol ChatViewDelegate: AnyObject {
 
 class ChatView: UIView {
     weak var delegate: ChatViewDelegate?
+    
+    // MARK: - User Profile Configuration
+    private var localUserProfile: UserProfile = UserProfile()
+    private var remoteUserProfile: UserProfile = UserProfile()
+    
     // MARK: - Properties
     lazy var viewModel: ChatMessageViewModel = {
         let vm = ChatMessageViewModel()
@@ -602,6 +620,27 @@ class ChatView: UIView {
     }
     
     // MARK: - Public Methods
+    
+    /// Set local user profile (the current user sending messages)
+    /// - Parameters:
+    ///   - nickname: User's display name
+    ///   - avatarImage: User's avatar image (if provided, this takes priority)
+    ///   - avatarURLString: User's avatar URL string (used if avatarImage is nil)
+    ///   - placeholderImage: Placeholder image while loading from URL
+    func setLocalUserProfile(nickname: String? = nil, avatarImage: UIImage? = nil, avatarURLString: String? = nil, placeholderImage: UIImage? = nil) {
+        localUserProfile = UserProfile(nickname: nickname, avatarImage: avatarImage, avatarURLString: avatarURLString, placeholderImage: placeholderImage)
+    }
+    
+    /// Set remote user profile (the agent or other user)
+    /// - Parameters:
+    ///   - nickname: User's display name
+    ///   - avatarImage: User's avatar image (if provided, this takes priority)
+    ///   - avatarURLString: User's avatar URL string (used if avatarImage is nil)
+    ///   - placeholderImage: Placeholder image while loading from URL
+    func setRemoteUserProfile(nickname: String? = nil, avatarImage: UIImage? = nil, avatarURLString: String? = nil, placeholderImage: UIImage? = nil) {
+        remoteUserProfile = UserProfile(nickname: nickname, avatarImage: avatarImage, avatarURLString: avatarURLString, placeholderImage: placeholderImage)
+    }
+    
     func getAllMessages() -> [Message] {
         return viewModel.messages
     }
@@ -646,19 +685,85 @@ extension ChatView: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let message = viewModel.messages[indexPath.row]
         let isLatestMessage = indexPath.row == viewModel.messages.count - 1
+        
         if message.isImage {
             let cell = tableView.dequeueReusableCell(withIdentifier: ChatImageMessageCell.identifier, for: indexPath) as! ChatImageMessageCell
             cell.resendImageAction = { [weak self] image, uuid in
                 guard let self = self else { return }
-                
                 self.delegate?.resendImage(image: image, uuid: uuid)
             }
             cell.configure(with: message)
+            configureUserProfile(for: cell, isMine: message.isMine)
             return cell
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: ChatMessageCell.identifier, for: indexPath) as! ChatMessageCell
             cell.configure(with: message, isLastMessage: isLatestMessage)
+            configureUserProfile(for: cell, isMine: message.isMine)
             return cell
+        }
+    }
+    
+    private func configureUserProfile(for cell: ChatMessageCell, isMine: Bool) {
+        if isMine {
+            // Local user
+            configureProfile(
+                nickname: localUserProfile.nickname ?? ResourceManager.L10n.Conversation.messageYou,
+                profile: localUserProfile,
+                defaultAvatar: UIImage.ag_named("ic_agent_mine_avatar"),
+                setProfile: { cell.setUserProfile(nickname: $0, avatarImage: $1) },
+                setProfileWithURL: { cell.setUserProfileWithURL(nickname: $0, avatarURLString: $1, placeholder: $2) }
+            )
+        } else {
+            // Remote user
+            configureProfile(
+                nickname: remoteUserProfile.nickname,
+                profile: remoteUserProfile,
+                defaultAvatar: UIImage.ag_named("ic_agent_avatar"),
+                setProfile: { cell.setUserProfile(nickname: $0, avatarImage: $1) },
+                setProfileWithURL: { cell.setUserProfileWithURL(nickname: $0, avatarURLString: $1, placeholder: $2) }
+            )
+        }
+    }
+    
+    private func configureUserProfile(for cell: ChatImageMessageCell, isMine: Bool) {
+        if isMine {
+            // Local user
+            configureProfile(
+                nickname: localUserProfile.nickname ?? ResourceManager.L10n.Conversation.messageYou,
+                profile: localUserProfile,
+                defaultAvatar: UIImage.ag_named("ic_agent_mine_avatar"),
+                setProfile: { cell.setUserProfile(nickname: $0, avatarImage: $1) },
+                setProfileWithURL: { cell.setUserProfileWithURL(nickname: $0, avatarURLString: $1, placeholder: $2) }
+            )
+        } else {
+            // Remote user
+            configureProfile(
+                nickname: remoteUserProfile.nickname,
+                profile: remoteUserProfile,
+                defaultAvatar: UIImage.ag_named("ic_agent_avatar"),
+                setProfile: { cell.setUserProfile(nickname: $0, avatarImage: $1) },
+                setProfileWithURL: { cell.setUserProfileWithURL(nickname: $0, avatarURLString: $1, placeholder: $2) }
+            )
+        }
+    }
+    
+    private func configureProfile(
+        nickname: String?,
+        profile: UserProfile,
+        defaultAvatar: UIImage?,
+        setProfile: (String?, UIImage?) -> Void,
+        setProfileWithURL: (String?, String?, UIImage?) -> Void
+    ) {
+        if let avatarImage = profile.avatarImage {
+            // Use direct image if provided
+            setProfile(nickname, avatarImage)
+        } else if let avatarURLString = profile.avatarURLString {
+            // Load from URL with placeholder
+            let placeholder = profile.placeholderImage ?? defaultAvatar
+            setProfileWithURL(nickname, avatarURLString, placeholder)
+        } else {
+            // Use default avatar
+            setProfile(nickname, defaultAvatar)
         }
     }
     

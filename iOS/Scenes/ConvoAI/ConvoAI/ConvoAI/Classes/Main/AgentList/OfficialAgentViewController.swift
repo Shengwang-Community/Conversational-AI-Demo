@@ -214,9 +214,20 @@ extension OfficialAgentViewController: UITableViewDelegate, UITableViewDataSourc
         AppContext.settingManager().updatePreset(preset)
         let reportEvent = ReportEvent(appId: AppContext.shared.appId, sceneId: "\(ConvoAIEntrance.kSceneName)_iOS", action: preset.displayName, appVersion: ConversationalAIAPIImpl.version, appPlatform: "iOS", deviceModel: UIDevice.current.machineModel, deviceBrand: "Apple", osVersion: "")
         toolBoxApi.reportEvent(event: reportEvent, success: nil, failure: nil)
-        let chatViewController = ChatViewController()
-        chatViewController.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(chatViewController, animated: true)
+        let presetType = preset.presetType.stringValue()
+        if presetType == "sip_call_in" {
+            let chatViewController = CallInSIPViewController()
+            chatViewController.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(chatViewController, animated: true)
+        } else if presetType == "sip_call_out" {
+            let chatViewController = CallOutSipViewController()
+            chatViewController.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(chatViewController, animated: true)
+        } else {
+            let chatViewController = ChatViewController()
+            chatViewController.hidesBottomBarWhenPushed = true
+            navigationController?.pushViewController(chatViewController, animated: true)
+        }
     }
 }
 

@@ -31,7 +31,7 @@ object ServerConfig {
     @JvmStatic
     val thirdPartyUrl: String
         get() {
-            return "https://fullapp.oss-cn-beijing.aliyuncs.com/convoai/libraries.html"
+            return "https://conversational-ai.shengwang.cn/terms/privacy/sdk"
         }
 
     @JvmStatic
@@ -71,6 +71,9 @@ object ServerConfig {
     @JvmStatic
     var toolBoxUrl: String = ""
         private set
+
+    @JvmStatic
+    val serviceVersion = "v5"
 
     @JvmStatic
     var rtcAppId: String = ""

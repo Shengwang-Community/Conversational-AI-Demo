@@ -257,6 +257,7 @@ class ChannelInfoView: UIView {
     
     // MARK: - Public Methods
     func updateStatus() {
+
         let stateManager = AppContext.stateManager()
         
         agentItem.detailLabel.text = stateManager.agentState == .unload ? ConnectionStatus.disconnected.rawValue : stateManager.agentState.rawValue

@@ -29,6 +29,8 @@ object CovAgentApiManager {
     const val ERROR_RESOURCE_LIMIT_EXCEEDED = 1412
     const val ERROR_AVATAR_LIMIT = 1700
     const val ERROR_AGENT_OFFLINE = 1800
+    const val ERROR_SIP_CALL_STATUS_NOT_FOUND = 1438
+    const val ERROR_SIP_CALL_LIMIT_EXCEEDED = 1439
 
     private val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -44,7 +46,7 @@ object CovAgentApiManager {
         private set
 
 
-    private const val SERVICE_VERSION = "v4"
+    private val SERVICE_VERSION get() = ServerConfig.serviceVersion
 
     fun startAgentWithMap(
         channelName: String,
@@ -382,6 +384,193 @@ object CovAgentApiManager {
                 CovLogger.e(TAG, "fetch custom presets failed: $e")
                 runOnMainThread {
                     completion.invoke(ApiException(-1), emptyList())
+                }
+            }
+        })
+    }
+
+    fun startSipCallWithMap(channelName:String,convoaiBody: Map<String,Any?>, completion: (error: ApiException?,
+                                                                                           channelName: String) -> Unit) {
+        agentId = null
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/call"
+        val postBody = JSONObject()
+        try {
+            postBody.put("app_id", ServerConfig.rtcAppId)
+            ServerConfig.rtcAppCert.takeIf { it.isNotEmpty() }?.let {
+                postBody.put("app_cert",it)
+            }
+            // pre-commit: ignore - BuildConfig variables are not hardcoded secrets
+            BuildConfig.BASIC_AUTH_KEY.takeIf  { it.isNotEmpty() }?.let {
+                postBody.put("basic_auth_username",it)
+            }
+            BuildConfig.BASIC_AUTH_SECRET.takeIf  { it.isNotEmpty() }?.let {
+                postBody.put("basic_auth_password",it)
+            }
+            CovAgentManager.getPreset()?.name?.let {
+                postBody.put("preset_name", it)
+            }
+            CovAgentManager.getPreset()?.preset_type?.let {
+                postBody.put("preset_type", it)
+            }
+
+            // Process convoaiBody, convert Map to JSONObject and filter out null values
+            val convoaiJsonObject = mapToJsonObjectWithFilter(convoaiBody)
+            postBody.put("convoai_body", convoaiJsonObject)
+
+        } catch (e: JSONException) {
+            CovLogger.e(TAG, "postBody error ${e.message}")
+        }
+        CovLogger.json(TAG, postBody.toString())
+
+        val requestBody = postBody.toString().toRequestBody(null)
+        val request = buildRequest(requestURL, "POST", requestBody)
+
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val json = response.body.string()
+                val httpCode = response.code
+                if (httpCode != 200) {
+                    runOnMainThread {
+                        completion.invoke(ApiException(httpCode, "Http error"), channelName)
+                    }
+                } else {
+                    try {
+                        val jsonObj = JSONObject(json)
+                        val code = jsonObj.optInt("code")
+                        val aid = jsonObj.optJSONObject("data")?.optString("agent_id")
+
+                        currentHost = jsonObj.optJSONObject("data")?.optString("agent_url")
+                        if (code == 0 && !aid.isNullOrEmpty()) {
+                            agentId = aid
+                            runOnMainThread {
+                                completion.invoke(null, channelName)
+                            }
+                        } else {
+                            runOnMainThread {
+                                completion.invoke(ApiException(code), channelName)
+                            }
+                        }
+                    } catch (e: JSONException) {
+                        CovLogger.e(TAG, "JSON parse error: ${e.message}")
+                        runOnMainThread {
+                            completion.invoke(ApiException(-1), channelName)
+                        }
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                CovLogger.e(TAG, "Start agent failed: $e")
+                runOnMainThread {
+                    completion.invoke(ApiException(-1), channelName)
+                }
+            }
+        })
+    }
+
+    fun stopSipCall(channelName: String, preset: String?, completion: (error: Exception?) -> Unit) {
+        if (agentId.isNullOrEmpty()) {
+            runOnMainThread {
+                completion.invoke(Exception("AgentId is null"))
+            }
+            return
+        }
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/hangup"
+        val postBody = JSONObject()
+        try {
+            postBody.put("app_id", ServerConfig.rtcAppId)
+            postBody.put("channel_name", channelName)
+            preset?.let { postBody.put("preset_name", it) }
+            postBody.put("agent_id", agentId)
+            // pre-commit: ignore - BuildConfig variables are not hardcoded secrets
+            BuildConfig.BASIC_AUTH_KEY.takeIf { it.isNotEmpty() }?.let { postBody.put("basic_auth_username", it) }
+            BuildConfig.BASIC_AUTH_SECRET.takeIf { it.isNotEmpty() }?.let { postBody.put("basic_auth_password", it) }
+        } catch (e: JSONException) {
+            CovLogger.e(TAG, "postBody error ${e.message}")
+        }
+        val requestBody = postBody.toString().toRequestBody(null)
+        val request = buildRequest(requestURL, "POST", requestBody)
+
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val json = response.body.string()
+                runOnMainThread {
+                    agentId = null
+
+                }
+                try {
+                    val jsonObject = GsonTools.toBean(json, JsonObject::class.java)
+                    val code = jsonObject?.get("code")?.asInt ?: -1
+                    if (code == 0) {
+                        // success
+                    } else {
+                        runOnMainThread {
+                            completion.invoke(Exception("stopAgent failed:$json"))
+                        }
+                        CovLogger.e(TAG, "stopAgent failed $json")
+                    }
+                } catch (e: Exception) {
+                    CovLogger.e(TAG, "Parse stopAgent failed: $e")
+                    runOnMainThread {
+                        completion.invoke(e)
+                    }
+                } finally {
+                    agentId = null
+                }
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                CovLogger.e(TAG, "Stop agent failed: $e")
+                runOnMainThread {
+                    agentId = null
+                    completion.invoke(e)
+                }
+            }
+        })
+    }
+
+    fun callPing(agentId: String, completion: (error: ApiException?, callSipStatus: CallSipStatus?) -> Unit) {
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/sip/status"
+        val postBody = JSONObject()
+        try {
+            postBody.put("app_id", ServerConfig.rtcAppId)
+            postBody.put("agent_id", agentId)
+        } catch (e: JSONException) {
+            CovLogger.e(TAG, "postBody error ${e.message}")
+        }
+        val requestBody = postBody.toString().toRequestBody(null)
+        val request = buildRequest(requestURL, "POST", requestBody)
+
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val json = response.body.string()
+                try {
+                    val jsonObject = GsonTools.toBean(json, JsonObject::class.java)
+                    val code = jsonObject?.get("code")?.asInt ?: -1
+                    val msg = jsonObject?.get("msg")?.asString ?: ""
+                    runOnMainThread {
+                        if (code == 0) {
+                            val status = jsonObject?.getAsJsonObject("data")?.get("state")?.asString ?: "unknown"
+                            completion.invoke(null, CallSipStatus.fromValue(status))
+                            CovLogger.d(TAG, "callPing success $json")
+                        } else {
+                            "msg"
+                            completion.invoke(ApiException(code, msg), null)
+                            CovLogger.e(TAG, "callPing failed $json")
+                        }
+                    }
+                } catch (e: Exception) {
+                    CovLogger.e(TAG, "Parse ping failed: $e")
+                    runOnMainThread {
+                        completion.invoke(ApiException(-100, "${e.message}"), null)
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                CovLogger.e(TAG, "agent ping failed: $e")
+                runOnMainThread {
+                    completion.invoke(ApiException(-1, "${e.message}"), null)
                 }
             }
         })

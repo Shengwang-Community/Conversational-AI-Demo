@@ -81,7 +81,7 @@ class PrivacySettingViewController: BaseViewController {
         item.configure(
             icon: "ic_privacy_setting_global",
             title: ResourceManager.L10n.Mine.privacyRecordNumber,
-            subtitle: "沪ICP备14053584号-27A",
+            subtitle: ResourceManager.L10n.Mine.icpSubtitle,
             hasArrow: true
         )
         item.addTarget(self, action: #selector(recordNumberTapped), for: .touchUpInside)

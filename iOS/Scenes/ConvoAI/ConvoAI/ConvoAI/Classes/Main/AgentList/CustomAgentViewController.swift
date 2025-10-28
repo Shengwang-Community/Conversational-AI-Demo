@@ -107,7 +107,8 @@ class CustomAgentViewController: UIViewController {
                     }
                     
                     if !res {
-                        self.presets.append(p)
+                        // Insert at the beginning so new items appear first
+                        self.presets.insert(p, at: 0)
                     }
                 }
                 self.reloadData()
@@ -152,7 +153,12 @@ class CustomAgentViewController: UIViewController {
                 for e in presets {
                     self.save(presetId: e.name.stringValue())
                 }
-                self.presets = presets
+                
+                // Sort presets according to the saved IDs order (newest first)
+                let savedIds = self.getSavedPresetIds()
+                self.presets = savedIds.compactMap { savedId in
+                    presets.first { $0.name.stringValue() == savedId }
+                }
                 self.reloadData()
             }
         }
@@ -179,7 +185,8 @@ class CustomAgentViewController: UIViewController {
         var saved = UserDefaults.standard.dictionary(forKey: kCustomPresetSave) as? [String: [String]] ?? [:]
         var ids = saved[key] ?? []
         if !ids.contains(presetId) {
-            ids.append(presetId)
+            // Insert at the beginning so newer items appear first
+            ids.insert(presetId, at: 0)
         }
         saved[key] = ids
         UserDefaults.standard.set(saved, forKey: kCustomPresetSave)
@@ -232,11 +239,12 @@ extension CustomAgentViewController: UITableViewDelegate, UITableViewDataSource 
         let preset = presets[indexPath.row]
         cell.nameLabel.text = preset.displayName
         cell.avatarImageView.kf.setImage(with: URL(string: preset.avatarUrl.stringValue()), placeholder: UIImage.ag_named("ic_custom_agent_head"))
-        cell.descriptionLabel.text = preset.description ?? ""
+        cell.descriptionLabel.text = "[\(preset.name.stringValue())]  \(preset.description.stringValue())"
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
         var preset = presets[indexPath.row]
         let id = preset.name.stringValue()
         SVProgressHUD.show()
@@ -257,14 +265,25 @@ extension CustomAgentViewController: UITableViewDelegate, UITableViewDataSource 
                 return
             }
             if let presets = result, !presets.isEmpty {
-                preset.defaultAvatar = "ic_custom_agent_head"
-                AppContext.settingManager().isCustomPreset = true
-                AppContext.settingManager().updatePreset(preset)
                 let reportEvent = ReportEvent(appId: AppContext.shared.appId, sceneId: ConvoAIEntrance.reportSceneId, action: preset.displayName, appVersion: ConversationalAIAPIImpl.version, appPlatform: "iOS", deviceModel: UIDevice.current.machineModel, deviceBrand: "Apple", osVersion: "")
                 toolBoxApi.reportEvent(event: reportEvent, success: nil, failure: nil)
-                let chatViewController = ChatViewController()
-                chatViewController.hidesBottomBarWhenPushed = true
-                self.navigationController?.pushViewController(chatViewController, animated: true)
+                let presetType = preset.presetType.stringValue()
+                if presetType == "sip_call_in" {
+                    let chatViewController = CallInSIPViewController()
+                    chatViewController.hidesBottomBarWhenPushed = true
+                    navigationController?.pushViewController(chatViewController, animated: true)
+                } else if presetType == "sip_call_out" {
+                    let chatViewController = CallOutSipViewController()
+                    chatViewController.hidesBottomBarWhenPushed = true
+                    navigationController?.pushViewController(chatViewController, animated: true)
+                } else {
+                    preset.defaultAvatar = "ic_custom_agent_head"
+                    AppContext.settingManager().isCustomPreset = true
+                    AppContext.settingManager().updatePreset(preset)
+                    let chatViewController = ChatViewController()
+                    chatViewController.hidesBottomBarWhenPushed = true
+                    navigationController?.pushViewController(chatViewController, animated: true)
+                }
             } else {
                 SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Error.agentNotFound)
                 ConvoAILogger.error(ResourceManager.L10n.Error.agentNotFound)

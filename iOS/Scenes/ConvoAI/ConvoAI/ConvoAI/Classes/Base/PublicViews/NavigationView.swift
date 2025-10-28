@@ -127,8 +127,8 @@ class NavigationBar: UIView {
         
         addSubview(titleLabel)
         titleLabel.snp.makeConstraints { make in
-            make.bottom.equalTo(-20)
-            make.centerX.equalToSuperview()
+            make.top.equalTo(self.safeAreaLayoutGuide.snp.top)
+            make.bottom.centerX.equalToSuperview()
         }
         
         setLeftButtonTarget(self, action: #selector(didClickLeftButtonAction))

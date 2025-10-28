@@ -10,6 +10,10 @@ import Common
 import SVProgressHUD
 
 extension ChatViewController: LoginManagerDelegate {
+    func loginManager(_ manager: LoginManager, userInfoDidChange userInfo: LoginModel) {
+        // Update chat view when user info changes (e.g., nickname changed)
+        updateChatUserProfiles()
+    }
     
     func userDidLogout(reason: LogoutReason) {
         if agentIsJoined {

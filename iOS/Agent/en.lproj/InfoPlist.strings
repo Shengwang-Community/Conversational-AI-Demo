@@ -6,10 +6,20 @@
   
 */
 
-"NSLocationWhenInUseUsageDescription" = "The app needs to use location to access Wi-Fi for connecting to smart home devices.";
-"NSBluetoothAlwaysUsageDescription" = "The app needs to use Bluetooth to connect to smart home devices.";
-"NSLocationAlwaysAndWhenInUseUsageDescription" = "The app needs to use location to access Wi-Fi for connecting to smart home devices.";
-"NSLocationAlwaysUsageDescription" = "The app needs to use location to access Wi-Fi for connecting to smart home devices.";
-"NSBluetoothPeripheralUsageDescription" = "The app needs to use Bluetooth to connect to smart home devices.";
-"NSPhotoLibraryUsageDescription" = "The app needs to access your photo library to select images.";
-"NSCameraUsageDescription" = "The app needs to use your camera to take photos.";
+// Microphone Permission
+"NSMicrophoneUsageDescription" = "For voice conversation experience";
+
+// Camera Permission
+"NSCameraUsageDescription" = "Allow the app to use the camera";
+
+// Photo Library Permission
+"NSPhotoLibraryUsageDescription" = "Allow the app to access photo library";
+
+// Location Permissions (for IoT devices)
+"NSLocationWhenInUseUsageDescription" = "For IoT device network configuration";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "For IoT device network configuration";
+"NSLocationAlwaysUsageDescription" = "For IoT device network configuration";
+
+// Bluetooth Permissions (for IoT devices)
+"NSBluetoothAlwaysUsageDescription" = "For IoT device network configuration";
+"NSBluetoothPeripheralUsageDescription" = "Allow the app to connect with external Bluetooth devices";

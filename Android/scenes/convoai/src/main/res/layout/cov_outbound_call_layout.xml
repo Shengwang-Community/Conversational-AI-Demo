@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:background="@android:color/transparent"
+    tools:background="@color/ai_fill4">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_not_join"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="gone">
+
+        <TextView
+            android:id="@+id/tv_error_hint"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="40dp"
+            android:gravity="center"
+            android:text="@string/cov_sip_valid_number"
+            android:textColor="@color/ai_red6"
+            android:textSize="12sp"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="@+id/llInputContainer"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:visibility="visible" />
+
+        <LinearLayout
+            android:id="@+id/llInputContainer"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/ai_dp_large"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/cov_sip_call_input_bg"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toTopOf="@+id/btnJoinCall"
+            app:layout_constraintTop_toBottomOf="@+id/tv_error_hint">
+
+            <EditText
+                android:id="@+id/et_phone_number"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="48dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:digits="0123456789"
+                android:gravity="center"
+                android:hint="@string/cov_sip_outbound_call_hint"
+                android:imeOptions="actionSend"
+                android:inputType="number"
+                android:maxLength="14"
+                android:textColor="@color/ai_icontext1"
+                android:textColorHint="@color/ai_icontext3"
+                android:textCursorDrawable="@drawable/custom_agent_cursor"
+                android:textSize="14sp" />
+
+            <ImageView
+                android:id="@+id/iv_clear_input"
+                android:layout_width="48dp"
+                android:layout_height="wrap_content"
+                android:src="@drawable/common_ic_clear"
+                android:visibility="invisible"
+                tools:visibility="visible" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnJoinCall"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/ai_dp_large"
+            android:layout_marginHorizontal="40dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/selector_gradient_button_r99"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:paddingHorizontal="20dp"
+            android:stateListAnimator="@null"
+            android:text="@string/cov_sip_call_out"
+            android:textAllCaps="false"
+            android:textColor="@color/ai_brand_white10"
+            android:textSize="18sp"
+            app:backgroundTint="@null"
+            app:icon="@drawable/cov_detail_join_call"
+            app:iconGravity="textStart"
+            app:iconPadding="10dp"
+            app:iconSize="24dp"
+            app:iconTint="@color/ai_brand_white10"
+            app:layout_constraintBottom_toTopOf="@+id/layout_tips"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/layout_tips" />
+
+        <LinearLayout
+            android:id="@+id/layout_tips"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="40dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btnJoinCall">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/cov_sip_outbound_call_tips"
+                android:textColor="@color/ai_icontext2"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_joined"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:id="@+id/layout_calling_number"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="70dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/cv_end_call"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <io.agora.scene.convoai.ui.sip.widget.ShimmerTextView
+                android:id="@+id/tv_calling_number"
+                android:layout_width="wrap_content"
+                android:layout_height="72dp"
+                android:gravity="center"
+                android:textColor="@color/ai_icontext1"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                tools:text="+91-22-47790159" />
+
+            <TextView
+                android:id="@+id/tv_calling"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cov_sip_outbound_calling"
+                android:textColor="@color/ai_icontext1"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_end_call"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:backgroundTint="@android:color/transparent"
+            app:cardCornerRadius="36dp"
+            app:cardElevation="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <ImageButton
+                android:id="@+id/btn_end_call"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/btn_bg_block1_selector"
+                android:src="@drawable/scene_detail_close"
+                app:tint="@color/ai_red6" />
+        </androidx.cardview.widget.CardView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

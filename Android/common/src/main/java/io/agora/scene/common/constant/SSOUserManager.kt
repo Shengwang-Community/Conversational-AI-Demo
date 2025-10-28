@@ -1,5 +1,6 @@
 package io.agora.scene.common.constant
 
+import androidx.annotation.DrawableRes
 import com.google.gson.JsonIOException
 import io.agora.scene.common.net.SSOUserInfo
 import io.agora.scene.common.util.CommonLogger
@@ -38,6 +39,17 @@ object SSOUserManager {
         }
         return mUserInfo
     }
+
+    @get:DrawableRes
+    val userAvatar: Int
+        get() {
+            val gender = userInfo?.gender ?: "male"
+            return if (gender == "male") {
+                io.agora.scene.common.R.drawable.common_default_male
+            } else {
+                io.agora.scene.common.R.drawable.common_default_female
+            }
+        }
 
     @JvmStatic
     fun logout() {

@@ -37,7 +37,8 @@ class HttpLogger : Interceptor {
         // Excluded API paths
         private val EXCLUDE_PATHS = setOf(
             "/heartbeat",  // Heartbeat API
-            "/ping"       // Ping API
+            "/ping",       // Ping API
+            "sip/status"   // sip ping
         )
 
         // Excluded Content-Types

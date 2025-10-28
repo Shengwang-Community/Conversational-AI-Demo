@@ -6,10 +6,20 @@
   
 */
 
-"NSLocationWhenInUseUsageDescription" = "应用需要使用定位获取 WIFI来连接智能家居设备。";
-"NSBluetoothAlwaysUsageDescription" = "应用需要使用蓝牙来连接智能家居设备。";
-"NSLocationAlwaysAndWhenInUseUsageDescription" = "应用需要使用定位获取 WIFI来连接智能家居设备。";
-"NSLocationAlwaysUsageDescription" = "应用需要使用定位获取 WIFI来连接智能家居设备。";
-"NSBluetoothPeripheralUsageDescription" = "应用需要使用蓝牙来连接智能家居设备。";
-"NSPhotoLibraryUsageDescription" = "应用需要访问您的相册以选择图片。";
-"NSCameraUsageDescription" = "应用需要使用您的相机进行拍照。";
+// Microphone Permission
+"NSMicrophoneUsageDescription" = "用于提供语音对话功能效果体验";
+
+// Camera Permission
+"NSCameraUsageDescription" = "允许应用程序使用摄像头";
+
+// Photo Library Permission
+"NSPhotoLibraryUsageDescription" = "允许应用程序访问相册";
+
+// Location Permissions (for IoT devices)
+"NSLocationWhenInUseUsageDescription" = "IoT设备配网使用";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "IoT设备配网使用";
+"NSLocationAlwaysUsageDescription" = "IoT设备配网使用";
+
+// Bluetooth Permissions (for IoT devices)
+"NSBluetoothAlwaysUsageDescription" = "IoT设备配网使用";
+"NSBluetoothPeripheralUsageDescription" = "允许应用与外接蓝牙设备对接";

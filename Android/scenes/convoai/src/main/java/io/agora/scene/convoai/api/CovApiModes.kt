@@ -1,6 +1,9 @@
 package io.agora.scene.convoai.api
 
 import android.os.Parcelable
+import io.agora.scene.convoai.convoaiApi.MessageType
+import io.agora.scene.convoai.convoaiApi.MessageType.UNKNOWN
+import io.agora.scene.convoai.convoaiApi.MessageType.entries
 import kotlinx.parcelize.Parcelize
 
 data class CovAgentPreset(
@@ -18,7 +21,8 @@ data class CovAgentPreset(
     val avatar_url: String?,
     val description: String,
     val advanced_features_enable_sal: Boolean,
-    val is_support_sal: Boolean?
+    val is_support_sal: Boolean?,
+    val sip_vendor_callee_numbers: List<CovSipCallee>? = null,
 ) {
     val isIndependent: Boolean
         get() {
@@ -34,6 +38,19 @@ data class CovAgentPreset(
         get() {
             return preset_type.startsWith("custom")
         }
+
+    val isSipInternal: Boolean
+        get() {
+            return preset_type.startsWith("sip_call_in")
+        }
+
+    val isSipOutBound: Boolean
+        get() {
+            return preset_type.startsWith("sip_call_out")
+        }
+
+    val isSip: Boolean
+        get() = isSipInternal || isSipOutBound
 
     fun getAvatarsForLang(lang: String?): List<CovAvatar> {
         if (lang == null) return emptyList()
@@ -61,3 +78,29 @@ data class CovAvatar(
     val thumb_img_url: String,
     val bg_img_url: String,
 ) : Parcelable
+
+@Parcelize
+data class CovSipCallee(
+    val region_name: String, // CN、US
+    val region_code: String, // 86、1
+    val phone_number: String,
+    val region_full_name: String,
+    val flag_emoji: String
+) : Parcelable
+
+enum class CallSipStatus {
+    START,
+    CALLING,
+    RINGING,
+    ANSWERED,
+    HANGUP,
+    ERROR,
+    UNKNOWN;
+
+    companion object {
+
+        fun fromValue(value: String): CallSipStatus {
+            return entries.find { it.name == value } ?: UNKNOWN
+        }
+    }
+}

@@ -48,7 +48,6 @@ class MainNavigationBar: UIView {
     
     let characterInfo: CharactersInformationView = {
         let informationView = CharactersInformationView()
-        informationView.configure(icon: "", defaultIcon: "", name: "hello kitty")
         informationView.backgroundColor = UIColor.themColor(named: "ai_brand_white1")
         informationView.layer.cornerRadius = 16
         informationView.layer.masksToBounds = true
@@ -111,11 +110,6 @@ class MainNavigationBar: UIView {
         return button
     }()
     
-    var showTipsTimer: Timer?
-    private var isShowTips: Bool = false
-    
-    private var isAnimationInprogerss = false
-    
     // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -141,8 +135,8 @@ class MainNavigationBar: UIView {
         AppContext.stateManager().removeDelegate(self)
     }
     
-    public func updateCharacterInformation(icon: String, defaultIcon: String, name: String) {
-        characterInfo.configure(icon: icon, defaultIcon: defaultIcon, name: name)
+    public func updateCharacterInformation(icon: String, defaultIcon: String, name: String, subtitle: String = "") {
+        characterInfo.configure(icon: icon, defaultIcon: defaultIcon, name: name, subtitle: subtitle)
     }
     
     public func updateButtonVisible(_ visible: Bool) {
