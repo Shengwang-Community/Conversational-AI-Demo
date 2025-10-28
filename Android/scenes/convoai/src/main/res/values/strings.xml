@@ -254,7 +254,7 @@
     <string name="cov_sip_valid_number">请输入正确的手机号/固定电话号码</string>
     <string name="cov_sip_call_out">呼出</string>
     <string name="cov_sip_callee_title">呼叫提示</string>
-    <string name="cov_sip_callee_content">即将使用当前手机呼叫该号码，确认？</string>
+    <string name="cov_sip_callee_content">为保障通话服务正常运行及纠纷追溯，您的通话记录（含电话号码、通话时间、通话时长）将被记录</string>
     <string name="cov_sip_callee">立即呼叫</string>
     <string name="cov_sip_limit_time">智能客服电话沟通单次体验限 %d 分钟</string>
     <string name="cov_sip_call_limit_error">已超过本日呼出上限 20 次</string>

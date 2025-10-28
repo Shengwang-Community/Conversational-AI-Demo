@@ -12,6 +12,8 @@ import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
+import androidx.fragment.app.FragmentActivity
+import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.convoaiApi.ImageMessage
@@ -181,16 +183,33 @@ class CovSipOutBoundCallView @JvmOverloads constructor(
         }
     }
 
-    private fun sendCall(){
+    private fun sendCall() {
         val phoneNumber = getPhoneNumber()
         if (phoneNumber.length >= 4 && phoneNumber.length <= 14) {
             clearErrorState()
-            if (phoneNumber.isNotEmpty()) {
+            showCallPhoneDialog {
                 setCallState(CallState.CALLING, phoneNumber)
                 onCallActionListener?.invoke(CallAction.JOIN_CALL, phoneNumber)
             }
         } else {
             showErrorState()
+        }
+    }
+
+    private fun showCallPhoneDialog(onPositiveClick: () -> Unit) {
+        val context = this.context
+        if (context is FragmentActivity) {
+            CommonDialog.Builder()
+                .setTitle(context.getString(R.string.cov_sip_callee_title))
+                .setContent(context.getString(R.string.cov_sip_callee_content))
+                .setPositiveButton(context.getString(R.string.cov_sip_callee)) {
+                    onPositiveClick.invoke()
+                }
+                .setNegativeButton(context.getString(io.agora.scene.common.R.string.common_cancel)) {}
+                .hideTopImage()
+                .setCancelable(false)
+                .build()
+                .show(context.supportFragmentManager, "CallPhoneDialog")
         }
     }
 
