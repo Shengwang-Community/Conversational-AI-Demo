@@ -110,6 +110,26 @@ extension CallOutSipViewController {
             sipInputView.showErrorWith(str: ResourceManager.L10n.Sip.sipPhoneInvalid)
             return
         }
+        
+        if AppContext.shared.isGlobal {
+            performCall()
+        } else {
+            AgentAlertView.show(
+                in: self.view,
+                title: ResourceManager.L10n.Sip.callAlertTitle,
+                content: ResourceManager.L10n.Sip.callAlertMessage,
+                cancelTitle: ResourceManager.L10n.Sip.callAlertCancel,
+                confirmTitle: ResourceManager.L10n.Sip.callAlertConfirm,
+                type: .normal,
+                onConfirm: { [weak self] in
+                    self?.performCall()
+                },
+                onCancel: nil
+            )
+        }
+    }
+    
+    private func performCall() {
         showCallingView()
         channelName = "agent_\(UUID().uuidString.prefix(8))"
         agentUid = AppContext.agentUid
@@ -143,7 +163,6 @@ extension CallOutSipViewController {
                 closeConnect()
             }
         }
-        
     }
     
     @objc func closeConnect() {

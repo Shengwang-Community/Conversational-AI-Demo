@@ -316,7 +316,7 @@
 "agent.sip.phone.invalid" = "请输入有效的手机号/固定电话号码";
 "agent.sip.callout" = "呼叫";
 "agent.sip.call.alert.title" = "呼叫提示";
-"agent.sip.call.alert.message" = "即将使用当前手机呼叫该号码，确认？";
+"agent.sip.call.alert.message" = "为保障通话服务正常运行及纠纷追溯，您的通话记录（含电话号码、通话时间、通话时长）将被记录";
 "agent.sip.call.alert.cancel" = "取消";
 "agent.sip.call.alert.confirm" = "立即呼叫";
 "agent.sip.area.code.search.placeholder" = "搜索国家/地区号...";
