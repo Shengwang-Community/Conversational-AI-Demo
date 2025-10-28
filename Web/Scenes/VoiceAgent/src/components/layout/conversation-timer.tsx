@@ -165,3 +165,12 @@ function TimeoutDialog() {
     </Dialog>
   )
 }
+
+export function SipTimer() {
+  const t = useTranslations('sip')
+  return (
+    <div className='rounded-full bg-fill-popover px-4 py-3 text-icontext text-sm'>
+      {t('timer')}
+    </div>
+  )
+}

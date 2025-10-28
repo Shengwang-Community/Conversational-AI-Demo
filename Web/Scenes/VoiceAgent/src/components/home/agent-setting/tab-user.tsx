@@ -68,7 +68,13 @@ const DeleteAccountContent = () => {
             onClick={() => setChecked(!checked)}
           >
             <div className='flex h-5 items-center justify-center'>
-              <Checkbox className='size-4 p-1 leading-5' checked={checked} />
+              <Checkbox
+                className={cn('mt-[3px]', {
+                  'border-none ring-offset-transparent': checked,
+                  'border-line': !checked
+                })}
+                checked={checked}
+              />
             </div>
 
             <p className='text-icontext text-sm'>

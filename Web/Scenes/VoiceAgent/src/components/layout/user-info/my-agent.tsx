@@ -8,9 +8,9 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
+import { CircleXIcon } from '@/components/icon'
 import { UserAgentPreference } from '@/components/layout/user-info/schema'
 import { Checkbox } from '@/components/ui/checkbox'
-
 import {
   Form,
   FormControl,
@@ -131,15 +131,25 @@ export const MyAgentContent = () => {
                       {t('nickname')}
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder={t('nickname-placeholder')}
-                        className='mt-3 h-11 rounded-sm bg-brand-white-1'
-                        // {...field}
-                        value={nickname}
-                        onChange={(e) => {
-                          setNickname(e.target.value)
-                        }}
-                      />
+                      <div className='group relative'>
+                        <Input
+                          placeholder={t('nickname-placeholder')}
+                          className='mt-3 h-11 rounded-sm bg-brand-white-1'
+                          // {...field}
+                          value={nickname}
+                          onChange={(e) => {
+                            setNickname(e.target.value)
+                          }}
+                        />
+                        {!!nickname && (
+                          <CircleXIcon
+                            className='-translate-y-1/2 absolute top-1/2 right-2 h-5 w-5 fill-[#FFFFFF50] transition-colors duration-300 group-hover:fill-icontext'
+                            onClick={() => {
+                              setNickname('')
+                            }}
+                          />
+                        )}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -160,8 +170,8 @@ export const MyAgentContent = () => {
                           className={cn(
                             'flex items-center justify-between gap-1 rounded-sm bg-brand-white-1 p-3',
                             'h-11 flex-1/2 shadow-none',
-                            'whitespace-nowrap border-2 border-transparent',
-                            field.value === 'male' && 'border-[#2B6DF6]'
+                            'whitespace-nowrap outline-2 outline-transparent',
+                            field.value === 'male' && 'outline-[#2B6DF6]'
                           )}
                           htmlFor={`gender-male`}
                         >
@@ -187,8 +197,8 @@ export const MyAgentContent = () => {
                           className={cn(
                             'flex items-center justify-between gap-1 rounded-sm bg-brand-white-1 p-3',
                             'h-11 flex-1/2 shadow-none',
-                            'whitespace-nowrap border-2 border-transparent',
-                            field.value === 'female' && 'border-[#2B6DF6]'
+                            'whitespace-nowrap outline-2 outline-transparent',
+                            field.value === 'female' && 'outline-[#2B6DF6]'
                           )}
                           htmlFor={`gender-female`}
                         >
@@ -234,8 +244,8 @@ export const MyAgentContent = () => {
                         value={
                           field.value
                             ? new Date(field.value)
-                                .toISOString()
-                                .substring(0, 10)
+                              .toISOString()
+                              .substring(0, 10)
                             : '1990-01-01'
                         }
                         onChange={(e) => {

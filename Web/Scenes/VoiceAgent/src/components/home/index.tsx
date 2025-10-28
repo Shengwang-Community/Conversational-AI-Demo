@@ -17,7 +17,7 @@ import { PresetPlaceholderIcon } from '@/components/icon/agent'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AVATAR_PLACEHOLDER_IMAGE, DEFAULT_AVATAR_DOM_ID } from '@/constants'
 import { EAgentState } from '@/conversational-ai-api/type'
-import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
+import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
 import { logger } from '@/lib/logger'
 import { cn, isCN } from '@/lib/utils'
 import {
@@ -53,7 +53,8 @@ export function AgentBlock() {
   const isUserSubtitleExist =
     history.some((item) => item.uid === `${remote_rtc_uid}`) &&
     agentStatus === EConnectionStatus.CONNECTED
-  const disableFormMemo = useIsAgentCalling()
+
+  const disableFormMemo = useIsDemoCalling()
 
   React.useEffect(() => {
     if (!cube.current || !splineRef.current) {
@@ -145,9 +146,9 @@ export function AgentBlock() {
             avatar={
               selectedPreset.type === 'default'
                 ? {
-                    src: selectedPreset.preset.avatar_url,
-                    alt: selectedPreset.preset.display_name
-                  }
+                  src: selectedPreset.preset.avatar_url,
+                  alt: selectedPreset.preset.display_name
+                }
                 : undefined
             }
           >
@@ -184,12 +185,14 @@ export function AgentBlock() {
         </div>
         <AgentCardContent
           className={cn(
-            'flex h-full flex-col items-center justify-between gap-3 pt-12 pb-6 md:pt-12 md:pb-12'
+            'flex h-full flex-col items-center justify-between gap-3 pt-12 pb-6 md:pt-12 md:pb-12',
+            selectedPreset?.preset.preset_type.includes('sip_call') &&
+            'md:pb-0 lg:pb-6'
           )}
         >
           <div
             className={cn(
-              'relative',
+              'relative overflow-y-auto',
               'flex w-full flex-col items-center gap-3',
               'h-full min-h-fit',
               'transition-height duration-500',
@@ -243,8 +246,11 @@ export function AgentBlock() {
                       key={`greeting-avatar-${selectedPreset.preset.name}`}
                     >
                       <div>
-                        {selectedPreset.type === 'default' &&
-                        selectedPreset.preset?.avatar_url ? (
+                        {(selectedPreset.type === 'default' ||
+                          selectedPreset.preset.preset_type.includes(
+                            'sip_call'
+                          )) &&
+                          selectedPreset.preset.avatar_url ? (
                           <AvatarImage
                             src={selectedPreset.preset.avatar_url}
                             alt={selectedPreset.preset.display_name}
@@ -255,9 +261,9 @@ export function AgentBlock() {
                             alt={selectedPreset.preset.display_name}
                           />
                         )}
-                        <AvatarFallback>
+                        {/* <AvatarFallback>
                           <PresetPlaceholderIcon />
-                        </AvatarFallback>
+                        </AvatarFallback> */}
                       </div>
                     </Avatar>
                     {selectedPreset?.preset && (

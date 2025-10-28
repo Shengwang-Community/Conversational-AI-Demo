@@ -192,6 +192,7 @@ export const useAgentSettingsStore = create<IAgentSettings>()(
             if (force) {
               return { customPresets: newPresets }
             }
+
             const customPresetsMap = new Map<
               string,
               z.infer<typeof remoteAgentCustomPresetItem>
@@ -202,9 +203,14 @@ export const useAgentSettingsStore = create<IAgentSettings>()(
             }
             // Update or add new presets
             for (const preset of newPresets) {
-              customPresetsMap.set(preset.name, preset)
+              customPresetsMap.set(preset.name, {
+                ...preset,
+                updated_at: new Date()
+              })
             }
-            return { customPresets: Array.from(customPresetsMap.values()) }
+            return {
+              customPresets: Array.from(customPresetsMap.values())
+            }
           }),
         updateSelectedPreset: (
           preset:

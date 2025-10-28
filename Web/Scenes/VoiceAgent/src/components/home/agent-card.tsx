@@ -13,7 +13,7 @@ import {
   CardContent
 } from '@/components/card/base'
 import { useClickAway } from '@/hooks/use-click-away'
-import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
+import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
 import { useIsMobile } from '@/hooks/use-mobile'
 // import { LockCheckedIcon } from '@/components/icon'
 // import { Button } from '@/components/ui/button'
@@ -48,10 +48,13 @@ export function AgentCard(props: {
     onClickSidebar,
     setShowSALSettingSidebar
   } = useGlobalStore()
+  const { selectedPreset } = useAgentSettingsStore()
   const { accountUid } = useUserInfoStore()
 
+  const isSipPresetSelected =
+    !!selectedPreset?.preset?.preset_type?.includes('sip_call')
   // const t = useTranslations()
-  const isAgentCalling = useIsAgentCalling()
+  const isDemoCalling = useIsDemoCalling()
 
   return (
     <Card
@@ -68,7 +71,7 @@ export function AgentCard(props: {
           'z-50',
           { ['hidden']: !accountUid },
           {
-            'max-md:flex max-md:flex-col max-md:items-end': isAgentCalling
+            'max-md:flex max-md:flex-col max-md:items-end': isDemoCalling
           }
         )}
       >
@@ -97,23 +100,27 @@ export function AgentCard(props: {
         >
           <GenerateAIInfoTypewriter />
         </div>
-        <AgentCardAdvancedFeatures />
-        <CardAction
-          key='settings'
-          variant='outline'
-          size='icon'
-          onClick={() => {
-            if (showSidebar && showSALSettingSidebar) {
-              setShowSALSettingSidebar(false)
-              return
-            }
-            onClickSidebar()
-          }}
-          className='bg-block-2'
-          disabled={!accountUid}
-        >
-          <Settings2Icon className='size-4' />
-        </CardAction>
+        {!isSipPresetSelected && (
+          <>
+            <AgentCardAdvancedFeatures />
+            <CardAction
+              key='settings'
+              variant='outline'
+              size='icon'
+              onClick={() => {
+                if (showSidebar && showSALSettingSidebar) {
+                  setShowSALSettingSidebar(false)
+                  return
+                }
+                onClickSidebar()
+              }}
+              className='bg-block-2'
+              disabled={!accountUid}
+            >
+              <Settings2Icon className='size-4' />
+            </CardAction>
+          </>
+        )}
       </CardActions>
       {children}
     </Card>
@@ -135,12 +142,15 @@ export function AgentCardContent(props: {
 
 export function AgentCardAdvancedFeatures() {
   const t = useTranslations('roomInfo')
+  const ref = useRef<NodeJS.Timeout>(null)
   const isMobile = useIsMobile()
 
   const { salStatus } = useRTCStore()
   const { settings } = useAgentSettingsStore()
 
   const [open, setOpen] = useState(false)
+  const [keyframes, setKeyframes] = useState<string>('1,2,3')
+  const [top, setTop] = useState<'sal' | 'vad'>('vad')
 
   const { setIsRoomInfoOpen } = useGlobalStore()
 
@@ -150,6 +160,42 @@ export function AgentCardAdvancedFeatures() {
   const clickAwayRef = useClickAway<HTMLDivElement>(() => {
     setOpen(false)
   })
+
+  // useEffect(() => {
+  //   if (open) {
+  //     if (ref.current) {
+  //       clearInterval(ref.current)
+  //     }
+  //     ref.current = null
+  //   } else {
+  //     if (ref.current) {
+  //       clearInterval(ref.current)
+  //     }
+  //     ref.current = setInterval(() => {
+  //       setTop((prev) => (prev === 'vad' ? 'sal' : 'vad'))
+  //     }, 10000)
+  //   }
+
+  //   return () => {
+  //     if (ref.current) {
+  //       clearInterval(ref.current)
+  //     }
+  //   }
+  // }, [open])
+
+  useEffect(() => {
+    if (keyframes === '1,2,3') {
+      setKeyframes('2,3,1')
+    }
+
+    if (keyframes === '2,3,1') {
+      setKeyframes('3,1,2')
+    }
+
+    if (keyframes === '3,1,2') {
+      setKeyframes('1,2,3')
+    }
+  }, [top])
 
   const salItem = (
     <div className='flex items-center gap-2 px-4 py-1.5'>
@@ -172,6 +218,8 @@ export function AgentCardAdvancedFeatures() {
       <span>{t('vad')}</span>
     </div>
   )
+
+  const keyframesItems = keyframes.split(',').map((item) => Number(item))
 
   if (isMobile) {
     return (
@@ -196,6 +244,116 @@ export function AgentCardAdvancedFeatures() {
       }}
     >
       <motion.div className='text-icontext'>
+        {/* <div className='relative h-9'>
+          <motion.div
+            className='absolute'
+            initial={{
+              top:
+                keyframesItems[0] === 1
+                  ? '-100%'
+                  : keyframesItems[0] === 2
+                    ? '100%'
+                    : '0',
+              opacity: keyframesItems[0] === 2 ? 1 : 0
+            }}
+            animate={{
+              top:
+                keyframesItems[0] === 1
+                  ? '100%'
+                  : keyframesItems[0] === 2
+                    ? '0'
+                    : '-100%',
+              opacity: keyframesItems[0] === 2 ? 1 : 0
+            }}
+            transition={{
+              duration: 0.9
+            }}
+          >
+            {keyframesItems[0] === 1
+              ? null
+              : keyframesItems[0] === 2
+                ? top === 'vad'
+                  ? salItem
+                  : vadItem
+                : top === 'vad'
+                  ? vadItem
+                  : salItem}
+          </motion.div>
+
+          <motion.div
+            className='absolute'
+            initial={{
+              top:
+                keyframesItems[1] === 2
+                  ? '0'
+                  : keyframesItems[1] === 3
+                    ? '-100%'
+                    : '100%',
+              opacity: keyframesItems[1] === 1 ? 1 : 0
+            }}
+            animate={{
+              top:
+                keyframesItems[1] === 2
+                  ? '-100%'
+                  : keyframesItems[1] === 3
+                    ? '100%'
+                    : '0',
+              opacity: keyframesItems[1] === 1 ? 1 : 0
+            }}
+            transition={{
+              duration: 0.9,
+              delay: 0
+            }}
+          >
+            {keyframesItems[1] === 3
+              ? null
+              : keyframesItems[1] === 1
+                ? top === 'vad'
+                  ? salItem
+                  : vadItem
+                : top === 'vad'
+                  ? vadItem
+                  : salItem}
+            {salItem}
+          </motion.div>
+          <motion.div
+            className='absolute'
+            initial={{
+              top:
+                keyframesItems[2] === 3
+                  ? '100%'
+                  : keyframesItems[2] === 1
+                    ? '0'
+                    : '-100%',
+              opacity: keyframesItems[2] === 3 ? 1 : 0
+            }}
+            animate={{
+              top:
+                keyframesItems[2] === 3
+                  ? '0'
+                  : keyframesItems[2] === 1
+                    ? '-100%'
+                    : '100%',
+              opacity: keyframesItems[2] === 3 ? 1 : 0
+            }}
+            transition={{
+              duration: 0.9,
+              delay: 0
+            }}
+          >
+            {keyframesItems[2] === 2
+              ? null
+              : keyframesItems[2] === 3
+                ? top === 'vad'
+                  ? salItem
+                  : vadItem
+                : top === 'vad'
+                  ? vadItem
+                  : salItem}
+          </motion.div>
+        </div> 
+        <div>{top === 'vad' ? vadItem : salItem}</div>
+        */}
         <div>{salItem}</div>
         <div>{vadItem}</div>
         <motion.div

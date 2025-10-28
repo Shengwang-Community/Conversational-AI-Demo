@@ -39,7 +39,8 @@ export const remoteAgentCustomPresetItem = z.object({
   description: z.string(),
   preset_type: z.string(),
   call_time_limit_second: z.number(),
-  is_support_vision: z.boolean()
+  is_support_vision: z.boolean(),
+  updated_at: z.date().optional()
 })
 
 export const remoteAgentFileUploadSchema = basicRemoteResSchema.extend({
@@ -56,4 +57,8 @@ export const remoteUserInfoUpdateSchema = basicRemoteResSchema.extend({
     birthday: z.date().optional(),
     description: z.string().optional()
   })
+})
+
+export const remoteSipStatusSchema = z.object({
+  agent_id: z.string()
 })

@@ -3,12 +3,12 @@
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import Typewriter, { type TypewriterClass } from 'typewriter-effect'
-import { useIsAgentCalling } from '@/hooks/use-is-agent-calling'
+import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
 import { isCN } from '@/lib/utils'
 
 export function GreetingTypewriterCN() {
   // const { history } = useChatStore()
-  const isAgentCalling = useIsAgentCalling()
+  const isDemoCalling = useIsDemoCalling()
   const typewriterRef = React.useRef<TypewriterClass>(null)
 
   const tAgentGreeting = useTranslations('agent.greeting')
@@ -82,7 +82,7 @@ export function GreetingTypewriterCN() {
   //   return null
   // }
 
-  if (isAgentCalling) {
+  if (isDemoCalling) {
     return null
   }
 
@@ -118,7 +118,7 @@ export function GreetingTypewriterEN() {
   // const { history } = useChatStore()
 
   const typewriterRef = React.useRef<TypewriterClass>(null)
-  const isAgentCalling = useIsAgentCalling()
+  const isDemoCalling = useIsDemoCalling()
 
   const tAgentGreeting = useTranslations('agent.greeting')
 
@@ -188,7 +188,7 @@ export function GreetingTypewriterEN() {
   //   return null
   // }
 
-  if (isAgentCalling) {
+  if (isDemoCalling) {
     return null
   }
 
@@ -223,9 +223,9 @@ export function GreetingTypewriter() {
 
 export function GenerateAIInfoTypewriter() {
   const t = useTranslations()
-  const isAgentCalling = useIsAgentCalling()
+  const isDemoCalling = useIsDemoCalling()
 
-  if (!isAgentCalling) {
+  if (!isDemoCalling) {
     return null
   }
 
