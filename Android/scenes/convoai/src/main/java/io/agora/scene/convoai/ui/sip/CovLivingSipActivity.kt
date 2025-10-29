@@ -139,6 +139,7 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
         lifecycleScope.launch {   // Observe connection state
             viewModel.callState.collect { state ->
                 mBinding?.outBoundCallView?.setCallState(state)
+                mBinding?.tvAgentHint?.isVisible = state != CallState.IDLE
                 if (state == CallState.CALLED) {
                     mBinding?.apply {
                         clTop.updateSessionLimit(
@@ -334,6 +335,7 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
                 clTop.settingIcon.isVisible = true
                 internalCallView.isVisible = false
                 outBoundCallView.isVisible = true
+                mBinding?.tvAgentHint?.isVisible = false
                 outBoundCallView.onCallActionListener = { action, phoneNumber ->
                     when (action) {
                         CovSipOutBoundCallView.CallAction.JOIN_CALL -> {

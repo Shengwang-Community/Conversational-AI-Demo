@@ -108,4 +108,19 @@
         android:visibility="gone"
         tools:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_agent_hint"
+        style="@style/TextShadowStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/cov_agent_generator_by_ai"
+        android:textColor="@color/ai_brand_white8"
+        android:textSize="11sp"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/outBoundCallView" />
 </androidx.constraintlayout.widget.ConstraintLayout>
