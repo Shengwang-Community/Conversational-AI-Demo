@@ -95,7 +95,7 @@ class CovAvatarSelectorDialog : BaseDialogFragment<CovAvatarSelectorDialogBindin
                 customTitleBar.layoutParams = layoutParams
             }
             // Set back button click listener
-            customTitleBar.setOnClickListener {
+            customTitleBar.setOnBackClickListener {
                 CovLogger.d(TAG, "Back button clicked")
                 handleDismiss()
             }
