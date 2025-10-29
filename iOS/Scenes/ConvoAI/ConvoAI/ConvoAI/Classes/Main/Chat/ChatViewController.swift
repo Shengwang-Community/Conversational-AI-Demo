@@ -59,6 +59,17 @@ class ChatViewController: BaseViewController {
         return view
     }()
     
+    internal lazy var aiGeneratedLabel: UILabel = {
+        let label = UILabel()
+        label.text = ResourceManager.L10n.Conversation.aiGeneratedContent
+        label.font = UIFont.systemFont(ofSize: 10, weight: .regular)
+        label.shadowColor = UIColor(hex: 0x14142B, alpha: 0.06)
+        label.shadowOffset = CGSize(width: 0, height: 2)
+        label.textColor = UIColor.themColor(named: "ai_brand_white8")
+        label.textAlignment = .center
+        return label
+    }()
+    
     internal lazy var volumeAnimateView: VolumeAnimateView = {
         let view = VolumeAnimateView()
         return view
