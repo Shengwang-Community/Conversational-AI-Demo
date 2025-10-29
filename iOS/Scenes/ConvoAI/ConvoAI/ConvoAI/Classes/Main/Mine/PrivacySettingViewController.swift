@@ -76,18 +76,6 @@ class PrivacySettingViewController: BaseViewController {
         return item
     }()
     
-    private lazy var recordNumberItem: PrivacyListItemView = {
-        let item = PrivacyListItemView()
-        item.configure(
-            icon: "ic_privacy_setting_global",
-            title: ResourceManager.L10n.Mine.privacyRecordNumber,
-            subtitle: ResourceManager.L10n.Mine.icpSubtitle,
-            hasArrow: true
-        )
-        item.addTarget(self, action: #selector(recordNumberTapped), for: .touchUpInside)
-        return item
-    }()
-    
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -116,7 +104,6 @@ class PrivacySettingViewController: BaseViewController {
         settingsStackView.addArrangedSubview(privacyPolicyItem)
         settingsStackView.addArrangedSubview(dataSharingItem)
         settingsStackView.addArrangedSubview(personalInfoItem)
-        settingsStackView.addArrangedSubview(recordNumberItem)
     }
     
     private func setupConstraints() {
@@ -168,12 +155,6 @@ class PrivacySettingViewController: BaseViewController {
         let sceneId = ConvoAIEntrance.reportSceneId
         webViewVC.url = "\(AppContext.shared.personalReportInfoUrl)?token=\(token)&app_id=\(appId)&scene_id=\(sceneId)"
         self.navigationController?.pushViewController(webViewVC)
-    }
-    
-    @objc private func recordNumberTapped() {
-        if let url = URL(string: "https://beian.miit.gov.cn/#/Integrated/recordQuery") {
-            UIApplication.shared.open(url, options: [:], completionHandler: nil)
-        }
     }
 }
 

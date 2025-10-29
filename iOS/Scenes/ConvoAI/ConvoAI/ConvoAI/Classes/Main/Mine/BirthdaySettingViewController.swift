@@ -39,8 +39,10 @@ class BirthdaySettingViewController: UIViewController {
         let picker = UIDatePicker()
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .wheels
-        picker.maximumDate = Date()
-        picker.minimumDate = Calendar.current.date(byAdding: .year, value: -100, to: Date())
+        // Maximum date: 18 years ago from today (user must be at least 18 years old)
+        picker.maximumDate = Calendar.current.date(byAdding: .year, value: -18, to: Date())
+        // Minimum date: 150 years ago
+        picker.minimumDate = Calendar.current.date(byAdding: .year, value: -150, to: Date())
         return picker
     }()
     
@@ -80,6 +82,12 @@ class BirthdaySettingViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
+        
+        // Ensure selected birthday is within valid range (user must be at least 18 years old)
+        if let maxDate = datePicker.maximumDate, selectedBirthday > maxDate {
+            selectedBirthday = maxDate
+        }
+        
         datePicker.setDate(selectedBirthday, animated: false)
     }
     

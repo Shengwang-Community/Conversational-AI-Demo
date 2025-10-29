@@ -28,7 +28,7 @@ extension ChatViewController {
     internal func setupViews() {
         view.backgroundColor = .black
         naviBar.isHidden = true
-        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, navivationBar, sideNavigationBar, activeFuncsView, callControlBar, volumeAnimateView, annotationView, sendMessageButton].forEach { view.addSubview($0) }
+        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, navivationBar, sideNavigationBar, activeFuncsView, callControlBar, volumeAnimateView, annotationView, aiGeneratedLabel, sendMessageButton].forEach { view.addSubview($0) }
 
         [miniView].forEach { smallSizeContainerView.addSubview($0) }
         [remoteAvatarView].forEach { miniView.addSubview($0) }
@@ -111,6 +111,11 @@ extension ChatViewController {
             make.bottom.equalTo(callControlBar.snp.top).offset(-94)
             make.left.right.equalTo(0)
             make.height.equalTo(44)
+        }
+        
+        aiGeneratedLabel.snp.makeConstraints { make in
+            make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-8)
+            make.centerX.equalToSuperview()
         }
         
         upperBackgroundView.snp.makeConstraints { make in

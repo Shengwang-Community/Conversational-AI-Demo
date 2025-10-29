@@ -61,6 +61,7 @@
 "conversation.alert.confirm" = "确定";
 "conversation.alert.clear" = "清除";
 "conversation.agent.voiceprint.lock.toast" = "引擎将学习您说话的声纹，过滤周围其他人的声音和噪音";
+"conversation.ai.generated.content" = "以上对话内容均由AI生成";
 
 "settings.title" = "智能体设定";
 "settings.connected.tips" = "(连接中不可修改)";
@@ -87,9 +88,6 @@
 "settings.digital.human" = "数字人";
 "settings.digital.human.closed" = "关闭";
 "settings.digital.human.all" = "全部";
-
-// Avatar AI Label
-"avatar.ai.generated.content" = "内容由AI生成";
 "settings.digital.human.preset.alert.title" = "更换Preset需重新设置数字人";
 "settings.digital.human.preset.alert.description" = "Preset 和数字人的性别相关，更换 Preset 后请重新设置数字人";
 "settings.digital.human.language.alert.title" = "更换Language需重新设置数字人";
@@ -289,7 +287,6 @@
 "mine.privacy.privacyPolicy" = "隐私政策";
 "mine.privacy.dataSharing" = "第三方信息数据共享";
 "mine.privacy.personalInfo" = "个人信息收集清单";
-"mine.privacy.recordNumber" = "备案号";
 
 // Account Settings
 "mine.account.deactivateWarning.message" = "您必须勾选并同意注销账号的各项风险才可以注销";
@@ -304,7 +301,6 @@
 // Nickname Generation
 "mine.nickname.adjectives" = "暖,柔,轻,淡,微,浅,软,绵,净,纯,空,寂,默,幻,谜,韵,绪,念,思,忆,春,夏,秋,冬,昼,夜,晨,昏,岁,月";
 "mine.nickname.nouns" = "云,星,月,日,霞,虹,风,雨,雪,雾,龙,凤,鹤,鹿,蝶,蝉,萤,雁,鸥,鹭,光,影,晨,昏,昼,夜,秒,分,时,季";
-"mine.icp.subtitle" = "沪ICP备14053584号-27A";
 
 "agent.sip.in.call.tips" = "请使用你的手机拨打该号码，即可体验电话与 AI 智能客服沟通";
 "agent.sip.in.call.tips.multi" = "请使用你的手机拨打任一号码，即可体验电话与 AI 智能客服沟通";

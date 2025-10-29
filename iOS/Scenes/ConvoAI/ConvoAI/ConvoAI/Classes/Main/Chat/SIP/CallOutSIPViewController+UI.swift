@@ -17,7 +17,7 @@ extension CallOutSipViewController {
         navivationBar.transcriptionButton.addTarget(self, action: #selector(onClickTranscriptionButton(_:)), for: .touchUpInside)
 
         sipInputView.delegate = self
-        [prepareCallContentView, callingView, transcriptView, closeButton, sideNavigationBar].forEach { view.insertSubview($0, belowSubview: navivationBar) }
+        [prepareCallContentView, callingView, transcriptView, closeButton, sideNavigationBar, aiGeneratedLabel].forEach { view.insertSubview($0, belowSubview: navivationBar) }
     }
     
     func setupSIPConstraints() {
@@ -46,6 +46,11 @@ extension CallOutSipViewController {
             make.left.right.equalToSuperview()
             make.height.equalTo(32)
             make.top.equalTo(navivationBar.snp.bottom)
+        }
+        
+        aiGeneratedLabel.snp.makeConstraints { make in
+            make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-8)
+            make.centerX.equalToSuperview()
         }
     }
     

@@ -95,6 +95,7 @@ extension ResourceManager {
             public static let retryAfterConnect = ResourceManager.localizedString("conversation.vision.retry.after.connect")
             public static let voiceLockTips = ResourceManager.localizedString("conversation.agent.voice.lock.tips")
             public static let voiceprintLockToast = ResourceManager.localizedString("conversation.agent.voiceprint.lock.toast")
+            public static let aiGeneratedContent = ResourceManager.localizedString("conversation.ai.generated.content")
         }
         
         public enum Setting {
@@ -152,7 +153,6 @@ extension ResourceManager {
             public static let digitalHumanAlertCancel = ResourceManager.localizedString("settings.digital.human.alert.cancel")
             public static let digitalHumanAlertConfirm = ResourceManager.localizedString("settings.digital.human.alert.confirm")
             public static let aiVadTips = ResourceManager.localizedString("settings.noise.aiVad.tips")
-            public static let aiGeneratedContent = ResourceManager.localizedString("avatar.ai.generated.content")
         }
         
         public enum ChannelInfo {
@@ -341,7 +341,6 @@ extension ResourceManager {
             public static let privacyPrivacyPolicy = ResourceManager.localizedString("mine.privacy.privacyPolicy")
             public static let privacyDataSharing = ResourceManager.localizedString("mine.privacy.dataSharing")
             public static let privacyPersonalInfo = ResourceManager.localizedString("mine.privacy.personalInfo")
-            public static let privacyRecordNumber = ResourceManager.localizedString("mine.privacy.recordNumber")
             
             // Account Settings
             public static let accountDeactivateWarningMessage = ResourceManager.localizedString("mine.account.deactivateWarning.message")
@@ -356,7 +355,6 @@ extension ResourceManager {
             // Nickname Generation
             public static let nicknameAdjectives = ResourceManager.localizedString("mine.nickname.adjectives")
             public static let nicknameNouns = ResourceManager.localizedString("mine.nickname.nouns")
-            public static let icpSubtitle = ResourceManager.localizedString("mine.icp.subtitle")
         }
         
         public enum Sip {
