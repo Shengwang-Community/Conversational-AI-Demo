@@ -4,8 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import com.loper7.date_time_picker.DateTimeConfig
 import io.agora.scene.common.ui.BaseSheetDialog
+import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.databinding.CovDialogBirthdayPickerBinding
 import java.text.SimpleDateFormat
 import java.util.*
@@ -73,10 +75,10 @@ class CovBirthdayPickerDialog : BaseSheetDialog<CovDialogBirthdayPickerBinding>(
             minCalendar.set(Calendar.DAY_OF_MONTH, 1)
             setMinMillisecond(minCalendar.timeInMillis)
 
-            // Set maximum date (18 years ago from today)
+            // Set maximum date for picker display (allow full year 18 years ago for better UX)
+            // Age validation (must be 18+) will be enforced on confirm button click
             val maxCalendar = Calendar.getInstance()
-            maxCalendar.add(Calendar.YEAR, -18) // 18 years ago
-            // Set to end of year to allow selection of any date in that year
+            maxCalendar.add(Calendar.YEAR, -18)
             maxCalendar.set(Calendar.MONTH, Calendar.DECEMBER)
             maxCalendar.set(Calendar.DAY_OF_MONTH, 31)
             setMaxMillisecond(maxCalendar.timeInMillis)
@@ -173,6 +175,13 @@ class CovBirthdayPickerDialog : BaseSheetDialog<CovDialogBirthdayPickerBinding>(
             btnConfirm.setOnClickListener {
                 // Get current selected values from NumberPickers
                 val currentDate = getCurrentSelectedDate()
+                
+                // Validate that user is at least 18 years old
+                if (!isAtLeast18YearsOld(currentDate)) {
+                    ToastUtil.show(io.agora.scene.convoai.R.string.cov_mine_age_limit_error)
+                    return@setOnClickListener
+                }
+                
                 val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
                 val formattedDate = dateFormat.format(currentDate)
                 onDateSelected?.invoke(formattedDate)
@@ -202,5 +211,28 @@ class CovBirthdayPickerDialog : BaseSheetDialog<CovDialogBirthdayPickerBinding>(
 
         // Fallback to stored selectedDate
         return selectedDate ?: Date()
+    }
+
+    /**
+     * Check if the given birthdate means the person is at least 18 years old today
+     * @param birthDate The birth date to check
+     * @return true if the person is 18 or older, false otherwise
+     */
+    private fun isAtLeast18YearsOld(birthDate: Date): Boolean {
+        val today = Calendar.getInstance()
+        val birth = Calendar.getInstance()
+        birth.time = birthDate
+        
+        // Calculate age in years
+        var age = today.get(Calendar.YEAR) - birth.get(Calendar.YEAR)
+        
+        // If birthday hasn't occurred this year yet, subtract 1 from age
+        if (today.get(Calendar.MONTH) < birth.get(Calendar.MONTH) ||
+            (today.get(Calendar.MONTH) == birth.get(Calendar.MONTH) && 
+             today.get(Calendar.DAY_OF_MONTH) < birth.get(Calendar.DAY_OF_MONTH))) {
+            age--
+        }
+        
+        return age >= 18
     }
 }
