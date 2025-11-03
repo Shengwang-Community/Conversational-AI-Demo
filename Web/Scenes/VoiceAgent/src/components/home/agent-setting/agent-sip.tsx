@@ -15,6 +15,13 @@ import {
     CommandItem,
     CommandList
 } from '@/components/ui/command'
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import {
     Popover,
@@ -27,9 +34,8 @@ import {
     type agentPresetSipSchema,
     SIP_REGION_NOT_FOUND_IMAGE
 } from '@/constants'
-
+import { useIsMobile } from '@/hooks/use-mobile'
 import { cn, formatPhoneNumber, isCN, validatePhoneNumber } from '@/lib/utils'
-
 import { useSipStore } from '@/store/sip'
 
 export const AgentSipDisplay = ({
@@ -37,6 +43,7 @@ export const AgentSipDisplay = ({
 }: {
     sips: z.infer<typeof agentPresetSipSchema>[]
 }) => {
+    const t = useTranslations()
     return (
         <div className=''>
             <div className='mx-auto flex w-fit flex-wrap gap-2'>
@@ -59,6 +66,11 @@ export const AgentSipDisplay = ({
                 <div className='absolute inset-x-[15%] top-0 h-px w-3/4 bg-gradient-to-r from-transparent via-indigo-500 to-transparent' />
                 <div className='absolute inset-x-[40%] top-0 h-[5px] w-1/4 bg-gradient-to-r from-transparent via-sky-500 to-transparent blur-sm' />
                 <div className='absolute inset-x-[40%] top-0 h-px w-1/4 bg-gradient-to-r from-transparent via-sky-500 to-transparent' />
+                {isCN && (
+                    <div className='flex w-full items-center justify-center pt-2 text-icontext-disabled text-xs'>
+                        <span>{t('sip.inbound_hint')}</span>
+                    </div>
+                )}
                 <SparklesCore
                     id='sparkles-core'
                     background='transparent'
@@ -86,7 +98,9 @@ export const AgentSipCallOut = ({
     const [regionName, setRegionName] = useState<string>()
     const [popoverOpen, setPopoverOpen] = useState(false)
     const [isValidPhoneNumber, setIsValidPhoneNumber] = useState(true)
+    const [dialogOpen, setDialogOpen] = useState(false)
     const t = useTranslations()
+    const isMobile = useIsMobile()
 
     const regions = useMemo(() => {
         return (presets || [])
@@ -122,6 +136,30 @@ export const AgentSipCallOut = ({
         const prefix = isCN ? '' : region?.key || ''
         updateCallee(prefix + phoneNumber.replaceAll(' ', ''))
     }, [phoneNumber, region, updateCallee])
+
+    const callOutButton = (
+        <Button
+            className={cn(
+                'ag-sip-call-out-button h-full w-16 rounded-full px-5 py-3',
+                !isCN && isMobile && 'mt-2 h-fit w-full'
+            )}
+            disabled={!isValidPhoneNumber}
+            onClick={() => {
+                const isValid = validatePhoneNumber(phoneNumber)
+                setIsValidPhoneNumber(isValid)
+                if (isValid) {
+                    if (isCN) {
+                        setDialogOpen(true)
+                    } else {
+                        onClick?.()
+                    }
+                }
+            }}
+            variant={'action'}
+        >
+            <SipCallOutIcon />
+        </Button>
+    )
 
     return (
         <div>
@@ -233,21 +271,33 @@ export const AgentSipCallOut = ({
                         />
                     )}
                 </div>
-                <Button
-                    className='ag-sip-call-out-button h-full w-16 rounded-full px-5 py-3'
-                    disabled={!isValidPhoneNumber}
-                    onClick={() => {
-                        const isValid = validatePhoneNumber(phoneNumber)
-                        setIsValidPhoneNumber(isValid)
-                        if (isValid) {
-                            onClick?.()
-                        }
-                    }}
-                    variant={'action'}
-                >
-                    <SipCallOutIcon />
-                </Button>
+                {(isCN || !isMobile) && callOutButton}
             </div>
+            {!isCN && isMobile && callOutButton}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogContent className='bg-card'>
+                    <DialogHeader>
+                        <DialogTitle className='mb-3 font-bold text-base text-icontext'>
+                            {t('sip.dialog.title')}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <DialogFooter className='flex items-center justify-between gap-2'>
+                        <Button
+                            variant='secondary'
+                            className='w-full bg-line-2'
+                            onClick={() => setDialogOpen(false)}
+                        >
+                            {t('sip.dialog.cancel')}
+                        </Button>
+                        <Button
+                            className='w-full bg-brand-main'
+                            onClick={() => onClick?.()}
+                        >
+                            {t('sip.dialog.confirm')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <div className='mt-3 flex h-4 items-center justify-center'>
                 {!isValidPhoneNumber && (

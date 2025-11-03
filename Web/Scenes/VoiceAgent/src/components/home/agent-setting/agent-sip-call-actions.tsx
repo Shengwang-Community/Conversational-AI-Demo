@@ -63,52 +63,55 @@ export const AgentSipCallActions = ({
     return (
         <div className='space-y-8'>
             {[ESipStatus.CONNECTED, ESipStatus.DISCONNECTED].includes(sipStatus) && (
-                <div className='space-y-8'>
-                    {/* <AgentStateIndicator /> */}
-                    {!showSubtitle && (
-                        <div className='flex items-center justify-center'>
-                            <div className='text-icontext'>
-                                {sipStatus === ESipStatus.CONNECTED
-                                    ? tSip('status.connected')
-                                    : tSip('status.disconnected')}
-                            </div>
-                        </div>
-                    )}
-                    <div
-                        className={cn(
-                            'flex items-center gap-3 md:gap-8',
-                            'h-(--ag-action-height)'
-                        )}
-                    >
-                        <AgentActionSubtitle
-                            enabled={showSubtitle}
-                            onClick={onClickSubtitle}
-                        />
-                        <div className='flex flex-col items-center justify-center gap-2.5'>
-                            {showSubtitle && (
-                                <div className='text-icontext-disabled'>
+                <div>
+                    <div className='space-y-8'>
+                        {/* <AgentStateIndicator /> */}
+                        {!showSubtitle && (
+                            <div className='flex items-center justify-center'>
+                                <div className='text-icontext'>
                                     {sipStatus === ESipStatus.CONNECTED
                                         ? tSip('status.connected')
                                         : tSip('status.disconnected')}
                                 </div>
+                            </div>
+                        )}
+                        <div
+                            className={cn(
+                                'flex items-center gap-3 md:gap-8',
+                                'h-(--ag-action-height)'
                             )}
-                            {anime.length > 0 && (
-                                <div className='flex items-center'>
-                                    {<SipCallOutAnimeIcon className='mr-1 size-5' />}
-                                    {anime.slice(1).join('')}
-                                </div>
-                            )}
+                        >
+                            <AgentActionSubtitle
+                                enabled={showSubtitle}
+                                onClick={onClickSubtitle}
+                            />
+                            <div className='flex flex-col items-center justify-center gap-2.5'>
+                                {showSubtitle && (
+                                    <div className='text-icontext-disabled'>
+                                        {sipStatus === ESipStatus.CONNECTED
+                                            ? tSip('status.connected')
+                                            : tSip('status.disconnected')}
+                                    </div>
+                                )}
+                                {anime.length > 0 && (
+                                    <div className='flex items-center'>
+                                        {<SipCallOutAnimeIcon className='mr-1 size-5' />}
+                                        {anime.slice(1).join('')}
+                                    </div>
+                                )}
+                            </div>
+                            <AgentActionHangUp
+                                disabled={[ESipStatus.IDLE].includes(sipStatus)}
+                                onClick={onExit}
+                            />
                         </div>
-                        <AgentActionHangUp
-                            disabled={[ESipStatus.IDLE].includes(sipStatus)}
-                            onClick={onExit}
-                        />
                     </div>
                     <div
                         className={cn(
                             'h-fit min-h-fit min-w-fit py-1.5',
                             '!text-icontext-4 font-semibold',
-                            'md:hidden'
+                            'md:hidden',
+                            'flex justify-center'
                         )}
                     >
                         <GenerateAIInfoTypewriter />

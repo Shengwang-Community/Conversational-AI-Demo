@@ -229,6 +229,10 @@ export function GenerateAIInfoTypewriter() {
     return null
   }
 
+  if (!isCN) {
+    return null
+  }
+
   return (
     <Typewriter
       options={{ cursor: '', delay: 20, loop: true }}
