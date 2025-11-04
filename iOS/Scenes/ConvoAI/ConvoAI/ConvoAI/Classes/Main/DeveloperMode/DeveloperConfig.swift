@@ -59,19 +59,21 @@ public class DeveloperConfig {
     public var audioDump: Bool = false
     
     public lazy var devModeButton: UIButton = {
-        let button = UIButton(type: .custom)
+        let button = DebugButton(type: .custom)
         button.setImage(UIImage.ag_named("ic_setting_debug"), for: .normal)
         button.addTarget(self, action: #selector(showDevModePage), for: .touchUpInside)
         button.isHidden = true
         // Add button to window
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first {
+            let buttonSize: CGFloat = 44
+            button.frame = CGRect(
+                x: window.bounds.width - buttonSize - 16,
+                y: window.bounds.height - buttonSize - 16,
+                width: buttonSize,
+                height: buttonSize
+            )
             window.addSubview(button)
-            button.snp.makeConstraints { make in
-                make.right.equalTo(-16)
-                make.bottom.equalTo(-100)
-                make.size.equalTo(CGSize(width: 44, height: 44))
-            }
         }
         return button
     }()
@@ -204,5 +206,72 @@ public class DeveloperConfig {
             return topViewController(tabBarController.selectedViewController)
         }
         return rootViewController
+    }
+}
+
+// MARK: - DebugButton
+private class DebugButton: UIButton {
+    private var lastLocation: CGPoint = .zero
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupPanGesture()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupPanGesture()
+    }
+    
+    private func setupPanGesture() {
+        let panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+        self.addGestureRecognizer(panRecognizer)
+    }
+    
+    @objc private func handlePan(_ recognizer: UIPanGestureRecognizer) {
+        guard let superview = self.superview else { return }
+        
+        if recognizer.state == .began {
+            lastLocation = self.center
+        }
+        
+        let translation = recognizer.translation(in: superview)
+        
+        var newCenter = CGPoint(
+            x: lastLocation.x + translation.x,
+            y: lastLocation.y + translation.y
+        )
+        
+        let halfWidth = bounds.width / 2
+        let halfHeight = bounds.height / 2
+        let padding: CGFloat = 16
+        
+        // Keep within superview bounds
+        newCenter.x = max(halfWidth + padding, min(newCenter.x, superview.bounds.width - halfWidth - padding))
+        newCenter.y = max(halfHeight + padding, min(newCenter.y, superview.bounds.height - halfHeight - padding))
+        
+        center = newCenter
+        
+        if recognizer.state == .ended {
+            // Snap to nearest left or right edge after drag ends
+            let distanceToLeft = newCenter.x - (halfWidth + padding)
+            let distanceToRight = superview.bounds.width - (newCenter.x + halfWidth + padding)
+            
+            UIView.animate(withDuration: 0.2) {
+                if distanceToLeft < distanceToRight {
+                    // Snap to left edge
+                    self.center.x = halfWidth + padding
+                } else {
+                    // Snap to right edge
+                    self.center.x = superview.bounds.width - (halfWidth + padding)
+                }
+                self.lastLocation = self.center
+            }
+        }
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesBegan(touches, with: event)
+        lastLocation = self.center
     }
 }
