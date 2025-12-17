@@ -43,7 +43,7 @@ object CovAgentManager {
     var renderMode: Int = CovRenderMode.WORD
 
     var enableAiVad = false
-    val enableBHVS = true
+    val enableBHVS get() = voiceprintMode == VoiceprintMode.OFF
 
     // Preset change reminder setting, follows app lifecycle
     private var showPresetChangeReminder = true
