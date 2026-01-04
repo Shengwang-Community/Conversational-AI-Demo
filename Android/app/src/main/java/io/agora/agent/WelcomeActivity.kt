@@ -13,17 +13,26 @@ import io.agora.scene.convoai.ui.main.CovMainActivity
 
 class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
 
+    private var hasNavigated = false
+
     override fun getViewBinding(): WelcomeActivityBinding {
         return WelcomeActivityBinding.inflate(layoutInflater)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Android S+: installSplashScreen() must be called before super.onCreate()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            handleSplashScreenExit()
-        } else {
+            val splashScreen = installSplashScreen()
+            handleSplashScreenExit(splashScreen)
+        }
+
+        super.onCreate(savedInstanceState)
+
+        // Android < S: Navigate after super.onCreate() to ensure Activity is fully initialized
+        // This ensures Context is available and follows Android lifecycle best practices
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             goScene()
         }
-        super.onCreate(savedInstanceState)
     }
 
     override fun immersiveMode(): ImmersiveMode  = ImmersiveMode.FULLY_IMMERSIVE
@@ -34,6 +43,9 @@ class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
     }
 
     private fun goScene() {
+        if (hasNavigated) return
+        hasNavigated = true
+
         if (SSOUserManager.getToken().isNotEmpty()) {
             initBugly()
             startActivity(Intent(this@WelcomeActivity, CovMainActivity::class.java))
@@ -46,8 +58,7 @@ class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
     private val SPLASH_DURATION = 300L
 
     @RequiresApi(Build.VERSION_CODES.S)
-    private fun handleSplashScreenExit() {
-        val splashScreen = installSplashScreen()
+    private fun handleSplashScreenExit(splashScreen: androidx.core.splashscreen.SplashScreen) {
         var keepSplashOnScreen = true
 
         splashScreen.setOnExitAnimationListener { provider ->
@@ -58,15 +69,18 @@ class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
                 .scaleY(1f)
                 .withEndAction {
                     provider.remove()
-                    goScene()
                 }.start()
         }
 
+        // Set condition to keep splash screen visible
+        splashScreen.setKeepOnScreenCondition { keepSplashOnScreen }
+
+        // After delay, allow splash screen to exit and navigate directly
         val handler = android.os.Handler(mainLooper)
         handler.postDelayed({
             keepSplashOnScreen = false
+            // Navigate directly here, don't rely on animation listener
+            goScene()
         }, SPLASH_DURATION)
-
-        splashScreen.setKeepOnScreenCondition { keepSplashOnScreen }
     }
 }
