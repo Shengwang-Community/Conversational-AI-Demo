@@ -18,6 +18,9 @@ public class DeveloperBasicSettingView: UIView  {
     public let rtmVersionValueLabel = UILabel()
     private let environmentLabel = UILabel()
     public let menuButton = UIButton(type: .system)
+    private let appIdLabel = UILabel()
+    public let appIdMenuButton = UIButton(type: .system)
+    private var appIdStack: UIStackView!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -106,5 +109,34 @@ public class DeveloperBasicSettingView: UIView  {
         envStack.snp.makeConstraints { make in
             make.height.equalTo(44)
         }
+        
+        // AppID Selection (initially hidden)
+        appIdLabel.text = "App ID"
+        appIdLabel.textColor = .white
+        appIdLabel.font = UIFont.systemFont(ofSize: 16)
+        appIdMenuButton.setTitle("Select App ID", for: .normal)
+        appIdMenuButton.setTitleColor(UIColor.themColor(named: "ai_icontext1"), for: .normal)
+        appIdMenuButton.titleLabel?.font = UIFont.systemFont(ofSize: 14)
+        appIdMenuButton.backgroundColor = UIColor.themColor(named: "ai_block2")
+        appIdMenuButton.layer.cornerRadius = 4
+        appIdMenuButton.layer.borderWidth = 1
+        appIdMenuButton.setImage(UIImage(systemName: "chevron.down"), for: .normal)
+        appIdMenuButton.semanticContentAttribute = .forceRightToLeft
+        appIdMenuButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 0)
+        appIdMenuButton.contentEdgeInsets = UIEdgeInsets(top: 5, left: 10, bottom: 5, right: 10)
+        appIdStack = UIStackView(arrangedSubviews: [appIdLabel, appIdMenuButton])
+        appIdStack.axis = .horizontal
+        appIdStack.distribution = .equalSpacing
+        appIdStack.alignment = .center
+        appIdStack.isHidden = true // Initially hidden
+        stackView.addArrangedSubview(appIdStack)
+        appIdStack.snp.makeConstraints { make in
+            make.height.equalTo(44)
+        }
+    }
+    
+    // Public method to show/hide AppID selection
+    public func setAppIdSelectionVisible(_ visible: Bool) {
+        appIdStack.isHidden = !visible
     }
 }

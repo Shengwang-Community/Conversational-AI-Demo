@@ -183,6 +183,35 @@ class ToolBoxApiManager: NSObject {
                                          success: success,
                                          failure: failure)
     }
+    
+    /// Get Lab Testing environment VID configuration
+    /// - Parameters:
+    ///   - success: success callback with lab testing config data
+    ///   - failure: failure callback
+    public func getLabTestingConfigs(success: NetworkManager.SuccessClosure?,
+                                     failure: NetworkManager.FailClosure?) {
+        // use labtesting base url
+        let url = "https://staging-toolbox-convoai-cn.bj2.agoralab.co/convoai/v5/envs/lab_testing/configs"
+        
+        NetworkManager.shared.getRequest(urlString: url,
+                                         params: nil,
+                                         success: success,
+                                         failure: failure)
+    }
+    
+    /// Get latest demo version information
+    /// - Parameters:
+    ///   - success: success callback with latest demo version data
+    ///   - failure: failure callback
+    public func getLatestDemoVersion(success: NetworkManager.SuccessClosure?,
+                                     failure: NetworkManager.FailClosure?) {
+        let url = "\(AppContext.shared.baseServerUrl)/convoai/v5/demo/version/latest"
+        
+        NetworkManager.shared.getRequest(urlString: url,
+                                         params: nil,
+                                         success: success,
+                                         failure: failure)
+    }
 }
 
 // MARK: - TimeUtils

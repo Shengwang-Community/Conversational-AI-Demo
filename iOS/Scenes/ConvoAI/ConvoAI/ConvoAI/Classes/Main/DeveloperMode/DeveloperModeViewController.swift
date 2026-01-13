@@ -39,9 +39,12 @@ public class DeveloperModeViewController: UIViewController {
             let environments = AppContext.shared.environments
             if selectedEnvironmentIndex < environments.count {
                 basicSettingView.menuButton.setTitle(environments[selectedEnvironmentIndex][kEnvName] ?? "", for: .normal)
+                updateAppIdSelectionVisibility()
             }
         }
     }
+    private var selectedAppId: String? = nil
+    private var availableAppIds: [String] = []
 
     override public func viewDidLoad() {
         super.viewDidLoad()
@@ -63,6 +66,9 @@ public class DeveloperModeViewController: UIViewController {
         }
         basicSettingView.menuButton.menu = createEnvironmentMenu()
         basicSettingView.menuButton.showsMenuAsPrimaryAction = true
+        
+        // Setup AppID menu button
+        basicSettingView.appIdMenuButton.addTarget(self, action: #selector(onAppIdMenuTapped), for: .touchUpInside)
     }
     
     private func setupHeader() {
@@ -245,7 +251,16 @@ public class DeveloperModeViewController: UIViewController {
             let displayTitle = isSelected ? "\(title) ✅" : title
             return UIAction(title: displayTitle) { [weak self] _ in
                 self?.selectedEnvironmentIndex = index
-                self?.switchEnvironment()
+                let envName = env[self?.kEnvName ?? ""] ?? ""
+                let isLabTesting = envName.lowercased().contains("labtesting")
+                
+                if isLabTesting {
+                    // For lab testing, just update UI and fetch AppIDs, don't switch immediately
+                    self?.basicSettingView.menuButton.menu = self?.createEnvironmentMenu()
+                } else {
+                    // For other environments, switch immediately
+                    self?.switchEnvironment()
+                }
             }
         }
         return UIMenu(children: actions)
@@ -273,23 +288,128 @@ public class DeveloperModeViewController: UIViewController {
             return
         }
         let envi = environments[selectedEnvironmentIndex]
-        guard let host = envi[kHost],
-              let appId = envi[kAppId],
-              AppContext.shared.baseServerUrl != host
-        else {
+        guard let host = envi[kHost] else { return }
+        
+        let envName = envi[kEnvName]?.lowercased() ?? ""
+        let isLabTesting = envName.lowercased().contains("labtesting")
+        
+        var appIdToUse: String
+        if isLabTesting {
+            // For lab testing, use selected AppID or fallback to environment's AppID
+            appIdToUse = selectedAppId ?? envi[kAppId] ?? AppContext.shared.appId
+        } else {
+            // For other environments, use environment's AppID
+            appIdToUse = envi[kAppId] ?? AppContext.shared.appId
+        }
+        
+        // Check if we're actually switching
+        guard AppContext.shared.baseServerUrl != host || AppContext.shared.appId != appIdToUse else {
             return
         }
+        
         if DeveloperConfig.shared.defaultHost == nil {
             DeveloperConfig.shared.defaultHost = AppContext.shared.baseServerUrl
         }
         if DeveloperConfig.shared.defaultAppId == nil {
             DeveloperConfig.shared.defaultAppId = AppContext.shared.appId
         }
+        
         AppContext.shared.baseServerUrl = host
-        AppContext.shared.appId = appId
-        SVProgressHUD.showInfo(withStatus: host)
+        AppContext.shared.appId = appIdToUse
+        
+        let statusMessage = isLabTesting ? "\(host) | AppID: \(appIdToUse)" : host
+        SVProgressHUD.showInfo(withStatus: statusMessage)
         config.notifySwitchServer()
         dismiss(endDevMode: false)
+    }
+    
+    private func updateAppIdSelectionVisibility() {
+        let environments = AppContext.shared.environments
+        guard selectedEnvironmentIndex < environments.count else { return }
+        
+        let selectedEnv = environments[selectedEnvironmentIndex]
+        let envName = selectedEnv[kEnvName]?.lowercased() ?? ""
+        let isLabTesting = envName.lowercased().contains("labtesting")
+        
+        basicSettingView.setAppIdSelectionVisible(isLabTesting)
+        
+        if isLabTesting {
+            fetchLabTestingAppIds()
+        }
+    }
+    
+    private func fetchLabTestingAppIds() {
+        // Use the new API to fetch lab testing configs
+        let toolBoxManager = ToolBoxApiManager()
+        toolBoxManager.getLabTestingConfigs(success: { [weak self] response in
+            DispatchQueue.main.async {
+                self?.handleLabTestingConfigResponse(response)
+            }
+        }, failure: { [weak self] error in
+            DispatchQueue.main.async {
+                print("Failed to fetch lab testing configs: \(error)")
+                // Fallback to default AppIDs if API fails
+                self?.availableAppIds = ["default_app_id_1", "default_app_id_2"]
+                self?.updateAppIdMenu()
+            }
+        })
+    }
+    
+    private func handleLabTestingConfigResponse(_ response: [String: Any]) {
+        // Parse the response to extract available AppIDs
+        if let data = response["data"] as? [String: Any] {
+            // Assuming the response contains an array of AppIDs
+            if let appIds = data["app_ids"] as? [String] {
+                availableAppIds = appIds
+            } else if let vid = data["vid"] as? String {
+                // If only VID is returned, use it as the AppID
+                availableAppIds = [vid]
+            } else {
+                // Fallback AppIDs
+                availableAppIds = ["lab_testing_app_id_1", "lab_testing_app_id_2"]
+            }
+        } else {
+            // Fallback AppIDs
+            availableAppIds = ["lab_testing_app_id_1", "lab_testing_app_id_2"]
+        }
+        updateAppIdMenu()
+    }
+    
+    private func updateAppIdMenu() {
+        let actions = availableAppIds.enumerated().map { index, appId in
+            let isSelected = appId == selectedAppId
+            let displayTitle = isSelected ? "\(appId) ✅" : appId
+            return UIAction(title: displayTitle) { [weak self] _ in
+                self?.selectedAppId = appId
+                self?.basicSettingView.appIdMenuButton.setTitle(appId, for: .normal)
+                self?.applySelectedAppId()
+            }
+        }
+        let menu = UIMenu(children: actions)
+        basicSettingView.appIdMenuButton.menu = menu
+        basicSettingView.appIdMenuButton.showsMenuAsPrimaryAction = true
+        
+        // Set default selection if none selected
+        if selectedAppId == nil && !availableAppIds.isEmpty {
+            selectedAppId = availableAppIds.first
+            basicSettingView.appIdMenuButton.setTitle(selectedAppId, for: .normal)
+        }
+    }
+    
+    @objc private func onAppIdMenuTapped() {
+        // This method is called when the AppID menu button is tapped
+        // The menu will be shown automatically due to showsMenuAsPrimaryAction = true
+    }
+    
+    private func applySelectedAppId() {
+        guard let appId = selectedAppId else { return }
+        
+        // Apply the selected AppID and switch environment
+        selectedAppId = appId
+        basicSettingView.appIdMenuButton.setTitle(appId, for: .normal)
+        
+        // Now switch to the lab testing environment with the selected AppID
+        switchEnvironment()
     }
     
     @objc private func onClickSessionLimit(_ sender: UISwitch) {

@@ -79,6 +79,7 @@ class AgentManager: AgentAPI {
     func fetchAgentPresets(appId: String, completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void)) {
         let parameters: [String: Any] = [
             "app_id": appId,
+            "is_debug": DeveloperConfig.shared.isDeveloperMode
         ]
         
         sendRequest(endpoint: .fetchAgentPresets, parameters: parameters) { (result: Result<[AgentPreset], ConvoAIError>) in
@@ -224,7 +225,7 @@ enum AgentServiceUrl {
         case .fetchSIPState: return "sip/status"
         }
     }
-    
+        
     public func toHttpUrlString() -> String {
         return Self.baseUrl + Self.apiPrefix + "/" + endpoint
     }
@@ -250,4 +251,5 @@ enum ConvoAIError: Error {
         }
     }
 }
+
 
