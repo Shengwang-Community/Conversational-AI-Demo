@@ -198,14 +198,16 @@ object CovAgentApiManager {
     }
 
     fun fetchPresets(isDebug: Boolean = false, completion: (error: Exception?, List<CovAgentPreset>) -> Unit) {
-        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/presets/list"
+        var requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/presets/list"
+        
+        // Add is_debug query parameter if needed
+        if (isDebug) {
+            requestURL += "?is_debug=true"
+        }
 
         val postBody = JSONObject()
         try {
             postBody.put("app_id", ServerConfig.rtcAppId)
-            if (isDebug) {
-                postBody.put("debug", true)
-            }
         } catch (e: JSONException) {
             CovLogger.e(TAG, "postBody error ${e.message}")
         }
