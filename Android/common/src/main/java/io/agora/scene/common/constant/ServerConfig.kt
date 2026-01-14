@@ -83,6 +83,10 @@ object ServerConfig {
     var rtcAppCert: String = ""
         private set
 
+    @JvmStatic
+    var labTestingVid: String = ""
+        private set
+
     private val buildEnvConfig: EnvConfig = EnvConfig()
 
     val isBuildEnv: Boolean get() = buildEnvConfig.toolboxServerHost == toolBoxUrl
@@ -112,6 +116,11 @@ object ServerConfig {
         this.rtcAppId = debugConfig.rtcAppId
         this.rtcAppCert = debugConfig.rtcAppCertificate
         ApiManager.setBaseURL(toolBoxUrl)
+    }
+
+    fun updateLabTestingConfig(appId: String, vid: String) {
+        this.rtcAppId = appId
+        this.labTestingVid = vid
     }
 
     fun reset() {
