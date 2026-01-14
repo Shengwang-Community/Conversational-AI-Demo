@@ -184,14 +184,16 @@ class ToolBoxApiManager: NSObject {
                                          failure: failure)
     }
     
-    /// Get Lab Testing environment VID configuration
+    /// Get environment dynamic configuration
     /// - Parameters:
-    ///   - success: success callback with lab testing config data
+    ///   - baseURL: The base URL for the environment to fetch configs from
+    ///   - success: success callback with environment dynamic config data
     ///   - failure: failure callback
-    public func getLabTestingConfigs(success: NetworkManager.SuccessClosure?,
-                                     failure: NetworkManager.FailClosure?) {
-        // use labtesting base url
-        let url = "https://staging-toolbox-convoai-cn.bj2.agoralab.co/convoai/v5/envs/lab_testing/configs"
+    public func getEnvironmentDynamicConfigs(baseURL: String,
+                                            success: NetworkManager.SuccessClosure?,
+                                            failure: NetworkManager.FailClosure?) {
+        // use the provided base url to get configs for the selected environment
+        let url = "\(baseURL)/convoai/v5/envs/lab_testing/configs"
         
         NetworkManager.shared.getRequest(urlString: url,
                                          params: nil,

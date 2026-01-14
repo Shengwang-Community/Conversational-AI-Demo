@@ -6,6 +6,24 @@ import AgoraRtmKit
 import SVProgressHUD
 import ObjectiveC
 
+// MARK: - Data Models
+struct VIDAppIDModel {
+    let vid: String
+    let appId: String
+    
+    var displayTitle: String {
+        return "\(vid)-\(maskedAppId)"
+    }
+    
+    var maskedAppId: String {
+        guard appId.count > 8 else { return appId }
+        let startIndex = appId.index(appId.startIndex, offsetBy: 4)
+        let endIndex = appId.index(appId.endIndex, offsetBy: -4)
+        let masked = String(appId[..<startIndex]) + "***" + String(appId[endIndex...])
+        return masked
+    }
+}
+
 public var isDebugPageShow = false
 public class DeveloperModeViewController: UIViewController {
     // Tab type
@@ -38,13 +56,16 @@ public class DeveloperModeViewController: UIViewController {
         didSet {
             let environments = AppContext.shared.environments
             if selectedEnvironmentIndex < environments.count {
-                basicSettingView.menuButton.setTitle(environments[selectedEnvironmentIndex][kEnvName] ?? "", for: .normal)
-                updateAppIdSelectionVisibility()
+                let env = environments[selectedEnvironmentIndex]
+                basicSettingView.envValueLabel.text = env[kEnvName] ?? ""
+                basicSettingView.envDetailLabel.text = env[kHost] ?? ""
+                fetchEnvironmentAppIds()
             }
         }
     }
     private var selectedAppId: String? = nil
-    private var availableAppIds: [String] = []
+    private var availableVIDs: [VIDAppIDModel] = []
+    private var vidIndex: Int? = nil
 
     override public func viewDidLoad() {
         super.viewDidLoad()
@@ -64,11 +85,14 @@ public class DeveloperModeViewController: UIViewController {
                 break
             }
         }
-        basicSettingView.menuButton.menu = createEnvironmentMenu()
-        basicSettingView.menuButton.showsMenuAsPrimaryAction = true
+        basicSettingView.envMenuButton.menu = updateEnvironmentMenu()
+        basicSettingView.envMenuButton.showsMenuAsPrimaryAction = true
         
         // Setup AppID menu button
         basicSettingView.appIdMenuButton.addTarget(self, action: #selector(onAppIdMenuTapped), for: .touchUpInside)
+        
+        // Fetch AppIDs for the current environment
+        fetchEnvironmentAppIds()
     }
     
     private func setupHeader() {
@@ -243,7 +267,7 @@ public class DeveloperModeViewController: UIViewController {
         agentSettingView.graphTextField.addTarget(self, action: #selector(onGraphIdEndEditing(_:)), for: .editingDidEnd)
     }
     
-    private func createEnvironmentMenu() -> UIMenu {
+    private func updateEnvironmentMenu() -> UIMenu {
         let environments = AppContext.shared.environments
         let actions = environments.enumerated().map { index, env in
             let title = env[kEnvName] ?? ""
@@ -251,16 +275,8 @@ public class DeveloperModeViewController: UIViewController {
             let displayTitle = isSelected ? "\(title) ✅" : title
             return UIAction(title: displayTitle) { [weak self] _ in
                 self?.selectedEnvironmentIndex = index
-                let envName = env[self?.kEnvName ?? ""] ?? ""
-                let isLabTesting = envName.lowercased().contains("labtesting")
-                
-                if isLabTesting {
-                    // For lab testing, just update UI and fetch AppIDs, don't switch immediately
-                    self?.basicSettingView.menuButton.menu = self?.createEnvironmentMenu()
-                } else {
-                    // For other environments, switch immediately
-                    self?.switchEnvironment()
-                }
+                // Update UI and fetch AppIDs for the selected environment
+                self?.basicSettingView.envMenuButton.menu = self?.updateEnvironmentMenu()
             }
         }
         return UIMenu(children: actions)
@@ -290,15 +306,11 @@ public class DeveloperModeViewController: UIViewController {
         let envi = environments[selectedEnvironmentIndex]
         guard let host = envi[kHost] else { return }
         
-        let envName = envi[kEnvName]?.lowercased() ?? ""
-        let isLabTesting = envName.lowercased().contains("labtesting")
-        
         var appIdToUse: String
-        if isLabTesting {
-            // For lab testing, use selected AppID or fallback to environment's AppID
-            appIdToUse = selectedAppId ?? envi[kAppId] ?? AppContext.shared.appId
+        // Use selected AppID if available, otherwise fallback to environment's AppID
+        if let index = vidIndex, index < availableVIDs.count {
+            appIdToUse = availableVIDs[index].appId
         } else {
-            // For other environments, use environment's AppID
             appIdToUse = envi[kAppId] ?? AppContext.shared.appId
         }
         
@@ -317,71 +329,69 @@ public class DeveloperModeViewController: UIViewController {
         AppContext.shared.baseServerUrl = host
         AppContext.shared.appId = appIdToUse
         
-        let statusMessage = isLabTesting ? "\(host) | AppID: \(appIdToUse)" : host
+        let statusMessage = "\(host) | AppID: \(appIdToUse)"
         SVProgressHUD.showInfo(withStatus: statusMessage)
         config.notifySwitchServer()
         dismiss(endDevMode: false)
     }
     
-    private func updateAppIdSelectionVisibility() {
+    private func fetchEnvironmentAppIds() {
+        // Get the selected environment's base URL
         let environments = AppContext.shared.environments
         guard selectedEnvironmentIndex < environments.count else { return }
         
         let selectedEnv = environments[selectedEnvironmentIndex]
-        let envName = selectedEnv[kEnvName]?.lowercased() ?? ""
-        let isLabTesting = envName.lowercased().contains("labtesting")
+        guard let baseURL = selectedEnv[kHost] else { return }
         
-        basicSettingView.setAppIdSelectionVisible(isLabTesting)
-        
-        if isLabTesting {
-            fetchLabTestingAppIds()
-        }
-    }
-    
-    private func fetchLabTestingAppIds() {
-        // Use the new API to fetch lab testing configs
+        // Use the new API to fetch environment dynamic configs
         let toolBoxManager = ToolBoxApiManager()
-        toolBoxManager.getLabTestingConfigs(success: { [weak self] response in
-            DispatchQueue.main.async {
-                self?.handleLabTestingConfigResponse(response)
+        toolBoxManager.getEnvironmentDynamicConfigs(baseURL: baseURL, success: { [weak self] response in
+            // Parse the response to extract available VIDs and AppIDs
+            if let data = response["data"] as? [String: Any],
+               let appIdVidList = data["app_id_vid_List"] as? [[String: Any]] {
+                // Extract VID and AppID pairs from the list
+                let vidModels = appIdVidList.compactMap { item -> VIDAppIDModel? in
+                    guard let appId = item["app_id"] as? String,
+                          let vid = item["vid"] as? String else {
+                        return nil
+                    }
+                    return VIDAppIDModel(vid: vid, appId: appId)
+                }
+                
+                if !vidModels.isEmpty {
+                    self?.availableVIDs = vidModels
+                    self?.updateAppIdMenu()
+                    return
+                }
             }
+            
+            self?.useDefaultAppId()
         }, failure: { [weak self] error in
-            DispatchQueue.main.async {
-                print("Failed to fetch lab testing configs: \(error)")
-                // Fallback to default AppIDs if API fails
-                self?.availableAppIds = ["default_app_id_1", "default_app_id_2"]
-                self?.updateAppIdMenu()
-            }
+            print("Failed to fetch environment dynamic configs: \(error)")
+            // Use default AppID from environment if API fails
+            self?.useDefaultAppId()
         })
     }
     
-    private func handleLabTestingConfigResponse(_ response: [String: Any]) {
-        // Parse the response to extract available AppIDs
-        if let data = response["data"] as? [String: Any] {
-            // Assuming the response contains an array of AppIDs
-            if let appIds = data["app_ids"] as? [String] {
-                availableAppIds = appIds
-            } else if let vid = data["vid"] as? String {
-                // If only VID is returned, use it as the AppID
-                availableAppIds = [vid]
-            } else {
-                // Fallback AppIDs
-                availableAppIds = ["lab_testing_app_id_1", "lab_testing_app_id_2"]
-            }
-        } else {
-            // Fallback AppIDs
-            availableAppIds = ["lab_testing_app_id_1", "lab_testing_app_id_2"]
-        }
+    private func useDefaultAppId() {
+        let environments = AppContext.shared.environments
+        guard selectedEnvironmentIndex < environments.count else { return }
+        
+        let selectedEnv = environments[selectedEnvironmentIndex]
+        let defaultAppId = selectedEnv[kAppId] ?? AppContext.shared.appId
+        // Create a default VID model with empty VID
+        let defaultModel = VIDAppIDModel(vid: "default", appId: defaultAppId)
+        availableVIDs = [defaultModel]
         updateAppIdMenu()
     }
     
     private func updateAppIdMenu() {
-        let actions = availableAppIds.enumerated().map { index, appId in
-            let isSelected = appId == selectedAppId
-            let displayTitle = isSelected ? "\(appId) ✅" : appId
+        let actions = availableVIDs.enumerated().map { index, vidModel in
+            let isSelected = index == vidIndex
+            let displayTitle = isSelected ? "\(vidModel.displayTitle) ✅" : vidModel.displayTitle
             return UIAction(title: displayTitle) { [weak self] _ in
-                self?.selectedAppId = appId
-                self?.basicSettingView.appIdMenuButton.setTitle(appId, for: .normal)
+                self?.vidIndex = index
+                self?.basicSettingView.appIdValueLabel.text = vidModel.displayTitle
                 self?.applySelectedAppId()
             }
         }
@@ -390,9 +400,9 @@ public class DeveloperModeViewController: UIViewController {
         basicSettingView.appIdMenuButton.showsMenuAsPrimaryAction = true
         
         // Set default selection if none selected
-        if selectedAppId == nil && !availableAppIds.isEmpty {
-            selectedAppId = availableAppIds.first
-            basicSettingView.appIdMenuButton.setTitle(selectedAppId, for: .normal)
+        if vidIndex == nil && !availableVIDs.isEmpty {
+            vidIndex = 0
+            basicSettingView.appIdValueLabel.text = availableVIDs[0].displayTitle
         }
     }
     
@@ -402,13 +412,15 @@ public class DeveloperModeViewController: UIViewController {
     }
     
     private func applySelectedAppId() {
-        guard let appId = selectedAppId else { return }
+        guard let index = vidIndex, index < availableVIDs.count else { return }
+        
+        let selectedModel = availableVIDs[index]
         
         // Apply the selected AppID and switch environment
-        selectedAppId = appId
-        basicSettingView.appIdMenuButton.setTitle(appId, for: .normal)
+        vidIndex = index
+        basicSettingView.appIdValueLabel.text = selectedModel.displayTitle
         
-        // Now switch to the lab testing environment with the selected AppID
+        // Now switch to the environment with the selected AppID
         switchEnvironment()
     }
     
