@@ -31,6 +31,7 @@ object CovAgentApiManager {
     const val ERROR_AGENT_OFFLINE = 1800
     const val ERROR_SIP_CALL_STATUS_NOT_FOUND = 1438
     const val ERROR_SIP_CALL_LIMIT_EXCEEDED = 1439
+    const val ERROR_PIPELINE_ID_NOT_FOUND = 1424
 
     private val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
