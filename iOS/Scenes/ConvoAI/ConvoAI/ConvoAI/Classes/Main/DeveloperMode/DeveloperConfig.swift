@@ -58,8 +58,9 @@ public class DeveloperConfig {
         }
     }
     
-    public var defaultAppId: String? = nil
-    public var defaultHost: String? = nil
+    public var defaultHost: String = AppContext.shared.baseServerUrl
+    public var defaultAppId: String = AppContext.shared.appId
+    
     public var convoaiServerConfig: String? = nil
     public var graphId: String? = nil
     public var sdkParams: [String] = []
@@ -218,15 +219,11 @@ public class DeveloperConfig {
         self.metrics = false
         self.sdkParams.removeAll()
         self.convoaiServerConfig = nil
-        if let defaultHost = self.defaultHost {
-            AppContext.shared.baseServerUrl = defaultHost
-            self.defaultHost = nil
-            notifySwitchServer()
-        }
         
-        if let defaultAppId = self.defaultAppId {
+        if AppContext.shared.baseServerUrl != defaultHost || AppContext.shared.appId != defaultAppId {
+            AppContext.shared.baseServerUrl = defaultHost
             AppContext.shared.appId = defaultAppId
-            self.defaultAppId = nil
+            notifySwitchServer()
         }
     }
     

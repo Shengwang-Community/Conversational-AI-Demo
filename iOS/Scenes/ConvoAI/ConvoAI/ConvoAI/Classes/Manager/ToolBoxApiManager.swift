@@ -186,21 +186,19 @@ class ToolBoxApiManager: NSObject {
     
     /// Get environment dynamic configuration
     /// - Parameters:
-    ///   - baseURL: The base URL for the environment to fetch configs from
+    ///   - env: The environment string (e.g., "dev", "testing", "lab_testing")
     ///   - success: success callback with environment dynamic config data
     ///   - failure: failure callback
-    public func getEnvironmentDynamicConfigs(baseURL: String,
-                                            success: NetworkManager.SuccessClosure?,
-                                            failure: NetworkManager.FailClosure?) {
-        // use the provided base url to get configs for the selected environment
-        let url = "\(baseURL)/convoai/v5/envs/lab_testing/configs"
-        
+    public func getEnvDynamicConfigs(env: String,
+                                     success: NetworkManager.SuccessClosure?,
+                                     failure: NetworkManager.FailClosure?) {
+        let url = "\(AppContext.shared.baseServerUrl)/convoai/v5/envs/\(env)/configs"
+
         NetworkManager.shared.getRequest(urlString: url,
                                          params: nil,
                                          success: success,
                                          failure: failure)
     }
-    
     /// Get latest demo version information
     /// - Parameters:
     ///   - success: success callback with latest demo version data
