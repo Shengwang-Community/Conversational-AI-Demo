@@ -31,6 +31,7 @@ object CovAgentApiManager {
     const val ERROR_AGENT_OFFLINE = 1800
     const val ERROR_SIP_CALL_STATUS_NOT_FOUND = 1438
     const val ERROR_SIP_CALL_LIMIT_EXCEEDED = 1439
+    const val ERROR_PIPELINE_ID_NOT_FOUND = 1424
 
     private val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -197,8 +198,13 @@ object CovAgentApiManager {
         return builder.build()
     }
 
-    fun fetchPresets(completion: (error: Exception?, List<CovAgentPreset>) -> Unit) {
-        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/presets/list"
+    fun fetchPresets(isDebug: Boolean = false, completion: (error: Exception?, List<CovAgentPreset>) -> Unit) {
+        var requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/presets/list"
+        
+        // Add is_debug query parameter if needed
+        if (isDebug) {
+            requestURL += "?is_debug=true"
+        }
 
         val postBody = JSONObject()
         try {

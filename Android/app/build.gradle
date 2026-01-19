@@ -19,7 +19,7 @@ android {
         minSdk rootProject.ext.minSdkVersion
         targetSdk rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "2.1.0"
+        versionName "2.0.1"
         
         buildConfigField("String", "BUILD_TIMESTAMP", "\"${buildTimestamp}\"")
 
@@ -36,6 +36,8 @@ android {
             buildConfigField("String", "TOOLBOX_SERVER_HOST", "\"${project.getProperty("TOOLBOX_SERVER_HOST")}\"")
             buildConfigField("String", "AG_APP_ID", "\"${project.getProperty("AG_APP_ID")}\"")
             buildConfigField("String", "AG_APP_CERTIFICATE", "\"${project.getProperty("AG_APP_CERTIFICATE")}\"")
+            // Get BUILD_ENV from command line parameter (-PBUILD_ENV=xxx) or gradle.properties
+            buildConfigField("String", "BUILD_ENV", "\"${project.getProperty("BUILD_ENV")}\"")
         }
     }
 
@@ -60,8 +62,15 @@ android {
                 } else {
                     flavorPrefix = "Conversational_Al_Engine_Demo_for_Android"
                 }
+                
+                // Get current build environment name (for APK filename)
+                def buildEnv = project.hasProperty("BUILD_ENV") ? project.getProperty("BUILD_ENV") : "prod"
+                def envSuffix = variant.buildType.name == "release" ? buildEnv : "debug"
+                
+                // APK filename includes environment info for easy identification
                 outputFileName = new File(
                         flavorPrefix + "_" +
+                                envSuffix + "_" +
                                 "v" + defaultConfig.versionName + "_" +
                                 buildTimestamp + ".apk")
             }

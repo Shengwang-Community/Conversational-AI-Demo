@@ -29,6 +29,6 @@ class AppDataProvider : DataProvider {
     }
 
     override fun envName(): String {
-        return ""
+        return BuildConfig.BUILD_ENV
     }
 }

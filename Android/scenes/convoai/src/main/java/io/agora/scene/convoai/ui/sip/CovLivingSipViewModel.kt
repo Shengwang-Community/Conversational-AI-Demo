@@ -259,6 +259,11 @@ class CovLivingSipViewModel : ViewModel() {
                     Toast.LENGTH_LONG
                 )
 
+                CovAgentApiManager.ERROR_PIPELINE_ID_NOT_FOUND -> ToastUtil.show(
+                    R.string.cov_sip_pipeline_not_found,
+                    Toast.LENGTH_LONG
+                )
+
                 else -> ToastUtil.show(R.string.cov_detail_join_call_failed, Toast.LENGTH_LONG)
             }
             _callState.value = CallState.IDLE
