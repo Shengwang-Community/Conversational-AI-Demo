@@ -81,11 +81,14 @@ class AgentManager: AgentAPI {
     
     func fetchAgentPresets(appId: String, isDebug: Bool, completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void)) {
         let parameters: [String: Any] = [
-            "app_id": appId,
-            "is_debug": isDebug,
+            "app_id": appId
         ]
         
-        sendRequest(endpoint: .fetchAgentPresets, parameters: parameters) { (result: Result<[AgentPreset], ConvoAIError>) in
+        let urlParameters: [String: Any] = [
+            "is_debug": isDebug
+        ]
+        
+        sendRequest(endpoint: .fetchAgentPresets, parameters: parameters, urlParameters: urlParameters) { (result: Result<[AgentPreset], ConvoAIError>) in
             switch result {
             case .success(var response):
                 response.removeAll(where: { $0.presetType == "custom" })

@@ -333,3 +333,10 @@
 "agent.sip.area.code.search.button" = "Search";
 "agent.sip.area.code.no.results" = "No Results";
 "agent.sip.call.limit.exceeded" = "You've reached today's call limit (20)";
+
+// Version Update
+"main.update.alert.title" = "ConvoAI Version Update Detected!";
+"main.update.alert.version.info" = "Current Version: %@ ; Latest Version: %@";
+"main.update.alert.description" = "We have optimized multiple features to enhance your user experience, come and try it!";
+"main.update.alert.update.button" = "Update Now";
+"main.update.alert.later.text" = "Later";
