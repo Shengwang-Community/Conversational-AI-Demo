@@ -413,7 +413,7 @@ class CovLivingViewModel : ViewModel() {
 
     val agentName: String
         get() = if (CovAgentManager.isEnableAvatar) {
-            CovAgentManager.avatar?.avatar_name ?: ""
+            CovAgentManager.avatar?.avatar_name ?: CovAgentManager.getPreset()?.display_name ?: ""
         } else {
             CovAgentManager.getPreset()?.display_name ?: ""
         }
@@ -1026,7 +1026,8 @@ class CovLivingViewModel : ViewModel() {
                 ),
                 "avatar" to mapOf(
                     "enable" to CovAgentManager.isEnableAvatar,
-                    "vendor" to CovAgentManager.avatar?.vendor?.takeIf { it.isNotEmpty() },
+                    "vendor" to if (CovAgentManager.isCustomEnableAvatar) CovAgentManager.customAvatarVendor else
+                            CovAgentManager.avatar?.vendor?.takeIf { it.isNotEmpty() },
                     "params" to mapOf(
                         "agora_uid" to CovAgentManager.avatarUID.toString(),
                         "avatar_id" to CovAgentManager.avatar?.avatar_id?.takeIf { it.isNotEmpty() }

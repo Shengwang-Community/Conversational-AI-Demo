@@ -23,6 +23,8 @@ data class CovAgentPreset(
     val advanced_features_enable_sal: Boolean,
     val is_support_sal: Boolean?,
     val sip_vendor_callee_numbers: List<CovSipCallee>? = null,
+    val is_support_avatar: Boolean? = null,
+    val avatar_vendor: String? = null,
 ) {
     val isIndependent: Boolean
         get() {

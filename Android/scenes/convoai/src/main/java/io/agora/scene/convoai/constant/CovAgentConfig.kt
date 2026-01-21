@@ -106,7 +106,11 @@ object CovAgentManager {
         return preset?.getAvatarsForLang(language?.language_code) ?: emptyList()
     }
 
-    val isEnableAvatar: Boolean get() = avatar != null
+    val isEnableAvatar: Boolean get() = avatar != null || isCustomEnableAvatar
+
+    val isCustomEnableAvatar: Boolean get() = (preset?.isCustom == true) && (preset?.is_support_avatar == true)
+
+    val customAvatarVendor: String? get() = preset?.avatar_vendor?.takeIf { isCustomEnableAvatar }
 
     // Preset change reminder management methods
     fun shouldShowPresetChangeReminder(): Boolean {
