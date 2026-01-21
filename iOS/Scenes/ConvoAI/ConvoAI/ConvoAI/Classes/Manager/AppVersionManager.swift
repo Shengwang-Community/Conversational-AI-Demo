@@ -24,6 +24,21 @@ public class AppVersionManager {
     
     // MARK: - Public Methods
     
+    /// Check version and handle result automatically (add dev tag or show update alert)
+    public func checkVersionAndHandle() {
+        checkVersion { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .isDebugBuild:
+                self.addGlobalDevTag()
+            case .needsUpdate(let latestVersion, let downloadUrl):
+                self.showUpdateAlert(latestVersion: latestVersion, downloadUrl: downloadUrl)
+            case .upToDate:
+                ConvoAILogger.info("[Version] App is up to date")
+            }
+        }
+    }
+    
     /// Check version update
     /// - Parameter completion: Version check result callback
     public func checkVersion(completion: @escaping (VersionCheckResult) -> Void) {
@@ -123,6 +138,32 @@ public class AppVersionManager {
         }
         
         return false
+    }
+    
+    /// Add global dev tag to window (for debug builds)
+    public func addGlobalDevTag() {
+        guard let window = UIApplication.kWindow else {
+            return
+        }
+        let devTag = UILabel()
+        devTag.text = "TEST"
+        devTag.textColor = .black
+        // #446CFF99: RGB = #446CFF, Alpha = 0x99 (153/255 ≈ 0.6)
+        devTag.backgroundColor = UIColor(hex: "#446CFF", alpha: 153.0 / 255.0)
+        devTag.font = UIFont.boldSystemFont(ofSize: 20)
+        devTag.textAlignment = .center
+        
+        window.addSubview(devTag)
+        devTag.snp.makeConstraints { make in
+            make.width.equalTo(120)
+            make.height.equalTo(40)
+            make.top.equalToSuperview().offset(10)
+            make.right.equalToSuperview().offset(30)
+        }
+        
+        // Rotate 45 degrees clockwise after constraints are set
+        devTag.transform = CGAffineTransform(rotationAngle: CGFloat.pi / 4)
+        window.bringSubviewToFront(devTag)
     }
 }
 

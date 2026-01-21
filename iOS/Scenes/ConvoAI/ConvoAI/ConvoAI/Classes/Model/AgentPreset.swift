@@ -95,27 +95,4 @@ struct AgentPreset: Codable {
         case avatarVendor = "avatar_vendor"
         case isSupportAvatar = "is_support_avatar"
     }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        name = try container.decodeIfPresent(String.self, forKey: .name)
-        displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
-        description = try container.decodeIfPresent(String.self, forKey: .description)
-        presetType = try container.decodeIfPresent(String.self, forKey: .presetType)
-        defaultLanguageCode = try container.decodeIfPresent(String.self, forKey: .defaultLanguageCode)
-        defaultLanguageName = try container.decodeIfPresent(String.self, forKey: .defaultLanguageName)
-        isSupportVision = try container.decodeIfPresent(Bool.self, forKey: .isSupportVision)
-        callTimeLimitSecond = try container.decodeIfPresent(Int.self, forKey: .callTimeLimitSecond)
-        callTimeLimitAvatarSecond = try container.decodeIfPresent(Int.self, forKey: .callTimeLimitAvatarSecond)
-        supportLanguages = try container.decodeIfPresent([SupportLanguage].self, forKey: .supportLanguages)
-        avatarIdsByLang = try container.decodeIfPresent([String: [Avatar]].self, forKey: .avatarIdsByLang)
-        avatarUrl = try container.decodeIfPresent(String.self, forKey: .avatarUrl)
-        enableSal = try container.decodeIfPresent(Bool.self, forKey: .enableSal)
-        supportSal = try container.decodeIfPresent(Bool.self, forKey: .supportSal)
-        defaultAvatar = try container.decodeIfPresent(String.self, forKey: .defaultAvatar)
-        sipVendorCalleeNumbers = try container.decodeIfPresent([VendorCalleeNumber].self, forKey: .sipVendorCalleeNumbers)
-        avatarVendor = try container.decodeIfPresent(String.self, forKey: .avatarVendor)
-        isSupportAvatar = try container.decodeIfPresent(Bool.self, forKey: .isSupportAvatar)
-    }
 }

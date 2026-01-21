@@ -13,7 +13,6 @@ import SnapKit
 public class MainTabBarController: UITabBarController {
     
     private lazy var toolBox = ToolBoxApiManager()
-    private lazy var versionManager = AppVersionManager()
     
     deinit {
         AppContext.loginManager().removeDelegate(self)
@@ -26,50 +25,13 @@ public class MainTabBarController: UITabBarController {
         configureTabBarAppearance()
         
         AppContext.loginManager().addDelegate(self)
-        checkAppVersion()
+        
         fetchLoginState()
     }
     
-    func checkAppVersion() {
-        versionManager.checkVersion { [weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .isDebugBuild:
-                self.addGlobalDevTag()
-            case .needsUpdate(let latestVersion, let downloadUrl):
-                // Needs update: show alert
-                self.showVersionUpdateAlert(latestVersion: latestVersion, downloadUrl: downloadUrl)
-            case .upToDate:
-                // Already up to date: no action needed
-                ConvoAILogger.info("[Version] App is up to date")
-            }
-        }
-    }
-    
-    private func showVersionUpdateAlert(latestVersion: String, downloadUrl: String) {
-        versionManager.showUpdateAlert(
-            latestVersion: latestVersion,
-            downloadUrl: downloadUrl
-        )
-    }
-    
-    private func addGlobalDevTag() {
-        let devTag = UILabel()
-        devTag.text = "TEST"
-        devTag.textColor = UIColor.themColor(named: "ai_icontext3")
-        devTag.backgroundColor = UIColor.themColor(named: "ai_fill6")
-        devTag.font = UIFont.boldSystemFont(ofSize: 10)
-        devTag.textAlignment = .center
-        devTag.layer.cornerRadius = 10
-        devTag.clipsToBounds = true
-        
-        view.addSubview(devTag)
-        devTag.snp.makeConstraints { make in
-            make.right.top.equalToSuperview()
-            make.width.equalTo(40)
-            make.height.equalTo(20)
-        }
-        view.bringSubviewToFront(devTag)
+    public override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        AppVersionManager().checkVersionAndHandle()
     }
     
     func fetchLoginState() {
