@@ -12,7 +12,7 @@ import SnapKit
 
 public enum VersionCheckResult {
     case isDebugBuild
-    case needsUpdate(latestVersion: String, downloadUrl: String)
+    case needsUpdate(latestVersion: String, latestBuildVersion: Int, downloadUrl: String)
     case upToDate
 }
 
@@ -31,8 +31,8 @@ public class AppVersionManager {
             switch result {
             case .isDebugBuild:
                 self.addGlobalDevTag()
-            case .needsUpdate(let latestVersion, let downloadUrl):
-                self.showUpdateAlert(latestVersion: latestVersion, downloadUrl: downloadUrl)
+            case .needsUpdate(let latestVersion, let latestBuildVersion, let downloadUrl):
+                self.showUpdateAlert(latestVersion: latestVersion, latestBuildVersion: latestBuildVersion, downloadUrl: downloadUrl)
             case .upToDate:
                 ConvoAILogger.info("[Version] App is up to date")
             }
@@ -86,7 +86,7 @@ public class AppVersionManager {
                 if downloadUrl.isEmpty {
                     completion(.upToDate)
                 } else {
-                    completion(.needsUpdate(latestVersion: latestAppVersion, downloadUrl: downloadUrl))
+                    completion(.needsUpdate(latestVersion: latestAppVersion, latestBuildVersion: latestBuildVersion, downloadUrl: downloadUrl))
                 }
             }
         } failure: { error in
@@ -188,11 +188,18 @@ extension AppVersionManager {
     /// Show version update alert
     /// - Parameters:
     ///   - latestVersion: Latest version number
+    ///   - latestBuildVersion: Latest build version number
     ///   - downloadUrl: Download URL
     public func showUpdateAlert(latestVersion: String,
+                                latestBuildVersion: Int,
                                 downloadUrl: String) {
         let currentVersion = getCurrentVersion()
-        let versionInfo = String(format: ResourceManager.L10n.Main.updateAlertVersionInfo, currentVersion, latestVersion)
+        let currentBuildVersion = getCurrentBuildVersion()
+        
+        // Format version strings: xx.xx.xx(xxxxxxxx)
+        let currentVersionString = "\(currentVersion)(\(currentBuildVersion))"
+        let latestVersionString = "\(latestVersion)(\(latestBuildVersion))"
+        let versionInfo = String(format: ResourceManager.L10n.Main.updateAlertVersionInfo, currentVersionString, latestVersionString)
         
         VersionUpdateAlertView.show(
             title: ResourceManager.L10n.Main.updateAlertTitle,
