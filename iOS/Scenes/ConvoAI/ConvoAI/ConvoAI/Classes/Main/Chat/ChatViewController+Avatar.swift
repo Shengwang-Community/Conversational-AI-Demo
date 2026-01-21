@@ -30,6 +30,8 @@ extension ChatViewController {
     }
     
     internal func isEnableAvatar() -> Bool {
-        return AppContext.shared.avatarEnable || AppContext.settingManager().avatar != nil
+        let preset = AppContext.settingManager().preset
+        let isPresetSupportAvatar = preset?.isSupportAvatar == true
+        return AppContext.shared.avatarEnable || AppContext.settingManager().avatar != nil || isPresetSupportAvatar
     }
 }
