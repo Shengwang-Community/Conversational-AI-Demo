@@ -323,6 +323,5 @@
 // Version Update
 "main.update.alert.title" = "检测到ConvoAI版本更新!";
 "main.update.alert.version.info" = "当前版本号: %@ ; 最新版本号: %@";
-"main.update.alert.description" = "我们优化了多项功能来提升你的使用体验, 快来试试吧!";
 "main.update.alert.update.button" = "立即更新";
 "main.update.alert.later.text" = "以后再说";

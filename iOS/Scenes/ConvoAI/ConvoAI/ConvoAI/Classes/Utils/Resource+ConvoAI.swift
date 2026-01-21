@@ -27,7 +27,6 @@ extension ResourceManager {
             
             public static let updateAlertTitle = ResourceManager.localizedString("main.update.alert.title")
             public static let updateAlertVersionInfo = ResourceManager.localizedString("main.update.alert.version.info")
-            public static let updateAlertDescription = ResourceManager.localizedString("main.update.alert.description")
             public static let updateAlertUpdateButton = ResourceManager.localizedString("main.update.alert.update.button")
             public static let updateAlertLaterText = ResourceManager.localizedString("main.update.alert.later.text")
         }

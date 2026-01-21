@@ -12,7 +12,7 @@ import SnapKit
 
 public enum VersionCheckResult {
     case isDebugBuild
-    case needsUpdate(latestVersion: String, latestBuildVersion: Int, downloadUrl: String)
+    case needsUpdate(latestVersion: String, latestBuildVersion: Int, description: String, downloadUrl: String)
     case upToDate
 }
 
@@ -31,8 +31,8 @@ public class AppVersionManager {
             switch result {
             case .isDebugBuild:
                 self.addGlobalDevTag()
-            case .needsUpdate(let latestVersion, let latestBuildVersion, let downloadUrl):
-                self.showUpdateAlert(latestVersion: latestVersion, latestBuildVersion: latestBuildVersion, downloadUrl: downloadUrl)
+            case .needsUpdate(let latestVersion, let latestBuildVersion, let description, let downloadUrl):
+                self.showUpdateAlert(latestVersion: latestVersion, latestBuildVersion: latestBuildVersion, description: description, downloadUrl: downloadUrl)
             case .upToDate:
                 ConvoAILogger.info("[Version] App is up to date")
             }
@@ -69,13 +69,14 @@ public class AppVersionManager {
                 return
             }
             
-            let latestAppVersion = (iosData["app_version"] as? String ?? "").replacingOccurrences(of: "v", with: "")
+            let latestAppVersion = iosData["app_version"] as? String ?? ""
             let latestBuildVersion = Int(iosData["build_version"] as? String ?? "0") ?? 0
+            let description = iosData["description"] as? String ?? ""
             let downloadUrl = iosData["download_url"] as? String ?? ""
             
             // Check if it's the latest version
-            // Compare app_version first, then build_version if app_version is the same
-            let isLatestVersion = !self.isVersionOlder(latestAppVersion: latestAppVersion, latestBuildVersion: latestBuildVersion)
+            // Compare build_version only
+            let isLatestVersion = !self.isVersionOlder(latestBuildVersion: latestBuildVersion)
             
             if isLatestVersion {
                 // Release build and is latest version
@@ -86,7 +87,7 @@ public class AppVersionManager {
                 if downloadUrl.isEmpty {
                     completion(.upToDate)
                 } else {
-                    completion(.needsUpdate(latestVersion: latestAppVersion, latestBuildVersion: latestBuildVersion, downloadUrl: downloadUrl))
+                    completion(.needsUpdate(latestVersion: latestAppVersion, latestBuildVersion: latestBuildVersion, description: description, downloadUrl: downloadUrl))
                 }
             }
         } failure: { error in
@@ -122,35 +123,10 @@ public class AppVersionManager {
     }
     
     /// Check if current version is older than the latest version
-    /// - Parameters:
-    ///   - latestAppVersion: Latest app version (e.g., "2.0.1")
-    ///   - latestBuildVersion: Latest build version (e.g., 2026011201)
+    /// - Parameter latestBuildVersion: Latest build version (e.g., 2026011201)
     /// - Returns: true means current version is older and needs update
-    private func isVersionOlder(latestAppVersion: String, latestBuildVersion: Int) -> Bool {
-        // Get current versions
-        let currentAppVersion = getCurrentVersion()
+    private func isVersionOlder(latestBuildVersion: Int) -> Bool {
         let currentBuildVersion = getCurrentBuildVersion()
-        
-        // Compare app version first
-        let currentComponents = currentAppVersion.split(separator: ".").compactMap { Int($0) }
-        let latestComponents = latestAppVersion.split(separator: ".").compactMap { Int($0) }
-        
-        let maxLength = max(currentComponents.count, latestComponents.count)
-        
-        for i in 0..<maxLength {
-            let current = i < currentComponents.count ? currentComponents[i] : 0
-            let latest = i < latestComponents.count ? latestComponents[i] : 0
-            
-            if current < latest {
-                // Current app version is older
-                return true
-            } else if current > latest {
-                // Current app version is newer
-                return false
-            }
-        }
-        
-        // App versions are the same, compare build version
         return currentBuildVersion < latestBuildVersion
     }
     
@@ -163,7 +139,7 @@ public class AppVersionManager {
         devTag.text = "TEST"
         devTag.textColor = .black
         // #446CFF99: RGB = #446CFF, Alpha = 0x99 (153/255 ≈ 0.6)
-        devTag.backgroundColor = UIColor(hex: "#446CFF", alpha: 153.0 / 255.0)
+        devTag.backgroundColor = UIColor(hex: "#446CFF", alpha: 0.1)
         devTag.font = UIFont.boldSystemFont(ofSize: 20)
         devTag.textAlignment = .center
         
@@ -189,9 +165,11 @@ extension AppVersionManager {
     /// - Parameters:
     ///   - latestVersion: Latest version number
     ///   - latestBuildVersion: Latest build version number
+    ///   - description: Update description from server
     ///   - downloadUrl: Download URL
     public func showUpdateAlert(latestVersion: String,
                                 latestBuildVersion: Int,
+                                description: String,
                                 downloadUrl: String) {
         let currentVersion = getCurrentVersion()
         let currentBuildVersion = getCurrentBuildVersion()
@@ -201,10 +179,13 @@ extension AppVersionManager {
         let latestVersionString = "\(latestVersion)(\(latestBuildVersion))"
         let versionInfo = String(format: ResourceManager.L10n.Main.updateAlertVersionInfo, currentVersionString, latestVersionString)
         
+        // Use server description directly
+        let descriptionText = description
+        
         VersionUpdateAlertView.show(
             title: ResourceManager.L10n.Main.updateAlertTitle,
             versionInfo: versionInfo,
-            description: ResourceManager.L10n.Main.updateAlertDescription,
+            description: descriptionText,
             updateTitle: ResourceManager.L10n.Main.updateAlertUpdateButton,
             laterText: ResourceManager.L10n.Main.updateAlertLaterText,
             onUpdate: {
@@ -281,13 +262,18 @@ private class VersionUpdateAlertView: UIView {
         return label
     }()
     
-    private lazy var descriptionLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = UIColor.themColor(named: "ai_icontext1")
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.numberOfLines = 0
-        label.textAlignment = .center
-        return label
+    private lazy var descriptionTextView: UITextView = {
+        let textView = UITextView()
+        textView.textColor = UIColor.themColor(named: "ai_icontext1")
+        textView.font = UIFont.systemFont(ofSize: 14)
+        textView.textAlignment = .left
+        textView.isEditable = false
+        textView.isScrollEnabled = false
+        textView.backgroundColor = .clear
+        textView.textContainerInset = .zero
+        textView.textContainer.lineFragmentPadding = 0
+        textView.showsVerticalScrollIndicator = false
+        return textView
     }()
     
     private lazy var updateButton: UIButton = {
@@ -328,7 +314,7 @@ private class VersionUpdateAlertView: UIView {
         
         contentView.addSubview(titleLabel)
         contentView.addSubview(versionInfoLabel)
-        contentView.addSubview(descriptionLabel)
+        contentView.addSubview(descriptionTextView)
         contentView.addSubview(updateButton)
         contentView.addSubview(laterButton)
         
@@ -364,14 +350,15 @@ private class VersionUpdateAlertView: UIView {
             make.right.equalToSuperview().offset(-24)
         }
         
-        descriptionLabel.snp.makeConstraints { make in
+        descriptionTextView.snp.makeConstraints { make in
             make.top.equalTo(versionInfoLabel.snp.bottom).offset(12)
             make.left.equalToSuperview().offset(24)
             make.right.equalToSuperview().offset(-24)
+            make.height.lessThanOrEqualTo(150)
         }
         
         updateButton.snp.makeConstraints { make in
-            make.top.equalTo(descriptionLabel.snp.bottom).offset(24)
+            make.top.equalTo(descriptionTextView.snp.bottom).offset(10)
             make.left.equalToSuperview().offset(24)
             make.right.equalToSuperview().offset(-24)
             make.height.equalTo(44)
@@ -426,12 +413,14 @@ private class VersionUpdateAlertView: UIView {
         
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 5
-        paragraphStyle.alignment = .center
+        paragraphStyle.alignment = .left
         let attributes: [NSAttributedString.Key: Any] = [
-            .paragraphStyle: paragraphStyle
+            .paragraphStyle: paragraphStyle,
+            .foregroundColor: UIColor.themColor(named: "ai_icontext1") ?? .label,
+            .font: UIFont.systemFont(ofSize: 14)
         ]
         let attributedString = NSAttributedString(string: description, attributes: attributes)
-        descriptionLabel.attributedText = attributedString
+        descriptionTextView.attributedText = attributedString
         
         updateButton.setTitle(updateTitle, for: .normal)
         laterButton.setTitle(laterText, for: .normal)
