@@ -582,6 +582,84 @@ object CovAgentApiManager {
         })
     }
 
+    /**
+     * Fetch latest demo version
+     * @param completion Callback function that returns VersionInfo or ApiException
+     */
+    fun fetchLatestVersion(completion: (error: ApiException?, versionInfo: VersionInfo?) -> Unit) {
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/demo/version/latest"
+        // Version check API doesn't need Authorization header
+        val request = Request.Builder()
+            .url(requestURL)
+            .get()
+            .build()
+
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val json = response.body.string()
+                val httpCode = response.code
+                if (httpCode != 200) {
+                    runOnMainThread {
+                        completion.invoke(ApiException(httpCode, "Http error"), null)
+                    }
+                } else {
+                    try {
+                        val jsonObject = GsonTools.toBean(json, JsonObject::class.java) ?: run {
+                            runOnMainThread {
+                                completion.invoke(ApiException(-1, "Failed to parse response"), null)
+                            }
+                            return@onResponse
+                        }
+                        
+                        val code = jsonObject.get("code")?.asInt ?: -1
+                        if (code != 0) {
+                            val msg = jsonObject.get("msg")?.asString ?: "Unknown error"
+                            CovLogger.e(TAG, "API error: code=$code, msg=$msg")
+                            runOnMainThread {
+                                completion.invoke(ApiException(code, msg), null)
+                            }
+                            return@onResponse
+                        }
+                        
+                        val androidData = jsonObject.getAsJsonObject("data")?.getAsJsonObject("android")
+                            ?: run {
+                                CovLogger.e(TAG, "Android version data not found")
+                                runOnMainThread {
+                                    completion.invoke(ApiException(-1, "Android version data not found"), null)
+                                }
+                                return@onResponse
+                            }
+                        
+                        val versionInfo = GsonTools.toBean(androidData, VersionInfo::class.java)
+                            ?: run {
+                                CovLogger.e(TAG, "Failed to parse VersionInfo")
+                                runOnMainThread {
+                                    completion.invoke(ApiException(-1, "Failed to parse VersionInfo"), null)
+                                }
+                                return@onResponse
+                            }
+                        
+                        runOnMainThread {
+                            completion.invoke(null, versionInfo)
+                        }
+                    } catch (e: Exception) {
+                        CovLogger.e(TAG, "Parse version info failed: $e")
+                        runOnMainThread {
+                            completion.invoke(ApiException(-1, "Parse error: ${e.message}"), null)
+                        }
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                CovLogger.e(TAG, "Fetch latest version failed: $e")
+                runOnMainThread {
+                    completion.invoke(ApiException(-1, "Network request failed: ${e.message}"), null)
+                }
+            }
+        })
+    }
+
     private fun runOnMainThread(r: Runnable) {
         mainScope.launch {
             r.run()

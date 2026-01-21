@@ -106,3 +106,11 @@ enum class CallSipStatus {
         }
     }
 }
+
+data class VersionInfo(
+    val app_version: String,
+    val build_version: String,
+    val description: String,
+    val release_date: String,
+    val download_url: String
+)

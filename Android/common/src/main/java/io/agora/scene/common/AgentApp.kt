@@ -37,12 +37,12 @@ class AgentApp : Application() {
     private fun fetchAppData() {
         DataProviderLoader.getDataProvider()?.let {
             ServerConfig.initBuildConfig(
-                appBuildNo = it.appBuildNo(),
                 envName = it.envName(),
                 toolboxHost = it.toolboxHost(),
                 rtcAppId = it.rtcAppId(),
                 rtcAppCert = it.rtcAppCert(),
-                appVersionName = it.appVersionName()
+                appVersionName = it.appVersionName(),
+                appVersionCode = it.appVersionCode()
             )
         } ?: run {
             Log.d(TAG, "No data provider found")
