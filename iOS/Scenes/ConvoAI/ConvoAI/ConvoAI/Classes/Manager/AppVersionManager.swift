@@ -70,12 +70,12 @@ public class AppVersionManager {
             }
             
             let latestAppVersion = (iosData["app_version"] as? String ?? "").replacingOccurrences(of: "v", with: "")
+            let latestBuildVersion = Int(iosData["build_version"] as? String ?? "0") ?? 0
             let downloadUrl = iosData["download_url"] as? String ?? ""
             
-            let currentVersion = self.getCurrentVersion()
-            
             // Check if it's the latest version
-            let isLatestVersion = !self.isVersionOlder(currentVersion, than: latestAppVersion)
+            // Compare app_version first, then build_version if app_version is the same
+            let isLatestVersion = !self.isVersionOlder(latestAppVersion: latestAppVersion, latestBuildVersion: latestBuildVersion)
             
             if isLatestVersion {
                 // Release build and is latest version
@@ -105,6 +105,12 @@ public class AppVersionManager {
         return Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
     }
     
+    /// Get current app build version number
+    public func getCurrentBuildVersion() -> Int {
+        let buildVersionString = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+        return Int(buildVersionString) ?? 0
+    }
+    
     // MARK: - Private Methods
     
     /// Check if it's a release build
@@ -115,29 +121,37 @@ public class AppVersionManager {
         return !bundleId.contains("test")
     }
     
-    /// Compare two version numbers
+    /// Check if current version is older than the latest version
     /// - Parameters:
-    ///   - version1: Version number 1 (e.g., "1.2.3")
-    ///   - version2: Version number 2 (e.g., "1.2.4")
-    /// - Returns: true means version1 < version2
-    private func isVersionOlder(_ version1: String, than version2: String) -> Bool {
-        let v1Components = version1.split(separator: ".").compactMap { Int($0) }
-        let v2Components = version2.split(separator: ".").compactMap { Int($0) }
+    ///   - latestAppVersion: Latest app version (e.g., "2.0.1")
+    ///   - latestBuildVersion: Latest build version (e.g., 2026011201)
+    /// - Returns: true means current version is older and needs update
+    private func isVersionOlder(latestAppVersion: String, latestBuildVersion: Int) -> Bool {
+        // Get current versions
+        let currentAppVersion = getCurrentVersion()
+        let currentBuildVersion = getCurrentBuildVersion()
         
-        let maxLength = max(v1Components.count, v2Components.count)
+        // Compare app version first
+        let currentComponents = currentAppVersion.split(separator: ".").compactMap { Int($0) }
+        let latestComponents = latestAppVersion.split(separator: ".").compactMap { Int($0) }
+        
+        let maxLength = max(currentComponents.count, latestComponents.count)
         
         for i in 0..<maxLength {
-            let v1 = i < v1Components.count ? v1Components[i] : 0
-            let v2 = i < v2Components.count ? v2Components[i] : 0
+            let current = i < currentComponents.count ? currentComponents[i] : 0
+            let latest = i < latestComponents.count ? latestComponents[i] : 0
             
-            if v1 < v2 {
+            if current < latest {
+                // Current app version is older
                 return true
-            } else if v1 > v2 {
+            } else if current > latest {
+                // Current app version is newer
                 return false
             }
         }
         
-        return false
+        // App versions are the same, compare build version
+        return currentBuildVersion < latestBuildVersion
     }
     
     /// Add global dev tag to window (for debug builds)

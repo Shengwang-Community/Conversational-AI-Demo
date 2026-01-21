@@ -13,6 +13,7 @@ import SnapKit
 public class MainTabBarController: UITabBarController {
     
     private lazy var toolBox = ToolBoxApiManager()
+    private lazy var versionManager = AppVersionManager()
     
     deinit {
         AppContext.loginManager().removeDelegate(self)
@@ -31,7 +32,7 @@ public class MainTabBarController: UITabBarController {
     
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        AppVersionManager().checkVersionAndHandle()
+        versionManager.checkVersionAndHandle()
     }
     
     func fetchLoginState() {
