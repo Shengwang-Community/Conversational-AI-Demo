@@ -194,6 +194,14 @@ if [[ ! -z ${package_name} && "${package_name}" != 'none' && "${package_name}" !
   fi
 fi
 
+# modify app_name if package name contains "test"
+final_package=$(grep -o 'applicationId "[^"]*"' app/build.gradle | head -1 | sed 's/applicationId "\(.*\)"/\1/')
+if [[ "${final_package}" == *"test"* ]]; then
+  echo "Package name contains 'test', modifying app_name to '对话式 AI 引擎体验'"
+  sed -ie 's#resValue "string", "app_name", "对话式 AI 引擎"#resValue "string", "app_name", "对话式 AI 引擎体验"#g' app/build.gradle
+  echo "App name modified successfully"
+fi
+
 cat gradle.properties
 
 # Compile apk

@@ -65,12 +65,15 @@ android {
                 
                 // Get current build environment name (for APK filename)
                 def buildEnv = project.hasProperty("BUILD_ENV") ? project.getProperty("BUILD_ENV") : "prod"
-                def envSuffix = variant.buildType.name == "release" ? buildEnv : "debug"
+
+                // Get package name and replace dots with underscores for filename compatibility
+                def packageName = variant.applicationId.replaceAll('\\.', '_')
                 
-                // APK filename includes environment info for easy identification
+                // APK filename includes package name, environment info for easy identification
                 outputFileName = new File(
                         flavorPrefix + "_" +
-                                envSuffix + "_" +
+                                buildEnv + "_" +
+                                packageName + "_" +
                                 "v" + defaultConfig.versionName + "_" +
                                 buildTimestamp + ".apk")
             }
