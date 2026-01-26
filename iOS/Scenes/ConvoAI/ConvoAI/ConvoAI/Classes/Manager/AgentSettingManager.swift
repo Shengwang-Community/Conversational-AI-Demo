@@ -202,6 +202,7 @@ class AgentSettingManager {
     /// Update language setting
     func updateLanguage(_ language: SupportLanguage?) {
         preference.language = language
+        preference.aiVad = language?.aivadEnabledByDefault ?? false
         notifyDelegates { $0.settingManager(self, languageDidUpdated: language) }
     }
      

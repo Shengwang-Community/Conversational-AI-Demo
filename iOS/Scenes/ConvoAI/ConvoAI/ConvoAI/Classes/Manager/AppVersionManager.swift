@@ -96,11 +96,6 @@ public class AppVersionManager {
         }
     }
     
-    /// Get current app Bundle Identifier
-    public func getBundleIdentifier() -> String {
-        return Bundle.main.bundleIdentifier ?? ""
-    }
-    
     /// Get current app version number
     public func getCurrentVersion() -> String {
         return Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
@@ -118,7 +113,7 @@ public class AppVersionManager {
     /// - Returns: true means release build, false means test build
     private func isReleaseBuild() -> Bool {
         // Check if bundle name contains "test"
-        let bundleId = getBundleIdentifier().lowercased()
+        let bundleId = Bundle.main.bundleIdentifier ?? "".lowercased()
         return !bundleId.contains("test")
     }
     
@@ -135,25 +130,13 @@ public class AppVersionManager {
         guard let window = UIApplication.kWindow else {
             return
         }
-        let devTag = UILabel()
-        devTag.text = "TEST"
-        devTag.textColor = .black
-        // #446CFF99: RGB = #446CFF, Alpha = 0x99 (153/255 ≈ 0.6)
-        devTag.backgroundColor = UIColor(hex: "#446CFF", alpha: 0.1)
-        devTag.font = UIFont.boldSystemFont(ofSize: 20)
-        devTag.textAlignment = .center
-        
-        window.addSubview(devTag)
-        devTag.snp.makeConstraints { make in
-            make.width.equalTo(120)
-            make.height.equalTo(40)
-            make.top.equalToSuperview().offset(10)
-            make.right.equalToSuperview().offset(30)
+        let imageView = UIImageView()
+        imageView.image = UIImage.ag_named("ic_app_test_tag")
+        window.addSubview(imageView)
+        imageView.snp.makeConstraints { make in
+            make.right.top.equalToSuperview()
         }
-        
-        // Rotate 45 degrees clockwise after constraints are set
-        devTag.transform = CGAffineTransform(rotationAngle: CGFloat.pi / 4)
-        window.bringSubviewToFront(devTag)
+        window.bringSubviewToFront(imageView)
     }
 }
 
@@ -416,7 +399,7 @@ private class VersionUpdateAlertView: UIView {
         paragraphStyle.alignment = .left
         let attributes: [NSAttributedString.Key: Any] = [
             .paragraphStyle: paragraphStyle,
-            .foregroundColor: UIColor.themColor(named: "ai_icontext1") ?? .label,
+            .foregroundColor: UIColor.themColor(named: "ai_icontext1"),
             .font: UIFont.systemFont(ofSize: 14)
         ]
         let attributedString = NSAttributedString(string: description, attributes: attributes)
