@@ -36,6 +36,11 @@ object CovAgentManager {
     // Settings
     private var preset: CovAgentPreset? = null
     var language: CovAgentLanguage? = null
+        set(value) {
+            field = value
+            enableAiVad = value?.aivad_enabled_by_default ?: false
+        }
+
     var avatar: CovAvatar? = null
 
     var voiceprintMode: VoiceprintMode = VoiceprintMode.OFF
