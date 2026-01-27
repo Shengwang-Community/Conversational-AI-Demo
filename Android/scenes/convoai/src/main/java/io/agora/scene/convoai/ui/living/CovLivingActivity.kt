@@ -328,8 +328,6 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                         persistentToast(true, getString(io.agora.scene.convoai.R.string.cov_detail_agent_state_error))
                     }
                 }
-
-                previousState = state
             }
         }
         lifecycleScope.launch {    // Observe microphone state
