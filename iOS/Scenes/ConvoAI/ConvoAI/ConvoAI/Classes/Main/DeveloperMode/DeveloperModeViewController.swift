@@ -320,7 +320,7 @@ public class DeveloperModeViewController: UIViewController {
         } else {
             // Use the new API to fetch environment dynamic configs
             let toolBoxManager = ToolBoxApiManager()
-            toolBoxManager.getEnvDynamicConfigs(env: env, success: { [weak self] response in
+            toolBoxManager.getEnvDynamicConfigs(hostUrl: hostUrl, env: env, success: { [weak self] response in
                     guard let self = self else {
                         completion?()
                         return
