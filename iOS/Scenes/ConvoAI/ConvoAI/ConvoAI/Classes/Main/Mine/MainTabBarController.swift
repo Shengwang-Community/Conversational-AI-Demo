@@ -28,11 +28,10 @@ public class MainTabBarController: UITabBarController {
         AppContext.loginManager().addDelegate(self)
         
         fetchLoginState()
-    }
-    
-    public override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        versionManager.checkVersionAndHandle()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.versionManager.mayAddTestTag()
+        }
     }
     
     func fetchLoginState() {
@@ -45,6 +44,7 @@ public class MainTabBarController: UITabBarController {
                     return
                 }
                 self?.mayGenerateName()
+                self?.versionManager.mayShowVersionDialog()
             }
         } else {
             DispatchQueue.main.async { [weak self] in
@@ -169,6 +169,7 @@ extension MainTabBarController: LoginManagerDelegate {
     
     func userDidLogin() {
         fetchLoginState()
+        versionManager.mayShowVersionDialog()
     }
     
     func userDidLogout(reason: LogoutReason) {

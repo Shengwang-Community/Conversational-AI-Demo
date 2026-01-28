@@ -12,6 +12,8 @@ import Common
 public class DeveloperBasicSettingView: UIView  {
     private let appVersionLabel = UILabel()
     public let appVersionValueLabel = UILabel()
+    private let bundleIdLabel = UILabel()
+    public let bundleIdValueLabel = UILabel()
     private let rtcVersionLabel = UILabel()
     public let rtcVersionValueLabel = UILabel()
     
@@ -69,6 +71,21 @@ public class DeveloperBasicSettingView: UIView  {
         appStack.distribution = .equalSpacing
         stackView.addArrangedSubview(appStack)
         appStack.snp.makeConstraints { make in
+            make.height.equalTo(44)
+        }
+        
+        // Bundle ID
+        bundleIdLabel.text = "Bundle ID"
+        bundleIdLabel.textColor = .white
+        bundleIdLabel.font = UIFont.systemFont(ofSize: 16)
+        bundleIdValueLabel.textColor = .lightGray
+        bundleIdValueLabel.font = UIFont.systemFont(ofSize: 16)
+        bundleIdValueLabel.text = Bundle.main.bundleIdentifier ?? "Unknown"
+        let bundleIdStack = UIStackView(arrangedSubviews: [bundleIdLabel, bundleIdValueLabel])
+        bundleIdStack.axis = .horizontal
+        bundleIdStack.distribution = .equalSpacing
+        stackView.addArrangedSubview(bundleIdStack)
+        bundleIdStack.snp.makeConstraints { make in
             make.height.equalTo(44)
         }
         

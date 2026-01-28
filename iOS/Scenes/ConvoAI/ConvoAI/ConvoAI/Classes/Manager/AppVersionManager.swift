@@ -11,7 +11,6 @@ import Common
 import SnapKit
 
 public enum VersionCheckResult {
-    case isDebugBuild
     case needsUpdate(latestVersion: String, latestBuildVersion: Int, description: String, downloadUrl: String)
     case upToDate
 }
@@ -19,18 +18,22 @@ public enum VersionCheckResult {
 public class AppVersionManager {
     
     private let toolBoxApiManager = ToolBoxApiManager()
+    private var hasCheckedVersion = false
     
     public init() {}
     
     // MARK: - Public Methods
     
-    /// Check version and handle result automatically (add dev tag or show update alert)
-    public func checkVersionAndHandle() {
+    /// Check version and handle result automatically (show update alert)
+    /// Only checks once per app lifecycle
+    public func mayShowVersionDialog() {
+        guard !hasCheckedVersion else {
+            return
+        }
+        hasCheckedVersion = true
         checkVersion { [weak self] result in
             guard let self = self else { return }
             switch result {
-            case .isDebugBuild:
-                self.addGlobalDevTag()
             case .needsUpdate(let latestVersion, let latestBuildVersion, let description, let downloadUrl):
                 self.showUpdateAlert(latestVersion: latestVersion, latestBuildVersion: latestBuildVersion, description: description, downloadUrl: downloadUrl)
             case .upToDate:
@@ -39,15 +42,18 @@ public class AppVersionManager {
         }
     }
     
+    // MARK: - Private Methods
+    
+    /// Check if it's a test build and add test tag if needed
+    public func mayAddTestTag() {
+        if isTestBundleID() {
+            addGlobalTestTag()
+        }
+    }
+    
     /// Check version update
     /// - Parameter completion: Version check result callback
-    public func checkVersion(completion: @escaping (VersionCheckResult) -> Void) {
-        // Check bundle name first: if it's a test package, return directly without requesting API
-        if !isReleaseBuild() {
-            completion(.isDebugBuild)
-            return
-        }
-        
+    private func checkVersion(completion: @escaping (VersionCheckResult) -> Void) {
         // Release build: request latest version number
         ConvoAILogger.info("[Version] Requesting latest version")
         toolBoxApiManager.getLatestDemoVersion { [weak self] response in
@@ -96,25 +102,25 @@ public class AppVersionManager {
         }
     }
     
+    // MARK: - Private Methods
+    
     /// Get current app version number
-    public func getCurrentVersion() -> String {
+    private func getCurrentVersion() -> String {
         return Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
     }
     
     /// Get current app build version number
-    public func getCurrentBuildVersion() -> Int {
+    private func getCurrentBuildVersion() -> Int {
         let buildVersionString = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
         return Int(buildVersionString) ?? 0
     }
     
-    // MARK: - Private Methods
-    
-    /// Check if it's a release build
-    /// - Returns: true means release build, false means test build
-    private func isReleaseBuild() -> Bool {
+    /// Check if bundle ID contains "test"
+    /// - Returns: true means test bundle ID, false means release bundle ID
+    private func isTestBundleID() -> Bool {
         // Check if bundle name contains "test"
         let bundleId = Bundle.main.bundleIdentifier ?? "".lowercased()
-        return !bundleId.contains("test")
+        return bundleId.contains("test")
     }
     
     /// Check if current version is older than the latest version
@@ -125,8 +131,8 @@ public class AppVersionManager {
         return currentBuildVersion < latestBuildVersion
     }
     
-    /// Add global dev tag to window (for debug builds)
-    public func addGlobalDevTag() {
+    /// Add global test tag to window (for test builds)
+    private func addGlobalTestTag() {
         guard let window = UIApplication.kWindow else {
             return
         }
@@ -150,10 +156,10 @@ extension AppVersionManager {
     ///   - latestBuildVersion: Latest build version number
     ///   - description: Update description from server
     ///   - downloadUrl: Download URL
-    public func showUpdateAlert(latestVersion: String,
-                                latestBuildVersion: Int,
-                                description: String,
-                                downloadUrl: String) {
+    private func showUpdateAlert(latestVersion: String,
+                                 latestBuildVersion: Int,
+                                 description: String,
+                                 downloadUrl: String) {
         let currentVersion = getCurrentVersion()
         let currentBuildVersion = getCurrentBuildVersion()
         
