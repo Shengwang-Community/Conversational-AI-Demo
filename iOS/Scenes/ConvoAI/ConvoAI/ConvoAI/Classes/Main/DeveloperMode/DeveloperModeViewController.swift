@@ -406,14 +406,16 @@ public class DeveloperModeViewController: UIViewController {
     }
     
     private func updateAvailableVIDMenu() {
+        for i in 0..<availableVIDs.count {
+            availableVIDs[i].selected = false
+        }
         let actions = availableVIDs.enumerated().map { index, vidModel in
-            let displayTitle = vidModel.selected ? "\(vidModel.displayTitle) ✅" : vidModel.displayTitle
-            return UIAction(title: displayTitle) { [weak self] _ in
+            return UIAction(title: vidModel.displayTitle) { [weak self] _ in
                 guard let self = self else { return }
                 if self.availableVIDs[index].selected {
-                    // Already selected, do nothing
                     return
                 }
+                self.availableVIDs[index].selected = true
                 self.switchEnvironment()
             }
         }
