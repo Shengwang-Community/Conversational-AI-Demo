@@ -1,15 +1,16 @@
 [versions]
-agp = "8.6.0"
+agp = "8.7.3"
 kotlin = "1.9.24"
-coreKtx = "1.10.1"
+coreKtx = "1.13.1"
 junit = "4.13.2"
-junitVersion = "1.1.5"
-espressoCore = "3.5.1"
-appcompat = "1.6.1"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+appcompat = "1.7.0"
 lifecycleProcess = "2.8.4"
-material = "1.10.0"
+material = "1.12.0"
 activity = "1.8.0"
-constraintlayout = "2.1.4"
+constraintlayout = "2.2.0"
+coroutines = "1.8.0"
 photoview = "2.3.0"
 datetimepicker = "0.6.3"
 viewbinding = "8.7.3"
@@ -44,6 +45,7 @@ material = { module = "com.google.android.material:material", version.ref = "mat
 androidx-activity = { module = "androidx.activity:activity", version.ref = "activity" }
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 androidx-viewbinding = { module = "androidx.databinding:viewbinding", version.ref = "viewbinding" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycleProcess" }
 navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigation" }
 navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigation" }
