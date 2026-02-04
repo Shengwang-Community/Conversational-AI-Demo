@@ -68,6 +68,14 @@ class DebugCovConfigFragment : BaseFragment<CommonDebugCovConfigFragmentBinding>
                 }
             }
 
+            cbRenderModeFallback.setChecked(DebugConfigSettings.isEnableRenderModeFallback)
+            cbRenderModeFallback.setOnCheckedChangeListener { buttonView, isChecked ->
+                if (buttonView.isPressed) {
+                    DebugConfigSettings.enableRenderModeFallback(isChecked)
+                    onDebugCallback?.onRenderModeFallback(isChecked)
+                }
+            }
+
             btnCopy.setOnClickListener(object : OnFastClickListener() {
                 override fun onClickJacking(view: View) {
                     onDebugCallback?.onClickCopy()

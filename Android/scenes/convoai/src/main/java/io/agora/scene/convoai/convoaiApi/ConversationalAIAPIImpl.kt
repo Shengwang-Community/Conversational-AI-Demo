@@ -271,6 +271,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
             rtcEngine = config.rtcEngine,
             rtmClient = config.rtmClient,
             renderMode = if (config.renderMode == TranscriptRenderMode.Word) TranscriptRenderMode.Word else TranscriptRenderMode.Text,
+            enableRenderModeFallback = config.enableRenderModeFallback,
             callback = object : IConversationTranscriptCallback {
                 override fun onTranscriptUpdated(agentUserId: String, transcript: Transcript) {
                     conversationalAIHandlerHelper.notifyEventHandlers { delegate ->

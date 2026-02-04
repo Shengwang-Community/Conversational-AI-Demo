@@ -37,6 +37,8 @@ class DebugTabDialog : BaseDialogFragment<CommonDebugTabDialogBinding>() {
 
         fun onMetricsEnable(enable: Boolean) = Unit  // Default implementation
 
+        fun onRenderModeFallback(enable: Boolean) = Unit  // Default implementation
+
         fun onEnvConfigChange() = Unit  // Default implementation
 
         fun getConvoAiHost(): String = ""

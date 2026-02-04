@@ -109,6 +109,13 @@ object DebugConfigSettings {
         this.isMetricsEnabled = isMetricsEnabled
     }
 
+    var isEnableRenderModeFallback: Boolean = true
+        private set
+
+    fun enableRenderModeFallback(enableRenderModeFallback: Boolean) {
+        this.isEnableRenderModeFallback = enableRenderModeFallback
+    }
+
     @JvmStatic
     fun init(context: Context) {
         if (instance != null) return
@@ -141,6 +148,7 @@ object DebugConfigSettings {
         isDebug = false
         isAudioDumpEnabled = false
         isMetricsEnabled = false
+        isEnableRenderModeFallback = true
         _sdkAudioParameters.clear()
         convoAIParameter = ""
     }

@@ -10,6 +10,7 @@ import io.agora.rtm.RtmClient
 import io.agora.scene.common.BuildConfig
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
+import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.common.net.AgoraTokenType
 import io.agora.scene.common.net.ApiManager
 import io.agora.scene.common.net.TokenGenerator
@@ -274,7 +275,8 @@ class CovLivingViewModel : ViewModel() {
             ConversationalAIAPIConfig(
                 rtcEngine = rtcEngine,
                 rtmClient = rtmClient,
-                enableLog = true
+                enableLog = true,
+                enableRenderModeFallback = DebugConfigSettings.isEnableRenderModeFallback
             )
         )
         conversationalAIAPI?.addHandler(covEventHandler)

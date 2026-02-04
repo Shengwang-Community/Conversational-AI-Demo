@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngineEx
 import io.agora.rtm.RtmClient
+import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.CovAgentManager
@@ -79,7 +80,8 @@ class CovLivingSipViewModel : ViewModel() {
             ConversationalAIAPIConfig(
                 rtcEngine = rtcEngine,
                 rtmClient = rtmClient,
-                enableLog = true
+                enableLog = true,
+                enableRenderModeFallback = DebugConfigSettings.isEnableRenderModeFallback
             )
         )
         conversationalAIAPI?.addHandler(covEventHandler)

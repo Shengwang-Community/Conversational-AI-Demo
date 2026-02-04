@@ -3,6 +3,8 @@ package io.agora.scene.common.debugMode
 import android.os.Bundle
 import androidx.viewbinding.ViewBinding
 import io.agora.scene.common.ui.BaseActivity
+import io.agora.scene.common.util.CommonLogger
+import io.agora.scene.common.util.toast.ToastUtil
 
 /**
  * Base activity with debug support
@@ -93,6 +95,13 @@ abstract class DebugSupportActivity<T : ViewBinding> : BaseActivity<T>() {
 
             override fun onAudioParameter(parameter: String) {
                 // Default implementation - subclasses can override
+            }
+
+            override fun onRenderModeFallback(enable: Boolean) {
+                // Handle render mode fallback toggle
+                CommonLogger.d("DebugSupportActivity", "Render Mode Fallback enabled: $enable")
+
+                ToastUtil.show("onRenderModeFallback: $enable")
             }
         }
     }
