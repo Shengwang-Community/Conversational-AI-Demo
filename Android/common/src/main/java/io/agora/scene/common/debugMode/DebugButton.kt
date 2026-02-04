@@ -1,195 +1,201 @@
 package io.agora.scene.common.debugMode
 
-import android.content.Context
-import android.content.Intent
-import android.graphics.PixelFormat
-import android.net.Uri
-import android.provider.Settings
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
-import android.view.WindowManager
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import io.agora.scene.common.R
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.CommonLogger
+import java.lang.ref.WeakReference
+import kotlin.math.abs
 
-class DebugButton private constructor(private val context: Context) {
+/**
+ * Draggable debug button that attaches to Activity's DecorView.
+ * No SYSTEM_ALERT_WINDOW permission required.
+ */
+class DebugButton private constructor() {
 
     companion object {
         private const val TAG = "DebugButton"
-        private val CLICK_THRESHOLD = 10.dp.toInt() // Threshold for click detection
-        private val BUTTON_SIZE = 64.dp.toInt()     // Size of debug button
-        private val INITIAL_X = 24.dp.toInt()       // Initial X position
-        private val INITIAL_Y = 100.dp.toInt()      // Initial Y position
+        private const val VIEW_TAG = "debug_button_view"
+
+        private val CLICK_THRESHOLD = 10.dp.toInt()
+        private val BUTTON_SIZE = 64.dp.toInt()
+        private val DEFAULT_MARGIN_END = 24.dp.toInt()
+        private val DEFAULT_MARGIN_TOP = 100.dp.toInt()
 
         @Volatile
         private var instance: DebugButton? = null
 
         @JvmStatic
-        fun getInstance(context: Context): DebugButton {
-            return instance ?: synchronized(this) {
-                instance ?: DebugButton(context.applicationContext).also { instance = it }
+        fun getInstance(): DebugButton =
+            instance ?: synchronized(this) {
+                instance ?: DebugButton().also { instance = it }
             }
-        }
 
         @JvmStatic
-        fun isShowing(): Boolean {
-            return instance?.isShowing == true
-        }
+        val isShowing: Boolean get() = instance?.showing == true
 
         @JvmStatic
         var onClickCallback: (() -> Unit)? = null
             private set
 
         @JvmStatic
-        fun setDebugCallback(onClickCallback: (() -> Unit)?) {
-            this.onClickCallback = onClickCallback
+        fun setDebugCallback(callback: (() -> Unit)?) {
+            onClickCallback = callback
         }
 
         @JvmStatic
-        fun shouldShow(): Boolean {
-            return instance?.shouldShowButton == true
+        val shouldShow: Boolean get() = instance?.shouldShowButton == true
+    }
+
+    private var activityRef: WeakReference<Activity>? = null
+    private var showing = false
+    private var shouldShowButton = false
+
+    // Persisted position across activity transitions
+    private var positionX = DEFAULT_MARGIN_END
+    private var positionY = DEFAULT_MARGIN_TOP
+
+    fun attachTo(activity: Activity) {
+        if (!shouldShowButton) return
+
+        activityRef?.get()?.takeIf { it != activity }?.let(::removeButton)
+        activityRef = WeakReference(activity)
+        addButton(activity)
+    }
+
+    fun show() {
+        shouldShowButton = true
+        activityRef?.get()?.let(::addButton)
+    }
+
+    fun hide() {
+        shouldShowButton = false
+        removeCurrentButton()
+    }
+
+    fun temporaryHide() = removeCurrentButton()
+
+    fun restoreVisibility() {
+        if (shouldShowButton) {
+            activityRef?.get()?.let(::addButton)
         }
     }
 
-    private var windowManager: WindowManager? = null
-    private var debugButton: ImageButton? = null
-    private var isShowing = false
-    private var shouldShowButton = false  // Track whether the button should be shown
-
-    private val layoutParams = WindowManager.LayoutParams().apply {
-        type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        format = PixelFormat.TRANSLUCENT
-        flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-        gravity = Gravity.TOP or Gravity.END
-        width = BUTTON_SIZE
-        height = BUTTON_SIZE
-        x = INITIAL_X
-        y = INITIAL_Y
+    fun detachFrom(activity: Activity) {
+        if (activityRef?.get() == activity) {
+            removeButton(activity)
+            activityRef = null
+        }
     }
 
-    // Touch event initial positions
-    private var initialX = 0
-    private var initialY = 0
-    private var initialTouchX = 0f
-    private var initialTouchY = 0f
+    private fun addButton(activity: Activity) {
+        if (showing || activity.isFinishing || activity.isDestroyed) return
 
-    fun show() {
-        if (isShowing) return
+        val decorView = activity.window?.decorView as? ViewGroup ?: return
 
-        shouldShowButton = true
-
-        if (!Settings.canDrawOverlays(context)) {
-            requestOverlayPermission()
+        // Already attached
+        if (decorView.findViewWithTag<View>(VIEW_TAG) != null) {
+            showing = true
             return
         }
 
         try {
-            createAndShowButton()
+            decorView.addView(createButton(activity, decorView))
+            showing = true
         } catch (e: Exception) {
-            e.printStackTrace()
+            CommonLogger.e(TAG, "Failed to add debug button: ${e.message}")
         }
     }
 
-    private fun requestOverlayPermission() {
-        val intent = Intent(
-            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:${context.packageName}")
-        ).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(intent)
-    }
-
-    private fun createAndShowButton() {
-        windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-
-        debugButton = ImageButton(context).apply {
+    @SuppressLint("ClickableViewAccessibility")
+    private fun createButton(activity: Activity, parent: ViewGroup): ImageButton {
+        return ImageButton(activity).apply {
+            tag = VIEW_TAG
             setImageResource(R.drawable.btn_debug_selector)
             setBackgroundResource(android.R.color.transparent)
-            setOnTouchListener(createTouchListener())
+            layoutParams = createLayoutParams()
+            setOnTouchListener(DragTouchListener(parent))
         }
-
-        windowManager?.addView(debugButton, layoutParams)
-        isShowing = true
     }
 
-    private fun createTouchListener() = { view: View, event: MotionEvent ->
+    private fun createLayoutParams() = FrameLayout.LayoutParams(BUTTON_SIZE, BUTTON_SIZE).apply {
+        gravity = Gravity.TOP or Gravity.END
+        marginEnd = positionX
+        topMargin = positionY
+    }
+
+    private fun removeCurrentButton() {
+        activityRef?.get()?.let(::removeButton)
+    }
+
+    private fun removeButton(activity: Activity) {
         try {
-            when (event.action) {
+            (activity.window?.decorView as? ViewGroup)
+                ?.findViewWithTag<View>(VIEW_TAG)
+                ?.let { (it.parent as? ViewGroup)?.removeView(it) }
+        } catch (e: Exception) {
+            CommonLogger.w(TAG, "Failed to remove debug button: ${e.message}")
+        } finally {
+            showing = false
+        }
+    }
+
+    /**
+     * Handles drag and click detection for the debug button.
+     */
+    private inner class DragTouchListener(private val parent: ViewGroup) : View.OnTouchListener {
+        private var startX = 0
+        private var startY = 0
+        private var startTouchX = 0f
+        private var startTouchY = 0f
+
+        @SuppressLint("ClickableViewAccessibility")
+        override fun onTouch(view: View, event: MotionEvent): Boolean {
+            val lp = view.layoutParams as? FrameLayout.LayoutParams ?: return false
+
+            return when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    // Save initial positions when touch starts
-                    initialX = layoutParams.x
-                    initialY = layoutParams.y
-                    initialTouchX = event.rawX
-                    initialTouchY = event.rawY
+                    startX = lp.marginEnd
+                    startY = lp.topMargin
+                    startTouchX = event.rawX
+                    startTouchY = event.rawY
                     true
                 }
 
                 MotionEvent.ACTION_MOVE -> {
-                    // Update button position while dragging
-                    layoutParams.x = initialX + (initialTouchX - event.rawX).toInt()
-                    layoutParams.y = initialY + (event.rawY - initialTouchY).toInt()
-                    try {
-                        windowManager?.updateViewLayout(view, layoutParams)
-                    } catch (e: Exception) {
-                        CommonLogger.w(TAG, "Failed to update button position: ${e.message}")
-                    }
+                    lp.marginEnd = (startX + (startTouchX - event.rawX).toInt())
+                        .coerceIn(0, parent.width - BUTTON_SIZE)
+                    lp.topMargin = (startY + (event.rawY - startTouchY).toInt())
+                        .coerceIn(0, parent.height - BUTTON_SIZE)
+                    view.layoutParams = lp
                     true
                 }
 
                 MotionEvent.ACTION_UP -> {
-                    // Handle click event if movement is within threshold
+                    // Save position
+                    positionX = lp.marginEnd
+                    positionY = lp.topMargin
+
+                    // Trigger click if minimal movement
                     if (isClick(event)) {
-                        try {
-                            onClickCallback?.invoke()
-                        } catch (e: Exception) {
-                            CommonLogger.e(TAG, "Debug callback failed: ${e.message}")
-                        }
+                        onClickCallback?.invoke()
                     }
                     true
                 }
 
                 else -> false
             }
-        } catch (e: Exception) {
-            CommonLogger.e(TAG, "Touch event handling failed: ${e.message}")
-            false
         }
-    }
 
-    private fun isClick(event: MotionEvent): Boolean {
-        return Math.abs(event.rawX - initialTouchX) < CLICK_THRESHOLD &&
-                Math.abs(event.rawY - initialTouchY) < CLICK_THRESHOLD
+        private fun isClick(event: MotionEvent): Boolean =
+            abs(event.rawX - startTouchX) < CLICK_THRESHOLD &&
+                    abs(event.rawY - startTouchY) < CLICK_THRESHOLD
     }
-
-    fun hide() {
-        if (!isShowing) return
-        shouldShowButton = false
-        hideInternal()
-    }
-
-    fun temporaryHide() {
-        if (!isShowing) return
-        hideInternal()
-    }
-
-    fun restoreVisibility() {
-        if (shouldShowButton) {
-            show()
-        }
-    }
-
-    private fun hideInternal() {
-        try {
-            windowManager?.removeView(debugButton)
-        } catch (e: Exception) {
-            CommonLogger.w(TAG, "Failed to remove debug button: ${e.message}")
-        } finally {
-            debugButton = null
-            windowManager = null
-            isShowing = false
-        }
-    }
-} 
+}

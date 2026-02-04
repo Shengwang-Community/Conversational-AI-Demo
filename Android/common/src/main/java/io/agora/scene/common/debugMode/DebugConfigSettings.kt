@@ -156,7 +156,7 @@ object DebugConfigSettings {
         if (counts > 7) {
             counts = 0
             enableDebugMode(true)
-            DebugButton.getInstance(AgentApp.instance()).show()
+            DebugButton.getInstance().show()
             // Immediately notify DebugManager to activate debug for current activity
             DebugManager.onDebugModeEnabled()
         }
