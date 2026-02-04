@@ -92,7 +92,6 @@ object ServerConfig {
     val isBuildEnv: Boolean get() = buildEnvConfig.toolboxServerHost == toolBoxUrl
 
     fun initBuildConfig(
-        envName: String,
         toolboxHost: String,
         rtcAppId: String,
         rtcAppCert: String,
@@ -102,12 +101,26 @@ object ServerConfig {
         this.appVersionName = appVersionName
         this.appVersionCode = appVersionCode
         buildEnvConfig.apply {
-            this.envName = envName
             this.toolboxServerHost = toolboxHost
             this.rtcAppId = rtcAppId
             this.rtcAppCertificate = rtcAppCert
         }
         reset()
+    }
+
+    fun detectEnvName(config: List<EnvConfig>) {
+        if (buildEnvConfig.envName.isEmpty()) {
+            config.find {
+                it.toolboxServerHost == buildEnvConfig.toolboxServerHost && it.rtcAppId == buildEnvConfig.rtcAppId
+            }?.envName?.also {
+                buildEnvConfig.envName = it
+                val isSameEnv = buildEnvConfig.toolboxServerHost == toolBoxUrl &&
+                        buildEnvConfig.rtcAppId == rtcAppId
+                if (isSameEnv){
+                    envName = it
+                }
+            }
+        }
     }
 
     fun updateDebugConfig(debugConfig: EnvConfig) {

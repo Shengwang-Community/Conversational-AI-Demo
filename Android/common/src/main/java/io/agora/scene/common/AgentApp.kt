@@ -37,7 +37,6 @@ class AgentApp : Application() {
     private fun fetchAppData() {
         DataProviderLoader.getDataProvider()?.let {
             ServerConfig.initBuildConfig(
-                envName = it.envName(),
                 toolboxHost = it.toolboxHost(),
                 rtcAppId = it.rtcAppId(),
                 rtcAppCert = it.rtcAppCert(),

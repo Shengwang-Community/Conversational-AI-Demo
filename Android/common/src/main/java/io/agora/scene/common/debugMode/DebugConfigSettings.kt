@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.gson.Gson
 import io.agora.scene.common.AgentApp
 import io.agora.scene.common.constant.EnvConfig
+import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.util.LocalStorageUtil
 import io.agora.scene.common.util.LocaleManager
 import java.io.BufferedReader
@@ -115,6 +116,9 @@ object DebugConfigSettings {
             val jsonString =
                 context.assets.open(DEV_CONFIG_FILE).bufferedReader().use(BufferedReader::readText)
             instance = Gson().fromJson(jsonString, DevEnvConfig::class.java)
+            getServerConfig().apply {
+                ServerConfig.detectEnvName(this)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }

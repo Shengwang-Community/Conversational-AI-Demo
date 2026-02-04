@@ -6,6 +6,11 @@ apply from: 'resource.gradle'
 
 def buildTimestamp = new Date().format("yyyyMMddHHmm")
 
+static def generateVersionCode() {
+    def date = new Date()
+    return Integer.parseInt(date.format("yyMMddHH"))
+}
+
 if (project.getProperty("AG_APP_ID").toString().isEmpty()) {
     throw new GradleException("Please configure Agora ID and Certificate in gradle.properties")
 }
@@ -36,8 +41,6 @@ android {
             buildConfigField("String", "TOOLBOX_SERVER_HOST", "\"${project.getProperty("TOOLBOX_SERVER_HOST")}\"")
             buildConfigField("String", "AG_APP_ID", "\"${project.getProperty("AG_APP_ID")}\"")
             buildConfigField("String", "AG_APP_CERTIFICATE", "\"${project.getProperty("AG_APP_CERTIFICATE")}\"")
-            // Get BUILD_ENV from command line parameter (-PBUILD_ENV=xxx) or gradle.properties
-            buildConfigField("String", "BUILD_ENV", "\"${project.getProperty("BUILD_ENV")}\"")
         }
     }
 
@@ -50,33 +53,25 @@ android {
         }
     }
 
-    applicationVariants.all {
-        variant ->
-            variant.outputs.all { output ->
-                def flavor = variant.productFlavors.isEmpty() ? "default" : variant.productFlavors[0].name
-                def flavorPrefix = ""
-                if (flavor == "china") {
-                    flavorPrefix = "ShengWang_Conversational_Al_Engine_Demo_for_Android"
-                } else if (flavor == "global") {
-                    flavorPrefix = "Agora_Conversational_Al_Engine_Demo_for_Android"
-                } else {
-                    flavorPrefix = "Conversational_Al_Engine_Demo_for_Android"
-                }
-                
-                // Get current build environment name (for APK filename)
-                def buildEnv = project.hasProperty("BUILD_ENV") ? project.getProperty("BUILD_ENV") : "prod"
-
-                // Get package name and replace dots with underscores for filename compatibility
-                def packageName = variant.applicationId.replaceAll('\\.', '_')
-                
-                // APK filename includes package name, environment info for easy identification
-                outputFileName = new File(
-                        flavorPrefix + "_" +
-                                buildEnv + "_" +
-                                packageName + "_" +
-                                "v" + defaultConfig.versionName + "_" +
-                                buildTimestamp + ".apk")
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            // Override versionCode for release builds
+            if (variant.buildType.name == "release") {
+                output.versionCodeOverride = generateVersionCode()
             }
+            
+            def flavorPrefix = "ShengWang_Conversational_Al_Engine_Demo_for_Android"
+
+            // Get package name and replace dots with underscores for filename compatibility
+            def packageName = variant.applicationId.replaceAll('\\.', '_')
+            
+            // APK filename includes package name, environment info for easy identification
+            outputFileName = new File(
+                    flavorPrefix + "_" +
+                            packageName + "_" +
+                            "v" + defaultConfig.versionName + "_" +
+                            buildTimestamp + ".apk")
+        }
     }
 
     buildTypes {

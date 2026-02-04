@@ -206,13 +206,7 @@ cat gradle.properties
 
 # Compile apk
 ./gradlew clean || exit 1
-if [[ "${toolbox_url}" == *"staging"* ]]; then
-  ./gradlew :app:assembleRelease -PBUILD_ENV=staging || exit 1
-elif [[ "${toolbox_url}" == *"dev"* ]]; then
-  ./gradlew :app:assembleRelease -PBUILD_ENV=dev || exit 1
-else
-  ./gradlew :app:assembleRelease -PBUILD_ENV=prod|| exit 1
-fi
+./gradlew :app:assembleRelease || exit 1
 
 # Upload apk
 rm -rf ${WORKSPACE}/*.apk && cp app/build/outputs/apk/china/release/*.apk ${WORKSPACE}

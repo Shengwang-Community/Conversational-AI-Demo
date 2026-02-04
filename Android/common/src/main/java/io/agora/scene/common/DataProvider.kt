@@ -7,5 +7,4 @@ interface DataProvider {
     fun appBuildNo(): String
     fun appVersionCode(): Int
     fun appVersionName(): String
-    fun envName(): String
 }
