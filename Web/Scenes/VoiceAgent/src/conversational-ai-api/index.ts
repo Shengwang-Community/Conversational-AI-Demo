@@ -430,7 +430,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     const traceId = genTraceID()
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] [chat] ${agentUserId}`,
+      `>>> [traceID:${traceId}] [chat] ${agentUserId}`,
       message
     )
 
@@ -459,14 +459,14 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
 
       this.callMessagePrint(
         ELoggerType.debug,
-        `>>> [trancID:${traceId}] [chat]`,
+        `>>> [traceID:${traceId}] [chat]`,
         'sucessfully sent chat message',
         result
       )
     } catch (error: unknown) {
       this.callMessagePrint(
         ELoggerType.error,
-        `>>> [trancID:${traceId}] [chat]`,
+        `>>> [traceID:${traceId}] [chat]`,
         'failed to send chat message',
         error
       )
@@ -501,7 +501,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     const traceId = genTraceID()
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] [chat] ${agentUserId}`,
+      `>>> [traceID:${traceId}] [chat] ${agentUserId}`,
       message
     )
 
@@ -530,14 +530,14 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
 
       this.callMessagePrint(
         ELoggerType.debug,
-        `>>> [trancID:${traceId}] [chat]`,
+        `>>> [traceID:${traceId}] [chat]`,
         'sucessfully sent chat message',
         result
       )
     } catch (error: unknown) {
       this.callMessagePrint(
         ELoggerType.error,
-        `>>> [trancID:${traceId}] [chat]`,
+        `>>> [traceID:${traceId}] [chat]`,
         'failed to send chat message',
         error
       )
@@ -562,7 +562,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     const traceId = genTraceID()
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] [interrupt]`,
+      `>>> [traceID:${traceId}] [interrupt]`,
       agentUserId
     )
 
@@ -580,14 +580,14 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       const result = await rtmEngine.publish(agentUserId, messageStr, options)
       this.callMessagePrint(
         ELoggerType.debug,
-        `>>> [trancID:${traceId}] [interrupt]`,
+        `>>> [traceID:${traceId}] [interrupt]`,
         'sucessfully sent interrupt message',
         result
       )
     } catch (error: unknown) {
       this.callMessagePrint(
         ELoggerType.error,
-        `>>> [trancID:${traceId}] [interrupt]`,
+        `>>> [traceID:${traceId}] [interrupt]`,
         'failed to send interrupt message',
         error
       )
@@ -770,7 +770,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     const traceId = genTraceID()
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] ${ERTMEvents.MESSAGE}`,
+      `>>> [traceID:${traceId}] ${ERTMEvents.MESSAGE}`,
       `Publisher: ${message.publisher}, type: ${message.messageType}`
     )
     // Handle the message
@@ -781,7 +781,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
         const parsedMessage = JSON.parse(messageData)
         this.callMessagePrint(
           ELoggerType.debug,
-          `>>> [trancID:${traceId}] ${ERTMEvents.MESSAGE}`,
+          `>>> [traceID:${traceId}] ${ERTMEvents.MESSAGE}`,
           parsedMessage
         )
         this.covSubRenderController.handleMessage(parsedMessage, {
@@ -796,7 +796,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
         const parsedMessage = JSON.parse(messageString)
         this.callMessagePrint(
           ELoggerType.debug,
-          `>>> [trancID:${traceId}] ${ERTMEvents.MESSAGE}`,
+          `>>> [traceID:${traceId}] ${ERTMEvents.MESSAGE}`,
           parsedMessage
         )
         this.covSubRenderController.handleMessage(parsedMessage, {
@@ -806,13 +806,13 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       }
       this.callMessagePrint(
         ELoggerType.warn,
-        `>>> [trancID:${traceId}] ${ERTMEvents.MESSAGE}`,
+        `>>> [traceID:${traceId}] ${ERTMEvents.MESSAGE}`,
         'Unsupported message type received'
       )
     } catch (error) {
       this.callMessagePrint(
         ELoggerType.error,
-        `>>> [trancID:${traceId}] ${ERTMEvents.MESSAGE}`,
+        `>>> [traceID:${traceId}] ${ERTMEvents.MESSAGE}`,
         'Failed to parse message',
         error
       )
@@ -822,7 +822,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     const traceId = genTraceID()
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] ${ERTMEvents.PRESENCE}`,
+      `>>> [traceID:${traceId}] ${ERTMEvents.PRESENCE}`,
       `Publisher: ${presence.publisher}`
     )
     // Handle the presence event
@@ -830,7 +830,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     if (stateChanged?.state && stateChanged?.turn_id) {
       this.callMessagePrint(
         ELoggerType.debug,
-        `>>> [trancID:${traceId}] ${ERTMEvents.PRESENCE}`,
+        `>>> [traceID:${traceId}] ${ERTMEvents.PRESENCE}`,
         `State changed: ${stateChanged.state}, Turn ID: ${stateChanged.turn_id}, timestamp: ${presence.timestamp}`
       )
       this.covSubRenderController.handleAgentStatus(
@@ -845,7 +845,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     }
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] ${ERTMEvents.PRESENCE}`,
+      `>>> [traceID:${traceId}] ${ERTMEvents.PRESENCE}`,
       'No state change detected, skipping handling presence event'
     )
   }
@@ -857,7 +857,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     const traceId = genTraceID()
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] ${ERTMEvents.STATUS}`,
+      `>>> [traceID:${traceId}] ${ERTMEvents.STATUS}`,
       status
     )
   }
