@@ -22,7 +22,16 @@ class LogManager {
     try {
       const timestamp = new Date().toISOString()
       const logMessage = args
-        .map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg)))
+        .map((arg) => {
+          if (typeof arg === 'string') {
+            return arg
+          }
+          try {
+            return JSON.stringify(arg)
+          } catch {
+            return String(arg)
+          }
+        })
         .join(' ')
       if (process.env.NODE_ENV === 'development') {
         // In development, log to console
