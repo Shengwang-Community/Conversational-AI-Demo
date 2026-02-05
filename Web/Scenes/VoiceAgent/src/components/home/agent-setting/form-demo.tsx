@@ -463,7 +463,7 @@ export function AgentSettingsForm(props: {
             <Separator />
             <div className='flex items-center justify-between gap-2'>
               <FormLabel className='text-icontext'>
-                {t('transcription.render-mode-fallback.title')}
+                {isCN() ? '渲染模式回退' : 'Render mode fallback'}
               </FormLabel>
               <FormControl>
                 <Switch
