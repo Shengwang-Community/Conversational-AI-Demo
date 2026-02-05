@@ -27,7 +27,6 @@ const nextConfig: NextConfig = {
 const withMDX = createMDX({
   // Add markdown plugins here, as desired
   options: {
-    // @ts-expect-error remark-gfm is not typed
     remarkPlugins: [['remark-gfm', { strict: true, throwOnError: true }]],
     rehypePlugins: [],
   },

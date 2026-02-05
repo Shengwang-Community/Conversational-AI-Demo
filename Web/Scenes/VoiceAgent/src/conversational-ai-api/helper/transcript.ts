@@ -538,7 +538,7 @@ export class MessageServiceV2 extends MessageService {
         turn_id,
         uid: message.stream_id ? `${MessageServiceV2.localUserId}` : `${uid}`,
         stream_id,
-        _time: new Date().getTime(),
+        _time: Date.now(),
         text,
         status: turn_status,
         metadata: message
@@ -548,7 +548,7 @@ export class MessageServiceV2 extends MessageService {
       targetChatHistoryItem.text = text
       targetChatHistoryItem.status = turn_status
       targetChatHistoryItem.metadata = message
-      targetChatHistoryItem._time = new Date().getTime()
+      targetChatHistoryItem._time = Date.now()
     }
     this._mutateChatHistory()
   }
@@ -924,7 +924,7 @@ export class MessageServiceV2 extends MessageService {
         turn_id: queueItem.turn_id,
         uid: `${queueItem.uid}`,
         stream_id: queueItem.stream_id,
-        _time: new Date().getTime(),
+        _time: Date.now(),
         text: '',
         status: queueItem.status,
         metadata: queueItem
@@ -932,7 +932,7 @@ export class MessageServiceV2 extends MessageService {
       this._appendChatHistory(correspondingChatHistoryItem)
     }
     // update correspondingChatHistoryItem._time for chatHistory auto-scroll
-    correspondingChatHistoryItem._time = new Date().getTime()
+    correspondingChatHistoryItem._time = Date.now()
     // update correspondingChatHistoryItem.metadata
     correspondingChatHistoryItem.metadata = queueItem
     // update correspondingChatHistoryItem.status if queueItem.status is interrupted(from message.interrupt event)
