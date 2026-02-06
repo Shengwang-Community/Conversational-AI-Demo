@@ -1,7 +1,6 @@
 import { logger as agoraLogger } from '@agora-js/report'
 import type { RTMEvents } from 'agora-rtm'
-import _ from 'lodash'
-
+import { ELoggerType, factoryFormatLog, logger } from '../utils/logger'
 import {
   type EAgentState,
   EChatMessageType,
@@ -23,14 +22,12 @@ import {
   type TDataChunkMessageWord,
   type TQueueItem,
   type TTranscriptHelperObjectWord
-} from '@/conversational-ai-api/type'
-import { factoryFormatLog } from '@/conversational-ai-api/utils'
-import { ELoggerType, logger } from '@/lib/logger'
+} from '../type'
 
 const TAG = 'CovSubRenderController'
 const CONSOLE_LOG_PREFIX = `[${TAG}]`
 const SELF_USER_ID = 0
-const VERSION = '1.8.0'
+const VERSION = '2.0.2'
 
 const DEFAULT_INTERVAL = 200 // milliseconds
 const DEFAULT_CHUNK_INTERVAL = 100 // milliseconds, 10 char/s
@@ -57,6 +54,7 @@ export class CovSubRenderController {
   public static self_uid = SELF_USER_ID
 
   private _mode: ETranscriptHelperMode = ETranscriptHelperMode.UNKNOWN
+  private _enableRenderModeFallback?: boolean = true
   private _queue: TQueueItem[] = []
   private _interval: number
   private _intervalRef: NodeJS.Timeout | null = null
@@ -180,6 +178,21 @@ export class CovSubRenderController {
     )
   }
 
+  private _fallbackToTextMode(reason: string) {
+    if (this._mode === ETranscriptHelperMode.TEXT) {
+      return
+    }
+    this.callMessagePrint(
+      ELoggerType.warn,
+      '[Fallback]',
+      `Switching render mode to TEXT: ${reason}`
+    )
+    this._teardownInterval()
+    this._queue = []
+    this._lastPoppedQueueItem = null
+    this._mode = ETranscriptHelperMode.TEXT
+  }
+
   private _handleQueue() {
     const queueLength = this._queue.length
     // empty queue, skip
@@ -270,7 +283,7 @@ export class CovSubRenderController {
         turn_id: queueItem.turn_id,
         uid: queueItem.uid,
         stream_id: queueItem.stream_id,
-        _time: new Date().getTime(),
+        _time: Date.now(),
         text: '',
         status: queueItem.status,
         metadata: queueItem
@@ -278,7 +291,7 @@ export class CovSubRenderController {
       this._appendChatHistory(correspondingChatHistoryItem)
     }
     // update correspondingChatHistoryItem._time for chatHistory auto-scroll
-    correspondingChatHistoryItem._time = new Date().getTime()
+    correspondingChatHistoryItem._time = Date.now()
     // update correspondingChatHistoryItem.metadata
     correspondingChatHistoryItem.metadata = queueItem
     // update correspondingChatHistoryItem.status if queueItem.status is interrupted(from message.interrupt event)
@@ -532,7 +545,7 @@ export class CovSubRenderController {
           ? `${CovSubRenderController.self_uid}`
           : `${uid}`,
         stream_id,
-        _time: new Date().getTime(),
+        _time: Date.now(),
         text,
         status: turn_status,
         metadata: message
@@ -542,7 +555,7 @@ export class CovSubRenderController {
       targetChatHistoryItem.text = text
       targetChatHistoryItem.status = turn_status
       targetChatHistoryItem.metadata = message
-      targetChatHistoryItem._time = new Date().getTime()
+      targetChatHistoryItem._time = Date.now()
       this.callMessagePrint(
         ELoggerType.debug,
         `[Text Mode]`,
@@ -671,7 +684,8 @@ export class CovSubRenderController {
     )
     const turn_id = message.turn_id
     // workaround: pts < interrupt.start_ms, and interrupt will be ignored
-    const start_ms = _.min([message.start_ms, this._pts]) || message.start_ms
+    const minStartMs = Math.min(message.start_ms, this._pts)
+    const start_ms = Number.isFinite(minStartMs) ? minStartMs : message.start_ms
     this._interruptQueue({
       turn_id,
       start_ms
@@ -819,8 +833,8 @@ export class CovSubRenderController {
     //   `prev-state: ${this._agentMessageState}, state: ${metadata.stateChanged.state}, turn_id: ${metadata.stateChanged.turn_id}, timestamp: ${metadata.stateChanged.timestamp}`
     // )
     const message = metadata.stateChanged
-    const currentTurnId = _.toNumber(message.turn_id) || 0
-    if (_.toNumber(this._agentMessageState?.turn_id || 0) > currentTurnId) {
+    const currentTurnId = Number(message.turn_id) || 0
+    if (Number(this._agentMessageState?.turn_id || 0) > currentTurnId) {
       this.callMessagePrint(
         ELoggerType.debug,
         'handleAgentStatus',
@@ -830,7 +844,7 @@ export class CovSubRenderController {
     }
     // check if message is older(by timestamp) than previous one, if so, skip
     const currentMsgTs = metadata.timestamp
-    if (_.toNumber(this._agentMessageState?.timestamp || 0) >= currentMsgTs) {
+    if (Number(this._agentMessageState?.timestamp || 0) >= currentMsgTs) {
       // console.debug(
       //   CONSOLE_LOG_PREFIX,
       //   'handleAgentStatus',
@@ -860,7 +874,7 @@ export class CovSubRenderController {
     }
     this.onAgentStateChanged?.(metadata.publisher, {
       state: message.state,
-      turnID: _.toNumber(message.turn_id),
+      turnID: Number(message.turn_id),
       timestamp: currentMsgTs,
       reason: ''
     })
@@ -910,7 +924,17 @@ export class CovSubRenderController {
     })
   }
 
-  public setMode(mode: ETranscriptHelperMode) {
+  public setMode(
+    mode: ETranscriptHelperMode,
+    options?: {
+      enableRenderModeFallback?: boolean
+    }
+  ) {
+    if (options?.enableRenderModeFallback !== undefined) {
+      this._enableRenderModeFallback = options.enableRenderModeFallback
+    }
+    this.callMessagePrint(ELoggerType.debug, `setMode`, mode, options)
+    // if mode is WORD and enableRenderModeFallback is true, set mode to TEXT
     if (this._mode !== ETranscriptHelperMode.UNKNOWN) {
       this.callMessagePrint(
         ELoggerType.warn,
@@ -931,11 +955,6 @@ export class CovSubRenderController {
       // set interval to default interval
       this._interval = DEFAULT_INTERVAL
     }
-    this.callMessagePrint(
-      ELoggerType.debug,
-      `setMode`,
-      ETranscriptHelperMode.TEXT
-    )
     this._mode = mode
   }
 
@@ -982,6 +1001,16 @@ export class CovSubRenderController {
 
     // handle Agent Message
     if (isAgentMessage && this._mode === ETranscriptHelperMode.WORD) {
+      const hasWordData =
+        Array.isArray(message.words) && message.words.length > 0
+      if (this._enableRenderModeFallback && !hasWordData) {
+        this._fallbackToTextMode('word data missing')
+        this.handleTextMessage(
+          options.publisher,
+          message as unknown as IUserTranscription
+        )
+        return
+      }
       this._setupIntervalForWords({ isForce: false })
       this.handleWordAgentMessage(
         options.publisher,

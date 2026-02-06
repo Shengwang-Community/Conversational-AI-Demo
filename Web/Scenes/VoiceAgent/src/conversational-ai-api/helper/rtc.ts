@@ -20,7 +20,10 @@ import {
   NotFoundError
 } from '@/conversational-ai-api/type'
 import { EventHelper } from '@/conversational-ai-api/utils/event'
+import { factoryFormatLog, logger } from '../utils/logger'
 import { getAgentToken } from '@/services/agent'
+
+const formatLog = factoryFormatLog({ tag: 'RTCHelper' })
 
 export class RTCHelper extends EventHelper<
   IHelperRTCEvents & {
@@ -53,6 +56,17 @@ export class RTCHelper extends EventHelper<
   public userId: string | null = null
   private processor: IAIDenoiserProcessor | null = null
 
+  // Bound event handlers (to ensure same reference for on/off)
+  private _boundHandleAudioPTS = this._eHandleAudioPTS.bind(this)
+  private _boundHandleNetworkQuality = this._eHandleNetworkQuality.bind(this)
+  private _boundHandleUserPublished = this._eHandleUserPublished.bind(this)
+  private _boundHandleUserUnpublished = this._eHandleUserUnpublished.bind(this)
+  private _boundHandleStreamMessage = this._eHandleStreamMessage.bind(this)
+  private _boundHandleUserJoined = this._eHandleUserJoined.bind(this)
+  private _boundHandleUserLeft = this._eHandleUserLeft.bind(this)
+  private _boundHandleConnectionStateChange =
+    this._eHandleConnectionStateChange.bind(this)
+
   constructor() {
     super()
 
@@ -63,13 +77,10 @@ export class RTCHelper extends EventHelper<
     ;(AgoraRTC as any).setParameter('ENABLE_AUDIO_PTS', true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(AgoraRTC as any).setParameter('{"rtc.log_external_input": true}')
-    // // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // ;(AgoraRTC as any).setParameter('ENABLE_AUDIO_RED', true)
-    // // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // ;(AgoraRTC as any).setParameter('EXPERIMENTS', { enableChorusMode: true })
 
     AgoraRTC.enableLogUpload()
     this.client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
+    logger.info(formatLog('constructor', 'RTC client created'))
   }
 
   public static getInstance(): RTCHelper {
@@ -79,6 +90,14 @@ export class RTCHelper extends EventHelper<
     return RTCHelper._instance
   }
 
+  /**
+   * Retrieves an Agora token for RTC authentication.
+   *
+   * @param userId - The user ID to retrieve the token for
+   * @param channel - Optional channel name
+   * @param force - If true, forces a new token retrieval even if one exists
+   * @param options - Optional configuration (e.g., devMode)
+   */
   public async retrieveToken(
     userId: string | number,
     channel?: string,
@@ -86,21 +105,34 @@ export class RTCHelper extends EventHelper<
     options?: { devMode?: boolean }
   ) {
     if (!force && this.appId && this.token) {
+      logger.debug(formatLog('retrieveToken', 'Using cached token'))
       return
     }
-    // get appId and token from server
-    console.log({ channel, userId }, 'Retrieving token')
+    logger.debug(
+      formatLog('retrieveToken', `channel: ${channel}, userId: ${userId}`)
+    )
     try {
       const resData = await getAgentToken(`${userId}`, channel, options)
       this.appId = resData.data.appId
       this.token = resData.data.token
       this.channelName = channel ?? null
+      logger.info(formatLog('retrieveToken', 'Token retrieved successfully'))
     } catch (error) {
-      console.error('Failed to retrieve token', error)
+      logger.error(
+        formatLog('retrieveToken', 'Failed to retrieve token', error)
+      )
       throw new Error('Failed to retrieve token')
     }
   }
 
+  /**
+   * Joins an RTC channel with the specified parameters.
+   *
+   * @param params - Join parameters
+   * @param params.channel - The channel name to join
+   * @param params.userId - The user ID to join with
+   * @param params.options - Optional configuration (e.g., devMode)
+   */
   public async join({
     channel,
     userId,
@@ -111,7 +143,12 @@ export class RTCHelper extends EventHelper<
     options?: { devMode?: boolean }
   }) {
     if (this.joined) {
-      console.log({ channel, userId }, 'Already initialized')
+      logger.warn(
+        formatLog(
+          'join',
+          `Already joined, channel: ${channel}, userId: ${userId}`
+        )
+      )
       return
     }
     this.bindRtcEvents()
@@ -119,91 +156,113 @@ export class RTCHelper extends EventHelper<
     if (!this.appId || !this.token) {
       await this.retrieveToken(userId, undefined, false, options)
     }
-    // // set client role as host
-    // this.client.setClientRole('host')
-    // join the channel
     await this.client.join(
       this.appId as string,
       channel,
       this.token as string,
       userId
     )
-    console.log({ channel, userId }, 'Joined channel')
+    logger.info(
+      formatLog('join', `Joined channel: ${channel}, userId: ${userId}`)
+    )
     this.joined = true
   }
 
+  /**
+   * Initializes the AI denoiser audio processor.
+   *
+   * @param assetsPath - Path to the denoiser WASM assets
+   */
   public async initDenoiserProcessor(
     assetsPath = '/denoiser/external'
   ): Promise<void> {
     if (this.processor) {
-      console.log('[DenoiserProcessor]', 'Already initialized')
+      logger.debug(formatLog('initDenoiserProcessor', 'Already initialized'))
       return
     }
-    console.log('[DenoiserProcessor]', 'Initializing')
+    logger.info(formatLog('initDenoiserProcessor', 'Initializing'))
     const denoiser = new AIDenoiserExtension({
       assetsPath
     })
-    // Check compatibility
     if (!denoiser.checkCompatibility()) {
-      // Current browser may not support AI denoiser plugin, stop further execution
-      console.error('[DenoiserProcessor]', 'Does not support AI Denoiser!')
+      logger.error(
+        formatLog(
+          'initDenoiserProcessor',
+          'Browser does not support AI Denoiser'
+        )
+      )
     } else {
-      // Register plugin
       this.agoraRTC.registerExtensions([denoiser])
-      // Listen for Wasm file loading failure events, possible reasons include incorrect Wasm file path
       denoiser.onloaderror = async () => {
-        // If Wasm file fails to load, you can disable the plugin, for example:
-        // openDenoiserButton.enabled = false;
-        console.error('[DenoiserProcessor]', 'Failed to load AI Denoiser!')
+        logger.error(
+          formatLog(
+            'initDenoiserProcessor',
+            'Failed to load AI Denoiser (Wasm load error)'
+          )
+        )
         try {
           await this.processor?.disable()
         } catch (error) {
-          console.error(
-            '[DenoiserProcessor]',
-            'Failed to disable AI Denoiser!',
-            error
+          logger.error(
+            formatLog(
+              'initDenoiserProcessor',
+              'Failed to disable after load error',
+              error
+            )
           )
         }
       }
-      // Create IAIDenoiserProcessor instance
       const processor = denoiser.createProcessor()
       this.processor = processor
-      // Enable plugin by default
       await this.processor.enable()
-      console.log('[DenoiserProcessor]', 'Initialized')
+      logger.info(
+        formatLog(
+          'initDenoiserProcessor',
+          'Initialized and enabled successfully'
+        )
+      )
     }
   }
 
-  // must be called after pipe processor
+  /**
+   * Sets the denoiser processor level. Must be called after pipe processor.
+   *
+   * @param level - The denoiser aggressiveness level (default: 'AGGRESSIVE')
+   */
   public async setDenoiserProcessorLevel(
     level: AIDenoiserProcessorLevel = 'AGGRESSIVE'
   ) {
     try {
-      console.log('[DenoiserProcessor]', 'setLevel', level)
       if (this.processor) {
         await this.processor.setLevel(level)
-        console.log('[DenoiserProcessor]', 'setLevel', level, 'success')
+        logger.debug(formatLog('setDenoiserProcessorLevel', `Set to ${level}`))
       }
     } catch (error) {
-      console.error('[DenoiserProcessor]', error, 'Failed to set denoise level')
+      logger.error(
+        formatLog('setDenoiserProcessorLevel', 'Failed to set level', error)
+      )
     }
   }
 
   public async enableDenoiserProcessor() {
-    console.log('[DenoiserProcessor]', 'prev', this.processor?.enabled)
     if (this.processor && !this.processor.enabled) {
       await this.processor.enable()
-      console.log('[DenoiserProcessor]', 'enable success')
+      logger.debug(formatLog('enableDenoiserProcessor', 'Enabled'))
     }
   }
 
   public async disableDenoiserProcessor() {
-    console.log('[DenoiserProcessor]', 'prev', this.processor?.enabled)
     if (this.processor?.enabled) {
       await this.processor.disable()
+      logger.debug(formatLog('disableDenoiserProcessor', 'Disabled'))
     }
   }
 
+  /**
+   * Creates local audio tracks with optional denoiser processing.
+   *
+   * @returns The created local tracks
+   */
   public async createTracks() {
     try {
       const audioTrack = await AgoraRTC.createMicrophoneAudioTrack({
@@ -212,29 +271,25 @@ export class RTCHelper extends EventHelper<
         AGC: true
       })
       if (this.processor) {
-        console.log(
-          '[createTracks]',
-          '[DenoiserProcessor]',
-          'pipe processor',
-          !!this.processor
-        )
+        logger.debug(formatLog('createTracks', 'Piping denoiser processor'))
         audioTrack.pipe(this.processor).pipe(audioTrack.processorDestination)
-        // // close ains.agc
-        // // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        // ;(this.processor as any).setParameter({ agcConfig: { enabled: false } })
       }
       this.localTracks.audioTrack = audioTrack
-      // must be called after pipe processor
       await this.setDenoiserProcessorLevel()
+      logger.info(formatLog('createTracks', 'Audio track created'))
     } catch (error) {
-      console.error(error, 'Failed to create tracks')
-      // console.error( JSON.stringify(error), 'Failed to create tracks')
+      logger.error(formatLog('createTracks', 'Failed to create tracks', error))
     } finally {
       this.emit(ERTCCustomEvents.LOCAL_TRACKS_CHANGED, this.localTracks)
       return this.localTracks
     }
   }
 
+  /**
+   * Publishes local audio/video tracks to the channel.
+   *
+   * @throws {@link NotFoundError} When RTC client is not initialized
+   */
   public async publishTracks() {
     if (!this.client) {
       throw new NotFoundError('RTC client is not initialized')
@@ -245,87 +300,139 @@ export class RTCHelper extends EventHelper<
     }
     if (tracks.length) {
       await this.client.publish(tracks)
+      logger.info(
+        formatLog('publishTracks', `Published ${tracks.length} track(s)`)
+      )
     }
   }
 
   public resetMicVolume() {
     this.localTracks.audioTrack?.setVolume(0)
-    console.log('Reset mic volume')
+    logger.debug(formatLog('resetMicVolume', 'Volume set to 0'))
   }
 
+  /**
+   * Cleans up all RTC resources: unbinds events, closes tracks, disables
+   * denoiser, leaves channel, and removes all listeners.
+   */
   public async exitAndCleanup() {
+    logger.info(formatLog('exitAndCleanup', 'Starting cleanup'))
+    // Unbind RTC events first
+    this.unbindRtcEvents()
+
     try {
       this.localTracks?.audioTrack?.close()
     } catch (error) {
-      console.error(error, 'Failed to destroy tracks')
+      logger.error(formatLog('exitAndCleanup', 'Failed to close tracks', error))
     }
-    //console.log('Leaving channel')
+
+    // Cleanup denoiser processor
+    try {
+      if (this.processor) {
+        await this.processor.disable()
+        this.processor = null
+      }
+    } catch (error) {
+      logger.error(
+        formatLog(
+          'exitAndCleanup',
+          'Failed to cleanup denoiser processor',
+          error
+        )
+      )
+    }
+
     this.localTracks = {}
     this.joined = false
     try {
       await this.client?.leave()
     } catch (error) {
-      console.error(error, 'Failed to leave channel')
+      logger.error(
+        formatLog('exitAndCleanup', 'Failed to leave channel', error)
+      )
     }
     try {
       this.client?.removeAllListeners()
     } catch (error) {
-      console.error(error, 'Failed to remove all listeners')
+      logger.error(
+        formatLog('exitAndCleanup', 'Failed to remove all listeners', error)
+      )
     }
+    logger.info(formatLog('exitAndCleanup', 'Cleanup complete'))
   }
 
   private bindRtcEvents() {
     // microphone changed
     this.agoraRTC.onMicrophoneChanged = async (info: DeviceInfo) => {
-      console.log('cjtest RTC event onMicrophoneChanged', info)
+      logger.debug(
+        formatLog(
+          'onMicrophoneChanged',
+          `device: ${info.device.label}, state: ${info.state}`
+        )
+      )
       this.emit(ERTCCustomEvents.MICROPHONE_CHANGED, info)
       await this._eHandleMicrophoneChanged(info)
     }
-    // audio metadata (pts)
-    // this.client.on(
-    //   ERTCEvents.AUDIO_METADATA,
-    //   this._eHandleAudioMetadata.bind(this)
-    // )
-    this.client.on(ERTCEvents.AUDIO_PTS, this._eHandleAudioPTS.bind(this))
+    // audio pts
+    this.client.on(ERTCEvents.AUDIO_PTS, this._boundHandleAudioPTS)
     // rtc network quality
-    this.client.on(
-      ERTCEvents.NETWORK_QUALITY,
-      this._eHandleNetworkQuality.bind(this)
-    )
+    this.client.on(ERTCEvents.NETWORK_QUALITY, this._boundHandleNetworkQuality)
     // user published
-    this.client.on(
-      ERTCEvents.USER_PUBLISHED,
-      this._eHandleUserPublished.bind(this)
-    )
+    this.client.on(ERTCEvents.USER_PUBLISHED, this._boundHandleUserPublished)
     // user unpublished
     this.client.on(
       ERTCEvents.USER_UNPUBLISHED,
-      this._eHandleUserUnpublished.bind(this)
+      this._boundHandleUserUnpublished
     )
     // stream data
-    this.client.on(
-      ERTCEvents.STREAM_MESSAGE,
-      this._eHandleStreamMessage.bind(this)
-    )
+    this.client.on(ERTCEvents.STREAM_MESSAGE, this._boundHandleStreamMessage)
     // user joined
-    this.client.on(ERTCEvents.USER_JOINED, this._eHandleUserJoined.bind(this))
+    this.client.on(ERTCEvents.USER_JOINED, this._boundHandleUserJoined)
     // user left
-    this.client.on(ERTCEvents.USER_LEFT, this._eHandleUserLeft.bind(this))
+    this.client.on(ERTCEvents.USER_LEFT, this._boundHandleUserLeft)
     // connection state change
     this.client.on(
       ERTCEvents.CONNECTION_STATE_CHANGE,
-      this._eHandleConnectionStateChange.bind(this)
+      this._boundHandleConnectionStateChange
     )
+    logger.debug(formatLog('bindRtcEvents', 'All RTC events bound'))
+  }
+
+  private unbindRtcEvents() {
+    // Clear global microphone handler
+    this.agoraRTC.onMicrophoneChanged = undefined
+    // audio pts
+    this.client.off(ERTCEvents.AUDIO_PTS, this._boundHandleAudioPTS)
+    // rtc network quality
+    this.client.off(ERTCEvents.NETWORK_QUALITY, this._boundHandleNetworkQuality)
+    // user published
+    this.client.off(ERTCEvents.USER_PUBLISHED, this._boundHandleUserPublished)
+    // user unpublished
+    this.client.off(
+      ERTCEvents.USER_UNPUBLISHED,
+      this._boundHandleUserUnpublished
+    )
+    // stream data
+    this.client.off(ERTCEvents.STREAM_MESSAGE, this._boundHandleStreamMessage)
+    // user joined
+    this.client.off(ERTCEvents.USER_JOINED, this._boundHandleUserJoined)
+    // user left
+    this.client.off(ERTCEvents.USER_LEFT, this._boundHandleUserLeft)
+    // connection state change
+    this.client.off(
+      ERTCEvents.CONNECTION_STATE_CHANGE,
+      this._boundHandleConnectionStateChange
+    )
+    logger.debug(formatLog('unbindRtcEvents', 'All RTC events unbound'))
   }
 
   private async _eHandleMicrophoneChanged(changedDevice: DeviceInfo) {
-    console.log('[microphone-changed]', changedDevice)
     const microphoneTrack = this.localTracks.audioTrack
-    console.log(
-      'cjtest microphoneTrack has microphoneTrack:',
-      !!microphoneTrack,
-      'changedDevice',
-      changedDevice
+    logger.debug(
+      formatLog(
+        'onMicrophoneChanged',
+        `hasMicTrack: ${!!microphoneTrack}, device: ${changedDevice.device.label}, state: ${changedDevice.state}`
+      )
     )
     if (!microphoneTrack) {
       return
@@ -334,35 +441,23 @@ export class RTCHelper extends EventHelper<
       microphoneTrack.setDevice(changedDevice.device.deviceId)
       return
     }
-    console.log(
-      'cjtest microphoneTrack.getTrackLabel()',
-      changedDevice.device.label,
-      microphoneTrack.getTrackLabel()
-    )
     const oldMicrophones = await this.agoraRTC.getMicrophones()
     if (oldMicrophones[0]) {
+      logger.debug(
+        formatLog(
+          'onMicrophoneChanged',
+          `Switching to fallback device: ${oldMicrophones[0].label}`
+        )
+      )
       microphoneTrack.setDevice(oldMicrophones[0].deviceId)
     }
   }
-
-  // private _eHandleAudioMetadata(metadata: Uint8Array) {
-  //   // console.log('[audio-metadata]', metadata)
-  //   // try {
-  //   //   const pts64 = Number(new DataView(metadata.buffer).getBigUint64(0, true))
-  //   //   console.log('[audio-metadata]', pts64)
-  //   //   this.transcript.setPts(pts64)
-  //   // } catch (error) {
-  //   //   console.error('[audio-metadata]', error, 'Failed to parse audio metadata')
-  //   // }
-  //   this.emit(ERTCEvents.AUDIO_METADATA, metadata)
-  // }
 
   private _eHandleAudioPTS(pts: number) {
     this.emit(ERTCEvents.AUDIO_PTS, pts)
   }
 
   private async _eHandleNetworkQuality(quality: NetworkQuality) {
-    console.log('[network-quality]', quality)
     this.emit(ERTCEvents.NETWORK_QUALITY, quality)
   }
 
@@ -370,12 +465,11 @@ export class RTCHelper extends EventHelper<
     user: IAgoraRTCRemoteUser,
     mediaType: 'audio' | 'video'
   ) {
-    console.log(
-      {
-        userId: user.uid,
-        mediaType
-      },
-      '[user-published] subscribing to user'
+    logger.info(
+      formatLog(
+        'onUserPublished',
+        `userId: ${user.uid}, mediaType: ${mediaType}`
+      )
     )
     await this.client.subscribe(user, mediaType)
     if (
@@ -383,16 +477,14 @@ export class RTCHelper extends EventHelper<
       user.audioTrack &&
       !user.audioTrack.isPlaying
     ) {
-      console.log(
-        {
-          userId: user.uid
-        },
-        '[user-published] remote mediaType audio'
+      logger.debug(
+        formatLog(
+          'onUserPublished',
+          `Playing remote audio for userId: ${user.uid}`
+        )
       )
-      // user.audioTrack?.setVolume(80)
       user.audioTrack.play()
     }
-    // emit event
     this.emit(ERTCCustomEvents.REMOTE_USER_CHANGED, { user, mediaType })
   }
 
@@ -400,56 +492,35 @@ export class RTCHelper extends EventHelper<
     user: IAgoraRTCRemoteUser,
     mediaType: 'audio' | 'video'
   ) {
-    console.log(
-      {
-        userId: user.uid,
-        mediaType
-      },
-      '[user-unpublished] unsubscribing from user'
+    logger.debug(
+      formatLog(
+        'onUserUnpublished',
+        `userId: ${user.uid}, mediaType: ${mediaType}`
+      )
     )
     // !SPECIAL CASE[unsubscribe]
     // when remote agent joined, it will frequently unsubscribe and resubscribe in short time
     // so we don't unsubscribe it
-    // await this.client.unsubscribe(user, mediaType)
-    // this.emit(ERTCServicesEvents.REMOTE_USER_CHANGED, {
-    //   userId: user.uid,
-    //   audioTrack: user.audioTrack,
-    // })
   }
 
   private _eHandleStreamMessage(
     user: IAgoraRTCRemoteUser,
     message: string | Uint8Array
   ) {
-    console.log(
-      {
-        user: user,
-        message
-      },
-      '[stream-message] received message'
-    )
+    logger.debug(formatLog('onStreamMessage', `userId: ${user.uid}`))
     this.emit(ERTCEvents.STREAM_MESSAGE, user, message)
   }
 
   private _eHandleUserJoined(user: IAgoraRTCRemoteUser) {
-    console.log(
-      {
-        userId: user.uid
-      },
-      'user joined'
-    )
+    logger.info(formatLog('onUserJoined', `userId: ${user.uid}`))
     this.emit(ERTCCustomEvents.REMOTE_USER_JOINED, {
       userId: user.uid
     })
   }
 
   private _eHandleUserLeft(user: IAgoraRTCRemoteUser, reason?: string) {
-    console.log(
-      {
-        userId: user.uid,
-        reason
-      },
-      'user left'
+    logger.info(
+      formatLog('onUserLeft', `userId: ${user.uid}, reason: ${reason}`)
     )
     this.emit(ERTCCustomEvents.REMOTE_USER_LEFT, {
       userId: user.uid,
@@ -463,12 +534,11 @@ export class RTCHelper extends EventHelper<
     reason: string
   ) {
     const curChannelName = this.client.channelName
-    console.log(
-      'connection state change',
-      curState,
-      revState,
-      reason,
-      curChannelName
+    logger.info(
+      formatLog(
+        'onConnectionStateChange',
+        `${revState} -> ${curState}, reason: ${reason}, channel: ${curChannelName}`
+      )
     )
     this.emit(ERTCEvents.CONNECTION_STATE_CHANGE, {
       curState,

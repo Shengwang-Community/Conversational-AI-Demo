@@ -18,7 +18,6 @@ export class EventHelper<T> {
     const cbs = this._eventMap.get(evt) ?? []
     cbs.push(cb as any)
     this._eventMap.set(evt, cbs)
-    console.debug(`Subscribed to event: ${String(evt)}`)
     return this
   }
 
@@ -29,14 +28,12 @@ export class EventHelper<T> {
         evt,
         cbs.filter((it) => it !== cb)
       )
-      console.debug(`Unsubscribed from event: ${String(evt)}`)
     }
     return this
   }
 
   removeAllEventListeners(): void {
     this._eventMap.clear()
-    console.debug('Removed all event listeners')
   }
 
   emit<Key extends keyof T>(evt: Key, ...args: any[]) {
@@ -52,7 +49,6 @@ export class EventHelper<T> {
         console.error(`Error handling event ${String(evt)}: ${details}`)
       }
     }
-    console.debug({ args }, `Emitted event: ${String(evt)}`)
     return this
   }
 }
