@@ -40,7 +40,8 @@ Please follow these steps to quickly integrate and use the ConversationalAI API:
         rtcEngine: rtcEngine, 
         rtmEngine: rtmEngine, 
         renderMode: .words, 
-        enableLog: true
+        enableLog: true,
+        enableRenderModeFallback: Bool = true
     )
    ```
 

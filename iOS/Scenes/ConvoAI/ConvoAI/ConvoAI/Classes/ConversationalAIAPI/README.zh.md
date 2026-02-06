@@ -39,7 +39,8 @@
         rtcEngine: rtcEngine, 
         rtmEngine: rtmEngine, 
         renderMode: .words, 
-        enableLog: true
+        enableLog: true,
+        enableRenderModeFallback: Bool = true
     )
    ```
 
