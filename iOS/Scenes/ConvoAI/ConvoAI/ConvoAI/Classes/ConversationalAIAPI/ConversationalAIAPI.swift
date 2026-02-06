@@ -654,6 +654,8 @@ public enum MessageType: String, CaseIterable {
     @objc public var renderMode: TranscriptRenderMode
     /// Whether to enable detailed logging
     @objc public var enableLog: Bool
+    /// Whether to enable render mode fallback
+    @objc public var enableRenderModeFallback: Bool
     
     /// Initialize ConversationalAI API configuration
     /// - Parameters:
@@ -661,11 +663,13 @@ public enum MessageType: String, CaseIterable {
     ///   - rtmEngine: RTM client instance
     ///   - renderMode: Transcript rendering mode
     ///   - enableLog: Enable logging flag
-    @objc public init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, renderMode: TranscriptRenderMode, enableLog: Bool = true) {
+    ///   - enableRenderModeFallback: Enable render mode fallback flag
+    @objc public init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, renderMode: TranscriptRenderMode, enableLog: Bool = true, enableRenderModeFallback: Bool = true) {
         self.rtcEngine = rtcEngine
         self.rtmEngine = rtmEngine
         self.renderMode = renderMode
         self.enableLog = enableLog
+        self.enableRenderModeFallback = enableRenderModeFallback
     }
     
     /// Convenience initializer with default settings

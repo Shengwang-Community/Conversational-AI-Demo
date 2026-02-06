@@ -44,7 +44,8 @@
        rtcEngine = rtcEngineInstance,
        rtmClient = rtmClientInstance,
        renderMode = TranscriptRenderMode.Word, // 或 TranscriptRenderMode.Text
-       enableLog = true
+       enableLog = true,
+       enableRenderModeFallback = true
    )
    ```
 
