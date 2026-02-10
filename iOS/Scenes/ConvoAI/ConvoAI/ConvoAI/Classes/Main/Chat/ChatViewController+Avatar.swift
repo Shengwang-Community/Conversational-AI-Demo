@@ -15,6 +15,8 @@ extension ChatViewController {
         windowState.showAvatar = true
         if let avatar = AppContext.settingManager().avatar, let url = URL(string: avatar.bgImageUrl.stringValue()) {
             remoteAvatarView.backgroundImageView.kf.setImage(with: url)
+        } else {
+            remoteAvatarView.backgroundImageView.image = UIImage.ag_named("img_avatar_place_holder")
         }
         updateWindowContent()
     }
@@ -30,6 +32,8 @@ extension ChatViewController {
     }
     
     internal func isEnableAvatar() -> Bool {
-        return AppContext.shared.avatarEnable || AppContext.settingManager().avatar != nil
+        let preset = AppContext.settingManager().preset
+        let isPresetSupportAvatar = preset?.isSupportAvatar == true
+        return AppContext.shared.avatarEnable || AppContext.settingManager().avatar != nil || isPresetSupportAvatar
     }
 }

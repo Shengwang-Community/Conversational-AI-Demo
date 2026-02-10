@@ -24,6 +24,11 @@ extension ResourceManager {
             public static let agents = ResourceManager.localizedString("main.agents")
             public static let digitalHuman = ResourceManager.localizedString("main.digitalHuman")
             public static let mine = ResourceManager.localizedString("main.mine")
+            
+            public static let updateAlertTitle = ResourceManager.localizedString("main.update.alert.title")
+            public static let updateAlertVersionInfo = ResourceManager.localizedString("main.update.alert.version.info")
+            public static let updateAlertUpdateButton = ResourceManager.localizedString("main.update.alert.update.button")
+            public static let updateAlertLaterText = ResourceManager.localizedString("main.update.alert.later.text")
         }
 
         public enum Scene {

@@ -4,7 +4,9 @@ import android.content.Context
 import com.google.gson.Gson
 import io.agora.scene.common.AgentApp
 import io.agora.scene.common.constant.EnvConfig
+import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.util.LocalStorageUtil
+import io.agora.scene.common.util.LocaleManager
 import java.io.BufferedReader
 
 
@@ -47,11 +49,39 @@ object DebugConfigSettings {
         this.convoAIParameter = apiParameter
     }
 
-    var isDebug: Boolean = false
-        private set
+    @Volatile
+    private var _isDebug: Boolean = false
+    
+    var isDebug: Boolean
+        get() = _isDebug
+        private set(value) {
+            _isDebug = value
+            // Persist debug state to LocaleManager
+            try {
+                LocaleManager.getInstance().setDebugMode(AgentApp.instance(), value)
+            } catch (e: Exception) {
+                // If LocaleManager is not initialized, just set the value
+                // This can happen during initialization
+            }
+        }
 
     fun enableDebugMode(isDebug: Boolean) {
         this.isDebug = isDebug
+    }
+    
+    /**
+     * Load debug state from LocaleManager
+     * Should be called after LocaleManager is initialized
+     */
+    private fun loadDebugState(context: Context) {
+        try {
+            val savedDebug = LocaleManager.getInstance().getDebugMode(context)
+            // Directly set the field without triggering setter to avoid circular save
+            _isDebug = savedDebug
+        } catch (e: Exception) {
+            // If LocaleManager is not initialized, keep default value
+            e.printStackTrace()
+        }
     }
 
     var isAudioDumpEnabled: Boolean = false
@@ -86,6 +116,15 @@ object DebugConfigSettings {
             val jsonString =
                 context.assets.open(DEV_CONFIG_FILE).bufferedReader().use(BufferedReader::readText)
             instance = Gson().fromJson(jsonString, DevEnvConfig::class.java)
+            getServerConfig().apply {
+                ServerConfig.detectEnvName(this)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        // Load debug state from LocaleManager after initialization
+        try {
+            loadDebugState(context)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -121,7 +160,7 @@ object DebugConfigSettings {
         if (counts > 7) {
             counts = 0
             enableDebugMode(true)
-            DebugButton.getInstance(AgentApp.instance()).show()
+            DebugButton.getInstance().show()
             // Immediately notify DebugManager to activate debug for current activity
             DebugManager.onDebugModeEnabled()
         }

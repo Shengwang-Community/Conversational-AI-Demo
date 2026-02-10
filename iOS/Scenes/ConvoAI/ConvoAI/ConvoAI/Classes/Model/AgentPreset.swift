@@ -72,6 +72,8 @@ struct AgentPreset: Codable {
     let supportSal: Bool?
     var defaultAvatar: String?
     let sipVendorCalleeNumbers:[VendorCalleeNumber]?
+    let avatarVendor: String?
+    let isSupportAvatar: Bool?
 
     enum CodingKeys: String, CodingKey {
         case name
@@ -90,5 +92,7 @@ struct AgentPreset: Codable {
         case sipVendorCalleeNumbers = "sip_vendor_callee_numbers"
         case enableSal = "advanced_features_enable_sal"
         case supportSal = "is_support_sal"
+        case avatarVendor = "avatar_vendor"
+        case isSupportAvatar = "is_support_avatar"
     }
 }

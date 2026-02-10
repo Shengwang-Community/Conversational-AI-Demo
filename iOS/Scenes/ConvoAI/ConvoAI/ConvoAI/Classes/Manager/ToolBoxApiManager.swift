@@ -183,6 +183,37 @@ class ToolBoxApiManager: NSObject {
                                          success: success,
                                          failure: failure)
     }
+    
+    /// Get environment dynamic configuration
+    /// - Parameters:
+    ///   - hostUrl: The host URL to use for the request
+    ///   - env: The environment string (e.g., "dev", "testing", "lab_testing")
+    ///   - success: success callback with environment dynamic config data
+    ///   - failure: failure callback
+    public func getEnvDynamicConfigs(hostUrl: String,
+                                     env: String,
+                                     success: NetworkManager.SuccessClosure?,
+                                     failure: NetworkManager.FailClosure?) {
+        let url = "\(hostUrl)/convoai/v5/envs/\(env)/configs"
+
+        NetworkManager.shared.getRequest(urlString: url,
+                                         params: nil,
+                                         success: success,
+                                         failure: failure)
+    }
+    /// Get latest demo version information
+    /// - Parameters:
+    ///   - success: success callback with latest demo version data
+    ///   - failure: failure callback
+    public func getLatestDemoVersion(success: NetworkManager.SuccessClosure?,
+                                     failure: NetworkManager.FailClosure?) {
+        let url = "\(AppContext.shared.baseServerUrl)/convoai/v5/demo/version/latest"
+        
+        NetworkManager.shared.getRequest(urlString: url,
+                                         params: nil,
+                                         success: success,
+                                         failure: failure)
+    }
 }
 
 // MARK: - TimeUtils

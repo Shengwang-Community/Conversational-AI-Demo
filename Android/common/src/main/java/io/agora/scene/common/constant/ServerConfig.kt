@@ -61,7 +61,7 @@ object ServerConfig {
         private set
 
     @JvmStatic
-    var appBuildNo: String = ""
+    var appVersionCode: Int = 0
         private set
 
     @JvmStatic
@@ -83,27 +83,44 @@ object ServerConfig {
     var rtcAppCert: String = ""
         private set
 
+    @JvmStatic
+    var labTestingVid: String = ""
+        private set
+
     private val buildEnvConfig: EnvConfig = EnvConfig()
 
     val isBuildEnv: Boolean get() = buildEnvConfig.toolboxServerHost == toolBoxUrl
 
     fun initBuildConfig(
-        appBuildNo: String,
-        envName: String,
         toolboxHost: String,
         rtcAppId: String,
         rtcAppCert: String,
-        appVersionName: String
+        appVersionName: String,
+        appVersionCode: Int
     ) {
-        this.appBuildNo = appBuildNo
         this.appVersionName = appVersionName
+        this.appVersionCode = appVersionCode
         buildEnvConfig.apply {
-            this.envName = envName
             this.toolboxServerHost = toolboxHost
             this.rtcAppId = rtcAppId
             this.rtcAppCertificate = rtcAppCert
         }
         reset()
+    }
+
+    fun detectEnvName(config: List<EnvConfig>) {
+        if (buildEnvConfig.envName.isEmpty()) {
+            config.find {
+                it.toolboxServerHost == buildEnvConfig.toolboxServerHost && it.rtcAppId == buildEnvConfig.rtcAppId
+            }?.envName?.also {
+                buildEnvConfig.envName = it
+                val isSameEnv = buildEnvConfig.toolboxServerHost == toolBoxUrl &&
+                        buildEnvConfig.rtcAppId == rtcAppId
+                if (isSameEnv){
+                    envName = it
+                }
+            }
+        }
     }
 
     fun updateDebugConfig(debugConfig: EnvConfig) {
@@ -112,6 +129,11 @@ object ServerConfig {
         this.rtcAppId = debugConfig.rtcAppId
         this.rtcAppCert = debugConfig.rtcAppCertificate
         ApiManager.setBaseURL(toolBoxUrl)
+    }
+
+    fun updateLabTestingConfig(appId: String, vid: String) {
+        this.rtcAppId = appId
+        this.labTestingVid = vid
     }
 
     fun reset() {
