@@ -123,16 +123,19 @@ extension TranscriptDelegate {
 ///   - rtcEngine: The RTC engine instance used for real-time communication
 ///   - renderMode: The mode of transcript rendering (Auto, Text, or Word)
 ///   - callback: Callback interface for transcript updates
+///   - enableRenderModeFallback: Whether to enable render mode fallback
 @objc public class TranscriptRenderConfig: NSObject {
     weak var rtcEngine: AgoraRtcEngineKit?
     weak var rtmEngine: AgoraRtmClientKit?
     weak var delegate: TranscriptDelegate?
     let renderMode: TranscriptRenderMode
+    let enableRenderModeFallback: Bool
 
-    init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, renderMode: TranscriptRenderMode, delegate: TranscriptDelegate?) {
+    init(rtcEngine: AgoraRtcEngineKit, rtmEngine: AgoraRtmClientKit, renderMode: TranscriptRenderMode, enableRenderModeFallback: Bool, delegate: TranscriptDelegate?) {
         self.rtmEngine = rtmEngine
         self.rtcEngine = rtcEngine
         self.renderMode = renderMode
+        self.enableRenderModeFallback = enableRenderModeFallback
         self.delegate = delegate
     }
 }
@@ -143,10 +146,9 @@ extension TranscriptDelegate {
 /// Manages the processing and rendering of transcript in conversation
 ///
 @objc public class TranscriptController: NSObject {
-    public static let version: String = "2.1.0"
+    public static let version: String = "2.0.2"
     static let tag = "[Transcript]"
     static let uiTag = "[Transcript-UI]"
-
 
     enum MessageType: String {
         case assistant = "assistant.transcription"
@@ -174,9 +176,7 @@ extension TranscriptDelegate {
     private var lastPublish: String? = nil
     private var lastFinishMessage: Transcript? = nil
     private var lastInterruptEvent: InterruptEvent? = nil
-    
     private var renderConfig: TranscriptRenderConfig? = nil
-    
     private var stateMessage: TranscriptMessage? = nil
     
     deinit {
@@ -184,11 +184,21 @@ extension TranscriptDelegate {
     }
     
     func callMessagePrint(tag: String, msg: String) {
-        print("\(tag) \(msg)")
         delegate?.onDebugLog("\(tag) \(msg)")
     }
     
     private let queue = DispatchQueue(label: "com.voiceagent.messagequeue", attributes: .concurrent)
+    
+    private func startEventLoopTimer() {
+        timer?.invalidate()
+        timer = nil
+        timer = Timer.scheduledTimer(timeInterval: 0.2, target: self, selector: #selector(eventLoop), userInfo: nil, repeats: true)
+    }
+    
+    private func stopEventLoopTimer() {
+        timer?.invalidate()
+        timer = nil
+    }
     
     private func handleMessage(_ message: TranscriptMessage) {
         if message.object == MessageType.interrupt.rawValue {
@@ -233,15 +243,18 @@ extension TranscriptDelegate {
         }
         if renderConfig?.renderMode == .words {
             if let words = message.words, !words.isEmpty {
-                //TODO:
                 renderMode = .words
-                timer?.invalidate()
-                timer = nil
-                timer = Timer.scheduledTimer(timeInterval: 0.2, target: self, selector: #selector(eventLoop), userInfo: nil, repeats: true)
+                startEventLoopTimer()
             } else {
-                renderMode = .text
-                timer?.invalidate()
-                timer = nil
+                // Only execute fallback logic when enableRenderModeFallback is true
+                if renderConfig?.enableRenderModeFallback == true {
+                    renderMode = .text
+                    stopEventLoopTimer()
+                } else {
+                    // No fallback, keep words mode
+                    renderMode = .words
+                    startEventLoopTimer()
+                }
             }
         } else if (renderConfig?.renderMode == .text) {
             renderMode = .text
@@ -492,7 +505,7 @@ extension TranscriptController {
         rtcEngine.setPlaybackAudioFrameBeforeMixingParametersWithSampleRate(44100, channel: 1)
         
         rtmEngine.addDelegate(self)
-        callMessagePrint(tag: TranscriptController.tag, msg: ">>> [setupWithConfig]")
+        callMessagePrint(tag: TranscriptController.tag, msg: ">>> [setupWithConfig], renderMode: \(config.renderMode), enableFallback:\(config.enableRenderModeFallback)")
     }
         
     @objc public func reset() {
@@ -507,6 +520,7 @@ extension TranscriptController {
         messageQueue.removeAll()
     }
     
+    static var flag = 0
     private func inputRtmMessage(message: Data?, publisherId: String) {
         guard let data = message else { return }
         do {
