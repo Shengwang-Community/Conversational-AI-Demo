@@ -28,12 +28,23 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * @property rtcEngine The RTC engine instance used for real-time communication
  * @property rtmClient The RTC engine instance used for real-time communication
  * @property renderMode The mode of subtitle rendering (Idle, Text, or Word)
+ * @property enableRenderModeFallback Whether to enable render mode fallback when Word mode is configured
+ *           but server doesn't provide word-level data. Default is true.
  * @property callback Callback interface for subtitle updates
  */
 data class TranscriptConfig(
     val rtcEngine: RtcEngine,
     val rtmClient: RtmClient,
     val renderMode: TranscriptRenderMode,
+    /**
+     * Whether to enable render mode fallback when Word mode is configured but server
+     * doesn't provide word-level data.
+     *
+     * - When true (default): Automatically falls back to Text mode if server doesn't return word-level timestamps.
+     * - When false: Stays in Word mode regardless. WARNING: This may result in no subtitles being displayed
+     *   if the server doesn't support word-level transcription.
+     */
+    val enableRenderModeFallback: Boolean = true,
     val callback: IConversationTranscriptCallback?
 )
 
@@ -473,14 +484,25 @@ internal class TranscriptController(private val config: TranscriptConfig) : IRtc
                 if (words != null) {
                     TranscriptRenderMode.Word
                 } else {
-                    TranscriptRenderMode.Text
+                    if (config.enableRenderModeFallback) {
+                        TranscriptRenderMode.Text
+                    } else {
+                        callMessagePrint(
+                            TAG,
+                            "[!] WARNING: Word mode configured but server returned no word-level data. " +
+                                    "enableRenderModeFallback is disabled, staying in Word mode. " +
+                                    "This may result in no subtitles being displayed."
+                        )
+                        TranscriptRenderMode.Word
+                    }
                 }
             } else {
                 TranscriptRenderMode.Text
             }
             callMessagePrint(
                 TAG,
-                "this:0x${this.hashCode().toString(16)} version:$ConversationalAIAPI_VERSION RenderMode:$mRenderMode"
+                "this:0x${this.hashCode().toString(16)} version:$ConversationalAIAPI_VERSION RenderMode:$mRenderMode " +
+                        "enableRenderModeFallback:${config.enableRenderModeFallback}"
             )
         }
     }

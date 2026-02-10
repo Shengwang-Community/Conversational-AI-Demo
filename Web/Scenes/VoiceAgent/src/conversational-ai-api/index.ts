@@ -1,7 +1,7 @@
 import { logger as agoraLogger } from '@agora-js/report'
 import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng'
 import type { ChannelType, RTMClient, RTMEvents } from 'agora-rtm'
-
+import { ELoggerType, factoryFormatLog, logger, genTraceID } from './utils/logger'
 import {
   type EAgentState,
   EChatMessagePriority,
@@ -23,24 +23,33 @@ import {
   type TMessageReceipt,
   type TModuleError,
   type TStateChangeEvent
-} from '@/conversational-ai-api/type'
-import { factoryFormatLog } from '@/conversational-ai-api/utils'
-import { EventHelper } from '@/conversational-ai-api/utils/event'
-import { CovSubRenderController } from '@/conversational-ai-api/utils/sub-render'
-import { ELoggerType, logger } from '@/lib/logger'
-import { genTranceID } from '@/lib/utils'
+} from './type'
+import { EventHelper } from './utils/event'
+import { CovSubRenderController } from './utils/sub-render'
 
 const TAG = 'ConversationalAIAPI'
 // const CONSOLE_LOG_PREFIX = `[${TAG}]`
-const VERSION = '1.8.0'
+const VERSION = '2.0.2'
 
 const formatLog = factoryFormatLog({ tag: TAG })
 
+/**
+ * Configuration options for initializing ConversationalAIAPI.
+ *
+ * @remarks
+ * - `enableRenderModeFallback` defaults to `true` when not provided
+ */
 export interface IConversationalAIAPIConfig {
+  /** RTC engine instance */
   rtcEngine: IAgoraRTCClient
+  /** RTM engine instance */
   rtmEngine: RTMClient
+  /** Transcript render mode */
   renderMode?: ETranscriptHelperMode
+  /** Enable internal logging */
   enableLog?: boolean
+  /** Enable render mode fallback (default: true) */
+  enableRenderModeFallback?: boolean
 }
 
 /**
@@ -71,7 +80,8 @@ export interface IConversationalAIAPIConfig {
  * const api = ConversationalAIAPI.init({
  *   rtcEngine: rtcClient,
  *   rtmEngine: rtmClient,
- *   renderMode: ETranscriptHelperMode.REALTIME
+ *   renderMode: ETranscriptHelperMode.WORD,
+ *   enableRenderModeFallback: true
  * });
  *
  * // Subscribe to a channel
@@ -147,9 +157,16 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
   protected rtcEngine: IAgoraRTCClient | null = null
   protected rtmEngine: RTMClient | null = null
   protected renderMode: ETranscriptHelperMode = ETranscriptHelperMode.UNKNOWN
+  protected enableRenderModeFallback: boolean = true
   protected channel: string | null = null
   protected covSubRenderController: CovSubRenderController
   protected enableLog: boolean = false
+
+  // Bound event handlers (to ensure same reference for on/off)
+  private _boundHandleRtcAudioPTS = this._handleRtcAudioPTS.bind(this)
+  private _boundHandleRtmMessage = this._handleRtmMessage.bind(this)
+  private _boundHandleRtmPresence = this._handleRtmPresence.bind(this)
+  private _boundHandleRtmStatus = this._handleRtmStatus.bind(this)
 
   constructor() {
     super()
@@ -214,7 +231,8 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       rtmEngine: this.rtmEngine,
       renderMode: this.renderMode,
       channel: this.channel,
-      enableLog: this.enableLog
+      enableLog: this.enableLog,
+      enableRenderModeFallback: this.enableRenderModeFallback
     }
   }
 
@@ -225,12 +243,10 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
    * It must be called before any other methods of ConversationalAIAPI can be used.
    *
    * @remarks
-   * - Only one instance can be initialized at a time
-   * - Throws error if already initialized
+   * - Reuses existing instance if already initialized
    *
    * @param cfg - Configuration object for initializing the API
    * @returns The initialized instance of ConversationalAIAPI
-   * @throws {@link Error} If ConversationalAIAPI is already initialized
    * @since 1.6.0
    */
   public static init(cfg: IConversationalAIAPIConfig) {
@@ -242,6 +258,20 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     ConversationalAIAPI._instance.renderMode =
       cfg.renderMode ?? ETranscriptHelperMode.UNKNOWN
     ConversationalAIAPI._instance.enableLog = cfg.enableLog ?? false
+    ConversationalAIAPI._instance.enableRenderModeFallback =
+      cfg?.enableRenderModeFallback === undefined
+        ? true
+        : cfg.enableRenderModeFallback
+
+    logger.info(
+      formatLog(
+        'init',
+        `version: ${VERSION}`,
+        `renderMode: ${ConversationalAIAPI._instance.renderMode}`,
+        `enableLog: ${ConversationalAIAPI._instance.enableLog}`,
+        `enableRenderModeFallback: ${ConversationalAIAPI._instance.enableRenderModeFallback}`
+      )
+    )
 
     return ConversationalAIAPI._instance
   }
@@ -260,11 +290,21 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
    * @since 1.6.0
    */
   public subscribeMessage(channel: string) {
+    logger.info(
+      formatLog(
+        'subscribeMessage',
+        `channel: ${channel}`,
+        `renderMode: ${this.renderMode}`,
+        `enableRenderModeFallback: ${this.enableRenderModeFallback}`
+      )
+    )
     this.bindRtcEvents()
     this.bindRtmEvents()
 
     this.channel = channel
-    this.covSubRenderController.setMode(this.renderMode)
+    this.covSubRenderController.setMode(this.renderMode, {
+      enableRenderModeFallback: this.enableRenderModeFallback
+    })
     this.covSubRenderController.run()
   }
 
@@ -281,6 +321,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
    * @since 1.6.0
    */
   public unsubscribe() {
+    logger.info(formatLog('unsubscribe', `channel: ${this.channel}`))
     this.unbindRtcEvents()
     this.unbindRtmEvents()
 
@@ -301,6 +342,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
    * @since 1.6.0
    */
   public destroy() {
+    logger.info(formatLog('destroy', 'Destroying instance'))
     const instance = ConversationalAIAPI.getInstance()
     if (instance) {
       instance?.rtcEngine?.removeAllListeners()
@@ -308,14 +350,12 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       instance?.rtmEngine?.removeAllListeners()
       instance.rtmEngine = null
       instance.renderMode = ETranscriptHelperMode.UNKNOWN
+      instance.enableRenderModeFallback = true
       instance.channel = null
       instance.removeAllEventListeners()
       ConversationalAIAPI._instance = null
     }
-    this.callMessagePrint(
-      ELoggerType.debug,
-      `${ConversationalAIAPI.NAME} destroyed`
-    )
+    logger.info(formatLog('destroy', 'Instance destroyed'))
   }
 
   /**
@@ -387,10 +427,10 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
    * ```
    */
   public async sendText(agentUserId: string, message: IChatMessageText) {
-    const traceId = genTranceID()
+    const traceId = genTraceID()
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] [chat] ${agentUserId}`,
+      `>>> [traceID:${traceId}] [chat] ${agentUserId}`,
       message
     )
 
@@ -419,14 +459,14 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
 
       this.callMessagePrint(
         ELoggerType.debug,
-        `>>> [trancID:${traceId}] [chat]`,
+        `>>> [traceID:${traceId}] [chat]`,
         'sucessfully sent chat message',
         result
       )
     } catch (error: unknown) {
       this.callMessagePrint(
         ELoggerType.error,
-        `>>> [trancID:${traceId}] [chat]`,
+        `>>> [traceID:${traceId}] [chat]`,
         'failed to send chat message',
         error
       )
@@ -458,10 +498,10 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
    * ```
    */
   public async sendImage(agentUserId: string, message: IChatMessageImage) {
-    const traceId = genTranceID()
+    const traceId = genTraceID()
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] [chat] ${agentUserId}`,
+      `>>> [traceID:${traceId}] [chat] ${agentUserId}`,
       message
     )
 
@@ -490,14 +530,14 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
 
       this.callMessagePrint(
         ELoggerType.debug,
-        `>>> [trancID:${traceId}] [chat]`,
+        `>>> [traceID:${traceId}] [chat]`,
         'sucessfully sent chat message',
         result
       )
     } catch (error: unknown) {
       this.callMessagePrint(
         ELoggerType.error,
-        `>>> [trancID:${traceId}] [chat]`,
+        `>>> [traceID:${traceId}] [chat]`,
         'failed to send chat message',
         error
       )
@@ -519,10 +559,10 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
    * @since 1.6.0
    */
   public async interrupt(agentUserId: string) {
-    const traceId = genTranceID()
+    const traceId = genTraceID()
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] [interrupt]`,
+      `>>> [traceID:${traceId}] [interrupt]`,
       agentUserId
     )
 
@@ -540,14 +580,14 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       const result = await rtmEngine.publish(agentUserId, messageStr, options)
       this.callMessagePrint(
         ELoggerType.debug,
-        `>>> [trancID:${traceId}] [interrupt]`,
+        `>>> [traceID:${traceId}] [interrupt]`,
         'sucessfully sent interrupt message',
         result
       )
     } catch (error: unknown) {
       this.callMessagePrint(
         ELoggerType.error,
-        `>>> [trancID:${traceId}] [interrupt]`,
+        `>>> [traceID:${traceId}] [interrupt]`,
         'failed to send interrupt message',
         error
       )
@@ -618,7 +658,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     messageReceipt: TMessageReceipt
   ) {
     this.callMessagePrint(
-      ELoggerType.error,
+      ELoggerType.debug,
       `>>> ${EConversationalAIAPIEvents.MESSAGE_RECEIPT_UPDATED}`,
       agentUserId,
       messageReceipt
@@ -662,78 +702,51 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
   }
 
   private bindRtcEvents() {
-    // this.getCfg().rtcEngine.on(
-    //   ERTCEvents.AUDIO_METADATA,
-    //   this._handleRtcAudioMetadata.bind(this)
-    // )
     this.getCfg().rtcEngine.on(
       ERTCEvents.AUDIO_PTS,
-      this._handleRtcAudioPTS.bind(this)
+      this._boundHandleRtcAudioPTS
     )
   }
   private unbindRtcEvents() {
-    // this.getCfg().rtcEngine.off(
-    //   ERTCEvents.AUDIO_METADATA,
-    //   this._handleRtcAudioMetadata.bind(this)
-    // )
     this.getCfg().rtcEngine.off(
       ERTCEvents.AUDIO_PTS,
-      this._handleRtcAudioPTS.bind(this)
+      this._boundHandleRtcAudioPTS
     )
   }
   private bindRtmEvents() {
     // - message
     this.getCfg().rtmEngine.addEventListener(
       ERTMEvents.MESSAGE,
-      this._handleRtmMessage.bind(this)
+      this._boundHandleRtmMessage
     )
     // - presence
     this.getCfg().rtmEngine.addEventListener(
       ERTMEvents.PRESENCE,
-      this._handleRtmPresence.bind(this)
+      this._boundHandleRtmPresence
     )
     // - status
     this.getCfg().rtmEngine.addEventListener(
       ERTMEvents.STATUS,
-      this._handleRtmStatus.bind(this)
+      this._boundHandleRtmStatus
     )
   }
   private unbindRtmEvents() {
     // - message
     this.getCfg().rtmEngine.removeEventListener(
       ERTMEvents.MESSAGE,
-      this._handleRtmMessage.bind(this)
+      this._boundHandleRtmMessage
     )
     // - presence
     this.getCfg().rtmEngine.removeEventListener(
       ERTMEvents.PRESENCE,
-      this._handleRtmPresence.bind(this)
+      this._boundHandleRtmPresence
     )
     // - status
     this.getCfg().rtmEngine.removeEventListener(
       ERTMEvents.STATUS,
-      this._handleRtmStatus.bind(this)
+      this._boundHandleRtmStatus
     )
   }
-
-  // private _handleRtcAudioMetadata(metadata: Uint8Array) {
-  //   try {
-  //     const pts64 = Number(new DataView(metadata.buffer).getBigUint64(0, true))
-  //     this.callMessagePrint(
-  //       ELoggerType.debug,
-  //       `<<< ${ERTCEvents.AUDIO_METADATA}`,
-  //       pts64
-  //     )
-  //     this.covSubRenderController.setPts(pts64)
-  //   } catch (error) {
-  //     this.callMessagePrint(
-  //       ELoggerType.error,
-  //       `<<< ${ERTCEvents.AUDIO_METADATA}`,
-  //       metadata,
-  //       error
-  //     )
-  //   }
-  // }
 
   private _handleRtcAudioPTS(pts: number) {
     try {
@@ -754,10 +767,10 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
   }
 
   private _handleRtmMessage(message: RTMEvents.MessageEvent) {
-    const traceId = genTranceID()
+    const traceId = genTraceID()
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] ${ERTMEvents.MESSAGE}`,
+      `>>> [traceID:${traceId}] ${ERTMEvents.MESSAGE}`,
       `Publisher: ${message.publisher}, type: ${message.messageType}`
     )
     // Handle the message
@@ -768,7 +781,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
         const parsedMessage = JSON.parse(messageData)
         this.callMessagePrint(
           ELoggerType.debug,
-          `>>> [trancID:${traceId}] ${ERTMEvents.MESSAGE}`,
+          `>>> [traceID:${traceId}] ${ERTMEvents.MESSAGE}`,
           parsedMessage
         )
         this.covSubRenderController.handleMessage(parsedMessage, {
@@ -783,7 +796,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
         const parsedMessage = JSON.parse(messageString)
         this.callMessagePrint(
           ELoggerType.debug,
-          `>>> [trancID:${traceId}] ${ERTMEvents.MESSAGE}`,
+          `>>> [traceID:${traceId}] ${ERTMEvents.MESSAGE}`,
           parsedMessage
         )
         this.covSubRenderController.handleMessage(parsedMessage, {
@@ -793,23 +806,23 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       }
       this.callMessagePrint(
         ELoggerType.warn,
-        `>>> [trancID:${traceId}] ${ERTMEvents.MESSAGE}`,
+        `>>> [traceID:${traceId}] ${ERTMEvents.MESSAGE}`,
         'Unsupported message type received'
       )
     } catch (error) {
       this.callMessagePrint(
         ELoggerType.error,
-        `>>> [trancID:${traceId}] ${ERTMEvents.MESSAGE}`,
+        `>>> [traceID:${traceId}] ${ERTMEvents.MESSAGE}`,
         'Failed to parse message',
         error
       )
     }
   }
   private _handleRtmPresence(presence: RTMEvents.PresenceEvent) {
-    const traceId = genTranceID()
+    const traceId = genTraceID()
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] ${ERTMEvents.PRESENCE}`,
+      `>>> [traceID:${traceId}] ${ERTMEvents.PRESENCE}`,
       `Publisher: ${presence.publisher}`
     )
     // Handle the presence event
@@ -817,7 +830,7 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
     if (stateChanged?.state && stateChanged?.turn_id) {
       this.callMessagePrint(
         ELoggerType.debug,
-        `>>> [trancID:${traceId}] ${ERTMEvents.PRESENCE}`,
+        `>>> [traceID:${traceId}] ${ERTMEvents.PRESENCE}`,
         `State changed: ${stateChanged.state}, Turn ID: ${stateChanged.turn_id}, timestamp: ${presence.timestamp}`
       )
       this.covSubRenderController.handleAgentStatus(
@@ -828,10 +841,11 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
           }
         }
       )
+      return
     }
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] ${ERTMEvents.PRESENCE}`,
+      `>>> [traceID:${traceId}] ${ERTMEvents.PRESENCE}`,
       'No state change detected, skipping handling presence event'
     )
   }
@@ -840,10 +854,10 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       | RTMEvents.RTMConnectionStatusChangeEvent
       | RTMEvents.StreamChannelConnectionStatusChangeEvent
   ) {
-    const traceId = genTranceID()
+    const traceId = genTraceID()
     this.callMessagePrint(
       ELoggerType.debug,
-      `>>> [trancID:${traceId}] ${ERTMEvents.STATUS}`,
+      `>>> [traceID:${traceId}] ${ERTMEvents.STATUS}`,
       status
     )
   }

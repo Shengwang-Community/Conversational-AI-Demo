@@ -39,11 +39,13 @@ export interface IAgentSettings {
   conversationTimerEndTimestamp: number | null
   settings: TAgentSettings
   transcriptionRenderMode: ETranscriptHelperMode
+  enableRenderModeFallback: boolean
   onFormSetValue?: UseFormSetValue<z.infer<typeof publicAgentSettingSchema>>
   updateFormSetValue: (
     cb: UseFormSetValue<z.infer<typeof publicAgentSettingSchema>>
   ) => void
   updateTranscriptionRenderMode: (mode: ETranscriptHelperMode) => void
+  updateEnableRenderModeFallback: (enabled: boolean) => void
   updateSettings: (settings: TAgentSettings) => void
   updatePresets: (
     newPresets: z.infer<typeof agentPresetSchema>[],
@@ -134,6 +136,7 @@ export const useAgentSettingsStore = create<IAgentSettings>()(
         settings: DEFAULT_SETTINGS as TAgentSettings,
         disabledPresetNameList: [],
         transcriptionRenderMode: ETranscriptHelperMode.WORD,
+        enableRenderModeFallback: true,
         updateFormSetValue: (
           cb: UseFormSetValue<z.infer<typeof publicAgentSettingSchema>>
         ) => {
@@ -143,6 +146,9 @@ export const useAgentSettingsStore = create<IAgentSettings>()(
         },
         updateTranscriptionRenderMode: (mode: ETranscriptHelperMode) => {
           set(() => ({ transcriptionRenderMode: mode }))
+        },
+        updateEnableRenderModeFallback: (enabled: boolean) => {
+          set(() => ({ enableRenderModeFallback: enabled }))
         },
         updateSettings: <T>(settings: T) => {
           set(() => ({ settings: settings as TAgentSettings }))

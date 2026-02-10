@@ -69,6 +69,8 @@ export function AgentSettingsForm(props: {
     updateSettings,
     transcriptionRenderMode,
     updateTranscriptionRenderMode,
+    enableRenderModeFallback,
+    updateEnableRenderModeFallback,
     updateFormSetValue
   } = useAgentSettingsStore()
 
@@ -459,6 +461,18 @@ export function AgentSettingsForm(props: {
           <InnerCard className='mt-6'>
             <h3 className=''>DEV MODE</h3>
             <Separator />
+            <div className='flex items-center justify-between gap-2'>
+              <FormLabel className='text-icontext'>
+                {isCN ? '渲染模式回退' : 'Render mode fallback'}
+              </FormLabel>
+              <FormControl>
+                <Switch
+                  disabled={disableFormMemo}
+                  checked={enableRenderModeFallback}
+                  onCheckedChange={updateEnableRenderModeFallback}
+                />
+              </FormControl>
+            </div>
             <FormField
               control={settingsForm.control}
               name='graph_id'

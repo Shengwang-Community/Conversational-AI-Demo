@@ -130,6 +130,7 @@ export default function AgentControl(props: { className?: string }) {
     settings,
     presets,
     transcriptionRenderMode,
+    enableRenderModeFallback,
     conversationDuration,
     selectedPreset,
     setConversationTimerEndTimestamp
@@ -192,10 +193,8 @@ export default function AgentControl(props: { className?: string }) {
         rtmEngine,
         enableLog: isDevMode || process.env.NODE_ENV === 'development',
         // custom private preset mode is unknown as default and set value by ConversationalAIAPI logic
-        renderMode:
-          transcriptionRenderMode === ETranscriptHelperMode.WORD
-            ? ETranscriptHelperMode.UNKNOWN
-            : transcriptionRenderMode
+        renderMode: transcriptionRenderMode,
+        enableRenderModeFallback
       })
 
       rtcHelper.on(ERTCCustomEvents.LOCAL_TRACKS_CHANGED, onLocalTracksChanged)
@@ -613,10 +612,8 @@ export default function AgentControl(props: { className?: string }) {
       rtmEngine,
       enableLog: isDevMode || process.env.NODE_ENV === 'development',
       // custom private preset mode is unknown as default and set value by ConversationalAIAPI logic
-      renderMode:
-        transcriptionRenderMode === ETranscriptHelperMode.WORD
-          ? ETranscriptHelperMode.UNKNOWN
-          : transcriptionRenderMode
+      renderMode: transcriptionRenderMode,
+      enableRenderModeFallback
     })
 
     // conversationalAIAPI.on(

@@ -35,8 +35,8 @@ object CovRtcManager {
             rtcEngine = (RtcEngine.create(config) as RtcEngineEx).apply {
                 enableVideo()
                 // load extension provider for AI-QoS
-                loadExtensionProvider("ai_echo_cancellation_extension")
-                loadExtensionProvider("ai_noise_suppression_extension")
+                loadExtensionProvider("agora_ai_echo_cancellation_extension")
+                loadExtensionProvider("agora_ai_noise_suppression_extension")
             }
             CovLogger.d(TAG, "createRtcEngine success")
         } catch (e: Exception) {
