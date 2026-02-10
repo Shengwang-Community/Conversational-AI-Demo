@@ -3,15 +3,25 @@ package io.agora.agent
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import io.agora.agent.databinding.WelcomeActivityBinding
-import io.agora.scene.common.ui.BaseActivity
 import androidx.annotation.RequiresApi
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
+import io.agora.agent.databinding.WelcomeActivityBinding
 import io.agora.scene.common.constant.SSOUserManager
+import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.convoai.ui.auth.CovLoginActivity
 import io.agora.scene.convoai.ui.main.CovMainActivity
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
+
+    companion object {
+        private const val SPLASH_DURATION = 300L
+        private const val SPLASH_TIMEOUT = 800L
+    }
+
+    private var hasNavigated = false
 
     override fun getViewBinding(): WelcomeActivityBinding {
         return WelcomeActivityBinding.inflate(layoutInflater)
@@ -26,24 +36,24 @@ class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
         super.onCreate(savedInstanceState)
     }
 
-    override fun immersiveMode(): ImmersiveMode  = ImmersiveMode.FULLY_IMMERSIVE
+    override fun immersiveMode(): ImmersiveMode = ImmersiveMode.FULLY_IMMERSIVE
 
     override fun supportOnBackPressed(): Boolean = false
 
-    override fun initView() {
-    }
+    override fun initView() {}
 
     private fun goScene() {
+        if (hasNavigated) return
+        hasNavigated = true
+        
         if (SSOUserManager.getToken().isNotEmpty()) {
             initBugly()
-            startActivity(Intent(this@WelcomeActivity, CovMainActivity::class.java))
+            startActivity(Intent(this, CovMainActivity::class.java))
         } else {
             startActivity(Intent(this, CovLoginActivity::class.java))
         }
         finish()
     }
-
-    private val SPLASH_DURATION = 300L
 
     @RequiresApi(Build.VERSION_CODES.S)
     private fun handleSplashScreenExit() {
@@ -53,7 +63,7 @@ class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
         splashScreen.setOnExitAnimationListener { provider ->
             provider.iconView.animate()
                 .alpha(0f)
-                .setDuration(300L)
+                .setDuration(SPLASH_DURATION)
                 .scaleX(1f)
                 .scaleY(1f)
                 .withEndAction {
@@ -62,10 +72,13 @@ class WelcomeActivity : BaseActivity<WelcomeActivityBinding>() {
                 }.start()
         }
 
-        val handler = android.os.Handler(mainLooper)
-        handler.postDelayed({
+        lifecycleScope.launch {
+            delay(SPLASH_DURATION)
             keepSplashOnScreen = false
-        }, SPLASH_DURATION)
+            // Timeout fallback: ensure navigation if animation callback doesn't trigger
+            delay(SPLASH_TIMEOUT - SPLASH_DURATION)
+            goScene()
+        }
 
         splashScreen.setKeepOnScreenCondition { keepSplashOnScreen }
     }
