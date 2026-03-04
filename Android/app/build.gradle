@@ -6,11 +6,6 @@ apply from: 'resource.gradle'
 
 def buildTimestamp = new Date().format("yyyyMMddHHmm")
 
-static def generateVersionCode() {
-    def date = new Date()
-    return Integer.parseInt(date.format("yyMMddHH"))
-}
-
 if (project.getProperty("AG_APP_ID").toString().isEmpty()) {
     throw new GradleException("Please configure Agora ID and Certificate in gradle.properties")
 }
@@ -23,7 +18,7 @@ android {
         ndk.abiFilters 'arm64-v8a', 'armeabi-v7a'
         minSdk rootProject.ext.minSdkVersion
         targetSdk rootProject.ext.targetSdkVersion
-        versionCode 26012120
+        versionCode 26030410
         versionName "2.1.0"
         
         buildConfigField("String", "BUILD_TIMESTAMP", "\"${buildTimestamp}\"")
@@ -55,11 +50,6 @@ android {
 
     applicationVariants.all { variant ->
         variant.outputs.all { output ->
-            // Override versionCode for release builds
-            if (variant.buildType.name == "release") {
-                output.versionCodeOverride = generateVersionCode()
-            }
-            
             def flavorPrefix = "ShengWang_Conversational_Al_Engine_Demo_for_Android"
 
             // Get package name and replace dots with underscores for filename compatibility
