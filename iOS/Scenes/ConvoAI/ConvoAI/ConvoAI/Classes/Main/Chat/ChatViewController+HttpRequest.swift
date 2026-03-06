@@ -12,6 +12,10 @@ import IoT
 
 extension ChatViewController {
     private func getStartAgentParametersForConvoAI() -> [String: Any] {
+        var bhvs = true
+        if AppContext.settingManager().voiceprintMode != .off {
+            bhvs = false
+        }
         let parameters: [String: Any?] = [
             // Basic parameters
             "app_id": AppContext.shared.appId,
@@ -34,7 +38,7 @@ extension ChatViewController {
                     "idle_timeout": nil,
                     "advanced_features": [
                         "enable_aivad": AppContext.settingManager().aiVad,
-                        "enable_bhvs": AppContext.settingManager().bhvs,
+                        "enable_bhvs": bhvs,
                         "enable_rtm": true,
                         "enable_sal": AppContext.settingManager().voiceprintMode != .off
                     ],

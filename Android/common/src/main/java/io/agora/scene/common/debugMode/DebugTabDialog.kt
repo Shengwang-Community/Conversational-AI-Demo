@@ -109,7 +109,7 @@ class DebugTabDialog : BaseDialogFragment<CommonDebugTabDialogBinding>() {
             ServerConfig.reset()
         }
         onDebugCallback?.onAudioDumpEnable(false)
-        DebugButton.getInstance(AgentApp.instance()).hide()
+        DebugButton.getInstance().hide()
         DebugConfigSettings.reset()
         onDebugCallback = null
     }

@@ -10,12 +10,18 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import io.agora.scene.common.constant.SSOUserManager
+import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.debugMode.DebugSupportActivity
 import io.agora.scene.common.debugMode.DebugTabDialog
+import io.agora.scene.common.ui.BaseActivity
 import io.agora.scene.common.util.TimeUtils
+import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.ui.auth.LoginState
 import io.agora.scene.convoai.ui.auth.UserViewModel
 import io.agora.scene.convoai.R
+import io.agora.scene.convoai.api.VersionInfo
+import io.agora.scene.convoai.constant.AppVersionManager
+import io.agora.scene.convoai.constant.VersionCheckResult
 import io.agora.scene.convoai.databinding.CovActivityMainBinding
 import io.agora.scene.convoai.rtm.CovRtmManager
 import io.agora.scene.convoai.ui.auth.CovLoginActivity
@@ -35,7 +41,7 @@ class CovMainActivity : DebugSupportActivity<CovActivityMainBinding>() {
     }
 
     // ViewModel instances - using global UserViewModel for cross-activity communication
-    private val userViewModel: UserViewModel by lazy { 
+    private val userViewModel: UserViewModel by lazy {
         GlobalUserViewModel.getUserViewModel(application)
     }
     private val listViewModel: CovListViewModel by viewModels()
@@ -45,10 +51,29 @@ class CovMainActivity : DebugSupportActivity<CovActivityMainBinding>() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         TimeUtils.syncTimeAsync()
+        val appVersionManager = AppVersionManager(this)
+        appVersionManager.checkVersion( completion = { result ->
+            when (result) {
+                is VersionCheckResult.IsDebugBuild -> {
+                    // Set global flag to show DEV label - all BaseActivity instances will show it
+                    setGlobalDevLabelVisibility(true)
+                }
+                is VersionCheckResult.NeedsUpdate -> {
+                    showVersionUpdateDialog(
+                        currentVersion = "v${result.currentVersion}",
+                        currentVersionCode = result.currentVersionCode,
+                        latestVersionInfo = result.latestVersionInfo
+                    )
+                }
+                is VersionCheckResult.UpToDate -> {
+                    // App is up to date, no action needed
+                }
+            }
+        })
     }
 
     override fun initView() {
-        Log.d("UserViewModel","UserViewModel:$userViewModel $this")
+        Log.d("UserViewModel", "UserViewModel:$userViewModel $this")
         userViewModel.checkLogin()
         mBinding?.apply {
             activityKeyboardOverlayMask.setOnClickListener {
@@ -75,13 +100,13 @@ class CovMainActivity : DebugSupportActivity<CovActivityMainBinding>() {
                 }
             }
         }
-      lifecycleScope.launch {
-          listViewModel.isKeyboardVisible.collect { isVisible ->
-              mBinding?.apply {
-                  activityKeyboardOverlayMask.isVisible = isVisible
-              }
-          }
-      }
+        lifecycleScope.launch {
+            listViewModel.isKeyboardVisible.collect { isVisible ->
+                mBinding?.apply {
+                    activityKeyboardOverlayMask.isVisible = isVisible
+                }
+            }
+        }
     }
 
 
@@ -201,5 +226,24 @@ class CovMainActivity : DebugSupportActivity<CovActivityMainBinding>() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
+    }
+
+    /**
+     * Show version update dialog
+     */
+    private fun showVersionUpdateDialog(
+        currentVersion: String,
+        currentVersionCode: Int,
+        latestVersionInfo: VersionInfo
+    ) {
+        AppVersionTestDialog.newInstance(
+            currentVersion = currentVersion,
+            currentVersionCode = currentVersionCode,
+            latestVersionInfo = latestVersionInfo,
+            onUpdateCallback = { update ->
+                // Update action is handled in AppVersionTestDialog
+                // This callback is kept for compatibility
+            }
+        ).show(supportFragmentManager, "app_version_test")
     }
 }

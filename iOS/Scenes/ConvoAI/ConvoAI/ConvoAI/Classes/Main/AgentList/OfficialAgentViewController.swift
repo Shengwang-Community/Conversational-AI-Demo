@@ -89,7 +89,10 @@ class OfficialAgentViewController: UIViewController {
     
     private func requestAgentPresets() {
         SVProgressHUD.show()
-        agentManager.fetchAgentPresets(appId: AppContext.shared.appId) {[weak self] error, result in
+        agentManager.fetchAgentPresets(
+            appId: AppContext.shared.appId,
+            isDebug: DeveloperConfig.shared.isDeveloperMode)
+        {[weak self] error, result in
             SVProgressHUD.dismiss()
             self?.refreshControl.endRefreshing()
             if let error = error {

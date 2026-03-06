@@ -319,3 +319,9 @@
 "agent.sip.area.code.search.button" = "搜索";
 "agent.sip.area.code.no.results" = "无结果";
 "agent.sip.call.limit.exceeded" = "已超过每日20次通话限制";
+
+// Version Update
+"main.update.alert.title" = "检测到ConvoAI版本更新!";
+"main.update.alert.version.info" = "当前版本号: %@ ; 最新版本号: %@";
+"main.update.alert.update.button" = "立即更新";
+"main.update.alert.later.text" = "以后再说";

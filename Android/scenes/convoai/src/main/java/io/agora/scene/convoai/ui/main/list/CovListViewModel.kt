@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.agora.scene.common.constant.ServerConfig
+import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.common.util.LocalStorageUtil
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.CovLogger
@@ -95,7 +96,8 @@ class CovListViewModel : ViewModel() {
                     }
                 } else {
                     // Use real API for production mode
-                    CovAgentApiManager.fetchPresets { error, presets ->
+                    val isDebug = DebugConfigSettings.isDebug
+                    CovAgentApiManager.fetchPresets(isDebug) { error, presets ->
                         if (error != null) {
                             CovLogger.e(TAG, "Failed to load official presets: ${error.message}")
                             _officialState.value = AgentListState.Error("")

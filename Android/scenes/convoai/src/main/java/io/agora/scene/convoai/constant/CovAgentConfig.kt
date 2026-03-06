@@ -36,6 +36,11 @@ object CovAgentManager {
     // Settings
     private var preset: CovAgentPreset? = null
     var language: CovAgentLanguage? = null
+        set(value) {
+            field = value
+            enableAiVad = value?.aivad_enabled_by_default ?: false
+        }
+
     var avatar: CovAvatar? = null
 
     var voiceprintMode: VoiceprintMode = VoiceprintMode.OFF
@@ -43,7 +48,7 @@ object CovAgentManager {
     var renderMode: Int = CovRenderMode.WORD
 
     var enableAiVad = false
-    val enableBHVS = true
+    val enableBHVS get() = voiceprintMode == VoiceprintMode.OFF
 
     // Preset change reminder setting, follows app lifecycle
     private var showPresetChangeReminder = true
@@ -106,7 +111,11 @@ object CovAgentManager {
         return preset?.getAvatarsForLang(language?.language_code) ?: emptyList()
     }
 
-    val isEnableAvatar: Boolean get() = avatar != null
+    val isEnableAvatar: Boolean get() = avatar != null || isCustomEnableAvatar
+
+    val isCustomEnableAvatar: Boolean get() = (preset?.isCustom == true) && (preset?.is_support_avatar == true)
+
+    val customAvatarVendor: String? get() = preset?.avatar_vendor?.takeIf { isCustomEnableAvatar }
 
     // Preset change reminder management methods
     fun shouldShowPresetChangeReminder(): Boolean {

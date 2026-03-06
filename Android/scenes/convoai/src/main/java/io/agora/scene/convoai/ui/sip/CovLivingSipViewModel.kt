@@ -151,7 +151,7 @@ class CovLivingSipViewModel : ViewModel() {
 
     val agentName: String
         get() = if (CovAgentManager.isEnableAvatar) {
-            CovAgentManager.avatar?.avatar_name ?: ""
+            CovAgentManager.avatar?.avatar_name ?: CovAgentManager.getPreset()?.display_name ?: ""
         } else {
             CovAgentManager.getPreset()?.display_name ?: ""
         }
@@ -256,6 +256,11 @@ class CovLivingSipViewModel : ViewModel() {
 
                 CovAgentApiManager.ERROR_SIP_CALL_LIMIT_EXCEEDED -> ToastUtil.show(
                     R.string.cov_sip_call_limit_error,
+                    Toast.LENGTH_LONG
+                )
+
+                CovAgentApiManager.ERROR_PIPELINE_ID_NOT_FOUND -> ToastUtil.show(
+                    R.string.cov_sip_pipeline_not_found,
                     Toast.LENGTH_LONG
                 )
 

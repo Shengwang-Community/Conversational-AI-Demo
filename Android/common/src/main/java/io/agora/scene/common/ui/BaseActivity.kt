@@ -20,9 +20,64 @@ import io.agora.scene.common.BuildConfig
 import io.agora.scene.common.constant.AgentConstant
 import io.agora.scene.common.util.CommonLogger
 import io.agora.scene.common.util.LocaleManager
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.ImageView
+import io.agora.scene.common.R
+import io.agora.scene.common.util.dp
+import io.agora.scene.common.util.getStatusBarHeight
+import java.lang.ref.WeakReference
 
 abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
 
+    companion object {
+        /**
+         * Global flag to control DEV label visibility across all activities
+         * Set this to true when version check indicates debug build
+         */
+        @Volatile
+        var shouldShowDevLabelGlobally: Boolean = false
+            private set
+
+        /**
+         * Track all active BaseActivity instances to notify them when flag changes
+         */
+        private val activeActivities = mutableSetOf<WeakReference<BaseActivity<*>>>()
+
+        /**
+         * Set global DEV label visibility flag
+         * Any Activity inheriting from BaseActivity will automatically show/hide DEV label based on this flag
+         */
+        @JvmStatic
+        fun setGlobalDevLabelVisibility(show: Boolean) {
+            if (shouldShowDevLabelGlobally == show) return
+            shouldShowDevLabelGlobally = show
+
+            // Notify all active activities to update their DEV label
+            activeActivities.removeAll { it.get() == null }
+            activeActivities.forEach { ref ->
+                ref.get()?.updateDevLabelVisibility()
+            }
+        }
+
+        /**
+         * Register an activity to receive DEV label visibility updates
+         */
+        private fun registerActivity(activity: BaseActivity<*>) {
+            activeActivities.removeAll { it.get() == null }
+            activeActivities.add(WeakReference(activity))
+        }
+
+        /**
+         * Unregister an activity
+         */
+        private fun unregisterActivity(activity: BaseActivity<*>) {
+            activeActivities.removeAll { it.get() == null || it.get() == activity }
+        }
+    }
+
+    private var devLabelView: ImageView? = null
     private var _binding: VB? = null
     protected val mBinding: VB? get() = _binding
 
@@ -46,6 +101,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        registerActivity(this)
         _binding = getViewBinding()
         if (_binding?.root == null) {
             finish()
@@ -54,6 +110,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
         setContentView(_binding!!.root)
         onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
         setupSystemBarsAndCutout(immersiveMode(), usesDarkStatusBarIcons())
+        showDevLabelIfNeeded()
         initView()
     }
 
@@ -68,12 +125,15 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
     open fun usesDarkStatusBarIcons(): Boolean = false
 
     override fun finish() {
+        removeDevLabel()
         onBackPressedCallback.remove()
         super.finish()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        unregisterActivity(this)
+        removeDevLabel()
         _binding = null
     }
 
@@ -213,5 +273,87 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
          * Hide all system bars, fully immersive
          */
         FULLY_IMMERSIVE
+    }
+
+    /**
+     * Show DEV label if needed
+     * Checks the global shouldShowDevLabelGlobally flag
+     * Any Activity inheriting from BaseActivity will automatically check this flag
+     */
+    protected open fun showDevLabelIfNeeded() {
+        updateDevLabelVisibility()
+    }
+
+    /**
+     * Update DEV label visibility based on global flag
+     * Called automatically when global flag changes
+     */
+    private fun updateDevLabelVisibility() {
+        if (shouldShowDevLabelGlobally) {
+            showDevLabel()
+        } else {
+            hideDevLabel()
+        }
+    }
+
+    /**
+     * Show TEST label overlay on decorView
+     */
+    protected fun showDevLabel() {
+        try {
+            val decorView = window.decorView as? ViewGroup ?: return
+
+            // Check if TEST label already exists
+            if (devLabelView != null && devLabelView?.parent != null) {
+                return
+            }
+
+            devLabelView = ImageView(this).apply {
+                setImageResource(R.drawable.app_test_cover)
+                // Set transparency to prevent blocking buttons (alpha: 0.6 = 60% opacity)
+                alpha = 0.6f
+                // Prevent blocking touch events
+                isClickable = false
+                isFocusable = false
+                isFocusableInTouchMode = false
+                // Allow touch events to pass through
+                setOnTouchListener { _, _ -> false }
+            }
+
+            val layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.END
+                topMargin = 0
+            }
+
+            decorView.addView(devLabelView, layoutParams)
+            CommonLogger.d("BaseActivity", "TEST label shown")
+        } catch (e: Exception) {
+            CommonLogger.e("BaseActivity", "Failed to show TEST label: ${e.message}")
+        }
+    }
+
+    /**
+     * Hide DEV label
+     */
+    protected fun hideDevLabel() {
+        removeDevLabel()
+    }
+
+    /**
+     * Remove DEV label
+     */
+    private fun removeDevLabel() {
+        try {
+            devLabelView?.let { view ->
+                val parent = view.parent as? ViewGroup
+                parent?.removeView(view)
+            }
+            devLabelView = null
+        } catch (e: Exception) {
+            CommonLogger.w("BaseActivity", "Failed to remove DEV label: ${e.message}")
+        }
     }
 }

@@ -276,8 +276,9 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
     // Observe ViewModel state changes
     private fun observeViewModelStates() {
         lifecycleScope.launch {   // Observe connection state
-            var previousState: AgentConnectionState? = null
             viewModel.connectionState.collect { state ->
+                // Update agentInfoViewModel connection state to keep it in sync
+                agentInfoViewModel.updateConnectionState(state)
                 updateStateView(state)
                 mBinding?.clTop?.updateAgentState(state)
 
@@ -327,8 +328,6 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                         persistentToast(true, getString(io.agora.scene.convoai.R.string.cov_detail_agent_state_error))
                     }
                 }
-
-                previousState = state
             }
         }
         lifecycleScope.launch {    // Observe microphone state

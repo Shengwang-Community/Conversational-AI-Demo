@@ -35,6 +35,7 @@ public class DeveloperConfig {
     
     private let kSessionFree = "io.agora.convoai.kSessionFree"
     private let kMetrics = "io.agora.convoai.kMetrics"
+    private let kDeveloperMode = "io.agora.convoai.kDeveloperMode"
 
     static let shared = DeveloperConfig()
     
@@ -48,10 +49,18 @@ public class DeveloperConfig {
         delegates.remove(delegate)
     }
     
-    public var isDeveloperMode = false
+    public var isDeveloperMode: Bool {
+        get {
+            return UserDefaults.standard.bool(forKey: kDeveloperMode)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: kDeveloperMode)
+        }
+    }
     
-    public var defaultAppId: String? = nil
-    public var defaultHost: String? = nil
+    public var defaultHost: String = AppContext.shared.baseServerUrl
+    public var defaultAppId: String = AppContext.shared.appId
+    
     public var convoaiServerConfig: String? = nil
     public var graphId: String? = nil
     public var sdkParams: [String] = []
@@ -80,6 +89,33 @@ public class DeveloperConfig {
     
     var clickCount = 0
     var lastClickTime: Date?
+    
+    private init() {
+        if isDeveloperMode {
+            restoreDevMode()
+        }
+    }
+    
+    private func restoreDevMode() {
+        let button = devModeButton
+        button.isHidden = false
+        
+        if button.superview == nil {
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first {
+                let buttonSize: CGFloat = 44
+                button.frame = CGRect(
+                    x: window.bounds.width - buttonSize - 16,
+                    y: window.bounds.height - buttonSize - 16,
+                    width: buttonSize,
+                    height: buttonSize
+                )
+                window.addSubview(button)
+            }
+        }
+        
+        notifyOpenDevMode()
+    }
     
     public func startDevMode() {
         if isDeveloperMode {
@@ -178,20 +214,16 @@ public class DeveloperConfig {
     }
     
     public func resetDevParams() {
-        self.isDeveloperMode = false
+        isDeveloperMode = false
         self.graphId = nil
         self.metrics = false
         self.sdkParams.removeAll()
         self.convoaiServerConfig = nil
-        if let defaultHost = self.defaultHost {
-            AppContext.shared.baseServerUrl = defaultHost
-            self.defaultHost = nil
-            notifySwitchServer()
-        }
         
-        if let defaultAppId = self.defaultAppId {
+        if AppContext.shared.baseServerUrl != defaultHost || AppContext.shared.appId != defaultAppId {
+            AppContext.shared.baseServerUrl = defaultHost
             AppContext.shared.appId = defaultAppId
-            self.defaultAppId = nil
+            notifySwitchServer()
         }
     }
     

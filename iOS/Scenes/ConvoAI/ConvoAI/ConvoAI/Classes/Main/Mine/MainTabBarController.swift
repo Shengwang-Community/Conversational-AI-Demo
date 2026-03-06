@@ -8,10 +8,12 @@
 import UIKit
 import Common
 import SVProgressHUD
+import SnapKit
 
 public class MainTabBarController: UITabBarController {
     
     private lazy var toolBox = ToolBoxApiManager()
+    private lazy var versionManager = AppVersionManager()
     
     deinit {
         AppContext.loginManager().removeDelegate(self)
@@ -24,7 +26,12 @@ public class MainTabBarController: UITabBarController {
         configureTabBarAppearance()
         
         AppContext.loginManager().addDelegate(self)
+        
         fetchLoginState()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.versionManager.mayAddTestTag()
+        }
     }
     
     func fetchLoginState() {
@@ -37,6 +44,7 @@ public class MainTabBarController: UITabBarController {
                     return
                 }
                 self?.mayGenerateName()
+                self?.versionManager.mayShowVersionDialog()
             }
         } else {
             DispatchQueue.main.async { [weak self] in
@@ -161,6 +169,7 @@ extension MainTabBarController: LoginManagerDelegate {
     
     func userDidLogin() {
         fetchLoginState()
+        versionManager.mayShowVersionDialog()
     }
     
     func userDidLogout(reason: LogoutReason) {

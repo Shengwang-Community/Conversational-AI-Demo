@@ -18,6 +18,7 @@ class LocaleManager private constructor(private val application: Application) {
         private const val PREFS_NAME = "locale_preferences"
         private const val KEY_LANGUAGE = "selected_language"
         private const val KEY_FOLLOW_SYSTEM = "follow_system_language"
+        const val KEY_LOCAL_DEBUG = "local_debug"
         
         @Volatile
         private var instance: LocaleManager? = null
@@ -142,6 +143,24 @@ class LocaleManager private constructor(private val application: Application) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val lang = prefs.getString(KEY_LANGUAGE, null) ?: "zh"
         return Locale(lang)
+    }
+    
+    /**
+     * Gets the debug mode state from saved preferences
+     */
+    fun getDebugMode(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_LOCAL_DEBUG, false)
+    }
+    
+    /**
+     * Sets the debug mode state in preferences
+     */
+    fun setDebugMode(context: Context, isDebug: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_LOCAL_DEBUG, isDebug)
+            .apply()
     }
     
     /**

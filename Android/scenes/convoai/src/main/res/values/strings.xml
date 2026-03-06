@@ -259,4 +259,11 @@
     <string name="cov_sip_callee">立即呼叫</string>
     <string name="cov_sip_limit_time">智能客服电话沟通单次体验限 %d 分钟</string>
     <string name="cov_sip_call_limit_error">已超过本日呼出上限 20 次</string>
+    <string name="cov_sip_pipeline_not_found">Pipeline Id 未找到</string>
+
+    <!-- ai test    -->
+    <string name="cov_version_update_detected">检测到ConvoAI版本更新！</string>
+    <string name="cov_version_update_info">当前版本号：%1s \n最新版本号：%2s</string>
+    <string name="cov_version_update_now">立即更新</string>
+    <string name="cov_version_update_later">以后再说</string>
 </resources>

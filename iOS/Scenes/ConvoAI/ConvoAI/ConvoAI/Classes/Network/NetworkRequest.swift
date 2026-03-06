@@ -11,9 +11,15 @@ extension AgentManager {
         endpoint: AgentServiceUrl,
         method: HTTPMethod = .post,
         parameters: [String: Any],
+        urlParameters: [String: Any]? = nil,
         completion: @escaping (Result<T, ConvoAIError>) -> Void
     ) {
-        let url = endpoint.toHttpUrlString()
+        var url = endpoint.toHttpUrlString()
+        if let urlParams = urlParameters, !urlParams.isEmpty {
+            let paramComponents = urlParams.map { "\($0.key)=\($0.value)" }
+            let paramString = paramComponents.joined(separator: "&")
+            url += "?\(paramString)"
+        }
         ConvoAILogger.info("[\(method.rawValue)] \(url) parameters: \(parameters)")
         
         let networkCompletion: ([String: Any]) -> Void = { result in

@@ -150,6 +150,16 @@ extension AgentViewController: LoginManagerDelegate {
 }
 // MARK: - DevMode
 extension AgentViewController: DeveloperConfigDelegate {
+    public func devConfigDidOpenDevMode(_ config: DeveloperConfig) {
+        // reload agent list for debug/normal mode
+        officialAgentVC.fetchData()
+    }
+    
+    public func devConfigDidCloseDevMode(_ config: DeveloperConfig) {
+        // reload agent list for debug/normal mode
+        officialAgentVC.fetchData()
+    }
+    
     public func devConfigDidSwitchServer(_ config: DeveloperConfig) {
         IoTEntrance.deleteAllPresets()
         AppContext.loginManager().logout(reason: .resetScene)

@@ -27,8 +27,4 @@ class AppDataProvider : DataProvider {
     override fun appBuildNo(): String {
         return BuildConfig.BUILD_TIMESTAMP
     }
-
-    override fun envName(): String {
-        return ""
-    }
 }

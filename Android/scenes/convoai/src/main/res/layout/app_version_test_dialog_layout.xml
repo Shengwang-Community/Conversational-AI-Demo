@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_common_dialog"
+    android:orientation="vertical">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/ivImage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        app:shapeAppearanceOverlay="@style/CommonTopCustomShape"
+        android:background="@drawable/ai_test_background" />
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="@color/ai_icontext1"
+        android:textSize="20sp"
+        android:layout_marginTop="20dp"
+        android:paddingHorizontal="24dp"
+        android:textStyle="bold"
+        android:text="@string/cov_version_update_detected" />
+
+    <TextView
+        android:id="@+id/tvInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:gravity="start"
+        android:paddingHorizontal="24dp"
+        android:textColor="@color/ai_icontext1"
+        android:textSize="14sp"
+        android:text="@string/cov_version_update_info" />
+
+    <TextView
+        android:id="@+id/tvContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="start"
+        android:paddingHorizontal="24dp"
+        android:textColor="@color/ai_icontext1"
+        android:textSize="14sp"
+        tools:text="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPositive"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/ai_dp_small"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:textAllCaps="false"
+            android:textColor="@color/ai_brand_white10"
+            android:textSize="15sp"
+            android:padding="0dp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/ai_brand_main6"
+            app:cornerRadius="12dp"
+            app:rippleColor="#1AFFFFFF"
+            android:text="@string/cov_version_update_now" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnNegative"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/ai_dp_small"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:textAllCaps="false"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/ai_icontext2"
+            android:textSize="15sp"
+            app:backgroundTint="@android:color/transparent"
+            android:background="@android:color/transparent"
+            app:rippleColor="#1A000000"
+            android:text="@string/cov_version_update_later"  />
+
+    </LinearLayout>
+</LinearLayout>

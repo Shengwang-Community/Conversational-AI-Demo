@@ -37,8 +37,11 @@ protocol AgentAPI {
     func ping(appId: String, channelName: String, presetName: String, completion: @escaping ((ConvoAIError?, [String : Any]?) -> Void))
     
     /// Retrieves the list of available agent presets
-    /// - Parameter completion: Callback with optional error and array of agent presets
-    func fetchAgentPresets(appId: String, completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void))
+    /// - Parameters:
+    ///   - appId: The unique identifier for the application
+    ///   - isDebug: Flag indicating whether to fetch debug presets
+    ///   - completion: Callback with optional error and array of agent presets
+    func fetchAgentPresets(appId: String, isDebug: Bool, completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void))
     
     /// Retrieves the list of custom agent presets
     /// - Parameters:
@@ -76,12 +79,16 @@ class AgentManager: AgentAPI {
         }
     }
     
-    func fetchAgentPresets(appId: String, completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void)) {
+    func fetchAgentPresets(appId: String, isDebug: Bool, completion: @escaping ((ConvoAIError?, [AgentPreset]?) -> Void)) {
         let parameters: [String: Any] = [
-            "app_id": appId,
+            "app_id": appId
         ]
         
-        sendRequest(endpoint: .fetchAgentPresets, parameters: parameters) { (result: Result<[AgentPreset], ConvoAIError>) in
+        let urlParameters: [String: Any] = [
+            "is_debug": isDebug
+        ]
+        
+        sendRequest(endpoint: .fetchAgentPresets, parameters: parameters, urlParameters: urlParameters) { (result: Result<[AgentPreset], ConvoAIError>) in
             switch result {
             case .success(var response):
                 response.removeAll(where: { $0.presetType == "custom" })
@@ -224,7 +231,7 @@ enum AgentServiceUrl {
         case .fetchSIPState: return "sip/status"
         }
     }
-    
+        
     public func toHttpUrlString() -> String {
         return Self.baseUrl + Self.apiPrefix + "/" + endpoint
     }
@@ -250,4 +257,5 @@ enum ConvoAIError: Error {
         }
     }
 }
+
 

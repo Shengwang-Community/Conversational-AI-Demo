@@ -35,7 +35,7 @@ object DebugManager : Application.ActivityLifecycleCallbacks {
         
         application = app
         app.registerActivityLifecycleCallbacks(this)
-        debugButton = DebugButton.getInstance(app)
+        debugButton = DebugButton.getInstance()
         isInitialized = true
     }
     
@@ -92,8 +92,9 @@ object DebugManager : Application.ActivityLifecycleCallbacks {
                 val callback = debugCallbacks[activityKey]
                 
                 if (callback != null) {
-                    // Set debug callback and show button for registered activities
+                    // Set debug callback and attach button to current activity
                     DebugButton.setDebugCallback(callback)
+                    debugButton?.attachTo(activity)
                     debugButton?.restoreVisibility()
                 } else {
                     // Hide button for non-debug activities
@@ -108,6 +109,7 @@ object DebugManager : Application.ActivityLifecycleCallbacks {
         // Only clear debug callback if debug is enabled
         if (isDebugEnabled() && activity == currentActivity) {
             DebugButton.setDebugCallback(null)
+            debugButton?.detachFrom(activity)
         }
     }
 
@@ -138,8 +140,9 @@ object DebugManager : Application.ActivityLifecycleCallbacks {
             val callback = debugCallbacks[activityKey]
             
             if (callback != null) {
-                // Set debug callback and show button immediately
+                // Set debug callback and attach button to activity
                 DebugButton.setDebugCallback(callback)
+                debugButton?.attachTo(activity)
                 debugButton?.show()
             }
         }

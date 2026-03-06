@@ -70,6 +70,7 @@ dependencies {
     api libs.androidx.constraintlayout
     api libs.androidx.viewbinding
     api libs.androidx.lifecycle.process
+    api libs.kotlinx.coroutines.android
     api libs.navigation.fragment.ktx
     api libs.navigation.ui.ktx
     api libs.splashscreen
