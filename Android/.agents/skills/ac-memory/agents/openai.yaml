@@ -1,0 +1,4 @@
+interface:
+  display_name: "AC Memory"
+  short_description: "Manage PROJECT_STATE.md as local workflow memory and gatekeeping state"
+  default_prompt: "Use $ac-memory to create, validate, and update PROJECT_STATE.md before planner, executor, or reviewer work continues."

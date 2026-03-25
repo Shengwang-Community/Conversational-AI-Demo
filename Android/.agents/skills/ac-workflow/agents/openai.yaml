@@ -1,0 +1,4 @@
+interface:
+  display_name: "AC Task"
+  short_description: "Route workflow entry and orchestrate task phases across ac-* roles"
+  default_prompt: "Use $ac-workflow as the workflow entrypoint: validate PROJECT_STATE through $ac-memory, then route into the correct execution role."

@@ -5,3 +5,6 @@
 common/base/sdk-*/
 /app/release/
 .vscode
+
+.ai-coding/
+PROJECT_STATE.md
