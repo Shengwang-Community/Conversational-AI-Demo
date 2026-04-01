@@ -138,6 +138,7 @@ paths = [
     '''.*\/zh\.lproj\/.*''',
     '''iOS/Pods/.*''',
     '''README\.md''',
+    '''README\.zh\.md''',
     '''Android/.*/res/values(-zh)?/(strings|arrays)\.xml''',
     '''Android/app/build.gradle''',
 ]

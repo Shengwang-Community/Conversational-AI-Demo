@@ -10,14 +10,14 @@ import AgoraRtcKit
 import AgoraRtmKit
 
 @objc public class ConversationalAIAPIImpl: NSObject {
-    public static let version: String = "2.0.2"
+    public static let version: String = "2.1.1"
     private let tag: String = "[ConvoAPI]"
     private let delegates = NSHashTable<ConversationalAIAPIEventHandler>.weakObjects()
     private let config: ConversationalAIAPIConfig
     private var channel: String? = nil
     private var audioRouting = AgoraAudioOutputRouting.default
     private var audioScenario: AgoraAudioScenario = .aiClient
-    private var stateChangeEvent: StateChangeEvent? = nil
+    private var stateChangeEvents: [String: StateChangeEvent] = [:]
 
     private lazy var transcriptController: TranscriptController = {
         let transcriptController = TranscriptController()
@@ -124,7 +124,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
         let traceId = UUID().uuidString.prefix(8)
         callMessagePrint(msg: ">>> [traceId:\(traceId)] [subscribe] channel: \(channelName)")
         
-        stateChangeEvent = nil
+        stateChangeEvents.removeAll()
         self.transcriptController.reset()
         let subscribeOptions = AgoraRtmSubscribeOptions()
         subscribeOptions.features = [.presence, .message]
@@ -136,6 +136,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
             } else {
                 self?.callMessagePrint(msg: "<<< [traceId:\(traceId)] [subscribe] success)")
                 completion(nil)
+                self?.queryAgentState(channelName: channelName)
             }
         }
     }
@@ -145,7 +146,7 @@ extension ConversationalAIAPIImpl: ConversationalAIAPI {
             return
         }
         channel = nil
-        stateChangeEvent = nil
+        stateChangeEvents.removeAll()
         transcriptController.reset()
         let traceId = UUID().uuidString.prefix(8)
         callMessagePrint(msg: ">>> [traceId:\(traceId)] [unsubscribe] channel: \(channelName)")
@@ -294,6 +295,33 @@ extension ConversationalAIAPIImpl {
         DispatchQueue.main.async {
             for delegate in self.delegates.allObjects {
                 delegate.onAgentStateChanged(agentUserId: agentUserId, event: event)
+            }
+        }
+    }
+
+    private func notifyDelegatesListeningChanged(agentUserId: String, isListening: Bool) {
+        callMessagePrint(msg: "<<< [onAgentListeningChanged] agentUserId:\(agentUserId), isListening:\(isListening)")
+        DispatchQueue.main.async {
+            for delegate in self.delegates.allObjects {
+                delegate.onAgentListeningChanged?(agentUserId: agentUserId, isListening: isListening)
+            }
+        }
+    }
+
+    private func notifyDelegatesThinkingChanged(agentUserId: String, isThinking: Bool) {
+        callMessagePrint(msg: "<<< [onAgentThinkingChanged] agentUserId:\(agentUserId), isThinking:\(isThinking)")
+        DispatchQueue.main.async {
+            for delegate in self.delegates.allObjects {
+                delegate.onAgentThinkingChanged?(agentUserId: agentUserId, isThinking: isThinking)
+            }
+        }
+    }
+
+    private func notifyDelegatesSpeakingChanged(agentUserId: String, isSpeaking: Bool) {
+        callMessagePrint(msg: "<<< [onAgentSpeakingChanged] agentUserId:\(agentUserId), isSpeaking:\(isSpeaking)")
+        DispatchQueue.main.async {
+            for delegate in self.delegates.allObjects {
+                delegate.onAgentSpeakingChanged?(agentUserId: agentUserId, isSpeaking: isSpeaking)
             }
         }
     }
@@ -517,6 +545,92 @@ extension ConversationalAIAPIImpl {
     func writeLogToRTCSDK(log: String) {
         config.rtcEngine?.writeLog(.info, content: log)
     }
+
+    private func queryAgentState(channelName: String) {
+        guard let presence = config.rtmEngine?.getPresence() else {
+            callMessagePrint(msg: "<<< [queryAgentState] presence is nil")
+            return
+        }
+
+        presence.whoNow(
+            channelName: channelName,
+            channelType: .message,
+            options: nil
+        ) { [weak self] response, error in
+            guard let self = self else {
+                return
+            }
+
+            if let errorInfo = error {
+                self.callMessagePrint(msg: "<<< [queryAgentState] failed: \(errorInfo.reason) (\(errorInfo.code))")
+                return
+            }
+
+            guard let users = response?.userStateList else {
+                self.callMessagePrint(msg: "<<< [queryAgentState] success, no user states")
+                return
+            }
+
+            self.callMessagePrint(msg: "<<< [queryAgentState] success, userCount: \(users.count)")
+            for user in users {
+                self.handlePresenceStates(agentUserId: user.userId, states: user.states, timestamp: nil)
+            }
+        }
+    }
+
+    private func handlePresenceStates(agentUserId: String, states: [String: String], timestamp: TimeInterval?) {
+        if let state = states["state"] {
+            let turnId = Int(states["turn_id"] ?? "") ?? 0
+            let currentStateChangeEvent = stateChangeEvents[agentUserId]
+            let shouldNotifyStateChange: Bool
+
+            if let timestamp = timestamp {
+                shouldNotifyStateChange =
+                    turnId >= (currentStateChangeEvent?.turnId ?? 0) &&
+                    timestamp > (currentStateChangeEvent?.timestamp ?? 0)
+            } else {
+                shouldNotifyStateChange = currentStateChangeEvent == nil
+            }
+
+            if shouldNotifyStateChange, let aiState = agentState(from: state) {
+                let resolvedTimestamp = timestamp ?? Date().timeIntervalSince1970 * 1000
+                callMessagePrint(msg: "<<< [handlePresenceStates] agent state: \(state)")
+                let changeEvent = StateChangeEvent(state: aiState, turnId: turnId, timestamp: resolvedTimestamp, reason: "")
+                stateChangeEvents[agentUserId] = changeEvent
+                notifyDelegatesStateChange(agentUserId: agentUserId, event: changeEvent)
+            }
+        }
+
+        if let listening = states["listening"] {
+            notifyDelegatesListeningChanged(agentUserId: agentUserId, isListening: listening == "true")
+        }
+
+        if let thinking = states["thinking"] {
+            notifyDelegatesThinkingChanged(agentUserId: agentUserId, isThinking: thinking == "true")
+        }
+
+        if let speaking = states["speaking"] {
+            notifyDelegatesSpeakingChanged(agentUserId: agentUserId, isSpeaking: speaking == "true")
+        }
+    }
+
+    private func agentState(from value: String) -> AgentState? {
+        switch value {
+        case "idle":
+            return .idle
+        case "silent":
+            return .silent
+        case "listening":
+            return .listening
+        case "thinking":
+            return .thinking
+        case "speaking":
+            return .speaking
+        default:
+            callMessagePrint(msg: "<<< [handlePresenceStates] unknown agent state: \(value)")
+            return .unknown
+        }
+    }
 }
 
 extension ConversationalAIAPIImpl: AgoraRtcEngineDelegate {
@@ -565,39 +679,9 @@ extension ConversationalAIAPIImpl: AgoraRtmClientDelegate {
             return
         }
         
-        if event.channelType == .message {
-            if event.type == .remoteStateChanged {
-                print(event.states)
-                let state = event.states["state"] ?? "idle"
-                var value = 0
-                if state == "idle" {
-                    value = 0
-                } else if state == "silent" {
-                    value = 1
-                } else if state == "listening" {
-                    value = 2
-                } else if state == "thinking" {
-                    value = 3
-                } else if state == "speaking" {
-                    value = 4
-                }
-                let turnId = Int(event.states["turn_id"] ?? "") ?? 0
-                if turnId < (self.stateChangeEvent?.turnId ?? 0) {
-                    return
-                }
-                
-                let ts = Double(event.timestamp)
-                if ts <= (self.stateChangeEvent?.timestamp ?? 0) {
-                    return
-                }
-                callMessagePrint(msg: "<<< [didReceivePresenceEvent] agent state: \(state)")
-                let aiState = AgentState.fromValue(value)
-                let changeEvent = StateChangeEvent(state: aiState, turnId: turnId, timestamp: ts, reason: "")
-                self.stateChangeEvent = changeEvent
-                let agentUserId = event.publisher ?? "-1"
-                notifyDelegatesStateChange(agentUserId: agentUserId, event: changeEvent)
-            }
-            //other
+        if event.channelType == .message, event.type == .remoteStateChanged {
+            let agentUserId = event.publisher ?? "-1"
+            handlePresenceStates(agentUserId: agentUserId, states: event.states, timestamp: Double(event.timestamp))
         }
     }
 }
@@ -615,5 +699,3 @@ extension ConversationalAIAPIImpl: TranscriptDelegate {
         callMessagePrint(msg: txt)
     }
 }
-
-

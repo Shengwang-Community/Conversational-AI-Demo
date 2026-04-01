@@ -696,6 +696,30 @@ public enum MessageType: String, CaseIterable {
     ///   - agentUserId: Agent RTM user ID
     ///   - event: Agent state change event containing state, turn ID, timestamp, and reason
     @objc func onAgentStateChanged(agentUserId: String, event: StateChangeEvent)
+
+    /// Called when agent listening state changes
+    /// This method is called when the agent starts or stops listening to user input.
+    ///
+    /// - Parameters:
+    ///   - agentUserId: Agent RTM user ID
+    ///   - isListening: Whether the agent is currently listening
+    @objc optional func onAgentListeningChanged(agentUserId: String, isListening: Bool)
+
+    /// Called when agent thinking state changes
+    /// This method is called when the agent starts or stops processing/thinking.
+    ///
+    /// - Parameters:
+    ///   - agentUserId: Agent RTM user ID
+    ///   - isThinking: Whether the agent is currently thinking
+    @objc optional func onAgentThinkingChanged(agentUserId: String, isThinking: Bool)
+
+    /// Called when agent speaking state changes
+    /// This method is called when the agent starts or stops speaking.
+    ///
+    /// - Parameters:
+    ///   - agentUserId: Agent RTM user ID
+    ///   - isSpeaking: Whether the agent is currently speaking
+    @objc optional func onAgentSpeakingChanged(agentUserId: String, isSpeaking: Bool)
      
     /// Called when an interrupt event occurs
     /// This callback is triggered when the agent's speech or processing is interrupted
@@ -856,7 +880,6 @@ public enum MessageType: String, CaseIterable {
     /// Call this method when you no longer need the ConversationalAI API.
     @objc func destroy()
 }
-
 
 
 

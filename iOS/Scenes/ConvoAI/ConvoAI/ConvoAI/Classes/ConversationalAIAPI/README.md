@@ -58,6 +58,21 @@ Please follow these steps to quickly integrate and use the ConversationalAI API:
    convoAIAPI.addHandler(handler: self)
    ```
 
+   Fine-grained Presence callbacks are also available for listening, thinking, and speaking:
+   ```swift
+   func onAgentListeningChanged(agentUserId: String, isListening: Bool) {
+       print("Agent listening: \(isListening)")
+   }
+
+   func onAgentThinkingChanged(agentUserId: String, isThinking: Bool) {
+       print("Agent thinking: \(isThinking)")
+   }
+
+   func onAgentSpeakingChanged(agentUserId: String, isSpeaking: Bool) {
+       print("Agent speaking: \(isSpeaking)")
+   }
+   ```
+
 4. **Subscribe to Channel Messages**
 
    Call before starting a session:
@@ -71,6 +86,8 @@ Please follow these steps to quickly integrate and use the ConversationalAI API:
         }
     }
    ```
+
+   After subscription succeeds, the component automatically calls `whoNow` once to backfill current Presence states so the latest agent status is not missed if it was published before subscription.
 
 5. **(Optional) Set Audio Parameters Before Joining RTC Channel**
 
@@ -202,6 +219,7 @@ public func onMessageError(agentUserId: String, error: MessageError) {
         }
     }
    ```
+  The component will also query current Presence states after subscription succeeds and dispatch the same state callbacks for the users already in the channel.
 
 - **Unsubscribe**
   Call at the end of each session:
