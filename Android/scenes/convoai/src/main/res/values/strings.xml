@@ -66,6 +66,14 @@
     <string name="cov_agent_connecting">连接中...</string>
     <string name="cov_copy_succeed">已复制</string>
     <string name="cov_interrupted">已打断</string>
+    <string name="cov_latency_metrics_round_format">第 %1$d 轮</string>
+    <string name="cov_latency_metrics_current_round">本轮</string>
+    <string name="cov_latency_metrics_total">端到端</string>
+    <string name="cov_latency_metrics_value_ms">%1$dms</string>
+    <string name="cov_latency_metrics_chip_format">%1$s %2$s</string>
+    <string name="cov_latency_metrics_label_asr">ASR</string>
+    <string name="cov_latency_metrics_label_llm">LLM</string>
+    <string name="cov_latency_metrics_label_tts">TTS</string>
     <string name="cov_agent_silent">你可以开始说话</string>
     <string name="cov_agent_listening">正在听…</string>
     <string name="cov_agent_thinking">说话或点击打断</string>
