@@ -49,6 +49,104 @@
 
     </LinearLayout>
 
+    <HorizontalScrollView
+        android:id="@+id/layout_message_metrics"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="26dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:overScrollMode="never"
+        android:scrollbars="none"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/cov_latency_metrics_card_bg"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="10dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/tv_metrics_turn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/cov_latency_metrics_turn_bg"
+                android:includeFontPadding="false"
+                android:paddingStart="8dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="4dp"
+                android:textColor="@color/ai_icontext1"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="第 1 轮" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_metrics_summary_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/ai_icontext2"
+                    android:textSize="12sp"
+                    tools:text="端到端" />
+
+                <TextView
+                    android:id="@+id/tv_metrics_summary_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:includeFontPadding="false"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    tools:text="1423ms" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_metrics_asr"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:includeFontPadding="false"
+                android:textColor="@color/ai_icontext2"
+                android:textSize="12sp"
+                tools:text="ASR 198ms" />
+
+            <TextView
+                android:id="@+id/tv_metrics_llm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:includeFontPadding="false"
+                android:textColor="@color/ai_icontext2"
+                android:textSize="12sp"
+                tools:text="LLM 542ms" />
+
+            <TextView
+                android:id="@+id/tv_metrics_tts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:includeFontPadding="false"
+                android:textColor="@color/ai_icontext2"
+                android:textSize="12sp"
+                tools:text="TTS 186ms" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
     <!-- Add image message layout below text message layout -->
     <!-- Image message item for agent (hidden by default, shown for image messages) -->
     <LinearLayout

@@ -8,11 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import io.agora.scene.common.R
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.common.util.dp
@@ -23,6 +23,9 @@ import io.agora.scene.convoai.convoaiApi.TranscriptType
 import io.agora.scene.convoai.databinding.CovMessageAgentItemBinding
 import io.agora.scene.convoai.databinding.CovMessageListViewBinding
 import io.agora.scene.convoai.databinding.CovMessageMineItemBinding
+import io.agora.scene.convoai.ui.living.metrics.LatencyMetricChipUiModel
+import io.agora.scene.convoai.ui.living.metrics.TurnFinishedMetricsUiModel
+import io.agora.scene.common.R as CommonR
 
 /**
  * CovMessageListView is a custom view for displaying a conversation message list.
@@ -38,6 +41,7 @@ class CovMessageListView @JvmOverloads constructor(
 
     private val binding = CovMessageListViewBinding.inflate(LayoutInflater.from(context), this, true)
     private val messageAdapter = MessageAdapter()
+    private val pendingLatencyMetrics = mutableMapOf<Long, TurnFinishedMetricsUiModel>()
 
     // Track whether to automatically scroll to bottom
     private var autoScrollToBottom = true
@@ -143,6 +147,7 @@ class CovMessageListView @JvmOverloads constructor(
     fun clearMessages() {
         autoScrollToBottom = true
         binding.cvToBottom.visibility = INVISIBLE
+        pendingLatencyMetrics.clear()
         messageAdapter.clearMessages()
     }
 
@@ -170,9 +175,13 @@ class CovMessageListView @JvmOverloads constructor(
             turnId = transcript.turnId,
             content = transcript.text,
             status = transcript.status,
-            localTurn = transcript.turnId
+            localTurn = transcript.turnId,
+            latencyMetrics = if (isUser) null else pendingLatencyMetrics[transcript.turnId]
         )
         messageAdapter.addOrUpdateMessage(newMessage)
+        if (!isUser) {
+            pendingLatencyMetrics.remove(transcript.turnId)
+        }
         // Determine if this is a new message (just inserted)
         val isNewMessage =
             messageAdapter.getAllMessages().count { it.turnId == transcript.turnId && it.isMe == isUser } == 1
@@ -249,6 +258,7 @@ class CovMessageListView @JvmOverloads constructor(
         val uuid: String? = null, // Unique local ID for local image messages
         val localTurn: Long = 0L,
         var uploadStatus: UploadStatus = UploadStatus.NONE, // For image
+        var latencyMetrics: TurnFinishedMetricsUiModel? = null,
     )
 
     /**
@@ -259,7 +269,7 @@ class CovMessageListView @JvmOverloads constructor(
         private var agentName: String = ""
         private var agentUrl: String = ""
         @DrawableRes
-        private var agentDefaultImage: Int = R.drawable.common_default_agent
+        private var agentDefaultImage: Int = CommonR.drawable.common_default_agent
         private val messages = mutableListOf<Message>()
 
         abstract inner class MessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -341,6 +351,7 @@ class CovMessageListView @JvmOverloads constructor(
 
                     // Set text content
                     binding.tvMessageContent.text = message.content
+                    bindLatencyMetrics(message.latencyMetrics)
 
                     // Show/hide typing dots based on message status
                     if (message.status == TranscriptStatus.IN_PROGRESS) {
@@ -352,6 +363,7 @@ class CovMessageListView @JvmOverloads constructor(
                     binding.layoutMessageInterrupt.isVisible = message.status == TranscriptStatus.INTERRUPTED
                 } else if (message.type == MessageType.IMAGE) {
                     binding.tvMessageContent.isVisible = false
+                    binding.layoutMessageMetrics.isVisible = false
                     binding.layoutImageMessage.isVisible = true
                     val imageView = binding.ivImageMessage
                     val progressBar = binding.progressUpload
@@ -384,6 +396,42 @@ class CovMessageListView @JvmOverloads constructor(
                         onImagePreviewClickListener?.invoke(message, imageBounds)
                     }
                 }
+            }
+
+            private fun bindLatencyMetrics(metrics: TurnFinishedMetricsUiModel?) {
+                binding.layoutMessageMetrics.isVisible = metrics != null
+                if (metrics == null) {
+                    bindMetricChip(binding.tvMetricsAsr, null)
+                    bindMetricChip(binding.tvMetricsLlm, null)
+                    bindMetricChip(binding.tvMetricsTts, null)
+                    return
+                }
+                val context = binding.root.context
+                binding.tvMetricsTurn.text = metrics.turnId?.let {
+                    context.getString(io.agora.scene.convoai.R.string.cov_latency_metrics_round_format, it)
+                } ?: context.getString(io.agora.scene.convoai.R.string.cov_latency_metrics_current_round)
+                binding.tvMetricsSummaryLabel.setText(io.agora.scene.convoai.R.string.cov_latency_metrics_total)
+                binding.tvMetricsSummaryValue.text = formatLatencyValueText(context, metrics.totalLatencyMs)
+                bindMetricChip(binding.tvMetricsAsr, metrics.asrMetric)
+                bindMetricChip(binding.tvMetricsLlm, metrics.llmMetric)
+                bindMetricChip(binding.tvMetricsTts, metrics.ttsMetric)
+            }
+
+            private fun bindMetricChip(textView: TextView, metric: LatencyMetricChipUiModel?) {
+                textView.isVisible = metric != null
+                textView.text = metric?.let { formatMetricChipText(textView.context, it) }.orEmpty()
+            }
+
+            private fun formatMetricChipText(context: Context, metric: LatencyMetricChipUiModel): String {
+                return context.getString(
+                    io.agora.scene.convoai.R.string.cov_latency_metrics_chip_format,
+                    context.getString(metric.labelResId),
+                    formatLatencyValueText(context, metric.latencyMs)
+                )
+            }
+
+            private fun formatLatencyValueText(context: Context, latencyMs: Int): String {
+                return context.getString(io.agora.scene.convoai.R.string.cov_latency_metrics_value_ms, latencyMs)
             }
         }
 
@@ -445,7 +493,10 @@ class CovMessageListView @JvmOverloads constructor(
         fun addOrUpdateMessage(message: Message) {
             val existIndex = messages.indexOfFirst { it.turnId == message.turnId && it.isMe == message.isMe }
             if (existIndex != -1) {
-                messages[existIndex] = message
+                val existingMessage = messages[existIndex]
+                messages[existIndex] = message.copy(
+                    latencyMetrics = message.latencyMetrics ?: existingMessage.latencyMetrics
+                )
                 notifyItemChanged(existIndex)
             } else {
                 messages.add(message)
@@ -486,6 +537,16 @@ class CovMessageListView @JvmOverloads constructor(
          */
         fun getAllMessages(): List<Message> {
             return messages.toList()
+        }
+
+        fun updateLatencyMetrics(turnId: Long, metrics: TurnFinishedMetricsUiModel): Boolean {
+            val index = messages.indexOfLast { it.turnId == turnId && !it.isMe && it.type == MessageType.TEXT }
+            if (index == -1) {
+                return false
+            }
+            messages[index] = messages[index].copy(latencyMetrics = metrics)
+            notifyItemChanged(index)
+            return true
         }
 
         /**
@@ -581,6 +642,13 @@ class CovMessageListView @JvmOverloads constructor(
 
     fun updateLocalImageMessage(uuid: String, uploadStatus: UploadStatus) {
         messageAdapter.updateLocalImageMessage(uuid, uploadStatus)
+    }
+
+    fun updateLatencyMetrics(turnId: Long, metrics: TurnFinishedMetricsUiModel) {
+        pendingLatencyMetrics[turnId] = metrics
+        if (messageAdapter.updateLatencyMetrics(turnId, metrics)) {
+            pendingLatencyMetrics.remove(turnId)
+        }
     }
 
     /**

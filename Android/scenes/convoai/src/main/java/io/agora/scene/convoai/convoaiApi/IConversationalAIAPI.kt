@@ -5,7 +5,7 @@ import io.agora.rtc2.RtcEngine
 import io.agora.rtm.RtmClient
 import io.agora.scene.convoai.convoaiApi.AgentState.UNKNOWN
 
-const val ConversationalAIAPI_VERSION = "2.1.0"
+const val ConversationalAIAPI_VERSION = "2.2.0"
 
 /*
  * This file defines the core interfaces, data structures, and error system for the Conversational AI API.
@@ -249,6 +249,38 @@ data class InterruptEvent(
 )
 
 /**
+ * Segmented latency metrics for a completed turn.
+ *
+ * @property algorithmProcessing End-to-end algorithm processing latency in milliseconds
+ * @property asrTTLW ASR time-to-last-word in milliseconds
+ * @property llmTTFT LLM time-to-first-token in milliseconds
+ * @property ttsTTFB TTS time-to-first-byte in milliseconds
+ * @property transport RTC transport latency in milliseconds
+ */
+data class SegmentedLatency(
+    val algorithmProcessing: Double,
+    val asrTTLW: Double,
+    val llmTTFT: Double,
+    val ttsTTFB: Double,
+    val transport: Double,
+)
+
+/**
+ * Latency metrics for a completed conversation turn.
+ *
+ * @property turnId Turn ID of the completed round
+ * @property e2eLatency End-to-end latency in milliseconds
+ * @property segmentedLatency Segmented latency details
+ * @property timestamp Turn start timestamp in milliseconds since epoch
+ */
+data class Turn(
+    val turnId: Long,
+    val e2eLatency: Double,
+    val segmentedLatency: SegmentedLatency,
+    val timestamp: Long,
+)
+
+/**
  * Performance module type enum.
  *
  * Used to distinguish different types of performance metrics.
@@ -341,6 +373,7 @@ data class ModuleError(
  * @property USER User transcript message
  * @property ERROR Error message
  * @property METRICS Performance metrics message
+ * @property TURN_FINISHED Completed-turn latency message
  * @property INTERRUPT Interrupt message
  * @property UNKNOWN Unknown type
  */
@@ -356,6 +389,9 @@ enum class MessageType(val value: String) {
 
     /** Performance metrics message */
     METRICS("message.metrics"),
+
+    /** Completed-turn latency message */
+    TURN_FINISHED("turn.finished"),
 
     /** Interrupt message */
     INTERRUPT("message.interrupt"),
@@ -608,6 +644,13 @@ interface IConversationalAIAPIEventHandler {
      * @param metric Performance metrics
      */
     fun onAgentMetrics(agentUserId: String, metric: Metric)
+
+    /**
+     * Called when a conversation turn is finished and latency metrics are available.
+     * @param agentUserId Agent user ID
+     * @param turn Completed turn latency metrics
+     */
+    fun onTurnFinished(agentUserId: String, turn: Turn)
 
     /**
      * Called when an AI error occurs.

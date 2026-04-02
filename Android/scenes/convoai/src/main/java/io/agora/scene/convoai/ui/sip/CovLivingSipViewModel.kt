@@ -103,6 +103,10 @@ class CovLivingSipViewModel : ViewModel() {
             // Handle metrics
         }
 
+        override fun onTurnFinished(agentUserId: String, turn: Turn) {
+            // Handle turn finished
+        }
+
         override fun onAgentError(agentUserId: String, error: ModuleError) {
             // Handle agent error
         }

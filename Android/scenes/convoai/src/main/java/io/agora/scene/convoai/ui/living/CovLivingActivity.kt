@@ -448,6 +448,17 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                 }
             }
         }
+        lifecycleScope.launch {  // Observe turn finished metrics updates
+            viewModel.turnFinishedMetricsState.collect { turnFinishedState ->
+                if (isSelfSubRender) return@collect
+                turnFinishedState?.let {
+                    mBinding?.messageListViewV2?.updateLatencyMetrics(
+                        turnId = it.turn.turnId,
+                        metrics = it.toSubtitleMetricsUiModel()
+                    )
+                }
+            }
+        }
         lifecycleScope.launch {  // Observe interrupt event updates
             viewModel.interruptEvent.collect { interruptEvent ->
                 if (isSelfSubRender) return@collect

@@ -45,6 +45,7 @@ import io.agora.scene.convoai.convoaiApi.Transcript
 import io.agora.scene.convoai.convoaiApi.TranscriptRenderMode
 import io.agora.scene.convoai.convoaiApi.TranscriptStatus
 import io.agora.scene.convoai.convoaiApi.TranscriptType
+import io.agora.scene.convoai.convoaiApi.Turn
 import io.agora.scene.convoai.convoaiApi.VoiceprintStateChangeEvent
 import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.rtm.CovRtmManager
@@ -54,6 +55,9 @@ import io.agora.scene.convoai.ui.MediaInfo
 import io.agora.scene.convoai.ui.PictureError
 import io.agora.scene.convoai.ui.PictureInfo
 import io.agora.scene.convoai.ui.ResourceError
+import io.agora.scene.convoai.ui.living.metrics.AgentLatencyData
+import io.agora.scene.convoai.ui.living.metrics.LatencyMetricsManager
+import io.agora.scene.convoai.ui.living.metrics.TurnFinishedMetricsState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -150,9 +154,15 @@ class CovLivingViewModel : ViewModel() {
     private var integratedToken: String? = null
     private var pingJob: Job? = null
     private var waitingAgentJob: Job? = null
+    private val latencyMetricsManager = LatencyMetricsManager.shared
+    private var latencyMetricsPresetName: String? = null
 
     // API instances
     private var conversationalAIAPI: IConversationalAIAPI? = null
+
+    private val _turnFinishedMetricsState = MutableStateFlow<TurnFinishedMetricsState?>(null)
+    val turnFinishedMetricsState: StateFlow<TurnFinishedMetricsState?> =
+        _turnFinishedMetricsState.asStateFlow()
 
     // Typing animation related properties
     private var currentTypingTurnId: Long = -1
@@ -319,6 +329,21 @@ class CovLivingViewModel : ViewModel() {
             // Handle metrics
         }
 
+        override fun onTurnFinished(agentUserId: String, turn: Turn) {
+            val presetName = latencyMetricsPresetName
+            if (presetName.isNullOrEmpty()) {
+                CovLogger.w(TAG, "Ignore turn.finished because latency metrics session is not ready")
+                return
+            }
+            latencyMetricsManager.append(presetName, turn)
+            _turnFinishedMetricsState.value = TurnFinishedMetricsState(
+                agentUserId = agentUserId,
+                presetName = presetName,
+                turn = turn
+            )
+            CovLogger.d(TAG, "Stored turn.finished for preset=$presetName, turnId=${turn.turnId}")
+        }
+
         override fun onAgentError(agentUserId: String, error: ModuleError) {
             // Handle agent error
         }
@@ -429,6 +454,7 @@ class CovLivingViewModel : ViewModel() {
     fun startAgentConnection() {
         if (_connectionState.value != AgentConnectionState.IDLE) return
         _connectionState.value = AgentConnectionState.CONNECTING
+        prepareLatencyMetricsSession()
         // Generate channel name
         CovAgentManager.channelName =
             CovAgentManager.channelPrefix + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
@@ -808,6 +834,14 @@ class CovLivingViewModel : ViewModel() {
         ApiManager.uploadImage(SSOUserManager.getToken(), requestId, channelName, imageFile, onResult)
     }
 
+    fun getCurrentLatencyMetricsData(): AgentLatencyData? {
+        val presetName = latencyMetricsPresetName ?: resolveLatencyMetricsPresetName()
+        if (presetName.isNullOrEmpty()) {
+            return null
+        }
+        return latencyMetricsManager.fetch(presetName)
+    }
+
     // ===== Private methods =====
     private fun handleAgentStartResult(result: Pair<String, Int>) {
         val (message, errorCode) = result
@@ -927,6 +961,24 @@ class CovLivingViewModel : ViewModel() {
         }
     }
 
+    private fun resolveLatencyMetricsPresetName(): String? {
+        return CovAgentManager.getPreset()?.name?.takeIf { it.isNotEmpty() }
+    }
+
+    private fun prepareLatencyMetricsSession() {
+        _turnFinishedMetricsState.value = null
+        latencyMetricsPresetName = resolveLatencyMetricsPresetName()
+        latencyMetricsPresetName?.let { presetName ->
+            latencyMetricsManager.remove(presetName)
+            CovLogger.d(TAG, "Reset latency metrics session for preset=$presetName")
+        } ?: CovLogger.w(TAG, "Preset name unavailable, turn.finished data will be ignored")
+    }
+
+    private fun clearLatencyMetricsSession() {
+        latencyMetricsPresetName = null
+        _turnFinishedMetricsState.value = null
+    }
+
     private fun cancelJobs() {
         // Cancel ping job safely
         runCatching {
@@ -956,6 +1008,7 @@ class CovLivingViewModel : ViewModel() {
     private fun resetState() {
         // Stop typing animation
         stopTypingAnimation()
+        clearLatencyMetricsSession()
 
         _isShowMessageList.value = false
         _isLocalAudioMuted.value = false
