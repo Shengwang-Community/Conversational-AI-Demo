@@ -129,6 +129,8 @@ paths = [
     '''gitleaks.toml''',
     '''(.*?)(jpg|gif|doc|pdf|bin|svg|socket)$''',
     '''(go.mod|go.sum)$''',
+    '''iOS/\.agents/skills/.*/SKILL\.md''',
+    '''iOS/\.agents/skills/.*/references/.*\.md''',
     '''iOS/.*\.strings''',
     '''iOS/.*\.lproj/.*''',
     '''.*\.strings$''',
@@ -139,6 +141,8 @@ paths = [
     '''iOS/Pods/.*''',
     '''README\.md''',
     '''README\.zh\.md''',
+    '''Android/\.agents/skills/.*/SKILL\.md''',
+    '''Android/\.agents/skills/.*/references/.*\.md''',
     '''Android/.*/res/values(-zh)?/(strings|arrays)\.xml''',
     '''Android/app/build.gradle''',
 ]

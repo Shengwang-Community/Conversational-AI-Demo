@@ -1,0 +1,6 @@
+interface:
+  display_name: "ConvoAI iOS Workflow"
+  short_description: "Workflow for implementing iOS requirements in this ConvoAI repo"
+  default_prompt: "Use $convoai-ios-workflow for iOS requirement delivery in this ConvoAI repo. If I explicitly ask for closed-loop workflow, delegation, or multiple agents, run the developer-and-tester loop."
+policy:
+  allow_implicit_invocation: false
