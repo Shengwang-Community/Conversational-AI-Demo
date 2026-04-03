@@ -61,6 +61,9 @@
    ```kotlin
    api.addHandler(object : IConversationalAIAPIEventHandler {
        override fun onAgentStateChanged(agentUserId: String, event: StateChangeEvent) { /* ... */ }
+       override fun onAgentListeningChanged(agentUserId: String, isListening: Boolean) { /* ... */ }
+       override fun onAgentThinkingChanged(agentUserId: String, isThinking: Boolean) { /* ... */ }
+       override fun onAgentSpeakingChanged(agentUserId: String, isSpeaking: Boolean) { /* ... */ }
        override fun onAgentInterrupted(agentUserId: String, event: InterruptEvent) { /* ... */ }
        override fun onAgentMetrics(agentUserId: String, metric: Metric) { /* ... */ }
        override fun onAgentError(agentUserId: String, error: ModuleError) { /* ... */ }
@@ -72,6 +75,8 @@
    })
    ```
 
+   同时支持通过 Presence 接收 agent 的 `listening`、`thinking`、`speaking` 细粒度状态回调；这三个回调都带有默认空实现，如无需要可不覆盖。
+
 4. **订阅频道消息**
 
    在开始会话前调用：
@@ -82,6 +87,8 @@
        }
    }
    ```
+
+   订阅成功后，组件会自动调用一次 `whoNow` 补拉当前频道的 Presence 状态，避免在订阅前已经上报的 agent 最新状态被遗漏。
 
 5. **（可选）加入 RTC 频道前设置音频参数**
 
