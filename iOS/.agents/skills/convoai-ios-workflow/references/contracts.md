@@ -5,6 +5,8 @@ Use these contracts to keep the closed loop deterministic.
 ## Controller Checklist
 
 Before spawning agents, the controller should lock:
+- the ordered feature plan
+- the active feature item for this loop
 - the validation mode
 - the user goal
 - acceptance criteria
@@ -16,6 +18,7 @@ Before spawning agents, the controller should lock:
 
 Recommended defaults:
 - `max_rounds = 3`
+- one active feature item at a time
 - developer writes production code only
 - tester is read-only for production code
 - `logic` tasks require developer-added or updated UT and tester-run UT before `passed`
@@ -24,27 +27,58 @@ Recommended defaults:
 - plain build commands do not satisfy `logic` validation on their own
 - prefer `Agent.xcworkspace` over `Agent.xcodeproj` for UT when the workspace is available
 
+## Feature Plan Template
+
+Use a small plan object before entering the loop. Keep later items pending until the active one is closed.
+
+```json
+[
+  {
+    "id": "F1",
+    "title": "short feature title",
+    "goal": "user-visible outcome for this item",
+    "validation_mode": "logic|ui|docs|mixed",
+    "depends_on": [],
+    "owned_files": ["path/to/file"],
+    "acceptance_criteria": ["specific, testable outcome"],
+    "validation_commands": ["exact command or method"],
+    "closure_signal": "what must be true before moving to the next item",
+    "status": "active|pending"
+  }
+]
+```
+
+Plan rules:
+- split the requirement into independently closable items
+- keep dependent downstream work in later items
+- keep exactly one `active` item
+- do not promote the next item until the current item is validated as closed
+
 ## Developer Prompt Template
 
 ```text
 You are the developer agent for this repo.
 
 Task:
-- [paste scoped task]
+- implement the current active feature item only
 
-Validation mode:
-- [logic|ui|docs|mixed]
+Feature plan context:
+- current item id/title: [paste]
+- current item goal: [paste]
+- dependencies already satisfied: [paste]
+- later pending items: [paste concise list]
 
 Acceptance criteria:
-- [paste criteria]
+- [paste criteria for the active feature item only]
 
 Owned files:
-- [paste paths]
+- [paste paths for the active feature item]
 
 Rules:
 - You are not alone in the codebase.
 - Do not revert unrelated changes.
 - Do not edit files outside your ownership.
+- Do not pre-implement later planned items unless a tiny supporting change is required to close the active item.
 - If validation mode is `logic`, add or update relevant unit tests in your owned files.
 - If validation mode is `logic` and there is no suitable app-owned unit test target, create or extend one as part of the task.
 - If validation mode is `logic` and the test target is new, update any shared scheme wiring needed for the agreed UT command to run.
@@ -67,9 +101,11 @@ Return JSON only:
 You are the tester agent for this repo.
 
 Goal:
-- validate whether the developer result satisfies the acceptance criteria
+- validate whether the developer result closes the current active feature item
 
 Inputs:
+- feature plan summary
+- current feature item id/title
 - validation mode
 - task summary
 - acceptance criteria
@@ -79,6 +115,7 @@ Inputs:
 
 Rules:
 - Do not modify production files.
+- Validate only the active feature item; later pending items are not grounds for failure.
 - If validation mode is `logic`, run the agreed UT command and use it as the primary gate.
 - Do not treat a plain build or compile-only command as sufficient for `logic` validation.
 - Do not replace missing or failing logic UT with static review.
@@ -106,13 +143,14 @@ Return JSON only:
 ## Loop Policy
 
 If tester returns:
-- `passed`: controller stops and summarizes delivery
+- `passed`: controller marks the active item done, summarizes delivery, and only then may activate the next planned item
 - `failed`: controller forwards failures verbatim to developer and starts the next round
-- `blocked`: controller decides whether there is still a useful static pass; if not, stop and report the blocker
+- `blocked`: controller decides whether there is still a useful static pass; if not, stop and report the blocker without skipping to later items
 
 Controller must also verify the developer result actually exists in the shared workspace before asking the tester to validate. A common guard is `git diff --name-only` scoped to the owned files.
 
 For production code tasks:
+- only one feature item may be active in a loop
 - `logic` `passed` should mean the agreed UT command succeeded.
 - `logic` `blocked` should be used when UT execution is required but impossible because of environment or tooling constraints.
 - `logic` `failed` should be used for real scheme wiring issues, test-file compile failures, assertion failures, or other actionable code/test defects.

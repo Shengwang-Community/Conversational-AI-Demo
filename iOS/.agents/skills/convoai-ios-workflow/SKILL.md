@@ -1,6 +1,6 @@
 ---
 name: convoai-ios-workflow
-description: Workflow for implementing, modifying, fixing, or completing iOS requirements in this ConvoAI repo. Logic tasks are UT-first and UI tasks hand visual acceptance to QA. Only spawn the developer+tester multi-agent loop when the user explicitly asks for closed-loop workflow, delegation, or multiple agents.
+description: Workflow for implementing, modifying, fixing, or completing iOS requirements in this ConvoAI repo. First analyze the request, split it into dependency-ordered feature items, and close exactly one item at a time. Logic tasks are UT-first and UI tasks hand visual acceptance to QA. Only spawn the developer+tester multi-agent loop when the user explicitly asks for closed-loop workflow, delegation, or multiple agents.
 ---
 
 # ConvoAI iOS Workflow
@@ -8,6 +8,12 @@ description: Workflow for implementing, modifying, fixing, or completing iOS req
 ## Overview
 
 This skill may trigger for normal iOS implementation requests such as “帮我实现 xxx 需求”, “帮我修改 xxx 功能”, or “修复这个 iOS 问题”.
+
+Every requirement starts with a planning pass before any coding or delegation:
+- restate the user goal and acceptance criteria
+- split the requirement into independently closable feature items
+- identify dependencies, shared prerequisites, and execution order
+- choose exactly one active feature item for the current loop
 
 When it triggers, choose the execution mode like this:
 - If the user explicitly asks for closed-loop workflow, delegation, or multiple agents, keep the main thread as the controller, spawn one developer agent and one tester agent, and drive a loop of implement -> validate -> fix until the tester returns `passed` or the loop blocks.
@@ -29,29 +35,64 @@ Multi-agent execution is allowed only when the user explicitly asks for multiple
 
 Do not use this skill for pure casual chat or non-iOS work in other repos.
 
+## Requirement Planning
+
+Before implementation, the controller must turn the request into an ordered feature plan.
+
+Feature-plan rules:
+- A feature item should represent an independently understandable outcome, not just a file edit or a vague engineering chore.
+- A feature item is only valid if it can be closed with explicit acceptance criteria and a matching validation method.
+- Merge changes into one item when they cannot be validated independently.
+- Split changes into multiple items when they have different acceptance bars, different dependencies, or can be closed separately.
+- Order items by dependency first, then by delivery value and implementation risk.
+- Keep exactly one active feature item at a time. All later items stay pending until the active item is closed.
+
+Each feature item should capture:
+- `id` and short title
+- user-visible goal
+- validation mode: `logic`, `ui`, `docs`, or `mixed`
+- dependencies or prerequisites
+- owned files or likely file scope
+- acceptance criteria
+- validation command or validation method
+- closure signal: what must be true before moving on
+
+Suggested decomposition heuristics:
+- Put contract, model, storage, or callback foundation ahead of downstream UI wiring.
+- Put test-target or scheme wiring ahead of logic work that depends on UT.
+- Keep optional polish, copy tweaks, or follow-up cleanup out of the active item unless they are required for closure.
+- If a request bundles unrelated asks, turn them into separate items instead of hiding them inside one large implementation pass.
+
 ## Controller Workflow
 
 1. Ground locally first.
    Read the requirement, inspect likely files, and identify acceptance criteria before spawning anything.
-2. Freeze the loop contract.
+2. Build the feature plan.
+   Break the requirement into ordered feature items, note dependencies, and choose the first item that should be closed.
+3. Freeze the loop contract for the active feature item only.
    Decide the validation mode, target files, allowed commands, validation commands, the primary UT command for `logic` work, any retry/fallback commands, and `max_rounds` up front. Default to `max_rounds = 3`.
-3. Spawn the developer agent.
+4. Scope the active item tightly.
+   Pass only the current feature item to the implementation loop. Do not ask the developer or tester to work on later items in the plan.
+5. Spawn the developer agent.
    Prefer narrow-context delegation. If thread history is large or noisy, do not blindly fork the whole thread; pass only the task, acceptance criteria, owned files, and the relevant current file paths. Include test files for logic tasks. Tell the developer it is not alone in the codebase and must not revert unrelated edits.
-4. Spawn the tester agent.
+6. Spawn the tester agent.
    Prefer narrow-context delegation here too. Pass the acceptance criteria, changed files, and the exact UT command rather than full history when possible. Keep the tester read-mostly: it may run checks and do review, but it should not edit production files.
-5. Confirm the developer result exists in the shared workspace.
+7. Confirm the developer result exists in the shared workspace.
    Before sending work to the tester, verify that the expected files actually changed in the shared workspace with `git diff --name-only` or equivalent. Do not let the tester validate a stale tree.
-6. Run the loop.
+8. Run the loop for the active feature item.
    Wait for the developer result, send the result and acceptance criteria to the tester, and only treat the task as complete when the tester returns `passed`.
    For logic tasks, a `passed` result should include the agreed UT command and a successful UT result. A plain build is not a substitute for UT. For UI tasks, do not require smoke-check evidence unless the user explicitly asks for it.
-7. On failure, forward findings verbatim.
+9. On pass, close only the active feature item.
+   Mark the item done, summarize what changed, then choose the next planned item only after the current item is closed and validated.
+10. On failure, forward findings verbatim.
    If the tester returns `failed`, pass `failures`, `logs_summary`, and `fix_suggestions` back to the developer and start the next round.
-8. On blockage, classify it.
+11. On blockage, classify it and stop the plan.
    Distinguish between environment blockage and code blockage. For logic tasks, if the agreed UT command is blocked by environment, require the tester to do the static pass and return `blocked`, not `passed`. For UI tasks, do not invent a smoke-check blocker; hand off UI verification to QA in the final summary.
+   Do not silently skip to the next planned feature item when the current one is blocked. Report the blocker and the remaining plan state instead.
 
 ## Task Classification
 
-This skill is iOS-only. Before validation, the controller should classify the validation mode for the current iOS task.
+This skill is iOS-only. Before validation, the controller should classify the validation mode for the current active feature item, not just the overall request.
 
 Validation mode:
 - `logic` for parsing, callbacks, storage, caching, managers, reducers, state machines, API contracts, and non-visual business logic
@@ -67,6 +108,7 @@ Validation mode:
 - For `logic` tasks, owns relevant unit test additions or updates alongside production code.
 - If the repo has no suitable app-owned unit test target for a `logic` task, owns creating or extending the nearest unit-test target needed to run focused UT.
 - May update docs only when they are part of the requested delivery.
+- Works on the active feature item only and must not pre-implement later planned items unless required to close the active one.
 - Must return the JSON contract from [contracts.md](references/contracts.md).
 
 ### Tester agent
@@ -76,12 +118,14 @@ Validation mode:
 - For `logic` tasks, must run the agreed UT command and use UT as the primary acceptance gate.
 - Must not replace missing or failing logic UT with static review.
 - For `ui` tasks, must not require smoke checks or simulator walkthroughs unless the user explicitly asks for them.
+- Validates only the active feature item and must not fail or pass based on later pending plan items.
 - Must return the JSON contract from [contracts.md](references/contracts.md).
 
 ### Controller agent
 
-- Owns scoping, agent setup, loop control, and final summary.
+- Owns requirement decomposition, plan ordering, active-item scoping, loop control, and final summary.
 - Decides whether a tester result is actionable, blocked, or terminal.
+- Tracks item status as `pending`, `active`, `done`, or `blocked`.
 
 ## Repo Defaults
 
@@ -144,6 +188,10 @@ iOS validation defaults:
 
 ## Guardrails
 
+- Never skip requirement analysis and feature decomposition for a multi-part request.
+- Never keep more than one active feature item in flight at the same time.
+- Never implement later planned items before the current item is closed.
+- Never hide extra scope inside the active item just because nearby files are already open.
 - Never let the developer and tester edit overlapping production files.
 - Never let the tester silently change the acceptance bar.
 - Never close the loop on a developer self-report alone.
@@ -155,6 +203,7 @@ iOS validation defaults:
 - Never default to `Agent.xcodeproj` for UT when `Agent.xcworkspace` is available and required for dependency resolution.
 - Never require a smoke check for a `ui` task unless the user explicitly asks for one.
 - Never treat a `logic` task `blocked` result as equivalent to `passed`.
+- Never move to the next planned feature item after a `blocked` result unless the user explicitly changes the plan.
 - Do not push, cherry-pick, or modify remotes unless the user explicitly asks.
 - Preserve user changes and unrelated dirty worktrees.
 
@@ -163,6 +212,9 @@ iOS validation defaults:
 - Developer output must be machine-checkable and list changed files.
 - Tester output must clearly say `passed`, `failed`, or `blocked`, and include the validation mode and whether validation was static-only or executable.
 - Final controller output should summarize:
+  - the ordered feature plan
+  - which feature item was just closed
+  - remaining pending or blocked items
   - delivered behavior
   - changed files
   - validation mode(s)
