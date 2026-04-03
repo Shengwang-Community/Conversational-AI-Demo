@@ -72,6 +72,32 @@ Expected result:
 2. Pick a concrete simulator UUID from the preflight output.
 3. Run the focused UT script with the narrowest `-only-testing:` identifier that still covers the acceptance criteria.
 
+## Repo Fast Path
+
+This repo now provides lightweight wrappers under `scripts/` for repeat focused UT runs:
+
+- `scripts/ios_build_for_testing.sh`
+  - builds once into a shared DerivedData directory
+- `scripts/ios_test_without_building.sh`
+  - reruns a focused test target from the existing `.xctestrun`
+- `scripts/ios_focused_test_fast.sh`
+  - repo-preferred wrapper that reuses build artifacts when present
+- `scripts/ios_feature_validation.sh`
+  - feature-name wrapper for the common validations in this repo
+
+Default behavior:
+- reuses `/tmp/AgentDerivedData-<scheme>-x86` unless another path is provided
+- prefers a booted iPhone simulator when possible
+- defaults to `SIM_ARCH=x86_64` to avoid the current arm64 simulator linkage issue from legacy dependencies
+
+Current feature aliases:
+- `turn-finished`
+  - runs `Agent-cnTests/ConversationalAIAPITurnFinishedTests`
+- `latency-storage`
+  - runs `Agent-cnTests/LatencyMetricsManagerTests`
+- `chat-latency-ui`
+  - currently uses the compile-and-canary path because no dedicated UI test exists yet
+
 ## One-Shot Retry Rules
 
 If the first focused UT attempt fails for an obvious local iOS reason, allow one targeted retry:

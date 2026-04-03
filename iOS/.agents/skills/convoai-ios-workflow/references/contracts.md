@@ -14,6 +14,8 @@ Before spawning agents, the controller should lock:
 - validation commands
 - the primary UT command when validation mode is `logic`
 - any one-shot retry or fallback commands for obvious iOS test-environment issues
+- the UT reporting requirements for the final summary:
+  exact UT command(s), per-command result, whether artifacts were rebuilt or reused, test-case details or counts, and `xcresult`/log paths when available
 - max rounds
 
 Recommended defaults:
@@ -22,6 +24,7 @@ Recommended defaults:
 - developer writes production code only
 - tester is read-only for production code
 - `logic` tasks require developer-added or updated UT and tester-run UT before `passed`
+- executable UT runs must be reported back with full user-visible status, not just a pass/fail label
 - `ui` tasks do not require smoke checks; QA owns UI acceptance
 - validation commands must match the iOS toolchain used in this repo
 - plain build commands do not satisfy `logic` validation on their own
@@ -127,6 +130,12 @@ Rules:
   - retry once with an `x86_64` simulator destination if arm64 simulator linkage fails on a legacy dependency
 - If the agreed automated command fails due to environment, continue with static review and return `blocked` instead of `passed` unless the task is `docs` or the controller explicitly scoped UI acceptance to QA.
 - Be specific; do not say only "failed".
+- When executable UT runs, collect the full UT state needed by the final user-facing summary:
+  - exact UT command(s)
+  - per-command result (`passed|failed|blocked`)
+  - whether build artifacts were rebuilt or reused
+  - concrete test-case details when available
+  - `xcresult` or log path when available
 
 Return JSON only:
 {
@@ -136,7 +145,22 @@ Return JSON only:
   "commands": ["..."],
   "failures": ["..."],
   "logs_summary": "...",
-  "fix_suggestions": ["..."]
+  "fix_suggestions": ["..."],
+  "ut_status": {
+    "commands": [
+      {
+        "command": "...",
+        "result": "passed|failed|blocked",
+        "artifacts": "rebuilt|reused|unknown",
+        "summary": "...",
+        "passed_tests": ["..."],
+        "failed_tests": ["..."],
+        "skipped_tests": ["..."],
+        "xcresult_path": "...",
+        "log_path": "..."
+      }
+    ]
+  }
 }
 ```
 
@@ -152,6 +176,7 @@ Controller must also verify the developer result actually exists in the shared w
 For production code tasks:
 - only one feature item may be active in a loop
 - `logic` `passed` should mean the agreed UT command succeeded.
+- user-facing completion for executable UT must surface the full UT status block, not just "passed"
 - `logic` `blocked` should be used when UT execution is required but impossible because of environment or tooling constraints.
 - `logic` `failed` should be used for real scheme wiring issues, test-file compile failures, assertion failures, or other actionable code/test defects.
 - if no suitable unit-test target exists for a `logic` task, the expected path is to add or extend one, not to waive UT

@@ -21,6 +21,7 @@ When it triggers, choose the execution mode like this:
 
 Validation mode is task-dependent:
 - Logic/data/API/storage/parsing tasks are UT-first. The developer should add or update relevant unit tests, and the tester should run the agreed UT command. Passing UT is sufficient for `passed`.
+- When executable UT runs are part of closure, the final close-out must show the full UT status, not just a pass/fail label. At minimum include the exact UT command, whether build artifacts were rebuilt or reused, the executable result, and the concrete test-case outcome observed by the tester.
 - UI tasks do not require smoke checks or simulator walkthroughs by default. QA owns UI acceptance. The tester may run cheap automated checks, but must not block on missing smoke checks.
 - Docs-only tasks may use static review only.
 
@@ -52,6 +53,7 @@ Each feature item should capture:
 - user-visible goal
 - validation mode: `logic`, `ui`, `docs`, or `mixed`
 - dependencies or prerequisites
+- missing dependencies that are still required from the user, backend, design, or external systems
 - owned files or likely file scope
 - acceptance criteria
 - validation command or validation method
@@ -62,6 +64,7 @@ Suggested decomposition heuristics:
 - Put test-target or scheme wiring ahead of logic work that depends on UT.
 - Keep optional polish, copy tweaks, or follow-up cleanup out of the active item unless they are required for closure.
 - If a request bundles unrelated asks, turn them into separate items instead of hiding them inside one large implementation pass.
+- If implementation depends on an endpoint, fixed URL, credential, asset, config, or product decision that was not provided, keep the active item narrow and record that dependency explicitly instead of guessing it.
 
 ## Controller Workflow
 
@@ -73,6 +76,7 @@ Suggested decomposition heuristics:
    Decide the validation mode, target files, allowed commands, validation commands, the primary UT command for `logic` work, any retry/fallback commands, and `max_rounds` up front. Default to `max_rounds = 3`.
 4. Scope the active item tightly.
    Pass only the current feature item to the implementation loop. Do not ask the developer or tester to work on later items in the plan.
+   If the active item still depends on missing external inputs, add clear `TODO` markers at the real integration points before stopping or reporting the blocker.
 5. Spawn the developer agent.
    Prefer narrow-context delegation. If thread history is large or noisy, do not blindly fork the whole thread; pass only the task, acceptance criteria, owned files, and the relevant current file paths. Include test files for logic tasks. Tell the developer it is not alone in the codebase and must not revert unrelated edits.
 6. Spawn the tester agent.
@@ -82,6 +86,7 @@ Suggested decomposition heuristics:
 8. Run the loop for the active feature item.
    Wait for the developer result, send the result and acceptance criteria to the tester, and only treat the task as complete when the tester returns `passed`.
    For logic tasks, a `passed` result should include the agreed UT command and a successful UT result. A plain build is not a substitute for UT. For UI tasks, do not require smoke-check evidence unless the user explicitly asks for it.
+   The controller must preserve the full UT execution state for the final summary: exact command string, whether artifacts were rebuilt or reused, executable vs blocked status, the observed test-case list or test summary, and any `xcresult` or log path the tester can provide.
 9. On pass, close only the active feature item.
    Mark the item done, summarize what changed, then choose the next planned item only after the current item is closed and validated.
 10. On failure, forward findings verbatim.
@@ -109,6 +114,7 @@ Validation mode:
 - If the repo has no suitable app-owned unit test target for a `logic` task, owns creating or extending the nearest unit-test target needed to run focused UT.
 - May update docs only when they are part of the requested delivery.
 - Works on the active feature item only and must not pre-implement later planned items unless required to close the active one.
+- If implementation is blocked by an unprovided dependency, must leave a concise `TODO` marker at the affected integration point before stopping. Do not invent the missing dependency.
 - Must return the JSON contract from [contracts.md](references/contracts.md).
 
 ### Tester agent
@@ -119,6 +125,7 @@ Validation mode:
 - Must not replace missing or failing logic UT with static review.
 - For `ui` tasks, must not require smoke checks or simulator walkthroughs unless the user explicitly asks for them.
 - Validates only the active feature item and must not fail or pass based on later pending plan items.
+- When executable UT runs, must capture and return the full UT state needed by the final user-facing summary: exact command(s), per-command result, whether build artifacts were rebuilt or reused, the concrete test-case outcome when available, and any `xcresult` or log path.
 - Must return the JSON contract from [contracts.md](references/contracts.md).
 
 ### Controller agent
@@ -142,6 +149,10 @@ Common validation commands in this repo:
 - `git diff --name-only`
 - `git diff -- <paths>`
 - `rg` for call sites and protocol conformances
+- `scripts/ios_build_for_testing.sh` for one-time build reuse when focused UT will run repeatedly
+- `scripts/ios_test_without_building.sh` for fast reruns after build artifacts already exist
+- `scripts/ios_focused_test_fast.sh` for the repo-preferred focused UT path with shared DerivedData and `x86_64` simulator fallback
+- `scripts/ios_feature_validation.sh` for feature-name driven validation without remembering `only-testing` identifiers
 - `XcodeBuildMCP` test tools when available for iOS UT execution
 - `xcodebuild test ...` for UT execution
 - `xcodebuild build ...` only when a cheap non-UI compile check is useful, and never as a substitute for UT on `logic` tasks
@@ -160,6 +171,9 @@ Use the helper scripts when helpful:
   - `scripts/preflight_ios_logic_ut.sh Agent.xcworkspace Agent.xcodeproj Agent-cn Agent.xcodeproj/xcshareddata/xcschemes/Agent-cn.xcscheme`
 - Run focused UT:
   - `scripts/run_ios_logic_ut.sh Agent.xcworkspace Agent-cn SIMULATOR_UUID YourLogicTestsTarget/YourTestClass`
+- Repo fast path:
+  - `scripts/ios_focused_test_fast.sh Agent.xcworkspace Agent-cn Agent-cnTests/YourLogicTests`
+  - `scripts/ios_feature_validation.sh turn-finished`
 
 Selection rules:
 - Prefer the narrowest UT command that still covers the acceptance criteria.
@@ -192,11 +206,14 @@ iOS validation defaults:
 - Never keep more than one active feature item in flight at the same time.
 - Never implement later planned items before the current item is closed.
 - Never hide extra scope inside the active item just because nearby files are already open.
+- Never guess a missing endpoint, URL, credential, asset, config, or product decision just to keep moving.
+- When a required dependency is missing, leave a clear `TODO` marker at the real integration point before reporting the gap.
 - Never let the developer and tester edit overlapping production files.
 - Never let the tester silently change the acceptance bar.
 - Never close the loop on a developer self-report alone.
 - Never let the tester validate before the controller confirms the shared workspace actually contains the developer's changes.
 - Never pass a `logic` task without running the agreed UT command.
+- Never close a `logic` or UT-bearing `mixed` task with a user-facing summary that says only "UT passed". The final close-out must expose the full UT status in a scan-friendly form.
 - Never treat `xcodebuild build` or any plain compile check as sufficient validation for a `logic` task.
 - Never replace missing logic UT with static review.
 - Never waive UT just because the repo currently lacks a suitable app-owned test target.
@@ -211,6 +228,7 @@ iOS validation defaults:
 
 - Developer output must be machine-checkable and list changed files.
 - Tester output must clearly say `passed`, `failed`, or `blocked`, and include the validation mode and whether validation was static-only or executable.
+- Tester output for executable UT must include the full UT state: exact UT command(s), per-command result, whether build artifacts were rebuilt or reused, concrete test-case outcome details when available, and any `xcresult` or log path available from the toolchain.
 - Final controller output should summarize:
   - the ordered feature plan
   - which feature item was just closed
@@ -219,6 +237,8 @@ iOS validation defaults:
   - changed files
   - validation mode(s)
   - validation performed
+  - full UT status for the closed item:
+    exact UT command(s), executable result, whether artifacts were rebuilt or reused, test-case details or summary counts, and `xcresult`/log paths when available
   - residual risks or manual follow-up
 
 See [contracts.md](references/contracts.md) for the exact JSON contracts and prompt templates.

@@ -24,38 +24,45 @@ target 'Agent-cn' do
   pod 'BLEManager', :path => 'Scenes/ConvoAI/BLEManager'
   pod 'AgoraRtm', :path => 'AgoraRtm.podspec'
 
+  target 'Agent-cnTests' do
+    inherit! :complete
+  end
 end
 
 post_install do |installer|
   resource_url = "https://accktvpic.oss-cn-beijing.aliyuncs.com/ConvoAI/Resource/Convo_AI_Demo_v1.0.0_Resource.zip"
   download_path = "#{Dir.pwd}/Agent/Resources/Convo_AI_Demo_v1.0.0_Resource.zip"
   extract_path = "#{Dir.pwd}/Agent/Resources"
-  
-  Pod::UI.puts "Downloading Convo AI Demo resources..."
-  download_success = system "curl -L #{resource_url} -o #{download_path}"
-  
-  unless download_success
-    Pod::UI.warn "[!] Resource download failed. Please check your network connection and try again."
-    raise Pod::Informative, "Resource download failed"
-  end
-  
-  if File.exist?(download_path)
-    Pod::UI.puts "Download completed successfully."
-    
-    Pod::UI.puts "Extracting resources..."
-    extract_success = system "unzip -j -o #{download_path} -d #{extract_path}"
-    
-    unless extract_success
-      Pod::UI.warn "[!] Resource extraction failed."
-      raise Pod::Informative, "Resource extraction failed"
-    end
-        
-    system "rm #{download_path}"
-    
-    Pod::UI.puts "Resource settings completed."
+
+  if ENV["SKIP_DEMO_RESOURCE_DOWNLOAD"] == "1"
+    Pod::UI.puts "Skipping Convo AI Demo resource download because SKIP_DEMO_RESOURCE_DOWNLOAD=1."
   else
-    Pod::UI.warn "[!] Resource download failed. Please check your network connection and try again."
-    raise Pod::Informative, "Resource download failed"
+    Pod::UI.puts "Downloading Convo AI Demo resources..."
+    download_success = system "curl -L #{resource_url} -o #{download_path}"
+
+    unless download_success
+      Pod::UI.warn "[!] Resource download failed. Please check your network connection and try again."
+      raise Pod::Informative, "Resource download failed"
+    end
+
+    if File.exist?(download_path)
+      Pod::UI.puts "Download completed successfully."
+
+      Pod::UI.puts "Extracting resources..."
+      extract_success = system "unzip -j -o #{download_path} -d #{extract_path}"
+
+      unless extract_success
+        Pod::UI.warn "[!] Resource extraction failed."
+        raise Pod::Informative, "Resource extraction failed"
+      end
+
+      system "rm #{download_path}"
+
+      Pod::UI.puts "Resource settings completed."
+    else
+      Pod::UI.warn "[!] Resource download failed. Please check your network connection and try again."
+      raise Pod::Informative, "Resource download failed"
+    end
   end
   
   installer.pods_project.targets.each do |target|
