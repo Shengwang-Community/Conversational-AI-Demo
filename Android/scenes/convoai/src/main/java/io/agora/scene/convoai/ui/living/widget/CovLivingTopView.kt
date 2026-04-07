@@ -10,6 +10,7 @@ import androidx.core.view.isVisible
 import io.agora.rtc2.Constants
 import io.agora.scene.common.R
 import io.agora.scene.common.util.GlideImageLoader
+import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.databinding.CovActivityLivingTopBinding
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +38,7 @@ class CovLivingTopView @JvmOverloads constructor(
     private var onSettingsClick: (() -> Unit)? = null
     private var onCCClick: (() -> Unit)? = null
     private var onMoreClick: (() -> Unit)? = null
+    private var onMetricsToggleChange: ((Boolean) -> Unit)? = null
 
     private var isTitleAnimRunning = false
     private var connectionState: AgentConnectionState = AgentConnectionState.IDLE
@@ -52,6 +54,10 @@ class CovLivingTopView @JvmOverloads constructor(
         binding.btnNet.setOnClickListener { onWifiClick?.invoke() }
         binding.btnSettings.setOnClickListener { onSettingsClick?.invoke() }
         binding.tvCc.setOnClickListener { onCCClick?.invoke() }
+        binding.cbMetricsToggle.isChecked = CovAgentManager.isRealtimeDataEnabled
+        binding.cbMetricsToggle.setOnCheckedChangeListener { _, isChecked ->
+            onMetricsToggleChange?.invoke(isChecked)
+        }
 
         binding.voiceprintSettingsView.setOnMoreClickListener {
             onMoreClick?.invoke()
@@ -109,6 +115,20 @@ class CovLivingTopView @JvmOverloads constructor(
      */
     fun setOnMoreClickListener(listener: (() -> Unit)?) {
         onMoreClick = listener
+    }
+
+    fun setOnMetricsToggleChangeListener(listener: ((Boolean) -> Unit)?) {
+        onMetricsToggleChange = listener
+    }
+
+    fun updateMetricsToggleChecked(checked: Boolean) {
+        if (binding.cbMetricsToggle.isChecked != checked) {
+            binding.cbMetricsToggle.isChecked = checked
+        }
+    }
+
+    fun updateMetricsToggleVisible(visible: Boolean) {
+        binding.layoutMetricsToggle.isVisible = visible
     }
 
     fun updateTitleName(name: String, url: String, @DrawableRes defaultImage:Int) {

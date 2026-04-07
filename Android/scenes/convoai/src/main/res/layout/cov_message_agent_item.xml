@@ -49,103 +49,90 @@
 
     </LinearLayout>
 
-    <HorizontalScrollView
+    <LinearLayout
         android:id="@+id/layout_message_metrics"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="26dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:layout_marginEnd="16dp"
-        android:overScrollMode="never"
-        android:scrollbars="none"
+        android:gravity="top"
+        android:orientation="horizontal"
         android:visibility="gone"
         tools:visibility="visible">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/tv_metrics_turn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/cov_latency_metrics_card_bg"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="10dp"
-            android:paddingTop="8dp"
-            android:paddingEnd="10dp"
-            android:paddingBottom="8dp">
+            android:background="@drawable/cov_latency_metrics_turn_bg"
+            android:includeFontPadding="false"
+            android:paddingStart="4dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="4dp"
+            android:paddingBottom="2dp"
+            android:textColor="@color/ai_icontext3"
+            android:textSize="9sp"
+            tools:text="#1" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp">
 
             <TextView
-                android:id="@+id/tv_metrics_turn"
+                android:id="@+id/tv_metrics_summary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/cov_latency_metrics_turn_bg"
                 android:includeFontPadding="false"
-                android:paddingStart="8dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="8dp"
-                android:paddingBottom="4dp"
-                android:textColor="@color/ai_icontext1"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                tools:text="第 1 轮" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/tv_metrics_summary_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:includeFontPadding="false"
-                    android:textColor="@color/ai_icontext2"
-                    android:textSize="12sp"
-                    tools:text="端到端" />
-
-                <TextView
-                    android:id="@+id/tv_metrics_summary_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:includeFontPadding="false"
-                    android:textColor="@color/ai_icontext1"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    tools:text="1423ms" />
-            </LinearLayout>
+                android:textColor="@color/ai_icontext3"
+                android:textSize="9sp"
+                tools:text="端到端:1423ms" />
 
             <TextView
                 android:id="@+id/tv_metrics_asr"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
                 android:includeFontPadding="false"
-                android:textColor="@color/ai_icontext2"
-                android:textSize="12sp"
-                tools:text="ASR 198ms" />
+                android:textColor="@color/ai_icontext3"
+                android:textSize="9sp"
+                tools:text="ASR:198ms" />
 
             <TextView
                 android:id="@+id/tv_metrics_llm"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
                 android:includeFontPadding="false"
-                android:textColor="@color/ai_icontext2"
-                android:textSize="12sp"
-                tools:text="LLM 542ms" />
+                android:textColor="@color/ai_icontext3"
+                android:textSize="9sp"
+                tools:text="LLM:542ms" />
 
             <TextView
                 android:id="@+id/tv_metrics_tts"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
                 android:includeFontPadding="false"
-                android:textColor="@color/ai_icontext2"
-                android:textSize="12sp"
-                tools:text="TTS 186ms" />
-        </LinearLayout>
-    </HorizontalScrollView>
+                android:textColor="@color/ai_icontext3"
+                android:textSize="9sp"
+                tools:text="TTS:186ms" />
+
+            <androidx.constraintlayout.helper.widget.Flow
+                android:id="@+id/flow_message_metrics"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:constraint_referenced_ids="tv_metrics_summary,tv_metrics_asr,tv_metrics_llm,tv_metrics_tts"
+                app:flow_horizontalGap="4dp"
+                app:flow_horizontalBias="0"
+                app:flow_horizontalStyle="packed"
+                app:flow_verticalGap="6dp"
+                app:flow_wrapMode="chain"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 
     <!-- Add image message layout below text message layout -->
     <!-- Image message item for agent (hidden by default, shown for image messages) -->

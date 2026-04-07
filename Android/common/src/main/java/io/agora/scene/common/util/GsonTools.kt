@@ -11,24 +11,27 @@ import java.lang.reflect.Type
 
 object GsonTools {
     private val gson =
-        GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-            .registerTypeAdapter(TypeToken.get(JSONObject::class.java).type, object : TypeAdapter<JSONObject>() {
-                @Throws(IOException::class)
-                override fun write(jsonWriter: JsonWriter, value: JSONObject) {
-                    jsonWriter.jsonValue(value.toString())
-                }
+        GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss")
+            .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+            .registerTypeAdapter(
+                TypeToken.get(JSONObject::class.java).type,
+                object : TypeAdapter<JSONObject>() {
+                    @Throws(IOException::class)
+                    override fun write(jsonWriter: JsonWriter, value: JSONObject) {
+                        jsonWriter.jsonValue(value.toString())
+                    }
 
-                @Throws(IOException::class)
-                override fun read(jsonReader: JsonReader): JSONObject? {
-                    return null
-                }
-            })
+                    @Throws(IOException::class)
+                    override fun read(jsonReader: JsonReader): JSONObject? {
+                        return null
+                    }
+                })
             .enableComplexMapKeySerialization()
             .create()
 
     @JvmStatic
     fun beanToString(obj: Any?): String? {
-        if(obj is String){
+        if (obj is String) {
             return obj
         }
         return try {
@@ -81,7 +84,7 @@ object GsonTools {
     @JvmStatic
     fun <T> toMap(jsonString: String?, clazz: Class<T>): Map<String, T>? {
         return try {
-            gson.fromJson(jsonString, ParameterizedTypeMapImpl(clazz))
+            gson.fromJson(jsonString, ParameterizedTypeMapImpl(String::class.java, clazz))
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -89,7 +92,7 @@ object GsonTools {
     }
 
     @JvmStatic
-    fun <T> toList(gsonString: String?, clazz:Class<T>): List<T>? {
+    fun <T> toList(gsonString: String?, clazz: Class<T>): List<T>? {
         return try {
             gson.fromJson(gsonString, ParameterizedTypeListImpl(clazz))
         } catch (e: Exception) {
@@ -163,9 +166,12 @@ internal class ParameterizedTypeListImpl(var clazz: Class<*>) : ParameterizedTyp
     }
 }
 
-internal class ParameterizedTypeMapImpl(var clazz: Class<*>) : ParameterizedType {
+internal class ParameterizedTypeMapImpl(
+    private val keyClazz: Class<*>,
+    private val valueClazz: Class<*>
+) : ParameterizedType {
     override fun getActualTypeArguments(): Array<Type> {
-        return arrayOf(clazz)
+        return arrayOf(keyClazz, valueClazz)
     }
 
     override fun getRawType(): Type {

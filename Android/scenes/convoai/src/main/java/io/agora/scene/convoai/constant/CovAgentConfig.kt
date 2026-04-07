@@ -3,6 +3,7 @@ package io.agora.scene.convoai.constant
 import io.agora.scene.common.BuildConfig
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.debugMode.DebugConfigSettings
+import io.agora.scene.common.util.LocalStorageUtil
 import io.agora.scene.convoai.api.CovAgentLanguage
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.api.CovAvatar
@@ -32,6 +33,7 @@ enum class VoiceprintMode {
 object CovAgentManager {
 
     private val TAG = "CovAgentManager"
+    private const val REAL_TIME_DATA_ENABLED = "cov_real_time_data_enabled"
 
     // Settings
     private var preset: CovAgentPreset? = null
@@ -159,6 +161,12 @@ object CovAgentManager {
     val convoAIParameter: String get() = DebugConfigSettings.convoAIParameter
 
     val isMetricsEnabled: Boolean get() = DebugConfigSettings.isMetricsEnabled
+
+    val isRealtimeDataEnabled: Boolean get() = LocalStorageUtil.getBoolean(REAL_TIME_DATA_ENABLED, false)
+
+    fun setRealtimeDataEnabled(enabled: Boolean) {
+        LocalStorageUtil.putBoolean(REAL_TIME_DATA_ENABLED, enabled)
+    }
 
     val isSessionLimitMode: Boolean get() = DebugConfigSettings.isSessionLimitMode
 }

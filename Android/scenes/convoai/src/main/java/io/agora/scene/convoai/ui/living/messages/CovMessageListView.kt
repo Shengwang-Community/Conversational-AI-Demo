@@ -2,6 +2,9 @@ package io.agora.scene.convoai.ui.living.messages
 
 import android.content.Context
 import android.graphics.Rect
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +13,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.DrawableRes
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -42,6 +46,7 @@ class CovMessageListView @JvmOverloads constructor(
     private val binding = CovMessageListViewBinding.inflate(LayoutInflater.from(context), this, true)
     private val messageAdapter = MessageAdapter()
     private val pendingLatencyMetrics = mutableMapOf<Long, TurnFinishedMetricsUiModel>()
+    private var isLatencyMetricsVisible = CovAgentManager.isRealtimeDataEnabled
 
     // Track whether to automatically scroll to bottom
     private var autoScrollToBottom = true
@@ -399,35 +404,66 @@ class CovMessageListView @JvmOverloads constructor(
             }
 
             private fun bindLatencyMetrics(metrics: TurnFinishedMetricsUiModel?) {
-                binding.layoutMessageMetrics.isVisible = metrics != null
-                if (metrics == null) {
+                val shouldShow = isLatencyMetricsVisible && metrics != null
+                binding.layoutMessageMetrics.isVisible = shouldShow
+                if (!shouldShow) {
                     bindMetricChip(binding.tvMetricsAsr, null)
                     bindMetricChip(binding.tvMetricsLlm, null)
                     bindMetricChip(binding.tvMetricsTts, null)
                     return
                 }
                 val context = binding.root.context
-                binding.tvMetricsTurn.text = metrics.turnId?.let {
-                    context.getString(io.agora.scene.convoai.R.string.cov_latency_metrics_round_format, it)
-                } ?: context.getString(io.agora.scene.convoai.R.string.cov_latency_metrics_current_round)
-                binding.tvMetricsSummaryLabel.setText(io.agora.scene.convoai.R.string.cov_latency_metrics_total)
-                binding.tvMetricsSummaryValue.text = formatLatencyValueText(context, metrics.totalLatencyMs)
-                bindMetricChip(binding.tvMetricsAsr, metrics.asrMetric)
-                bindMetricChip(binding.tvMetricsLlm, metrics.llmMetric)
-                bindMetricChip(binding.tvMetricsTts, metrics.ttsMetric)
+                binding.tvMetricsTurn.text = metrics?.turnId?.let {
+                    context.getString(io.agora.scene.convoai.R.string.cov_latency_metrics_current_round) + it
+                }
+                    ?: context.getString(io.agora.scene.convoai.R.string.cov_latency_metrics_current_round)
+                binding.tvMetricsSummary.text = metrics?.let {
+                    formatMetricText(
+                        context = context,
+                        label = context.getString(io.agora.scene.convoai.R.string.cov_latency_metrics_total),
+                        value = formatLatencyValueText(context, it.totalLatencyMs)
+                    )
+                } ?: ""
+                bindMetricChip(binding.tvMetricsAsr, metrics?.asrMetric)
+                bindMetricChip(binding.tvMetricsLlm, metrics?.llmMetric)
+                bindMetricChip(binding.tvMetricsTts, metrics?.ttsMetric)
             }
 
             private fun bindMetricChip(textView: TextView, metric: LatencyMetricChipUiModel?) {
                 textView.isVisible = metric != null
-                textView.text = metric?.let { formatMetricChipText(textView.context, it) }.orEmpty()
+                textView.text = metric?.let {
+                    formatMetricText(
+                        context = textView.context,
+                        label = textView.context.getString(it.labelResId),
+                        value = formatLatencyValueText(textView.context, it.latencyMs)
+                    )
+                } ?: ""
             }
 
-            private fun formatMetricChipText(context: Context, metric: LatencyMetricChipUiModel): String {
-                return context.getString(
+            private fun formatMetricText(
+                context: Context,
+                label: String,
+                value: String,
+            ): CharSequence {
+                val content = context.getString(
                     io.agora.scene.convoai.R.string.cov_latency_metrics_chip_format,
-                    context.getString(metric.labelResId),
-                    formatLatencyValueText(context, metric.latencyMs)
+                    label,
+                    value
                 )
+                return SpannableStringBuilder(content).apply {
+                    setSpan(
+                        ForegroundColorSpan(ContextCompat.getColor(context, CommonR.color.ai_icontext3)),
+                        0,
+                        label.length,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    setSpan(
+                        ForegroundColorSpan(ContextCompat.getColor(context, CommonR.color.ai_brand_main6)),
+                        label.length,
+                        content.length,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
             }
 
             private fun formatLatencyValueText(context: Context, latencyMs: Int): String {
@@ -649,6 +685,14 @@ class CovMessageListView @JvmOverloads constructor(
         if (messageAdapter.updateLatencyMetrics(turnId, metrics)) {
             pendingLatencyMetrics.remove(turnId)
         }
+    }
+
+    fun setLatencyMetricsVisible(visible: Boolean) {
+        if (isLatencyMetricsVisible == visible) {
+            return
+        }
+        isLatencyMetricsVisible = visible
+        messageAdapter.notifyDataSetChanged()
     }
 
     /**
