@@ -632,6 +632,33 @@ interface IConversationalAIAPIEventHandler {
     fun onAgentStateChanged(agentUserId: String, event: StateChangeEvent)
 
     /**
+     * Called when the agent listening state changes.
+     * This is a fine-grained Presence callback in addition to onAgentStateChanged.
+     *
+     * @param agentUserId Agent user ID
+     * @param isListening Whether the agent is currently listening
+     */
+    fun onAgentListeningChanged(agentUserId: String, isListening: Boolean) {}
+
+    /**
+     * Called when the agent thinking state changes.
+     * This is a fine-grained Presence callback in addition to onAgentStateChanged.
+     *
+     * @param agentUserId Agent user ID
+     * @param isThinking Whether the agent is currently thinking
+     */
+    fun onAgentThinkingChanged(agentUserId: String, isThinking: Boolean) {}
+
+    /**
+     * Called when the agent speaking state changes.
+     * This is a fine-grained Presence callback in addition to onAgentStateChanged.
+     *
+     * @param agentUserId Agent user ID
+     * @param isSpeaking Whether the agent is currently speaking
+     */
+    fun onAgentSpeakingChanged(agentUserId: String, isSpeaking: Boolean) {}
+
+    /**
      * Called when an interrupt event occurs.
      * @param agentUserId Agent user ID
      * @param event Interrupt event
