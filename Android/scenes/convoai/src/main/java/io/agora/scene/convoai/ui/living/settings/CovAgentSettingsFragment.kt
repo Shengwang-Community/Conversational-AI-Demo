@@ -101,6 +101,17 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
             btnAiVad.setOnClickListener {
                 ToastUtil.show(io.agora.scene.convoai.R.string.cov_setting_ai_vad_high_desc, Toast.LENGTH_LONG)
             }
+            cbAiPause.isChecked = CovAgentManager.enableAiPause
+            cbAiPause.setOnCheckedChangeListener(object : CompoundButton.OnCheckedChangeListener {
+                override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
+                    if (buttonView.isPressed) {
+                        CovAgentManager.enableAiPause = isChecked
+                    }
+                }
+            })
+            btnAiPause.setOnClickListener {
+                ToastUtil.show(io.agora.scene.convoai.R.string.cov_setting_ai_pause_desc, Toast.LENGTH_LONG)
+            }
             clAvatar.setOnClickListener(object : OnFastClickListener() {
                 override fun onClickJacking(view: View) {
                     onClickAvatar()
@@ -147,7 +158,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         }
     }
 
-    // The non-English overseas version must disable AiVad.
+    // Language capability determines whether AI-VAD / AI Pause can be used.
     private fun setAiVadBySelectLanguage() {
         mBinding?.apply {
             tvLanguageDetail.text = CovAgentManager.language?.language_name
@@ -160,6 +171,15 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                 CovAgentManager.enableAiVad = false
                 cbAiVad.isChecked = false
                 cbAiVad.isEnabled = false
+            }
+
+            if (CovAgentManager.language?.aipause_supported == true) {
+                cbAiPause.isEnabled = livingViewModel.connectionState.value == AgentConnectionState.IDLE
+                cbAiPause.isChecked = CovAgentManager.enableAiPause
+            } else {
+                CovAgentManager.enableAiPause = false
+                cbAiPause.isChecked = false
+                cbAiPause.isEnabled = false
             }
         }
     }
@@ -176,6 +196,11 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
             // AI VAD section
             cbAiVad.isEnabled = if (isIdle) {
                 CovAgentManager.language?.aivad_supported ?: false
+            } else {
+                false
+            }
+            cbAiPause.isEnabled = if (isIdle) {
+                CovAgentManager.language?.aipause_supported ?: false
             } else {
                 false
             }

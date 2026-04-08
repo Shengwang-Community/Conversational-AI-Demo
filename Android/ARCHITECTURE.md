@@ -236,7 +236,6 @@ flowchart LR
 2. `ARCHITECTURE.md`（本文）
 3. `scenes/convoai/README.md`
 4. `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/README.md`
-5. `docs/convoai2.2.0-hld.md`
 
 ## 9. 文档边界
 
@@ -245,4 +244,3 @@ flowchart LR
 - workflow 协作、状态机和评审规则：看 `AGENTS.md`
 - 运行前配置与快速开始：看 `scenes/convoai/README.md`
 - `convoaiApi` 组件的接入细节：看 `convoaiApi/README.md`
-- 单点功能设计细节：看 `docs/convoai2.2.0-hld.md`

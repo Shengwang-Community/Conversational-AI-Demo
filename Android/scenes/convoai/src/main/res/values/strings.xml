@@ -61,7 +61,9 @@
     <string name="cov_setting_bhvs">启用 对话人声锁定</string>
     <string name="cov_setting_ai_vad">启用&#160;&#160;</string>
     <string name="cov_setting_ai_vad_high">优雅打断</string>
-    <string name="cov_setting_ai_vad_high_desc">优雅打断是声网自研高阶打断功能，支持让智能体临时停下逻辑推理去做其它事情，返回后继续让智能体按照打断前的节点继续的技术</string>
+    <string name="cov_setting_ai_vad_high_desc">优雅打断是声网自研智能打断算法，能够自动判断当前用户说话的语境并执行打断策略</string>
+    <string name="cov_setting_ai_pause">智能暂停</string>
+    <string name="cov_setting_ai_pause_desc">智能暂停是声网自研高阶智能体对话算法，支持让智能体临时停下逻辑推理去做其他事情，返回后继续让智能体按照打断前的节点继续的技术</string>
     <string name="cov_setting_network_error">请求失败：</string>
     <string name="cov_agent_connecting">连接中...</string>
     <string name="cov_copy_succeed">已复制</string>

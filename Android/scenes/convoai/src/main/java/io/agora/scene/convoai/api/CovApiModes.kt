@@ -65,6 +65,8 @@ data class CovAgentLanguage(
     val language_name: String,
     val aivad_supported: Boolean,
     val aivad_enabled_by_default: Boolean,
+    val aipause_supported: Boolean,
+    val aipause_enabled_by_default: Boolean,
 ) {
 
     val isChinese: Boolean
