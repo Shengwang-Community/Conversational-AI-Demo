@@ -648,6 +648,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
     private fun onClickEndCall() {
         mBinding?.clTop?.stopCountDownTask()
         mBinding?.clTop?.stopTitleAnim()
+        viewModel.reportLatencyMetricsIfNeeded()
         viewModel.stopAgentAndLeaveChannel()
         resetSceneState()
         ToastUtil.show(getString(io.agora.scene.convoai.R.string.cov_detail_agent_leave))

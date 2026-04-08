@@ -15,6 +15,7 @@ import io.agora.scene.common.net.ApiManager
 import io.agora.scene.common.net.TokenGenerator
 import io.agora.scene.common.net.TokenGeneratorType
 import io.agora.scene.common.net.UploadImage
+import io.agora.scene.common.util.TimeUtils
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.R
@@ -852,6 +853,33 @@ class CovLivingViewModel : ViewModel() {
             return null
         }
         return latencyMetricsManager.fetch(presetName)
+    }
+
+    fun reportLatencyMetricsIfNeeded(onCompleted: ((Boolean) -> Unit)? = null) {
+        val presetName = latencyMetricsPresetName ?: resolveLatencyMetricsPresetName()
+        if (presetName.isNullOrEmpty()) {
+            onCompleted?.invoke(false)
+            return
+        }
+        val data = latencyMetricsManager.fetch(presetName)
+        if (data == null || data.turns.isEmpty()) {
+            onCompleted?.invoke(false)
+            return
+        }
+        CovAgentApiManager.reportLatencyMock(presetName, data) { error, latencyId ->
+            if (error == null && !latencyId.isNullOrEmpty()) {
+                latencyMetricsManager.updateReportInfo(
+                    presetName = presetName,
+                    latencyId = latencyId,
+                    reportedAtMs = TimeUtils.currentTimeMillis()
+                )
+                CovLogger.d(TAG, "Stored mock latency report for preset=$presetName")
+                onCompleted?.invoke(true)
+            } else {
+                CovLogger.w(TAG, "reportLatencyMock failed: ${error?.message}")
+                onCompleted?.invoke(false)
+            }
+        }
     }
 
     // ===== Private methods =====

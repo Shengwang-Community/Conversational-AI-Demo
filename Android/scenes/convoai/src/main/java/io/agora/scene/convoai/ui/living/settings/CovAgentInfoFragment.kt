@@ -7,9 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import androidx.activity.viewModels
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import io.agora.scene.common.ui.BaseFragment
 import io.agora.scene.common.ui.OnFastClickListener
@@ -26,11 +24,15 @@ import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.ui.ActivateStatus
 import io.agora.scene.convoai.ui.ConnectionStatus
 import io.agora.scene.convoai.ui.VoiceprintUIStatus
-import io.agora.scene.convoai.ui.living.settings.CovAgentInfoViewModel
 import io.agora.scene.convoai.ui.living.CovLivingViewModel
+import io.agora.scene.convoai.ui.living.metrics.LatencyMetricsManager
+import io.agora.scene.convoai.ui.mine.TermsActivity
 import io.agora.scene.convoai.ui.sip.CallState
 import io.agora.scene.convoai.ui.sip.CovLivingSipViewModel
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.getValue
 
 /**
@@ -42,6 +44,7 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
 
     companion object {
         private const val TAG = "CovAgentInfoFragment"
+        private const val DATA_REPORT_URL = "https://www.shengwang.cn/ConversationalAI/"
 
         fun newInstance(): CovAgentInfoFragment {
             return CovAgentInfoFragment()
@@ -108,7 +111,13 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
                     }, 2000L)
                 }
             })
+            layoutDataReport.setOnClickListener(object : OnFastClickListener() {
+                override fun onClickJacking(view: View) {
+                    openLatencyReportIfAvailable()
+                }
+            })
         }
+        updateReportSection()
     }
 
     /**
@@ -137,6 +146,7 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
                         }
                     }
                     updateUploadingStatus(disable = (state == CallState.IDLE || state == CallState.CALLING))
+                    updateReportSection()
                 }
             }
         } else {
@@ -144,6 +154,7 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
                 livingViewModel.connectionState.collect { state ->
                     agentInfoViewModel.updateConnectionState(state)
                     updateUploadingStatus(disable = state != AgentConnectionState.CONNECTED)
+                    updateReportSection()
                 }
             }
         }
@@ -276,6 +287,48 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
                 layoutUploader.isEnabled = true
             }
         }
+    }
+
+    private fun updateReportSection() {
+        val presetName = CovAgentManager.getPreset()?.name.orEmpty()
+        val reportData = if (presetName.isBlank()) {
+            null
+        } else {
+            LatencyMetricsManager.shared.fetch(presetName)
+        }
+        val hasUploadedReport = !reportData?.latencyId.isNullOrEmpty() && (reportData?.reportedAtMs ?: 0L) > 0L
+
+        mBinding?.apply {
+            mtvReportGenerate.visibility = if (hasUploadedReport) View.GONE else View.VISIBLE
+            mtvReportTime.visibility = if (hasUploadedReport) View.VISIBLE else View.GONE
+            ivReportTimeArrow.visibility = if (hasUploadedReport) View.VISIBLE else View.GONE
+            layoutDataReport.isEnabled = hasUploadedReport
+            if (hasUploadedReport) {
+                mtvReportTime.text = formatReportTime(reportData?.reportedAtMs)
+            } else {
+                mtvReportGenerate.text = getString(R.string.cov_info_report_generate_tip)
+            }
+        }
+    }
+
+    private fun openLatencyReportIfAvailable() {
+        val activity = activity ?: return
+        val presetName = CovAgentManager.getPreset()?.name.orEmpty()
+        if (presetName.isBlank()) {
+            return
+        }
+        val reportData = LatencyMetricsManager.shared.fetch(presetName) ?: return
+        if (reportData.latencyId.isNullOrEmpty()) {
+            return
+        }
+        TermsActivity.startActivity(activity, DATA_REPORT_URL)
+    }
+
+    private fun formatReportTime(timestampMs: Long?): String {
+        if (timestampMs == null || timestampMs <= 0L) {
+            return ""
+        }
+        return SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault()).format(Date(timestampMs))
     }
 
     private fun copyToClipboard(text: String) {

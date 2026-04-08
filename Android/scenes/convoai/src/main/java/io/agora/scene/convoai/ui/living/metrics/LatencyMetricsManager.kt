@@ -30,6 +30,7 @@ object LocalLatencyMetricsStorage : LatencyMetricsStorage {
 data class AgentLatencyData(
     val turns: MutableList<Turn> = mutableListOf(),
     var latencyId: String? = null,
+    var reportedAtMs: Long? = null,
 )
 
 data class LatencyMetricChipUiModel(
@@ -136,7 +137,8 @@ class LatencyMetricsManager internal constructor(
             presetName,
             AgentLatencyData(
                 turns = turns,
-                latencyId = currentData?.latencyId
+                latencyId = currentData?.latencyId,
+                reportedAtMs = currentData?.reportedAtMs
             )
         )
     }
@@ -172,7 +174,23 @@ class LatencyMetricsManager internal constructor(
             presetName,
             currentData.copy(
                 turns = currentData.turns.toMutableList(),
-                latencyId = latencyId
+                latencyId = latencyId,
+                reportedAtMs = currentData.reportedAtMs
+            )
+        )
+    }
+
+    fun updateReportInfo(presetName: String, latencyId: String, reportedAtMs: Long) {
+        if (presetName.isBlank()) {
+            return
+        }
+        val currentData = cache.fetch(presetName) ?: return
+        cache.save(
+            presetName,
+            currentData.copy(
+                turns = currentData.turns.toMutableList(),
+                latencyId = latencyId,
+                reportedAtMs = reportedAtMs
             )
         )
     }

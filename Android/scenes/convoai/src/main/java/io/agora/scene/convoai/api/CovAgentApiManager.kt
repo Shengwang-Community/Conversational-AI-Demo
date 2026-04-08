@@ -6,8 +6,10 @@ import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.net.SecureOkHttpClient
 import io.agora.scene.common.util.GsonTools
+import io.agora.scene.common.util.TimeUtils
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.constant.CovAgentManager
+import io.agora.scene.convoai.ui.living.metrics.AgentLatencyData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -343,6 +345,35 @@ object CovAgentApiManager {
                 }
             }
         })
+    }
+
+    fun reportLatencyMock(
+        presetName: String,
+        data: AgentLatencyData,
+        completion: (error: Exception?, latencyId: String?) -> Unit
+    ) {
+        if (presetName.isBlank()) {
+            runOnMainThread {
+                completion.invoke(Exception("presetName is empty"), null)
+            }
+            return
+        }
+        if (data.turns.isEmpty()) {
+            runOnMainThread {
+                completion.invoke(Exception("latency turns is empty"), null)
+            }
+            return
+        }
+
+        val safePresetName = presetName.replace(Regex("[^A-Za-z0-9_]"), "_")
+        val latencyId = "mock_${safePresetName}_${TimeUtils.currentTimeMillis()}"
+        CovLogger.d(
+            TAG,
+            "reportLatencyMock success preset=$presetName turns=${data.turns.size} latencyId=$latencyId"
+        )
+        runOnMainThread {
+            completion.invoke(null, latencyId)
+        }
     }
 
 
