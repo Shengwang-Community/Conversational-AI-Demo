@@ -1,6 +1,6 @@
 ---
 name: ac-workflow
-description: Workflow entrypoint for feat/fix/refactor/chore/docs/continue tasks in this Android repo. Use when the user asks to change code, AGENTS.md, .agents/skills, docs templates, or resume an unfinished PROJECT_STATE.md.
+description: Workflow entrypoint for feat/fix/refactor/chore/docs/continue tasks in this Android repo. Use when the user asks to change code, AGENTS.md, .agents/skills, docs templates, or explicitly resume an unfinished PROJECT_STATE.md.
 ---
 
 1. Call `$ac-memory` first to ensure `PROJECT_STATE.md` exists, is valid, and has a fresh `[STATE]` anchor.
@@ -8,11 +8,12 @@ description: Workflow entrypoint for feat/fix/refactor/chore/docs/continue tasks
 - identify task type (`feat` / `fix` / `refactor` / `chore` / `docs`)
 - determine whether this is a new task or `continue`
 - read current `PLAN_FROZEN` / `CURRENT_ROLE` / `WORKFLOW_STATUS`
-- only resume automatically when `WORKFLOW_STATUS` is not `completed`
+- treat `active` / `blocked` as resumable only when the user explicitly indicates `continue`
+- if an unfinished `PROJECT_STATE.md` exists but the user intent is a new task, start a new workflow instead of auto-resuming
 3. Determine route using the AGENTS risk score:
 - `single` for low-risk work: run minimal `ac-plan` then `ac-execute` responsibilities in the same thread, do not edit files before the Contract is written and `PLAN_FROZEN=true`, and after execution perform summary closeout by writing `CURRENT_ROLE: single` and `WORKFLOW_STATUS: completed`
-- `single + reviewer` when review must be forced: complete the same collapsed planning/execution path, but hand off to `$ac-review` instead of performing local summary closeout
-- `planner -> executor -> reviewer` for multi-file, high-risk, or workflow-rule changes
+- `single + reviewer` when review must be forced: complete the same collapsed planning/execution path, hand off to `$ac-review`, then reclaim control after a pass for final summary closeout
+- `planner -> executor -> reviewer` for multi-file, high-risk, or workflow-rule changes; reclaim control after `$ac-review` passes for final summary closeout
 4. Echo the exact `[STATE] PROJECT_STATE.md：已检查` or `[STATE] PROJECT_STATE.md：已更新` line in the current user-facing reply, then emit the standard workflow progress display and keep it aligned with the real phase in `PROJECT_STATE.md`.
 5. For docs / skills / templates tasks, ensure the Contract uses consistency checks instead of default `gradlew` commands unless code or build files are touched.
 6. On phase or status change, update `PROJECT_STATE.md` before handoff.
@@ -22,6 +23,10 @@ description: Workflow entrypoint for feat/fix/refactor/chore/docs/continue tasks
 - refresh `PROJECT_STATE.md`
 - echo the updated `[STATE]` line
 - output completed work, remaining work, and the next resume hint
+8. Summary closeout ownership:
+- `$ac-workflow` is the only owner of final `📝 总结`
+- after `$ac-review` passes, echo the final `[STATE]` line and output the summary in the same thread
+- for reviewed routes, keep `CURRENT_ROLE: reviewer` and `WORKFLOW_STATUS: completed`; do not rewrite reviewed tasks to `single`
 
 Outputs:
 
@@ -35,5 +40,7 @@ Hard rules:
 - Do not replace planner / executor / reviewer responsibilities; orchestrate them, and collapse them only when `single` is explicitly selected.
 - Do not leave a finished `single` task in `CURRENT_ROLE: executor` or `WORKFLOW_STATUS: active`.
 - Do not treat docs-only file changes as general chat once workflow assets are being edited.
+- Do not auto-resume from `PROJECT_STATE.md` without explicit user intent to continue.
 - Do not auto-resume a `WORKFLOW_STATUS: completed` task as `continue`.
+- Do not leave passed reviewed routes without returning to `$ac-workflow` for final summary closeout.
 - Keep user-facing workflow progress and `[STATE]` echo aligned with actual state in `PROJECT_STATE.md`.

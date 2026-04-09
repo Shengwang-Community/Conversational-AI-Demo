@@ -11,11 +11,9 @@
 **通用约束**
 
 - 每次阶段结束必须更新 `PROJECT_STATE.md`
-- `PROJECT_STATE.md` 头部至少维护 `PLAN_FROZEN`、`CURRENT_ROLE`、`WORKFLOW_STATUS`
-- `single` = 折叠 `ac-plan -> ac-execute -> summary closeout`；结束前写回 `CURRENT_ROLE: single` 与 `WORKFLOW_STATUS: completed`
-- `single + reviewer` = 前者去掉 summary closeout，改为强制 `ac-review`
-- `continue` 只恢复 `WORKFLOW_STATUS != completed` 的任务；强制收尾时先写为 `blocked`
 - 纯文档 / skill / template 任务也属于 workflow，不按 general 模式处理
+- 存在未完成 `PROJECT_STATE.md` 不等于自动 continue；只有用户明确说“继续 / 接着做 / 继续 <任务名>”时，才按 continue 恢复
+- 带 reviewer 的路线在 `✅ 校验` 通过后，统一回交 `ac-workflow` 执行最终 `📝 总结`
 - 代码任务优先跑 `gradlew` 检查；docs-only 任务优先做路径、术语、模板一致性检查
 - 触及 `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/` 或 `subRender/` 字幕组件时，默认按高风险处理，扩大验证范围
 

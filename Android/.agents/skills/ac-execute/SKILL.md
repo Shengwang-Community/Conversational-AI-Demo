@@ -12,7 +12,7 @@ description: Execute only the frozen Execution Contract for code or docs tasks, 
 - docs / skills / templates tasks run the declared consistency checks
 6. When the task changes shared workflow assets, update the coupled documents together so terminology and routing stay in sync.
 7. Record results in `验收证据（Evidence）` and update Top 3 completion.
-8. If the route is `single + reviewer` or `planner -> executor -> reviewer`, hand off to `$ac-review`.
+8. If the route is `single + reviewer` or `planner -> executor -> reviewer`, hand off to `$ac-review`, which returns control to `$ac-workflow` after a pass.
 9. If the route is pure `single`, return control to `$ac-workflow` for summary closeout (`CURRENT_ROLE: single`, `WORKFLOW_STATUS: completed`).
 
 Unfreeze fallback (mandatory):

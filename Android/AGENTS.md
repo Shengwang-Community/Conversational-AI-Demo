@@ -25,7 +25,7 @@
 | Mode | 识别特征 | 响应策略 |
 |------|---------|---------|
 | **workflow** | 包含 feat/fix/refactor/chore/docs，或明确要求修改 `app/common/scenes`、RTC/RTM、字幕、IoT、文档、skill、template、workflow 资产 | **启动工作流（强制状态管理）** |
-| **continue** | “继续 / 接着做”，或存在 `WORKFLOW_STATUS` 非 `completed` 的 `PROJECT_STATE.md` | 读取状态文件，恢复上下文，进入 workflow |
+| **continue** | 用户明确输入“继续 / 接着做 / 继续 <任务名>”，且存在 `WORKFLOW_STATUS` 为 `active` 或 `blocked` 的 `PROJECT_STATE.md` | 读取状态文件，恢复上下文，进入 workflow |
 | **general** | 技术咨询、代码解释、一般问题 | 直接回答，不启动 workflow |
 
 ## 模式切换规则
@@ -48,6 +48,16 @@
 
 建议切换到 workflow 模式以确保状态追踪。是否切换？
 ```
+
+### 未完成状态文件分流
+
+当仓库中存在 `WORKFLOW_STATUS: active` 或 `blocked` 的 `PROJECT_STATE.md`，但用户当前请求未明确表达“继续”时：
+
+- 不得仅因状态文件存在而自动进入 continue
+- 若当前请求是新任务，按新任务进入 workflow
+- 若当前请求可能与旧任务相关，但无法确定是否续做，必须先提示用户选择“继续旧任务”或“启动新任务”
+- `blocked` 表示“可恢复”，不表示“必须恢复”
+- `completed` 永不触发 continue
 
 ## workflow 模式（强制状态机）
 

@@ -1,4 +1,4 @@
 interface:
   display_name: "AC Review"
-  short_description: "Review contract completion and decide unfreeze"
-  default_prompt: "Use $ac-review to validate contract completion with Evidence and Gaps."
+  short_description: "Review contract completion and hand passed work back for summary"
+  default_prompt: "Use $ac-review to validate contract completion with Evidence and Gaps, then return passed work to $ac-workflow for final summary closeout."
