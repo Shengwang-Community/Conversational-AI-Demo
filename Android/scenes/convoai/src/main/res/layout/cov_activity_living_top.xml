@@ -128,7 +128,7 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/layout_metrics_toggle"
+        android:id="@+id/layout_realtime_data_toggle"
         android:layout_width="wrap_content"
         android:layout_height="24dp"
         android:layout_marginTop="10dp"
@@ -144,7 +144,7 @@
         app:layout_constraintTop_toBottomOf="@+id/cl_top">
 
         <TextView
-            android:id="@+id/tv_metrics_toggle"
+            android:id="@+id/tv_realtime_data_toggle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="4dp"
@@ -153,12 +153,12 @@
             android:textColor="@color/ai_icontext1"
             android:textSize="10sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/cb_metrics_toggle"
+            app:layout_constraintEnd_toStartOf="@+id/cb_realtime_data_toggle"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.appcompat.widget.AppCompatCheckBox
-            android:id="@+id/cb_metrics_toggle"
+            android:id="@+id/cb_realtime_data_toggle"
             android:layout_width="23dp"
             android:layout_height="14dp"
             android:background="@drawable/cb_def_selector"

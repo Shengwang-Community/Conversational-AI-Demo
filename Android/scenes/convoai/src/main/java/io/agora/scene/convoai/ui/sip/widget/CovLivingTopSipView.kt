@@ -12,6 +12,7 @@ import androidx.core.view.isVisible
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.util.GlideImageLoader
 import io.agora.scene.convoai.R
+import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.databinding.CovActivityLivingTopSipBinding
 import io.agora.scene.convoai.ui.sip.CallState
 
@@ -35,12 +36,18 @@ class CovLivingTopSipView @JvmOverloads constructor(
 
     private var onCCClick: (() -> Unit)? = null
 
+    private var onRealtimeDataToggleChange: ((Boolean) -> Unit)? = null
+
     private var callState: CallState = CallState.IDLE
 
     init {
         binding.btnBack.setOnClickListener { onBackClick?.invoke() }
         binding.viewFlipper.setOnClickListener { onTitleClick?.invoke() }
         binding.btnSettings.setOnClickListener { onSettingsClick?.invoke() }
+        binding.cbRealtimeDataToggle.isChecked = CovAgentManager.isRealtimeDataEnabled
+        binding.cbRealtimeDataToggle.setOnCheckedChangeListener { _, isChecked ->
+            onRealtimeDataToggleChange?.invoke(isChecked)
+        }
 
         binding.tvCc.setOnClickListener(object : OnFastClickListener(delay = 500L) {
             override fun onClickJacking(view: View) {
@@ -77,6 +84,20 @@ class CovLivingTopSipView @JvmOverloads constructor(
      */
     fun setOnCCClickListener(listener: (() -> Unit)?) {
         onCCClick = listener
+    }
+
+    fun setOnRealtimeDataToggleChangeListener(listener: ((Boolean) -> Unit)?) {
+        onRealtimeDataToggleChange = listener
+    }
+
+    fun updateRealtimeDataToggleChecked(checked: Boolean) {
+        if (binding.cbRealtimeDataToggle.isChecked != checked) {
+            binding.cbRealtimeDataToggle.isChecked = checked
+        }
+    }
+
+    fun updateRealtimeDataToggleVisible(visible: Boolean) {
+        binding.layoutRealtimeDataToggle.isVisible = visible
     }
 
     fun updateTitleName(name: String, url: String, @DrawableRes defaultImage: Int) {

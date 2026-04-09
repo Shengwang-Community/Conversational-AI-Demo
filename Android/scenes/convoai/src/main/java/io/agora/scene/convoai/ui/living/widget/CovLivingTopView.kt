@@ -38,7 +38,7 @@ class CovLivingTopView @JvmOverloads constructor(
     private var onSettingsClick: (() -> Unit)? = null
     private var onCCClick: (() -> Unit)? = null
     private var onMoreClick: (() -> Unit)? = null
-    private var onMetricsToggleChange: ((Boolean) -> Unit)? = null
+    private var onRealtimeDataToggleChange: ((Boolean) -> Unit)? = null
 
     private var isTitleAnimRunning = false
     private var connectionState: AgentConnectionState = AgentConnectionState.IDLE
@@ -54,9 +54,9 @@ class CovLivingTopView @JvmOverloads constructor(
         binding.btnNet.setOnClickListener { onWifiClick?.invoke() }
         binding.btnSettings.setOnClickListener { onSettingsClick?.invoke() }
         binding.tvCc.setOnClickListener { onCCClick?.invoke() }
-        binding.cbMetricsToggle.isChecked = CovAgentManager.isRealtimeDataEnabled
-        binding.cbMetricsToggle.setOnCheckedChangeListener { _, isChecked ->
-            onMetricsToggleChange?.invoke(isChecked)
+        binding.cbRealtimeDataToggle.isChecked = CovAgentManager.isRealtimeDataEnabled
+        binding.cbRealtimeDataToggle.setOnCheckedChangeListener { _, isChecked ->
+            onRealtimeDataToggleChange?.invoke(isChecked)
         }
 
         binding.voiceprintSettingsView.setOnMoreClickListener {
@@ -117,18 +117,18 @@ class CovLivingTopView @JvmOverloads constructor(
         onMoreClick = listener
     }
 
-    fun setOnMetricsToggleChangeListener(listener: ((Boolean) -> Unit)?) {
-        onMetricsToggleChange = listener
+    fun setOnRealtimeDataToggleChangeListener(listener: ((Boolean) -> Unit)?) {
+        onRealtimeDataToggleChange = listener
     }
 
-    fun updateMetricsToggleChecked(checked: Boolean) {
-        if (binding.cbMetricsToggle.isChecked != checked) {
-            binding.cbMetricsToggle.isChecked = checked
+    fun updateRealtimeDataToggleChecked(checked: Boolean) {
+        if (binding.cbRealtimeDataToggle.isChecked != checked) {
+            binding.cbRealtimeDataToggle.isChecked = checked
         }
     }
 
-    fun updateMetricsToggleVisible(visible: Boolean) {
-        binding.layoutMetricsToggle.isVisible = visible
+    fun updateRealtimeDataToggleVisible(visible: Boolean) {
+        binding.layoutRealtimeDataToggle.isVisible = visible
     }
 
     fun updateTitleName(name: String, url: String, @DrawableRes defaultImage:Int) {
