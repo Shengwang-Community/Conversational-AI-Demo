@@ -25,7 +25,7 @@
 | Mode | 识别特征 | 响应策略 |
 |------|---------|---------|
 | **workflow** | 包含 feat/fix/refactor/chore/docs，或明确要求修改 `app/common/scenes`、RTC/RTM、字幕、IoT、文档、skill、template、workflow 资产 | **启动工作流（强制状态管理）** |
-| **continue** | “继续 / 接着做”，或存在未完成的 `PROJECT_STATE.md` | 读取状态文件，恢复上下文，进入 workflow |
+| **continue** | “继续 / 接着做”，或存在 `WORKFLOW_STATUS` 非 `completed` 的 `PROJECT_STATE.md` | 读取状态文件，恢复上下文，进入 workflow |
 | **general** | 技术咨询、代码解释、一般问题 | 直接回答，不启动 workflow |
 
 ## 模式切换规则
@@ -58,13 +58,15 @@
 1. **先进入 `ac-workflow`**
    - `ac-workflow` 会调用 `ac-memory`
    - `ac-memory` 负责检查/创建/校验 `PROJECT_STATE.md`
-   - 状态就绪后再路由到 `single` 或 `planner / executor / reviewer`
+   - 状态就绪后再路由到 `single` / `single + reviewer` 或 `planner / executor / reviewer`
 
 2. **在本轮输出中显式声明状态结果（必填）**：
 
 ```text
 [STATE] PROJECT_STATE.md：已检查 / 已更新
 ```
+
+- 这行状态既要写入 `PROJECT_STATE.md`，也要在当前回复中原样回显；只写文件、不对用户回显，仍视为 workflow 未启动。
 
 > ⚠️ **未出现 `[STATE]` 声明，视为 workflow 未启动。**
 
@@ -95,6 +97,11 @@
 - 总分 `4-6`：`single + reviewer`
 - 总分 `>=7`：完整多角色（`planner -> executor -> reviewer`）
 
+**路由语义（补充定义）**：
+- `single`：不是独立 skill，而是由 `ac-workflow` 编排的折叠路由；同一 Agent 需先完成最小 `ac-plan` 职责，写出 `Execution Contract` 并设置 `PLAN_FROZEN=true`，再进入执行；执行后的收尾由 `ac-workflow` 负责完成最小自检，并在进入总结前写回 `CURRENT_ROLE: single`、`WORKFLOW_STATUS: completed`
+- `single + reviewer`：先按 `single` 完成最小 planning + execution，再强制进入 `ac-review`
+- `planner -> executor -> reviewer`：按显式多角色顺序交接；高风险任务默认使用该路线
+
 附加约定：
 
 - 涉及 `AGENTS.md`、`.agents/skills/`、`docs/*.md` 多文档联动时，复杂度和影响面通常不低于 `1`
@@ -102,11 +109,13 @@
 
 ### 执行冻结与角色纪律
 
+- `single`：由 `ac-workflow` 编排的折叠路由；同一 Agent 串行执行最小 `ac-plan -> ac-execute -> summary closeout`，但仍受冻结 Contract、范围控制与 Evidence / Gaps 约束
 - `ac-memory`：负责 `PROJECT_STATE.md` 的本地记忆、结构校验与 `[STATE]` 门禁
-- `ac-workflow`：负责 workflow 入口、阶段推进、continue 恢复与强制收尾编排
+- `ac-workflow`：负责 workflow 入口、阶段推进、`single` 折叠路由、continue 恢复与强制收尾编排
 - `ac-plan`：在 `ac-memory` 校验通过后，产出并写入 `Execution Contract`，设置 `PLAN_FROZEN=true`
 - `ac-execute`：在 `ac-memory` 校验通过且 `PLAN_FROZEN=true` 时，仅按 Contract 执行，不得新增设计
 - `ac-review`：在 `ac-memory` 校验通过后，按 Contract 验收 Evidence/Gaps，必要时触发解冻回退
+- `self-improving-agent`：在 `ac-review` 完成后按需提炼可复用经验，只写自身 `memory/`；若要采纳经验并修改仓库规则资产，必须重新进入 docs/skills workflow
 - 执行中若出现新增设计、范围扩大、关键约束变化：必须回到 `ac-plan` 解冻重规划，再次冻结后继续
 
 
@@ -123,7 +132,7 @@
 - `ac-workflow` 会调用 `ac-memory`
 - `ac-memory` 负责：
   - 创建或校验 `PROJECT_STATE.md`
-  - 校验头字段与固定区块
+  - 校验头字段（含 `WORKFLOW_STATUS`）与固定区块
   - 维护 `[STATE]` 状态锚点
 
 #### 2. 强制更新节点
@@ -144,6 +153,12 @@
 `PROJECT_STATE.md` 头部必须包含：
 - `PLAN_FROZEN: true|false`
 - `CURRENT_ROLE: planner|executor|reviewer|single`
+- `WORKFLOW_STATUS: active|blocked|completed`
+
+状态语义：
+- `active`：任务正在推进，可继续执行或恢复
+- `blocked`：已强制收尾，等待继续或补充信息
+- `completed`：当前任务已收尾，不应仅因状态文件存在而自动触发 `continue`
 
 `PROJECT_STATE.md`  必须包含并维护以下区块：
 1. 目标
@@ -215,6 +230,8 @@
 - 大量代码或文档变更
 - 用户提示上下文不足
 - Agent 感知上下文风险
+
+- 强制收尾时，将 `WORKFLOW_STATUS` 更新为 `blocked`；review 通过并进入总结收尾时，将其更新为 `completed`。
 
 输出格式：
 
@@ -295,7 +312,7 @@
 
 ```bash
 rg -n "旧术语|旧路径|过时模块名" AGENTS.md docs .agents/skills
-rg -n "PLAN_FROZEN|CURRENT_ROLE|Execution Contract" AGENTS.md docs .agents/skills
+rg -n "PLAN_FROZEN|CURRENT_ROLE|WORKFLOW_STATUS|Execution Contract" AGENTS.md docs .agents/skills
 ```
 
 - 检查模块名、路径、命令示例是否与仓库一致
@@ -317,3 +334,4 @@ rg -n "PLAN_FROZEN|CURRENT_ROLE|Execution Contract" AGENTS.md docs .agents/skill
 - `.agents/skills/ac-plan/SKILL.md`：冻结 Contract
 - `.agents/skills/ac-execute/SKILL.md`：按 Contract 执行
 - `.agents/skills/ac-review/SKILL.md`：按 Evidence / Gaps 验收
+- `.agents/skills/self-improving-agent/SKILL.md`：`ac-review` 后的可选复盘与 repo-local memory 提案

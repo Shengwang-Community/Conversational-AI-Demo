@@ -2,10 +2,17 @@
 
 用途：用于跨会话接力，不做会话打卡；适用于代码任务、文档任务、skill 任务与 workflow 规范任务。
 
-说明：由 `ac-memory` 负责创建、结构校验与 `[STATE]` 状态锚点维护；由 `ac-workflow` 负责在 workflow 入口、continue 与收尾时编排状态流转。
+说明：由 `ac-memory` 负责创建、结构校验与 `[STATE]` 状态锚点维护；由 `ac-workflow` 负责在 workflow 入口、continue 与收尾时编排状态流转；`WORKFLOW_STATUS` 用于区分进行中、阻塞和已完成任务。
 
 PLAN_FROZEN: false
 CURRENT_ROLE: single
+WORKFLOW_STATUS: active
+
+状态说明：
+
+- `WORKFLOW_STATUS: active`：任务进行中，可继续恢复
+- `WORKFLOW_STATUS: blocked`：已强制收尾，等待继续
+- `WORKFLOW_STATUS: completed`：任务已收尾，不应自动作为 `continue` 恢复
 
 仓库范围提示：
 

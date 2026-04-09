@@ -100,6 +100,9 @@
 - [ ] Magic numbers 已提取或解释
 - [ ] 公共接口、配置变更、迁移点已同步文档
 - [ ] `AGENTS.md`、`.agents/skills`、`docs/*.md` 的 workflow 语义一致
+- [ ] `PLAN_FROZEN`、`CURRENT_ROLE`、`WORKFLOW_STATUS` 的状态语义一致
+- [ ] `single` / `single + reviewer` 路由与 `continue` 完成态定义无冲突
+- [ ] 纯 `single` 任务的完成态不会依赖 `ac-review` 才能落盘
 - [ ] `SKILL.md` 的 `description`、边界、禁止项足够清晰
 - [ ] `PROJECT_STATE.md` 中 Evidence / Gaps 已同步
 

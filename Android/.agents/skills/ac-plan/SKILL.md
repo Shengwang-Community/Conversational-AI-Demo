@@ -16,8 +16,8 @@ description: Freeze an Execution Contract for code or docs workflow tasks in thi
 - Rollback note
 5. If the task touches `AGENTS.md`, `.agents/skills`, or `docs/*.md`, include all coupled files that must stay in sync.
 6. Update `下一步 Top 3` and append `关键决策日志`.
-7. Set `PLAN_FROZEN: true` and `CURRENT_ROLE: planner`.
-8. Emit a `[STATE]` anchor and hand off to `$ac-execute`.
+7. Set `PLAN_FROZEN: true`, `CURRENT_ROLE: planner`, and `WORKFLOW_STATUS: active`.
+8. Emit a `[STATE]` anchor for the caller to echo and hand off to `$ac-execute`.
 
 Hard rules:
 

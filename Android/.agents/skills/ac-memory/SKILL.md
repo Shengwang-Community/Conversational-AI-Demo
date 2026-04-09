@@ -7,6 +7,7 @@ description: Create, repair, and refresh PROJECT_STATE.md for workflow and conti
 2. Validate required header fields:
 - `PLAN_FROZEN`
 - `CURRENT_ROLE`
+- `WORKFLOW_STATUS`
 3. Validate required sections exist:
 - `目标`
 - `下一步 Top 3`
@@ -18,8 +19,8 @@ description: Create, repair, and refresh PROJECT_STATE.md for workflow and conti
 - `提交计划`
 - `Execution Contract`
 4. Repair missing structure in place while preserving existing history and user-written details.
-5. Refresh a visible `[STATE] PROJECT_STATE.md：已检查` or `[STATE] PROJECT_STATE.md：已更新` anchor whenever workflow starts, continues, or changes phase.
-6. When todo items, decisions, Evidence, Gaps, or role/freeze state change, update the relevant blocks before control returns to the caller.
+5. Refresh a visible `[STATE] PROJECT_STATE.md：已检查` or `[STATE] PROJECT_STATE.md：已更新` anchor whenever workflow starts, continues, or changes phase, and return the exact same line for the caller to echo in the current reply.
+6. When todo items, decisions, Evidence, Gaps, or role/freeze/status change, update the relevant blocks before control returns to the caller.
 7. For docs-only tasks, allow `Checks` / `Evidence` to record consistency review instead of pretending code builds ran.
 
 Outputs:
@@ -33,4 +34,4 @@ Hard rules:
 - Treat `PROJECT_STATE.md` as the current local memory backend.
 - Do not continue planner / executor / reviewer work while required structure is missing.
 - Preserve existing history in decision logs; append instead of overwriting.
-- Never leave stale `CURRENT_ROLE` or `PLAN_FROZEN` values after a phase change.
+- Never leave stale `CURRENT_ROLE`, `PLAN_FROZEN`, or `WORKFLOW_STATUS` values after a phase change.

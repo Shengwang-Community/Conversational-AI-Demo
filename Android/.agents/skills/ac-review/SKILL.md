@@ -16,12 +16,15 @@ description: Review frozen-contract execution against Evidence and Gaps for code
 - skill descriptions still explain what they do and when to use them
 5. Update `验收证据（Evidence）` with concrete proof.
 6. Update `未验证清单（Gaps）` with residual risks, missing checks, and untested continue/doc workflows.
-7. Decide outcome:
-- Pass: keep `PLAN_FROZEN=true` and allow summary / submit prep
-- Fail: set `PLAN_FROZEN=false` and route back to `$ac-plan`
+7. When review reveals repeated mistakes, cross-document drift, or reusable workflow lessons, recommend `$self-improving-agent` after review to write candidate patterns into its own `memory/`.
+8. Decide outcome:
+- Pass: set `WORKFLOW_STATUS: completed`, keep `PLAN_FROZEN=true`, and allow summary / explicit follow-up task
+- Fail: set `WORKFLOW_STATUS: active`, `PLAN_FROZEN=false`, and route back to `$ac-plan`
 
 Hard rules:
 
 - Base conclusions on Contract and evidence only.
 - Do not skip Gaps when any verification is missing.
 - Do not pass work that still contains known cross-document inconsistencies.
+- Do not leave `WORKFLOW_STATUS: active` after a pass conclusion.
+- Do not require `$self-improving-agent` for pass/fail; it is an optional post-review follow-up.
