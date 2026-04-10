@@ -325,6 +325,15 @@ extension ConversationalAIAPIImpl {
             }
         }
     }
+
+    private func notifyDelegatesTurnFinished(agentUserId: String, turn: Turn) {
+        callMessagePrint(msg: "<<< [onTurnFinished] agentUserId:\(agentUserId), turn:\(turn)")
+        DispatchQueue.main.async {
+            for delegate in self.delegates.allObjects {
+                delegate.onTurnFinished?(agentUserId: agentUserId, turn: turn)
+            }
+        }
+    }
     
     private func notifyDelegatesInterrupt(agentUserId: String, event: InterruptEvent) {
         callMessagePrint(msg: "<<< [onInterrupted], agentUserId: \(agentUserId), event: \(event)")
@@ -440,15 +449,14 @@ extension ConversationalAIAPIImpl {
     }
     
     private func dealMessageWithMap(uid: String, msg: [String: Any]) {
-        guard let transcriptObj = msg["object"] as? String else {
-            return
-        }
-        
-        let messageType = MessageType.fromValue(transcriptObj)
+        let messageTypeValue = (msg["event_type"] as? String) ?? (msg["object"] as? String) ?? ""
+        let messageType = MessageType.fromValue(messageTypeValue)
         
         switch messageType {
         case .metrics:
             handleMetricsMessage(uid: uid, msg: msg)
+        case .turnFinished:
+            handleTurnFinishedMessage(uid: uid, msg: msg)
         case .error:
             handleErrorMessage(uid: uid, msg: msg)
         case .messageReceipt:
@@ -458,6 +466,15 @@ extension ConversationalAIAPIImpl {
         default:
             break
         }
+    }
+
+    private func handleTurnFinishedMessage(uid: String, msg: [String: Any]) {
+        guard let turn = Turn.fromMessage(msg) else {
+            callMessagePrint(msg: "Failed to parse turn.finished message: \(msg)")
+            return
+        }
+
+        notifyDelegatesTurnFinished(agentUserId: uid, turn: turn)
     }
     
     private func handleVoiceprintMessage(uid: String, msg: [String: Any]) {

@@ -137,6 +137,10 @@ extension CallOutSipViewController {
     private func performCall() {
         showCallingView()
         channelName = "agent_\(UUID().uuidString.prefix(8))"
+        LatencyMetricsManager.shared.beginSession(
+            presetName: AppContext.settingManager().preset?.name,
+            channelName: channelName
+        )
         agentUid = AppContext.agentUid
         Task {
             do {
@@ -262,4 +266,3 @@ extension CallOutSipViewController: SIPInputViewDelegate {
         startCall()
     }
 }
-

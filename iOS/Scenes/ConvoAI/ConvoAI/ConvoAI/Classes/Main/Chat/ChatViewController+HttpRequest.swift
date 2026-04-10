@@ -311,6 +311,10 @@ extension ChatViewController {
         } else {
             channelName = "agent_\(UUID().uuidString.prefix(8))"
         }
+        LatencyMetricsManager.shared.beginSession(
+            presetName: AppContext.settingManager().preset?.name,
+            channelName: channelName
+        )
         agentIsJoined = false
         avatarIsJoined = false
         
@@ -342,6 +346,7 @@ extension ChatViewController {
                     AppContext.stateManager().updateAgentId(remoteAgentId)
                     AppContext.stateManager().updateUserId(self.uid)
                     AppContext.stateManager().updateTargetServer(targetServer)
+                    LatencyMetricsManager.shared.updateAgentId(remoteAgentId)
                 }
                 addLog("start agent success, agent id is: \(self.remoteAgentId)")
                 self.timerCoordinator.startPingTimer()

@@ -137,6 +137,12 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     public func onAgentSpeakingChanged(agentUserId: String, isSpeaking: Bool) {
         addLog("<<< [onAgentSpeakingChanged] isSpeaking: \(isSpeaking)")
     }
+
+    public func onTurnFinished(agentUserId: String, turn: Turn) {
+        addLog("<<< [onTurnFinished] turnId: \(turn.turnId), e2e: \(turn.e2eLatency)")
+        let presetName = AppContext.settingManager().preset?.name ?? ""
+        LatencyMetricsManager.shared.append(presetName: presetName, turn: turn)
+    }
     
     public func onAgentInterrupted(agentUserId: String, event: InterruptEvent) {
         addLog("<<< [onAgentInterrupted]")

@@ -369,6 +369,8 @@ import AgoraRtmKit
 public enum MessageType: String, CaseIterable {
     /// Metrics message type
     case metrics = "message.metrics"
+    /// Turn finished message type
+    case turnFinished = "turn.finished"
     /// Error message type
     case error = "message.error"
     /// Assistant transcription message type
@@ -391,6 +393,108 @@ public enum MessageType: String, CaseIterable {
     /// - Returns: Corresponding MessageType, defaults to unknown if invalid
     public static func fromValue(_ value: String) -> MessageType {
         return MessageType(rawValue: value) ?? .unknown
+    }
+}
+
+/// Segmented latency data for one turn.
+@objcMembers public final class SegmentedLatency: NSObject, Codable {
+    public let algorithmProcessing: Double
+    public let asrTTLW: Double
+    public let llmTTFT: Double
+    public let ttsTTFB: Double
+    public let transport: Double
+
+    @objc public init(algorithmProcessing: Double, asrTTLW: Double, llmTTFT: Double, ttsTTFB: Double, transport: Double) {
+        self.algorithmProcessing = algorithmProcessing
+        self.asrTTLW = asrTTLW
+        self.llmTTFT = llmTTFT
+        self.ttsTTFB = ttsTTFB
+        self.transport = transport
+        super.init()
+    }
+
+    public override var description: String {
+        return "SegmentedLatency(algorithmProcessing: \(algorithmProcessing), asrTTLW: \(asrTTLW), llmTTFT: \(llmTTFT), ttsTTFB: \(ttsTTFB), transport: \(transport))"
+    }
+
+    public static func fromRaw(_ rawValue: Any?) -> SegmentedLatency {
+        var values: [String: Double] = [:]
+
+        if let segments = rawValue as? [[String: Any]] {
+            for segment in segments {
+                guard let name = segment["name"] as? String else {
+                    continue
+                }
+                if let latency = (segment["latency"] as? NSNumber)?.doubleValue {
+                    values[name] = latency
+                } else if let latency = segment["latency"] as? Double {
+                    values[name] = latency
+                } else if let latency = segment["latency"] as? Int {
+                    values[name] = Double(latency)
+                }
+            }
+        } else if let dict = rawValue as? [String: Any] {
+            for (name, latencyValue) in dict {
+                if let latency = (latencyValue as? NSNumber)?.doubleValue {
+                    values[name] = latency
+                } else if let latency = latencyValue as? Double {
+                    values[name] = latency
+                } else if let latency = latencyValue as? Int {
+                    values[name] = Double(latency)
+                }
+            }
+        }
+
+        return SegmentedLatency(
+            algorithmProcessing: values["algorithm_processing"] ?? 0,
+            asrTTLW: values["asr_ttlw"] ?? 0,
+            llmTTFT: values["llm_ttft"] ?? 0,
+            ttsTTFB: values["tts_ttfb"] ?? 0,
+            transport: values["transport"] ?? 0
+        )
+    }
+}
+
+/// One conversation turn latency snapshot.
+@objcMembers public final class Turn: NSObject, Codable {
+    public let turnId: Int
+    public let e2eLatency: Double
+    public let segmentedLatency: SegmentedLatency
+    public let timestamp: TimeInterval
+
+    @objc public init(turnId: Int, e2eLatency: Double, segmentedLatency: SegmentedLatency, timestamp: TimeInterval) {
+        self.turnId = turnId
+        self.e2eLatency = e2eLatency
+        self.segmentedLatency = segmentedLatency
+        self.timestamp = timestamp
+        super.init()
+    }
+
+    public override var description: String {
+        return "Turn(turnId: \(turnId), e2eLatency: \(e2eLatency), segmentedLatency: \(segmentedLatency), timestamp: \(timestamp))"
+    }
+
+    public static func fromMessage(_ msg: [String: Any]) -> Turn? {
+        let payload = (msg["payload"] as? [String: Any]) ?? msg
+        guard let metrics = payload["metrics"] as? [String: Any] else {
+            return nil
+        }
+
+        let turnId = (payload["turn_id"] as? NSNumber)?.intValue ?? (payload["turn_id"] as? Int) ?? 0
+        let e2eLatency = (metrics["e2e_latency_ms"] as? NSNumber)?.doubleValue ?? (metrics["e2e_latency_ms"] as? Double) ?? 0
+        let segmentedLatency = SegmentedLatency.fromRaw(metrics["segmented_latency_ms"])
+
+        let start = payload["start"] as? [String: Any]
+        let timestamp = (start?["start_at"] as? NSNumber)?.doubleValue
+            ?? (start?["start_at"] as? Double)
+            ?? 0
+
+        return Turn(
+            turnId: turnId,
+            e2eLatency: e2eLatency,
+            segmentedLatency: segmentedLatency,
+            timestamp: timestamp
+        )
     }
 }
 
@@ -720,6 +824,13 @@ public enum MessageType: String, CaseIterable {
     ///   - agentUserId: Agent RTM user ID
     ///   - isSpeaking: Whether the agent is currently speaking
     @objc optional func onAgentSpeakingChanged(agentUserId: String, isSpeaking: Bool)
+
+    /// Called when latency data for one turn is available.
+    ///
+    /// - Parameters:
+    ///   - agentUserId: Agent RTM user ID
+    ///   - turn: Single turn latency snapshot
+    @objc optional func onTurnFinished(agentUserId: String, turn: Turn)
      
     /// Called when an interrupt event occurs
     /// This callback is triggered when the agent's speech or processing is interrupted
@@ -880,7 +991,6 @@ public enum MessageType: String, CaseIterable {
     /// Call this method when you no longer need the ConversationalAI API.
     @objc func destroy()
 }
-
 
 
 
