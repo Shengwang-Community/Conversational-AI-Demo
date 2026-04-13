@@ -14,13 +14,23 @@ description: Freeze an Execution Contract for code or docs workflow tasks in thi
 - Checks
 - Commit plan
 - Rollback note
-5. If the task touches `AGENTS.md`, `.agents/skills`, or `docs/*.md`, include all coupled files that must stay in sync.
-6. Update `下一步 Top 3` and append `关键决策日志`.
-7. Set `PLAN_FROZEN: true`, `CURRENT_ROLE: planner`, and `WORKFLOW_STATUS: active`.
-8. Emit a `[STATE]` anchor for the caller to echo and hand off to `$ac-execute`.
+5. For development-stage integration or debugging tasks, encode review boundaries directly into the existing Contract fields and state:
+- local cache / debug data policy
+- backend contract assumptions used in this round
+- explicit non-goals for this task
+- which suspicious behaviors should remain in `Gaps` as `assumption` / `open question` unless contradicted by evidence
+6. If the user request starts with an exact review trigger, record the matched subtype in the Contract and plan against that mode:
+- `开发态联调 review` -> dev-stage integration review
+- `问题修复 review` -> fix / regression review
+7. If the task touches `AGENTS.md`, `.agents/skills`, or `docs/*.md`, include all coupled files that must stay in sync.
+8. Update `下一步 Top 3` and append `关键决策日志`.
+9. Set `PLAN_FROZEN: true`, `CURRENT_ROLE: planner`, and `WORKFLOW_STATUS: active`.
+10. Emit a `[STATE]` anchor for the caller to echo and hand off to `$ac-execute`.
 
 Hard rules:
 
 - Do not implement feature or document changes in this skill.
 - Do not hand off if Contract fields are incomplete.
 - Do not freeze generic placeholders or non-existent repo paths as final scope.
+- Do not leave development-stage review assumptions as private reasoning; they must be visible in Contract/Evidence/Gaps.
+- Do not infer a review subtype from vague wording when the exact trigger phrase was not provided.
