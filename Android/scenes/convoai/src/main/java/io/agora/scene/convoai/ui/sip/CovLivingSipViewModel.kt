@@ -273,17 +273,24 @@ class CovLivingSipViewModel : ViewModel() {
             onCompleted?.invoke(false)
             return
         }
-        CovAgentApiManager.reportLatencyMock(presetName, data) { error, latencyId ->
-            if (error == null && !latencyId.isNullOrEmpty()) {
-                latencyMetricsManager.updateReportInfo(
+        val sessionCallStartAtMs = data.callStartAtMs
+        CovAgentApiManager.reportAgentMetrics(presetName, data) { error, result ->
+            if (error == null && result != null) {
+                val updated = latencyMetricsManager.updateReportInfoIfSessionMatches(
                     presetName = presetName,
-                    latencyId = latencyId,
-                    reportedAtMs = TimeUtils.currentTimeMillis()
+                    sessionCallStartAtMs = sessionCallStartAtMs,
+                    agentId = result.agentId,
+                    reportedAtMs = result.uploadedAtMs
                 )
-                CovLogger.d(TAG, "Stored SIP mock latency report for preset=$presetName")
-                onCompleted?.invoke(true)
+                if (updated) {
+                    CovLogger.d(TAG, "Stored SIP latency report for preset=$presetName")
+                    onCompleted?.invoke(true)
+                } else {
+                    CovLogger.w(TAG, "Ignore stale SIP latency report callback for preset=$presetName")
+                    onCompleted?.invoke(false)
+                }
             } else {
-                CovLogger.w(TAG, "SIP reportLatencyMock failed: ${error?.message}")
+                CovLogger.w(TAG, "SIP reportAgentMetrics failed: ${error?.message}")
                 onCompleted?.invoke(false)
             }
         }
@@ -500,7 +507,7 @@ class CovLivingSipViewModel : ViewModel() {
         _turnFinishedMetricsState.value = null
         latencyMetricsPresetName = resolveLatencyMetricsPresetName()
         latencyMetricsPresetName?.let { presetName ->
-            latencyMetricsManager.remove(presetName)
+            latencyMetricsManager.startSession(presetName, TimeUtils.currentTimeMillis())
             CovLogger.d(TAG, "Reset SIP latency metrics session for preset=$presetName")
         } ?: CovLogger.w(TAG, "SIP preset name unavailable, turn.finished data will be ignored")
     }

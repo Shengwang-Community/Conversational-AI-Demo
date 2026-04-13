@@ -27,7 +27,6 @@ import io.agora.scene.convoai.convoaiApi.TranscriptType
 import io.agora.scene.convoai.databinding.CovMessageAgentItemBinding
 import io.agora.scene.convoai.databinding.CovMessageListViewBinding
 import io.agora.scene.convoai.databinding.CovMessageMineItemBinding
-import io.agora.scene.convoai.ui.living.metrics.LatencyMetricChipUiModel
 import io.agora.scene.convoai.ui.living.metrics.TurnFinishedMetricsUiModel
 import io.agora.scene.common.R as CommonR
 
@@ -407,9 +406,9 @@ class CovMessageListView @JvmOverloads constructor(
                 val shouldShow = isLatencyMetricsVisible && metrics != null
                 binding.layoutMessageMetrics.isVisible = shouldShow
                 if (!shouldShow) {
-                    bindMetricChip(binding.tvMetricsAsr, null)
-                    bindMetricChip(binding.tvMetricsLlm, null)
-                    bindMetricChip(binding.tvMetricsTts, null)
+                    bindMetricChip(binding.tvMetricsAsr, io.agora.scene.convoai.R.string.cov_latency_metrics_label_asr, null)
+                    bindMetricChip(binding.tvMetricsLlm, io.agora.scene.convoai.R.string.cov_latency_metrics_label_llm, null)
+                    bindMetricChip(binding.tvMetricsTts, io.agora.scene.convoai.R.string.cov_latency_metrics_label_tts, null)
                     return
                 }
                 val context = binding.root.context
@@ -424,20 +423,18 @@ class CovMessageListView @JvmOverloads constructor(
                         value = formatLatencyValueText(context, it.totalLatencyMs)
                     )
                 } ?: ""
-                bindMetricChip(binding.tvMetricsAsr, metrics?.asrMetric)
-                bindMetricChip(binding.tvMetricsLlm, metrics?.llmMetric)
-                bindMetricChip(binding.tvMetricsTts, metrics?.ttsMetric)
+                bindMetricChip(binding.tvMetricsAsr, io.agora.scene.convoai.R.string.cov_latency_metrics_label_asr, metrics?.asrLatencyMs)
+                bindMetricChip(binding.tvMetricsLlm, io.agora.scene.convoai.R.string.cov_latency_metrics_label_llm, metrics?.llmLatencyMs)
+                bindMetricChip(binding.tvMetricsTts, io.agora.scene.convoai.R.string.cov_latency_metrics_label_tts, metrics?.ttsLatencyMs)
             }
 
-            private fun bindMetricChip(textView: TextView, metric: LatencyMetricChipUiModel?) {
-                textView.isVisible = metric != null
-                textView.text = metric?.let {
-                    formatMetricText(
-                        context = textView.context,
-                        label = textView.context.getString(it.labelResId),
-                        value = formatLatencyValueText(textView.context, it.latencyMs)
-                    )
-                } ?: ""
+            private fun bindMetricChip(textView: TextView, labelResId: Int, latencyMs: Int?) {
+                textView.isVisible = true
+                textView.text = formatMetricText(
+                    context = textView.context,
+                    label = textView.context.getString(labelResId),
+                    value = latencyMs?.let { formatLatencyValueText(textView.context, it) } ?: "-"
+                )
             }
 
             private fun formatMetricText(

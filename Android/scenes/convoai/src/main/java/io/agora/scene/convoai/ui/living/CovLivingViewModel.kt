@@ -866,17 +866,24 @@ class CovLivingViewModel : ViewModel() {
             onCompleted?.invoke(false)
             return
         }
-        CovAgentApiManager.reportLatencyMock(presetName, data) { error, latencyId ->
-            if (error == null && !latencyId.isNullOrEmpty()) {
-                latencyMetricsManager.updateReportInfo(
+        val sessionCallStartAtMs = data.callStartAtMs
+        CovAgentApiManager.reportAgentMetrics(presetName, data) { error, result ->
+            if (error == null && result != null) {
+                val updated = latencyMetricsManager.updateReportInfoIfSessionMatches(
                     presetName = presetName,
-                    latencyId = latencyId,
-                    reportedAtMs = TimeUtils.currentTimeMillis()
+                    sessionCallStartAtMs = sessionCallStartAtMs,
+                    agentId = result.agentId,
+                    reportedAtMs = result.uploadedAtMs
                 )
-                CovLogger.d(TAG, "Stored mock latency report for preset=$presetName")
-                onCompleted?.invoke(true)
+                if (updated) {
+                    CovLogger.d(TAG, "Stored latency report for preset=$presetName")
+                    onCompleted?.invoke(true)
+                } else {
+                    CovLogger.w(TAG, "Ignore stale latency report callback for preset=$presetName")
+                    onCompleted?.invoke(false)
+                }
             } else {
-                CovLogger.w(TAG, "reportLatencyMock failed: ${error?.message}")
+                CovLogger.w(TAG, "reportAgentMetrics failed: ${error?.message}")
                 onCompleted?.invoke(false)
             }
         }
@@ -1009,7 +1016,7 @@ class CovLivingViewModel : ViewModel() {
         _turnFinishedMetricsState.value = null
         latencyMetricsPresetName = resolveLatencyMetricsPresetName()
         latencyMetricsPresetName?.let { presetName ->
-            latencyMetricsManager.remove(presetName)
+            latencyMetricsManager.startSession(presetName, TimeUtils.currentTimeMillis())
             CovLogger.d(TAG, "Reset latency metrics session for preset=$presetName")
         } ?: CovLogger.w(TAG, "Preset name unavailable, turn.finished data will be ignored")
     }
