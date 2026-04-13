@@ -388,10 +388,7 @@ object CovAgentApiManager {
         val presetDisplayName = CovAgentManager.getPreset()?.display_name
             ?.takeIf { it.isNotBlank() }
             ?: presetName
-        val callStartAtMs = data.callStartAtMs
-            ?.takeIf { it > 0L }
-            ?: data.turns.minOfOrNull { it.timestamp }
-            ?: TimeUtils.currentTimeMillis()
+        val callStartAtMs = data.callStartAtMs?.takeIf { it > 0L }
         val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/agent/metrics/report"
         val postBody = mapToJsonObjectWithFilter(
             mapOf(
@@ -401,8 +398,13 @@ object CovAgentApiManager {
                 "preset_display_name" to presetDisplayName,
                 "call_start_at" to callStartAtMs,
                 "turn_event" to data.turns.map { turn ->
+                    val transcription = data.turnTranscriptions[turn.turnId.toString()]
                     mapOf(
                         "turn_id" to turn.turnId,
+                        "transcription" to mapOf(
+                            "assistant" to transcription?.assistant.orEmpty(),
+                            "user" to transcription?.user.orEmpty()
+                        ),
                         "metrics" to mapOf(
                             "e2e_latency_ms" to turn.e2eLatency.roundToInt(),
                             "segmented_latency_ms" to listOf(

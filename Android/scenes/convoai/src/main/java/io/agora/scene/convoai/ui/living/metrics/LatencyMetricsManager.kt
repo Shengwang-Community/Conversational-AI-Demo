@@ -25,8 +25,14 @@ object LocalLatencyMetricsStorage : LatencyMetricsStorage {
     }
 }
 
+data class TurnTranscription(
+    var assistant: String? = null,
+    var user: String? = null,
+)
+
 data class AgentLatencyData(
     val turns: MutableList<Turn> = mutableListOf(),
+    val turnTranscriptions: MutableMap<String, TurnTranscription> = mutableMapOf(),
     var callStartAtMs: Long? = null,
     var agentId: String? = null,
     var reportedAtMs: Long? = null,
@@ -120,7 +126,7 @@ class LatencyMetricsManager internal constructor(
         itemClass = AgentLatencyData::class.java
     )
 ) {
-    fun startSession(presetName: String, callStartAtMs: Long) {
+    fun startSession(presetName: String, callStartAtMs: Long?, agentId: String) {
         if (presetName.isBlank()) {
             return
         }
@@ -128,8 +134,9 @@ class LatencyMetricsManager internal constructor(
             presetName,
             AgentLatencyData(
                 turns = mutableListOf(),
+                turnTranscriptions = mutableMapOf(),
                 callStartAtMs = callStartAtMs,
-                agentId = null,
+                agentId = agentId,
                 reportedAtMs = null
             )
         )
@@ -146,9 +153,38 @@ class LatencyMetricsManager internal constructor(
             presetName,
             AgentLatencyData(
                 turns = turns,
-                callStartAtMs = currentData?.callStartAtMs ?: turn.timestamp,
+                turnTranscriptions = currentData?.turnTranscriptions?.toMutableMap() ?: mutableMapOf(),
+                callStartAtMs = currentData?.callStartAtMs,
                 agentId = currentData?.agentId,
                 reportedAtMs = currentData?.reportedAtMs
+            )
+        )
+    }
+
+    fun updateTurnTranscription(
+        presetName: String,
+        turnId: Long,
+        assistantText: String?,
+        userText: String?,
+    ) {
+        if (presetName.isBlank() || turnId <= 0L) {
+            return
+        }
+        val currentData = cache.fetch(presetName) ?: return
+        val turnKey = turnId.toString()
+        val turnTranscriptions = currentData.turnTranscriptions.toMutableMap()
+        turnTranscriptions[turnKey] = TurnTranscription(
+            assistant = assistantText,
+            user = userText
+        )
+        cache.save(
+            presetName,
+            currentData.copy(
+                turns = currentData.turns.toMutableList(),
+                turnTranscriptions = turnTranscriptions,
+                callStartAtMs = currentData.callStartAtMs,
+                agentId = currentData.agentId,
+                reportedAtMs = currentData.reportedAtMs
             )
         )
     }
@@ -184,6 +220,7 @@ class LatencyMetricsManager internal constructor(
             presetName,
             currentData.copy(
                 turns = currentData.turns.toMutableList(),
+                turnTranscriptions = currentData.turnTranscriptions.toMutableMap(),
                 callStartAtMs = currentData.callStartAtMs,
                 agentId = agentId,
                 reportedAtMs = currentData.reportedAtMs
@@ -208,6 +245,7 @@ class LatencyMetricsManager internal constructor(
             presetName,
             currentData.copy(
                 turns = currentData.turns.toMutableList(),
+                turnTranscriptions = currentData.turnTranscriptions.toMutableMap(),
                 callStartAtMs = currentData.callStartAtMs,
                 agentId = agentId,
                 reportedAtMs = reportedAtMs

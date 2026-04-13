@@ -296,7 +296,8 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
         } else {
             LatencyMetricsManager.shared.fetch(presetName)
         }
-        val hasUploadedReport = !reportData?.agentId.isNullOrEmpty() && (reportData?.reportedAtMs ?: 0L) > 0L
+        val hasUploadedReport = !reportData?.agentId.isNullOrEmpty() &&
+            (reportData?.reportedAtMs ?: 0L) > 0L
 
         mBinding?.apply {
             mtvReportGenerate.visibility = if (hasUploadedReport) View.GONE else View.VISIBLE

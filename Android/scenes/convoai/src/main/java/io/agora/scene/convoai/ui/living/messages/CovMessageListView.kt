@@ -28,6 +28,7 @@ import io.agora.scene.convoai.databinding.CovMessageAgentItemBinding
 import io.agora.scene.convoai.databinding.CovMessageListViewBinding
 import io.agora.scene.convoai.databinding.CovMessageMineItemBinding
 import io.agora.scene.convoai.ui.living.metrics.TurnFinishedMetricsUiModel
+import io.agora.scene.convoai.ui.living.metrics.TurnTranscription
 import io.agora.scene.common.R as CommonR
 
 /**
@@ -682,6 +683,23 @@ class CovMessageListView @JvmOverloads constructor(
         if (messageAdapter.updateLatencyMetrics(turnId, metrics)) {
             pendingLatencyMetrics.remove(turnId)
         }
+    }
+
+    fun getTurnTranscription(turnId: Long): TurnTranscription? {
+        if (turnId <= 0L) {
+            return null
+        }
+        val messages = messageAdapter.getAllMessages()
+        val assistant = messages.lastOrNull {
+            it.turnId == turnId && !it.isMe && it.type == MessageType.TEXT
+        }?.content
+        val user = messages.lastOrNull {
+            it.turnId == turnId && it.isMe && it.type == MessageType.TEXT
+        }?.content
+        if (assistant.isNullOrEmpty() && user.isNullOrEmpty()) {
+            return null
+        }
+        return TurnTranscription(assistant = assistant, user = user)
     }
 
     fun setLatencyMetricsVisible(visible: Boolean) {
