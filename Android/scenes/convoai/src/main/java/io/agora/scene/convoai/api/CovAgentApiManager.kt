@@ -82,6 +82,13 @@ object CovAgentApiManager {
                 postBody.put("preset_type", it)
             }
 
+            if (!CovAgentManager.isOpenSource) {
+                val appFeature = JSONObject()
+                appFeature.put("enable_aivad", CovAgentManager.enableAiVad)
+                appFeature.put("pause_state_enabled", CovAgentManager.enableAiPause)
+                postBody.put("app_feature", appFeature)
+            }
+
             // Process convoaiBody, convert Map to JSONObject and filter out null values
             val convoaiJsonObject = mapToJsonObjectWithFilter(convoaiBody)
             postBody.put("convoai_body", convoaiJsonObject)

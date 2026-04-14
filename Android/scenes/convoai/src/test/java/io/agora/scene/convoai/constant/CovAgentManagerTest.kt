@@ -104,7 +104,7 @@ class CovAgentManagerTest {
             language_name = code,
             aivad_supported = aiVadSupported,
             aivad_enabled_by_default = aiVadEnabledByDefault,
-            aipause_enabled_by_default = aiPauseEnabledByDefault
+            pause_state_enabled_by_default = aiPauseEnabledByDefault
         )
     }
 }

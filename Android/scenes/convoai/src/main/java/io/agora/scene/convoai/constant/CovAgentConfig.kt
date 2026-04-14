@@ -46,7 +46,7 @@ object CovAgentManager {
                 language?.aivad_enabled_by_default ?: true
             }
             enableAiPause = if (enableAiVad) {
-                value?.aipause_enabled_by_default ?: false
+                value?.pause_state_enabled_by_default ?: false
             } else {
                 false
             }

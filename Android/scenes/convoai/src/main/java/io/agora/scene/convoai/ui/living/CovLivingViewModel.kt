@@ -1134,7 +1134,6 @@ class CovLivingViewModel : ViewModel() {
                 "idle_timeout" to null,
                 "agent_rtm_uid" to null,
                 "advanced_features" to mapOf(
-                    "enable_aivad" to CovAgentManager.enableAiVad,
                     "enable_bhvs" to CovAgentManager.enableBHVS,
                     "enable_rtm" to (dataChannel == "rtm"),
                     "enable_sal" to (CovAgentManager.voiceprintMode != VoiceprintMode.OFF)
@@ -1225,7 +1224,6 @@ class CovLivingViewModel : ViewModel() {
                 "idle_timeout" to null,
                 "agent_rtm_uid" to null,
                 "advanced_features" to mapOf(
-                    "enable_aivad" to CovAgentManager.enableAiVad,
                     "enable_bhvs" to CovAgentManager.enableBHVS,
                     "enable_rtm" to true,
                     "enable_sal" to (CovAgentManager.voiceprintMode != VoiceprintMode.OFF)
