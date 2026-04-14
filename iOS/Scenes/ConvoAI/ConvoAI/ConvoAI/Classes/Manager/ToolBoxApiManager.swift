@@ -56,7 +56,7 @@ class ToolBoxApiManager: NSObject {
             "call_start_at": Int(session.startedAt.rounded()),
             "turn_event": session.turns.map { turn in
                 let transcription = session.transcription(for: turn.turnId)
-                [
+                return [
                     "turn_id": turn.turnId,
                     "metrics": [
                         "e2e_latency_ms": Int(turn.e2eLatency.rounded()),
