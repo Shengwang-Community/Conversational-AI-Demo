@@ -58,6 +58,7 @@ import io.agora.scene.convoai.ui.PictureInfo
 import io.agora.scene.convoai.ui.ResourceError
 import io.agora.scene.convoai.ui.living.metrics.AgentLatencyData
 import io.agora.scene.convoai.ui.living.metrics.LatencyMetricsManager
+import io.agora.scene.convoai.ui.living.metrics.TurnTranscription
 import io.agora.scene.convoai.ui.living.metrics.TurnFinishedMetricsState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -478,6 +479,7 @@ class CovLivingViewModel : ViewModel() {
                 if (integratedToken == null) {
                     val tokenResult = updateTokenAsync()
                     if (!tokenResult) {
+                        clearLatencyMetricsSession()
                         _connectionState.value = AgentConnectionState.IDLE
                         _ballAnimState.value = BallAnimState.STATIC
                         ToastUtil.show(R.string.cov_detail_join_call_failed, Toast.LENGTH_LONG)
@@ -848,7 +850,7 @@ class CovLivingViewModel : ViewModel() {
     }
 
     fun getCurrentLatencyMetricsData(): AgentLatencyData? {
-        val presetName = latencyMetricsPresetName ?: resolveLatencyMetricsPresetName()
+        val presetName = latencyMetricsPresetName
         if (presetName.isNullOrEmpty()) {
             return null
         }
@@ -856,7 +858,7 @@ class CovLivingViewModel : ViewModel() {
     }
 
     fun reportLatencyMetricsIfNeeded(onCompleted: ((Boolean) -> Unit)? = null) {
-        val presetName = latencyMetricsPresetName ?: resolveLatencyMetricsPresetName()
+        val presetName = latencyMetricsPresetName
         if (presetName.isNullOrEmpty()) {
             onCompleted?.invoke(false)
             return
@@ -866,26 +868,47 @@ class CovLivingViewModel : ViewModel() {
             onCompleted?.invoke(false)
             return
         }
-        CovAgentApiManager.reportLatencyMock(presetName, data) { error, latencyId ->
-            if (error == null && !latencyId.isNullOrEmpty()) {
-                latencyMetricsManager.updateReportInfo(
+        val sessionCallStartAtMs = data.callStartAtMs
+        CovAgentApiManager.reportAgentMetrics(presetName, data) { error, result ->
+            if (error == null && result != null) {
+                val updated = latencyMetricsManager.updateReportInfoIfSessionMatches(
                     presetName = presetName,
-                    latencyId = latencyId,
-                    reportedAtMs = TimeUtils.currentTimeMillis()
+                    sessionCallStartAtMs = sessionCallStartAtMs,
+                    agentId = result.agentId,
+                    reportedAtMs = result.uploadedAtMs
                 )
-                CovLogger.d(TAG, "Stored mock latency report for preset=$presetName")
-                onCompleted?.invoke(true)
+                if (updated) {
+                    CovLogger.d(TAG, "Stored latency report for preset=$presetName")
+                    onCompleted?.invoke(true)
+                } else {
+                    CovLogger.w(TAG, "Ignore stale latency report callback for preset=$presetName")
+                    onCompleted?.invoke(false)
+                }
             } else {
-                CovLogger.w(TAG, "reportLatencyMock failed: ${error?.message}")
+                CovLogger.w(TAG, "reportAgentMetrics failed: ${error?.message}")
                 onCompleted?.invoke(false)
             }
         }
+    }
+
+    fun updateTurnTranscription(turnId: Long, transcription: TurnTranscription?) {
+        val presetName = latencyMetricsPresetName
+        if (presetName.isNullOrEmpty() || transcription == null || turnId <= 0L) {
+            return
+        }
+        latencyMetricsManager.updateTurnTranscription(
+            presetName = presetName,
+            turnId = turnId,
+            assistantText = transcription.assistant,
+            userText = transcription.user
+        )
     }
 
     // ===== Private methods =====
     private fun handleAgentStartResult(result: Pair<String, Int>) {
         val (message, errorCode) = result
         if (errorCode == 0) {
+            activateLatencyMetricsSession()
             CovLogger.d(TAG, "Agent started successfully")
             startWaitingTimeout()
         } else {
@@ -1008,10 +1031,31 @@ class CovLivingViewModel : ViewModel() {
     private fun prepareLatencyMetricsSession() {
         _turnFinishedMetricsState.value = null
         latencyMetricsPresetName = resolveLatencyMetricsPresetName()
-        latencyMetricsPresetName?.let { presetName ->
-            latencyMetricsManager.remove(presetName)
-            CovLogger.d(TAG, "Reset latency metrics session for preset=$presetName")
-        } ?: CovLogger.w(TAG, "Preset name unavailable, turn.finished data will be ignored")
+        val presetName = latencyMetricsPresetName
+        if (presetName.isNullOrEmpty()) {
+            CovLogger.w(TAG, "Preset name unavailable, turn.finished data will be ignored")
+            return
+        }
+        latencyMetricsManager.startSession(
+            presetName = presetName,
+            callStartAtMs = TimeUtils.currentTimeMillis(),
+            agentId = ""
+        )
+    }
+
+    private fun activateLatencyMetricsSession() {
+        val presetName = latencyMetricsPresetName ?: resolveLatencyMetricsPresetName()
+        val agentId = CovAgentApiManager.agentId
+        if (presetName.isNullOrEmpty() || agentId.isNullOrEmpty()) {
+            CovLogger.w(
+                TAG,
+                "Skip latency metrics session activation preset=$presetName agentId=$agentId"
+            )
+            return
+        }
+        latencyMetricsManager.updateAgentId(presetName, agentId)
+        latencyMetricsPresetName = presetName
+        CovLogger.d(TAG, "Activated latency metrics session after start success for preset=$presetName")
     }
 
     private fun clearLatencyMetricsSession() {

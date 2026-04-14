@@ -1,9 +1,7 @@
 package io.agora.scene.convoai.ui.living.metrics
 
-import androidx.annotation.StringRes
 import io.agora.scene.common.util.GsonTools
 import io.agora.scene.common.util.LocalStorageUtil
-import io.agora.scene.convoai.R
 import io.agora.scene.convoai.convoaiApi.Turn
 import kotlin.math.roundToInt
 
@@ -27,23 +25,25 @@ object LocalLatencyMetricsStorage : LatencyMetricsStorage {
     }
 }
 
-data class AgentLatencyData(
-    val turns: MutableList<Turn> = mutableListOf(),
-    var latencyId: String? = null,
-    var reportedAtMs: Long? = null,
+data class TurnTranscription(
+    var assistant: String? = null,
+    var user: String? = null,
 )
 
-data class LatencyMetricChipUiModel(
-    @StringRes val labelResId: Int,
-    val latencyMs: Int,
+data class AgentLatencyData(
+    val turns: MutableList<Turn> = mutableListOf(),
+    val turnTranscriptions: MutableMap<String, TurnTranscription> = mutableMapOf(),
+    var callStartAtMs: Long? = null,
+    var agentId: String? = null,
+    var reportedAtMs: Long? = null,
 )
 
 data class TurnFinishedMetricsUiModel(
     val turnId: Long?,
     val totalLatencyMs: Int,
-    val asrMetric: LatencyMetricChipUiModel?,
-    val llmMetric: LatencyMetricChipUiModel?,
-    val ttsMetric: LatencyMetricChipUiModel?,
+    val asrLatencyMs: Int?,
+    val llmLatencyMs: Int?,
+    val ttsLatencyMs: Int?,
 )
 
 data class TurnFinishedMetricsState(
@@ -55,20 +55,20 @@ data class TurnFinishedMetricsState(
         return TurnFinishedMetricsUiModel(
             turnId = turn.turnId.takeIf { it > 0 },
             totalLatencyMs = turn.e2eLatency.toLatencyMs(),
-            asrMetric = turn.segmentedLatency.asrTTLW.toMetricChipOrNull(R.string.cov_latency_metrics_label_asr),
-            llmMetric = turn.segmentedLatency.llmTTFT.toMetricChipOrNull(R.string.cov_latency_metrics_label_llm),
-            ttsMetric = turn.segmentedLatency.ttsTTFB.toMetricChipOrNull(R.string.cov_latency_metrics_label_tts),
+            asrLatencyMs = turn.segmentedLatency.asrTTLW.toLatencyMsOrNull(),
+            llmLatencyMs = turn.segmentedLatency.llmTTFT.toLatencyMsOrNull(),
+            ttsLatencyMs = turn.segmentedLatency.ttsTTFB.toLatencyMsOrNull(),
         )
     }
 }
 
 private fun Double.toLatencyMs(): Int = roundToInt()
 
-private fun Double.toMetricChipOrNull(@StringRes labelResId: Int): LatencyMetricChipUiModel? {
+private fun Double.toLatencyMsOrNull(): Int? {
     if (this <= 0) {
         return null
     }
-    return LatencyMetricChipUiModel(labelResId = labelResId, latencyMs = toLatencyMs())
+    return toLatencyMs()
 }
 
 class DataCache<T>(
@@ -126,6 +126,22 @@ class LatencyMetricsManager internal constructor(
         itemClass = AgentLatencyData::class.java
     )
 ) {
+    fun startSession(presetName: String, callStartAtMs: Long?, agentId: String) {
+        if (presetName.isBlank()) {
+            return
+        }
+        cache.save(
+            presetName,
+            AgentLatencyData(
+                turns = mutableListOf(),
+                turnTranscriptions = mutableMapOf(),
+                callStartAtMs = callStartAtMs,
+                agentId = agentId,
+                reportedAtMs = null
+            )
+        )
+    }
+
     fun append(presetName: String, turn: Turn) {
         if (presetName.isBlank()) {
             return
@@ -137,8 +153,38 @@ class LatencyMetricsManager internal constructor(
             presetName,
             AgentLatencyData(
                 turns = turns,
-                latencyId = currentData?.latencyId,
+                turnTranscriptions = currentData?.turnTranscriptions?.toMutableMap() ?: mutableMapOf(),
+                callStartAtMs = currentData?.callStartAtMs,
+                agentId = currentData?.agentId,
                 reportedAtMs = currentData?.reportedAtMs
+            )
+        )
+    }
+
+    fun updateTurnTranscription(
+        presetName: String,
+        turnId: Long,
+        assistantText: String?,
+        userText: String?,
+    ) {
+        if (presetName.isBlank() || turnId <= 0L) {
+            return
+        }
+        val currentData = cache.fetch(presetName) ?: return
+        val turnKey = turnId.toString()
+        val turnTranscriptions = currentData.turnTranscriptions.toMutableMap()
+        turnTranscriptions[turnKey] = TurnTranscription(
+            assistant = assistantText,
+            user = userText
+        )
+        cache.save(
+            presetName,
+            currentData.copy(
+                turns = currentData.turns.toMutableList(),
+                turnTranscriptions = turnTranscriptions,
+                callStartAtMs = currentData.callStartAtMs,
+                agentId = currentData.agentId,
+                reportedAtMs = currentData.reportedAtMs
             )
         )
     }
@@ -165,7 +211,7 @@ class LatencyMetricsManager internal constructor(
         cache.removeAll()
     }
 
-    fun updateLatencyId(presetName: String, latencyId: String) {
+    fun updateAgentId(presetName: String, agentId: String) {
         if (presetName.isBlank()) {
             return
         }
@@ -174,25 +220,38 @@ class LatencyMetricsManager internal constructor(
             presetName,
             currentData.copy(
                 turns = currentData.turns.toMutableList(),
-                latencyId = latencyId,
+                turnTranscriptions = currentData.turnTranscriptions.toMutableMap(),
+                callStartAtMs = currentData.callStartAtMs,
+                agentId = agentId,
                 reportedAtMs = currentData.reportedAtMs
             )
         )
     }
 
-    fun updateReportInfo(presetName: String, latencyId: String, reportedAtMs: Long) {
+    fun updateReportInfoIfSessionMatches(
+        presetName: String,
+        sessionCallStartAtMs: Long?,
+        agentId: String,
+        reportedAtMs: Long
+    ): Boolean {
         if (presetName.isBlank()) {
-            return
+            return false
         }
-        val currentData = cache.fetch(presetName) ?: return
+        val currentData = cache.fetch(presetName) ?: return false
+        if (sessionCallStartAtMs != null && currentData.callStartAtMs != sessionCallStartAtMs) {
+            return false
+        }
         cache.save(
             presetName,
             currentData.copy(
                 turns = currentData.turns.toMutableList(),
-                latencyId = latencyId,
+                turnTranscriptions = currentData.turnTranscriptions.toMutableMap(),
+                callStartAtMs = currentData.callStartAtMs,
+                agentId = agentId,
                 reportedAtMs = reportedAtMs
             )
         )
+        return true
     }
 
     companion object {

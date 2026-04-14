@@ -296,7 +296,8 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
         } else {
             LatencyMetricsManager.shared.fetch(presetName)
         }
-        val hasUploadedReport = !reportData?.latencyId.isNullOrEmpty() && (reportData?.reportedAtMs ?: 0L) > 0L
+        val hasUploadedReport = !reportData?.agentId.isNullOrEmpty() &&
+            (reportData?.reportedAtMs ?: 0L) > 0L
 
         mBinding?.apply {
             mtvReportGenerate.visibility = if (hasUploadedReport) View.GONE else View.VISIBLE
@@ -318,7 +319,7 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
             return
         }
         val reportData = LatencyMetricsManager.shared.fetch(presetName) ?: return
-        if (reportData.latencyId.isNullOrEmpty()) {
+        if (reportData.agentId.isNullOrEmpty()) {
             return
         }
         TermsActivity.startActivity(activity, DATA_REPORT_URL)

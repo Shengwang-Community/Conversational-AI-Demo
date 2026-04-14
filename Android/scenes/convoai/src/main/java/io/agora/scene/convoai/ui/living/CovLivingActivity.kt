@@ -461,6 +461,10 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                         turnId = it.turn.turnId,
                         metrics = it.toSubtitleMetricsUiModel()
                     )
+                    viewModel.updateTurnTranscription(
+                        turnId = it.turn.turnId,
+                        transcription = mBinding?.messageListViewV2?.getTurnTranscription(it.turn.turnId)
+                    )
                 }
             }
         }

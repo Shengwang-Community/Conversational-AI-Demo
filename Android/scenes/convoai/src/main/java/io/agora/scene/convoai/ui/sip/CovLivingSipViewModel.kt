@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import io.agora.scene.convoai.ui.living.metrics.LatencyMetricsManager
+import io.agora.scene.convoai.ui.living.metrics.TurnTranscription
 import io.agora.scene.convoai.ui.living.metrics.TurnFinishedMetricsState
 import java.util.UUID
 import kotlin.coroutines.resume
@@ -263,7 +264,7 @@ class CovLivingSipViewModel : ViewModel() {
     }
 
     fun reportLatencyMetricsIfNeeded(onCompleted: ((Boolean) -> Unit)? = null) {
-        val presetName = latencyMetricsPresetName ?: resolveLatencyMetricsPresetName()
+        val presetName = latencyMetricsPresetName
         if (presetName.isNullOrEmpty()) {
             onCompleted?.invoke(false)
             return
@@ -273,20 +274,40 @@ class CovLivingSipViewModel : ViewModel() {
             onCompleted?.invoke(false)
             return
         }
-        CovAgentApiManager.reportLatencyMock(presetName, data) { error, latencyId ->
-            if (error == null && !latencyId.isNullOrEmpty()) {
-                latencyMetricsManager.updateReportInfo(
+        val sessionCallStartAtMs = data.callStartAtMs
+        CovAgentApiManager.reportAgentMetrics(presetName, data) { error, result ->
+            if (error == null && result != null) {
+                val updated = latencyMetricsManager.updateReportInfoIfSessionMatches(
                     presetName = presetName,
-                    latencyId = latencyId,
-                    reportedAtMs = TimeUtils.currentTimeMillis()
+                    sessionCallStartAtMs = sessionCallStartAtMs,
+                    agentId = result.agentId,
+                    reportedAtMs = result.uploadedAtMs
                 )
-                CovLogger.d(TAG, "Stored SIP mock latency report for preset=$presetName")
-                onCompleted?.invoke(true)
+                if (updated) {
+                    CovLogger.d(TAG, "Stored SIP latency report for preset=$presetName")
+                    onCompleted?.invoke(true)
+                } else {
+                    CovLogger.w(TAG, "Ignore stale SIP latency report callback for preset=$presetName")
+                    onCompleted?.invoke(false)
+                }
             } else {
-                CovLogger.w(TAG, "SIP reportLatencyMock failed: ${error?.message}")
+                CovLogger.w(TAG, "SIP reportAgentMetrics failed: ${error?.message}")
                 onCompleted?.invoke(false)
             }
         }
+    }
+
+    fun updateTurnTranscription(turnId: Long, transcription: TurnTranscription?) {
+        val presetName = latencyMetricsPresetName
+        if (presetName.isNullOrEmpty() || transcription == null || turnId <= 0L) {
+            return
+        }
+        latencyMetricsManager.updateTurnTranscription(
+            presetName = presetName,
+            turnId = turnId,
+            assistantText = transcription.assistant,
+            userText = transcription.user
+        )
     }
 
     // RTC event handling
@@ -304,6 +325,7 @@ class CovLivingSipViewModel : ViewModel() {
     private fun handleAgentStartResult(result: Pair<String, Int>) {
         val (message, errorCode) = result
         if (errorCode == 0) {
+            activateLatencyMetricsSession()
             CovLogger.d(TAG, "Agent started successfully")
             startWaitingTimeout()
             startPingTask()
@@ -499,10 +521,31 @@ class CovLivingSipViewModel : ViewModel() {
     private fun prepareLatencyMetricsSession() {
         _turnFinishedMetricsState.value = null
         latencyMetricsPresetName = resolveLatencyMetricsPresetName()
-        latencyMetricsPresetName?.let { presetName ->
-            latencyMetricsManager.remove(presetName)
-            CovLogger.d(TAG, "Reset SIP latency metrics session for preset=$presetName")
-        } ?: CovLogger.w(TAG, "SIP preset name unavailable, turn.finished data will be ignored")
+        val presetName = latencyMetricsPresetName
+        if (presetName.isNullOrEmpty()) {
+            CovLogger.w(TAG, "SIP preset name unavailable, turn.finished data will be ignored")
+            return
+        }
+        latencyMetricsManager.startSession(
+            presetName = presetName,
+            callStartAtMs = TimeUtils.currentTimeMillis(),
+            agentId = ""
+        )
+    }
+
+    private fun activateLatencyMetricsSession() {
+        val presetName = latencyMetricsPresetName ?: resolveLatencyMetricsPresetName()
+        val agentId = CovAgentApiManager.agentId
+        if (presetName.isNullOrEmpty() || agentId.isNullOrEmpty()) {
+            CovLogger.w(
+                TAG,
+                "Skip SIP latency metrics session activation preset=$presetName agentId=$agentId"
+            )
+            return
+        }
+        latencyMetricsManager.updateAgentId(presetName, agentId)
+        latencyMetricsPresetName = presetName
+        CovLogger.d(TAG, "Activated SIP latency metrics session after start success for preset=$presetName")
     }
 
     private fun clearLatencyMetricsSession() {

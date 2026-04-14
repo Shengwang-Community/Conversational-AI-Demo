@@ -71,7 +71,7 @@
             android:paddingEnd="4dp"
             android:paddingBottom="2dp"
             android:textColor="@color/ai_icontext3"
-            android:textSize="9sp"
+            android:textSize="11sp"
             tools:text="#1" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -88,7 +88,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:textColor="@color/ai_icontext3"
-                android:textSize="9sp"
+                android:textSize="11sp"
                 tools:text="端到端:1423ms" />
 
             <TextView
@@ -97,7 +97,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:textColor="@color/ai_icontext3"
-                android:textSize="9sp"
+                android:textSize="11sp"
                 tools:text="ASR:198ms" />
 
             <TextView
@@ -106,7 +106,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:textColor="@color/ai_icontext3"
-                android:textSize="9sp"
+                android:textSize="11sp"
                 tools:text="LLM:542ms" />
 
             <TextView
@@ -115,7 +115,7 @@
                 android:layout_height="wrap_content"
                 android:includeFontPadding="false"
                 android:textColor="@color/ai_icontext3"
-                android:textSize="9sp"
+                android:textSize="11sp"
                 tools:text="TTS:186ms" />
 
             <androidx.constraintlayout.helper.widget.Flow
