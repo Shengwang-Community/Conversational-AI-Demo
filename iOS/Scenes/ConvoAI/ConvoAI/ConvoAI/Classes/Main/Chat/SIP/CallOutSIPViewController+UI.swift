@@ -11,6 +11,22 @@ import SVProgressHUD
 import Common
 
 extension CallOutSipViewController {
+    private func uploadLatestLatencyReportIfNeeded() {
+        guard let latestSession = LatencyMetricsManager.shared.fetchLatest(),
+              latestSession.hasTurns else {
+            return
+        }
+
+        toolBox.uploadLatencyReport(
+            session: latestSession
+        ) { [weak self] uploadedAt in
+            LatencyMetricsManager.shared.updateReportUploadedAt(uploadedAt)
+            self?.addLog("[latency-report] upload success uploadedAt: \(uploadedAt?.description ?? "nil")")
+        } failure: { [weak self] error in
+            self?.addLog("[latency-report] upload skipped/failed: \(error)")
+        }
+    }
+
     func setupSIPViews() {
         navivationBar.settingButton.isHidden = false
         navivationBar.settingButton.addTarget(self, action: #selector(onClickSettingButton), for: .touchUpInside)
@@ -32,7 +48,7 @@ extension CallOutSipViewController {
         }
         
         transcriptView.snp.makeConstraints { make in
-            make.top.equalTo(navivationBar.snp.bottom).offset(22)
+            make.top.equalTo(navivationBar.snp.bottom).offset(12)
             make.left.right.bottom.equalTo(0)
         }
         
@@ -137,6 +153,10 @@ extension CallOutSipViewController {
     private func performCall() {
         showCallingView()
         channelName = "agent_\(UUID().uuidString.prefix(8))"
+        LatencyMetricsManager.shared.beginSession(
+            presetName: AppContext.settingManager().preset?.name,
+            channelName: channelName
+        )
         agentUid = AppContext.agentUid
         Task {
             do {
@@ -172,6 +192,7 @@ extension CallOutSipViewController {
     
     @objc func closeConnect() {
         showPrepareCallView()
+        uploadLatestLatencyReportIfNeeded()
         convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
             
         }
@@ -194,6 +215,7 @@ extension CallOutSipViewController {
     func dealServiceHangupAndErrorState() {
         stopTimer()
         showCallingView()
+        uploadLatestLatencyReportIfNeeded()
         AppContext.stateManager().resetToDefaults()
         convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
         }
@@ -202,6 +224,7 @@ extension CallOutSipViewController {
     func showCallingView() {
         sideNavigationBar.isHidden = false
         navivationBar.style = .active
+        messageView.setRealtimeDataToggleVisible(true)
         callingView.isHidden = false
         showTranscription(state: false)
         prepareCallContentView.isHidden = true
@@ -213,6 +236,7 @@ extension CallOutSipViewController {
     func showPrepareCallView() {
         sideNavigationBar.isHidden = true
         navivationBar.style = .idle
+        messageView.setRealtimeDataToggleVisible(false)
         messageView.clearMessages()
         callingView.reset()
         callingView.isHidden = true
@@ -262,4 +286,3 @@ extension CallOutSipViewController: SIPInputViewDelegate {
         startCall()
     }
 }
-

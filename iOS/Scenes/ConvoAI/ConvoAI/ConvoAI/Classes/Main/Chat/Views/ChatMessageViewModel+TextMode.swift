@@ -21,6 +21,7 @@ extension ChatMessageViewModel {
         message.turn_id = turnId
         message.timestamp = timestamp
         message.isInterrupted = isInterrupted
+        syncLatencyMetricsIfNeeded(for: message, turnId: turnId, isMine: isMine)
         
         let key = generateMessageKey(turnId: turnId, isMine: isMine)
         messageMapTable[key] = message
@@ -39,6 +40,9 @@ extension ChatMessageViewModel {
         let key = generateMessageKey(turnId: turnId, isMine: isMine)
         let message = messageMapTable[key]
         lastMessage = message
+        if let message {
+            syncLatencyMetricsIfNeeded(for: message, turnId: turnId, isMine: isMine)
+        }
         if isMine {
             message?.content = content
             message?.turn_id = turnId
@@ -87,5 +91,4 @@ extension ChatMessageViewModel {
         }
     }
 }
-
 

@@ -46,6 +46,7 @@ class SideNavigationBar: UIView {
     
     func setupViews() {
         clipsToBounds = true
+        isUserInteractionEnabled = false
         [centerTipsLabel, countDownLabel].forEach { addSubview($0) }
     }
     

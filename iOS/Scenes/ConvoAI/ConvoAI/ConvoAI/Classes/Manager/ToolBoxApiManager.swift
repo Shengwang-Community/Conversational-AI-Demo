@@ -10,8 +10,8 @@ import Common
 import UIKit
 
 class ToolBoxApiManager: NSObject {
-    
     public typealias UploadSuccessClosure = (String?) -> Void
+    public typealias LatencyReportSuccessClosure = (TimeInterval?) -> Void
     
     func reportEvent(event: ReportEvent, success: NetworkManager.SuccessClosure?, failure: NetworkManager.FailClosure?) {
         let url = "\(AppContext.shared.baseServerUrl)/convoai/v5/events/report"
@@ -38,6 +38,69 @@ class ToolBoxApiManager: NSObject {
         ]
         
         NetworkManager.shared.getRequest(urlString: url, params: parameter, success: success, failure: failure)
+    }
+
+    func uploadLatencyReport(
+        session: AgentLatencyData,
+        success: @escaping LatencyReportSuccessClosure,
+        failure: NetworkManager.FailClosure?
+    ) {
+        let url = "\(AppContext.shared.baseServerUrl)/convoai/v5/agent/metrics/report"
+
+        let parameters: [String: Any] = [
+            "app_id": AppContext.shared.appId,
+            "agent_id": session.agentId ?? "",
+            "channel_name": session.channelName ?? "",
+            "preset_name": session.presetName ?? "",
+            "preset_display_name": session.presetName ?? "",
+            "call_start_at": Int(session.startedAt.rounded()),
+            "turn_event": session.turns.map { turn in
+                let transcription = session.transcription(for: turn.turnId)
+                return [
+                    "turn_id": turn.turnId,
+                    "metrics": [
+                        "e2e_latency_ms": Int(turn.e2eLatency.rounded()),
+                        "segmented_latency_ms": [
+                            [
+                                "name": "algorithm_processing",
+                                "latency": Int(turn.segmentedLatency.algorithmProcessing.rounded()),
+                            ],
+                            [
+                                "name": "asr_ttlw",
+                                "latency": Int(turn.segmentedLatency.asrTTLW.rounded()),
+                            ],
+                            [
+                                "name": "llm_ttft",
+                                "latency": Int(turn.segmentedLatency.llmTTFT.rounded()),
+                            ],
+                            [
+                                "name": "tts_ttfb",
+                                "latency": Int(turn.segmentedLatency.ttsTTFB.rounded()),
+                            ],
+                            [
+                                "name": "transport",
+                                "latency": Int(turn.segmentedLatency.transport.rounded()),
+                            ],
+                        ],
+                    ],
+                    "transcription": [
+                        "assistant": transcription?.assistant ?? "",
+                        "user": transcription?.user ?? "",
+                    ],
+                ] as [String: Any]
+            },
+        ]
+
+        NetworkManager.shared.postRequest(urlString: url, params: parameters) { response in
+            let data = response["data"] as? [String: Any]
+            let uploadedAt = (data?["uploaded_at"] as? NSNumber)?.doubleValue
+                ?? (data?["uploaded_at"] as? Double)
+                ?? (response["uploaded_at"] as? NSNumber)?.doubleValue
+                ?? (response["uploaded_at"] as? Double)
+            success(uploadedAt)
+        } failure: { error in
+            failure?(error)
+        }
     }
     
     /// Upload image

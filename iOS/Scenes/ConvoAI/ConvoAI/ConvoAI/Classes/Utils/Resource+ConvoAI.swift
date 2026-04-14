@@ -101,6 +101,14 @@ extension ResourceManager {
             public static let voiceLockTips = ResourceManager.localizedString("conversation.agent.voice.lock.tips")
             public static let voiceprintLockToast = ResourceManager.localizedString("conversation.agent.voiceprint.lock.toast")
             public static let aiGeneratedContent = ResourceManager.localizedString("conversation.ai.generated.content")
+            public static let realtimeLatency = ResourceManager.localizedString("conversation.latency.toggle")
+            public static let latencyTurn = ResourceManager.localizedString("conversation.latency.turn")
+            public static let latencyE2E = ResourceManager.localizedString("conversation.latency.e2e")
+            public static let latencyRTC = ResourceManager.localizedString("conversation.latency.rtc")
+            public static let latencyAlgorithm = ResourceManager.localizedString("conversation.latency.algorithm")
+            public static let latencyASR = ResourceManager.localizedString("conversation.latency.asr")
+            public static let latencyLLM = ResourceManager.localizedString("conversation.latency.llm")
+            public static let latencyTTS = ResourceManager.localizedString("conversation.latency.tts")
         }
         
         public enum Setting {
@@ -158,6 +166,8 @@ extension ResourceManager {
             public static let digitalHumanAlertCancel = ResourceManager.localizedString("settings.digital.human.alert.cancel")
             public static let digitalHumanAlertConfirm = ResourceManager.localizedString("settings.digital.human.alert.confirm")
             public static let aiVadTips = ResourceManager.localizedString("settings.noise.aiVad.tips")
+            public static let smartPause = ResourceManager.localizedString("settings.noise.smartPause")
+            public static let smartPauseTips = ResourceManager.localizedString("settings.noise.smartPause.tips")
         }
         
         public enum ChannelInfo {
@@ -171,6 +181,13 @@ extension ResourceManager {
             public static let roomId = ResourceManager.localizedString("channel.info.room.id")
             public static let yourId = ResourceManager.localizedString("channel.info.your.id")
             public static let yourNetwork = ResourceManager.localizedString("channel.info.your.network")
+            public static let dataSectionTitle = ResourceManager.localizedString("channel.info.data.section.title")
+            public static let dataReport = ResourceManager.localizedString("channel.info.data.report")
+            public static let dataReportAvailable = ResourceManager.localizedString("channel.info.data.report.available")
+            public static let dataReportGenerating = ResourceManager.localizedString("channel.info.data.report.generating")
+            public static let dataReportUnavailable = ResourceManager.localizedString("channel.info.data.report.unavailable")
+            public static let dataReportCalling = ResourceManager.localizedString("channel.info.data.report.calling")
+            public static let dataReportMissingUrl = ResourceManager.localizedString("channel.info.data.report.missing.url")
             public static let connectedState = ResourceManager.localizedString("channel.connected.state")
             public static let disconnectedState = ResourceManager.localizedString("channel.disconnected.state")
             public static let copyToast = ResourceManager.localizedString("channel.info.copied")
@@ -189,6 +206,7 @@ extension ResourceManager {
             public static let serverStatusTitle = ResourceManager.localizedString("channel.serverStatus.title")
             public static let voiceprintLock = ResourceManager.localizedString("channel.voiceprint.lock")
             public static let elegantInterrupt = ResourceManager.localizedString("channel.elegant.interrupt")
+            public static let smartPause = ResourceManager.localizedString("channel.smart.pause")
             public static let more = ResourceManager.localizedString("channel.more")
             public static let seamless = ResourceManager.localizedString("channel.seamless")
             public static let aware = ResourceManager.localizedString("channel.aware")

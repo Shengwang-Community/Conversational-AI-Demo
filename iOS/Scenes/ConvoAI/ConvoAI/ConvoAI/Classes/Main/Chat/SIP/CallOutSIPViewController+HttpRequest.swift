@@ -80,6 +80,7 @@ extension CallOutSipViewController {
                     AppContext.stateManager().updateRoomState(.connected)
                     AppContext.stateManager().updateAgentState(.connected)
                     AppContext.stateManager().updateAgentId(agentId)
+                    LatencyMetricsManager.shared.updateAgentId(agentId)
                 }
                 continuation.resume()
             })

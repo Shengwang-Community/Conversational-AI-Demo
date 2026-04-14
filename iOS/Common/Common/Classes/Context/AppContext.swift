@@ -13,6 +13,7 @@ import Bugly
     
     public let termsOfServiceUrl: String = "https://conversational-ai.shengwang.cn/terms/service"
     public let privacyUrl: String = "https://conversational-ai.shengwang.cn/terms/privacy"
+    public let latencyDataReportPageBaseUrl: String = "https://agora.io/report/agent/"
     
     public var personalReportInfoUrl: String {
         if _baseServerUrl.contains("service.apprtc.cn") {
