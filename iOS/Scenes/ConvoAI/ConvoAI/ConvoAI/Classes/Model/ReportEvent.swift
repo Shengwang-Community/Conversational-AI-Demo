@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Common
 
 struct ReportEvent {
     let appId: String?
@@ -95,12 +96,23 @@ public final class DataCache<T: Codable> {
 }
 
 public final class AgentLatencyData: NSObject, Codable {
+    public struct TurnTranscriptionSnapshot: Codable, Equatable {
+        public let assistant: String
+        public let user: String
+
+        public init(assistant: String = "", user: String = "") {
+            self.assistant = assistant
+            self.user = user
+        }
+    }
+
     public var presetName: String?
     public var agentId: String?
     public var channelName: String?
     public var startedAt: TimeInterval
     public var turns: [Turn]
-    public var latencyId: String?
+    public var turnTranscriptions: [String: TurnTranscriptionSnapshot]
+    public var reportUploadedAt: TimeInterval?
 
     public init(
         presetName: String? = nil,
@@ -108,15 +120,37 @@ public final class AgentLatencyData: NSObject, Codable {
         channelName: String? = nil,
         startedAt: TimeInterval = 0,
         turns: [Turn] = [],
-        latencyId: String? = nil
+        turnTranscriptions: [String: TurnTranscriptionSnapshot] = [:],
+        reportUploadedAt: TimeInterval? = nil
     ) {
         self.presetName = presetName
         self.agentId = agentId
         self.channelName = channelName
         self.startedAt = startedAt
         self.turns = turns
-        self.latencyId = latencyId
+        self.turnTranscriptions = turnTranscriptions
+        self.reportUploadedAt = reportUploadedAt
         super.init()
+    }
+
+    public var hasTurns: Bool {
+        !turns.isEmpty
+    }
+
+    public func resolvedReportUrl(baseUrl: String?) -> String? {
+        guard let agentId, !agentId.isEmpty,
+              let baseUrl, !baseUrl.isEmpty else {
+            return nil
+        }
+        return "\(baseUrl)\(agentId)"
+    }
+
+    public var isReportReady: Bool {
+        reportUploadedAt != nil && resolvedReportUrl(baseUrl: AppContext.shared.latencyDataReportPageBaseUrl) != nil
+    }
+
+    public func transcription(for turnId: Int) -> TurnTranscriptionSnapshot? {
+        turnTranscriptions["\(turnId)"]
     }
 }
 
@@ -140,8 +174,7 @@ public final class LatencyMetricsManager: NSObject {
             presetName: presetName,
             channelName: channelName,
             startedAt: startedAt,
-            turns: [],
-            latencyId: nil
+            turns: []
         )
         cache.save(id: latestSessionKey, value: data)
     }
@@ -154,7 +187,11 @@ public final class LatencyMetricsManager: NSObject {
         cache.save(id: latestSessionKey, value: current)
     }
 
-    public func append(presetName: String, turn: Turn) {
+    public func append(
+        presetName: String,
+        turn: Turn,
+        transcription: AgentLatencyData.TurnTranscriptionSnapshot? = nil
+    ) {
         let current = fetchLatest() ?? AgentLatencyData(
             presetName: presetName,
             startedAt: turn.timestamp
@@ -166,6 +203,9 @@ public final class LatencyMetricsManager: NSObject {
             current.startedAt = turn.timestamp
         }
         current.turns.append(turn)
+        if let transcription {
+            current.turnTranscriptions["\(turn.turnId)"] = transcription
+        }
         cache.save(id: latestSessionKey, value: current)
     }
 
@@ -185,11 +225,11 @@ public final class LatencyMetricsManager: NSObject {
         cache.removeAll()
     }
 
-    public func updateLatencyId(presetName: String? = nil, latencyId: String) {
+    public func updateReportUploadedAt(_ uploadedAt: TimeInterval?) {
         guard let current = fetchLatest() else {
             return
         }
-        current.latencyId = latencyId
+        current.reportUploadedAt = uploadedAt
         cache.save(id: latestSessionKey, value: current)
     }
 }

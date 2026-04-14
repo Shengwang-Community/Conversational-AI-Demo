@@ -101,7 +101,7 @@ class ActiveFuncsView: UIView {
         interruptOption.snp.makeConstraints { make in
             make.height.equalTo(24)
         }
-        
+
         // Create more button
         let moreButton = UIButton(type: .custom)
         moreButton.setTitle(ResourceManager.L10n.ChannelInfo.more, for: .normal)
@@ -129,7 +129,7 @@ class ActiveFuncsView: UIView {
         
         optionsStackView.snp.makeConstraints { make in
             make.top.left.right.equalToSuperview()
-            make.height.equalTo(24 * 3) // 3 items * 24pt
+            make.height.equalTo(24 * 3)
         }
         
         collapseButton.snp.makeConstraints { make in
@@ -163,7 +163,7 @@ class ActiveFuncsView: UIView {
     private func expandContent() {
         // First set height constraint
         contentView.snp.updateConstraints { make in
-            make.height.equalTo(24 * 3 + 8) // 3 items * 24pt
+            make.height.equalTo(24 * 3 + 8)
         }
         
         // Use spring animation
@@ -248,4 +248,110 @@ class ActiveFuncItemView: UIView {
     
 }
 
+class ActiveFuncSwitchItemView: UIView {
+    let button = UIButton(type: .custom)
 
+    private var isOn = false
+
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 10)
+        label.textColor = .white
+        return label
+    }()
+
+    private let switchTrackView: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 7
+        view.layer.masksToBounds = true
+        return view
+    }()
+
+    private let switchThumbView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .white
+        view.layer.cornerRadius = 6
+        view.layer.masksToBounds = true
+        return view
+    }()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
+        setupConstraints()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override var intrinsicContentSize: CGSize {
+        let titleWidth = titleLabel.intrinsicContentSize.width
+        let width = 8 + titleWidth + 4 + 23 + 8
+        return CGSize(width: width, height: 24)
+    }
+
+    func configure(text: String, isOn: Bool) {
+        titleLabel.text = text
+        self.isOn = isOn
+        applySwitchStyle()
+        invalidateIntrinsicContentSize()
+        setNeedsLayout()
+    }
+
+    func setButtonColorTheme(showLight: Bool) {
+        backgroundColor = showLight ? UIColor.themColor(named: "ai_brand_black4") : UIColor.themColor(named: "ai_block1")
+    }
+
+    private func setupUI() {
+        backgroundColor = UIColor.themColor(named: "ai_block1")
+        layer.cornerRadius = 8
+        layer.masksToBounds = true
+        addSubview(titleLabel)
+        addSubview(switchTrackView)
+        switchTrackView.addSubview(switchThumbView)
+        addSubview(button)
+        applySwitchStyle()
+    }
+
+    private func setupConstraints() {
+        titleLabel.snp.makeConstraints { make in
+            make.left.equalToSuperview().offset(8)
+            make.centerY.equalToSuperview()
+        }
+
+        switchTrackView.snp.makeConstraints { make in
+            make.left.equalTo(titleLabel.snp.right).offset(4)
+            make.right.equalToSuperview().offset(-8)
+            make.centerY.equalToSuperview()
+            make.width.equalTo(23)
+            make.height.equalTo(14)
+        }
+
+        switchThumbView.snp.makeConstraints { make in
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(12)
+            make.left.equalToSuperview().offset(2)
+        }
+
+        button.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+    }
+
+    private func applySwitchStyle() {
+        switchTrackView.backgroundColor = isOn
+            ? UIColor(hex: 0x8DE9F5)
+            : UIColor(hex: 0x62697D)
+
+        switchThumbView.snp.remakeConstraints { make in
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(12)
+            if isOn {
+                make.right.equalToSuperview().offset(-1)
+            } else {
+                make.left.equalToSuperview().offset(1)
+            }
+        }
+    }
+}

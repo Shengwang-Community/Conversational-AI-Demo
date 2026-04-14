@@ -109,7 +109,7 @@ class MainNavigationBar: UIView {
         
         return button
     }()
-    
+
     // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)

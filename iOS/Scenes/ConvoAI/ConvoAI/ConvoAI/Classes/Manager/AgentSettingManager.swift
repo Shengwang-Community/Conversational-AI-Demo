@@ -63,7 +63,9 @@ class AgentPreference {
     var language: SupportLanguage?
     var avatar: Avatar?
     var aiVad = false
+    var smartPause = false
     var bhvs = true
+    var latencyMetricsVisible = false
     var isCustomPreset = false
     var transcriptMode: TranscriptDisplayMode = .words
     var voiceprintMode: VoiceprintMode = .off
@@ -75,6 +77,8 @@ protocol AgentSettingDelegate: AnyObject {
     func settingManager(_ manager: AgentSettingManager, languageDidUpdated language: SupportLanguage?)
     func settingManager(_ manager: AgentSettingManager, avatarDidUpdated avatar: Avatar?)
     func settingManager(_ manager: AgentSettingManager, aiVadStateDidUpdated state: Bool)
+    func settingManager(_ manager: AgentSettingManager, smartPauseStateDidUpdated state: Bool)
+    func settingManager(_ manager: AgentSettingManager, latencyMetricsVisibilityDidUpdated state: Bool)
     func settingManager(_ manager: AgentSettingManager, transcriptModeDidUpdated mode: TranscriptDisplayMode)
     func settingManager(_ manager: AgentSettingManager, voiceprintModeDidUpdated mode: VoiceprintMode)
     func settingManager(_ manager: AgentSettingManager, bhvsStateDidUpdated state: Bool)
@@ -87,9 +91,14 @@ class AgentSettingManager {
    
     /// Configuration data model
     private var preference = AgentPreference()
+    private let kLatencyMetricsVisibleKey = "latency_metrics_visible"
      
     // MARK: - Delegate Management
     private var delegates = NSHashTable<AnyObject>.weakObjects()
+
+    init() {
+        preference.latencyMetricsVisible = UserDefaults.standard.bool(forKey: kLatencyMetricsVisibleKey)
+    }
      
     /// Add configuration change listener
     func addDelegate(_ delegate: AgentSettingDelegate) {
@@ -131,11 +140,27 @@ class AgentSettingManager {
         get { preference.aiVad }
         set { updateAiVadState(newValue) }
     }
+
+    /// Smart pause feature switch
+    var smartPause: Bool {
+        get { preference.smartPause }
+        set { updateSmartPauseState(newValue) }
+    }
      
     /// Voice lock feature switch
     var bhvs: Bool {
         get { preference.bhvs }
         set { updateBhvsState(newValue) }
+    }
+
+    /// Product-facing latency summary visibility switch
+    var latencyMetricsVisible: Bool {
+        get { preference.latencyMetricsVisible }
+        set { updateLatencyMetricsVisibility(newValue) }
+    }
+
+    var supportsLatencyMetricsDisplay: Bool {
+        !(preference.preset?.presetType?.contains("independent") ?? false)
     }
      
     /// Whether it is a custom preset
@@ -187,23 +212,35 @@ class AgentSettingManager {
             } else {
                 updateVoiceprintMode(.off)
             }
+
+            if preset.presetType?.contains("independent") == true {
+                preference.aiVad = false
+                preference.smartPause = false
+            }
         } else {
             // If preset is nil, reset related settings
             updateLanguage(nil)
             updateAvatar(nil)
             updateVoiceprintMode(.off)
+            preference.aiVad = false
+            preference.smartPause = false
         }
         
         // Update preset and notify delegates
         preference.preset = preset
         notifyDelegates { $0.settingManager(self, presetDidUpdated: preset) }
+        notifyDelegates { $0.settingManager(self, aiVadStateDidUpdated: self.preference.aiVad) }
+        notifyDelegates { $0.settingManager(self, smartPauseStateDidUpdated: self.preference.smartPause) }
     }
      
     /// Update language setting
     func updateLanguage(_ language: SupportLanguage?) {
         preference.language = language
         preference.aiVad = language?.aivadEnabledByDefault ?? false
+        preference.smartPause = false
         notifyDelegates { $0.settingManager(self, languageDidUpdated: language) }
+        notifyDelegates { $0.settingManager(self, aiVadStateDidUpdated: self.preference.aiVad) }
+        notifyDelegates { $0.settingManager(self, smartPauseStateDidUpdated: self.preference.smartPause) }
     }
      
     /// Update digital human avatar information
@@ -215,13 +252,31 @@ class AgentSettingManager {
     /// Update AI interruption function state
     func updateAiVadState(_ state: Bool) {
         preference.aiVad = state
+        if !state && preference.smartPause {
+            preference.smartPause = false
+            notifyDelegates { $0.settingManager(self, smartPauseStateDidUpdated: false) }
+        }
         notifyDelegates { $0.settingManager(self, aiVadStateDidUpdated: state) }
+    }
+
+    /// Update smart pause function state
+    func updateSmartPauseState(_ state: Bool) {
+        let nextState = preference.aiVad ? state : false
+        preference.smartPause = nextState
+        notifyDelegates { $0.settingManager(self, smartPauseStateDidUpdated: nextState) }
     }
      
     /// Update voice lock function state
     func updateBhvsState(_ state: Bool) {
         preference.bhvs = state
         notifyDelegates { $0.settingManager(self, bhvsStateDidUpdated: state) }
+    }
+
+    /// Update product-facing latency summary visibility
+    func updateLatencyMetricsVisibility(_ state: Bool) {
+        preference.latencyMetricsVisible = state
+        UserDefaults.standard.set(state, forKey: kLatencyMetricsVisibleKey)
+        notifyDelegates { $0.settingManager(self, latencyMetricsVisibilityDidUpdated: state) }
     }
      
     /// Update transcript display mode
@@ -239,6 +294,7 @@ class AgentSettingManager {
     /// Reset all configurations to default values
     func resetToDefaults() {
         preference = AgentPreference()
+        preference.latencyMetricsVisible = UserDefaults.standard.bool(forKey: kLatencyMetricsVisibleKey)
     }
      
     // MARK: - Private Methods
@@ -269,6 +325,8 @@ extension AgentSettingDelegate {
     func settingManager(_ manager: AgentSettingManager, languageDidUpdated language: SupportLanguage?) {}
     func settingManager(_ manager: AgentSettingManager, avatarDidUpdated avatar: Avatar?) {}
     func settingManager(_ manager: AgentSettingManager, aiVadStateDidUpdated state: Bool) {}
+    func settingManager(_ manager: AgentSettingManager, smartPauseStateDidUpdated state: Bool) {}
+    func settingManager(_ manager: AgentSettingManager, latencyMetricsVisibilityDidUpdated state: Bool) {}
     func settingManager(_ manager: AgentSettingManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {}
     func settingManager(_ manager: AgentSettingManager, voiceprintModeDidUpdated mode: VoiceprintMode) {}
     func settingManager(_ manager: AgentSettingManager, bhvsStateDidUpdated state: Bool) {}

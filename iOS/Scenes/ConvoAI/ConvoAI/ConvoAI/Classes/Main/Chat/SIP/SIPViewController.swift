@@ -9,7 +9,7 @@ import UIKit
 import AgoraRtcKit
 import Common
 
-class SIPViewController: BaseViewController, AgoraRtcEngineDelegate {
+class SIPViewController: BaseViewController, AgoraRtcEngineDelegate, AgentSettingDelegate {
     lazy var navivationBar: MainNavigationBar = {
         let view = MainNavigationBar()
         view.settingButton.isHidden = true
@@ -46,7 +46,7 @@ class SIPViewController: BaseViewController, AgoraRtcEngineDelegate {
         let view = UIView()
         return view
     }()
-    
+
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         didLayoutSubviews()
@@ -83,11 +83,18 @@ class SIPViewController: BaseViewController, AgoraRtcEngineDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        AppContext.settingManager().addDelegate(self)
         setupMPK()
         setupViews()
         setupConstraints()
         updateCharacterInformation()
+        if let chatView = (self as? CallOutSipViewController)?.messageView {
+            chatView.setRealtimeDataToggleVisible(false)
+        }
+    }
+
+    deinit {
+        AppContext.settingManager().removeDelegate(self)
     }
     
     func setupMPK() {
@@ -107,7 +114,7 @@ class SIPViewController: BaseViewController, AgoraRtcEngineDelegate {
             make.left.right.equalToSuperview()
             make.height.equalTo(48)
         }
-        
+
         animateContentView.snp.makeConstraints { make in
             make.left.right.top.bottom.equalTo(0)
         }
@@ -132,10 +139,10 @@ class SIPViewController: BaseViewController, AgoraRtcEngineDelegate {
             )
         }
     }
+
+    func settingManager(_ manager: AgentSettingManager, latencyMetricsVisibilityDidUpdated state: Bool) {}
     
     @objc func onNavigatBarCloseButtonAction() {
         self.navigationController?.popViewController(animated: true)
     }
 }
-
-

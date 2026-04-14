@@ -11,6 +11,7 @@ import SVProgressHUD
 
 protocol ChannelInfoViewDelegate: AnyObject {
     func channelInfoViewDidTapFeedback(_ view: ChannelInfoView)
+    func channelInfoViewDidTapDataReport(_ view: ChannelInfoView)
 }
 
 class ChannelInfoView: UIView {
@@ -65,6 +66,23 @@ class ChannelInfoView: UIView {
         label.textColor = UIColor.themColor(named: "ai_icontext3")
         return label
     }()
+
+    private lazy var dataReportTitle: UILabel = {
+        let label = UILabel()
+        label.text = ResourceManager.L10n.ChannelInfo.dataSectionTitle
+        label.font = UIFont.boldSystemFont(ofSize: 14)
+        label.textColor = UIColor.themColor(named: "ai_icontext3")
+        return label
+    }()
+
+    private lazy var dataReportView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.themColor(named: "ai_block2")
+        view.layerCornerRadius = 10
+        view.layer.borderWidth = 1.0
+        view.layer.borderColor = UIColor.themColor(named: "ai_line1").cgColor
+        return view
+    }()
     
     private lazy var moreInfoView: UIView = {
         let view = UIView()
@@ -105,6 +123,14 @@ class ChannelInfoView: UIView {
     private lazy var idItem: AgentSettingTextItemView = {
         let view = AgentSettingTextItemView(frame: .zero)
         view.titleLabel.text = ResourceManager.L10n.ChannelInfo.yourId
+        return view
+    }()
+
+    private lazy var dataReportItem: AgentSettingTableItemView = {
+        let view = AgentSettingTableItemView(frame: .zero)
+        view.titleLabel.text = ResourceManager.L10n.ChannelInfo.dataReport
+        view.detailLabel.text = ResourceManager.L10n.ChannelInfo.dataReportUnavailable
+        view.button.addTarget(self, action: #selector(onClickDataReportItem), for: .touchUpInside)
         view.bottomLine.isHidden = true
         return view
     }()
@@ -122,10 +148,9 @@ class ChannelInfoView: UIView {
         view.titleLabel.text = ResourceManager.L10n.ChannelInfo.elegantInterrupt
         view.detailLabel.text = ResourceManager.L10n.ChannelInfo.effective
         view.detailLabel.textColor = UIColor.themColor(named: "ai_green6")
-        view.bottomLine.isHidden = true
         return view
     }()
-    
+
     private lazy var feedbackItem: AgentSettingIconItemView = {
         let view = AgentSettingIconItemView(frame: .zero)
         view.titleLabel.text = ResourceManager.L10n.ChannelInfo.feedback
@@ -152,6 +177,7 @@ class ChannelInfoView: UIView {
     private func setupViews() {
         backgroundColor = .clear
         
+        elegantInterruptItem.bottomLine.isHidden = true
         serverItems = [voiceprintLockItem, elegantInterruptItem]
         moreItems = [feedbackItem]
         channelInfoItems = [agentItem, agentIDItem, roomItem, roomIDItem, idItem]
@@ -160,12 +186,15 @@ class ChannelInfoView: UIView {
         addSubview(serverStatusView)
         addSubview(channelInfoTitle)
         addSubview(channelInfoView)
+        addSubview(dataReportTitle)
+        addSubview(dataReportView)
         addSubview(moreInfoTitle)
         addSubview(moreInfoView)
         
         serverItems.forEach { serverStatusView.addSubview($0) }
         moreItems.forEach { moreInfoView.addSubview($0) }
         channelInfoItems.forEach { channelInfoView.addSubview($0) }
+        dataReportView.addSubview(dataReportItem)
     }
     
     private func setupConstraints() {
@@ -198,7 +227,7 @@ class ChannelInfoView: UIView {
         }
         
         channelInfoTitle.snp.makeConstraints { make in
-            make.top.equalTo(serverStatusView.snp.bottom).offset(32)
+            make.top.equalTo(serverStatusView.snp.bottom).offset(24)
             make.left.equalTo(34)
         }
         
@@ -224,9 +253,25 @@ class ChannelInfoView: UIView {
                 }
             }
         }
+
+        dataReportTitle.snp.makeConstraints { make in
+            make.top.equalTo(channelInfoView.snp.bottom).offset(24)
+            make.left.equalTo(34)
+        }
+
+        dataReportView.snp.makeConstraints { make in
+            make.top.equalTo(dataReportTitle.snp.bottom).offset(8)
+            make.left.equalTo(20)
+            make.right.equalTo(-20)
+        }
+
+        dataReportItem.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+            make.height.equalTo(60)
+        }
         
         moreInfoTitle.snp.makeConstraints { make in
-            make.top.equalTo(channelInfoView.snp.bottom).offset(32)
+            make.top.equalTo(dataReportView.snp.bottom).offset(24)
             make.left.equalTo(34)
         }
         
@@ -284,6 +329,7 @@ class ChannelInfoView: UIView {
         
         // Update Elegant Interrupt Status
         updateAiVadState()
+        updateDataReportState()
         // Update Feedback Item
         feedbackItem.setEnabled(isEnabled: stateManager.agentState != .unload)
     }
@@ -291,6 +337,7 @@ class ChannelInfoView: UIView {
     func updateAgentState(_ agentState: ConnectionStatus) {
         agentItem.detailLabel.text = agentState == .unload ? ConnectionStatus.disconnected.rawValue : agentState.rawValue
         agentItem.detailLabel.textColor = agentState == .unload ? ConnectionStatus.disconnected.color : agentState.color
+        updateDataReportState()
         feedbackItem.setEnabled(isEnabled: agentState != .unload)
     }
     
@@ -309,6 +356,52 @@ class ChannelInfoView: UIView {
     
     func updateUserId(_ userId: String) {
         idItem.detailLabel.text = AppContext.stateManager().rtcRoomState == .unload ? "--" : userId
+    }
+
+    func updateDataReportState() {
+        let stateManager = AppContext.stateManager()
+        let latestSession = LatencyMetricsManager.shared.fetchLatest()
+        let detailText: String
+        let detailColor: UIColor
+        let canOpen: Bool
+
+        if stateManager.agentState != .unload {
+            detailText = ResourceManager.L10n.ChannelInfo.dataReportCalling
+            detailColor = UIColor.themColor(named: "ai_icontext4")
+            canOpen = false
+        } else if let latestSession,
+                  latestSession.isReportReady {
+            detailText = formattedReportTimestamp(from: latestSession.reportUploadedAt)
+            detailColor = UIColor.themColor(named: "ai_green6")
+            canOpen = true
+        } else if latestSession?.hasTurns == true {
+            detailText = (latestSession?.agentId?.isEmpty ?? true)
+                ? ResourceManager.L10n.ChannelInfo.dataReportMissingUrl
+                : ResourceManager.L10n.ChannelInfo.dataReportGenerating
+            detailColor = UIColor.themColor(named: "ai_icontext4")
+            canOpen = false
+        } else {
+            detailText = ResourceManager.L10n.ChannelInfo.dataReportUnavailable
+            detailColor = UIColor.themColor(named: "ai_icontext4")
+            canOpen = false
+        }
+
+        dataReportItem.setEnable(canOpen)
+        dataReportItem.detailLabel.text = detailText
+        dataReportItem.detailLabel.textColor = detailColor
+        dataReportItem.setImageViewHiddenState(state: !canOpen)
+    }
+
+    private func formattedReportTimestamp(from timestamp: TimeInterval?) -> String {
+        guard let timestamp else {
+            return ResourceManager.L10n.ChannelInfo.dataReportAvailable
+        }
+
+        let date = Date(timeIntervalSince1970: timestamp / 1000.0)
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy/MM/dd HH:mm:ss"
+        return formatter.string(from: date)
     }
     
     func updateVoiceprintState() {
@@ -346,7 +439,7 @@ class ChannelInfoView: UIView {
         elegantInterruptItem.detailLabel.text = interruptStatus
         elegantInterruptItem.detailLabel.textColor = state ? UIColor.themColor(named: "ai_green6") : UIColor.themColor(named: "ai_red6")
     }
-    
+
     // MARK: - Private Methods
     private func initStatus() {
         updateStatus()
@@ -369,5 +462,9 @@ class ChannelInfoView: UIView {
                 self?.feedbackItem.stopLoading()
             }
         }
+    }
+
+    @objc private func onClickDataReportItem() {
+        delegate?.channelInfoViewDidTapDataReport(self)
     }
 }
