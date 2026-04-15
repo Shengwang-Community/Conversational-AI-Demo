@@ -205,9 +205,10 @@ extension AgentSettingViewController: ChannelInfoViewDelegate {
             return
         }
 
-        let webViewVC = BaseWebViewController()
-        webViewVC.url = reportUrl
-        navigationController?.pushViewController(webViewVC)
+        guard let url = URL(string: reportUrl) else {
+            return
+        }
+        UIApplication.shared.open(url)
     }
 }
 

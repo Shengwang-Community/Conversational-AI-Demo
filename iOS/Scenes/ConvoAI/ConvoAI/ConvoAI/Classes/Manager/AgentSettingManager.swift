@@ -158,10 +158,6 @@ class AgentSettingManager {
         get { preference.latencyMetricsVisible }
         set { updateLatencyMetricsVisibility(newValue) }
     }
-
-    var supportsLatencyMetricsDisplay: Bool {
-        !(preference.preset?.presetType?.contains("independent") ?? false)
-    }
      
     /// Whether it is a custom preset
     var isCustomPreset: Bool {
