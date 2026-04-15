@@ -880,7 +880,7 @@ class ChatView: UIView {
     private func updateRealtimeDataToggleState() {
         let isOn = AppContext.settingManager().latencyMetricsVisible
         realtimeDataSwitcherView.configure(text: ResourceManager.L10n.Conversation.realtimeLatency, isOn: isOn)
-        realtimeDataSwitcherView.isHidden = !(realtimeDataToggleVisible && AppContext.settingManager().supportsLatencyMetricsDisplay)
+        realtimeDataSwitcherView.isHidden = !realtimeDataToggleVisible
     }
 }
 
