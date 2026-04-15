@@ -48,9 +48,8 @@ class ToolBoxApiManager: NSObject {
         let url = "\(AppContext.shared.baseServerUrl)/convoai/v5/agent/metrics/report"
 
         let parameters: [String: Any] = [
-            "app_id": AppContext.shared.appId,
             "agent_id": session.agentId ?? "",
-            "channel_name": session.channelName ?? "",
+            "channel": session.channelName ?? "",
             "preset_name": session.presetName ?? "",
             "preset_display_name": session.presetName ?? "",
             "call_start_at": Int(session.startedAt.rounded()),
@@ -90,13 +89,15 @@ class ToolBoxApiManager: NSObject {
                 ] as [String: Any]
             },
         ]
-
         NetworkManager.shared.postRequest(urlString: url, params: parameters) { response in
+            let code = response["code"] as? Int ?? -1
+            guard code == 0 else {
+                let message = response["msg"] as? String ?? "Unknown error"
+                failure?("reportAgentMetrics failed: code=\(code), msg=\(message)")
+                return
+            }
             let data = response["data"] as? [String: Any]
             let uploadedAt = (data?["uploaded_at"] as? NSNumber)?.doubleValue
-                ?? (data?["uploaded_at"] as? Double)
-                ?? (response["uploaded_at"] as? NSNumber)?.doubleValue
-                ?? (response["uploaded_at"] as? Double)
             success(uploadedAt)
         } failure: { error in
             failure?(error)
