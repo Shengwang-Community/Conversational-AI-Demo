@@ -118,11 +118,7 @@
 "channel.info.your.network" = "您的网络";
 "channel.info.data.section.title" = "通话数据";
 "channel.info.data.report" = "数据报告";
-"channel.info.data.report.available" = "可查看";
-"channel.info.data.report.generating" = "生成中";
-"channel.info.data.report.unavailable" = "暂无数据";
-"channel.info.data.report.calling" = "通话中不可用";
-"channel.info.data.report.missing.url" = "报告地址未配置";
+"channel.info.data.report.calling" = "通话结束后生成";
 "channel.disconnected.state" = "未连接";
 "channel.connected.state" = "已连接";
 "channel.info.copied" = "已复制";

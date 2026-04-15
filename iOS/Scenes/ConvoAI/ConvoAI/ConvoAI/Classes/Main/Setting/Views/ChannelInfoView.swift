@@ -129,7 +129,7 @@ class ChannelInfoView: UIView {
     private lazy var dataReportItem: AgentSettingTableItemView = {
         let view = AgentSettingTableItemView(frame: .zero)
         view.titleLabel.text = ResourceManager.L10n.ChannelInfo.dataReport
-        view.detailLabel.text = ResourceManager.L10n.ChannelInfo.dataReportUnavailable
+        view.detailLabel.text = ResourceManager.L10n.ChannelInfo.dataReportCalling
         view.button.addTarget(self, action: #selector(onClickDataReportItem), for: .touchUpInside)
         view.bottomLine.isHidden = true
         return view
@@ -359,29 +359,18 @@ class ChannelInfoView: UIView {
     }
 
     func updateDataReportState() {
-        let stateManager = AppContext.stateManager()
         let latestSession = LatencyMetricsManager.shared.fetchLatest()
         let detailText: String
         let detailColor: UIColor
         let canOpen: Bool
 
-        if stateManager.agentState != .unload {
-            detailText = ResourceManager.L10n.ChannelInfo.dataReportCalling
-            detailColor = UIColor.themColor(named: "ai_icontext4")
-            canOpen = false
-        } else if let latestSession,
+        if let latestSession,
                   latestSession.isReportReady {
             detailText = formattedReportTimestamp(from: latestSession.reportUploadedAt)
             detailColor = UIColor.themColor(named: "ai_green6")
             canOpen = true
-        } else if latestSession?.hasTurns == true {
-            detailText = (latestSession?.agentId?.isEmpty ?? true)
-                ? ResourceManager.L10n.ChannelInfo.dataReportMissingUrl
-                : ResourceManager.L10n.ChannelInfo.dataReportGenerating
-            detailColor = UIColor.themColor(named: "ai_icontext4")
-            canOpen = false
         } else {
-            detailText = ResourceManager.L10n.ChannelInfo.dataReportUnavailable
+            detailText = ResourceManager.L10n.ChannelInfo.dataReportCalling
             detailColor = UIColor.themColor(named: "ai_icontext4")
             canOpen = false
         }
@@ -394,7 +383,7 @@ class ChannelInfoView: UIView {
 
     private func formattedReportTimestamp(from timestamp: TimeInterval?) -> String {
         guard let timestamp else {
-            return ResourceManager.L10n.ChannelInfo.dataReportAvailable
+            return ResourceManager.L10n.ChannelInfo.dataReportCalling
         }
 
         let date = Date(timeIntervalSince1970: timestamp / 1000.0)

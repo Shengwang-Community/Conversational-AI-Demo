@@ -33,14 +33,16 @@ extension ChatViewController {
             bhvs = false
         }
         let parameters: [String: Any?] = [
-            // Basic parameters
             "app_id": AppContext.shared.appId,
             "preset_name": AppContext.settingManager().preset?.name,
             "app_cert": nil,
             "basic_auth_username": nil,
             "basic_auth_password": nil,
             "preset_type": AppContext.settingManager().preset?.presetType,
-            // ConvoAI request body
+            "app_feature": [
+                "enable_aivad": AppContext.settingManager().aiVad,
+                "pause_state_enabled": AppContext.settingManager().smartPause
+            ],
             "convoai_body": [
                 "graph_id": DeveloperConfig.shared.graphId,
                 "name": nil,
@@ -52,12 +54,7 @@ extension ChatViewController {
                     "remote_rtc_uids": [uid],
                     "enable_string_uid": nil,
                     "idle_timeout": nil,
-                    "app_feature": [
-                        "enable_aivad": AppContext.settingManager().aiVad,
-                        "pause_state_enabled": AppContext.settingManager().smartPause
-                    ],
                     "advanced_features": [
-                        "enable_smart_pause": AppContext.settingManager().smartPause,
                         "enable_bhvs": bhvs,
                         "enable_rtm": true,
                         "enable_sal": AppContext.settingManager().voiceprintMode != .off
@@ -134,14 +131,12 @@ extension ChatViewController {
         AppContext.shared.avatarParams["agora_uid"] = "\(avatarUid)"
         AppContext.shared.avatarParams["agora_token"] = openSourceAvatarToken
         let parameters: [String: Any?] = [
-            // Basic parameters
             "app_id": AppContext.shared.appId,
             "preset_name": nil,
             "app_cert": AppContext.shared.certificate,
             "basic_auth_username": AppContext.shared.basicAuthKey,
             "basic_auth_password": AppContext.shared.basicAuthSecret,
             
-            // ConvoAI request body
             "convoai_body": [
                 "graph_id": nil,
                 "name": nil,
@@ -154,8 +149,6 @@ extension ChatViewController {
                     "enable_string_uid": nil,
                     "idle_timeout": nil,
                     "advanced_features": [
-                        "enable_aivad": false,
-                        "enable_smart_pause": AppContext.settingManager().smartPause,
                         "enable_bhvs": true,
                         "enable_rtm": true,
                         "enable_sal": AppContext.settingManager().voiceprintMode != .off
