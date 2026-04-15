@@ -28,9 +28,9 @@ extension ChatViewController {
     }
 
     private func getStartAgentParametersForConvoAI() -> [String: Any] {
-        var bhvs = true
+        var local_bvc = true
         if AppContext.settingManager().voiceprintMode != .off {
-            bhvs = false
+            local_bvc = false
         }
         let parameters: [String: Any?] = [
             "app_id": AppContext.shared.appId,
@@ -40,6 +40,7 @@ extension ChatViewController {
             "basic_auth_password": nil,
             "preset_type": AppContext.settingManager().preset?.presetType,
             "app_feature": [
+                "enable_local_bvc": local_bvc,
                 "enable_aivad": AppContext.settingManager().aiVad,
                 "pause_state_enabled": AppContext.settingManager().smartPause
             ],
@@ -55,7 +56,6 @@ extension ChatViewController {
                     "enable_string_uid": nil,
                     "idle_timeout": nil,
                     "advanced_features": [
-                        "enable_bhvs": bhvs,
                         "enable_rtm": true,
                         "enable_sal": AppContext.settingManager().voiceprintMode != .off
                     ],
@@ -149,7 +149,6 @@ extension ChatViewController {
                     "enable_string_uid": nil,
                     "idle_timeout": nil,
                     "advanced_features": [
-                        "enable_bhvs": true,
                         "enable_rtm": true,
                         "enable_sal": AppContext.settingManager().voiceprintMode != .off
                     ],
