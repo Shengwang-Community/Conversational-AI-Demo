@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.ui.living.metrics
 
+import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.util.GsonTools
 import io.agora.scene.common.util.LocalStorageUtil
 import io.agora.scene.convoai.convoaiApi.Turn
@@ -126,12 +127,41 @@ class LatencyMetricsManager internal constructor(
         itemClass = AgentLatencyData::class.java
     )
 ) {
+    private fun scopedPresetKey(presetName: String): String {
+        return "${currentEnvScope()}::$presetName"
+    }
+
+    private fun currentEnvScope(): String {
+        val host = ServerConfig.toolBoxUrl.lowercase()
+        return when {
+            host.contains("testing") || host.contains("test") -> "test"
+            host.contains("staging") -> "staging"
+            host.contains("dev") -> "dev"
+            else -> "prod"
+        }
+    }
+
+    private fun isCurrentEnvScopedKey(key: String): Boolean {
+        return key.startsWith("${currentEnvScope()}::")
+    }
+
+    private fun stripScope(key: String): String {
+        return key.substringAfter("::", key)
+    }
+
+    /**
+     * Starts a new latency metrics session for the specified preset.
+     *
+     * This overwrites any existing cached data for the same preset in the current
+     * environment and records the current call start time and agent ID.
+     */
     fun startSession(presetName: String, callStartAtMs: Long?, agentId: String) {
         if (presetName.isBlank()) {
             return
         }
+        val scopedKey = scopedPresetKey(presetName)
         cache.save(
-            presetName,
+            scopedKey,
             AgentLatencyData(
                 turns = mutableListOf(),
                 turnTranscriptions = mutableMapOf(),
@@ -142,15 +172,19 @@ class LatencyMetricsManager internal constructor(
         )
     }
 
+    /**
+     * Appends a `turn.finished` record to the current environment-scoped session.
+     */
     fun append(presetName: String, turn: Turn) {
         if (presetName.isBlank()) {
             return
         }
-        val currentData = cache.fetch(presetName)
+        val scopedKey = scopedPresetKey(presetName)
+        val currentData = cache.fetch(scopedKey)
         val turns = currentData?.turns?.toMutableList() ?: mutableListOf()
         turns.add(turn)
         cache.save(
-            presetName,
+            scopedKey,
             AgentLatencyData(
                 turns = turns,
                 turnTranscriptions = currentData?.turnTranscriptions?.toMutableMap() ?: mutableMapOf(),
@@ -161,6 +195,11 @@ class LatencyMetricsManager internal constructor(
         )
     }
 
+    /**
+     * Updates the user and assistant transcription text for a specific turn.
+     *
+     * The stored transcription data is later used when generating or displaying reports.
+     */
     fun updateTurnTranscription(
         presetName: String,
         turnId: Long,
@@ -170,7 +209,8 @@ class LatencyMetricsManager internal constructor(
         if (presetName.isBlank() || turnId <= 0L) {
             return
         }
-        val currentData = cache.fetch(presetName) ?: return
+        val scopedKey = scopedPresetKey(presetName)
+        val currentData = cache.fetch(scopedKey) ?: return
         val turnKey = turnId.toString()
         val turnTranscriptions = currentData.turnTranscriptions.toMutableMap()
         turnTranscriptions[turnKey] = TurnTranscription(
@@ -178,7 +218,7 @@ class LatencyMetricsManager internal constructor(
             user = userText
         )
         cache.save(
-            presetName,
+            scopedKey,
             currentData.copy(
                 turns = currentData.turns.toMutableList(),
                 turnTranscriptions = turnTranscriptions,
@@ -189,35 +229,60 @@ class LatencyMetricsManager internal constructor(
         )
     }
 
+    /**
+     * Returns the latency metrics data for the specified preset in the current environment.
+     */
     fun fetch(presetName: String): AgentLatencyData? {
         if (presetName.isBlank()) {
             return null
         }
-        return cache.fetch(presetName)
+        return cache.fetch(scopedPresetKey(presetName))
     }
 
+    /**
+     * Returns all latency metrics data for the current environment.
+     *
+     * Cached entries are internally stored with an environment scope prefix.
+     * This method strips that prefix before returning the data to callers.
+     */
     fun fetchAll(): Map<String, AgentLatencyData> {
         return cache.fetchAll()
+            .filterKeys(::isCurrentEnvScopedKey)
+            .mapKeys { (key, _) -> stripScope(key) }
     }
 
+    /**
+     * Removes the latency metrics data for the specified preset in the current environment.
+     */
     fun remove(presetName: String) {
         if (presetName.isBlank()) {
             return
         }
-        cache.remove(presetName)
+        cache.remove(scopedPresetKey(presetName))
     }
 
+    /**
+     * Removes all latency metrics data for the current environment only.
+     *
+     * Cached entries from other environments are preserved.
+     */
     fun removeAll() {
-        cache.removeAll()
+        fetchAll().keys.forEach { presetName ->
+            cache.remove(scopedPresetKey(presetName))
+        }
     }
 
+    /**
+     * Updates the latest agent ID for the specified preset in the current environment.
+     */
     fun updateAgentId(presetName: String, agentId: String) {
         if (presetName.isBlank()) {
             return
         }
-        val currentData = cache.fetch(presetName) ?: return
+        val scopedKey = scopedPresetKey(presetName)
+        val currentData = cache.fetch(scopedKey) ?: return
         cache.save(
-            presetName,
+            scopedKey,
             currentData.copy(
                 turns = currentData.turns.toMutableList(),
                 turnTranscriptions = currentData.turnTranscriptions.toMutableMap(),
@@ -228,6 +293,16 @@ class LatencyMetricsManager internal constructor(
         )
     }
 
+    /**
+     * Writes the report timestamp and agent ID only if the callback still matches
+     * the currently cached session.
+     *
+     * This prevents stale asynchronous callbacks from older sessions from
+     * overwriting newer session data.
+     *
+     * @return `true` if the callback matches the current cached session and the
+     * data was updated, or `false` if the callback was ignored.
+     */
     fun updateReportInfoIfSessionMatches(
         presetName: String,
         sessionCallStartAtMs: Long?,
@@ -237,12 +312,13 @@ class LatencyMetricsManager internal constructor(
         if (presetName.isBlank()) {
             return false
         }
-        val currentData = cache.fetch(presetName) ?: return false
+        val scopedKey = scopedPresetKey(presetName)
+        val currentData = cache.fetch(scopedKey) ?: return false
         if (sessionCallStartAtMs != null && currentData.callStartAtMs != sessionCallStartAtMs) {
             return false
         }
         cache.save(
-            presetName,
+            scopedKey,
             currentData.copy(
                 turns = currentData.turns.toMutableList(),
                 turnTranscriptions = currentData.turnTranscriptions.toMutableMap(),
