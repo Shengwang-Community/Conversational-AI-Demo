@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.ui.living.settings
 
+import android.content.Intent
 import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.core.net.toUri
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import io.agora.scene.common.constant.ServerConfig
@@ -28,7 +30,6 @@ import io.agora.scene.convoai.ui.ConnectionStatus
 import io.agora.scene.convoai.ui.VoiceprintUIStatus
 import io.agora.scene.convoai.ui.living.CovLivingViewModel
 import io.agora.scene.convoai.ui.living.metrics.LatencyMetricsManager
-import io.agora.scene.convoai.ui.mine.TermsActivity
 import io.agora.scene.convoai.ui.sip.CallState
 import io.agora.scene.convoai.ui.sip.CovLivingSipViewModel
 import kotlinx.coroutines.launch
@@ -314,7 +315,6 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
     }
 
     private fun openLatencyReportIfAvailable() {
-        val activity = activity ?: return
         val presetName = CovAgentManager.getPreset()?.name.orEmpty()
         if (presetName.isBlank()) {
             return
@@ -323,7 +323,13 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
         reportData.agentId?.let {
             val reportUrl = ServerConfig.getConvoAiReportUrl(it)
             CovLogger.d(TAG,"reportUrl:$reportUrl")
-            TermsActivity.startActivity(activity, reportUrl)
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, reportUrl.toUri())
+                startActivity(intent)
+            } catch (e: Exception) {
+                CovLogger.e(TAG, "Failed to open report in browser: ${e.message}")
+                ToastUtil.show("Unable to open browser")
+            }
         }
     }
 
