@@ -52,10 +52,11 @@ extension ChatViewController {
                     "remote_rtc_uids": [uid],
                     "enable_string_uid": nil,
                     "idle_timeout": nil,
-                    "advanced_features": [
+                    "app_feature": [
                         "enable_aivad": AppContext.settingManager().aiVad,
-                        // TODO: Confirm final backend contract for smart pause naming and nesting.
-                        // Using enable_smart_pause here to match the existing enable_aivad convention.
+                        "pause_state_enabled": AppContext.settingManager().smartPause
+                    ],
+                    "advanced_features": [
                         "enable_smart_pause": AppContext.settingManager().smartPause,
                         "enable_bhvs": bhvs,
                         "enable_rtm": true,

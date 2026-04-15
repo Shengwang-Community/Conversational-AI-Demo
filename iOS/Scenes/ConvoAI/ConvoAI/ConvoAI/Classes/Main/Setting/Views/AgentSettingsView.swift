@@ -146,7 +146,7 @@ class AgentSettingsView: UIView {
         view.tipsButton.isHidden = false
 
         let settingManager = AppContext.settingManager()
-        view.setEnable(canEditInterruptFeatures(settingManager: settingManager))
+        view.setEnable(canEditInterruptFeatures(settingManager: settingManager) && settingManager.aiVad)
         view.setOn(settingManager.smartPause)
         return view
     }()
@@ -192,6 +192,7 @@ class AgentSettingsView: UIView {
         setupViews()
         setupConstraints()
         loadData()
+        syncInterruptFeatureAvailability()
     }
     
     func loadData() {
