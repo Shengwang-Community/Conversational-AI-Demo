@@ -16,6 +16,11 @@ data class EnvConfig(
 
 object ServerConfig {
 
+    private const val CONVOAI_REPORT_PROD = "https://conversational-ai.shengwang.cn/"
+    private const val CONVOAI_REPORT_STAGING = "https://staging-convoai-cn.sh3.agoralab.co/"
+    private const val CONVOAI_REPORT_DEV = "https://dev-convoai-cn.sh3.agoralab.co/"
+    private const val CONVOAI_REPORT_TESTING = "https://testing-convoai-cn.sh3.agoralab.co/"
+
     @JvmStatic
     val termsOfServicesUrl: String
         get() {
@@ -55,6 +60,22 @@ object ServerConfig {
         get() {
             return "https://sso.shengwang.cn/profile"
         }
+
+    @JvmStatic
+    val convoAiReportBaseUrl: String
+        get() {
+            return when {
+                toolBoxUrl.contains("test") -> CONVOAI_REPORT_TESTING
+                toolBoxUrl.contains("staging") -> CONVOAI_REPORT_STAGING
+                toolBoxUrl.contains("dev") -> CONVOAI_REPORT_DEV
+                else -> CONVOAI_REPORT_PROD
+            }
+        }
+
+    @JvmStatic
+    fun getConvoAiReportUrl(agentId: String): String {
+        return "${convoAiReportBaseUrl.trimEnd('/')}/reports/$agentId"
+    }
 
     @JvmStatic
     var appVersionName: String = ""

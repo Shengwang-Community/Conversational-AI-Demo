@@ -86,6 +86,7 @@ object CovAgentApiManager {
                 val appFeature = JSONObject()
                 appFeature.put("enable_aivad", CovAgentManager.enableAiVad)
                 appFeature.put("pause_state_enabled", CovAgentManager.enableAiPause)
+                appFeature.put("enable_local_bvc", CovAgentManager.enableBHVS)
                 postBody.put("app_feature", appFeature)
             }
 
