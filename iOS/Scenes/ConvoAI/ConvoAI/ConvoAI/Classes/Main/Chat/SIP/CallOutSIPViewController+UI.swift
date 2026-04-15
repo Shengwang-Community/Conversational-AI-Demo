@@ -17,8 +17,16 @@ extension CallOutSipViewController {
             return
         }
 
+        let turnIds = latestSession.turns.map(\.turnId)
+        let transcriptions = messageView.snapshotTurnTranscriptions(turnIds: turnIds)
+        LatencyMetricsManager.shared.updateTurnTranscriptions(transcriptions)
+
+        guard let sessionToUpload = LatencyMetricsManager.shared.fetchLatest() else {
+            return
+        }
+
         toolBox.uploadLatencyReport(
-            session: latestSession
+            session: sessionToUpload
         ) { [weak self] uploadedAt in
             LatencyMetricsManager.shared.updateReportUploadedAt(uploadedAt)
             self?.addLog("[latency-report] upload success uploadedAt: \(uploadedAt?.description ?? "nil")")

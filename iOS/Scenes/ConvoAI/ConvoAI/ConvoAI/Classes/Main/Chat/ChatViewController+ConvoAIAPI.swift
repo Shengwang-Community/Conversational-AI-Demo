@@ -141,11 +141,9 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     public func onTurnFinished(agentUserId: String, turn: Turn) {
         addLog("<<< [onTurnFinished] turnId: \(turn.turnId), e2e: \(turn.e2eLatency)")
         let presetName = AppContext.settingManager().preset?.name ?? ""
-        let transcription = self.messageView.snapshotTurnTranscription(turnId: turn.turnId)
         LatencyMetricsManager.shared.append(
             presetName: presetName,
-            turn: turn,
-            transcription: transcription
+            turn: turn
         )
 
         let latencyInfo = MessageLatencyInfo(turn: turn)

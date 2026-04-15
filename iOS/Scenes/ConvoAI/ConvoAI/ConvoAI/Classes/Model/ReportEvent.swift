@@ -189,8 +189,7 @@ public final class LatencyMetricsManager: NSObject {
 
     public func append(
         presetName: String,
-        turn: Turn,
-        transcription: AgentLatencyData.TurnTranscriptionSnapshot? = nil
+        turn: Turn
     ) {
         let current = fetchLatest() ?? AgentLatencyData(
             presetName: presetName,
@@ -203,8 +202,15 @@ public final class LatencyMetricsManager: NSObject {
             current.startedAt = turn.timestamp
         }
         current.turns.append(turn)
-        if let transcription {
-            current.turnTranscriptions["\(turn.turnId)"] = transcription
+        cache.save(id: latestSessionKey, value: current)
+    }
+
+    public func updateTurnTranscriptions(_ transcriptions: [Int: AgentLatencyData.TurnTranscriptionSnapshot]) {
+        guard !transcriptions.isEmpty, let current = fetchLatest() else {
+            return
+        }
+        for (turnId, transcription) in transcriptions {
+            current.turnTranscriptions["\(turnId)"] = transcription
         }
         cache.save(id: latestSessionKey, value: current)
     }
