@@ -13,7 +13,18 @@ import Bugly
     
     public let termsOfServiceUrl: String = "https://conversational-ai.shengwang.cn/terms/service"
     public let privacyUrl: String = "https://conversational-ai.shengwang.cn/terms/privacy"
-    public let latencyDataReportPageBaseUrl: String = "https://agora.io/report/agent/"
+    public var latencyDataReportPageBaseUrl: String {
+        if _baseServerUrl.contains("staging") {
+            return "https://staging-convoai-cn.sh3.agoralab.co/reports/"
+        }
+        if _baseServerUrl.contains("dev") {
+            return "https://dev-convoai-cn.sh3.agoralab.co/reports/"
+        }
+        if _baseServerUrl.contains("test") {
+            return "https://testing-convoai-cn.sh3.agoralab.co/reports/"
+        }
+        return "https://conversational-ai.shengwang.cn/reports/"
+    }
     
     public var personalReportInfoUrl: String {
         if _baseServerUrl.contains("service.apprtc.cn") {
@@ -120,7 +131,7 @@ import Bugly
             }
         }
     }
-    
+
     public func loadLocalPreset() -> Data? {
         if let bundlePath = Bundle.main.path(forResource: "Common", ofType: "bundle"),
            let bundle = Bundle(path: bundlePath),

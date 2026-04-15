@@ -236,8 +236,10 @@ class AgentSettingManager {
     /// Update language setting
     func updateLanguage(_ language: SupportLanguage?) {
         preference.language = language
-        preference.aiVad = language?.aivadEnabledByDefault ?? false
-        preference.smartPause = false
+        let aiVadEnabledByDefault = language?.aivadEnabledByDefault ?? false
+        let smartPauseEnabledByDefault = language?.pauseStateEnabledByDefault ?? false
+        preference.aiVad = aiVadEnabledByDefault
+        preference.smartPause = aiVadEnabledByDefault && smartPauseEnabledByDefault
         notifyDelegates { $0.settingManager(self, languageDidUpdated: language) }
         notifyDelegates { $0.settingManager(self, aiVadStateDidUpdated: self.preference.aiVad) }
         notifyDelegates { $0.settingManager(self, smartPauseStateDidUpdated: self.preference.smartPause) }

@@ -198,15 +198,10 @@ extension AgentSettingViewController: ChannelInfoViewDelegate {
 
     func channelInfoViewDidTapDataReport(_ view: ChannelInfoView) {
         guard let latestSession = LatencyMetricsManager.shared.fetchLatest() else {
-            SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.ChannelInfo.dataReportUnavailable)
             return
         }
 
         guard let reportUrl = latestSession.resolvedReportUrl(baseUrl: AppContext.shared.latencyDataReportPageBaseUrl) else {
-            let status = latestSession.hasTurns
-                ? ResourceManager.L10n.ChannelInfo.dataReportMissingUrl
-                : ResourceManager.L10n.ChannelInfo.dataReportUnavailable
-            SVProgressHUD.showInfo(withStatus: status)
             return
         }
 

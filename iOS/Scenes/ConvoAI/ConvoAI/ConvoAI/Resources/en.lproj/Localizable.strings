@@ -112,11 +112,7 @@
 "channel.info.your.network" = "Your Network";
 "channel.info.data.section.title" = "Call Data";
 "channel.info.data.report" = "Data Report";
-"channel.info.data.report.available" = "Available";
-"channel.info.data.report.generating" = "Generating";
-"channel.info.data.report.unavailable" = "Unavailable";
-"channel.info.data.report.calling" = "Unavailable in Call";
-"channel.info.data.report.missing.url" = "Report URL Not Configured";
+"channel.info.data.report.calling" = "Available After Call Ends";
 "channel.disconnected.state" = "Disconnected";
 "channel.connected.state" = "Connected";
 "channel.info.copied" = "copied";

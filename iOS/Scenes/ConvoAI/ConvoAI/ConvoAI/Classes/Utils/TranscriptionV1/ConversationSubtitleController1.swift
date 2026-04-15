@@ -128,7 +128,7 @@ private struct TranscriptionMessage1: Codable {
 /// Manages the processing and rendering of subtitles in conversation
 ///
 @objc public class ConversationSubtitleController1: NSObject {
-    public static let version: String = "1.0.0"
+    public static let version: String = "2.2.0"
     public static let localUserId: UInt = 0
     public static let remoteUserId: UInt = 99
     

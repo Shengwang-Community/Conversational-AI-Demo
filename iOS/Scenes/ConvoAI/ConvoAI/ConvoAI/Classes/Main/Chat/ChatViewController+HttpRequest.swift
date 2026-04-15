@@ -28,19 +28,22 @@ extension ChatViewController {
     }
 
     private func getStartAgentParametersForConvoAI() -> [String: Any] {
-        var bhvs = true
+        var local_bvc = true
         if AppContext.settingManager().voiceprintMode != .off {
-            bhvs = false
+            local_bvc = false
         }
         let parameters: [String: Any?] = [
-            // Basic parameters
             "app_id": AppContext.shared.appId,
             "preset_name": AppContext.settingManager().preset?.name,
             "app_cert": nil,
             "basic_auth_username": nil,
             "basic_auth_password": nil,
             "preset_type": AppContext.settingManager().preset?.presetType,
-            // ConvoAI request body
+            "app_feature": [
+                "enable_local_bvc": local_bvc,
+                "enable_aivad": AppContext.settingManager().aiVad,
+                "pause_state_enabled": AppContext.settingManager().smartPause
+            ],
             "convoai_body": [
                 "graph_id": DeveloperConfig.shared.graphId,
                 "name": nil,
@@ -53,11 +56,6 @@ extension ChatViewController {
                     "enable_string_uid": nil,
                     "idle_timeout": nil,
                     "advanced_features": [
-                        "enable_aivad": AppContext.settingManager().aiVad,
-                        // TODO: Confirm final backend contract for smart pause naming and nesting.
-                        // Using enable_smart_pause here to match the existing enable_aivad convention.
-                        "enable_smart_pause": AppContext.settingManager().smartPause,
-                        "enable_bhvs": bhvs,
                         "enable_rtm": true,
                         "enable_sal": AppContext.settingManager().voiceprintMode != .off
                     ],
@@ -133,14 +131,12 @@ extension ChatViewController {
         AppContext.shared.avatarParams["agora_uid"] = "\(avatarUid)"
         AppContext.shared.avatarParams["agora_token"] = openSourceAvatarToken
         let parameters: [String: Any?] = [
-            // Basic parameters
             "app_id": AppContext.shared.appId,
             "preset_name": nil,
             "app_cert": AppContext.shared.certificate,
             "basic_auth_username": AppContext.shared.basicAuthKey,
             "basic_auth_password": AppContext.shared.basicAuthSecret,
             
-            // ConvoAI request body
             "convoai_body": [
                 "graph_id": nil,
                 "name": nil,
@@ -153,9 +149,6 @@ extension ChatViewController {
                     "enable_string_uid": nil,
                     "idle_timeout": nil,
                     "advanced_features": [
-                        "enable_aivad": false,
-                        "enable_smart_pause": AppContext.settingManager().smartPause,
-                        "enable_bhvs": true,
                         "enable_rtm": true,
                         "enable_sal": AppContext.settingManager().voiceprintMode != .off
                     ],
