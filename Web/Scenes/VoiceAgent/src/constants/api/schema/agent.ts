@@ -1,5 +1,11 @@
 import * as z from 'zod'
 
+const appFeatureSchema = z.object({
+  enable_aivad: z.boolean().optional(),
+  pause_state_enabled: z.boolean().optional(),
+  enable_local_bvc: z.boolean().optional()
+})
+
 const convoaiBodyPropertiesSchema = z.object({
   channel: z.string(),
   token: z.string().optional(),
@@ -122,6 +128,7 @@ export const startAgentRequestBodySchema = z.object({
   basic_auth_username: z.string().optional(),
   basic_auth_password: z.string().optional(),
   preset_name: z.string().optional(),
+  app_feature: appFeatureSchema.optional(),
   preset_type: z
     .enum(['standard', 'standard_avatar', 'independent', 'custom_private'])
     .optional(),

@@ -27,6 +27,9 @@ export const API_AGENT_STOP = `${API_AGENT}/stop`
 export const API_AGENT_PRESETS = `${API_AGENT}/presets`
 export const API_AGENT_PING = `${API_AGENT}/ping`
 export const API_AGENT_CUSTOM_PRESET = `${API_AGENT}/customPresets/search`
+export const API_AGENT_METRICS_REPORT = `${API_AGENT}/metrics/report`
+export const API_AGENT_METRICS = (agentId: string) =>
+  `${API_AGENT}/metrics/${agentId}`
 
 export const API_AUTH_TOKEN = `/api/sso/login`
 export const API_USER_INFO = '/api/sso/userInfo'
@@ -46,6 +49,10 @@ export const REMOTE_CONVOAI_AGENT_PRESETS = '/convoai/v5/presets/list'
 export const REMOTE_CONVOAI_AGENT_START = '/convoai/v5/start'
 export const REMOTE_CONVOAI_AGENT_STOP = '/convoai/v5/stop'
 export const REMOTE_CONVOAI_AGENT_PING = '/convoai/v5/ping'
+export const REMOTE_CONVOAI_AGENT_METRICS_REPORT =
+  '/convoai/v5/agent/metrics/report'
+export const REMOTE_CONVOAI_AGENT_METRICS = (agentId: string) =>
+  `/convoai/v5/agent/metrics/${agentId}`
 export const REMOTE_CONVOAI_SIP_START = '/convoai/v5/call'
 export const REMOTE_CONVOAI_SIP_STATUS = '/convoai/v5/sip/status'
 export const REMOTE_CONVOAI_GET_CUSTOM_PRESET =

@@ -8,6 +8,7 @@ import type {
   UID
 } from 'agora-rtc-sdk-ng'
 import type { RTMEvents } from 'agora-rtm'
+import type { LatencyTurn } from '@/lib/latency-metrics'
 
 /**
  * Transcript modes for the Conversational AI API
@@ -41,6 +42,7 @@ export enum EMessageType {
   AGENT_TRANSCRIPTION = 'assistant.transcription',
   MSG_INTERRUPTED = 'message.interrupt',
   MSG_METRICS = 'message.metrics',
+  TURN_FINISHED = 'turn.finished',
   MSG_ERROR = 'message.error',
   /** @deprecated */
   MSG_STATE = 'message.state',
@@ -105,8 +107,12 @@ export enum ERTCCustomEvents {
  */
 export enum EConversationalAIAPIEvents {
   AGENT_STATE_CHANGED = 'agent-state-changed',
+  AGENT_LISTENING_CHANGED = 'agent-listening-changed',
+  AGENT_THINKING_CHANGED = 'agent-thinking-changed',
+  AGENT_SPEAKING_CHANGED = 'agent-speaking-changed',
   AGENT_INTERRUPTED = 'agent-interrupted',
   AGENT_METRICS = 'agent-metrics',
+  AGENT_TURN_FINISHED = 'agent-turn-finished',
   AGENT_ERROR = 'agent-error',
   TRANSCRIPT_UPDATED = 'transcript-updated',
   DEBUG_LOG = 'debug-log',
@@ -160,6 +166,8 @@ export type TAgentMetric = {
   value: number
   timestamp: number
 }
+
+export type TAgentTurnFinished = LatencyTurn
 
 /**
  * Message receipt type definition
@@ -277,12 +285,28 @@ export interface IConversationalAIAPIEventHandlers {
     agentUserId: string,
     event: TStateChangeEvent
   ) => void
+  [EConversationalAIAPIEvents.AGENT_LISTENING_CHANGED]: (
+    agentUserId: string,
+    isListening: boolean
+  ) => void
+  [EConversationalAIAPIEvents.AGENT_THINKING_CHANGED]: (
+    agentUserId: string,
+    isThinking: boolean
+  ) => void
+  [EConversationalAIAPIEvents.AGENT_SPEAKING_CHANGED]: (
+    agentUserId: string,
+    isSpeaking: boolean
+  ) => void
   [EConversationalAIAPIEvents.AGENT_INTERRUPTED]: (
     agentUserId: string,
     event: {
       turnID: number
       timestamp: number
     }
+  ) => void
+  [EConversationalAIAPIEvents.AGENT_TURN_FINISHED]: (
+    agentUserId: string,
+    turn: TAgentTurnFinished
   ) => void
   [EConversationalAIAPIEvents.AGENT_METRICS]: (
     agentUserId: string,
@@ -443,6 +467,25 @@ export interface IMessageMetrics {
   turn_id: number
   latency_ms: number
   send_ts: number
+}
+
+export interface ITurnFinishedMessage {
+  object?: EMessageType.TURN_FINISHED
+  event_type?: EMessageType.TURN_FINISHED
+  payload?: {
+    turn_id: number
+    agent_id: string
+    start?: {
+      start_at?: number
+    }
+    metrics?: {
+      e2e_latency_ms?: number
+      segmented_latency_ms?: Array<{
+        name?: string
+        latency?: number
+      }>
+    }
+  }
 }
 
 export interface IMessageError {

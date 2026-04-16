@@ -2,7 +2,7 @@
 
 import { ChevronDownIcon, CircleAlertIcon, RotateCcwIcon } from 'lucide-react'
 import NextImage from 'next/image'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import * as React from 'react'
 import { toast } from 'sonner'
 import {
@@ -27,12 +27,17 @@ import {
   type IUserTranscription
 } from '@/conversational-ai-api/type'
 import { useAutoScroll } from '@/hooks/use-auto-scroll'
+import {
+  buildLatencySummary,
+  type MessageLatencyInfo
+} from '@/lib/latency-metrics'
 import { cn, genUUID } from '@/lib/utils'
 import { useAgentPresets } from '@/services/agent'
 import {
   useAgentSettingsStore,
   useChatStore,
   useGlobalStore,
+  useReportStore,
   useRTCStore,
   // useRTCStore,
   useUserInfoStore
@@ -47,8 +52,9 @@ export default function SubTitle(props: { className?: string }) {
   const scrollAreaRef = React.useRef<HTMLDivElement>(null)
   const isAutoScrollEnabledRef = React.useRef(true)
 
-  const { isDevMode } = useGlobalStore()
+  const { isDevMode, showLiveMetrics } = useGlobalStore()
   const { history, userInputHistory } = useChatStore()
+  const { activeSession } = useReportStore()
   const { accountUid } = useUserInfoStore()
   const { data: remotePresets = [] } = useAgentPresets({
     devMode: isDevMode,
@@ -58,11 +64,24 @@ export default function SubTitle(props: { className?: string }) {
   // const { remote_rtc_uid } = useRTCStore()
   const { abort, reset } = useAutoScroll(scrollAreaRef)
 
+  const latencySummaryByTurnId = React.useMemo(() => {
+    return new Map(
+      (activeSession?.turns || []).map((turn) => [
+        turn.turnId,
+        buildLatencySummary(turn)
+      ])
+    )
+  }, [activeSession?.turns])
+
   const presetSelected = React.useMemo(() => {
     return remotePresets.find((preset) => preset.name === settings.preset_name)
   }, [remotePresets, settings.preset_name])
 
-  const chatHistory = transcription2subtitle(history, userInputHistory)
+  const chatHistory = transcription2subtitle(
+    history,
+    userInputHistory,
+    latencySummaryByTurnId
+  )
 
   const handleScrollDownClick = () => {
     if (scrollAreaRef.current) {
@@ -124,7 +143,7 @@ export default function SubTitle(props: { className?: string }) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [abort, getIsAtBottom, getIsScrollable, reset])
 
   return (
     <div className={cn('relative backdrop-blur-lg', className)}>
@@ -146,6 +165,9 @@ export default function SubTitle(props: { className?: string }) {
                       : presetSelected?.display_name
                   }
                   status={item.status}
+                  latencyMetrics={
+                    showLiveMetrics ? item.latencyMetrics : undefined
+                  }
                   className={cn({
                     hidden: item.content === ''
                   })}
@@ -194,6 +216,7 @@ const ChatItem = React.forwardRef<
     children?: React.ReactNode
     label?: string | React.ReactNode
     status?: ETurnStatus
+    latencyMetrics?: MessageLatencyInfo
   }
 >((props, ref) => {
   const {
@@ -202,7 +225,8 @@ const ChatItem = React.forwardRef<
     type = EChatItemType.USER,
     children,
     label,
-    status
+    status,
+    latencyMetrics
   } = props
 
   const { settings } = useAgentSettingsStore()
@@ -221,7 +245,7 @@ const ChatItem = React.forwardRef<
       className={cn(
         'my-2 w-full text-icontext text-sm',
         'flex flex-col gap-2',
-        { ['items-end']: type === EChatItemType.USER },
+        { 'items-end': type === EChatItemType.USER },
         className
       )}
     >
@@ -255,8 +279,8 @@ const ChatItem = React.forwardRef<
           'rounded-md py-2',
           'h-fit w-fit max-w-[80%]',
           {
-            ['bg-block-4 px-4']: type === EChatItemType.USER,
-            ['text-right']: shouldAlignRightMemo
+            'bg-block-4 px-4': type === EChatItemType.USER,
+            'text-right': shouldAlignRightMemo
           },
           contentClassName
         )}
@@ -271,6 +295,9 @@ const ChatItem = React.forwardRef<
           <ChatInterruptIcon className='size-4' />
           <span className='text-icontext text-xs'>{t('interrupted')}</span>
         </div>
+      )}
+      {type === EChatItemType.AGENT && latencyMetrics && (
+        <ChatLatencyMetrics metrics={latencyMetrics} />
       )}
     </div>
   )
@@ -389,6 +416,7 @@ export type TRemoteTranscription = {
 
   status: ETurnStatus
   content: string
+  latencyMetrics?: MessageLatencyInfo
 }
 export type TLocalUserInputImage = {
   identifier: 'local-user-input-image'
@@ -410,7 +438,8 @@ const transcription2subtitle = (
   remoteTranscriptionList: ITranscriptHelperItem<
     Partial<IUserTranscription | IAgentTranscription>
   >[],
-  userInputHistory?: ILocalImageTranscription[]
+  userInputHistory?: ILocalImageTranscription[],
+  latencySummaryByTurnId?: Map<number, MessageLatencyInfo>
 ): TSubtitleItem[] => {
   const sortedRemoteTranscriptionList: TRemoteTranscription[] =
     remoteTranscriptionList
@@ -433,7 +462,11 @@ const transcription2subtitle = (
         type: Number(item.uid) === 0 ? EChatItemType.USER : EChatItemType.AGENT,
         timestamp: item._time,
         status: item.status,
-        content: item.text.trim()
+        content: item.text.trim(),
+        latencyMetrics:
+          Number(item.uid) === 0
+            ? undefined
+            : latencySummaryByTurnId?.get(item.turn_id)
       }))
   const sortedUserInputHistory: TLocalUserInputImage[] = (
     userInputHistory || []
@@ -482,6 +515,36 @@ const transcription2subtitle = (
   }
 
   return mergedItems
+}
+
+const ChatLatencyMetrics = (props: { metrics: MessageLatencyInfo }) => {
+  const { metrics } = props
+  const locale = useLocale()
+
+  const items = [
+    [locale === 'zh-CN' ? '端到端' : 'E2E', metrics.e2eLatencyMs],
+    ['RTC', metrics.rtcTransportMs],
+    ['ASR', metrics.asrTtlwMs],
+    ['LLM', metrics.llmTtftMs],
+    ['TTS', metrics.ttsTtfbMs]
+  ] as const
+
+  return (
+    <div className='flex flex-wrap items-center gap-2.5 px-4 text-[12px] leading-[14px]'>
+      <span className='rounded-full bg-brand-white-0 px-1.5 py-px text-icontext-disabled'>
+        {`#${metrics.turnId}`}
+      </span>
+      {items.map(([label, value]) => (
+        <span
+          key={`${label}-${value}`}
+          className='flex items-center whitespace-nowrap'
+        >
+          <span className='text-icontext-disabled'>{`${label}:`}</span>
+          <span className='text-brand-main'>{`${value}ms`}</span>
+        </span>
+      ))}
+    </div>
+  )
 }
 
 function useObjectURL(file?: File | Blob) {

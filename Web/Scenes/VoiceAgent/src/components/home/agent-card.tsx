@@ -12,6 +12,7 @@ import {
   CardActions,
   CardContent
 } from '@/components/card/base'
+import { LiveMetricsToggle } from '@/components/home/live-metrics-toggle'
 import { useClickAway } from '@/hooks/use-click-away'
 import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -27,6 +28,7 @@ import { cn } from '@/lib/utils'
 import {
   useAgentSettingsStore,
   useGlobalStore,
+  useReportStore,
   useRTCStore,
   useUserInfoStore
 } from '@/store'
@@ -40,28 +42,32 @@ export function AgentCard(props: {
   className?: string
 }) {
   const { children, className } = props
-  const t = useTranslations()
+  const _t = useTranslations()
 
   const {
     showSidebar,
     showSALSettingSidebar,
+    showSubtitle,
     onClickSidebar,
     setShowSALSettingSidebar
   } = useGlobalStore()
   const { selectedPreset } = useAgentSettingsStore()
   const { accountUid } = useUserInfoStore()
+  const { activeSession } = useReportStore()
 
   const isSipPresetSelected =
     !!selectedPreset?.preset?.preset_type?.includes('sip_call')
   // const t = useTranslations()
   const isDemoCalling = useIsDemoCalling()
+  const showLiveMetricsToggle =
+    isDemoCalling && showSubtitle && !!activeSession?.turns.length
 
   return (
     <Card
       className={cn(
         'w-full',
         {
-          ['md:mr-3 md:w-[calc(100%-var(--ag-sidebar-width))]']: showSidebar
+          'md:mr-3 md:w-[calc(100%-var(--ag-sidebar-width))]': showSidebar
         },
         className
       )}
@@ -69,7 +75,7 @@ export function AgentCard(props: {
       <CardActions
         className={cn(
           'z-50',
-          { ['hidden']: !accountUid },
+          { hidden: !accountUid },
           {
             'max-md:flex max-md:flex-col max-md:items-end': isDemoCalling
           }
@@ -102,6 +108,7 @@ export function AgentCard(props: {
         </div>
         {!isSipPresetSelected && (
           <>
+            {showLiveMetricsToggle && <LiveMetricsToggle />}
             <AgentCardAdvancedFeatures />
             <CardAction
               key='settings'
@@ -142,7 +149,7 @@ export function AgentCardContent(props: {
 
 export function AgentCardAdvancedFeatures() {
   const t = useTranslations('roomInfo')
-  const ref = useRef<NodeJS.Timeout>(null)
+  const _ref = useRef<NodeJS.Timeout>(null)
   const isMobile = useIsMobile()
 
   const { salStatus } = useRTCStore()
@@ -150,7 +157,7 @@ export function AgentCardAdvancedFeatures() {
 
   const [open, setOpen] = useState(false)
   const [keyframes, setKeyframes] = useState<string>('1,2,3')
-  const [top, setTop] = useState<'sal' | 'vad'>('vad')
+  const [_top, _setTop] = useState<'sal' | 'vad'>('vad')
 
   const { setIsRoomInfoOpen } = useGlobalStore()
 
@@ -195,7 +202,7 @@ export function AgentCardAdvancedFeatures() {
     if (keyframes === '3,1,2') {
       setKeyframes('1,2,3')
     }
-  }, [top])
+  }, [keyframes])
 
   const salItem = (
     <div className='flex items-center gap-2 px-4 py-1.5'>
@@ -219,7 +226,7 @@ export function AgentCardAdvancedFeatures() {
     </div>
   )
 
-  const keyframesItems = keyframes.split(',').map((item) => Number(item))
+  const _keyframesItems = keyframes.split(',').map((item) => Number(item))
 
   if (isMobile) {
     return (
@@ -368,7 +375,7 @@ export function AgentCardAdvancedFeatures() {
       <div className='my-1.5'>
         <div className='border-border border-l px-2'>
           <DropdownIcon
-            className={cn('size-6', { ['rotate-180 duration-300']: open })}
+            className={cn('size-6', { 'rotate-180 duration-300': open })}
           />
         </div>
       </div>

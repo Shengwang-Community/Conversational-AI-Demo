@@ -1,6 +1,6 @@
 # ConversationalAI API (Web)
 
-> Version: 2.0.2
+> Version: 2.2.0
 
 ## Prerequisites
 
