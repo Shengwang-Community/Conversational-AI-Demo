@@ -12,6 +12,7 @@ import {
   CardActions,
   CardContent
 } from '@/components/card/base'
+import { advanceAdvancedFeatureKeyframes } from '@/components/home/agent-card-utils'
 import { LiveMetricsToggle } from '@/components/home/live-metrics-toggle'
 import { useClickAway } from '@/hooks/use-click-away'
 import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
@@ -191,18 +192,8 @@ export function AgentCardAdvancedFeatures() {
   // }, [open])
 
   useEffect(() => {
-    if (keyframes === '1,2,3') {
-      setKeyframes('2,3,1')
-    }
-
-    if (keyframes === '2,3,1') {
-      setKeyframes('3,1,2')
-    }
-
-    if (keyframes === '3,1,2') {
-      setKeyframes('1,2,3')
-    }
-  }, [keyframes])
+    setKeyframes((current) => advanceAdvancedFeatureKeyframes(current))
+  }, [])
 
   const salItem = (
     <div className='flex items-center gap-2 px-4 py-1.5'>
