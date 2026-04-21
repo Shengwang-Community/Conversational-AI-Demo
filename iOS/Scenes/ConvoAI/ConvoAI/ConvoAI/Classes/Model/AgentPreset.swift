@@ -97,4 +97,12 @@ struct AgentPreset: Codable {
         case avatarVendor = "avatar_vendor"
         case isSupportAvatar = "is_support_avatar"
     }
+
+    var isIndependent: Bool {
+        presetType?.hasPrefix("independent") == true
+    }
+
+    var isCustom: Bool {
+        presetType?.hasPrefix("custom") == true
+    }
 }

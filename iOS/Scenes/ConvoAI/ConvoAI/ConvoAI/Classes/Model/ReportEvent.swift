@@ -158,7 +158,6 @@ public final class LatencyMetricsManager: NSObject {
     public static let shared = LatencyMetricsManager()
 
     private let cache: DataCache<AgentLatencyData>
-    private let latestSessionKey = "__latest__"
 
     public override convenience init() {
         self.init(storage: UserDefaultsStorage(), key: "latency_metrics_store")
@@ -169,29 +168,45 @@ public final class LatencyMetricsManager: NSObject {
         super.init()
     }
 
-    public func beginSession(presetName: String?, channelName: String?, startedAt: TimeInterval = Date().timeIntervalSince1970 * 1000) {
+    private func cacheKey(for presetName: String) -> String? {
+        guard !presetName.isEmpty else {
+            return nil
+        }
+        return presetName
+    }
+
+    public func beginSession(presetName: String, channelName: String?, startedAt: TimeInterval = Date().timeIntervalSince1970 * 1000) {
+        guard let key = cacheKey(for: presetName) else {
+            return
+        }
         let data = AgentLatencyData(
             presetName: presetName,
             channelName: channelName,
             startedAt: startedAt,
             turns: []
         )
-        cache.save(id: latestSessionKey, value: data)
+        cache.save(id: key, value: data)
     }
 
-    public func updateAgentId(_ agentId: String?) {
-        guard let current = fetchLatest() else {
+    public func updateAgentId(presetName: String, _ agentId: String?) {
+        guard let key = cacheKey(for: presetName) else {
+            return
+        }
+        guard let current = cache.fetch(id: key) else {
             return
         }
         current.agentId = agentId
-        cache.save(id: latestSessionKey, value: current)
+        cache.save(id: key, value: current)
     }
 
     public func append(
         presetName: String,
         turn: Turn
     ) {
-        let current = fetchLatest() ?? AgentLatencyData(
+        guard let key = cacheKey(for: presetName) else {
+            return
+        }
+        let current = cache.fetch(id: key) ?? AgentLatencyData(
             presetName: presetName,
             startedAt: turn.timestamp
         )
@@ -202,25 +217,27 @@ public final class LatencyMetricsManager: NSObject {
             current.startedAt = turn.timestamp
         }
         current.turns.append(turn)
-        cache.save(id: latestSessionKey, value: current)
+        cache.save(id: key, value: current)
     }
 
-    public func updateTurnTranscriptions(_ transcriptions: [Int: AgentLatencyData.TurnTranscriptionSnapshot]) {
-        guard !transcriptions.isEmpty, let current = fetchLatest() else {
+    public func updateTurnTranscriptions(presetName: String, _ transcriptions: [Int: AgentLatencyData.TurnTranscriptionSnapshot]) {
+        guard let key = cacheKey(for: presetName) else {
+            return
+        }
+        guard !transcriptions.isEmpty, let current = cache.fetch(id: key) else {
             return
         }
         for (turnId, transcription) in transcriptions {
             current.turnTranscriptions["\(turnId)"] = transcription
         }
-        cache.save(id: latestSessionKey, value: current)
+        cache.save(id: key, value: current)
     }
 
-    public func fetchLatest() -> AgentLatencyData? {
-        cache.fetch(id: latestSessionKey)
-    }
-
-    public func fetch(presetName: String? = nil) -> AgentLatencyData? {
-        fetchLatest()
+    public func fetch(presetName: String) -> AgentLatencyData? {
+        guard let key = cacheKey(for: presetName) else {
+            return nil
+        }
+        return cache.fetch(id: key)
     }
 
     public func fetchAll() -> [String: AgentLatencyData] {
@@ -231,11 +248,14 @@ public final class LatencyMetricsManager: NSObject {
         cache.removeAll()
     }
 
-    public func updateReportUploadedAt(_ uploadedAt: TimeInterval?) {
-        guard let current = fetchLatest() else {
+    public func updateReportUploadedAt(presetName: String, _ uploadedAt: TimeInterval?) {
+        guard let key = cacheKey(for: presetName) else {
+            return
+        }
+        guard let current = cache.fetch(id: key) else {
             return
         }
         current.reportUploadedAt = uploadedAt
-        cache.save(id: latestSessionKey, value: current)
+        cache.save(id: key, value: current)
     }
 }

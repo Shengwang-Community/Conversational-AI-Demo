@@ -359,7 +359,12 @@ class ChannelInfoView: UIView {
     }
 
     func updateDataReportState() {
-        let latestSession = LatencyMetricsManager.shared.fetchLatest()
+        let latestSession: AgentLatencyData?
+        if let presetName = AppContext.settingManager().preset?.name, !presetName.isEmpty {
+            latestSession = LatencyMetricsManager.shared.fetch(presetName: presetName)
+        } else {
+            latestSession = nil
+        }
         let detailText: String
         let detailColor: UIColor
         let canOpen: Bool

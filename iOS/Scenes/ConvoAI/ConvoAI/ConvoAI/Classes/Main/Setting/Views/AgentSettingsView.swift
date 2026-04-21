@@ -373,8 +373,7 @@ class AgentSettingsView: UIView {
     }
 
     private func canEditInterruptFeatures(settingManager: AgentSettingManager) -> Bool {
-        guard let language = settingManager.language,
-              let presetType = settingManager.preset?.presetType else {
+        guard let preset = settingManager.preset else {
             return false
         }
 
@@ -382,7 +381,15 @@ class AgentSettingsView: UIView {
             return false
         }
 
-        if presetType.contains("independent") {
+        if preset.isIndependent {
+            return false
+        }
+
+        if preset.isCustom {
+            return true
+        }
+
+        guard let language = settingManager.language else {
             return false
         }
 
