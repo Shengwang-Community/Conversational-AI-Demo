@@ -9,7 +9,6 @@ import io.agora.rtc2.RtcEngineEx
 import io.agora.rtm.RtmClient
 import io.agora.scene.common.BuildConfig
 import io.agora.scene.common.constant.SSOUserManager
-import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.net.AgoraTokenType
 import io.agora.scene.common.net.ApiManager
 import io.agora.scene.common.net.TokenGenerator
