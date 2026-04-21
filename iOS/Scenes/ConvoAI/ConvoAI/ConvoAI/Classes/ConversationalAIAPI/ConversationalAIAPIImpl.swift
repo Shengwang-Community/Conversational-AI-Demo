@@ -560,7 +560,8 @@ extension ConversationalAIAPIImpl {
     }
     
     func writeLogToRTCSDK(log: String) {
-        config.rtcEngine?.writeLog(.info, content: log)
+        let escapedLog = log.replacingOccurrences(of: "%", with: "%%")
+        config.rtcEngine?.writeLog(.info, content: escapedLog)
     }
 
     private func queryAgentState(channelName: String) {
