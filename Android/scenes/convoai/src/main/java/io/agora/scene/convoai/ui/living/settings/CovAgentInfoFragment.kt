@@ -296,7 +296,7 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
         val reportData = if (presetName.isBlank()) {
             null
         } else {
-            LatencyMetricsManager.shared.fetch(presetName)
+            LatencyMetricsManager.shared.fetchReport(presetName)
         }
         val hasUploadedReport = !reportData?.agentId.isNullOrEmpty() &&
             (reportData?.reportedAtMs ?: 0L) > 0L
@@ -319,7 +319,7 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
         if (presetName.isBlank()) {
             return
         }
-        val reportData = LatencyMetricsManager.shared.fetch(presetName) ?: return
+        val reportData = LatencyMetricsManager.shared.fetchReport(presetName) ?: return
         reportData.agentId?.let {
             val reportUrl = ServerConfig.getConvoAiReportUrl(it)
             CovLogger.d(TAG,"reportUrl:$reportUrl")

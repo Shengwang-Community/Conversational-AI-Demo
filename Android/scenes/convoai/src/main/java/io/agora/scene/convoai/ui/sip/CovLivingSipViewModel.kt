@@ -277,7 +277,7 @@ class CovLivingSipViewModel : ViewModel() {
         val sessionCallStartAtMs = data.callStartAtMs
         CovAgentApiManager.reportAgentMetrics(presetName, data) { error, result ->
             if (error == null && result != null) {
-                val updated = latencyMetricsManager.updateReportInfoIfSessionMatches(
+                val updated = latencyMetricsManager.storeReportInfoIfSessionMatches(
                     presetName = presetName,
                     sessionCallStartAtMs = sessionCallStartAtMs,
                     agentId = result.agentId,
@@ -528,24 +528,21 @@ class CovLivingSipViewModel : ViewModel() {
         }
         latencyMetricsManager.startSession(
             presetName = presetName,
-            callStartAtMs = TimeUtils.currentTimeMillis(),
-            agentId = ""
+            callStartAtMs = TimeUtils.currentTimeMillis()
         )
     }
 
     private fun activateLatencyMetricsSession() {
         val presetName = latencyMetricsPresetName ?: resolveLatencyMetricsPresetName()
-        val agentId = CovAgentApiManager.agentId
-        if (presetName.isNullOrEmpty() || agentId.isNullOrEmpty()) {
-            CovLogger.w(
-                TAG,
-                "Skip SIP latency metrics session activation preset=$presetName agentId=$agentId"
-            )
+        if (presetName.isNullOrEmpty()) {
+            CovLogger.w(TAG, "Skip SIP latency metrics session activation preset is empty")
             return
         }
-        latencyMetricsManager.updateAgentId(presetName, agentId)
         latencyMetricsPresetName = presetName
-        CovLogger.d(TAG, "Activated SIP latency metrics session after start success for preset=$presetName")
+        CovLogger.d(
+            TAG,
+            "Activated SIP latency metrics session after start success for preset=$presetName, agentId=${CovAgentApiManager.agentId}"
+        )
     }
 
     private fun clearLatencyMetricsSession() {
