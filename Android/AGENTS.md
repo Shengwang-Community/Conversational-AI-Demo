@@ -16,7 +16,7 @@
 - 配置与构建：主要配置来自 `gradle.properties`；`app` 当前只有 `china` flavor；`app/common/scenes:convoai` 使用 Java 17，`iot/bleManager` 使用 Java 11
 - UI 现状：当前仓库以 `Activity` / `Fragment` / `ViewBinding` 为主；无明确需求时，不要把方案默认成 Compose-first
 - 高风险区域：构建脚本、`gradle.properties`、Manifest，以及 `scenes/convoai/.../convoaiApi/subRender` 字幕链路
-- AI 工程化资产：`AGENTS.md`、`ARCHITECTURE.md`、`.agents/skills/`、`docs/*.md`、`PROJECT_STATE.md`
+- AI 工程化资产：`AGENTS.md`、`ARCHITECTURE.md`、`.agents/skills/`、`.agents/state/INDEX.md`、`.agents/state/tasks/`、`docs/*.md`
 
 ## 对话模式
 
@@ -24,9 +24,10 @@
 
 | Mode | 识别特征 | 响应策略 |
 |------|---------|---------|
-| **workflow** | 包含 feat/fix/refactor/chore/docs，或明确要求修改 `app/common/scenes`、RTC/RTM、字幕、IoT、文档、skill、template、workflow 资产 | **启动工作流（强制状态管理）** |
-| **continue** | 用户明确输入“继续 / 接着做 / 继续 <任务名>”，且存在 `WORKFLOW_STATUS` 为 `active` 或 `blocked` 的 `PROJECT_STATE.md` | 读取状态文件，恢复上下文，进入 workflow |
-| **general** | 技术咨询、代码解释、一般问题 | 直接回答，不启动 workflow |
+| **workflow** | 明确要求改文件、执行构建/测试/adb/提交流水线验证，或明确要求进入 workflow | **启动工作流（强制状态管理）** |
+| **continue** | 用户明确输入“继续 / 接着做 / 继续 <任务名>”，且 `.agents/state/tasks/` 中存在 `WORKFLOW_STATUS` 为 `active` 或 `blocked` 的任务 | 选择并恢复该任务，进入 workflow |
+| **analysis** | 仓库分析、读代码、看 diff、看日志、排查根因，但尚未进入改动执行 | 允许只读命令，不创建或更新任务状态 |
+| **general** | 技术咨询、概念解释、一般问题 | 直接回答，不启动 workflow |
 
 ## Review 子类型触发
 
@@ -39,18 +40,23 @@
 附加约定：
 
 - 只对精确短语生效，不做模糊同义扩展
-- 建议把短语放在请求开头，避免被普通叙述干扰
+- 精确短语可来自用户请求，或由 `ac-plan` 明确写入 `Execution Contract`
 - 若同一条请求同时出现两个短语，必须先要求用户澄清，不得自行猜测
 
 ## 模式切换规则
 
-### general → workflow 回切
+### general / analysis → workflow 回切
 
-当 **general 模式下的回答涉及以下操作时**，必须提示切换到 workflow 模式：
+当 **general 或 analysis 模式** 下的回答即将涉及以下操作时，必须切换到 workflow 模式：
 
 - 文件修改（创建、编辑、删除）
-- 命令执行（`./gradlew`、`git`、测试、构建等）
-- todo 变化（新增、更新任务）
+- 写操作命令（`./gradlew`、测试、构建、`adb`、提交前验证等）
+- 任务状态变化（新增任务、更新 Contract、更新 Evidence / Gaps）
+
+补充约定：
+
+- 若用户请求本身已经明确要求“修复 / 实现 / 重构 / 跑检查 / 进入 workflow”，直接进入 workflow，不需要二次确认
+- 只有在用户本来是在提问或分析，而当前回答需要升级成实际执行时，才提示切换
 
 **提示格式**：
 
@@ -63,13 +69,27 @@
 建议切换到 workflow 模式以确保状态追踪。是否切换？
 ```
 
-### 未完成状态文件分流
+### analysis 模式限制
 
-当仓库中存在 `WORKFLOW_STATUS: active` 或 `blocked` 的 `PROJECT_STATE.md`，但用户当前请求未明确表达“继续”时：
+analysis 模式允许：
 
-- 不得仅因状态文件存在而自动进入 continue
+- `rg`、`git status`、`git diff`、`git log`、`sed`、`cat`、`nl`、`ls`
+- 仅读取仓库上下文，不落盘任务状态
+
+analysis 模式禁止：
+
+- 修改文件
+- 运行构建、测试、`adb`
+- 更新 `.agents/state/INDEX.md` 或 `.agents/state/tasks/*.md`
+
+### 未完成任务分流
+
+当 `.agents/state/tasks/` 中存在 `WORKFLOW_STATUS: active` 或 `blocked` 的任务，但用户当前请求未明确表达“继续”时：
+
+- 不得仅因任务文件存在而自动进入 continue
 - 若当前请求是新任务，按新任务进入 workflow
 - 若当前请求可能与旧任务相关，但无法确定是否续做，必须先提示用户选择“继续旧任务”或“启动新任务”
+- 若存在多个未完成任务，必须要求用户指定任务名或 `task-id`
 - `blocked` 表示“可恢复”，不表示“必须恢复”
 - `completed` 永不触发 continue
 
@@ -81,18 +101,17 @@
 
 1. **先进入 `ac-workflow`**
    - `ac-workflow` 会调用 `ac-memory`
-   - `ac-memory` 负责检查/创建/校验 `PROJECT_STATE.md`
+   - `ac-memory` 负责检查/创建/校验 `.agents/state/INDEX.md` 与当前任务状态文件
    - 状态就绪后再路由到 `single` / `single + reviewer` 或 `planner / executor / reviewer`
 
-2. **在本轮输出中显式声明状态结果（必填）**：
+2. **建议在本轮输出中回显当前任务状态（推荐）**：
 
 ```text
-[STATE] PROJECT_STATE.md：已检查 / 已更新
+[STATE] <task-id> | <role> | <status> | 已检查 / 已更新
 ```
 
-- 这行状态既要写入 `PROJECT_STATE.md`，也要在当前回复中原样回显；只写文件、不对用户回显，仍视为 workflow 未启动。
-
-> ⚠️ **未出现 `[STATE]` 声明，视为 workflow 未启动。**
+- 任务状态文件与 `.agents/state/INDEX.md` 才是 workflow 的真实状态源
+- `[STATE]` 回显用于帮助用户感知当前任务，不再作为唯一门禁
 
 ### workflow 进度展示（标准输出）
 
@@ -145,7 +164,7 @@
 ### 执行冻结与角色纪律
 
 - `single`：由 `ac-workflow` 编排的折叠路由；同一 Agent 串行执行最小 `ac-plan -> ac-execute -> summary closeout`，但仍受冻结 Contract、范围控制与 Evidence / Gaps 约束
-- `ac-memory`：负责 `PROJECT_STATE.md` 的本地记忆、结构校验与 `[STATE]` 门禁
+- `ac-memory`：负责 `.agents/state/INDEX.md` 与当前任务状态文件的本地记忆、结构校验与同步
 - `ac-workflow`：负责 workflow 入口、阶段推进、`single` 折叠路由、continue 恢复与强制收尾编排
 - `ac-plan`：在 `ac-memory` 校验通过后，产出并写入 `Execution Contract`，设置 `PLAN_FROZEN=true`
 - `ac-execute`：在 `ac-memory` 校验通过且 `PLAN_FROZEN=true` 时，仅按 Contract 执行，不得新增设计
@@ -156,19 +175,20 @@
 
 ## AI 行为规范
 
-### PROJECT_STATE.md 维护（硬约束）
+### 任务状态文件维护（硬约束）
 
 **核心原则**：
-> **`PROJECT_STATE.md` 是当前 workflow 的本地任务状态文件；基础管理由 `ac-memory` 托管，workflow 编排由 `ac-workflow` 承接。**
+> **workflow 的状态源由 `.agents/state/INDEX.md` 与 `.agents/state/tasks/<task-id>.md` 组成；基础管理由 `ac-memory` 托管，workflow 编排由 `ac-workflow` 承接。**
 
 #### 1. 维护入口
 
 - 进入 workflow：先通过 `ac-workflow`
 - `ac-workflow` 会调用 `ac-memory`
 - `ac-memory` 负责：
-  - 创建或校验 `PROJECT_STATE.md`
-  - 校验头字段（含 `WORKFLOW_STATUS`）与固定区块
-  - 维护 `[STATE]` 状态锚点
+  - 创建或校验 `.agents/state/INDEX.md`
+  - 创建、选择或修复当前任务状态文件
+  - 校验头字段（含 `TASK_ID` / `TASK_TYPE` / `WORKFLOW_STATUS`）与固定区块
+  - 同步当前任务摘要
 
 #### 2. 强制更新节点
 
@@ -185,17 +205,21 @@
 
 #### 3.必备区块
 
-`PROJECT_STATE.md` 头部必须包含：
+当前任务状态文件头部必须包含：
+- `TASK_ID: <yyyy-mm-dd-slug>`
+- `TASK_TYPE: feat|fix|refactor|chore|docs`
 - `PLAN_FROZEN: true|false`
 - `CURRENT_ROLE: planner|executor|reviewer|single`
 - `WORKFLOW_STATUS: active|blocked|completed`
+- `STARTED_AT: YYYY-MM-DD`
+- `LAST_UPDATED_AT: YYYY-MM-DD`
 
 状态语义：
 - `active`：任务正在推进，可继续执行或恢复
 - `blocked`：已强制收尾，等待继续或补充信息
-- `completed`：当前任务已收尾，不应仅因状态文件存在而自动触发 `continue`
+- `completed`：当前任务已收尾，不应仅因任务文件存在而自动触发 `continue`
 
-`PROJECT_STATE.md`  必须包含并维护以下区块：
+当前任务状态文件必须包含并维护以下区块：
 1. 目标
 2. 下一步 Top 3
 3. 阻塞项
@@ -206,8 +230,16 @@
 8. 提交计划
 9. Execution Contract
 
+`.agents/state/INDEX.md` 至少维护：
+
+- `CURRENT_TASK`
+- `## Active`
+- `## Blocked`
+- `## Completed`
+
 #### 4. 模板
-- 使用`docs/PROJECT_STATE_TEMPLATE.md`
+- 使用 `docs/TASK_STATE_TEMPLATE.md`
+- 使用 `docs/STATE_INDEX_TEMPLATE.md`
 
 ### Commit Policy
 
@@ -216,7 +248,7 @@
 - **严格禁止 `git push`**：除非用户明确要求且单独确认
 - Commit message 必须使用英语，并使用动态模型名协作者信息：
   - `Co-Authored-By: <llm-model>`（示例：`Co-Authored-By: GPT-5.3-Codex`）
-- `PROJECT_STATE.md` 默认不提交；仅在以下情况提交：
+- `.agents/state/INDEX.md` 与 `.agents/state/tasks/*.md` 默认不提交；仅在以下情况提交：
   - 跨环境/跨会话同步需要
   - 用户明确要求
 
@@ -273,7 +305,7 @@
 
 ### 上下文管理（强制收尾）
 
-当出现以下任一情况时，必须先刷新 `PROJECT_STATE.md` 再继续：
+当出现以下任一情况时，必须先刷新当前任务状态文件与 `.agents/state/INDEX.md` 再继续：
 
 - 对话超过 10 轮
 - 大量代码或文档变更
@@ -365,8 +397,8 @@
 纯文档 / skill / template 任务默认改用以下检查，除非改动触及代码或构建配置：
 
 ```bash
-rg -n "旧术语|旧路径|过时模块名" AGENTS.md docs .agents/skills
-rg -n "PLAN_FROZEN|CURRENT_ROLE|WORKFLOW_STATUS|Execution Contract" AGENTS.md docs .agents/skills
+rg -n "PROJECT_STATE\\.md|旧术语|旧路径|过时模块名" AGENTS.md docs .agents/skills
+rg -n "TASK_ID|TASK_TYPE|PLAN_FROZEN|CURRENT_ROLE|WORKFLOW_STATUS|Execution Contract" AGENTS.md docs .agents/skills
 ```
 
 - 检查模块名、路径、命令示例是否与仓库一致
@@ -377,7 +409,8 @@ rg -n "PLAN_FROZEN|CURRENT_ROLE|WORKFLOW_STATUS|Execution Contract" AGENTS.md do
 ## 文档导航
 
 - `ARCHITECTURE.md`：项目全局模块关系、主链路与高风险区域总览
-- `docs/PROJECT_STATE_TEMPLATE.md`：workflow 状态记录模板
+- `docs/TASK_STATE_TEMPLATE.md`：任务状态模板
+- `docs/STATE_INDEX_TEMPLATE.md`：任务索引模板
 - `docs/WORKFLOW_TEMPLATES.md`：Android 开发任务模板
 - `docs/REVIEW_TEMPLATES.md`：阶段自检与结果验收模板
 - `docs/PR_CHECKLIST.md`：PR Review 标准
@@ -385,7 +418,7 @@ rg -n "PLAN_FROZEN|CURRENT_ROLE|WORKFLOW_STATUS|Execution Contract" AGENTS.md do
 - `scenes/convoai/README.md`：Convo AI 场景总览与运行说明
 - `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/README.md`：字幕 / 消息 / API 组件说明
 - `.agents/skills/ac-workflow/SKILL.md`：workflow 入口编排
-- `.agents/skills/ac-memory/SKILL.md`：状态文件校验与修复
+- `.agents/skills/ac-memory/SKILL.md`：任务索引与状态文件校验 / 修复
 - `.agents/skills/ac-plan/SKILL.md`：冻结 Contract
 - `.agents/skills/ac-execute/SKILL.md`：按 Contract 执行
 - `.agents/skills/ac-review/SKILL.md`：按 Evidence / Gaps 验收

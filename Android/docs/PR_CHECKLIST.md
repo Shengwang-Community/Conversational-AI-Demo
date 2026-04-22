@@ -104,7 +104,7 @@
 - [ ] `single` / `single + reviewer` 路由与 `continue` 完成态定义无冲突
 - [ ] 纯 `single` 任务的完成态不会依赖 `ac-review` 才能落盘
 - [ ] `SKILL.md` 的 `description`、边界、禁止项足够清晰
-- [ ] `PROJECT_STATE.md` 中 Evidence / Gaps 已同步
+- [ ] 当前任务状态文件中的 Evidence / Gaps 已同步，任务索引已对齐
 
 ---
 

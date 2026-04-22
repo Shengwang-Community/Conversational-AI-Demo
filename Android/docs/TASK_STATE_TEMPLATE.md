@@ -1,17 +1,21 @@
-# PROJECT_STATE.md（Android 项目状态记录模板）
+# TASK_STATE（Android 任务状态模板）
 
-用途：用于跨会话接力，不做会话打卡；适用于代码任务、文档任务、skill 任务与 workflow 规范任务。
+用途：用于单任务的 workflow 状态记录；适用于代码任务、文档任务、skill 任务与 workflow 规范任务。
 
-说明：由 `ac-memory` 负责创建、结构校验与 `[STATE]` 状态锚点维护；由 `ac-workflow` 负责在 workflow 入口、continue 与收尾时编排状态流转。
+说明：由 `ac-memory` 负责创建、结构校验与任务索引同步；由 `ac-workflow` 负责在 workflow 入口、continue 与收尾时编排状态流转。
 
+TASK_ID: <yyyy-mm-dd-slug>
+TASK_TYPE: feat|fix|refactor|chore|docs
 PLAN_FROZEN: false
 CURRENT_ROLE: single
 WORKFLOW_STATUS: active
+STARTED_AT: YYYY-MM-DD
+LAST_UPDATED_AT: YYYY-MM-DD
 
 仓库范围提示：
 
 - 业务模块：`app`、`common`、`scenes/convoai`、`scenes/convoai:iot`、`scenes/convoai:bleManager`
-- AI 工程化资产：`AGENTS.md`、`.agents/skills/`、`docs/*.md`、`PROJECT_STATE.md`
+- AI 工程化资产：`AGENTS.md`、`.agents/skills/`、`.agents/state/INDEX.md`、`.agents/state/tasks/`、`docs/*.md`
 
 ## 目标
 

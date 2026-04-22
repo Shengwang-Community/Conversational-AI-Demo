@@ -1,18 +1,20 @@
 # Android 与 AI 工程化工作流模板
 
-开始任务前，先识别任务类型；若不确定，按最接近的类型进入 workflow，并在 `PROJECT_STATE.md` 中补充说明。
+开始任务前，先识别 mode 与任务类型；若当前只是读代码、看 diff、定位根因，可先停留在 `analysis`。一旦进入执行，再由 workflow 绑定到当前任务状态文件。
 
 **仓库范围提示**
 
 - 业务模块：`app`、`common`、`scenes/convoai`、`scenes/convoai:iot`、`scenes/convoai:bleManager`
-- AI 工程化资产：`AGENTS.md`、`.agents/skills/`、`docs/*.md`、`PROJECT_STATE.md`
+- AI 工程化资产：`AGENTS.md`、`.agents/skills/`、`.agents/state/INDEX.md`、`.agents/state/tasks/`、`docs/*.md`
 - UI 现状：默认按当前 `Activity` / `Fragment` / `ViewBinding` 体系思考，除非需求明确要求 Compose
 
 **通用约束**
 
-- 每次阶段结束必须更新 `PROJECT_STATE.md`
+- workflow 任务每次阶段结束必须更新当前任务状态文件，并同步 `.agents/state/INDEX.md`
+- analysis 模式允许只读命令，不写任务状态
 - 纯文档 / skill / template 任务也属于 workflow，不按 general 模式处理
-- 存在未完成 `PROJECT_STATE.md` 不等于自动 continue；只有用户明确说“继续 / 接着做 / 继续 <任务名>”时，才按 continue 恢复
+- 存在未完成任务不等于自动 continue；只有用户明确说“继续 / 接着做 / 继续 <任务名>”时，才按 continue 恢复
+- 若存在多个未完成任务，先要求用户指定任务名或 `task-id`
 - 带 reviewer 的路线在 `✅ 校验` 通过后，统一回交 `ac-workflow` 执行最终 `📝 总结`
 - 代码任务优先跑 `gradlew` 检查；docs-only 任务优先做路径、术语、模板一致性检查
 - 触及 `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/` 或 `subRender/` 字幕组件时，默认按高风险处理，扩大验证范围
@@ -174,7 +176,7 @@
 
 在任何工作流结束前，确保：
 
-- [ ] `PROJECT_STATE.md` 已更新
+- [ ] 当前任务状态文件与 `.agents/state/INDEX.md` 已更新
 - [ ] Evidence 与 Gaps 已补充
 - [ ] 如用户要求提交，提交策略已明确
 - [ ] 代码任务：相关 `gradlew` 检查通过或已说明未运行原因

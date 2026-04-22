@@ -8,3 +8,4 @@ common/base/sdk-*/
 
 .ai-coding/
 PROJECT_STATE.md
+.agents/state/

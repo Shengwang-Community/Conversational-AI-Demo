@@ -10,7 +10,7 @@ Use this skill after a workflow task has completed review in this Android reposi
 
 ## Purpose
 
-- Extract one structured episode from the current workflow's `PROJECT_STATE.md`, `Execution Contract`, `Evidence`, and `Gaps`
+- Extract one structured episode from the current workflow's active task state file, `Execution Contract`, `Evidence`, and `Gaps`
 - Identify reusable workflow / docs / skills lessons and turn them into candidate patterns
 - Maintain repo-local memory instead of taking over active workflow state
 - Recommend an adoption path without directly modifying other rule assets
@@ -35,7 +35,8 @@ Do not use this skill when:
 
 Required inputs:
 
-- `PROJECT_STATE.md`
+- `.agents/state/INDEX.md`
+- the active task state file under `.agents/state/tasks/`
 - `AGENTS.md`
 - `.agents/skills/ac-workflow/SKILL.md`
 - `.agents/skills/ac-memory/SKILL.md`
@@ -59,7 +60,7 @@ Primary evidence sources:
 ## Process
 
 1. Confirm review is complete.
-- If `PROJECT_STATE.md` does not contain enough `Evidence` or `Gaps`, stop and return to the caller.
+- If the active task state file does not contain enough `Evidence` or `Gaps`, stop and return to the caller.
 
 2. Extract one episode.
 - Task type
@@ -123,11 +124,11 @@ Output a short user-facing summary that includes:
 
 ## Hard Rules
 
-- Do not modify `AGENTS.md`, `PROJECT_STATE.md`, `docs/*.md`, or other skills directly.
+- Do not modify `AGENTS.md`, `.agents/state/INDEX.md`, active task state files, `docs/*.md`, or other skills directly.
 - Do not auto-commit, auto-push, or auto-create PR.
-- Do not invent evidence that is not present in `PROJECT_STATE.md` or changed files.
+- Do not invent evidence that is not present in the active task state file or changed files.
 - Do not generalize from one-off noise.
-- Treat `PROJECT_STATE.md` as the workflow source of truth for the current task.
+- Treat the active task state file as the workflow source of truth for the current task.
 - If adoption requires repo rule changes, ask for a separate docs/skills workflow task.
 
 ## Pattern Quality Bar

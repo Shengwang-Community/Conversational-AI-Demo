@@ -3,7 +3,7 @@ name: ac-execute
 description: Execute only the frozen Execution Contract for code or docs tasks, collect evidence, and stop on scope drift. Use when PLAN_FROZEN=true and the Contract's files/checks are complete.
 ---
 
-1. Use `$ac-memory` to validate `PROJECT_STATE.md` structure before execution.
+1. Use `$ac-memory` to validate the active task state structure before execution.
 2. Verify `PLAN_FROZEN=true` and `Execution Contract` completeness.
 3. Set `CURRENT_ROLE: executor` and keep `WORKFLOW_STATUS: active`.
 4. Change only files listed in `Files to change`.

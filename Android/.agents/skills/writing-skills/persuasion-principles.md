@@ -6,7 +6,7 @@ LLMs respond to the same persuasion principles as humans. Understanding this psy
 
 **Research foundation:** Meincke et al. (2025) tested 7 persuasion principles with N=28,000 AI conversations. Persuasion techniques more than doubled compliance rates (33% → 72%, p < .001).
 
-**Repo-local note:** When a skill recommends checklist tracking, tie it to the task/state mechanism available in the current environment. In this repository, reflect checklist progress in `PROJECT_STATE.md` instead of assuming any specific todo tool exists.
+**Repo-local note:** When a skill recommends checklist tracking, tie it to the task/state mechanism available in the current environment. In this repository, reflect checklist progress in the active task state file under `.agents/state/tasks/` and keep `.agents/state/INDEX.md` aligned instead of assuming any specific todo tool exists.
 
 ## The Seven Principles
 
@@ -82,7 +82,7 @@ LLMs respond to the same persuasion principles as humans. Understanding this psy
 
 **Example:**
 ```markdown
-✅ Multi-step checklists need visible progress tracking. In this repo, update `PROJECT_STATE.md` as you go.
+✅ Multi-step checklists need visible progress tracking. In this repo, update the active task state file as you go and keep `.agents/state/INDEX.md` aligned.
 ❌ Checklist tracking depends on whichever todo tool happens to exist.
 ```
 

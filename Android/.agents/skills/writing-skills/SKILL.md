@@ -605,7 +605,7 @@ Deploying untested skills = deploying untested code. It's a violation of quality
 
 ## Skill Creation Checklist (TDD Adapted)
 
-**IMPORTANT:** Track EACH checklist item in the task/state system available in the current environment. In this repository, reflect progress in `PROJECT_STATE.md` instead of assuming a specific todo tool exists.
+**IMPORTANT:** Track EACH checklist item in the task/state system available in the current environment. In this repository, reflect progress in the active task state file under `.agents/state/tasks/` and keep `.agents/state/INDEX.md` aligned instead of assuming a specific todo tool exists.
 
 **RED Phase - Write Failing Test:**
 - [ ] Create pressure scenarios (3+ combined pressures for discipline skills)

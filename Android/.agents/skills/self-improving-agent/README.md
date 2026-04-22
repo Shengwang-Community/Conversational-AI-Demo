@@ -1,6 +1,6 @@
 # Self-Improving Agent
 
-Use this skill to run a structured retrospective after `ac-review` has completed in the current repository. It extracts reusable lessons from `PROJECT_STATE.md`, the `Execution Contract`, `Evidence`, and `Gaps`, stores them in the skill's own `memory/`, and suggests whether another docs/skills workflow should adopt them.
+Use this skill to run a structured retrospective after `ac-review` has completed in the current repository. It extracts reusable lessons from the active task state file, the `Execution Contract`, `Evidence`, and `Gaps`, stores them in the skill's own `memory/`, and suggests whether another docs/skills workflow should adopt them.
 
 ## When To Use
 
@@ -12,7 +12,7 @@ Use this skill to run a structured retrospective after `ac-review` has completed
 
 - It does not automatically modify `AGENTS.md`, `docs/*.md`, or any other `SKILL.md`
 - It does not automatically commit, push, or create PRs
-- It does not replace `PROJECT_STATE.md` as the workflow state source of truth
+- It does not replace the active task state file as the workflow state source of truth
 - It does not run in the background during `ac-execute`
 
 ## Typical Repository Flow

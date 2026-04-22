@@ -14,7 +14,8 @@ It is not a background auto-trigger and it does not replace the `ac-*` state mac
 
 Required reads:
 
-- `PROJECT_STATE.md`
+- `.agents/state/INDEX.md`
+- the active task state file under `.agents/state/tasks/`
 - `AGENTS.md`
 - `.agents/skills/ac-workflow/SKILL.md`
 - `.agents/skills/ac-memory/SKILL.md`
@@ -45,7 +46,7 @@ The following files are treated as local runtime outputs by default and usually 
 ## Forbidden
 
 - Do not modify `AGENTS.md` directly
-- Do not modify `PROJECT_STATE.md` directly
+- Do not modify `.agents/state/INDEX.md` or active task state files directly
 - Do not modify `docs/*.md` directly
 - Do not modify other `SKILL.md` files directly
 - Do not auto-commit, auto-push, or auto-create PRs

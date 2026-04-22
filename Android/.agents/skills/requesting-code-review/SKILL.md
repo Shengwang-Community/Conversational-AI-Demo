@@ -5,7 +5,7 @@ description: Prepare repo-local review requests and required context for the cur
 
 # Requesting Code Review
 
-Prepare a repo-local review request that feeds the current `ac-review` path with the right Contract, Evidence, and Gaps. In this repository, review should stay inside the existing workflow instead of dispatching external reviewer subagents that do not write back to `PROJECT_STATE.md`.
+Prepare a repo-local review request that feeds the current `ac-review` path with the right Contract, Evidence, and Gaps. In this repository, review should stay inside the existing workflow instead of dispatching external reviewer subagents that do not write back to the active task state file.
 
 **Core principle:** Review early, review often.
 
@@ -25,7 +25,7 @@ Prepare a repo-local review request that feeds the current `ac-review` path with
 
 **1. Refresh repo-local state first**
 
-- Ensure `PROJECT_STATE.md` reflects the current Contract, latest `Evidence`, and current `Gaps`
+- Ensure the active task state file reflects the current Contract, latest `Evidence`, and current `Gaps`
 - If the task is already on a reviewer route, keep using the current workflow rather than opening a separate review path
 
 **2. Prepare the review brief**
@@ -103,7 +103,7 @@ You: [Fix loading state reset]
 - Skip review because "it's simple"
 - Ignore Critical issues
 - Proceed with unfixed Important issues
-- Open a second review path that bypasses `PROJECT_STATE.md`
+- Open a second review path that bypasses the active task state file
 - Argue with valid technical feedback
 
 **If reviewer wrong:**
