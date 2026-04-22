@@ -121,6 +121,17 @@
 - 总分 `4-6`：`single + reviewer`
 - 总分 `>=7`：完整多角色（`planner -> executor -> reviewer`）
 
+**典型评分示例**：
+
+- 单 README 文案或路径修正，且不改变 workflow 语义：复杂度 `0` + 影响面 `0` + 不确定性 `0` + 变更风险 `0` + 验证成本 `0` = `0`，走 `single`
+- 单个 `SKILL.md` 的描述或触发词微调，不改变交接关系或 UI 展示语义：复杂度 `1` + 影响面 `1` + 不确定性 `0` + 变更风险 `0` + 验证成本 `0` = `2`，走 `single`
+- 同步 `AGENTS.md`、`.agents/skills/`、`docs/*.md` 的 workflow 术语或模板语义：复杂度 `1` + 影响面 `1` + 不确定性 `1` + 变更风险 `1` + 验证成本 `1` = `5`，走 `single + reviewer`
+- 修复 `scenes:convoai` 内单页面或单流程问题，未涉及共享字幕/构建/权限链路：复杂度 `1` + 影响面 `1` + 不确定性 `0` + 变更风险 `1` + 验证成本 `1` = `4`，走 `single + reviewer`
+- 修改 `common` 公共能力或跨 `common` / `scenes:convoai` 的共享逻辑：复杂度 `2` + 影响面 `2` + 不确定性 `1` + 变更风险 `1` + 验证成本 `1` = `7`，走 `planner -> executor -> reviewer`
+- 修改 `gradle.properties`、`build.gradle(.kts)`、`settings.gradle`、`AndroidManifest.xml` 等高风险配置：复杂度 `1` + 影响面 `2` + 不确定性 `1` + 变更风险 `2` + 验证成本 `1` = `7`，走 `planner -> executor -> reviewer`
+- 修改 `convoaiApi` / `subRender` 字幕链路、RTM/RTC 消息解析或相关回调派发：复杂度 `2` + 影响面 `2` + 不确定性 `1` + 变更风险 `2` + 验证成本 `2` = `9`，走 `planner -> executor -> reviewer`
+- 修改 IoT / BLE / 配网流程、设备权限或真机强依赖链路：复杂度 `2` + 影响面 `2` + 不确定性 `1` + 变更风险 `2` + 验证成本 `2` = `9`，走 `planner -> executor -> reviewer`
+
 **路由语义（补充定义）**：
 - `single`：不是独立 skill，而是由 `ac-workflow` 编排的折叠路由；同一 Agent 需先完成最小 `ac-plan` 职责，写出 `Execution Contract` 并设置 `PLAN_FROZEN=true`，再进入执行；执行后的收尾由 `ac-workflow` 负责完成最小自检，并在进入总结前写回 `CURRENT_ROLE: single`、`WORKFLOW_STATUS: completed`
 - `single + reviewer`：先按 `single` 完成最小 planning + execution，再强制进入 `ac-review`
@@ -225,6 +236,14 @@
 - 若 reviewer 发现的问题与上述边界不冲突，应优先定性为未验证风险或契约问题，而不是直接要求回退实现
 - **发现问题立即修复，不得累积**
 
+### 完成判定与验证新鲜度
+
+- “已完成 / 已修复 / 已验证通过” 的表述，必须基于本轮新增的 fresh Evidence
+- 历史 Evidence 只能作为背景，不得直接替代本轮验证结论
+- 若本轮只完成了代码或文档修改，但未完成声明中的验证，必须明确写入 `Gaps`
+- `review pass` 表示当前实现与 Contract 一致并可按本轮收尾，不自动等于所有运行时风险已消除
+- docs-only / skills-only 任务同样需要本轮一致性检查证据，不得仅以“已同步”作为完成依据
+
 ### 对话评审（自动执行）
 
 #### 常规轮次（简化）
@@ -316,6 +335,10 @@
 
 - 修改 `AGENTS.md`、`.agents/skills/*.md`、`docs/*.md` 时，必须检查三者是否需要同步，避免规则漂移
 - `SKILL.md` 的 `description` 必须同时说明“做什么”和“什么时候用”，并包含能触发该 skill 的关键词
+- 若外部 skill 编写方法论与本仓库规则不一致，以 `AGENTS.md` 的 repo-local 约定为准
+- skill 应优先服务 repo 当前 workflow，不应无条件覆盖 `ac-*` 主骨架；需尽量写清输入、输出、交接边界和禁止项
+- 修改 skill 时，除 `AGENTS.md`、`.agents/skills/*.md`、`docs/*.md` 外，还应评估是否同步同链路 skill 与 `agents/openai.yaml`
+- 若只是补现有 skill 的边界、触发词或模板，优先修改原 skill，而不是新增近义 skill
 - 模板中的模块名、路径示例必须使用当前仓库真实结构，例如 `common/`、`scenes/convoai/`、`.agents/skills/`
 - 文档类任务不得伪造构建或测试结论；未运行的命令要明确写入 `Evidence` / `Gaps`
 - 若文档 / skill 涉及 review 规则，应明确区分“已证实的回归”和“开发态联调下的未验证假设 / 契约前提 / 非目标”
@@ -358,6 +381,7 @@ rg -n "PLAN_FROZEN|CURRENT_ROLE|WORKFLOW_STATUS|Execution Contract" AGENTS.md do
 - `docs/WORKFLOW_TEMPLATES.md`：Android 开发任务模板
 - `docs/REVIEW_TEMPLATES.md`：阶段自检与结果验收模板
 - `docs/PR_CHECKLIST.md`：PR Review 标准
+- `docs/DEBUG_WORKFLOW.md`：debugging / 联调任务的定位、证据与收尾规则
 - `scenes/convoai/README.md`：Convo AI 场景总览与运行说明
 - `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/README.md`：字幕 / 消息 / API 组件说明
 - `.agents/skills/ac-workflow/SKILL.md`：workflow 入口编排

@@ -22,6 +22,13 @@ description: Review frozen-contract execution against Evidence and Gaps for code
 - for dev-stage integration tasks, unresolved items that depend on unverified backend behavior should be framed as `Gaps` / `assumption` / `open question` unless code or evidence clearly contradicts the declared boundary
 7. Update `验收证据（Evidence）` with concrete proof.
 8. Update `未验证清单（Gaps）` with residual risks, missing checks, and untested continue/doc workflows.
+8.5. If review findings or follow-up comments appear, close each item explicitly with exactly one outcome:
+- `fixed`
+- `rejected with evidence`
+- `accepted as gap`
+- `requires re-plan`
+8.6. Update `PROJECT_STATE.md` with the closure result before pass/fail conclusion.
+8.7. If a finding changes scope, files, checks, assumptions, or rollback strategy, set `PLAN_FROZEN=false` and return to `$ac-plan`.
 9. When review reveals repeated mistakes, cross-document drift, or reusable workflow lessons, recommend `$self-improving-agent` after review to write candidate patterns into its own `memory/`.
 10. Decide outcome:
 - Pass: set `CURRENT_ROLE: reviewer`, set `WORKFLOW_STATUS: completed`, keep `PLAN_FROZEN=true`, then return control to `$ac-workflow` for final summary closeout and final `[STATE]` echo
@@ -32,6 +39,7 @@ Hard rules:
 - Base conclusions on Contract and evidence only.
 - Do not skip Gaps when any verification is missing.
 - Do not pass work that still contains known cross-document inconsistencies.
+- Do not leave review findings without an explicit closure outcome.
 - Do not leave `WORKFLOW_STATUS: active` after a pass conclusion.
 - Do not require `$self-improving-agent` for pass/fail; it is an optional post-review follow-up.
 - Do not treat `$ac-review` as the final summary owner; passed work must return to `$ac-workflow` for `📝 总结`.

@@ -14,6 +14,11 @@ description: Freeze an Execution Contract for code or docs workflow tasks in thi
 - Checks
 - Commit plan
 - Rollback note
+4.5. The frozen Contract must be concrete enough for direct execution:
+- list `Files to change` as specifically as practical
+- write `Steps` as an ordered execution sequence, not abstract intentions
+- name concrete `Checks` such as commands, consistency searches, manual paths, or review checks
+- for docs / skills / templates tasks, list the coupled files that must stay in sync
 5. For development-stage integration or debugging tasks, encode review boundaries directly into the existing Contract fields and state:
 - local cache / debug data policy
 - backend contract assumptions used in this round
@@ -32,5 +37,7 @@ Hard rules:
 - Do not implement feature or document changes in this skill.
 - Do not hand off if Contract fields are incomplete.
 - Do not freeze generic placeholders or non-existent repo paths as final scope.
+- Do not freeze vague steps such as “update docs” or “do review” as final execution detail.
+- Do not leave `Checks` at “self-test” or other non-specific placeholders when a concrete search, command, or manual path can be named.
 - Do not leave development-stage review assumptions as private reasoning; they must be visible in Contract/Evidence/Gaps.
 - Do not infer a review subtype from vague wording when the exact trigger phrase was not provided.
