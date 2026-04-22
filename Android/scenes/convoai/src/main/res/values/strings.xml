@@ -76,6 +76,8 @@
     <string name="cov_latency_metrics_total">端到端:</string>
     <string name="cov_latency_metrics_value_ms">%1$dms</string>
     <string name="cov_latency_metrics_chip_format">%1$s%2$s</string>
+    <string name="cov_latency_metrics_label_rtc">RTC:</string>
+    <string name="cov_latency_metrics_label_ai">AI:</string>
     <string name="cov_latency_metrics_label_asr">ASR:</string>
     <string name="cov_latency_metrics_label_llm">LLM:</string>
     <string name="cov_latency_metrics_label_tts">TTS:</string>

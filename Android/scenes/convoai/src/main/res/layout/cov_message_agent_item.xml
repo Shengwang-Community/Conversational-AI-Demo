@@ -92,6 +92,24 @@
                 tools:text="端到端:1423ms" />
 
             <TextView
+                android:id="@+id/tv_metrics_rtc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:textColor="@color/ai_icontext3"
+                android:textSize="11sp"
+                tools:text="RTC:196ms" />
+
+            <TextView
+                android:id="@+id/tv_metrics_ai"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:textColor="@color/ai_icontext3"
+                android:textSize="11sp"
+                tools:text="AI:120ms" />
+
+            <TextView
                 android:id="@+id/tv_metrics_asr"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -122,7 +140,7 @@
                 android:id="@+id/flow_message_metrics"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:constraint_referenced_ids="tv_metrics_summary,tv_metrics_asr,tv_metrics_llm,tv_metrics_tts"
+                app:constraint_referenced_ids="tv_metrics_summary,tv_metrics_rtc,tv_metrics_ai,tv_metrics_asr,tv_metrics_llm,tv_metrics_tts"
                 app:flow_horizontalGap="4dp"
                 app:flow_horizontalBias="0"
                 app:flow_horizontalStyle="packed"

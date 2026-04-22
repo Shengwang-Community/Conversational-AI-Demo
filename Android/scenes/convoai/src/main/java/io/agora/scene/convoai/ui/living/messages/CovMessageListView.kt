@@ -407,6 +407,8 @@ class CovMessageListView @JvmOverloads constructor(
                 val shouldShow = isLatencyMetricsVisible && metrics != null
                 binding.layoutMessageMetrics.isVisible = shouldShow
                 if (!shouldShow) {
+                    bindMetricChip(binding.tvMetricsRtc, io.agora.scene.convoai.R.string.cov_latency_metrics_label_rtc, null)
+                    bindMetricChip(binding.tvMetricsAi, io.agora.scene.convoai.R.string.cov_latency_metrics_label_ai, null)
                     bindMetricChip(binding.tvMetricsAsr, io.agora.scene.convoai.R.string.cov_latency_metrics_label_asr, null)
                     bindMetricChip(binding.tvMetricsLlm, io.agora.scene.convoai.R.string.cov_latency_metrics_label_llm, null)
                     bindMetricChip(binding.tvMetricsTts, io.agora.scene.convoai.R.string.cov_latency_metrics_label_tts, null)
@@ -424,6 +426,8 @@ class CovMessageListView @JvmOverloads constructor(
                         value = formatLatencyValueText(context, it.totalLatencyMs)
                     )
                 } ?: ""
+                bindMetricChip(binding.tvMetricsRtc, io.agora.scene.convoai.R.string.cov_latency_metrics_label_rtc, metrics?.rtcLatencyMs)
+                bindMetricChip(binding.tvMetricsAi, io.agora.scene.convoai.R.string.cov_latency_metrics_label_ai, metrics?.aiAudioLatencyMs)
                 bindMetricChip(binding.tvMetricsAsr, io.agora.scene.convoai.R.string.cov_latency_metrics_label_asr, metrics?.asrLatencyMs)
                 bindMetricChip(binding.tvMetricsLlm, io.agora.scene.convoai.R.string.cov_latency_metrics_label_llm, metrics?.llmLatencyMs)
                 bindMetricChip(binding.tvMetricsTts, io.agora.scene.convoai.R.string.cov_latency_metrics_label_tts, metrics?.ttsLatencyMs)

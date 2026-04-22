@@ -42,6 +42,8 @@ data class AgentLatencyData(
 data class TurnFinishedMetricsUiModel(
     val turnId: Long?,
     val totalLatencyMs: Int,
+    val rtcLatencyMs: Int?,
+    val aiAudioLatencyMs: Int?,
     val asrLatencyMs: Int?,
     val llmLatencyMs: Int?,
     val ttsLatencyMs: Int?,
@@ -56,6 +58,8 @@ data class TurnFinishedMetricsState(
         return TurnFinishedMetricsUiModel(
             turnId = turn.turnId.takeIf { it > 0 },
             totalLatencyMs = turn.e2eLatency.toLatencyMs(),
+            rtcLatencyMs = turn.segmentedLatency.transport.toLatencyMsOrNull(),
+            aiAudioLatencyMs = turn.segmentedLatency.algorithmProcessing.toLatencyMsOrNull(),
             asrLatencyMs = turn.segmentedLatency.asrTTLW.toLatencyMsOrNull(),
             llmLatencyMs = turn.segmentedLatency.llmTTFT.toLatencyMsOrNull(),
             ttsLatencyMs = turn.segmentedLatency.ttsTTFB.toLatencyMsOrNull(),
