@@ -13,7 +13,6 @@ protocol MessageStandard {
     func updateImageMessage(uuid: String, state: ImageState)
     func reduceLLMInterrupt(turnId: Int)
     func updateLatencyMetrics(turnId: Int, latencyInfo: MessageLatencyInfo)
-    func snapshotTurnTranscription(turnId: Int) -> AgentLatencyData.TurnTranscriptionSnapshot
 }
 
 extension ChatMessageViewModel: MessageStandard {
@@ -104,13 +103,17 @@ extension ChatMessageViewModel: MessageStandard {
         delegate?.messageUpdated()
     }
 
-    func snapshotTurnTranscription(turnId: Int) -> AgentLatencyData.TurnTranscriptionSnapshot {
-        let userMessage = messageForSnapshot(turnId: turnId, isMine: true)
-        let assistantMessage = messageForSnapshot(turnId: turnId, isMine: false)
-        return AgentLatencyData.TurnTranscriptionSnapshot(
-            assistant: assistantMessage?.snapshotText ?? "",
-            user: userMessage?.snapshotText ?? ""
-        )
+    func snapshotTurnTranscriptions(turnIds: [Int]) -> [Int: AgentLatencyData.TurnTranscriptionSnapshot] {
+        var result: [Int: AgentLatencyData.TurnTranscriptionSnapshot] = [:]
+        for turnId in turnIds where turnId > 0 {
+            let userMessage = messageForSnapshot(turnId: turnId, isMine: true)
+            let assistantMessage = messageForSnapshot(turnId: turnId, isMine: false)
+            result[turnId] = AgentLatencyData.TurnTranscriptionSnapshot(
+                assistant: assistantMessage?.snapshotText ?? "",
+                user: userMessage?.snapshotText ?? ""
+            )
+        }
+        return result
     }
     
     private func updateImageContent(uuid: String, isMine: Bool, state: ImageState) {

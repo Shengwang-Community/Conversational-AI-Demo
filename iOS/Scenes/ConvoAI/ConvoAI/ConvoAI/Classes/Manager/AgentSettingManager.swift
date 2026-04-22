@@ -183,6 +183,9 @@ class AgentSettingManager {
      
     /// Update agent preset
     func updatePreset(_ preset: AgentPreset?) {
+        preference.preset = preset
+        preference.isCustomPreset = preset?.isCustom == true
+
         if let preset = preset {
             // Update language based on preset
             let defaultLanguageCode = preset.defaultLanguageCode
@@ -209,7 +212,7 @@ class AgentSettingManager {
                 updateVoiceprintMode(.off)
             }
 
-            if preset.presetType?.contains("independent") == true {
+            if preset.isIndependent {
                 preference.aiVad = false
                 preference.smartPause = false
             }
@@ -222,8 +225,7 @@ class AgentSettingManager {
             preference.smartPause = false
         }
         
-        // Update preset and notify delegates
-        preference.preset = preset
+        // Notify delegates
         notifyDelegates { $0.settingManager(self, presetDidUpdated: preset) }
         notifyDelegates { $0.settingManager(self, aiVadStateDidUpdated: self.preference.aiVad) }
         notifyDelegates { $0.settingManager(self, smartPauseStateDidUpdated: self.preference.smartPause) }
@@ -232,7 +234,12 @@ class AgentSettingManager {
     /// Update language setting
     func updateLanguage(_ language: SupportLanguage?) {
         preference.language = language
-        let aiVadEnabledByDefault = language?.aivadEnabledByDefault ?? false
+        let aiVadEnabledByDefault: Bool
+        if preference.preset?.isCustom == true {
+            aiVadEnabledByDefault = true
+        } else {
+            aiVadEnabledByDefault = language?.aivadEnabledByDefault ?? false
+        }
         let smartPauseEnabledByDefault = language?.pauseStateEnabledByDefault ?? false
         preference.aiVad = aiVadEnabledByDefault
         preference.smartPause = aiVadEnabledByDefault && smartPauseEnabledByDefault

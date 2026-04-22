@@ -83,9 +83,9 @@
 "settings.speaker" = "扬声器";
 "settings.noise.cancellation" = "噪声取消";
 "settings.noise.aiVad.highlight" = "优雅打断";
-"settings.noise.aiVad.tips" = "优雅打断可以在不中断上下文的前提下更自然地处理中途插话，智能体完成打断任务后可继续原会话流程。";
+"settings.noise.aiVad.tips" = "优雅打断是声网自研智能打断算法，能够自动判断当前用户说话的语境并执行打断策略";
 "settings.noise.smartPause" = "智能暂停";
-"settings.noise.smartPause.tips" = "智能暂停会在识别到自然停顿时短暂暂停响应，减少误触发和抢话。";
+"settings.noise.smartPause.tips" = "智能暂停是声网自研高阶智能体对话算法，支持让智能体临时停下逻辑推理去做其他事情，返回后继续让智能体按照打断前的节点继续的技术";
 "settings.transcript.render.mode" = "字幕渲染模式";
 "settings.transcript.render.word.mode" = "Word 模式";
 "settings.transcript.render.text.mode" = "Text - 字幕先出模式";

@@ -12,15 +12,24 @@ import Common
 
 extension CallOutSipViewController {
     private func uploadLatestLatencyReportIfNeeded() {
-        guard let latestSession = LatencyMetricsManager.shared.fetchLatest(),
+        guard let presetName = AppContext.settingManager().preset?.name, !presetName.isEmpty,
+              let latestSession = LatencyMetricsManager.shared.fetch(presetName: presetName),
               latestSession.hasTurns else {
             return
         }
 
+        let turnIds = latestSession.turns.map(\.turnId)
+        let transcriptions = messageView.snapshotTurnTranscriptions(turnIds: turnIds)
+        LatencyMetricsManager.shared.updateTurnTranscriptions(presetName: presetName, transcriptions)
+
+        guard let sessionToUpload = LatencyMetricsManager.shared.fetch(presetName: presetName) else {
+            return
+        }
+
         toolBox.uploadLatencyReport(
-            session: latestSession
+            session: sessionToUpload
         ) { [weak self] uploadedAt in
-            LatencyMetricsManager.shared.updateReportUploadedAt(uploadedAt)
+            LatencyMetricsManager.shared.updateReportUploadedAt(presetName: presetName, uploadedAt)
             self?.addLog("[latency-report] upload success uploadedAt: \(uploadedAt?.description ?? "nil")")
         } failure: { [weak self] error in
             self?.addLog("[latency-report] upload skipped/failed: \(error)")
@@ -153,10 +162,12 @@ extension CallOutSipViewController {
     private func performCall() {
         showCallingView()
         channelName = "agent_\(UUID().uuidString.prefix(8))"
-        LatencyMetricsManager.shared.beginSession(
-            presetName: AppContext.settingManager().preset?.name,
-            channelName: channelName
-        )
+        if let presetName = AppContext.settingManager().preset?.name, !presetName.isEmpty {
+            LatencyMetricsManager.shared.beginSession(
+                presetName: presetName,
+                channelName: channelName
+            )
+        }
         agentUid = AppContext.agentUid
         Task {
             do {

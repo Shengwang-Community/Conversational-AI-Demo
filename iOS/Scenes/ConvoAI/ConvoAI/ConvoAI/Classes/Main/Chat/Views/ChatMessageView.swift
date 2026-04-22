@@ -847,8 +847,8 @@ class ChatView: UIView {
         return viewModel.messages.last { $0.isMine == fromUser }
     }
 
-    func snapshotTurnTranscription(turnId: Int) -> AgentLatencyData.TurnTranscriptionSnapshot {
-        viewModel.snapshotTurnTranscription(turnId: turnId)
+    func snapshotTurnTranscriptions(turnIds: [Int]) -> [Int: AgentLatencyData.TurnTranscriptionSnapshot] {
+        viewModel.snapshotTurnTranscriptions(turnIds: turnIds)
     }
     
     func stopLoadingAnimation() {
