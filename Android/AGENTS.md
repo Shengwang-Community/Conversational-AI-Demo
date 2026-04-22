@@ -1,4 +1,4 @@
-# Android 项目 AI 协作规范（草案）
+# Android 项目 AI 协作规范
 
 > 适用于使用 AI Agent 参与 Android 项目开发的仓库。默认技术栈为 Android + Kotlin + Gradle；当前仓库主路径为传统 View + ViewBinding，局部实现以目标模块为准。所有约定以目标仓库实现为准，若与外部规范冲突以本文件优先。
 
@@ -25,7 +25,7 @@
 | Mode | 识别特征 | 响应策略 |
 |------|---------|---------|
 | **workflow** | 明确要求改文件、执行构建/测试/adb/提交流水线验证，或明确要求进入 workflow | **启动工作流（强制状态管理）** |
-| **continue** | 用户明确输入“继续 / 接着做 / 继续 <任务名>”，且 `.agents/state/tasks/` 中存在 `WORKFLOW_STATUS` 为 `active` 或 `blocked` 的任务 | 选择并恢复该任务，进入 workflow |
+| **continue** | 用户明确输入“继续 / 接着做 / 继续 <TASK_TITLE> / 继续 <task-id>”，且 `.agents/state/tasks/` 中存在 `WORKFLOW_STATUS` 为 `active` 或 `blocked` 的任务 | 选择并恢复该任务，进入 workflow |
 | **analysis** | 仓库分析、读代码、看 diff、看日志、排查根因，但尚未进入改动执行 | 允许只读命令，不创建或更新任务状态 |
 | **general** | 技术咨询、概念解释、一般问题 | 直接回答，不启动 workflow |
 
@@ -89,7 +89,8 @@ analysis 模式禁止：
 - 不得仅因任务文件存在而自动进入 continue
 - 若当前请求是新任务，按新任务进入 workflow
 - 若当前请求可能与旧任务相关，但无法确定是否续做，必须先提示用户选择“继续旧任务”或“启动新任务”
-- 若存在多个未完成任务，必须要求用户指定任务名或 `task-id`
+- 若存在多个未完成任务，必须要求用户指定 `TASK_TITLE` 或 `task-id`
+- 用户口头所说的“任务名”默认指任务状态文件中的 `TASK_TITLE`，不是临时自由描述
 - `blocked` 表示“可恢复”，不表示“必须恢复”
 - `completed` 永不触发 continue
 
@@ -100,8 +101,10 @@ analysis 模式禁止：
 > **只要进入 workflow 模式，必须先通过 `ac-workflow` 完成 workflow 编排与状态就绪检查，否则不得执行任何开发动作。**
 
 1. **先进入 `ac-workflow`**
-   - `ac-workflow` 会调用 `ac-memory`
-   - `ac-memory` 负责检查/创建/校验 `.agents/state/INDEX.md` 与当前任务状态文件
+   - `ac-workflow` 先读取 `.agents/state/INDEX.md` 与未完成任务摘要，判定这是新任务还是 continue
+   - 若是 continue，必须先解析到明确的 `TASK_TITLE` 或 `task-id`，再绑定目标任务
+   - 只有目标任务明确后才调用 `ac-memory`
+   - `ac-memory` 负责检查/创建/校验已选中的当前任务状态文件与 `.agents/state/INDEX.md`
    - 状态就绪后再路由到 `single` / `single + reviewer` 或 `planner / executor / reviewer`
 
 2. **建议在本轮输出中回显当前任务状态（推荐）**：
@@ -183,11 +186,12 @@ analysis 模式禁止：
 #### 1. 维护入口
 
 - 进入 workflow：先通过 `ac-workflow`
-- `ac-workflow` 会调用 `ac-memory`
+- `ac-workflow` 会先判定“新任务 / continue”以及 continue 对应的 `TASK_TITLE` / `task-id`
+- 只有目标任务明确后，`ac-workflow` 才会调用 `ac-memory`
 - `ac-memory` 负责：
   - 创建或校验 `.agents/state/INDEX.md`
-  - 创建、选择或修复当前任务状态文件
-  - 校验头字段（含 `TASK_ID` / `TASK_TYPE` / `WORKFLOW_STATUS`）与固定区块
+  - 创建、选择或修复已明确绑定的当前任务状态文件
+  - 校验头字段（含 `TASK_ID` / `TASK_TITLE` / `TASK_TYPE` / `WORKFLOW_STATUS`）与固定区块
   - 同步当前任务摘要
 
 #### 2. 强制更新节点
@@ -199,6 +203,7 @@ analysis 模式禁止：
 - 遇到阻塞 / 决策点时
 - 新增或更新验证证据时
 - 识别到未验证风险时
+- 收到或关闭 review finding 时
 - **即使是轻量任务（单文件修改、同步、微调）**
 
 > ⚠️ **禁止以"任务太小"为由跳过状态更新。**
@@ -207,6 +212,7 @@ analysis 模式禁止：
 
 当前任务状态文件头部必须包含：
 - `TASK_ID: <yyyy-mm-dd-slug>`
+- `TASK_TITLE: <short-stable-title>`
 - `TASK_TYPE: feat|fix|refactor|chore|docs`
 - `PLAN_FROZEN: true|false`
 - `CURRENT_ROLE: planner|executor|reviewer|single`
@@ -218,6 +224,7 @@ analysis 模式禁止：
 - `active`：任务正在推进，可继续执行或恢复
 - `blocked`：已强制收尾，等待继续或补充信息
 - `completed`：当前任务已收尾，不应仅因任务文件存在而自动触发 `continue`
+- `TASK_TITLE`：用于 continue 选择与索引展示的稳定短标题；用户输入“继续 <任务名>”时，默认匹配这里
 
 当前任务状态文件必须包含并维护以下区块：
 1. 目标
@@ -227,15 +234,17 @@ analysis 模式禁止：
 5. 关键决策日志（全量追加）
 6. 验收证据（Evidence）
 7. 未验证清单（Gaps）
-8. 提交计划
-9. Execution Contract
+8. Review Findings（闭环）
+9. 提交计划
+10. Execution Contract
 
 `.agents/state/INDEX.md` 至少维护：
 
-- `CURRENT_TASK`
+- `CURRENT_TASK`（存 `TASK_ID`；没有进行中的任务时写 `none`）
 - `## Active`
 - `## Blocked`
 - `## Completed`
+- 列表项格式：`<task-id> | <TASK_TITLE> | <task-type> | <role> | <status>`
 
 #### 4. 模板
 - 使用 `docs/TASK_STATE_TEMPLATE.md`
@@ -266,6 +275,7 @@ analysis 模式禁止：
   - 哪些行为是本轮明确非目标，不应按发布态默认要求直接判成回退
   - 哪些看起来有风险的行为目前只能记为 `Gaps` / `assumption` / `open question`
 - 若 reviewer 发现的问题与上述边界不冲突，应优先定性为未验证风险或契约问题，而不是直接要求回退实现
+- 收到 review finding 后，必须将每条 finding 写入 `Review Findings（闭环）`，并只用 `fixed` / `rejected with evidence` / `accepted as gap` / `requires re-plan` 之一收尾
 - **发现问题立即修复，不得累积**
 
 ### 完成判定与验证新鲜度
@@ -325,7 +335,7 @@ analysis 模式禁止：
 待继续：
 - [未完成任务列表]
 
-下一步：开启新对话，输入「继续 <任务名>」
+下一步：开启新对话，输入「继续 <TASK_TITLE>」或「继续 <task-id>」
 ```
 
 ## Android 开发约束
@@ -398,7 +408,7 @@ analysis 模式禁止：
 
 ```bash
 rg -n "PROJECT_STATE\\.md|旧术语|旧路径|过时模块名" AGENTS.md docs .agents/skills
-rg -n "TASK_ID|TASK_TYPE|PLAN_FROZEN|CURRENT_ROLE|WORKFLOW_STATUS|Execution Contract" AGENTS.md docs .agents/skills
+rg -n "TASK_ID|TASK_TITLE|TASK_TYPE|PLAN_FROZEN|CURRENT_ROLE|WORKFLOW_STATUS|Review Findings|Execution Contract" AGENTS.md docs .agents/skills
 ```
 
 - 检查模块名、路径、命令示例是否与仓库一致

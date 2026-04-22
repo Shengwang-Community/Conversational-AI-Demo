@@ -1,4 +1,4 @@
 interface:
   display_name: "AC Task"
   short_description: "Route workflow entry, guard continue intent, and own final summary closeout"
-  default_prompt: "Use $ac-workflow as the workflow entrypoint and final summary owner: validate `.agents/state/INDEX.md` and the active task state through $ac-memory, only resume when the user explicitly indicates continue, route into the correct execution role, and reclaim control after $ac-review pass for summary closeout."
+  default_prompt: "Use $ac-workflow as the workflow entrypoint and final summary owner: inspect `.agents/state/INDEX.md` first, resolve whether this is a new task or a continue target by `TASK_TITLE` or `task-id`, then bind the selected task state through $ac-memory, route into the correct execution role, and reclaim control after $ac-review pass for summary closeout."

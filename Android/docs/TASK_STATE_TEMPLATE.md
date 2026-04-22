@@ -5,6 +5,7 @@
 说明：由 `ac-memory` 负责创建、结构校验与任务索引同步；由 `ac-workflow` 负责在 workflow 入口、continue 与收尾时编排状态流转。
 
 TASK_ID: <yyyy-mm-dd-slug>
+TASK_TITLE: <short-stable-title>
 TASK_TYPE: feat|fix|refactor|chore|docs
 PLAN_FROZEN: false
 CURRENT_ROLE: single
@@ -51,6 +52,10 @@ LAST_UPDATED_AT: YYYY-MM-DD
 ## 未验证清单（Gaps）
 
 - <尚未验证的风险与原因，例如低版本设备、平板、深色模式、不同 variant、docs workflow 未做端到端演练>
+
+## Review Findings（闭环）
+
+- <finding 标题或摘要> | source: <review / follow-up / self-review> | outcome: fixed|rejected with evidence|accepted as gap|requires re-plan | note: <结论依据或后续动作>
 
 ## 提交计划
 

@@ -98,7 +98,7 @@ docs-only / skills-only 任务还应补充：
    - `rejected with evidence`
    - `accepted as gap`
    - `requires re-plan`
-5. 先更新当前任务状态文件中的对应结论，并同步任务索引，再进入后续实现或收尾
+5. 先将对应结论写入当前任务状态文件的 `Review Findings（闭环）`，并同步任务索引，再进入后续实现或收尾
 
 ### 何时必须回到 `ac-plan`
 
@@ -190,7 +190,7 @@ docs-only / skills-only 任务还应补充：
 - [ ] 尚未实际演练的 skill / continue 场景已写入 Gaps
 - [ ] 未运行的命令、未验证的流程没有被包装成“已完成”
 - [ ] review request 已携带最小材料，未以“改完了”替代 Contract / Evidence / Gaps
-- [ ] review findings 已显式闭环，未出现未归类的反馈项
+- [ ] review findings 已写回 `Review Findings（闭环）` 并显式闭环，未出现未归类的反馈项
 
 ---
 

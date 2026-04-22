@@ -13,8 +13,9 @@
 - workflow 任务每次阶段结束必须更新当前任务状态文件，并同步 `.agents/state/INDEX.md`
 - analysis 模式允许只读命令，不写任务状态
 - 纯文档 / skill / template 任务也属于 workflow，不按 general 模式处理
-- 存在未完成任务不等于自动 continue；只有用户明确说“继续 / 接着做 / 继续 <任务名>”时，才按 continue 恢复
-- 若存在多个未完成任务，先要求用户指定任务名或 `task-id`
+- 存在未完成任务不等于自动 continue；只有用户明确说“继续 / 接着做 / 继续 <TASK_TITLE> / 继续 <task-id>”时，才按 continue 恢复
+- continue 进入前，先由 `ac-workflow` 从索引和未完成任务摘要中解析目标任务，再交给 `ac-memory` 绑定状态文件
+- 若存在多个未完成任务，先要求用户指定 `TASK_TITLE` 或 `task-id`
 - 带 reviewer 的路线在 `✅ 校验` 通过后，统一回交 `ac-workflow` 执行最终 `📝 总结`
 - 代码任务优先跑 `gradlew` 检查；docs-only 任务优先做路径、术语、模板一致性检查
 - 触及 `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/` 或 `subRender/` 字幕组件时，默认按高风险处理，扩大验证范围

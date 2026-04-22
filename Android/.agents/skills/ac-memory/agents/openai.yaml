@@ -1,4 +1,4 @@
 interface:
   display_name: "AC Memory"
-  short_description: "Manage task-state files and the workflow index before work continues"
-  default_prompt: "Use $ac-memory to create, validate, and update `.agents/state/INDEX.md` plus the active task state file before planner, executor, or reviewer work continues."
+  short_description: "Manage a resolved task-state file and the workflow index"
+  default_prompt: "Use $ac-memory to create, validate, and update `.agents/state/INDEX.md` plus the caller-selected task state file after `ac-workflow` has resolved whether this is a new task or a specific continue target."
