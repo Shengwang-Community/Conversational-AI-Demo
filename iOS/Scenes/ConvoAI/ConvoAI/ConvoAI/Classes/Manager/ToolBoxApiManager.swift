@@ -51,7 +51,7 @@ class ToolBoxApiManager: NSObject {
             "agent_id": session.agentId ?? "",
             "channel": session.channelName ?? "",
             "preset_name": session.presetName ?? "",
-            "preset_display_name": session.presetName ?? "",
+            "preset_display_name": session.presetDisplayName ?? "",
             "call_start_at": Int(session.startedAt.rounded()),
             "turn_event": session.turns.map { turn in
                 let transcription = session.transcription(for: turn.turnId)

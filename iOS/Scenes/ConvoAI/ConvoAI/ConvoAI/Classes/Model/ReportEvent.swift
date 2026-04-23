@@ -107,29 +107,29 @@ public final class AgentLatencyData: NSObject, Codable {
     }
 
     public var presetName: String?
+    public var presetDisplayName: String?
     public var agentId: String?
     public var channelName: String?
     public var startedAt: TimeInterval
     public var turns: [Turn]
     public var turnTranscriptions: [String: TurnTranscriptionSnapshot]
-    public var reportUploadedAt: TimeInterval?
 
     public init(
         presetName: String? = nil,
+        presetDisplayName: String? = nil,
         agentId: String? = nil,
         channelName: String? = nil,
         startedAt: TimeInterval = 0,
         turns: [Turn] = [],
-        turnTranscriptions: [String: TurnTranscriptionSnapshot] = [:],
-        reportUploadedAt: TimeInterval? = nil
+        turnTranscriptions: [String: TurnTranscriptionSnapshot] = [:]
     ) {
         self.presetName = presetName
+        self.presetDisplayName = presetDisplayName
         self.agentId = agentId
         self.channelName = channelName
         self.startedAt = startedAt
         self.turns = turns
         self.turnTranscriptions = turnTranscriptions
-        self.reportUploadedAt = reportUploadedAt
         super.init()
     }
 
@@ -137,34 +137,50 @@ public final class AgentLatencyData: NSObject, Codable {
         !turns.isEmpty
     }
 
+    public func transcription(for turnId: Int) -> TurnTranscriptionSnapshot? {
+        turnTranscriptions["\(turnId)"]
+    }
+}
+
+public struct AgentReportData: Codable {
+    public let agentId: String
+    public let reportedAt: TimeInterval
+
+    public init(agentId: String, reportedAt: TimeInterval) {
+        self.agentId = agentId
+        self.reportedAt = reportedAt
+    }
+
     public func resolvedReportUrl(baseUrl: String?) -> String? {
-        guard let agentId, !agentId.isEmpty,
+        guard !agentId.isEmpty,
               let baseUrl, !baseUrl.isEmpty else {
             return nil
         }
         return "\(baseUrl)\(agentId)"
-    }
-
-    public var isReportReady: Bool {
-        reportUploadedAt != nil && resolvedReportUrl(baseUrl: AppContext.shared.latencyDataReportPageBaseUrl) != nil
-    }
-
-    public func transcription(for turnId: Int) -> TurnTranscriptionSnapshot? {
-        turnTranscriptions["\(turnId)"]
     }
 }
 
 public final class LatencyMetricsManager: NSObject {
     public static let shared = LatencyMetricsManager()
 
-    private let cache: DataCache<AgentLatencyData>
+    private let sessionCache: DataCache<AgentLatencyData>
+    private let reportCache: DataCache<AgentReportData>
 
     public override convenience init() {
-        self.init(storage: UserDefaultsStorage(), key: "latency_metrics_store")
+        self.init(
+            storage: UserDefaultsStorage(),
+            sessionKey: "latency_metrics_store",
+            reportKey: "latency_report_store"
+        )
     }
 
-    public init(storage: StorageProtocol, key: String = "latency_metrics_store") {
-        self.cache = DataCache(storage: storage, key: key)
+    public init(
+        storage: StorageProtocol,
+        sessionKey: String = "latency_metrics_store",
+        reportKey: String = "latency_report_store"
+    ) {
+        self.sessionCache = DataCache(storage: storage, key: sessionKey)
+        self.reportCache = DataCache(storage: storage, key: reportKey)
         super.init()
     }
 
@@ -175,28 +191,34 @@ public final class LatencyMetricsManager: NSObject {
         return presetName
     }
 
-    public func beginSession(presetName: String, channelName: String?, startedAt: TimeInterval = Date().timeIntervalSince1970 * 1000) {
+    public func beginSession(
+        presetName: String,
+        presetDisplayName: String?,
+        channelName: String?,
+        startedAt: TimeInterval = Date().timeIntervalSince1970 * 1000
+    ) {
         guard let key = cacheKey(for: presetName) else {
             return
         }
         let data = AgentLatencyData(
             presetName: presetName,
+            presetDisplayName: presetDisplayName,
             channelName: channelName,
             startedAt: startedAt,
             turns: []
         )
-        cache.save(id: key, value: data)
+        sessionCache.save(id: key, value: data)
     }
 
     public func updateAgentId(presetName: String, _ agentId: String?) {
         guard let key = cacheKey(for: presetName) else {
             return
         }
-        guard let current = cache.fetch(id: key) else {
+        guard let current = sessionCache.fetch(id: key) else {
             return
         }
         current.agentId = agentId
-        cache.save(id: key, value: current)
+        sessionCache.save(id: key, value: current)
     }
 
     public func append(
@@ -206,56 +228,82 @@ public final class LatencyMetricsManager: NSObject {
         guard let key = cacheKey(for: presetName) else {
             return
         }
-        let current = cache.fetch(id: key) ?? AgentLatencyData(
+        let current = sessionCache.fetch(id: key) ?? AgentLatencyData(
             presetName: presetName,
             startedAt: turn.timestamp
         )
         if current.presetName == nil {
             current.presetName = presetName
         }
+        if current.presetDisplayName == nil {
+            current.presetDisplayName = presetName
+        }
         if current.startedAt == 0 {
             current.startedAt = turn.timestamp
         }
         current.turns.append(turn)
-        cache.save(id: key, value: current)
+        sessionCache.save(id: key, value: current)
     }
 
     public func updateTurnTranscriptions(presetName: String, _ transcriptions: [Int: AgentLatencyData.TurnTranscriptionSnapshot]) {
         guard let key = cacheKey(for: presetName) else {
             return
         }
-        guard !transcriptions.isEmpty, let current = cache.fetch(id: key) else {
+        guard !transcriptions.isEmpty, let current = sessionCache.fetch(id: key) else {
             return
         }
         for (turnId, transcription) in transcriptions {
             current.turnTranscriptions["\(turnId)"] = transcription
         }
-        cache.save(id: key, value: current)
+        sessionCache.save(id: key, value: current)
     }
 
     public func fetch(presetName: String) -> AgentLatencyData? {
         guard let key = cacheKey(for: presetName) else {
             return nil
         }
-        return cache.fetch(id: key)
+        return sessionCache.fetch(id: key)
+    }
+
+    public func fetchReport(presetName: String) -> AgentReportData? {
+        guard let key = cacheKey(for: presetName) else {
+            return nil
+        }
+        return reportCache.fetch(id: key)
     }
 
     public func fetchAll() -> [String: AgentLatencyData] {
-        cache.fetchAll()
+        sessionCache.fetchAll()
     }
 
     public func removeAll() {
-        cache.removeAll()
+        sessionCache.removeAll()
+        reportCache.removeAll()
     }
 
-    public func updateReportUploadedAt(presetName: String, _ uploadedAt: TimeInterval?) {
+    public func storeReportInfoIfSessionMatches(
+        presetName: String,
+        sessionStartedAt: TimeInterval?,
+        agentId: String,
+        reportedAt: TimeInterval
+    ) -> Bool {
         guard let key = cacheKey(for: presetName) else {
-            return
+            return false
         }
-        guard let current = cache.fetch(id: key) else {
-            return
+        guard !agentId.isEmpty else {
+            return false
         }
-        current.reportUploadedAt = uploadedAt
-        cache.save(id: key, value: current)
+        guard let current = sessionCache.fetch(id: key) else {
+            return false
+        }
+        if let sessionStartedAt,
+           current.startedAt != sessionStartedAt {
+            return false
+        }
+        reportCache.save(
+            id: key,
+            value: AgentReportData(agentId: agentId, reportedAt: reportedAt)
+        )
+        return true
     }
 }
