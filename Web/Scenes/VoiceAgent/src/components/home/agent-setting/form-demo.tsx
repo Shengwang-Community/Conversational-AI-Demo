@@ -53,7 +53,7 @@ import {
 import { ETranscriptHelperMode } from '@/conversational-ai-api/type'
 import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
 import { cn, isCN } from '@/lib/utils'
-import { useAgentSettingsStore, useGlobalStore } from '@/store'
+import { useAgentSettingsStore, useGlobalStore, useReportStore } from '@/store'
 import type { TAgentSettings } from '@/store/agent'
 import { useRTCStore } from '@/store/rtc'
 import type { IAgentPreset } from '@/type/agent'
@@ -81,6 +81,7 @@ export function AgentSettingsForm(props: {
     setIsPresetDigitalReminderIgnored,
     setShowSALSettingSidebar
   } = useGlobalStore()
+  const { sessionsByAgentId } = useReportStore()
 
   const { remote_rtc_uid } = useRTCStore()
 
@@ -131,7 +132,7 @@ export function AgentSettingsForm(props: {
       aivad_target_presets
     ]
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPreset, settingsForm.watch('asr.language')])
+  }, [selectedPreset, settingsForm.watch])
 
   const { advanced_features_enable_sal, is_support_sal } = React.useMemo(() => {
     return {
@@ -149,7 +150,7 @@ export function AgentSettingsForm(props: {
       updateSettings(value as TAgentSettings)
     })
     return () => subscription.unsubscribe()
-  }, [settingsForm, updateSettings, settings])
+  }, [settingsForm, updateSettings])
 
   React.useEffect(() => {
     // !SPECIAL CASE[independent]
@@ -201,7 +202,7 @@ export function AgentSettingsForm(props: {
     aivad_enabled_by_default,
     selectedPreset,
     target_language,
-    process.env.NEXT_PUBLIC_LOCALE
+    settingsForm.setValue
   ])
 
   React.useEffect(() => {
@@ -209,7 +210,7 @@ export function AgentSettingsForm(props: {
       'advanced_features.enable_sal',
       !!advanced_features_enable_sal
     )
-  }, [advanced_features_enable_sal])
+  }, [advanced_features_enable_sal, settingsForm.setValue])
 
   React.useEffect(() => {
     if (avatarList && avatarList.length > 0) {
@@ -220,6 +221,16 @@ export function AgentSettingsForm(props: {
       }
     }
   }, [avatarList])
+
+  const latestReportSession = React.useMemo(() => {
+    return Object.values(sessionsByAgentId)
+      .filter((session) => session.presetName === selectedPreset.name)
+      .sort(
+        (a, b) =>
+          Math.max(b.uploadedAt || 0, b.callStartAt) -
+          Math.max(a.uploadedAt || 0, a.callStartAt)
+      )[0]
+  }, [selectedPreset.name, sessionsByAgentId])
 
   return (
     <Form {...settingsForm}>
@@ -288,11 +299,11 @@ export function AgentSettingsForm(props: {
                           field.onChange(value)
                         }
                       }}
-                    //   disabled={
-                    //     disableFormMemo ||
-                    //     settingsForm.watch('preset_name') !==
-                    //       EAgentPresetMode.CUSTOM
-                    //   }
+                      //   disabled={
+                      //     disableFormMemo ||
+                      //     settingsForm.watch('preset_name') !==
+                      //       EAgentPresetMode.CUSTOM
+                      //   }
                     >
                       <SelectTrigger
                         className='w-2/3'
@@ -429,10 +440,10 @@ export function AgentSettingsForm(props: {
               <SelectContent>
                 {(isCN
                   ? [
-                    ETranscriptHelperMode.WORD,
-                    ETranscriptHelperMode.CHUNK,
-                    ETranscriptHelperMode.TEXT
-                  ]
+                      ETranscriptHelperMode.WORD,
+                      ETranscriptHelperMode.CHUNK,
+                      ETranscriptHelperMode.TEXT
+                    ]
                   : [ETranscriptHelperMode.WORD, ETranscriptHelperMode.TEXT]
                 ).map((item) => (
                   <SelectItem key={`render-mode-${item}`} value={item}>
@@ -461,18 +472,6 @@ export function AgentSettingsForm(props: {
           <InnerCard className='mt-6'>
             <h3 className=''>DEV MODE</h3>
             <Separator />
-            <div className='flex items-center justify-between gap-2'>
-              <FormLabel className='text-icontext'>
-                {isCN ? '渲染模式回退' : 'Render mode fallback'}
-              </FormLabel>
-              <FormControl>
-                <Switch
-                  disabled={disableFormMemo}
-                  checked={enableRenderModeFallback}
-                  onCheckedChange={updateEnableRenderModeFallback}
-                />
-              </FormControl>
-            </div>
             <FormField
               control={settingsForm.control}
               name='graph_id'
@@ -523,7 +522,39 @@ export function AgentSettingsForm(props: {
                 </FormItem>
               )}
             />
+            <div className='flex items-center justify-between gap-2'>
+              <FormLabel className='text-icontext'>
+                {isCN ? '渲染模式回退' : 'Render mode fallback'}
+              </FormLabel>
+              <FormControl>
+                <Switch
+                  disabled={disableFormMemo}
+                  checked={enableRenderModeFallback}
+                  onCheckedChange={updateEnableRenderModeFallback}
+                />
+              </FormControl>
+            </div>
           </InnerCard>
+        )}
+
+        {!disableFormMemo && (
+          <div className='flex items-center justify-between gap-2'>
+            <Label className='font-normal'>{t('report.title')}</Label>
+            {latestReportSession?.agentId ? (
+              <NextLink
+                href={`/reports/${latestReportSession.agentId}`}
+                className='flex items-center gap-1 text-[10px] text-icontext md:text-xs'
+              >
+                <span>{t('report.view')}</span>
+                <ChevronRight className='size-5' />
+              </NextLink>
+            ) : (
+              <div className='flex items-center gap-1 text-[10px] text-icontext-disabled md:text-xs'>
+                <span>{t('report.empty')}</span>
+                <ChevronRight className='size-5' />
+              </div>
+            )}
+          </div>
         )}
 
         <div className='mt-4 flex flex-col items-center justify-center'>

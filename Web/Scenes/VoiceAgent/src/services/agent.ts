@@ -6,6 +6,8 @@ import { localResSchema } from '@/app/api/token/utils'
 import {
   API_AGENT,
   API_AGENT_CUSTOM_PRESET,
+  API_AGENT_METRICS,
+  API_AGENT_METRICS_REPORT,
   API_AGENT_PING,
   API_AGENT_PRESETS,
   API_AGENT_STOP,
@@ -38,13 +40,14 @@ import type {
   IUserInfoInput
 } from '@/type/agent'
 import type { TDevModeQuery } from '@/type/dev'
+import type { IAgentMetrics, IAgentMetricsReportPayload } from '@/type/report'
 
 const DEFAULT_FETCH_TIMEOUT = 10000
 
 export class ResourceLimitError extends Error {
   public readonly code: ERROR_CODE | SIP_ERROR_CODE
 
-  constructor(code: ERROR_CODE, message?: string) {
+  constructor(code: ERROR_CODE | SIP_ERROR_CODE, message?: string) {
     super(message)
     this.name = 'ResourceLimitError'
     this.code = code
@@ -225,9 +228,20 @@ export const startAgent = async (
     ?.preset_name
     ? localStartAgentPropertiesSchema.parse(payload)
     : localOpensourceStartAgentPropertiesSchema.parse(payload)
+  const nextData = {
+    ...data,
+    app_feature: {
+      enable_aivad:
+        data.app_feature?.enable_aivad ??
+        data.advanced_features?.enable_aivad ??
+        false,
+      pause_state_enabled: data.app_feature?.pause_state_enabled ?? false,
+      enable_local_bvc: data.app_feature?.enable_local_bvc ?? true
+    }
+  }
 
   try {
-    const opensourceData = data as z.infer<
+    const opensourceData = nextData as z.infer<
       typeof localOpensourceStartAgentPropertiesSchema
     >
     const llm_system_messages = opensourceData.llm?.system_messages?.trim()
@@ -261,7 +275,7 @@ export const startAgent = async (
         'Content-Type': 'application/json',
         Authorization: `Bearer ${Cookies.get('token')}`
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(nextData)
     },
     {
       abortController
@@ -269,6 +283,13 @@ export const startAgent = async (
   )
 
   const respData = await resp?.json()
+  if (!respData?.data) {
+    throw new Error(
+      respData?.msg ||
+        respData?.message ||
+        `Agent start failed${respData?.code ? ` (${respData.code})` : ''}`
+    )
+  }
   const remoteRespSchema = basicRemoteResSchema.extend({
     data: remoteAgentStartRespDataSchema
   })
@@ -298,6 +319,17 @@ export const startAgentDev = async (
   const query = generateDevModeQuery({ devMode })
   const url = `${API_AGENT}${query}`
   const data = localStartAgentPropertiesSchema.parse(payload)
+  const nextData = {
+    ...data,
+    app_feature: {
+      enable_aivad:
+        data.app_feature?.enable_aivad ??
+        data.advanced_features?.enable_aivad ??
+        false,
+      pause_state_enabled: data.app_feature?.pause_state_enabled ?? false,
+      enable_local_bvc: data.app_feature?.enable_local_bvc ?? true
+    }
+  }
   const resp = await fetchWithTimeout(
     url,
     {
@@ -306,7 +338,7 @@ export const startAgentDev = async (
         'Content-Type': 'application/json',
         Authorization: `Bearer ${Cookies.get('token')}`
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(nextData)
     },
     {
       abortController
@@ -445,6 +477,73 @@ export const retrievePresetById = async (id: string) => {
   }
   const remoteRespSchema = basicRemoteResSchema.extend({
     data: z.array(remoteAgentCustomPresetItem)
+  })
+  const remoteResp = remoteRespSchema.parse(respData)
+  return remoteResp.data
+}
+
+export const reportAgentMetrics = async (
+  payload: IAgentMetricsReportPayload,
+  options?: TDevModeQuery
+) => {
+  const query = generateDevModeQuery(options ?? {})
+  const url = `${API_AGENT_METRICS_REPORT}${query}`
+  const resp = await fetchWithTimeout(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${Cookies.get('token')}`
+    },
+    body: JSON.stringify(payload)
+  })
+  const respData = await resp?.json()
+  const remoteRespSchema = basicRemoteResSchema.extend({
+    data: z
+      .object({
+        uploaded_at: z.number().optional()
+      })
+      .optional()
+  })
+  return remoteRespSchema.parse(respData)
+}
+
+export const getAgentMetrics = async (
+  agentId: string
+): Promise<IAgentMetrics> => {
+  const resp = await fetchWithTimeout(API_AGENT_METRICS(agentId), {
+    method: 'GET'
+  })
+  const respData = await resp?.json()
+  const remoteRespSchema = z.object({
+    code: z.number().optional(),
+    msg: z.string().optional(),
+    data: z.object({
+      agent_id: z.string(),
+      channel: z.string(),
+      preset_name: z.string(),
+      preset_display_name: z.string(),
+      call_start_at: z.number(),
+      turn_event: z.array(
+        z.object({
+          turn_id: z.number(),
+          transcription: z
+            .object({
+              assistant: z.string().optional(),
+              user: z.string().optional()
+            })
+            .optional(),
+          metrics: z.object({
+            e2e_latency_ms: z.number(),
+            segmented_latency_ms: z.array(
+              z.object({
+                name: z.string(),
+                latency: z.number()
+              })
+            )
+          })
+        })
+      )
+    })
   })
   const remoteResp = remoteRespSchema.parse(respData)
   return remoteResp.data

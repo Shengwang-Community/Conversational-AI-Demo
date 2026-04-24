@@ -1,9 +1,9 @@
 import { logger as agoraLogger } from '@agora-js/report'
 import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng'
 import type { ChannelType, RTMClient, RTMEvents } from 'agora-rtm'
-import { ELoggerType, factoryFormatLog, logger, genTraceID } from './utils/logger'
+import { handlePresenceStates } from '@/conversational-ai-api/presence'
+import { parseTurnFinishedMessage } from '@/lib/latency-metrics'
 import {
-  type EAgentState,
   EChatMessagePriority,
   EChatMessageType,
   EConversationalAIAPIEvents,
@@ -17,19 +17,27 @@ import {
   type IConversationalAIAPIEventHandlers,
   type IMessageSalStatus,
   type ITranscriptHelperItem,
+  type ITurnFinishedMessage,
   type IUserTranscription,
   NotFoundError,
   type TAgentMetric,
+  type TAgentTurnFinished,
   type TMessageReceipt,
   type TModuleError,
   type TStateChangeEvent
 } from './type'
 import { EventHelper } from './utils/event'
+import {
+  ELoggerType,
+  factoryFormatLog,
+  genTraceID,
+  logger
+} from './utils/logger'
 import { CovSubRenderController } from './utils/sub-render'
 
 const TAG = 'ConversationalAIAPI'
 // const CONSOLE_LOG_PREFIX = `[${TAG}]`
-const VERSION = '2.0.2'
+const VERSION = '2.2.0'
 
 const formatLog = factoryFormatLog({ tag: TAG })
 
@@ -620,6 +628,45 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       event
     )
   }
+  private onAgentListeningChanged(agentUserId: string, isListening: boolean) {
+    this.callMessagePrint(
+      ELoggerType.debug,
+      `>>> ${EConversationalAIAPIEvents.AGENT_LISTENING_CHANGED}`,
+      agentUserId,
+      isListening
+    )
+    this.emit(
+      EConversationalAIAPIEvents.AGENT_LISTENING_CHANGED,
+      agentUserId,
+      isListening
+    )
+  }
+  private onAgentThinkingChanged(agentUserId: string, isThinking: boolean) {
+    this.callMessagePrint(
+      ELoggerType.debug,
+      `>>> ${EConversationalAIAPIEvents.AGENT_THINKING_CHANGED}`,
+      agentUserId,
+      isThinking
+    )
+    this.emit(
+      EConversationalAIAPIEvents.AGENT_THINKING_CHANGED,
+      agentUserId,
+      isThinking
+    )
+  }
+  private onAgentSpeakingChanged(agentUserId: string, isSpeaking: boolean) {
+    this.callMessagePrint(
+      ELoggerType.debug,
+      `>>> ${EConversationalAIAPIEvents.AGENT_SPEAKING_CHANGED}`,
+      agentUserId,
+      isSpeaking
+    )
+    this.emit(
+      EConversationalAIAPIEvents.AGENT_SPEAKING_CHANGED,
+      agentUserId,
+      isSpeaking
+    )
+  }
   private onAgentInterrupted(
     agentUserId: string,
     event: { turnID: number; timestamp: number }
@@ -634,6 +681,15 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
   }
   private onDebugLog(message: string) {
     this.emit(EConversationalAIAPIEvents.DEBUG_LOG, message)
+  }
+  private onAgentTurnFinished(agentUserId: string, turn: TAgentTurnFinished) {
+    this.callMessagePrint(
+      ELoggerType.debug,
+      `>>> ${EConversationalAIAPIEvents.AGENT_TURN_FINISHED}`,
+      agentUserId,
+      turn
+    )
+    this.emit(EConversationalAIAPIEvents.AGENT_TURN_FINISHED, agentUserId, turn)
   }
   private onAgentMetrics(agentUserId: string, metrics: TAgentMetric) {
     this.callMessagePrint(
@@ -784,6 +840,13 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
           `>>> [traceID:${traceId}] ${ERTMEvents.MESSAGE}`,
           parsedMessage
         )
+        const turn = parseTurnFinishedMessage(
+          parsedMessage as ITurnFinishedMessage
+        )
+        if (turn) {
+          this.onAgentTurnFinished(message.publisher, turn)
+          return
+        }
         this.covSubRenderController.handleMessage(parsedMessage, {
           publisher: message.publisher
         })
@@ -799,6 +862,13 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
           `>>> [traceID:${traceId}] ${ERTMEvents.MESSAGE}`,
           parsedMessage
         )
+        const turn = parseTurnFinishedMessage(
+          parsedMessage as ITurnFinishedMessage
+        )
+        if (turn) {
+          this.onAgentTurnFinished(message.publisher, turn)
+          return
+        }
         this.covSubRenderController.handleMessage(parsedMessage, {
           publisher: message.publisher
         })
@@ -826,21 +896,46 @@ export class ConversationalAIAPI extends EventHelper<IConversationalAIAPIEventHa
       `Publisher: ${presence.publisher}`
     )
     // Handle the presence event
-    const stateChanged = presence.stateChanged
-    if (stateChanged?.state && stateChanged?.turn_id) {
+    const stateChanged = presence.stateChanged || {}
+    const mapped = handlePresenceStates(presence.publisher, {
+      timestamp: presence.timestamp,
+      states: stateChanged as Record<string, string>
+    })
+    if (mapped.agentStateChanged) {
       this.callMessagePrint(
         ELoggerType.debug,
         `>>> [traceID:${traceId}] ${ERTMEvents.PRESENCE}`,
-        `State changed: ${stateChanged.state}, Turn ID: ${stateChanged.turn_id}, timestamp: ${presence.timestamp}`
+        `State changed: ${mapped.agentStateChanged.event.state}, Turn ID: ${mapped.agentStateChanged.event.turnID}, timestamp: ${presence.timestamp}`
       )
-      this.covSubRenderController.handleAgentStatus(
-        presence as Omit<RTMEvents.PresenceEvent, 'stateChanged'> & {
-          stateChanged: {
-            state: EAgentState
-            turn_id: string
-          }
-        }
+      this.onAgentStateChanged(
+        mapped.agentStateChanged.agentUserId,
+        mapped.agentStateChanged.event
       )
+    }
+    if (mapped.agentListeningChanged) {
+      this.onAgentListeningChanged(
+        mapped.agentListeningChanged.agentUserId,
+        mapped.agentListeningChanged.isListening
+      )
+    }
+    if (mapped.agentThinkingChanged) {
+      this.onAgentThinkingChanged(
+        mapped.agentThinkingChanged.agentUserId,
+        mapped.agentThinkingChanged.isThinking
+      )
+    }
+    if (mapped.agentSpeakingChanged) {
+      this.onAgentSpeakingChanged(
+        mapped.agentSpeakingChanged.agentUserId,
+        mapped.agentSpeakingChanged.isSpeaking
+      )
+    }
+    if (
+      mapped.agentStateChanged ||
+      mapped.agentListeningChanged ||
+      mapped.agentThinkingChanged ||
+      mapped.agentSpeakingChanged
+    ) {
       return
     }
     this.callMessagePrint(

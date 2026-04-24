@@ -28,6 +28,26 @@ export const agentAdvancedFeaturesSchema = z
   })
   .describe('Advanced Features')
 
+export const agentAppFeatureSchema = z
+  .object({
+    enable_aivad: z
+      .boolean()
+      .describe('Enable AIVAD')
+      .optional()
+      .default(false),
+    pause_state_enabled: z
+      .boolean()
+      .describe('Enable Pause State')
+      .optional()
+      .default(false),
+    enable_local_bvc: z
+      .boolean()
+      .describe('Enable Local BVC')
+      .optional()
+      .default(true)
+  })
+  .describe('App Feature')
+
 export const agentPresetLLMStyleConfigSchema = z.object({
   display_name: z.string(),
   style: z.string().min(1),
@@ -66,7 +86,8 @@ export const agentPresetSchema = z.object({
         language_code: z.string().optional(),
         language_name: z.string().optional(),
         aivad_supported: z.boolean().optional(),
-        aivad_enabled_by_default: z.boolean().optional()
+        aivad_enabled_by_default: z.boolean().optional(),
+        pause_state_enabled_by_default: z.boolean().optional()
       })
     )
     .optional(),
@@ -111,6 +132,11 @@ export const publicAgentSettingSchema = z.object({
     .describe('ASR')
     .optional(),
   advanced_features: agentAdvancedFeaturesSchema,
+  app_feature: agentAppFeatureSchema.default({
+    enable_aivad: false,
+    pause_state_enabled: false,
+    enable_local_bvc: true
+  }),
   sal: z
     .object({
       sal_mode: z.literal('locking'),
@@ -167,6 +193,11 @@ export const opensourceAgentSettingSchema = z.object({
     })
     .describe('ASR'),
   advanced_features: agentAdvancedFeaturesSchema.optional(),
+  app_feature: agentAppFeatureSchema.default({
+    enable_aivad: false,
+    pause_state_enabled: false,
+    enable_local_bvc: true
+  }),
   llm: z
     .object({
       url: z.string().url().describe('LLM URL'),
@@ -208,6 +239,11 @@ export const opensourceAgentSettingSchema = z.object({
 })
 
 export const opensourceAgentFormSchema = z.object({
+  enable_render_mode_fallback: z
+    .boolean()
+    .describe('Allow Subtitle Fallback')
+    .optional()
+    .default(true),
   asr: z
     .object({
       language: z
@@ -216,8 +252,18 @@ export const opensourceAgentFormSchema = z.object({
         .describe('Language')
     })
     .describe('ASR'),
+  enable_local_bvc: z
+    .boolean()
+    .describe('Enable Local BVC')
+    .optional()
+    .default(true),
   enable_bhvs: z.boolean().describe('Enable BHVS').optional().default(true),
   enable_aivad: z.boolean().describe('Enable AIVAD').optional().default(false),
+  pause_state_enabled: z
+    .boolean()
+    .describe('Enable Pause State')
+    .optional()
+    .default(false),
   enable_rtm: z.boolean().describe('Enable RTM').optional().default(true),
   enable_sal: z.boolean().describe('Enable SAL').optional().default(false),
   llm: z
@@ -272,7 +318,7 @@ export const localStartAgentPropertiesSchema =
           params: z
             .object({
               agora_uid: z.string().describe('Agora UID'),
-              avatar_id: z.string().describe('Avatar ID')
+              avatar_id: z.string().describe('Avatar ID').optional()
             })
             .describe('Avatar Params')
             .optional()

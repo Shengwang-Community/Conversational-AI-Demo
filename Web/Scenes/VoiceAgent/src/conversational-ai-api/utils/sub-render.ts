@@ -1,6 +1,5 @@
 import { logger as agoraLogger } from '@agora-js/report'
 import type { RTMEvents } from 'agora-rtm'
-import { ELoggerType, factoryFormatLog, logger } from '../utils/logger'
 import {
   type EAgentState,
   EChatMessageType,
@@ -23,11 +22,12 @@ import {
   type TQueueItem,
   type TTranscriptHelperObjectWord
 } from '../type'
+import { ELoggerType, factoryFormatLog, logger } from '../utils/logger'
 
 const TAG = 'CovSubRenderController'
 const CONSOLE_LOG_PREFIX = `[${TAG}]`
 const SELF_USER_ID = 0
-const VERSION = '2.0.2'
+const VERSION = '2.2.0'
 
 const DEFAULT_INTERVAL = 200 // milliseconds
 const DEFAULT_CHUNK_INTERVAL = 100 // milliseconds, 10 char/s
@@ -1075,7 +1075,10 @@ export class CovSubRenderController {
     }
 
     if (isMessageSalStatus) {
-      this.handleMessageSalStatus(options.publisher, message as unknown as any)
+      this.handleMessageSalStatus(
+        options.publisher,
+        message as unknown as IMessageSalStatus
+      )
       return
     }
   }

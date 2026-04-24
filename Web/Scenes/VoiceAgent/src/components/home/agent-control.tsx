@@ -58,22 +58,27 @@ import {
   EMessageSalStatus,
   ERTCCustomEvents,
   ERTCEvents,
-  ETranscriptHelperMode,
   type IAgentTranscription,
   type IMessageSalStatus,
   type ITranscriptHelperItem,
   type IUserTranscription,
+  type TAgentTurnFinished,
   type TStateChangeEvent
 } from '@/conversational-ai-api/type'
 import {
   useIsAgentCalling,
   useIsAgentSipCalling
 } from '@/hooks/use-is-agent-calling'
+import {
+  buildLatencyReportPayload,
+  type TranscriptLikeItem
+} from '@/lib/latency-metrics'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import {
   pingAgent,
   ResourceLimitError,
+  reportAgentMetrics,
   startAgent,
   stopAgent
 } from '@/services/agent'
@@ -82,6 +87,7 @@ import {
   useAgentSettingsStore,
   useChatStore,
   useGlobalStore,
+  useReportStore,
   useRTCStore,
   useUserInfoStore
 } from '@/store'
@@ -150,6 +156,14 @@ export default function AgentControl(props: { className?: string }) {
     sipStatus
   } = useSipStore()
   const { setHistory, clearHistory } = useChatStore()
+  const {
+    startSession,
+    upsertTurn,
+    syncTranscript,
+    finalizeActiveSession,
+    markUploaded,
+    clearActiveSession
+  } = useReportStore()
   const { accountUid, clearUserInfo } = useUserInfoStore()
 
   const sipStatusRef = React.useRef<NodeJS.Timeout | null>(null)
@@ -211,6 +225,10 @@ export default function AgentControl(props: { className?: string }) {
         EConversationalAIAPIEvents.MESSAGE_SAL_STATUS,
         onMessageSalStatus
       )
+      conversationalAIAPI.on(
+        EConversationalAIAPIEvents.AGENT_TURN_FINISHED,
+        onTurnFinished
+      )
 
       conversationalAIAPI.on(
         EConversationalAIAPIEvents.TRANSCRIPT_UPDATED,
@@ -227,7 +245,7 @@ export default function AgentControl(props: { className?: string }) {
       )?.preset_type
       const messageServiceMode =
         presetType?.startsWith('standard') ||
-          settings.preset_type === 'custom_private'
+        settings.preset_type === 'custom_private'
           ? 'default'
           : 'legacy'
 
@@ -352,13 +370,13 @@ export default function AgentControl(props: { className?: string }) {
         // avatar releated
         avatar: settings.avatar
           ? {
-            enable: true,
-            vendor: settings.avatar.vendor,
-            params: {
-              agora_uid: `${avatar_rtc_uid}`,
-              avatar_id: settings.avatar.avatar_id
+              enable: true,
+              vendor: settings.avatar.vendor,
+              params: {
+                agora_uid: `${avatar_rtc_uid}`,
+                avatar_id: settings.avatar.avatar_id
+              }
             }
-          }
           : undefined,
         channel: channel_name,
         agent_rtc_uid: `${agent_rtc_uid}`,
@@ -369,6 +387,14 @@ export default function AgentControl(props: { className?: string }) {
       startAgentAbortControllerRef.current = abortController
       const res = await startAgent(payload, abortController)
       updateAgentId(res.agent_id)
+      startSession({
+        agentId: res.agent_id,
+        channel: channel_name,
+        presetName: settings.preset_name,
+        presetDisplayName:
+          selectedPreset?.preset.display_name || settings.preset_name,
+        callStartAt: Date.now()
+      })
 
       setConversationTimerEndTimestamp(Date.now() + conversationDuration * 1000)
       setHeartBeat()
@@ -522,8 +548,13 @@ export default function AgentControl(props: { className?: string }) {
         logger.log('clearAndExit unauthorizedError')
         toast.error(tLogin('unauthorizedError'))
       }
+    } finally {
+      await uploadLatencyReport()
     }
   }
+
+  const clearAndExitRef = React.useRef(clearAndExit)
+  clearAndExitRef.current = clearAndExit
 
   // SIP
 
@@ -562,6 +593,14 @@ export default function AgentControl(props: { className?: string }) {
       updateSipStatus(ESipStatus.CALLING)
       console.log('startSipService res', res)
       updateAgentId(res.agent_id)
+      startSession({
+        agentId: res.agent_id,
+        channel: channel_name,
+        presetName: sipPreset?.preset_name || settings.preset_name,
+        presetDisplayName:
+          selectedPreset?.preset.display_name || sipPreset?.preset_name || '',
+        callStartAt: Date.now()
+      })
     } catch (error: unknown) {
       logger.error({ error }, 'startSipService error')
       console.log('startSipService error', (error as Error).message)
@@ -629,6 +668,10 @@ export default function AgentControl(props: { className?: string }) {
       EConversationalAIAPIEvents.TRANSCRIPT_UPDATED,
       onTextChanged
     )
+    conversationalAIAPI.on(
+      EConversationalAIAPIEvents.AGENT_TURN_FINISHED,
+      onTurnFinished
+    )
 
     conversationalAIAPI.subscribeMessage(channel_name)
     await rtmHelper.join(channel_name)
@@ -655,6 +698,7 @@ export default function AgentControl(props: { className?: string }) {
     startAgentAbortControllerRef.current = null
     clearCommon()
     updateChannelName()
+    await uploadLatencyReport()
   }
 
   const onLocalTracksChanged = (tracks: IUserTracks) => {
@@ -735,7 +779,7 @@ export default function AgentControl(props: { className?: string }) {
     if (data.curState === 'RECONNECTING' && data.revState === 'CONNECTED') {
       logger.info(
         'agent is listening -> user is offline(due to network issue) temporarily' +
-        '[onConnectionStateChange]'
+          '[onConnectionStateChange]'
       )
       toast.warning(tAgent('tmpDisconnected'))
       updateAgentStatus(EConnectionStatus.RECONNECTING)
@@ -747,7 +791,7 @@ export default function AgentControl(props: { className?: string }) {
     if (data.curState === 'CONNECTED' && data.revState === 'RECONNECTING') {
       logger.info(
         'agent is listening -> user is online again(in short time)' +
-        '[onConnectionStateChange]'
+          '[onConnectionStateChange]'
       )
       toast.success(tAgent('agentReconnected'))
       updateAgentStatus(EConnectionStatus.CONNECTED)
@@ -778,6 +822,18 @@ export default function AgentControl(props: { className?: string }) {
   ) => {
     logger.info({ history }, 'onTextChanged')
     setHistory(history)
+    syncTranscript(
+      history.map((item) => ({
+        turn_id: item.turn_id,
+        uid: item.uid,
+        text: item.text
+      })) as TranscriptLikeItem[]
+    )
+  }
+
+  const onTurnFinished = (_agentUserId: string, turn: TAgentTurnFinished) => {
+    logger.info({ turn }, 'onTurnFinished')
+    upsertTurn(turn)
   }
 
   const onAgentStateChangedLegacy = (state: EAgentState) => {
@@ -815,6 +871,34 @@ export default function AgentControl(props: { className?: string }) {
       }
     } else {
       updateSalStatus(ESALSettingsMode.OFF)
+    }
+  }
+
+  const uploadLatencyReport = async () => {
+    const session = finalizeActiveSession()
+    if (!session?.agentId || session.turns.length === 0) {
+      clearActiveSession()
+      return
+    }
+
+    try {
+      const payload = buildLatencyReportPayload({
+        agentId: session.agentId,
+        channel: session.channel,
+        presetName: session.presetName,
+        presetDisplayName: session.presetDisplayName,
+        callStartAt: session.callStartAt,
+        turns: session.turns,
+        transcriptByTurnId: session.transcriptByTurnId
+      })
+      const res = await reportAgentMetrics(payload, {
+        devMode: isDevMode
+      })
+      markUploaded(session.agentId, res.data?.uploaded_at)
+    } catch (error) {
+      logger.error({ error, agentId: session.agentId }, 'uploadLatencyReport')
+    } finally {
+      clearActiveSession()
     }
   }
 
@@ -871,7 +955,7 @@ export default function AgentControl(props: { className?: string }) {
   // listen to global events
   React.useEffect(() => {
     const handleStopAgent = () => {
-      clearAndExit()
+      void clearAndExitRef.current()
     }
 
     window.addEventListener('stop-agent', handleStopAgent)
@@ -879,16 +963,15 @@ export default function AgentControl(props: { className?: string }) {
     return () => {
       window.removeEventListener('stop-agent', handleStopAgent)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function cleanUpSip() {
+  const cleanUpSip = React.useCallback(() => {
     if (sipStatusRef.current) {
       clearInterval(sipStatusRef.current)
       sipStatusRef.current = null
     }
     updateSipStatus(ESipStatus.IDLE)
-  }
+  }, [updateSipStatus])
 
   React.useEffect(() => {
     if (agent_id && showCallingPage) {
@@ -924,13 +1007,13 @@ export default function AgentControl(props: { className?: string }) {
     return () => {
       cleanUpSip()
     }
-  }, [agent_id, showCallingPage, updateSipStatus])
+  }, [agent_id, showCallingPage, updateSipStatus, cleanUpSip])
 
   React.useEffect(() => {
     if (sipStatus === ESipStatus.CONNECTED) {
       setShowSubtitle(true)
     }
-  }, [sipStatus])
+  }, [sipStatus, setShowSubtitle])
 
   return (
     <>
@@ -1056,7 +1139,7 @@ const CompatibilityCheck = () => {
       setShowCompatibilityDialog(true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [setIsRTCCompatible, setShowCompatibilityDialog])
 
   return (
     <Dialog

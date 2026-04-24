@@ -39,13 +39,13 @@ export interface IAgentSettings {
   conversationTimerEndTimestamp: number | null
   settings: TAgentSettings
   transcriptionRenderMode: ETranscriptHelperMode
-  enableRenderModeFallback: boolean
   onFormSetValue?: UseFormSetValue<z.infer<typeof publicAgentSettingSchema>>
   updateFormSetValue: (
     cb: UseFormSetValue<z.infer<typeof publicAgentSettingSchema>>
   ) => void
-  updateTranscriptionRenderMode: (mode: ETranscriptHelperMode) => void
+  enableRenderModeFallback: boolean
   updateEnableRenderModeFallback: (enabled: boolean) => void
+  updateTranscriptionRenderMode: (mode: ETranscriptHelperMode) => void
   updateSettings: (settings: TAgentSettings) => void
   updatePresets: (
     newPresets: z.infer<typeof agentPresetSchema>[],
@@ -107,6 +107,11 @@ const DEFAULT_SETTINGS = {
     enable_aivad: false,
     enable_rtm: true,
     enable_sal: false
+  },
+  app_feature: {
+    enable_aivad: false,
+    pause_state_enabled: false,
+    enable_local_bvc: true
   },
   // !SPECIAL CASE[audio_scenario]
   parameters: {

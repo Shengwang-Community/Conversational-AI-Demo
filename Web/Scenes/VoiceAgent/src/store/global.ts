@@ -9,8 +9,15 @@ export interface IGlobalStore {
   showSubtitle: boolean
   setShowSubtitle: (showSubtitle: boolean) => void
   onClickSubtitle: () => void
+  showLiveMetrics: boolean
+  setShowLiveMetrics: (showLiveMetrics: boolean) => void
   isDevMode: boolean
   setIsDevMode: (isDevMode: boolean) => void
+  customAppId: string
+  setCustomAppId: (customAppId: string) => void
+  isCustomAppIdOverrideEnabled: boolean
+  setCustomAppIdOverrideEnabled: (isCustomAppIdOverrideEnabled: boolean) => void
+  resetDevModeOverrides: () => void
   isRTCCompatible: boolean
   showCompatibilityDialog: boolean
   setShowCompatibilityDialog: (showCompatibilityDialog: boolean) => void
@@ -64,8 +71,17 @@ export const useGlobalStore = create<IGlobalStore>()(
       setShowSubtitle: (showSubtitle: boolean) => set({ showSubtitle }),
       onClickSubtitle: () =>
         set((state) => ({ showSubtitle: !state.showSubtitle })),
+      showLiveMetrics: true,
+      setShowLiveMetrics: (showLiveMetrics: boolean) =>
+        set({ showLiveMetrics }),
       isDevMode: false,
       setIsDevMode: (isDevMode: boolean) => set({ isDevMode }),
+      customAppId: '',
+      setCustomAppId: (customAppId: string) => set({ customAppId }),
+      isCustomAppIdOverrideEnabled: false,
+      setCustomAppIdOverrideEnabled: (isCustomAppIdOverrideEnabled: boolean) =>
+        set({ isCustomAppIdOverrideEnabled }),
+      resetDevModeOverrides: () => set({ isCustomAppIdOverrideEnabled: false }),
       isRTCCompatible: true,
       setIsRTCCompatible: (isRTCCompatible: boolean) =>
         set({ isRTCCompatible }),
@@ -107,7 +123,9 @@ export const useGlobalStore = create<IGlobalStore>()(
     {
       name: 'global-store',
       partialize: (state) => ({
-        isPresetDigitalReminderIgnored: state.isPresetDigitalReminderIgnored
+        isPresetDigitalReminderIgnored: state.isPresetDigitalReminderIgnored,
+        customAppId: state.customAppId,
+        isCustomAppIdOverrideEnabled: state.isCustomAppIdOverrideEnabled
       })
     }
   )
