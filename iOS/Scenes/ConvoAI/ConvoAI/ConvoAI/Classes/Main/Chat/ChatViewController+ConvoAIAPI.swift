@@ -125,6 +125,18 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
         agentStateView.setState(event.state)
         volumeAnimateView.setState(event.state)
     }
+
+    public func onAgentListeningChanged(agentUserId: String, isListening: Bool) {
+        addLog("<<< [onAgentListeningChanged] isListening: \(isListening)")
+    }
+
+    public func onAgentThinkingChanged(agentUserId: String, isThinking: Bool) {
+        addLog("<<< [onAgentThinkingChanged] isThinking: \(isThinking)")
+    }
+
+    public func onAgentSpeakingChanged(agentUserId: String, isSpeaking: Bool) {
+        addLog("<<< [onAgentSpeakingChanged] isSpeaking: \(isSpeaking)")
+    }
     
     public func onAgentInterrupted(agentUserId: String, event: InterruptEvent) {
         addLog("<<< [onAgentInterrupted]")

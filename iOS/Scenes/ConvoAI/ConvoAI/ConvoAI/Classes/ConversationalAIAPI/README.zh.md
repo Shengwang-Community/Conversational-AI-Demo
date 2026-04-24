@@ -57,6 +57,21 @@
    convoAIAPI.addHandler(handler: self)
    ```
 
+   同时支持通过 Presence 接收 agent 的 listening、thinking、speaking 细粒度状态回调：
+   ```swift
+   func onAgentListeningChanged(agentUserId: String, isListening: Bool) {
+       print("Agent listening: \(isListening)")
+   }
+
+   func onAgentThinkingChanged(agentUserId: String, isThinking: Bool) {
+       print("Agent thinking: \(isThinking)")
+   }
+
+   func onAgentSpeakingChanged(agentUserId: String, isSpeaking: Bool) {
+       print("Agent speaking: \(isSpeaking)")
+   }
+   ```
+
 4. **订阅频道消息**
 
    在开始会话前调用：
@@ -70,6 +85,8 @@
         }
     }
    ```
+
+   订阅成功后，组件会自动调用一次 `whoNow` 补拉当前频道的 Presence 状态，避免在订阅前已上报的 agent 状态被遗漏。
 
 5. **（可选）加入 RTC 频道前设置音频参数**
 
@@ -197,6 +214,7 @@ public func onMessageError(agentUserId: String, error: MessageError) {
         }
     }
    ```
+  订阅成功后，组件还会主动查询一次当前频道用户的 Presence 状态，并复用同一套状态回调逻辑补发当前状态。
 
 - **取消订阅**
   每次结束会话调用：

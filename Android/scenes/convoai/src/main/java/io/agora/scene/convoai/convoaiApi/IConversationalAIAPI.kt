@@ -5,7 +5,7 @@ import io.agora.rtc2.RtcEngine
 import io.agora.rtm.RtmClient
 import io.agora.scene.convoai.convoaiApi.AgentState.UNKNOWN
 
-const val ConversationalAIAPI_VERSION = "2.1.0"
+const val ConversationalAIAPI_VERSION = "2.1.1"
 
 /*
  * This file defines the core interfaces, data structures, and error system for the Conversational AI API.
@@ -594,6 +594,33 @@ interface IConversationalAIAPIEventHandler {
      * @param event State change event
      */
     fun onAgentStateChanged(agentUserId: String, event: StateChangeEvent)
+
+    /**
+     * Called when the agent listening state changes.
+     * This is a fine-grained Presence callback in addition to onAgentStateChanged.
+     *
+     * @param agentUserId Agent user ID
+     * @param isListening Whether the agent is currently listening
+     */
+    fun onAgentListeningChanged(agentUserId: String, isListening: Boolean) {}
+
+    /**
+     * Called when the agent thinking state changes.
+     * This is a fine-grained Presence callback in addition to onAgentStateChanged.
+     *
+     * @param agentUserId Agent user ID
+     * @param isThinking Whether the agent is currently thinking
+     */
+    fun onAgentThinkingChanged(agentUserId: String, isThinking: Boolean) {}
+
+    /**
+     * Called when the agent speaking state changes.
+     * This is a fine-grained Presence callback in addition to onAgentStateChanged.
+     *
+     * @param agentUserId Agent user ID
+     * @param isSpeaking Whether the agent is currently speaking
+     */
+    fun onAgentSpeakingChanged(agentUserId: String, isSpeaking: Boolean) {}
 
     /**
      * Called when an interrupt event occurs.
