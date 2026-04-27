@@ -32,6 +32,12 @@ description: Create, repair, and refresh `.agents/state/INDEX.md` plus a caller-
 7. Sync `.agents/state/INDEX.md` with `CURRENT_TASK` plus `Active / Blocked / Completed` summaries, using the stable entry format `task-id | TASK_TITLE | task-type | role | status`.
 8. Return a concise state summary such as `[STATE] <task-id> | <role> | <status> | 已检查/已更新` for the caller to echo when helpful.
 9. When todo items, decisions, Evidence, Gaps, Review Findings closure, or role/freeze/status change, update the relevant blocks before control returns to the caller.
+9.5. For low-risk non-copy-edit work, allow multiple closely related small edits within the same execution burst to be recorded as one material update, as long as the task state still reflects:
+- current Top 3 completion
+- new Evidence
+- current role / freeze / status
+- updated `LAST_UPDATED_AT`
+9.6. For low-risk non-copy-edit work, append `关键决策日志` only when a real scope, wording, routing, or consistency decision was made; do not require artificial decision entries for trivial wording-only edits.
 10. For docs-only tasks, allow `Checks` / `Evidence` to record consistency review instead of pretending code builds ran.
 
 Outputs:

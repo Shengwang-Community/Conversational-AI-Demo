@@ -19,6 +19,17 @@ description: Freeze an Execution Contract for code or docs workflow tasks in thi
 - write `Steps` as an ordered execution sequence, not abstract intentions
 - name concrete `Checks` such as commands, consistency searches, manual paths, or review checks
 - for docs / skills / templates tasks, list the coupled files that must stay in sync
+4.6. For low-risk non-copy-edit docs / skills / template work, the frozen Contract may use a minimal form as long as it remains directly executable:
+- Scope
+- Files to change
+- Steps
+- Checks
+- Commit plan
+
+In this case:
+- `Forbidden` may be a short boundary sentence
+- `Rollback note` may be a short revert note
+- avoid expanding the Contract with generic filler
 5. For development-stage integration or debugging tasks, encode review boundaries directly into the existing Contract fields and state:
 - local cache / debug data policy
 - backend contract assumptions used in this round

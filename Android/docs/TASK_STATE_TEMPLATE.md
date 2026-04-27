@@ -46,6 +46,9 @@ LAST_UPDATED_AT: YYYY-MM-DD
 
 - <命令输出：例如 `./gradlew lint` / `./gradlew test` / `./gradlew assembleDebug`>
 - <文档任务检查：例如路径、模块名、术语、模板联动、一致性搜索结果>
+- <低风险非 copy-edit 任务示例：`rg` 一致性搜索通过；相关路径存在；术语已与 `AGENTS.md` / `docs` / `.agents/skills` 对齐>
+- <低风险非 copy-edit 任务示例：未运行构建或测试，原因：docs-only / skills-only 轻量 workflow 任务>
+- <低风险非 copy-edit 任务示例：仅修改单文件或少量联动文件，未触及高风险模块>
 - <截图 / 录屏 / Logcat / 模拟器或真机验证结果>
 - <手工回归路径：启动、返回、旋转屏、后台恢复、权限弹窗等>
 

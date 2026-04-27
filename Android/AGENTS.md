@@ -53,6 +53,17 @@
 - 写操作命令（`./gradlew`、测试、构建、`adb`、提交前验证等）
 - 任务状态变化（新增任务、更新 Contract、更新 Evidence / Gaps）
 
+纯展示文案豁免：
+
+- 若请求仅涉及纯展示文案修改，可直接执行，不进入 workflow
+- 纯展示文案修改同时满足以下条件：
+  - 仅修改展示文案，不改代码逻辑、资源 key、布局、样式、配置、埋点
+  - 不影响权限提示、错误处理语义、风控语义、计费语义、协议文案
+  - 不涉及 `AGENTS.md`、`.agents/skills/`、`docs/*.md`
+  - 不需要运行 `./gradlew`、`adb`、设备验证
+  - 修改范围为单文件或少量同类资源文件
+- 若执行中发现已超出纯文案边界，必须立即升级到 workflow 模式
+
 补充约定：
 
 - 若用户请求本身已经明确要求“修复 / 实现 / 重构 / 跑检查 / 进入 workflow”，直接进入 workflow，不需要二次确认
@@ -159,6 +170,28 @@ analysis 模式禁止：
 - `single + reviewer`：先按 `single` 完成最小 planning + execution，再强制进入 `ac-review`
 - `planner -> executor -> reviewer`：按显式多角色顺序交接；高风险任务默认使用该路线
 
+### 轻量 workflow（仅非 copy-edit 小任务）
+
+当任务同时满足以下条件时，可按轻量 workflow 处理：
+
+- 风险评分总分为 `0-2`
+- 不属于上面的纯展示文案豁免
+- 目标为 docs / skill / template / 注释 / 路径修正 / 术语同步，或其他仍需要最小状态追踪的小范围开发动作
+- 修改范围为单文件，或同目录下少量强联动文件
+- 不涉及 `gradle.properties`、`build.gradle(.kts)`、`settings.gradle`、`AndroidManifest.xml`
+- 不涉及 `scenes/convoai/.../convoaiApi/`、`subRender/`、IoT / BLE / 权限 / RTC / RTM 链路
+- 不需要运行 `./gradlew`、`adb`、设备验证
+
+处理约定：
+
+- 仍进入 workflow，并先经过 `ac-workflow`
+- 仍由 `ac-memory` 维护状态
+- 仍需由 `ac-plan` 冻结 `Execution Contract`
+- 允许使用简版 Contract
+- 允许把同一轮连续的小改动聚合成一次状态写回
+- 默认路由为 `single`
+- 仅当任务涉及 `AGENTS.md`、多个 `SKILL.md`、或 `docs` / `skills` / 模板联动语义时，升级为 `single + reviewer`
+
 附加约定：
 
 - 涉及 `AGENTS.md`、`.agents/skills/`、`docs/*.md` 多文档联动时，复杂度和影响面通常不低于 `1`
@@ -174,6 +207,7 @@ analysis 模式禁止：
 - `ac-review`：在 `ac-memory` 校验通过后，按 Contract 验收 Evidence/Gaps，必要时触发解冻回退
 - `self-improving-agent`：在 `ac-review` 完成后按需提炼可复用经验，只写自身 `memory/`；若要采纳经验并修改仓库规则资产，必须重新进入 docs/skills workflow
 - 执行中若出现新增设计、范围扩大、关键约束变化：必须回到 `ac-plan` 解冻重规划，再次冻结后继续
+- `micro-task`：不是第二套 workflow，而是在现有主状态机内对纯 copy-edit 之外、仍需最小状态追踪的低风险任务应用简版 Contract、聚合写回与更窄的 reviewer 触发边界
 
 
 ## AI 行为规范
@@ -204,9 +238,16 @@ analysis 模式禁止：
 - 新增或更新验证证据时
 - 识别到未验证风险时
 - 收到或关闭 review finding 时
-- **即使是轻量任务（单文件修改、同步、微调）**
+- **即使是轻量 workflow 任务（单文件修改、同步、微调）**
 
 > ⚠️ **禁止以"任务太小"为由跳过状态更新。**
+
+对 `micro-task` 的补充约定：
+
+- 允许把同一轮连续的小改动合并为一次 material update，再统一更新 `Top 3`、`Evidence`、角色字段和 `LAST_UPDATED_AT`
+- 仅在出现真实范围、措辞、路由或一致性取舍时追加 `关键决策日志`
+- 不得因为是轻量任务而省略 Contract、Evidence 或最终状态收尾
+- 纯展示文案豁免不适用上述状态维护约束，因为其默认不进入 workflow
 
 #### 3.必备区块
 

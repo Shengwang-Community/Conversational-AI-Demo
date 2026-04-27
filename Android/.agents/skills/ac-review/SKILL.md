@@ -20,6 +20,7 @@ description: Review frozen-contract execution against Evidence and Gaps for code
 - docs-only checks were recorded honestly
 - skill descriptions still explain what they do and when to use them
 - for dev-stage integration tasks, unresolved items that depend on unverified backend behavior should be framed as `Gaps` / `assumption` / `open question` unless code or evidence clearly contradicts the declared boundary
+- low-risk non-copy-edit work does not require review by default when it stays within a single docs / skills / template surface; escalate when workflow routing semantics, shared templates, AGENTS rules, or coupled terminology across multiple workflow assets also change
 7. Update `验收证据（Evidence）` with concrete proof.
 8. Update `未验证清单（Gaps）` with residual risks, missing checks, and untested continue/doc workflows.
 8.5. If review findings or follow-up comments appear, record each item in `Review Findings（闭环）` and close it explicitly with exactly one outcome:
