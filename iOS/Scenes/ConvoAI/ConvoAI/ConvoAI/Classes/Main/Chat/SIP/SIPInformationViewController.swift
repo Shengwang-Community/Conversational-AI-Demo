@@ -146,11 +146,11 @@ extension SipSettingViewController: ChannelInfoViewDelegate {
 
     func channelInfoViewDidTapDataReport(_ view: ChannelInfoView) {
         guard let presetName = AppContext.settingManager().preset?.name, !presetName.isEmpty,
-              let latestSession = LatencyMetricsManager.shared.fetch(presetName: presetName) else {
+              let latestReport = LatencyMetricsManager.shared.fetchReport(presetName: presetName) else {
             return
         }
 
-        guard let reportUrl = latestSession.resolvedReportUrl(baseUrl: AppContext.shared.latencyDataReportPageBaseUrl) else {
+        guard let reportUrl = latestReport.resolvedReportUrl(baseUrl: AppContext.shared.latencyDataReportPageBaseUrl) else {
             return
         }
 

@@ -25,12 +25,23 @@ extension CallOutSipViewController {
         guard let sessionToUpload = LatencyMetricsManager.shared.fetch(presetName: presetName) else {
             return
         }
+        let sessionStartedAt = sessionToUpload.startedAt
+        let sessionAgentId = sessionToUpload.agentId ?? ""
 
         toolBox.uploadLatencyReport(
             session: sessionToUpload
         ) { [weak self] uploadedAt in
-            LatencyMetricsManager.shared.updateReportUploadedAt(presetName: presetName, uploadedAt)
-            self?.addLog("[latency-report] upload success uploadedAt: \(uploadedAt?.description ?? "nil")")
+            guard let uploadedAt else {
+                self?.addLog("[latency-report] upload success but uploadedAt is nil")
+                return
+            }
+            let stored = LatencyMetricsManager.shared.storeReportInfoIfSessionMatches(
+                presetName: presetName,
+                sessionStartedAt: sessionStartedAt,
+                agentId: sessionAgentId,
+                reportedAt: uploadedAt
+            )
+            self?.addLog("[latency-report] upload success uploadedAt: \(uploadedAt) stored: \(stored)")
         } failure: { [weak self] error in
             self?.addLog("[latency-report] upload skipped/failed: \(error)")
         }
@@ -165,6 +176,7 @@ extension CallOutSipViewController {
         if let presetName = AppContext.settingManager().preset?.name, !presetName.isEmpty {
             LatencyMetricsManager.shared.beginSession(
                 presetName: presetName,
+                presetDisplayName: AppContext.settingManager().preset?.displayName,
                 channelName: channelName
             )
         }
