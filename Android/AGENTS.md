@@ -20,433 +20,190 @@
 
 ## 对话模式
 
-根据用户输入识别 Mode，采用不同响应策略：
-
 | Mode | 识别特征 | 响应策略 |
 |------|---------|---------|
 | **workflow** | 明确要求改文件、执行构建/测试/adb/提交流水线验证，或明确要求进入 workflow | **启动工作流（强制状态管理）** |
-| **continue** | 用户明确输入“继续 / 接着做 / 继续 <TASK_TITLE> / 继续 <task-id>”，且 `.agents/state/tasks/` 中存在 `WORKFLOW_STATUS` 为 `active` 或 `blocked` 的任务 | 先解析候选任务，再确认并恢复目标任务，进入 workflow |
+| **continue** | 用户明确输入"继续 / 接着做 / 继续 <TASK_TITLE> / 继续 <task-id>"，且 `.agents/state/tasks/` 中存在 `active` 或 `blocked` 任务 | 按「未完成任务分流」规则解析候选并恢复，进入 workflow |
 | **analysis** | 仓库分析、读代码、看 diff、看日志、排查根因，但尚未进入改动执行 | 允许只读命令，不创建或更新任务状态 |
 | **general** | 技术咨询、概念解释、一般问题 | 直接回答，不启动 workflow |
 
 ## Review 子类型触发
 
-当用户请求包含 `review` 时，先按以下**精确短语**识别 review 子类型：
+当用户请求包含 `review` 时，先按**精确短语**识别子类型（详细边界见 `docs/REVIEW_TEMPLATES.md`）：
 
-- `开发态联调 review`：进入开发联调评审模式。默认按开发中假设评审，优先把未证实问题定性为 `Gaps` / `assumption` / `open question`，不把已声明的本地缓存策略、后端契约前提、明确非目标直接判成回退
-- `问题修复 review`：进入问题修复评审模式。默认按发布态 / 回归风险评审，重点检查问题是否真正修复、是否引入新回归、边界条件与验收标准是否闭环
+- `开发态联调 review`：默认按开发中假设评审，优先把未证实问题定性为 `Gaps` / `assumption` / `open question`
+- `问题修复 review`：默认按发布态/回归风险评审，重点检查是否真正修复、是否引入新回归
 - 未命中以上短语：按默认 code review 模式处理
 
-附加约定：
-
-- 只对精确短语生效，不做模糊同义扩展
-- 精确短语可来自用户请求，或由 `ac-plan` 明确写入 `Execution Contract`
-- 若同一条请求同时出现两个短语，必须先要求用户澄清，不得自行猜测
+精确短语仅对原文字符串生效，不做模糊扩展。两短语同时出现时必须先要求用户澄清。
 
 ## 模式切换规则
 
-### general / analysis → workflow 回切
+### general / analysis → workflow
 
-当 **general 或 analysis 模式** 下的回答即将涉及以下操作时，必须切换到 workflow 模式：
+当 **general 或 analysis 模式**下的回答即将涉及文件修改、写操作命令（`./gradlew`、构建、`adb` 等）或任务状态变化时，必须切换到 workflow 模式。
 
-- 文件修改（创建、编辑、删除）
-- 写操作命令（`./gradlew`、测试、构建、`adb`、提交前验证等）
-- 任务状态变化（新增任务、更新 Contract、更新 Evidence / Gaps）
+**纯展示文案豁免**：仅修改展示文案、不改代码逻辑/资源 key/布局/样式/配置/埋点，且不涉及 `AGENTS.md`、`.agents/skills/`、`docs/*.md`、不需要构建验证时，可直接执行不进入 workflow。若执行中发现超出边界，必须立即升级。
 
-纯展示文案豁免：
-
-- 若请求仅涉及纯展示文案修改，可直接执行，不进入 workflow
-- 纯展示文案修改同时满足以下条件：
-  - 仅修改展示文案，不改代码逻辑、资源 key、布局、样式、配置、埋点
-  - 不影响权限提示、错误处理语义、风控语义、计费语义、协议文案
-  - 不涉及 `AGENTS.md`、`.agents/skills/`、`docs/*.md`
-  - 不需要运行 `./gradlew`、`adb`、设备验证
-  - 修改范围为单文件或少量同类资源文件
-- 若执行中发现已超出纯文案边界，必须立即升级到 workflow 模式
-
-补充约定：
-
-- 若用户请求本身已经明确要求“修复 / 实现 / 重构 / 跑检查 / 进入 workflow”，直接进入 workflow，不需要二次确认
-- 只有在用户本来是在提问或分析，而当前回答需要升级成实际执行时，才提示切换
-
-**提示格式**：
-
-```text
-⚠️ 检测到需要执行开发操作
-
-当前操作需要：
-- [具体操作列表]
-
-建议切换到 workflow 模式以确保状态追踪。是否切换？
-```
+若用户请求本身已明确要求"修复/实现/重构/跑检查/进入 workflow"，直接进入，不二次确认。只有提问/分析中需要升级成执行时才提示切换。
 
 ### analysis 模式限制
 
-analysis 模式允许：
+允许：`rg`、`git status`、`git diff`、`git log`、`sed`、`cat`、`nl`、`ls` 等只读命令。  
+禁止：修改文件、运行构建/测试/`adb`、更新 `.agents/state/` 下的状态文件。
 
-- `rg`、`git status`、`git diff`、`git log`、`sed`、`cat`、`nl`、`ls`
-- 仅读取仓库上下文，不落盘任务状态
+### 未完成任务分流（continue 唯一入口）
 
-analysis 模式禁止：
+当 `.agents/state/tasks/` 中存在 `active` 或 `blocked` 任务，但用户未明确表达"继续"时：
 
-- 修改文件
-- 运行构建、测试、`adb`
-- 更新 `.agents/state/INDEX.md` 或 `.agents/state/tasks/*.md`
-
-### 未完成任务分流
-
-当 `.agents/state/tasks/` 中存在 `WORKFLOW_STATUS: active` 或 `blocked` 的任务，但用户当前请求未明确表达“继续”时：
-
-- 不得仅因任务文件存在而自动进入 continue
+- 不得仅因任务文件存在而自动进入 continue；`completed` 永不触发 continue
+- 若用户输入"继续 XXX"，优先精确匹配 `TASK_TITLE` 或 `task-id`；未命中时允许做子串/关键词候选匹配，候选唯一则先确认再绑定，候选多个则列出让用户选择
 - 若当前请求是新任务，按新任务进入 workflow
-- 若当前请求可能与旧任务相关，但无法确定是否续做，必须先提示用户选择“继续旧任务”或“启动新任务”
-- 若存在多个未完成任务，必须要求用户指定 `TASK_TITLE` 或 `task-id`
-- 用户口头所说的“任务名”默认指任务状态文件中的 `TASK_TITLE`，不是临时自由描述
-- 若用户输入“继续 XXX”但未精确命中 `TASK_TITLE` / `task-id`，允许先做子串或稳定关键词候选匹配；只有在候选唯一或用户明确确认后，才能真正绑定 continue 目标
-- 若候选超过一个，必须先向用户列出候选 `TASK_TITLE` / `task-id` 再要求确认，不得自行猜测
-- `blocked` 表示“可恢复”，不表示“必须恢复”
-- `completed` 永不触发 continue
+- 若当前请求可能与旧任务相关但无法确定，必须先提示用户选择"继续旧任务"或"启动新任务"
+- `blocked` 表示"可恢复"，不表示"必须恢复"
 
 ## workflow 模式（强制状态机）
 
-### workflow 启动门禁（Hard Gate）
+### 启动门禁（Hard Gate）
 
-> **只要进入 workflow 模式，必须先通过 `ac-workflow` 完成 workflow 编排与状态就绪检查，否则不得执行任何开发动作。**
+> **只要进入 workflow 模式，必须先通过 `ac-workflow` 完成编排与状态就绪检查，否则不得执行任何开发动作。**
 
-1. **先进入 `ac-workflow`**
-   - `ac-workflow` 先读取 `.agents/state/INDEX.md` 与未完成任务摘要，判定这是新任务还是 continue
-   - 若是 continue，先解析 `task-id` / 精确 `TASK_TITLE`；未命中时允许生成候选列表并等待用户确认
-   - 只有目标任务明确后才调用 `ac-memory`
-   - `ac-memory` 负责检查/创建/校验已选中的当前任务状态文件与 `.agents/state/INDEX.md`
-   - 状态就绪后再路由到 `single` / `single + reviewer` 或 `planner / executor / reviewer`
+`ac-workflow` 流程：读取 `INDEX.md` 与未完成任务摘要 → 判定新任务/continue（continue 按上方分流规则解析目标）→ 目标明确后调用 `ac-memory` 校验/创建状态文件 → 路由到 `single` / `single + reviewer` / `planner -> executor -> reviewer`。
 
-2. **建议在本轮输出中回显当前任务状态（推荐）**：
+建议回显：`[STATE] <task-id> | <role> | <status> | 已检查/已更新`
 
-```text
-[STATE] <task-id> | <role> | <status> | 已检查 / 已更新
-```
+### 多角色路由（风险评分制）
 
-- 任务状态文件与 `.agents/state/INDEX.md` 才是 workflow 的真实状态源
-- `[STATE]` 回显用于帮助用户感知当前任务，不再作为唯一门禁
+默认 `single`。评分维度（每项 0-2 分）：
 
-### workflow 进度展示（标准输出）
+1. 复杂度：跨模块、页面、构建配置或数据层
+2. 影响面：公共组件、共享导航、网络层、数据库、权限
+3. 不确定性：需求模糊、方案需比较、信息不足
+4. 变更风险：迁移、兼容性、回滚难度、数据一致性
+5. 验证成本：单测、设备验证、手工回归、variant 验证
 
-```text
-进入 workflow 模式
+| 总分 | 路由 |
+|------|------|
+| 0-3 | `single` |
+| 4-6 | `single + reviewer` |
+| ≥7 | `planner -> executor -> reviewer` |
 
-[🔍 澄清] → [📐 设计] → [⚡ 执行] → [✅ 校验] → [📝 总结]
-  ▲ 当前
-```
+典型参考：
+- 单文件 README/SKILL.md 微调 → `0-2` → `single`
+- 同步 AGENTS.md + skills + docs 术语 → `5` → `single + reviewer`
+- 修改 common 公共能力 → `7` → 完整三角色
+- 修改 convoaiApi/subRender 字幕链路 → `9` → 完整三角色
 
-### 多角色路由（通用评分制）
-
-**路由原则**：
-- 默认 `single`
-- 当任务风险或协调成本上升时，升级为 `planner / executor / reviewer`。
-
-**风险评分维度（每项 0-2 分）**：
-1. 复杂度：是否跨多个模块、页面、构建配置或数据层
-2. 影响面：是否影响公共组件、共享导航、公共网络层、数据库、权限
-3. 不确定性：需求是否模糊、方案是否需要比较、依赖信息是否不足
-4. 变更风险：是否涉及迁移、兼容性、回滚难度、数据一致性
-5. 验证成本：是否需要单测、设备验证、手工回归、不同 variant 验证
-
-**触发阈值**：
-- 总分 `0-3`：`single`
-- 总分 `4-6`：`single + reviewer`
-- 总分 `>=7`：完整多角色（`planner -> executor -> reviewer`）
-
-**典型评分示例**：
-
-- 单 README 文案或路径修正，且不改变 workflow 语义：复杂度 `0` + 影响面 `0` + 不确定性 `0` + 变更风险 `0` + 验证成本 `0` = `0`，走 `single`
-- 单个 `SKILL.md` 的描述或触发词微调，不改变交接关系或 UI 展示语义：复杂度 `1` + 影响面 `1` + 不确定性 `0` + 变更风险 `0` + 验证成本 `0` = `2`，走 `single`
-- 同步 `AGENTS.md`、`.agents/skills/`、`docs/*.md` 的 workflow 术语或模板语义：复杂度 `1` + 影响面 `1` + 不确定性 `1` + 变更风险 `1` + 验证成本 `1` = `5`，走 `single + reviewer`
-- 修复 `scenes:convoai` 内单页面或单流程问题，未涉及共享字幕/构建/权限链路：复杂度 `1` + 影响面 `1` + 不确定性 `0` + 变更风险 `1` + 验证成本 `1` = `4`，走 `single + reviewer`
-- 修改 `common` 公共能力或跨 `common` / `scenes:convoai` 的共享逻辑：复杂度 `2` + 影响面 `2` + 不确定性 `1` + 变更风险 `1` + 验证成本 `1` = `7`，走 `planner -> executor -> reviewer`
-- 修改 `gradle.properties`、`build.gradle(.kts)`、`settings.gradle`、`AndroidManifest.xml` 等高风险配置：复杂度 `1` + 影响面 `2` + 不确定性 `1` + 变更风险 `2` + 验证成本 `1` = `7`，走 `planner -> executor -> reviewer`
-- 修改 `convoaiApi` / `subRender` 字幕链路、RTM/RTC 消息解析或相关回调派发：复杂度 `2` + 影响面 `2` + 不确定性 `1` + 变更风险 `2` + 验证成本 `2` = `9`，走 `planner -> executor -> reviewer`
-- 修改 IoT / BLE / 配网流程、设备权限或真机强依赖链路：复杂度 `2` + 影响面 `2` + 不确定性 `1` + 变更风险 `2` + 验证成本 `2` = `9`，走 `planner -> executor -> reviewer`
-
-**路由语义（补充定义）**：
-- `single`：不是独立 skill，而是由 `ac-workflow` 编排的折叠路由；同一 Agent 需先完成最小 `ac-plan` 职责，写出 `Execution Contract` 并设置 `PLAN_FROZEN=true`，再进入执行；执行后的收尾由 `ac-workflow` 负责完成最小自检，并在进入总结前写回 `CURRENT_ROLE: single`、`WORKFLOW_STATUS: completed`
-- `single + reviewer`：先按 `single` 完成最小 planning + execution，再强制进入 `ac-review`
-- `planner -> executor -> reviewer`：按显式多角色顺序交接；高风险任务默认使用该路线
+路由语义：
+- `single`：由 `ac-workflow` 折叠执行 `ac-plan → ac-execute → summary closeout`，收尾写 `CURRENT_ROLE: single`、`WORKFLOW_STATUS: completed`
+- `single + reviewer`：同上完成后强制进入 `ac-review`，通过后统一回交 `ac-workflow` 做 `📝 总结`
+- `planner -> executor -> reviewer`：显式多角色顺序交接
 
 ### 轻量 workflow（仅非 copy-edit 小任务）
 
-当任务同时满足以下条件时，可按轻量 workflow 处理：
+满足以下条件时按轻量处理：目标为 docs/skill/template/注释/路径修正/术语同步等，修改范围为单文件或少量联动文件（允许跨 `AGENTS.md`、`.agents/skills/`、`docs/`），不涉及构建配置、高风险代码路径、`./gradlew`/`adb`/设备验证。
 
-- 不属于上面的纯展示文案豁免
-- 目标为 docs / skill / template / 注释 / 路径修正 / 术语同步，或其他仍需要最小状态追踪的小范围开发动作
-- 修改范围为单文件，或少量强联动文件（允许跨 `AGENTS.md`、`.agents/skills/`、`docs/`）
-- 不涉及 `gradle.properties`、`build.gradle(.kts)`、`settings.gradle`、`AndroidManifest.xml`
-- 不涉及 `scenes/convoai/.../convoaiApi/`、`subRender/`、IoT / BLE / 权限 / RTC / RTM 链路
-- 不需要运行 `./gradlew`、`adb`、设备验证
+轻量 workflow 中（亦称 micro-task），评分决定路由而非资格：0-3 保持 `single`，4-6 升级 `single + reviewer`，≥7 退出轻量走完整三角色。涉及 workflow 路由语义、Execution Contract/review 规则或 AGENTS.md 核心约束时，默认至少带 `reviewer`。
 
-风险评分在轻量 workflow 中用于决定路由，而不是决定资格：
-
-- 总分 `0-3`：保持 `single`
-- 总分 `4-6`：升级为 `single + reviewer`
-- 总分 `>=7`：退出轻量 workflow，改走完整多角色路线
-
-处理约定：
-
-- 仍进入 workflow，并先经过 `ac-workflow`
-- 仍由 `ac-memory` 维护状态
-- 仍需由 `ac-plan` 冻结 `Execution Contract`
-- 允许使用简版 Contract
-- 允许把同一轮连续的小改动聚合成一次状态写回
-- 默认路由为 `single`
-- 仅当任务修改 workflow 路由语义、Execution Contract / review 规则、`AGENTS.md` 核心约束，或跨多个 workflow 资产同步共享术语时，升级为 `single + reviewer`
-
-这里的“同一轮”指：
-
-- 从本轮 Contract 冻结后开始，到本次回复用户之前结束
-- 聚合写回最多覆盖 `3` 个已声明步骤或约 `50` 行净变更，超过即回到标准逐步验证节奏
-- 聚合期间仍需按声明步骤顺序执行；只是将状态写回与 Evidence 记录合并到本轮回复前一次完成
-- 当本轮聚合达到上限边缘、明显过松、或明显过紧时，应在 `Evidence` 或 `Gaps` 中补一条简短校准记录，供后续调整 `3` / `50` 阈值
-
-附加约定：
-
-- 涉及 `AGENTS.md`、`.agents/skills/`、`docs/*.md` 多文档联动时，复杂度和影响面通常不低于 `1`；这会影响 reviewer 路由，但不自动取消轻量资格
-- 涉及 workflow 路由、Execution Contract、评审模板或会改变 reviewer 结论的规则语义时，默认至少带 `reviewer`
+处理约定：仍进入 workflow 经 `ac-workflow`，仍由 `ac-memory` 维护状态、`ac-plan` 冻结 Contract（允许简版），允许把同一轮（Contract 冻结后到本次回复前）连续小改动聚合成一次状态写回。聚合上限 `3` 步或 `50` 行净变更，超出回到标准节奏。接近上限时在 Evidence/Gaps 留校准观察（阈值可接受/偏紧/偏松）。
 
 ### 执行冻结与角色纪律
 
-- `single`：由 `ac-workflow` 编排的折叠路由；同一 Agent 串行执行最小 `ac-plan -> ac-execute -> summary closeout`，但仍受冻结 Contract、范围控制与 Evidence / Gaps 约束
-- `ac-memory`：负责 `.agents/state/INDEX.md` 与当前任务状态文件的本地记忆、结构校验与同步
-- `ac-workflow`：负责 workflow 入口、阶段推进、`single` 折叠路由、continue 恢复与强制收尾编排
-- `ac-plan`：在 `ac-memory` 校验通过后，产出并写入 `Execution Contract`，设置 `PLAN_FROZEN=true`
-- `ac-execute`：在 `ac-memory` 校验通过且 `PLAN_FROZEN=true` 时，仅按 Contract 执行，不得新增设计
-- `ac-review`：在 `ac-memory` 校验通过后，按 Contract 验收 Evidence/Gaps，必要时触发解冻回退
-- `self-improving-agent`：在 `ac-review` 完成后按需提炼可复用经验，只写自身 `memory/`；若要采纳经验并修改仓库规则资产，必须重新进入 docs/skills workflow
-- 执行中若出现新增设计、范围扩大、关键约束变化：必须回到 `ac-plan` 解冻重规划，再次冻结后继续
-- `micro-task`：不是第二套 workflow，而是在现有主状态机内对纯 copy-edit 之外、仍需最小状态追踪的低风险任务应用简版 Contract、聚合写回与更窄的 reviewer 触发边界
+- `ac-memory`：状态文件与索引的创建、校验、同步
+- `ac-workflow`：入口编排、阶段推进、`single` 折叠路由、continue 恢复、强制收尾编排
+- `ac-plan`：产出并冻结 Execution Contract（`PLAN_FROZEN=true`）
+- `ac-execute`：仅按 Contract 执行，不得新增设计
+- `ac-review`：按 Contract 验收 Evidence/Gaps，必要时解冻回退
+- `self-improving-agent`：`ac-review` 后可选复盘，只写自身 `memory/`
 
+执行中出现新增设计、范围扩大或关键约束变化，必须回 `ac-plan` 解冻重规划，再次冻结后继续。
 
 ## AI 行为规范
 
 ### 任务状态文件维护（硬约束）
 
-**核心原则**：
-> **workflow 的状态源由 `.agents/state/INDEX.md` 与 `.agents/state/tasks/<task-id>.md` 组成；基础管理由 `ac-memory` 托管，workflow 编排由 `ac-workflow` 承接。**
+**核心原则**：workflow 状态源由 `.agents/state/INDEX.md` 与 `.agents/state/tasks/<task-id>.md` 组成；`ac-memory` 托管维护，`ac-workflow` 承接编排。
 
-#### 1. 维护入口
+#### 强制更新节点
 
-- 进入 workflow：先通过 `ac-workflow`
-- `ac-workflow` 会先判定“新任务 / continue”以及 continue 对应的 `TASK_TITLE` / `task-id`
-- 只有目标任务明确后，`ac-workflow` 才会调用 `ac-memory`
-- `ac-memory` 负责：
-  - 创建或校验 `.agents/state/INDEX.md`
-  - 创建、选择或修复已明确绑定的当前任务状态文件
-  - 校验头字段（含 `TASK_ID` / `TASK_TITLE` / `TASK_TYPE` / `WORKFLOW_STATUS`）与固定区块
-  - 同步当前任务摘要
+以下节点必须更新任务状态文件与 INDEX.md：
 
-#### 2. 强制更新节点
-
-- 创建 / 更新 todo
-- 完成 todo item
-- 提交 commit 后
-- 阶段切换时
-- 遇到阻塞 / 决策点时
-- 新增或更新验证证据时
-- 识别到未验证风险时
+- 创建/更新 todo、完成 todo item
+- 提交 commit 后、阶段切换时
+- 遇到阻塞/决策点、新增/更新证据或识别到未验证风险时
 - 收到或关闭 review finding 时
-- **即使是轻量 workflow 任务（单文件修改、同步、微调）**
+- **即使是轻量 workflow 任务**
 
 > ⚠️ **禁止以"任务太小"为由跳过状态更新。**
 
-对 `micro-task` 的补充约定：
+轻量任务允许同一轮聚合写回（上限 `3` 步 / `50` 行），但不得跨 turn 延迟、不得省略 Contract/Evidence/最终收尾。仅在出现真实范围/路由/一致性取舍时追加关键决策日志。
 
-- 允许把同一轮连续的小改动合并为一次 material update，再统一更新 `Top 3`、`Evidence`、角色字段和 `LAST_UPDATED_AT`
-- 这里的“同一轮”指从 Contract 冻结后到本次回复用户前的执行窗口，不允许跨 turn 延迟写回
-- 单次聚合最多覆盖 `3` 个已声明步骤或约 `50` 行净变更；超出后应拆分写回或升级为标准节奏
-- 若本轮命中或接近该上限，应在 `Evidence` 或 `Gaps` 中记录“阈值偏紧 / 阈值可接受 / 阈值偏松”的简短观察，作为后续校准依据
-- 仅在出现真实范围、措辞、路由或一致性取舍时追加 `关键决策日志`
-- 不得因为是轻量任务而省略 Contract、Evidence 或最终状态收尾
-- 纯展示文案豁免不适用上述状态维护约束，因为其默认不进入 workflow
+#### 必备字段与区块
 
-#### 3.必备区块
+头部字段：`TASK_ID`、`TASK_TITLE`、`TASK_TYPE`、`PLAN_FROZEN`、`CURRENT_ROLE`、`WORKFLOW_STATUS`、`STARTED_AT`、`LAST_UPDATED_AT`。
 
-当前任务状态文件头部必须包含：
-- `TASK_ID: <yyyy-mm-dd-slug>`
-- `TASK_TITLE: <short-stable-title>`
-- `TASK_TYPE: feat|fix|refactor|chore|docs`
-- `PLAN_FROZEN: true|false`
-- `CURRENT_ROLE: planner|executor|reviewer|single`
-- `WORKFLOW_STATUS: active|blocked|completed`
-- `STARTED_AT: YYYY-MM-DD`
-- `LAST_UPDATED_AT: YYYY-MM-DD`
+状态语义：`active`（可推进）、`blocked`（已收尾等待继续）、`completed`（已收尾，永不自动触发 continue）。
 
-状态语义：
-- `active`：任务正在推进，可继续执行或恢复
-- `blocked`：已强制收尾，等待继续或补充信息
-- `completed`：当前任务已收尾，不应仅因任务文件存在而自动触发 `continue`
-- `TASK_TITLE`：用于 continue 选择与索引展示的稳定短标题；用户输入“继续 <任务名>”时，默认先尝试精确匹配，再退化到候选匹配与确认
+必备区块（模板见 `docs/TASK_STATE_TEMPLATE.md`）：目标、Top 3、阻塞项、关键决策索引（最近 3 条）、关键决策日志（全量追加）、Evidence、Gaps、Review Findings（闭环）、提交计划、Execution Contract。
 
-当前任务状态文件必须包含并维护以下区块：
-1. 目标
-2. 下一步 Top 3
-3. 阻塞项
-4. 关键决策索引（最近 3 条）
-5. 关键决策日志（全量追加）
-6. 验收证据（Evidence）
-7. 未验证清单（Gaps）
-8. Review Findings（闭环）
-9. 提交计划
-10. Execution Contract
-
-`.agents/state/INDEX.md` 至少维护：
-
-- `CURRENT_TASK`（存 `TASK_ID`；没有进行中的任务时写 `none`）
-- `## Active`
-- `## Blocked`
-- `## Completed`
-- 列表项格式：`<task-id> | <TASK_TITLE> | <task-type> | <role> | <status>`
-
-#### 4. 模板
-- 使用 `docs/TASK_STATE_TEMPLATE.md`
-- 使用 `docs/STATE_INDEX_TEMPLATE.md`
+INDEX.md 维护：`CURRENT_TASK`、`## Active`、`## Blocked`、`## Completed`，列表格式 `<task-id> | <TASK_TITLE> | <task-type> | <role> | <status>`（模板见 `docs/STATE_INDEX_TEMPLATE.md`）。
 
 ### Commit Policy
 
-- **允许执行 `git commit`**：仅当用户明确要求提交时
-- **默认不提交**：未明确要求时，仅准备变更与提交建议
-- **严格禁止 `git push`**：除非用户明确要求且单独确认
-- Commit message 必须使用英语，并使用动态模型名协作者信息：
-  - `Co-Authored-By: <llm-model>`（示例：`Co-Authored-By: GPT-5.3-Codex`）
-- `.agents/state/INDEX.md` 与 `.agents/state/tasks/*.md` 默认不提交；仅在以下情况提交：
-  - 跨环境/跨会话同步需要
-  - 用户明确要求
+- 允许 `git commit` 仅当用户明确要求；默认不提交
+- 严格禁止 `git push`，除非用户明确要求且单独确认
+- Commit message 英语，附 `Co-Authored-By: <llm-model>`
+- `.agents/state/` 默认不提交，仅在跨环境同步或用户明确要求时提交
 
 ### 质量审查
 
-- **生成 ≠ 完成**
-- 每完成一个 todo item 后，主动检查是否需要 review
-- Review 内容：
-  - 代码：逻辑正确性、Kotlin 类型安全、边界处理、生命周期与线程安全
-  - 配置与链路：BuildConfig 注入、flavor、权限、RTC/RTM、字幕、IoT/BLE 影响是否说清楚
-  - 文档：内容准确性、路径真实可达、命令可执行、模板可复用、skill 触发条件清晰
-- 对开发态联调 / debugging 任务，发起 review 前必须显式说明以下边界，并同步写入 `Execution Contract` / `Evidence` / `Gaps`：
-  - 本地缓存或调试数据是否会清空，是否要求兼容旧数据
-  - 哪些后端契约或联调前提已被默认采用
-  - 哪些行为是本轮明确非目标，不应按发布态默认要求直接判成回退
-  - 哪些看起来有风险的行为目前只能记为 `Gaps` / `assumption` / `open question`
-- 若 reviewer 发现的问题与上述边界不冲突，应优先定性为未验证风险或契约问题，而不是直接要求回退实现
-- 收到 review finding 后，必须将每条 finding 写入 `Review Findings（闭环）`，并只用 `fixed` / `rejected with evidence` / `accepted as gap` / `requires re-plan` 之一收尾
+- 每完成一个 todo item 后主动检查是否需要 review
+- Review 维度：代码（逻辑/类型/边界/生命周期/线程）、配置链路（BuildConfig/flavor/权限/RTC/RTM/字幕/IoT/BLE）、文档（准确性/路径/命令可执行性/skill 触发条件）
+- 开发态联调/debugging 任务发起 review 前，必须显式说明本地缓存策略、后端契约前提、明确非目标和可疑项归类（Gaps/assumption/open question）
+- 收到 review finding 后必须写入 `Review Findings（闭环）`，用 `fixed` / `rejected with evidence` / `accepted as gap` / `requires re-plan` 收尾
 - **发现问题立即修复，不得累积**
 
 ### 完成判定与验证新鲜度
 
-- “已完成 / 已修复 / 已验证通过” 的表述，必须基于本轮新增的 fresh Evidence
-- 历史 Evidence 只能作为背景，不得直接替代本轮验证结论
-- 若本轮只完成了代码或文档修改，但未完成声明中的验证，必须明确写入 `Gaps`
-- `review pass` 表示当前实现与 Contract 一致并可按本轮收尾，不自动等于所有运行时风险已消除
-- docs-only / skills-only 任务同样需要本轮一致性检查证据，不得仅以“已同步”作为完成依据
+- "已完成/已修复/已验证通过"必须基于本轮 fresh Evidence；历史 Evidence 只能作为背景
+- 仅完成代码/文档修改但未完成声明中的验证 → 写入 Gaps
+- `review pass` 表示实现与 Contract 一致可按本轮收尾，不自动等于所有运行时风险已消除
+- docs-only 任务同样需要本轮一致性检查证据
 
-### 对话评审（自动执行）
+### 对话评审与上下文管理
 
-#### 常规轮次（简化）
+进度回显格式与阶段切换提示见 `docs/REVIEW_TEMPLATES.md`。
 
-```text
-进度：📐设计 → ⚡执行 | 轮次 5 | +32 -10 行
-```
+出现以下情况时强制收尾（`WORKFLOW_STATUS → blocked`），刷新状态文件后提示：
 
-#### 阶段切换（完整）
-
-```text
-进入 ⚡执行 阶段
-
-[🔍 澄清] → [📐 设计] → [⚡ 执行] → [✅ 校验] → [📝 总结]
-                          ▲ 当前
-```
-
-#### 任务完成（效率统计）
-
-```text
-📊 本次对话统计
-轮次：12 | Tokens：~8.2k | 变更：+156 -23 ~45
-🤖 15min | 🧑‍💻 3h | ⬇️ 2.75h
-```
-
-评审标准参考：`docs/REVIEW_TEMPLATES.md`
-
-### 上下文管理（强制收尾）
-
-当出现以下任一情况时，必须先刷新当前任务状态文件与 `.agents/state/INDEX.md` 再继续：
-
-- 对话超过 10 轮
-- 大量代码或文档变更
-- 用户提示上下文不足
-- Agent 感知上下文风险
-
-- 强制收尾时，将 `WORKFLOW_STATUS` 更新为 `blocked`；review 通过并进入总结收尾时，将其更新为 `completed`。
+- 对话超过 10 轮、大量变更、用户提示上下文不足、Agent 感知上下文风险
 
 输出格式：
 
 ```text
 ⚠️ 建议切换新对话
 
-已完成：
-- [已完成任务列表]
-
-待继续：
-- [未完成任务列表]
-
+已完成：[已完成任务列表]
+待继续：[未完成任务列表]
 下一步：开启新对话，输入「继续 <TASK_TITLE>」或「继续 <task-id>」
 ```
 
+review 通过收尾时，`WORKFLOW_STATUS → completed`。
+
 ## Android 开发约束
 
-### 模块与边界
+以下为项目特有约束，模块详情与主链路见 `ARCHITECTURE.md`。
 
-- 优先在声明范围内修改模块，不随意跨 `app/common/scenes/docs/.agents` 扩散
-- `app` 只承载启动壳、flavor、Manifest、签名与入口逻辑，不要把业务细节回灌到 `app`
-- `common` 是高影响公共底座，改动默认要说明对 Agora、网络、存储、BuildConfig 注入和所有上层模块的影响
-- `scenes:convoai` 负责主业务；`scenes:convoai:iot -> scenes:convoai:bleManager` 是外设链路，相关改动需要说明依赖传播
-- 涉及 `settings.gradle`、任一 `build.gradle(.kts)`、`gradle/libs.versions.toml` 时，视为高风险
-- 涉及 `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/` 或 `subRender/` 字幕组件时，按高风险处理，并明确说明对包名结构、字幕回调和 RTC/RTM 消息链路的影响
-
-### 配置与构建
-
-- `gradle.properties` 是项目主要配置入口；涉及 `AG_APP_ID`、`BASIC_AUTH_*`、`LLM_*`、`TTS_*`、`AVATAR_*`、`TOOLBOX_SERVER_HOST`、`IS_OPEN_SOURCE` 时，必须说明影响范围
-- 不要在代码、文档或提交说明中随意扩散真实密钥、证书或厂商参数；示例优先使用占位值
-- 当前 `app` 只有 `china` flavor；涉及 `applicationId`、`resValue(app_name)`、签名、APK 命名、BuildConfig 字段时，按高风险处理
-- 当前存在 Java 17 与 Java 11 混用；跨 `app/common/scenes` 与 `iot/bleManager` 的构建或语言级别调整，必须列入验证清单
-
-### UI 与状态
-
-- 默认遵循项目现有 UI 方案；当前仓库以 ViewBinding + Activity/Fragment 为主，无需求时不要大规模引入 Compose
-- 涉及生命周期、状态恢复、导航返回栈、权限申请时，必须列入验证清单
-- 涉及无障碍、深色模式、横竖屏、平板适配时，必须说明是否已验证
-
-### 权限、音视频与外设
-
-- 涉及 `CAMERA`、`RECORD_AUDIO`、`POST_NOTIFICATIONS`、前台服务、Wi-Fi、蓝牙或媒体读取权限时，必须说明申请时机、拒绝路径和回归范围
-- 涉及 RTC / RTM、toolbox server、agent 消息、字幕、数字人、录音或回调派发时，必须说明链路影响与失败处理
-- 涉及 IoT / BLE / 配网流程时，必须列入设备权限、蓝牙状态、Wi-Fi、系统版本和真机验证要求
-
-### 数据与并发
-
-- 涉及 Room、Proto DataStore、网络缓存、离线状态时，必须显式写出迁移或兼容性风险
-- 涉及协程、线程切换、取消逻辑、Flow/LiveData 状态传播时，优先做最小改动并补充验证
-
-### 文档与 Skill
-
-- 修改 `AGENTS.md`、`.agents/skills/*.md`、`docs/*.md` 时，必须检查三者是否需要同步，避免规则漂移
-- `SKILL.md` 的 `description` 必须同时说明“做什么”和“什么时候用”，并包含能触发该 skill 的关键词
-- 若外部 skill 编写方法论与本仓库规则不一致，以 `AGENTS.md` 的 repo-local 约定为准
-- skill 应优先服务 repo 当前 workflow，不应无条件覆盖 `ac-*` 主骨架；需尽量写清输入、输出、交接边界和禁止项
-- 修改 skill 时，除 `AGENTS.md`、`.agents/skills/*.md`、`docs/*.md` 外，还应评估是否同步同链路 skill 与 `agents/openai.yaml`
-- 若只是补现有 skill 的边界、触发词或模板，优先修改原 skill，而不是新增近义 skill
-- 模板中的模块名、路径示例必须使用当前仓库真实结构，例如 `common/`、`scenes/convoai/`、`.agents/skills/`
-- 文档类任务不得伪造构建或测试结论；未运行的命令要明确写入 `Evidence` / `Gaps`
-- 若文档 / skill 涉及 review 规则，应明确区分“已证实的回归”和“开发态联调下的未验证假设 / 契约前提 / 非目标”
-- 若 skill 规则改变了交接关系、入口或 UI 展示语义，应评估是否同步对应的 `agents/openai.yaml`
-
+- **模块边界**：`app` 只承载壳层（flavor/Manifest/签名/入口），业务不回灌；`common` 是高影响底座，改动需说明对上层模块的影响；`scenes/convoai` 主业务；`iot → bleManager` 外设链路
+- **高风险路径**：`convoaiApi/subRender` 字幕链路、`settings.gradle`、`build.gradle(.kts)`、`gradle/libs.versions.toml`、`AndroidManifest.xml`
+- **配置**：`gradle.properties` 是配置入口，涉及 `AG_APP_ID`/`BASIC_AUTH_*`/`LLM_*`/`TTS_*`/`AVATAR_*`/`TOOLBOX_SERVER_HOST` 时说明影响范围；禁止扩散密钥，优先占位值
+- **构建**：仅 `china` flavor，Java 17 (`app/common/convoai`) 与 Java 11 (`iot/bleManager`) 混用
+- **UI**：默认 ViewBinding + Activity/Fragment，无需求不引入 Compose
+- **权限/外设**：涉及 `CAMERA`/`RECORD_AUDIO`/蓝牙/定位/Wi-Fi 时说明申请时机与拒绝路径；IoT/BLE 需要真机验证
+- **文档/Skill**：修改 `AGENTS.md`/`.agents/skills/`/`docs/*.md` 时必须检查三者同步；skill 的 `description` 需含"做什么"和"触发词"；优先修改原 skill 而非新增近义 skill
 ## 工具链与检查
 
-常见命令根据项目实际脚本调整，默认建议：
+代码任务默认：
 
 ```bash
 ./gradlew lint
@@ -454,40 +211,16 @@ analysis 模式禁止：
 ./gradlew :app:assembleChinaDebug
 ```
 
-如项目已集成，可额外运行：
-
-```bash
-./gradlew detekt
-./gradlew ktlintCheck
-./gradlew connectedDebugAndroidTest
-```
-
-纯文档 / skill / template 任务默认改用以下检查，除非改动触及代码或构建配置：
-
-```bash
-rg -n "PROJECT_STATE\\.md|旧术语|旧路径|过时模块名" AGENTS.md docs .agents/skills
-rg -n "TASK_ID|TASK_TITLE|TASK_TYPE|PLAN_FROZEN|CURRENT_ROLE|WORKFLOW_STATUS|Review Findings|Execution Contract" AGENTS.md docs .agents/skills
-```
-
-- 检查模块名、路径、命令示例是否与仓库一致
-- 检查 `AGENTS.md`、`.agents/skills`、`docs/*.md` 的 workflow 术语是否一致
-- 检查文档示例是否区分“代码任务校验”与“docs-only 校验”
-- 若涉及 `gradle.properties`、Manifest、`convoaiApi`、IoT 或 BLE，还要补充链路与权限层面的影响说明
+纯文档/skill/template 任务改为一致性检查（具体 `rg` 命令见 `docs/WORKFLOW_TEMPLATES.md`），不得伪造构建结论。
 
 ## 文档导航
 
-- `ARCHITECTURE.md`：项目全局模块关系、主链路与高风险区域总览
-- `docs/TASK_STATE_TEMPLATE.md`：任务状态模板
-- `docs/STATE_INDEX_TEMPLATE.md`：任务索引模板
-- `docs/WORKFLOW_TEMPLATES.md`：Android 开发任务模板
-- `docs/REVIEW_TEMPLATES.md`：阶段自检与结果验收模板
-- `docs/PR_CHECKLIST.md`：PR Review 标准
-- `docs/DEBUG_WORKFLOW.md`：debugging / 联调任务的定位、证据与收尾规则
-- `scenes/convoai/README.md`：Convo AI 场景总览与运行说明
-- `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/README.md`：字幕 / 消息 / API 组件说明
-- `.agents/skills/ac-workflow/SKILL.md`：workflow 入口编排
-- `.agents/skills/ac-memory/SKILL.md`：任务索引与状态文件校验 / 修复
-- `.agents/skills/ac-plan/SKILL.md`：冻结 Contract
-- `.agents/skills/ac-execute/SKILL.md`：按 Contract 执行
-- `.agents/skills/ac-review/SKILL.md`：按 Evidence / Gaps 验收
-- `.agents/skills/self-improving-agent/SKILL.md`：`ac-review` 后的可选复盘与 repo-local memory 提案
+详见 `ARCHITECTURE.md` §8 推荐阅读顺序。核心入口：
+
+- `ARCHITECTURE.md` — 模块关系、主链路、高风险区域
+- `docs/TASK_STATE_TEMPLATE.md` / `docs/STATE_INDEX_TEMPLATE.md` — 状态文件模板
+- `docs/WORKFLOW_TEMPLATES.md` — 按任务类型的 workflow 模板
+- `docs/REVIEW_TEMPLATES.md` — 评审标准与输出格式
+- `docs/PR_CHECKLIST.md` — PR 审查清单
+- `docs/DEBUG_WORKFLOW.md` — 联调/调试任务规则
+- `.agents/skills/ac-workflow/SKILL.md` 等 — 各 skill 的详细执行边界
