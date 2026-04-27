@@ -14,8 +14,8 @@
 - analysis 模式允许只读命令，不写任务状态
 - 纯文档 / skill / template 任务也属于 workflow，不按 general 模式处理
 - 存在未完成任务不等于自动 continue；只有用户明确说“继续 / 接着做 / 继续 <TASK_TITLE> / 继续 <task-id>”时，才按 continue 恢复
-- continue 进入前，先由 `ac-workflow` 从索引和未完成任务摘要中解析目标任务，再交给 `ac-memory` 绑定状态文件
-- 若存在多个未完成任务，先要求用户指定 `TASK_TITLE` 或 `task-id`
+- continue 进入前，先由 `ac-workflow` 从索引和未完成任务摘要中解析目标任务；若未精确命中，可先生成候选列表，再等用户确认后交给 `ac-memory` 绑定状态文件
+- 若存在多个未完成任务，先要求用户指定 `TASK_TITLE` 或 `task-id`；候选匹配只能缩小范围，不能替代最终确认
 - 带 reviewer 的路线在 `✅ 校验` 通过后，统一回交 `ac-workflow` 执行最终 `📝 总结`
 - 代码任务优先跑 `gradlew` 检查；docs-only 任务优先做路径、术语、模板一致性检查
 - 触及 `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/` 或 `subRender/` 字幕组件时，默认按高风险处理，扩大验证范围
@@ -163,6 +163,9 @@
 - [ ] 对照仓库实际结构，校准模块名、路径和命令示例
 - [ ] 检查 `AGENTS.md`、`.agents/skills`、`docs/*.md` 的术语与阶段定义是否一致
 - [ ] 为 `SKILL.md` 补足清晰的 `description`、交接边界和禁止项
+- [ ] 若按轻量 workflow 执行，确认资格先看任务形态与禁区，评分只决定是否补 reviewer
+- [ ] 若使用聚合写回，确保它只覆盖本轮回复前的连续执行窗口，且不超过 `3` 步或约 `50` 行净变更
+- [ ] 若本轮聚合接近或触达阈值，在 `Evidence` 或 `Gaps` 中留一条简短校准观察，供后续调整 `3` / `50`
 - [ ] 在 Evidence 中记录本次一致性检查结果，在 Gaps 中记录未演练场景
 
 ### 完成标准
@@ -170,6 +173,8 @@
 - 文档内容与当前仓库结构一致
 - workflow、template、skill 之间无明显冲突
 - docs-only 检查方式清晰，不伪造代码构建结论
+- 轻量 workflow 的资格、reviewer 升级和聚合写回边界描述一致
+- continue 的候选匹配、确认绑定和状态同步边界描述一致
 
 ---
 

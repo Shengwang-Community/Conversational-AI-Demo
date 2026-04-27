@@ -25,7 +25,7 @@
 | Mode | 识别特征 | 响应策略 |
 |------|---------|---------|
 | **workflow** | 明确要求改文件、执行构建/测试/adb/提交流水线验证，或明确要求进入 workflow | **启动工作流（强制状态管理）** |
-| **continue** | 用户明确输入“继续 / 接着做 / 继续 <TASK_TITLE> / 继续 <task-id>”，且 `.agents/state/tasks/` 中存在 `WORKFLOW_STATUS` 为 `active` 或 `blocked` 的任务 | 选择并恢复该任务，进入 workflow |
+| **continue** | 用户明确输入“继续 / 接着做 / 继续 <TASK_TITLE> / 继续 <task-id>”，且 `.agents/state/tasks/` 中存在 `WORKFLOW_STATUS` 为 `active` 或 `blocked` 的任务 | 先解析候选任务，再确认并恢复目标任务，进入 workflow |
 | **analysis** | 仓库分析、读代码、看 diff、看日志、排查根因，但尚未进入改动执行 | 允许只读命令，不创建或更新任务状态 |
 | **general** | 技术咨询、概念解释、一般问题 | 直接回答，不启动 workflow |
 
@@ -102,6 +102,8 @@ analysis 模式禁止：
 - 若当前请求可能与旧任务相关，但无法确定是否续做，必须先提示用户选择“继续旧任务”或“启动新任务”
 - 若存在多个未完成任务，必须要求用户指定 `TASK_TITLE` 或 `task-id`
 - 用户口头所说的“任务名”默认指任务状态文件中的 `TASK_TITLE`，不是临时自由描述
+- 若用户输入“继续 XXX”但未精确命中 `TASK_TITLE` / `task-id`，允许先做子串或稳定关键词候选匹配；只有在候选唯一或用户明确确认后，才能真正绑定 continue 目标
+- 若候选超过一个，必须先向用户列出候选 `TASK_TITLE` / `task-id` 再要求确认，不得自行猜测
 - `blocked` 表示“可恢复”，不表示“必须恢复”
 - `completed` 永不触发 continue
 
@@ -113,7 +115,7 @@ analysis 模式禁止：
 
 1. **先进入 `ac-workflow`**
    - `ac-workflow` 先读取 `.agents/state/INDEX.md` 与未完成任务摘要，判定这是新任务还是 continue
-   - 若是 continue，必须先解析到明确的 `TASK_TITLE` 或 `task-id`，再绑定目标任务
+   - 若是 continue，先解析 `task-id` / 精确 `TASK_TITLE`；未命中时允许生成候选列表并等待用户确认
    - 只有目标任务明确后才调用 `ac-memory`
    - `ac-memory` 负责检查/创建/校验已选中的当前任务状态文件与 `.agents/state/INDEX.md`
    - 状态就绪后再路由到 `single` / `single + reviewer` 或 `planner / executor / reviewer`
@@ -174,13 +176,18 @@ analysis 模式禁止：
 
 当任务同时满足以下条件时，可按轻量 workflow 处理：
 
-- 风险评分总分为 `0-2`
 - 不属于上面的纯展示文案豁免
 - 目标为 docs / skill / template / 注释 / 路径修正 / 术语同步，或其他仍需要最小状态追踪的小范围开发动作
-- 修改范围为单文件，或同目录下少量强联动文件
+- 修改范围为单文件，或少量强联动文件（允许跨 `AGENTS.md`、`.agents/skills/`、`docs/`）
 - 不涉及 `gradle.properties`、`build.gradle(.kts)`、`settings.gradle`、`AndroidManifest.xml`
 - 不涉及 `scenes/convoai/.../convoaiApi/`、`subRender/`、IoT / BLE / 权限 / RTC / RTM 链路
 - 不需要运行 `./gradlew`、`adb`、设备验证
+
+风险评分在轻量 workflow 中用于决定路由，而不是决定资格：
+
+- 总分 `0-3`：保持 `single`
+- 总分 `4-6`：升级为 `single + reviewer`
+- 总分 `>=7`：退出轻量 workflow，改走完整多角色路线
 
 处理约定：
 
@@ -190,12 +197,19 @@ analysis 模式禁止：
 - 允许使用简版 Contract
 - 允许把同一轮连续的小改动聚合成一次状态写回
 - 默认路由为 `single`
-- 仅当任务涉及 `AGENTS.md`、多个 `SKILL.md`、或 `docs` / `skills` / 模板联动语义时，升级为 `single + reviewer`
+- 仅当任务修改 workflow 路由语义、Execution Contract / review 规则、`AGENTS.md` 核心约束，或跨多个 workflow 资产同步共享术语时，升级为 `single + reviewer`
+
+这里的“同一轮”指：
+
+- 从本轮 Contract 冻结后开始，到本次回复用户之前结束
+- 聚合写回最多覆盖 `3` 个已声明步骤或约 `50` 行净变更，超过即回到标准逐步验证节奏
+- 聚合期间仍需按声明步骤顺序执行；只是将状态写回与 Evidence 记录合并到本轮回复前一次完成
+- 当本轮聚合达到上限边缘、明显过松、或明显过紧时，应在 `Evidence` 或 `Gaps` 中补一条简短校准记录，供后续调整 `3` / `50` 阈值
 
 附加约定：
 
-- 涉及 `AGENTS.md`、`.agents/skills/`、`docs/*.md` 多文档联动时，复杂度和影响面通常不低于 `1`
-- 涉及 workflow 路由、Execution Contract、评审模板、skill 触发描述调整时，默认至少带 `reviewer`
+- 涉及 `AGENTS.md`、`.agents/skills/`、`docs/*.md` 多文档联动时，复杂度和影响面通常不低于 `1`；这会影响 reviewer 路由，但不自动取消轻量资格
+- 涉及 workflow 路由、Execution Contract、评审模板或会改变 reviewer 结论的规则语义时，默认至少带 `reviewer`
 
 ### 执行冻结与角色纪律
 
@@ -245,6 +259,9 @@ analysis 模式禁止：
 对 `micro-task` 的补充约定：
 
 - 允许把同一轮连续的小改动合并为一次 material update，再统一更新 `Top 3`、`Evidence`、角色字段和 `LAST_UPDATED_AT`
+- 这里的“同一轮”指从 Contract 冻结后到本次回复用户前的执行窗口，不允许跨 turn 延迟写回
+- 单次聚合最多覆盖 `3` 个已声明步骤或约 `50` 行净变更；超出后应拆分写回或升级为标准节奏
+- 若本轮命中或接近该上限，应在 `Evidence` 或 `Gaps` 中记录“阈值偏紧 / 阈值可接受 / 阈值偏松”的简短观察，作为后续校准依据
 - 仅在出现真实范围、措辞、路由或一致性取舍时追加 `关键决策日志`
 - 不得因为是轻量任务而省略 Contract、Evidence 或最终状态收尾
 - 纯展示文案豁免不适用上述状态维护约束，因为其默认不进入 workflow
@@ -265,7 +282,7 @@ analysis 模式禁止：
 - `active`：任务正在推进，可继续执行或恢复
 - `blocked`：已强制收尾，等待继续或补充信息
 - `completed`：当前任务已收尾，不应仅因任务文件存在而自动触发 `continue`
-- `TASK_TITLE`：用于 continue 选择与索引展示的稳定短标题；用户输入“继续 <任务名>”时，默认匹配这里
+- `TASK_TITLE`：用于 continue 选择与索引展示的稳定短标题；用户输入“继续 <任务名>”时，默认先尝试精确匹配，再退化到候选匹配与确认
 
 当前任务状态文件必须包含并维护以下区块：
 1. 目标

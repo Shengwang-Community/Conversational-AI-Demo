@@ -10,16 +10,19 @@ description: Workflow entrypoint for feat/fix/refactor/chore/docs/continue tasks
 - check whether the request is a pure copy-edit exempted by AGENTS; if yes, do not enter workflow state handling
 - treat `active` / `blocked` as resumable only when the user explicitly indicates `continue`
 - if unfinished task-state files exist but the user intent is a new task, create a new task instead of auto-resuming
-- if the user says `continue` and multiple unfinished tasks exist, require `TASK_TITLE` or `task-id` before binding a task
-- resolve the target task by explicit `task-id` or by exact `TASK_TITLE`
+- if the user says `continue`, first try explicit `task-id` or exact `TASK_TITLE`
+- if exact resolution fails, build a small candidate set from stable substring / keyword matches against unfinished `TASK_TITLE`
+- if the candidate set has one clear match, surface it and let the user confirm before binding
+- if the candidate set has multiple matches, list the candidates and require user confirmation before binding
 3. Call `$ac-memory` only after the target task is resolved, so `.agents/state/INDEX.md` and the selected or newly created task state file are valid and ready for routing.
 4. Determine route using the AGENTS risk score:
 - `single` for low-risk work: run minimal `ac-plan` then `ac-execute` responsibilities in the same thread, do not edit files before the Contract is written and `PLAN_FROZEN=true`, and after execution perform summary closeout by writing `CURRENT_ROLE: single` and `WORKFLOW_STATUS: completed`
 - `single + reviewer` when review must be forced: complete the same collapsed planning/execution path, hand off to `$ac-review`, then reclaim control after a pass for final summary closeout
 - `planner -> executor -> reviewer` for multi-file, high-risk, or workflow-rule changes; reclaim control after `$ac-review` passes for final summary closeout
-- for low-risk work that is not AGENTS copy-edit exempt, prefer `single` unless coupled workflow assets, routing semantics, or shared terminology also change
+- for low-risk work that is not AGENTS copy-edit exempt, prefer `single` unless workflow routing semantics, AGENTS core rules, review conclusions, or shared terminology across multiple workflow assets also change
 5. Echo a concise state line such as `[STATE] <task-id> | <role> | <status> | 已检查/已更新` when helpful, then emit the standard workflow progress display and keep it aligned with the real phase in the active task state file.
-5.5. When running a low-risk non-copy-edit task, the caller may echo a concise line such as `当前按轻量 workflow 执行`; the workflow progress display may be shortened as long as the active task state remains accurate.
+5.5. When running a low-risk non-copy-edit task, the caller may echo a concise line such as `当前按轻量 workflow 执行（简版 Contract、聚合验证、按需 review）`; the workflow progress display may be shortened as long as the active task state remains accurate.
+5.6. AGENTS lightweight workflow eligibility is decided by task shape and exclusions first; use the risk score to decide whether the route stays `single`, upgrades to `single + reviewer`, or exits lightweight handling for a fuller route.
 6. For docs / skills / templates tasks, ensure the Contract uses consistency checks instead of default `gradlew` commands unless code or build files are touched.
 7. On phase or status change, update the active task state file and `.agents/state/INDEX.md` before handoff.
 8. On `continue`, long-running tasks, or context risk, trigger the forced wrap-up pattern:
@@ -43,6 +46,7 @@ Outputs:
 Hard rules:
 
 - Always resolve `new task` versus `continue`, plus the target `TASK_TITLE` / `task-id`, before calling `$ac-memory` in a way that binds or creates a task state file.
+- Candidate matching may narrow `continue` choices, but it never replaces explicit user confirmation when exact `TASK_TITLE` / `task-id` resolution failed.
 - Do not replace planner / executor / reviewer responsibilities; orchestrate them, and collapse them only when `single` is explicitly selected.
 - Do not create workflow state for AGENTS copy-edit-exempt requests.
 - Do not let `$ac-memory` auto-create or auto-select a task while continue intent is unresolved or ambiguous.
