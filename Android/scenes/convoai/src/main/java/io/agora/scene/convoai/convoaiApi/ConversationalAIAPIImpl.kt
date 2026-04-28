@@ -724,8 +724,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
             val turnId = stateItems["turn_id"]?.toLongOrNull() ?: 0L
             val currentStateChangeEvent = stateChangeEvents[agentUserId]
             val shouldNotifyStateChange = if (timestamp != null) {
-                turnId >= (currentStateChangeEvent?.turnId ?: 0L) &&
-                    timestamp > (currentStateChangeEvent?.timestamp ?: 0L)
+                turnId >= (currentStateChangeEvent?.turnId ?: 0L)
             } else {
                 currentStateChangeEvent == null
             }
