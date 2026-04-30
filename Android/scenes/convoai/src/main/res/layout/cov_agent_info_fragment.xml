@@ -17,7 +17,7 @@
             android:id="@+id/tv_service_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="32dp"
+            android:layout_marginHorizontal="24dp"
             android:text="@string/cov_agent_service_info"
             android:textColor="@color/ai_icontext4"
             android:textSize="12sp"
@@ -282,18 +282,97 @@
             </LinearLayout>
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/tv_call_data"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="32dp"
+            android:layout_marginTop="24dp"
+            android:text="@string/cov_info_call_data"
+            android:textColor="@color/ai_icontext4"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ll_item_content" />
+
+        <LinearLayout
+            android:id="@+id/ll_call_data"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/settings_item_bg"
+            android:orientation="vertical"
+            android:paddingVertical="6dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_call_data">
+
+            <LinearLayout
+                android:id="@+id/layout_data_report"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/ai_dp_default"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_data_report"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|start"
+                    android:text="@string/cov_info_data_report"
+                    android:textColor="@color/ai_icontext1"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_report_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:gravity="center_vertical|end"
+                    android:text="2026/02/23 14:02:23"
+                    android:textColor="@color/ai_green6"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <ImageView
+                    android:id="@+id/iv_report_time_arrow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/icon_dropleft"
+                    android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:tint="@color/ai_icontext2"
+                    tools:visibility="visible" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/mtv_report_generate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="12dp"
+                    android:gravity="center_vertical|end"
+                    android:text="@string/cov_info_report_generate_tip"
+                    android:textColor="@color/ai_icontext4"
+                    android:textSize="14sp"
+                    tools:visibility="gone" />
+            </LinearLayout>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tv_more"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="32dp"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="24dp"
             android:text="@string/cov_info_more"
             android:textColor="@color/ai_icontext4"
             android:textSize="12sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/ll_item_content" />
+            app:layout_constraintTop_toBottomOf="@id/ll_call_data" />
 
         <LinearLayout
             android:id="@+id/ll_more_content"

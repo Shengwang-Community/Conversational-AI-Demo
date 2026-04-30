@@ -95,11 +95,23 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                 override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
                     if (buttonView.isPressed) {
                         CovAgentManager.enableAiVad = isChecked
+                        syncAiPauseState()
                     }
                 }
             })
             btnAiVad.setOnClickListener {
                 ToastUtil.show(io.agora.scene.convoai.R.string.cov_setting_ai_vad_high_desc, Toast.LENGTH_LONG)
+            }
+            cbAiPause.isChecked = CovAgentManager.enableAiPause
+            cbAiPause.setOnCheckedChangeListener(object : CompoundButton.OnCheckedChangeListener {
+                override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
+                    if (buttonView.isPressed) {
+                        CovAgentManager.enableAiPause = isChecked
+                    }
+                }
+            })
+            btnAiPause.setOnClickListener {
+                ToastUtil.show(io.agora.scene.convoai.R.string.cov_setting_ai_pause_desc, Toast.LENGTH_LONG)
             }
             clAvatar.setOnClickListener(object : OnFastClickListener() {
                 override fun onClickJacking(view: View) {
@@ -147,12 +159,12 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
         }
     }
 
-    // The non-English overseas version must disable AiVad.
+    // AI-VAD capability comes from language/preset; AI Pause follows AI-VAD.
     private fun setAiVadBySelectLanguage() {
         mBinding?.apply {
             tvLanguageDetail.text = CovAgentManager.language?.language_name
             // AI-VAD - Only update UI state, preserve user settings
-            if (CovAgentManager.language?.aivad_supported == true) {
+            if (CovAgentManager.isAiVadSupported) {
                 cbAiVad.isEnabled = livingViewModel.connectionState.value == AgentConnectionState.IDLE
                 cbAiVad.isChecked = CovAgentManager.enableAiVad
             } else {
@@ -162,6 +174,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                 cbAiVad.isEnabled = false
             }
         }
+        syncAiPauseState()
     }
 
     private fun updatePageEnable() {
@@ -175,7 +188,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
             
             // AI VAD section
             cbAiVad.isEnabled = if (isIdle) {
-                CovAgentManager.language?.aivad_supported ?: false
+                CovAgentManager.isAiVadSupported
             } else {
                 false
             }
@@ -190,6 +203,19 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
                 false
             }
             setViewState(clVoiceprintMode, tvVoiceprintDetail, ivVoiceprintArrow,  isVoiceprintEnabled)
+        }
+        syncAiPauseState()
+    }
+
+    private fun syncAiPauseState() {
+        val isIdle = livingViewModel.connectionState.value == AgentConnectionState.IDLE
+        val isAiPauseAdjustable = CovAgentManager.isAiPauseAdjustable
+        if (!isAiPauseAdjustable) {
+            CovAgentManager.enableAiPause = false
+        }
+        mBinding?.apply {
+            cbAiPause.isChecked = CovAgentManager.enableAiPause
+            cbAiPause.isEnabled = isIdle && isAiPauseAdjustable
         }
     }
 

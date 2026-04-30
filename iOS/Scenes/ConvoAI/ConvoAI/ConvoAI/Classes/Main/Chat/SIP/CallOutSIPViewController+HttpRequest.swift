@@ -80,6 +80,13 @@ extension CallOutSipViewController {
                     AppContext.stateManager().updateRoomState(.connected)
                     AppContext.stateManager().updateAgentState(.connected)
                     AppContext.stateManager().updateAgentId(agentId)
+                    if let presetName = AppContext.settingManager().preset?.name,
+                       !presetName.isEmpty {
+                        LatencyMetricsManager.shared.updateAgentId(
+                            presetName: presetName,
+                            agentId
+                        )
+                    }
                 }
                 continuation.resume()
             })

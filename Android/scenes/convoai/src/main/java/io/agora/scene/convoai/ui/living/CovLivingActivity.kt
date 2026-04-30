@@ -205,6 +205,11 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             clTop.setOnMoreClickListener {
                 showSettingDialog(CovAgentTabDialog.Companion.TAB_CHANNEL_INFO) // Channel Info tab
             }
+            clTop.updateRealtimeDataToggleChecked(CovAgentManager.isRealtimeDataEnabled)
+            clTop.updateRealtimeDataToggleVisible(false)
+            clTop.setOnRealtimeDataToggleChangeListener { enable ->
+                handleRealtimeDataToggle(enable)
+            }
             // Set click listener for btn_image_container with dynamic functionality
             clBottomLogged.setOnImageContainerClickListener {
                 val isPublishVideo = viewModel.isPublishVideo.value
@@ -448,6 +453,21 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                 }
             }
         }
+        lifecycleScope.launch {  // Observe turn finished metrics updates
+            viewModel.turnFinishedMetricsState.collect { turnFinishedState ->
+                if (isSelfSubRender) return@collect
+                turnFinishedState?.let {
+                    mBinding?.messageListViewV2?.updateLatencyMetrics(
+                        turnId = it.turn.turnId,
+                        metrics = it.toSubtitleMetricsUiModel()
+                    )
+                    viewModel.updateTurnTranscription(
+                        turnId = it.turn.turnId,
+                        transcription = mBinding?.messageListViewV2?.getTurnTranscription(it.turn.turnId)
+                    )
+                }
+            }
+        }
         lifecycleScope.launch {  // Observe interrupt event updates
             viewModel.interruptEvent.collect { interruptEvent ->
                 if (isSelfSubRender) return@collect
@@ -632,6 +652,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
     private fun onClickEndCall() {
         mBinding?.clTop?.stopCountDownTask()
         mBinding?.clTop?.stopTitleAnim()
+        viewModel.reportLatencyMetricsIfNeeded()
         viewModel.stopAgentAndLeaveChannel()
         resetSceneState()
         ToastUtil.show(getString(io.agora.scene.convoai.R.string.cov_detail_agent_leave))
@@ -701,6 +722,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
 
     private fun updateMessageList(isShowMessageList: Boolean) {
         mBinding?.apply {
+            clTop.updateRealtimeDataToggleVisible(isShowMessageList)
             if (isShowMessageList) {
                 layoutMessage.isVisible = true
                 if (isSelfSubRender) {
@@ -985,9 +1007,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             }
 
             override fun onMetricsEnable(enable: Boolean) {
-                // Handle metrics toggle
                 CovLogger.d(TAG, "Metrics enabled: $enable")
-
                 ToastUtil.show("onMetricsEnable: $enable")
             }
 
@@ -1010,6 +1030,16 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             override fun onAudioParameter(parameter: String) {
                 CovRtcManager.setParameter(parameter)
             }
+        }
+    }
+
+    private fun handleRealtimeDataToggle(enable: Boolean, showToast: Boolean = false) {
+        CovAgentManager.setRealtimeDataEnabled(enable)
+        mBinding?.clTop?.updateRealtimeDataToggleChecked(enable)
+        mBinding?.messageListViewV2?.setLatencyMetricsVisible(enable)
+        CovLogger.d(TAG, "Realtime data enabled: $enable")
+        if (showToast) {
+            ToastUtil.show("onRealtimeDataToggle: $enable")
         }
     }
 

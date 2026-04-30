@@ -12,6 +12,7 @@ import SVProgressHUD
 
 class CallOutSipViewController: SIPViewController {
     internal var agentManager = AgentManager()
+    internal let toolBox = ToolBoxApiManager()
     internal var phoneNumber = ""
     internal let uid = "\(RtcEnum.getUid())"
     internal var token = ""

@@ -62,6 +62,14 @@
 "conversation.alert.clear" = "清除";
 "conversation.agent.voiceprint.lock.toast" = "引擎将学习您说话的声纹，过滤周围其他人的声音和噪音";
 "conversation.ai.generated.content" = "以上对话内容均由AI生成";
+"conversation.latency.toggle" = "实时数据";
+"conversation.latency.turn" = "轮次";
+"conversation.latency.e2e" = "端到端";
+"conversation.latency.rtc" = "RTC";
+"conversation.latency.algorithm" = "AI音频";
+"conversation.latency.asr" = "ASR";
+"conversation.latency.llm" = "LLM";
+"conversation.latency.tts" = "TTS";
 
 "settings.title" = "智能体设定";
 "settings.connected.tips" = "(连接中不可修改)";
@@ -75,7 +83,9 @@
 "settings.speaker" = "扬声器";
 "settings.noise.cancellation" = "噪声取消";
 "settings.noise.aiVad.highlight" = "优雅打断";
-"settings.noise.aiVad.tips" = "优雅打断是声网自研高阶打断功能，支持让智能体临时停下逻辑推理去做其他事情，返回后继续让智能体按照打断前的节点继续的技术";
+"settings.noise.aiVad.tips" = "优雅打断是声网自研智能打断算法，能够自动判断当前用户说话的语境并执行打断策略";
+"settings.noise.smartPause" = "智能暂停";
+"settings.noise.smartPause.tips" = "智能暂停是声网自研高阶智能体对话算法，支持让智能体临时停下逻辑推理去做其他事情，返回后继续让智能体按照打断前的节点继续的技术";
 "settings.transcript.render.mode" = "字幕渲染模式";
 "settings.transcript.render.word.mode" = "Word 模式";
 "settings.transcript.render.text.mode" = "Text - 字幕先出模式";
@@ -106,6 +116,9 @@
 "channel.info.room.id" = "房间 ID";
 "channel.info.your.id" = "您的 ID";
 "channel.info.your.network" = "您的网络";
+"channel.info.data.section.title" = "通话数据";
+"channel.info.data.report" = "数据报告";
+"channel.info.data.report.calling" = "通话结束后生成";
 "channel.disconnected.state" = "未连接";
 "channel.connected.state" = "已连接";
 "channel.info.copied" = "已复制";
@@ -124,6 +137,7 @@
 "channel.serverStatus.title" = "对话 AI 服务状态";
 "channel.voiceprint.lock" = "声纹锁定";
 "channel.elegant.interrupt" = "优雅打断";
+"channel.smart.pause" = "智能暂停";
 "channel.more" = "更多...";
 "channel.seamless" = "无感";
 "channel.aware" = "有感";

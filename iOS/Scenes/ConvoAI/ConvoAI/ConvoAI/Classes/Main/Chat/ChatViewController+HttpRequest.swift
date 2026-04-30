@@ -11,20 +11,59 @@ import Common
 import IoT
 
 extension ChatViewController {
+    private func uploadLatestLatencyReportIfNeeded() {
+        guard let presetName = AppContext.settingManager().preset?.name, !presetName.isEmpty,
+              let latestSession = LatencyMetricsManager.shared.fetch(presetName: presetName),
+              latestSession.hasTurns else {
+            return
+        }
+
+        let turnIds = latestSession.turns.map(\.turnId)
+        let transcriptions = messageView.snapshotTurnTranscriptions(turnIds: turnIds)
+        LatencyMetricsManager.shared.updateTurnTranscriptions(presetName: presetName, transcriptions)
+
+        guard let sessionToUpload = LatencyMetricsManager.shared.fetch(presetName: presetName) else {
+            return
+        }
+        let sessionStartedAt = sessionToUpload.startedAt
+        let sessionAgentId = sessionToUpload.agentId ?? ""
+
+        toolBox.uploadLatencyReport(
+            session: sessionToUpload
+        ) { [weak self] uploadedAt in
+            guard let uploadedAt else {
+                self?.addLog("[latency-report] upload success but uploadedAt is nil")
+                return
+            }
+            let stored = LatencyMetricsManager.shared.storeReportInfoIfSessionMatches(
+                presetName: presetName,
+                sessionStartedAt: sessionStartedAt,
+                agentId: sessionAgentId,
+                reportedAt: uploadedAt
+            )
+            self?.addLog("[latency-report] upload success uploadedAt: \(uploadedAt) stored: \(stored)")
+        } failure: { [weak self] error in
+            self?.addLog("[latency-report] upload skipped/failed: \(error)")
+        }
+    }
+
     private func getStartAgentParametersForConvoAI() -> [String: Any] {
-        var bhvs = true
+        var local_bvc = true
         if AppContext.settingManager().voiceprintMode != .off {
-            bhvs = false
+            local_bvc = false
         }
         let parameters: [String: Any?] = [
-            // Basic parameters
             "app_id": AppContext.shared.appId,
             "preset_name": AppContext.settingManager().preset?.name,
             "app_cert": nil,
             "basic_auth_username": nil,
             "basic_auth_password": nil,
             "preset_type": AppContext.settingManager().preset?.presetType,
-            // ConvoAI request body
+            "app_feature": [
+                "enable_local_bvc": local_bvc,
+                "enable_aivad": AppContext.settingManager().aiVad,
+                "pause_state_enabled": AppContext.settingManager().smartPause
+            ],
             "convoai_body": [
                 "graph_id": DeveloperConfig.shared.graphId,
                 "name": nil,
@@ -37,8 +76,6 @@ extension ChatViewController {
                     "enable_string_uid": nil,
                     "idle_timeout": nil,
                     "advanced_features": [
-                        "enable_aivad": AppContext.settingManager().aiVad,
-                        "enable_bhvs": bhvs,
                         "enable_rtm": true,
                         "enable_sal": AppContext.settingManager().voiceprintMode != .off
                     ],
@@ -86,7 +123,7 @@ extension ChatViewController {
                     "parameters": [
                         "data_channel": "rtm",
                         "enable_flexible": nil,
-                        "enable_metrics": self.enableMetric,
+                        "enable_metrics": true,
                         "enable_error_message": true,
                         "aivad_force_threshold": nil,
                         "output_audio_codec": nil,
@@ -114,14 +151,12 @@ extension ChatViewController {
         AppContext.shared.avatarParams["agora_uid"] = "\(avatarUid)"
         AppContext.shared.avatarParams["agora_token"] = openSourceAvatarToken
         let parameters: [String: Any?] = [
-            // Basic parameters
             "app_id": AppContext.shared.appId,
             "preset_name": nil,
             "app_cert": AppContext.shared.certificate,
             "basic_auth_username": AppContext.shared.basicAuthKey,
             "basic_auth_password": AppContext.shared.basicAuthSecret,
             
-            // ConvoAI request body
             "convoai_body": [
                 "graph_id": nil,
                 "name": nil,
@@ -134,8 +169,6 @@ extension ChatViewController {
                     "enable_string_uid": nil,
                     "idle_timeout": nil,
                     "advanced_features": [
-                        "enable_aivad": false,
-                        "enable_bhvs": true,
                         "enable_rtm": true,
                         "enable_sal": AppContext.settingManager().voiceprintMode != .off
                     ],
@@ -311,6 +344,13 @@ extension ChatViewController {
         } else {
             channelName = "agent_\(UUID().uuidString.prefix(8))"
         }
+        if let presetName = AppContext.settingManager().preset?.name, !presetName.isEmpty {
+            LatencyMetricsManager.shared.beginSession(
+                presetName: presetName,
+                presetDisplayName: AppContext.settingManager().preset?.displayName,
+                channelName: channelName
+            )
+        }
         agentIsJoined = false
         avatarIsJoined = false
         
@@ -342,6 +382,13 @@ extension ChatViewController {
                     AppContext.stateManager().updateAgentId(remoteAgentId)
                     AppContext.stateManager().updateUserId(self.uid)
                     AppContext.stateManager().updateTargetServer(targetServer)
+                    if let presetName = AppContext.settingManager().preset?.name,
+                       !presetName.isEmpty {
+                        LatencyMetricsManager.shared.updateAgentId(
+                            presetName: presetName,
+                            remoteAgentId
+                        )
+                    }
                 }
                 addLog("start agent success, agent id is: \(self.remoteAgentId)")
                 self.timerCoordinator.startPingTimer()
@@ -391,6 +438,7 @@ extension ChatViewController {
     
     internal func stopAgent() {
         addLog("[Call] stopAgent()")
+        uploadLatestLatencyReportIfNeeded()
         rtmManager.logout(completion: nil)
         convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
             

@@ -44,6 +44,9 @@
     <string name="cov_info_logout">退出登录</string>
     <string name="cov_info_more">更多操作</string>
     <string name="cov_info_uploader">一键上报</string>
+    <string name="cov_info_call_data">通话数据</string>
+    <string name="cov_info_data_report">数据报告</string>
+    <string name="cov_info_report_generate_tip">通话结束后生成</string>
 
     <string name="cov_setting_title">智能体设定</string>
     <string name="cov_setting_title_connected">(连接中不可修改)</string>
@@ -61,11 +64,23 @@
     <string name="cov_setting_bhvs">启用 对话人声锁定</string>
     <string name="cov_setting_ai_vad">启用&#160;&#160;</string>
     <string name="cov_setting_ai_vad_high">优雅打断</string>
-    <string name="cov_setting_ai_vad_high_desc">优雅打断是声网自研高阶打断功能，支持让智能体临时停下逻辑推理去做其它事情，返回后继续让智能体按照打断前的节点继续的技术</string>
+    <string name="cov_setting_ai_vad_high_desc">优雅打断是声网自研智能打断算法，能够自动判断当前用户说话的语境并执行打断策略</string>
+    <string name="cov_setting_ai_pause">智能暂停</string>
+    <string name="cov_setting_ai_pause_desc">智能暂停是声网自研高阶智能体对话算法，支持让智能体临时停下逻辑推理去做其他事情，返回后继续让智能体按照打断前的节点继续的技术</string>
     <string name="cov_setting_network_error">请求失败：</string>
     <string name="cov_agent_connecting">连接中...</string>
     <string name="cov_copy_succeed">已复制</string>
     <string name="cov_interrupted">已打断</string>
+    <string name="cov_real_time_data">实时数据</string>
+    <string name="cov_latency_metrics_current_round">#</string>
+    <string name="cov_latency_metrics_total">端到端:</string>
+    <string name="cov_latency_metrics_value_ms">%1$dms</string>
+    <string name="cov_latency_metrics_chip_format">%1$s%2$s</string>
+    <string name="cov_latency_metrics_label_rtc">RTC:</string>
+    <string name="cov_latency_metrics_label_ai">AI 音频:</string>
+    <string name="cov_latency_metrics_label_asr">ASR:</string>
+    <string name="cov_latency_metrics_label_llm">LLM:</string>
+    <string name="cov_latency_metrics_label_tts">TTS:</string>
     <string name="cov_agent_silent">你可以开始说话</string>
     <string name="cov_agent_listening">正在听…</string>
     <string name="cov_agent_thinking">说话或点击打断</string>

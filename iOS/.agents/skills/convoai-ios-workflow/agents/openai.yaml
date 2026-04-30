@@ -1,0 +1,6 @@
+interface:
+  display_name: "ConvoAI iOS Workflow"
+  short_description: "Plan, split, and deliver ConvoAI iOS requirements one closed feature item at a time"
+  default_prompt: "Use $convoai-ios-workflow for iOS requirement delivery in this ConvoAI repo. Start by analyzing the request, splitting it into dependency-ordered feature items, and closing exactly one item at a time. If I explicitly ask for closed-loop workflow, delegation, or multiple agents, run the developer-and-tester loop."
+policy:
+  allow_implicit_invocation: false

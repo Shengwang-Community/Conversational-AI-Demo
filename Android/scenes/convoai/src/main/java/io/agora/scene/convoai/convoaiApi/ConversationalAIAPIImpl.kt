@@ -22,6 +22,54 @@ import io.agora.scene.convoai.convoaiApi.subRender.v3.TranscriptConfig
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
+internal data class ParsedTurnFinishedEvent(
+    val agentUserId: String,
+    val turn: Turn,
+)
+
+internal fun resolveMessageType(msg: Map<String, Any>): MessageType {
+    val messageType = (msg["event_type"] as? String)
+        ?: (msg["object"] as? String)
+        ?: return MessageType.UNKNOWN
+    return MessageType.fromValue(messageType)
+}
+
+internal fun parseTurnFinishedEvent(
+    publisherId: String,
+    msg: Map<String, Any>,
+): ParsedTurnFinishedEvent? {
+    val payload = (msg["payload"] as? Map<*, *>) ?: msg
+    val metrics = payload["metrics"] as? Map<*, *> ?: return null
+    val segments = metrics["segmented_latency_ms"] as? List<*> ?: emptyList<Any>()
+    val segmentedLatencyMap = mutableMapOf<String, Double>()
+    for (segment in segments) {
+        val segmentMap = segment as? Map<*, *> ?: continue
+        val name = segmentMap["name"] as? String ?: continue
+        val latency = (segmentMap["latency"] as? Number)?.toDouble() ?: continue
+        segmentedLatencyMap[name] = latency
+    }
+
+    val segmentedLatency = SegmentedLatency(
+        algorithmProcessing = segmentedLatencyMap["algorithm_processing"] ?: 0.0,
+        asrTTLW = segmentedLatencyMap["asr_ttlw"] ?: 0.0,
+        llmTTFT = segmentedLatencyMap["llm_ttft"] ?: 0.0,
+        ttsTTFB = segmentedLatencyMap["tts_ttfb"] ?: 0.0,
+        transport = segmentedLatencyMap["transport"] ?: 0.0,
+    )
+    val start = payload["start"] as? Map<*, *>
+    val turn = Turn(
+        turnId = (payload["turn_id"] as? Number)?.toLong() ?: 0L,
+        e2eLatency = (metrics["e2e_latency_ms"] as? Number)?.toDouble() ?: 0.0,
+        segmentedLatency = segmentedLatency,
+        timestamp = (start?.get("start_at") as? Number)?.toLong()
+            ?: (msg["event_ms"] as? Number)?.toLong()
+            ?: 0L,
+    )
+    val agentUserId = (payload["agent_id"] as? String)?.takeIf { it.isNotBlank() } ?: publisherId
+
+    return ParsedTurnFinishedEvent(agentUserId = agentUserId, turn = turn)
+}
+
 /**
  * Implementation of ConversationalAI API
  *
@@ -114,8 +162,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
         }
 
         private fun dealMessageWithMap(publisherId: String, msg: Map<String, Any>) {
-            val transcriptObj = msg["object"] as? String ?: return
-            val objectType = MessageType.fromValue(transcriptObj)
+            val objectType = resolveMessageType(msg)
             when (objectType) {
                 /**
                  * {object=message.metrics, module=tts, metric_name=ttfb, turn_id=4, latency_ms=182, data_type=message, message_id=2d7de2a2, send_ts=1749630519485}
@@ -131,6 +178,39 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
                     callMessagePrint(TAG, "<<< [onAgentMetrics] $agentUserId $metrics")
                     conversationalAIHandlerHelper.notifyEventHandlers {
                         it.onAgentMetrics(agentUserId, metrics)
+                    }
+                }
+                /**
+                 * {
+                 *   "event_type": "turn.finished",
+                 *   "event_ms": 1773901235435,
+                 *   "payload": {
+                 *     "turn_id": 2,
+                 *     "agent_id": "A42AJ98KF56CV39FP62ED54VR47WP36R",
+                 *     "start": { "start_at": 1773901219000 },
+                 *     "metrics": {
+                 *       "e2e_latency_ms": 1294,
+                 *       "segmented_latency_ms": [
+                 *         { "name": "algorithm_processing", "latency": 120 },
+                 *         { "name": "transport", "latency": 196 }
+                 *       ]
+                 *     }
+                 *   }
+                 * }
+                 */
+                MessageType.TURN_FINISHED -> {
+                    val parsedTurnFinishedEvent = parseTurnFinishedEvent(publisherId, msg)
+                    if (parsedTurnFinishedEvent == null) {
+                        callMessagePrint(TAG, "[onTurnFinished] ignore invalid message: metrics missing")
+                        return
+                    }
+
+                    callMessagePrint(
+                        TAG,
+                        "<<< [onTurnFinished] ${parsedTurnFinishedEvent.agentUserId} ${parsedTurnFinishedEvent.turn}"
+                    )
+                    conversationalAIHandlerHelper.notifyEventHandlers {
+                        it.onTurnFinished(parsedTurnFinishedEvent.agentUserId, parsedTurnFinishedEvent.turn)
                     }
                 }
                 /**
@@ -644,8 +724,7 @@ class ConversationalAIAPIImpl(val config: ConversationalAIAPIConfig) : IConversa
             val turnId = stateItems["turn_id"]?.toLongOrNull() ?: 0L
             val currentStateChangeEvent = stateChangeEvents[agentUserId]
             val shouldNotifyStateChange = if (timestamp != null) {
-                turnId >= (currentStateChangeEvent?.turnId ?: 0L) &&
-                    timestamp > (currentStateChangeEvent?.timestamp ?: 0L)
+                turnId >= (currentStateChangeEvent?.turnId ?: 0L)
             } else {
                 currentStateChangeEvent == null
             }

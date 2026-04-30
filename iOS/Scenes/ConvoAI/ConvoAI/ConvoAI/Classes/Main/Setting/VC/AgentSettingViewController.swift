@@ -195,6 +195,22 @@ extension AgentSettingViewController: ChannelInfoViewDelegate {
     func channelInfoViewDidTapFeedback(_ view: ChannelInfoView) {
         // Feedback logic is handled inside ChannelInfoView
     }
+
+    func channelInfoViewDidTapDataReport(_ view: ChannelInfoView) {
+        guard let presetName = AppContext.settingManager().preset?.name, !presetName.isEmpty,
+              let latestReport = LatencyMetricsManager.shared.fetchReport(presetName: presetName) else {
+            return
+        }
+
+        guard let reportUrl = latestReport.resolvedReportUrl(baseUrl: AppContext.shared.latencyDataReportPageBaseUrl) else {
+            return
+        }
+
+        guard let url = URL(string: reportUrl) else {
+            return
+        }
+        UIApplication.shared.open(url)
+    }
 }
 
 // MARK: - AgentSettingsViewDelegate
@@ -256,6 +272,14 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
     
     func agentSettingsViewDidToggleAiVad(_ view: AgentSettingsView, isOn: Bool) {
         AppContext.settingManager().updateAiVadState(isOn)
+    }
+
+    func agentSettingsViewDidToggleSmartPause(_ view: AgentSettingsView, isOn: Bool) {
+        guard AppContext.settingManager().aiVad else {
+            view.updateSmartPauseState(false)
+            return
+        }
+        AppContext.settingManager().updateSmartPauseState(isOn)
     }
     
     func agentSettingsViewDidTapTranscriptRender(_ view: AgentSettingsView, sender: UIButton) {
@@ -400,6 +424,10 @@ extension AgentSettingViewController: AgentSettingDelegate {
         agentSettingsView.updateAiVadState(state)
         channelInfoView.updateAiVadState()
     }
+
+    func settingManager(_ manager: AgentSettingManager, smartPauseStateDidUpdated state: Bool) {
+        agentSettingsView.updateSmartPauseState(state)
+    }
     
     func settingManager(_ manager: AgentSettingManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {
         agentSettingsView.updateTranscriptMode(mode)
@@ -419,5 +447,3 @@ extension AgentSettingViewController: UIGestureRecognizerDelegate {
         return touch.view == view
     }
 }
-
-

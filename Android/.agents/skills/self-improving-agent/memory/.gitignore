@@ -1,0 +1,4 @@
+pattern-candidates.json
+working/latest-summary.md
+episodes/**/*.json
+!episodes/.gitkeep

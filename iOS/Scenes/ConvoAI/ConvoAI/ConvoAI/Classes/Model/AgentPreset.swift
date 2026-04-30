@@ -45,12 +45,14 @@ struct SupportLanguage: Codable, Equatable {
     let languageCode: String?
     let languageName: String?
     let aivadEnabledByDefault: Bool?
+    let pauseStateEnabledByDefault: Bool?
     let aivadSupported: Bool?
     
     enum CodingKeys: String, CodingKey {
         case languageCode = "language_code"
         case languageName = "language_name"
         case aivadEnabledByDefault = "aivad_enabled_by_default"
+        case pauseStateEnabledByDefault = "pause_state_enabled_by_default"
         case aivadSupported = "aivad_supported"
     }
 }
@@ -94,5 +96,13 @@ struct AgentPreset: Codable {
         case supportSal = "is_support_sal"
         case avatarVendor = "avatar_vendor"
         case isSupportAvatar = "is_support_avatar"
+    }
+
+    var isIndependent: Bool {
+        presetType?.hasPrefix("independent") == true
+    }
+
+    var isCustom: Bool {
+        presetType?.hasPrefix("custom") == true
     }
 }

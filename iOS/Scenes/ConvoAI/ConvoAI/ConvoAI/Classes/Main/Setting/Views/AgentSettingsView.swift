@@ -14,6 +14,7 @@ protocol AgentSettingsViewDelegate: AnyObject {
     func agentSettingsViewDidTapLanguage(_ view: AgentSettingsView, sender: UIButton)
     func agentSettingsViewDidTapDigitalHuman(_ view: AgentSettingsView, sender: UIButton)
     func agentSettingsViewDidToggleAiVad(_ view: AgentSettingsView, isOn: Bool)
+    func agentSettingsViewDidToggleSmartPause(_ view: AgentSettingsView, isOn: Bool)
     func agentSettingsViewDidTapTranscriptRender(_ view: AgentSettingsView, sender: UIButton)
     func agentSettingsViewDidTapVoiceprintMode(_ view: AgentSettingsView, sender: UIButton)
 }
@@ -124,27 +125,29 @@ class AgentSettingsView: UIView {
     private lazy var aiVadItem: AgentSettingSwitchItemView = {
         let view = AgentSettingSwitchItemView(frame: .zero)
         view.titleLabel.text = ResourceManager.L10n.Settings.aiVadLight
-        view.switcher.addTarget(self, action: #selector(onClickAiVad(_:)), for: .touchUpInside)
+        view.switcher.addTarget(self, action: #selector(onClickAiVad(_:)), for: .valueChanged)
         
         view.tipsButton.setImage(UIImage.ag_named("ic_aivad_tips_icon"), for: .normal)
         view.tipsButton.addTarget(self, action: #selector(onClickAIVadTips), for: .touchUpInside)
         view.tipsButton.isHidden = false
         
         let settingManager = AppContext.settingManager()
-        if let language = settingManager.language,
-           let presetType = settingManager.preset?.presetType {
-            if AppContext.stateManager().agentState != .unload ||
-                presetType.contains("independent") ||
-                language.aivadSupported == false {
-                view.setEnable(false)
-            } else {
-                view.setEnable(true)
-            }
-            view.setOn(settingManager.aiVad)
-        } else {
-            view.setEnable(false)
-            view.setOn(false)
-        }
+        view.setEnable(canEditInterruptFeatures(settingManager: settingManager))
+        view.setOn(settingManager.aiVad)
+        return view
+    }()
+
+    private lazy var smartPauseItem: AgentSettingSwitchItemView = {
+        let view = AgentSettingSwitchItemView(frame: .zero)
+        view.titleLabel.text = ResourceManager.L10n.Settings.smartPause
+        view.switcher.addTarget(self, action: #selector(onClickSmartPause(_:)), for: .valueChanged)
+        view.tipsButton.setImage(UIImage.ag_named("ic_aivad_tips_icon"), for: .normal)
+        view.tipsButton.addTarget(self, action: #selector(onClickSmartPauseTips), for: .touchUpInside)
+        view.tipsButton.isHidden = false
+
+        let settingManager = AppContext.settingManager()
+        view.setEnable(canEditInterruptFeatures(settingManager: settingManager) && settingManager.aiVad)
+        view.setOn(settingManager.smartPause)
         return view
     }()
     
@@ -189,6 +192,7 @@ class AgentSettingsView: UIView {
         setupViews()
         setupConstraints()
         loadData()
+        syncInterruptFeatureAvailability()
     }
     
     func loadData() {
@@ -206,7 +210,7 @@ class AgentSettingsView: UIView {
         backgroundColor = .clear
         
         basicSettingItems = [languageItem]
-        advancedSettingItems = [aiVadItem, transcriptRenderItem, voiceprintModeItem]
+        advancedSettingItems = [aiVadItem, smartPauseItem, transcriptRenderItem, voiceprintModeItem]
 
         addSubview(basicSettingView)
         addSubview(digitalHumanView)
@@ -286,24 +290,14 @@ class AgentSettingsView: UIView {
     
     // MARK: - Public Methods
     func updatePreset(_ preset: AgentPreset) {
-        guard let presetType = preset.presetType else { return }
-        
-        if presetType.contains("independent") {
-            aiVadItem.setEnable(false)
-        } else {
-            aiVadItem.setEnable(true)
-        }
+        syncInterruptFeatureAvailability()
     }
     
     func updateLanguage(_ language: SupportLanguage?) {
         languageItem.detailLabel.text = language?.languageName ?? ""
-        if let l = language, l.aivadSupported.boolValue() {
-            aiVadItem.setEnable(true)
-            aiVadItem.setOn(l.aivadEnabledByDefault.boolValue())
-        } else {
-            aiVadItem.setEnable(false)
-            aiVadItem.setOn(false)
-        }
+        aiVadItem.setOn(AppContext.settingManager().aiVad)
+        smartPauseItem.setOn(AppContext.settingManager().smartPause)
+        syncInterruptFeatureAvailability()
     }
     
     func updateTranscriptMode(_ mode: TranscriptDisplayMode) {
@@ -312,6 +306,15 @@ class AgentSettingsView: UIView {
     
     func updateAiVadState(_ state: Bool) {
         aiVadItem.setOn(state)
+        let canEnableSmartPause = canEditInterruptFeatures(settingManager: AppContext.settingManager()) && state
+        smartPauseItem.setEnable(canEnableSmartPause)
+        if !state {
+            smartPauseItem.setOn(false)
+        }
+    }
+
+    func updateSmartPauseState(_ state: Bool) {
+        smartPauseItem.setOn(state)
     }
     
     func updateAvatar(_ avatar: Avatar?) {
@@ -329,20 +332,7 @@ class AgentSettingsView: UIView {
     }
     
     func updateAgentState(_ agentState: ConnectionStatus) {
-        let settingManager = AppContext.settingManager()
-        
-        if agentState != .unload {
-            aiVadItem.setEnable(false)
-        } else {
-            if let presetType = settingManager.preset?.presetType,
-               presetType.contains("independent") {
-                aiVadItem.setEnable(false)
-                settingManager.updateAiVadState(false)
-            } else {
-                aiVadItem.setEnable(true)
-                settingManager.updateAiVadState(false)
-            }
-        }
+        syncInterruptFeatureAvailability()
     }
     
     func updateVoiceprintMode(_ mode: VoiceprintMode) {
@@ -370,8 +360,49 @@ class AgentSettingsView: UIView {
         SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Settings.aiVadTips)
     }
 
+    @objc private func onClickSmartPause(_ sender: UISwitch) {
+        delegate?.agentSettingsViewDidToggleSmartPause(self, isOn: sender.isOn)
+    }
+
+    @objc private func onClickSmartPauseTips() {
+        SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Settings.smartPauseTips)
+    }
+
     @objc private func onClickVoiceprintMode(_ sender: UIButton) {
         delegate?.agentSettingsViewDidTapVoiceprintMode(self, sender: sender)
+    }
+
+    private func canEditInterruptFeatures(settingManager: AgentSettingManager) -> Bool {
+        guard let preset = settingManager.preset else {
+            return false
+        }
+
+        if AppContext.stateManager().agentState != .unload {
+            return false
+        }
+
+        if preset.isIndependent {
+            return false
+        }
+
+        if preset.isCustom {
+            return true
+        }
+
+        guard let language = settingManager.language else {
+            return false
+        }
+
+        return language.aivadSupported.boolValue()
+    }
+
+    private func syncInterruptFeatureAvailability() {
+        let settingManager = AppContext.settingManager()
+        let isEnabled = canEditInterruptFeatures(settingManager: settingManager)
+        aiVadItem.setEnable(isEnabled)
+        smartPauseItem.setEnable(isEnabled && settingManager.aiVad)
+        aiVadItem.setOn(settingManager.aiVad)
+        smartPauseItem.setOn(settingManager.smartPause)
     }
 
 }

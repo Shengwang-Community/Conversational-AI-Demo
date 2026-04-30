@@ -25,7 +25,6 @@ extension ChatViewController: DeveloperConfigDelegate {
     }
     
     public func applyDevParams() {
-        self.enableMetric = DeveloperConfig.shared.metrics
         self.timerCoordinator.setDurationLimit(limited: DeveloperConfig.shared.getSessionLimit())
         self.rtcManager.enableAudioDump(enabled: DeveloperConfig.shared.audioDump)
         DeveloperConfig.shared.sdkParams.forEach { p in
@@ -68,7 +67,6 @@ extension ChatViewController: DeveloperConfigDelegate {
     }
 
     public func devConfig(_ config: DeveloperConfig, metricsDidChange enabled: Bool) {
-        self.enableMetric = enabled
     }
 
     public func devConfig(_ config: DeveloperConfig, sdkParamsDidChange params: String) {

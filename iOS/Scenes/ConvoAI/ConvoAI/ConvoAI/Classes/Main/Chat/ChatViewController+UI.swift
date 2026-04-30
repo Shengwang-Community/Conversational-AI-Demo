@@ -35,6 +35,7 @@ extension ChatViewController {
         [miniView].forEach { smallSizeContainerView.addSubview($0) }
         [remoteAvatarView].forEach { miniView.addSubview($0) }
         [localVideoView].forEach { fullSizeContainerView.addSubview($0) }
+        messageView.setRealtimeDataToggleVisible(false)
     }
     
     internal func setupConstraints() {
@@ -89,7 +90,7 @@ extension ChatViewController {
         }
         
         messageView.snp.makeConstraints { make in
-            make.top.equalTo(navivationBar.snp.bottom).offset(22)
+            make.top.equalTo(navivationBar.snp.bottom).offset(10)
             make.left.right.equalTo(0)
             make.bottom.equalTo(agentStateView.snp.top)
         }
@@ -185,6 +186,7 @@ extension ChatViewController {
         timerCoordinator.stopAllTimer()
         agentStateView.isHidden = true
         activeFuncsView.isHidden = true
+        messageView.setRealtimeDataToggleVisible(false)
         activeFuncsView.resetState()
         updateWindowContent()
     }
@@ -294,6 +296,7 @@ extension ChatViewController {
         callControlBar.setButtonColorTheme(showLight: isLight)
         navivationBar.setButtonColorTheme(showLight: isLight)
         activeFuncsView.setButtonColorTheme(showLight: isLight)
+        messageView.setRealtimeDataToggleStyle(showLight: isLight)
     }
     
     @objc func smallWindowClicked() {

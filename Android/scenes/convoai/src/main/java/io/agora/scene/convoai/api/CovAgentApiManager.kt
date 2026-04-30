@@ -6,8 +6,10 @@ import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.net.SecureOkHttpClient
 import io.agora.scene.common.util.GsonTools
+import io.agora.scene.common.util.TimeUtils
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.constant.CovAgentManager
+import io.agora.scene.convoai.ui.living.metrics.AgentLatencyData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,6 +23,7 @@ import okhttp3.Response
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
+import kotlin.math.roundToInt
 
 object CovAgentApiManager {
 
@@ -49,6 +52,11 @@ object CovAgentApiManager {
 
     private val SERVICE_VERSION get() = ServerConfig.serviceVersion
 
+    data class AgentMetricsReportResult(
+        val agentId: String,
+        val uploadedAtMs: Long
+    )
+
     fun startAgentWithMap(
         channelName: String,
         convoaiBody: Map<String, Any?>,
@@ -72,6 +80,14 @@ object CovAgentApiManager {
             }
             CovAgentManager.getPreset()?.preset_type?.let {
                 postBody.put("preset_type", it)
+            }
+
+            if (!CovAgentManager.isOpenSource) {
+                val appFeature = JSONObject()
+                appFeature.put("enable_aivad", CovAgentManager.enableAiVad)
+                appFeature.put("pause_state_enabled", CovAgentManager.enableAiPause)
+                appFeature.put("enable_local_bvc", CovAgentManager.enableBHVS)
+                postBody.put("app_feature", appFeature)
             }
 
             // Process convoaiBody, convert Map to JSONObject and filter out null values
@@ -340,6 +356,146 @@ object CovAgentApiManager {
                 runOnMainThread {
                     agentId = null
                     completion.invoke(e)
+                }
+            }
+        })
+    }
+
+    fun reportAgentMetrics(
+        presetName: String,
+        data: AgentLatencyData,
+        completion: (error: Exception?, result: AgentMetricsReportResult?) -> Unit
+    ) {
+        val currentAgentId = agentId?.takeIf { it.isNotBlank() }
+        if (currentAgentId.isNullOrEmpty()) {
+            runOnMainThread {
+                completion.invoke(Exception("agentId is empty"), null)
+            }
+            return
+        }
+        val channel = CovAgentManager.channelName.takeIf { it.isNotBlank() }
+        if (channel.isNullOrEmpty()) {
+            runOnMainThread {
+                completion.invoke(Exception("channel is empty"), null)
+            }
+            return
+        }
+        if (presetName.isBlank()) {
+            runOnMainThread {
+                completion.invoke(Exception("presetName is empty"), null)
+            }
+            return
+        }
+        if (data.turns.isEmpty()) {
+            runOnMainThread {
+                completion.invoke(Exception("latency turns is empty"), null)
+            }
+            return
+        }
+
+        val presetDisplayName = CovAgentManager.getPreset()?.display_name
+            ?.takeIf { it.isNotBlank() }
+            ?: presetName
+        val callStartAtMs = data.callStartAtMs?.takeIf { it > 0L }
+        val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/agent/metrics/report"
+        val postBody = mapToJsonObjectWithFilter(
+            mapOf(
+                "agent_id" to currentAgentId,
+                "channel" to channel,
+                "preset_name" to presetName,
+                "preset_display_name" to presetDisplayName,
+                "call_start_at" to callStartAtMs,
+                "turn_event" to data.turns.map { turn ->
+                    val transcription = data.turnTranscriptions[turn.turnId.toString()]
+                    mapOf(
+                        "turn_id" to turn.turnId,
+                        "transcription" to mapOf(
+                            "assistant" to transcription?.assistant.orEmpty(),
+                            "user" to transcription?.user.orEmpty()
+                        ),
+                        "metrics" to mapOf(
+                            "e2e_latency_ms" to turn.e2eLatency.roundToInt(),
+                            "segmented_latency_ms" to listOf(
+                                mapOf(
+                                    "name" to "algorithm_processing",
+                                    "latency" to turn.segmentedLatency.algorithmProcessing.roundToInt()
+                                ),
+                                mapOf(
+                                    "name" to "asr_ttlw",
+                                    "latency" to turn.segmentedLatency.asrTTLW.roundToInt()
+                                ),
+                                mapOf(
+                                    "name" to "llm_ttft",
+                                    "latency" to turn.segmentedLatency.llmTTFT.roundToInt()
+                                ),
+                                mapOf(
+                                    "name" to "tts_ttfb",
+                                    "latency" to turn.segmentedLatency.ttsTTFB.roundToInt()
+                                ),
+                                mapOf(
+                                    "name" to "transport",
+                                    "latency" to turn.segmentedLatency.transport.roundToInt()
+                                )
+                            )
+                        )
+                    )
+                }
+            )
+        )
+        val requestBody = postBody.toString().toRequestBody(null)
+        val request = buildRequest(requestURL, "POST", requestBody)
+
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                val json = response.body.string()
+                val httpCode = response.code
+                if (httpCode != 200) {
+                    runOnMainThread {
+                        completion.invoke(Exception("Http error: $httpCode"), null)
+                    }
+                    return
+                }
+
+                try {
+                    val jsonObj = JSONObject(json)
+                    val code = jsonObj.optInt("code", -1)
+                    if (code != 0) {
+                        val message = jsonObj.optString("msg").ifEmpty { "Unknown error" }
+                        runOnMainThread {
+                            completion.invoke(Exception("reportAgentMetrics failed: code=$code, msg=$message"), null)
+                        }
+                        return
+                    }
+
+                    val uploadedAtMs = jsonObj.optJSONObject("data")
+                        ?.optLong("uploaded_at")
+                        ?.takeIf { it > 0L }
+                        ?: TimeUtils.currentTimeMillis()
+                    CovLogger.d(
+                        TAG,
+                        "reportAgentMetrics success preset=$presetName turns=${data.turns.size} agentId=$currentAgentId uploadedAtMs=$uploadedAtMs"
+                    )
+                    runOnMainThread {
+                        completion.invoke(
+                            null,
+                            AgentMetricsReportResult(
+                                agentId = currentAgentId,
+                                uploadedAtMs = uploadedAtMs
+                            )
+                        )
+                    }
+                } catch (e: JSONException) {
+                    CovLogger.e(TAG, "reportAgentMetrics parse error: ${e.message}")
+                    runOnMainThread {
+                        completion.invoke(e, null)
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                CovLogger.e(TAG, "reportAgentMetrics failed: $e")
+                runOnMainThread {
+                    completion.invoke(e, null)
                 }
             }
         })

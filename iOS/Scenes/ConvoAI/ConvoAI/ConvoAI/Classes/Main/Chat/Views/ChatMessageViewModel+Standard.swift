@@ -12,6 +12,7 @@ protocol MessageStandard {
     func addImageMessage(uuid: String, image: UIImage)
     func updateImageMessage(uuid: String, state: ImageState)
     func reduceLLMInterrupt(turnId: Int)
+    func updateLatencyMetrics(turnId: Int, latencyInfo: MessageLatencyInfo)
 }
 
 extension ChatMessageViewModel: MessageStandard {
@@ -91,6 +92,29 @@ extension ChatMessageViewModel: MessageStandard {
             delegate?.messageUpdated()
         }
     }
+
+    func updateLatencyMetrics(turnId: Int, latencyInfo: MessageLatencyInfo) {
+        let key = generateMessageKey(turnId: turnId, isMine: false)
+        if let message = messageMapTable[key] {
+            message.latencyInfo = latencyInfo
+        } else {
+            pendingLatencyInfoTable[turnId] = latencyInfo
+        }
+        delegate?.messageUpdated()
+    }
+
+    func snapshotTurnTranscriptions(turnIds: [Int]) -> [Int: AgentLatencyData.TurnTranscriptionSnapshot] {
+        var result: [Int: AgentLatencyData.TurnTranscriptionSnapshot] = [:]
+        for turnId in turnIds where turnId > 0 {
+            let userMessage = messageForSnapshot(turnId: turnId, isMine: true)
+            let assistantMessage = messageForSnapshot(turnId: turnId, isMine: false)
+            result[turnId] = AgentLatencyData.TurnTranscriptionSnapshot(
+                assistant: assistantMessage?.snapshotText ?? "",
+                user: userMessage?.snapshotText ?? ""
+            )
+        }
+        return result
+    }
     
     private func updateImageContent(uuid: String, isMine: Bool, state: ImageState) {
         // Find the first message with matching UUID in imageSource
@@ -124,6 +148,24 @@ extension ChatMessageViewModel: MessageStandard {
         timer?.invalidate()
         timer = nil
         delegate?.messageFinished()
+    }
+
+    internal func syncLatencyMetricsIfNeeded(for message: Message, turnId: Int, isMine: Bool) {
+        guard !isMine else { return }
+        if let latencyInfo = pendingLatencyInfoTable.removeValue(forKey: turnId) {
+            message.latencyInfo = latencyInfo
+        }
+    }
+
+    private func messageForSnapshot(turnId: Int, isMine: Bool) -> Message? {
+        let key = generateMessageKey(turnId: turnId, isMine: isMine)
+        if let message = messageMapTable[key], !message.isImage {
+            return message
+        }
+
+        return messages.last {
+            $0.turn_id == turnId && $0.isMine == isMine && !$0.isImage
+        }
     }
     
 }

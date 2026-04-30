@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.ui.living.settings
 
+import android.content.Intent
 import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,15 +8,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import androidx.activity.viewModels
+import androidx.core.net.toUri
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.ui.BaseFragment
 import io.agora.scene.common.ui.OnFastClickListener
 import io.agora.scene.common.util.LogUploader
 import io.agora.scene.common.util.copyToClipboard
 import io.agora.scene.common.util.toast.ToastUtil
+import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.AgentConnectionState
@@ -26,11 +28,14 @@ import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.ui.ActivateStatus
 import io.agora.scene.convoai.ui.ConnectionStatus
 import io.agora.scene.convoai.ui.VoiceprintUIStatus
-import io.agora.scene.convoai.ui.living.settings.CovAgentInfoViewModel
 import io.agora.scene.convoai.ui.living.CovLivingViewModel
+import io.agora.scene.convoai.ui.living.metrics.LatencyMetricsManager
 import io.agora.scene.convoai.ui.sip.CallState
 import io.agora.scene.convoai.ui.sip.CovLivingSipViewModel
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.getValue
 
 /**
@@ -108,7 +113,13 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
                     }, 2000L)
                 }
             })
+            layoutDataReport.setOnClickListener(object : OnFastClickListener() {
+                override fun onClickJacking(view: View) {
+                    openLatencyReportIfAvailable()
+                }
+            })
         }
+        updateReportSection()
     }
 
     /**
@@ -137,6 +148,7 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
                         }
                     }
                     updateUploadingStatus(disable = (state == CallState.IDLE || state == CallState.CALLING))
+                    updateReportSection()
                 }
             }
         } else {
@@ -144,6 +156,7 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
                 livingViewModel.connectionState.collect { state ->
                     agentInfoViewModel.updateConnectionState(state)
                     updateUploadingStatus(disable = state != AgentConnectionState.CONNECTED)
+                    updateReportSection()
                 }
             }
         }
@@ -276,6 +289,55 @@ class CovAgentInfoFragment : BaseFragment<CovAgentInfoFragmentBinding>() {
                 layoutUploader.isEnabled = true
             }
         }
+    }
+
+    private fun updateReportSection() {
+        val presetName = CovAgentManager.getPreset()?.name.orEmpty()
+        val reportData = if (presetName.isBlank()) {
+            null
+        } else {
+            LatencyMetricsManager.shared.fetchReport(presetName)
+        }
+        val hasUploadedReport = !reportData?.agentId.isNullOrEmpty() &&
+            (reportData?.reportedAtMs ?: 0L) > 0L
+
+        mBinding?.apply {
+            mtvReportGenerate.visibility = if (hasUploadedReport) View.GONE else View.VISIBLE
+            mtvReportTime.visibility = if (hasUploadedReport) View.VISIBLE else View.GONE
+            ivReportTimeArrow.visibility = if (hasUploadedReport) View.VISIBLE else View.GONE
+            layoutDataReport.isEnabled = hasUploadedReport
+            if (hasUploadedReport) {
+                mtvReportTime.text = formatReportTime(reportData?.reportedAtMs)
+            } else {
+                mtvReportGenerate.text = getString(R.string.cov_info_report_generate_tip)
+            }
+        }
+    }
+
+    private fun openLatencyReportIfAvailable() {
+        val presetName = CovAgentManager.getPreset()?.name.orEmpty()
+        if (presetName.isBlank()) {
+            return
+        }
+        val reportData = LatencyMetricsManager.shared.fetchReport(presetName) ?: return
+        reportData.agentId?.let {
+            val reportUrl = ServerConfig.getConvoAiReportUrl(it)
+            CovLogger.d(TAG,"reportUrl:$reportUrl")
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, reportUrl.toUri())
+                startActivity(intent)
+            } catch (e: Exception) {
+                CovLogger.e(TAG, "Failed to open report in browser: ${e.message}")
+                ToastUtil.show("Unable to open browser")
+            }
+        }
+    }
+
+    private fun formatReportTime(timestampMs: Long?): String {
+        if (timestampMs == null || timestampMs <= 0L) {
+            return ""
+        }
+        return SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault()).format(Date(timestampMs))
     }
 
     private fun copyToClipboard(text: String) {

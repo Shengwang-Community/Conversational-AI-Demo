@@ -76,7 +76,7 @@
     <io.agora.scene.convoai.ui.sip.widget.CovLivingTopSipView
         android:id="@+id/cl_top"
         android:layout_width="match_parent"
-        android:layout_height="74dp"
+        android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent" />
 
     <View

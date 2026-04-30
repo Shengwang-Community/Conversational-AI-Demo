@@ -44,6 +44,47 @@ class ChatMessageCell: UITableViewCell {
         label.text = ""
         return label
     }()
+
+    private lazy var messageContentStack: UIStackView = {
+        let stackView = UIStackView(arrangedSubviews: [messageLabel])
+        stackView.axis = .vertical
+        stackView.alignment = .fill
+        stackView.distribution = .fill
+        stackView.spacing = 8
+        return stackView
+    }()
+
+    private lazy var latencyContentView: UIView = {
+        let view = UIView()
+        view.isHidden = true
+        return view
+    }()
+
+    private lazy var turnBadgeView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(hex: 0x34374A, alpha: 0.96)
+        view.layer.cornerRadius = 4
+        view.layer.masksToBounds = true
+        view.setContentHuggingPriority(.required, for: .horizontal)
+        view.setContentCompressionResistancePriority(.required, for: .horizontal)
+        return view
+    }()
+
+    private lazy var turnBadgeLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 9)
+        label.textColor = UIColor(hex: 0xA5ABBF)
+        label.textAlignment = .center
+        return label
+    }()
+
+    private lazy var latencyMetricsLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.isHidden = false
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return label
+    }()
             
     private lazy var interruptButton: UIButton = {
         let button = UIButton(type: .custom)
@@ -90,7 +131,29 @@ class ChatMessageCell: UITableViewCell {
         contentView.addSubview(nameLabel)
         contentView.addSubview(messageBubble)
         contentView.addSubview(interruptButton)
-        messageBubble.addSubview(messageLabel)
+        messageBubble.addSubview(messageContentStack)
+        messageBubble.addSubview(latencyContentView)
+        latencyContentView.addSubview(turnBadgeView)
+        turnBadgeView.addSubview(turnBadgeLabel)
+        latencyContentView.addSubview(latencyMetricsLabel)
+
+        turnBadgeLabel.snp.makeConstraints { make in
+            make.edges.equalToSuperview().inset(UIEdgeInsets(top: 2, left: 4, bottom: 2, right: 4))
+        }
+
+        turnBadgeView.snp.makeConstraints { make in
+            make.left.equalToSuperview()
+            make.top.equalToSuperview().offset(1)
+            make.height.greaterThanOrEqualTo(13)
+            make.bottom.lessThanOrEqualToSuperview()
+        }
+
+        latencyMetricsLabel.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(1)
+            make.left.equalTo(turnBadgeView.snp.right).offset(6)
+            make.right.equalToSuperview()
+            make.bottom.equalToSuperview()
+        }
     }
     
     func configure(with message: Message, isLastMessage: Bool) {
@@ -134,6 +197,7 @@ class ChatMessageCell: UITableViewCell {
         }
         
         interruptButton.isHidden = !message.isInterrupted
+        configureLatencySummary(for: message)
     }
     
     func setUserProfile(nickname: String?, avatarImage: UIImage?) {
@@ -184,13 +248,15 @@ class ChatMessageCell: UITableViewCell {
             make.left.greaterThanOrEqualToSuperview().offset(20)
             make.bottom.lessThanOrEqualToSuperview().offset(-8)
         }
-        
-        messageLabel.snp.remakeConstraints { make in
+
+        messageContentStack.snp.remakeConstraints { make in
             make.top.equalToSuperview().offset(12)
             make.left.equalToSuperview().offset(16)
             make.right.equalToSuperview().offset(-16)
             make.bottom.equalToSuperview().offset(-12)
         }
+
+        setLatencyContentVisible(false)
     }
     
     private func setupAgentLayout() {
@@ -215,19 +281,112 @@ class ChatMessageCell: UITableViewCell {
             make.left.equalToSuperview().offset(20)
             make.right.equalTo(-20)
         }
-        
-        messageLabel.snp.remakeConstraints { make in
-            make.top.equalToSuperview().offset(5)
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-            make.bottom.equalToSuperview().offset(-12)
-        }
+
+        updateAgentMessageConstraints(showLatency: false)
         
         interruptButton.snp.remakeConstraints { make in
             make.left.equalTo(messageBubble)
             make.top.equalTo(messageBubble.snp.bottom)
             make.bottom.equalTo(0)
             make.height.equalTo(22)
+        }
+    }
+
+    private func configureLatencySummary(for message: Message) {
+        if message.isMine {
+            latencyMetricsLabel.attributedText = nil
+            latencyContentView.isHidden = true
+            return
+        }
+
+        guard message.shouldShowLatencyMetrics,
+              let latencyInfo = message.latencyInfo else {
+            latencyMetricsLabel.attributedText = nil
+            turnBadgeLabel.text = nil
+            setLatencyContentVisible(false)
+            updateAgentMessageConstraints(showLatency: false)
+            return
+        }
+
+        turnBadgeLabel.text = "#\(latencyInfo.turnId)"
+        latencyMetricsLabel.attributedText = buildLatencySummary(from: latencyInfo)
+        setLatencyContentVisible(true)
+        updateAgentMessageConstraints(showLatency: true)
+    }
+
+    private func updateAgentMessageConstraints(showLatency: Bool) {
+        messageContentStack.snp.remakeConstraints { make in
+            make.top.equalToSuperview().offset(5)
+            make.left.equalToSuperview()
+            make.right.equalToSuperview()
+            make.bottom.equalToSuperview().offset(showLatency ? -10 : -12)
+        }
+    }
+
+    private func setLatencyContentVisible(_ visible: Bool) {
+        if visible {
+            if latencyContentView.superview != messageContentStack {
+                latencyContentView.removeFromSuperview()
+                messageContentStack.addArrangedSubview(latencyContentView)
+            }
+            latencyContentView.isHidden = false
+        } else {
+            if latencyContentView.superview == messageContentStack {
+                messageContentStack.removeArrangedSubview(latencyContentView)
+                latencyContentView.removeFromSuperview()
+            }
+            latencyContentView.isHidden = true
+        }
+    }
+
+    private func buildLatencySummary(from latencyInfo: MessageLatencyInfo) -> NSAttributedString {
+        let result = NSMutableAttributedString()
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 6
+        let labelAttributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 9),
+            .foregroundColor: UIColor(hex: 0xA5ABBF),
+            .paragraphStyle: paragraphStyle,
+        ]
+        let valueAttributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 9),
+            .foregroundColor: UIColor(hex: 0x4F6FFF),
+            .paragraphStyle: paragraphStyle,
+        ]
+
+        latencyInfo.orderedEntries
+            .filter { $0.kind != .turn }
+            .enumerated()
+            .forEach { index, entry in
+            if index > 0 {
+                result.append(NSAttributedString(string: "  ", attributes: labelAttributes))
+            }
+
+            result.append(NSAttributedString(string: "\(latencyTitle(for: entry.kind)):", attributes: labelAttributes))
+
+            let valueText = entry.isMilliseconds ? "\(entry.value)ms" : "\(entry.value)"
+            result.append(NSAttributedString(string: valueText, attributes: valueAttributes))
+        }
+
+        return result
+    }
+
+    private func latencyTitle(for kind: MessageLatencyMetricKind) -> String {
+        switch kind {
+        case .turn:
+            return ResourceManager.L10n.Conversation.latencyTurn
+        case .e2e:
+            return ResourceManager.L10n.Conversation.latencyE2E
+        case .rtc:
+            return ResourceManager.L10n.Conversation.latencyRTC
+        case .algorithm:
+            return ResourceManager.L10n.Conversation.latencyAlgorithm
+        case .asr:
+            return ResourceManager.L10n.Conversation.latencyASR
+        case .llm:
+            return ResourceManager.L10n.Conversation.latencyLLM
+        case .tts:
+            return ResourceManager.L10n.Conversation.latencyTTS
         }
     }
 }
@@ -557,6 +716,7 @@ class ChatView: UIView {
     // MARK: - User Profile Configuration
     private var localUserProfile: UserProfile = UserProfile()
     private var remoteUserProfile: UserProfile = UserProfile()
+    private var realtimeDataToggleVisible = false
     
     // MARK: - Properties
     lazy var viewModel: ChatMessageViewModel = {
@@ -577,6 +737,13 @@ class ChatView: UIView {
         button.isHidden = true
         return button
     }()
+
+    private lazy var realtimeDataSwitcherView: ActiveFuncSwitchItemView = {
+        let view = ActiveFuncSwitchItemView()
+        view.isHidden = true
+        view.button.addTarget(self, action: #selector(onClickRealtimeDataButton), for: .touchUpInside)
+        return view
+    }()
     
     // MARK: - UI Components
     private lazy var tableView: UITableView = {
@@ -593,23 +760,36 @@ class ChatView: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        AppContext.settingManager().addDelegate(self)
         setupViews()
         setupConstraints()
+        updateRealtimeDataToggleState()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
+    deinit {
+        AppContext.settingManager().removeDelegate(self)
+    }
     
     // MARK: - Setup
     private func setupViews() {
         addSubview(tableView)
+        addSubview(realtimeDataSwitcherView)
         addSubview(arrowButton)
     }
     
     private func setupConstraints() {
         tableView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
+        }
+
+        realtimeDataSwitcherView.snp.makeConstraints { make in
+            make.top.equalToSuperview()
+            make.right.equalTo(-10)
+            make.height.equalTo(24)
         }
         
         arrowButton.snp.makeConstraints { make in
@@ -666,6 +846,10 @@ class ChatView: UIView {
     func getLastMessage(fromUser: Bool) -> Message? {
         return viewModel.messages.last { $0.isMine == fromUser }
     }
+
+    func snapshotTurnTranscriptions(turnIds: [Int]) -> [Int: AgentLatencyData.TurnTranscriptionSnapshot] {
+        viewModel.snapshotTurnTranscriptions(turnIds: turnIds)
+    }
     
     func stopLoadingAnimation() {
         for cell in tableView.visibleCells {
@@ -673,6 +857,30 @@ class ChatView: UIView {
                 chatCell.stopLoadingAnimate()
             }
         }
+    }
+
+    func toggleRealtimeDataVisibility() {
+        let current = AppContext.settingManager().latencyMetricsVisible
+        AppContext.settingManager().updateLatencyMetricsVisibility(!current)
+    }
+
+    func setRealtimeDataToggleVisible(_ visible: Bool) {
+        realtimeDataToggleVisible = visible
+        updateRealtimeDataToggleState()
+    }
+
+    func setRealtimeDataToggleStyle(showLight: Bool) {
+        realtimeDataSwitcherView.setButtonColorTheme(showLight: showLight)
+    }
+
+    @objc private func onClickRealtimeDataButton() {
+        toggleRealtimeDataVisibility()
+    }
+
+    private func updateRealtimeDataToggleState() {
+        let isOn = AppContext.settingManager().latencyMetricsVisible
+        realtimeDataSwitcherView.configure(text: ResourceManager.L10n.Conversation.realtimeLatency, isOn: isOn)
+        realtimeDataSwitcherView.isHidden = !realtimeDataToggleVisible
     }
 }
 
@@ -809,3 +1017,14 @@ extension ChatView: ChatMessageViewModelDelegate {
     }
 }
 
+extension ChatView: AgentSettingDelegate {
+    func settingManager(_ manager: AgentSettingManager, latencyMetricsVisibilityDidUpdated state: Bool) {
+        updateRealtimeDataToggleState()
+        tableView.reloadData()
+    }
+
+    func settingManager(_ manager: AgentSettingManager, presetDidUpdated preset: AgentPreset?) {
+        updateRealtimeDataToggleState()
+        tableView.reloadData()
+    }
+}

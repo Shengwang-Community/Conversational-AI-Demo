@@ -7,6 +7,7 @@
 
 import UIKit
 import Common
+import SVProgressHUD
 
 class SipSettingViewController: UIViewController {
     private let backgroundViewHeight: CGFloat = 480
@@ -141,6 +142,22 @@ class SipSettingViewController: UIViewController {
 extension SipSettingViewController: ChannelInfoViewDelegate {
     func channelInfoViewDidTapFeedback(_ view: ChannelInfoView) {
         // Feedback logic is handled inside ChannelInfoView
+    }
+
+    func channelInfoViewDidTapDataReport(_ view: ChannelInfoView) {
+        guard let presetName = AppContext.settingManager().preset?.name, !presetName.isEmpty,
+              let latestReport = LatencyMetricsManager.shared.fetchReport(presetName: presetName) else {
+            return
+        }
+
+        guard let reportUrl = latestReport.resolvedReportUrl(baseUrl: AppContext.shared.latencyDataReportPageBaseUrl) else {
+            return
+        }
+
+        guard let url = URL(string: reportUrl) else {
+            return
+        }
+        UIApplication.shared.open(url)
     }
 }
 

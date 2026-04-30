@@ -91,7 +91,7 @@ class AgentSettingTableItemView: UIView {
     func setEnable(_ enable: Bool) {
         button.isEnabled = enable
         if enable {
-            detailLabel.textColor = UIColor.white
+            detailLabel.textColor = UIColor.themColor(named: "ai_icontext1")
         } else {
             detailLabel.textColor = UIColor.themColor(named: "ai_icontext4")
         }

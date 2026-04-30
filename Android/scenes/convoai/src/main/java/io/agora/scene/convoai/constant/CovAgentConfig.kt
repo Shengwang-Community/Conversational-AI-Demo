@@ -3,6 +3,7 @@ package io.agora.scene.convoai.constant
 import io.agora.scene.common.BuildConfig
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.debugMode.DebugConfigSettings
+import io.agora.scene.common.util.LocalStorageUtil
 import io.agora.scene.convoai.api.CovAgentLanguage
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.api.CovAvatar
@@ -32,13 +33,23 @@ enum class VoiceprintMode {
 object CovAgentManager {
 
     private val TAG = "CovAgentManager"
+    private const val REAL_TIME_DATA_ENABLED = "cov_real_time_data_enabled"
 
     // Settings
     private var preset: CovAgentPreset? = null
     var language: CovAgentLanguage? = null
         set(value) {
             field = value
-            enableAiVad = value?.aivad_enabled_by_default ?: false
+            enableAiVad = if (preset?.isCustom == true) {
+                true
+            } else {
+                language?.aivad_enabled_by_default ?: true
+            }
+            enableAiPause = if (enableAiVad) {
+                value?.pause_state_enabled_by_default ?: false
+            } else {
+                false
+            }
         }
 
     var avatar: CovAvatar? = null
@@ -48,6 +59,20 @@ object CovAgentManager {
     var renderMode: Int = CovRenderMode.WORD
 
     var enableAiVad = false
+        set(value) {
+            field = value
+            if (!value) {
+                enableAiPause = false
+            }
+        }
+    var enableAiPause = false
+        set(value) {
+            field = if (enableAiVad) {
+                value
+            } else {
+                false
+            }
+        }
     val enableBHVS get() = voiceprintMode == VoiceprintMode.OFF
 
     // Preset change reminder setting, follows app lifecycle
@@ -95,6 +120,17 @@ object CovAgentManager {
         return preset
     }
 
+    val isAiVadSupported: Boolean
+        get() {
+            return if (preset?.isCustom == true) {
+                true
+            } else {
+                language?.aivad_supported ?: false
+            }
+        }
+
+    val isAiPauseAdjustable: Boolean get() = isAiVadSupported && enableAiVad
+
     fun getAvatars(): List<CovAvatar> {
         if (isOpenSource) {
             return listOf(
@@ -133,6 +169,7 @@ object CovAgentManager {
 
     fun resetData() {
         enableAiVad = false
+        enableAiPause = false
         preset = null
         language = null
         avatar = null
@@ -159,6 +196,16 @@ object CovAgentManager {
     val convoAIParameter: String get() = DebugConfigSettings.convoAIParameter
 
     val isMetricsEnabled: Boolean get() = DebugConfigSettings.isMetricsEnabled
+
+    val isRealtimeDataEnabled: Boolean
+        get() = LocalStorageUtil.getBoolean(
+            REAL_TIME_DATA_ENABLED,
+            false
+        )
+
+    fun setRealtimeDataEnabled(enabled: Boolean) {
+        LocalStorageUtil.putBoolean(REAL_TIME_DATA_ENABLED, enabled)
+    }
 
     val isSessionLimitMode: Boolean get() = DebugConfigSettings.isSessionLimitMode
 }
