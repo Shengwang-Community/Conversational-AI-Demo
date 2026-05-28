@@ -116,8 +116,34 @@ class DebugCovConfigFragment : BaseFragment<CommonDebugCovConfigFragmentBinding>
                 }
             }
 
+            etConvoaiRequestBaseUrl.setText(DebugConfigSettings.convoAiRequestBaseUrl)
+            etConvoaiRequestBaseUrl.setOnFocusChangeListener { _, hasFocus ->
+                if (!hasFocus) {
+                    DebugConfigSettings.setConvoAiRequestBaseUrl(
+                        etConvoaiRequestBaseUrl.text.toString().trim()
+                    )
+                }
+            }
+
+            etConvoaiRequestHeader.setText(DebugConfigSettings.convoAiRequestHeaderNamespace)
+            etConvoaiRequestHeader.setOnFocusChangeListener { _, hasFocus ->
+                if (!hasFocus) {
+                    DebugConfigSettings.setConvoAiRequestHeaderNamespace(
+                        etConvoaiRequestHeader.text.toString().trim()
+                    )
+                }
+            }
+
             view.setOnTouchListener { _, _ ->
                 when {
+                    etConvoaiRequestBaseUrl.hasFocus() -> {
+                        etConvoaiRequestBaseUrl.clearFocus()
+                        hideKeyboard()
+                    }
+                    etConvoaiRequestHeader.hasFocus() -> {
+                        etConvoaiRequestHeader.clearFocus()
+                        hideKeyboard()
+                    }
                     etGraphId.hasFocus() -> {
                         etGraphId.clearFocus()
                         hideKeyboard()
@@ -159,6 +185,8 @@ class DebugCovConfigFragment : BaseFragment<CommonDebugCovConfigFragmentBinding>
                     // Keyboard is hidden - clear focus from input fields
                     mBinding?.apply {
                         when {
+                            etConvoaiRequestBaseUrl.hasFocus() -> etConvoaiRequestBaseUrl.clearFocus()
+                            etConvoaiRequestHeader.hasFocus() -> etConvoaiRequestHeader.clearFocus()
                             etGraphId.hasFocus() -> etGraphId.clearFocus()
                             etSdkAudioParameter.hasFocus() -> etSdkAudioParameter.clearFocus()
                             etApiParameter.hasFocus() -> etApiParameter.clearFocus()

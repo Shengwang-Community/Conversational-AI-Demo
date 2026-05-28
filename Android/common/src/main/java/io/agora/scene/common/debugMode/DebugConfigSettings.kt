@@ -49,6 +49,20 @@ object DebugConfigSettings {
         this.convoAIParameter = apiParameter
     }
 
+    var convoAiRequestBaseUrl: String = ""
+        private set
+
+    fun setConvoAiRequestBaseUrl(baseUrl: String) {
+        this.convoAiRequestBaseUrl = baseUrl
+    }
+
+    var convoAiRequestHeaderNamespace: String = ""
+        private set
+
+    fun setConvoAiRequestHeaderNamespace(namespace: String) {
+        this.convoAiRequestHeaderNamespace = namespace
+    }
+
     @Volatile
     private var _isDebug: Boolean = false
     
@@ -143,6 +157,8 @@ object DebugConfigSettings {
         isMetricsEnabled = false
         _sdkAudioParameters.clear()
         convoAIParameter = ""
+        convoAiRequestBaseUrl = ""
+        convoAiRequestHeaderNamespace = ""
     }
 
     // Counter for debug mode activation

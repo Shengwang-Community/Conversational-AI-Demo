@@ -23,6 +23,11 @@
     <string name="common_debug_graph_id">Graph id</string>
     <string name="common_debug_sdk_parameters">SDK 音频参数配置</string>
     <string name="common_debug_sc_config">ConvoAI 服务 preset 配置</string>
+    <string name="common_debug_convoai_request_base_url">请求域名</string>
+    <string name="common_debug_convoai_request_base_url_desc">(仅覆盖固定 ConvoAI 与 token API 路径之前的域名部分)</string>
+    <string name="common_debug_convoai_request_header">X-Service-Namespace</string>
+    <string name="common_debug_convoai_request_header_desc">(填写后会与远端请求已有 header 自动合并)</string>
+    <string name="common_debug_convoai_request_header_hint">输入服务命名空间</string>
     <string name="common_debug_close">退出开发者模式</string>
     <string name="common_debug_copy_user_question">复制用户当前通话提问</string>
     <string name="common_call_time_is_up">本次对话时间到！</string>

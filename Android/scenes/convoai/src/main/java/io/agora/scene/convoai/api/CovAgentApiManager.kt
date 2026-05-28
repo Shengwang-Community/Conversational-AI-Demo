@@ -4,6 +4,7 @@ import com.google.gson.JsonObject
 import io.agora.scene.common.BuildConfig
 import io.agora.scene.common.constant.SSOUserManager
 import io.agora.scene.common.constant.ServerConfig
+import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.common.net.SecureOkHttpClient
 import io.agora.scene.common.util.GsonTools
 import io.agora.scene.common.util.TimeUtils
@@ -57,6 +58,27 @@ object CovAgentApiManager {
         val uploadedAtMs: Long
     )
 
+    internal fun buildStartRequestConfig(
+        baseUrl: String,
+        namespace: String
+    ): Map<String, Any>? {
+        val trimmedBaseUrl = baseUrl.trim()
+        val trimmedNamespace = namespace.trim()
+        if (trimmedBaseUrl.isEmpty() && trimmedNamespace.isEmpty()) {
+            return null
+        }
+
+        val convoaiConfig = mutableMapOf<String, Any>()
+        if (trimmedBaseUrl.isNotEmpty()) {
+            convoaiConfig["base_url"] = trimmedBaseUrl
+        }
+        if (trimmedNamespace.isNotEmpty()) {
+            convoaiConfig["headers"] = mapOf("X-Service-Namespace" to trimmedNamespace)
+        }
+
+        return mapOf("convoai" to convoaiConfig)
+    }
+
     fun startAgentWithMap(
         channelName: String,
         convoaiBody: Map<String, Any?>,
@@ -93,6 +115,12 @@ object CovAgentApiManager {
             // Process convoaiBody, convert Map to JSONObject and filter out null values
             val convoaiJsonObject = mapToJsonObjectWithFilter(convoaiBody)
             postBody.put("convoai_body", convoaiJsonObject)
+            buildStartRequestConfig(
+                DebugConfigSettings.convoAiRequestBaseUrl,
+                DebugConfigSettings.convoAiRequestHeaderNamespace
+            )?.let { requestConfig ->
+                postBody.put("request_config", mapToJsonObjectWithFilter(requestConfig))
+            }
 
         } catch (e: JSONException) {
             CovLogger.e(TAG, "postBody error ${e.message}")
