@@ -170,12 +170,12 @@ CONFIGURATION='Release'
 # Signing configuration
 if [[ "$bundle_id" == *"test"* ]]; then
     PROVISIONING_PROFILE="shengwang_convoai_test"
-    CODE_SIGN_IDENTITY="iPhone Distribution"
+    CODE_SIGN_IDENTITY="Apple Distribution"
     DEVELOPMENT_TEAM="48TB6ZZL5S"
     PLIST_PATH="${CURRENT_PATH}/cicd/build_scripts/ios_export_store_test.plist"
 else
     PROVISIONING_PROFILE="shengwang_convoai_appstore"
-    CODE_SIGN_IDENTITY="iPhone Distribution"
+    CODE_SIGN_IDENTITY="Apple Distribution"
     DEVELOPMENT_TEAM="48TB6ZZL5S"
     PLIST_PATH="${CURRENT_PATH}/cicd/build_scripts/ios_export_store_prod.plist"
 fi
