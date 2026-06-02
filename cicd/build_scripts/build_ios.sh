@@ -160,7 +160,12 @@ fi
 echo "Version number read from project configuration: ${release_version}"
 
 # Artifact name
-export ARTIFACT_NAME="ShengWang_Conversational_Al_Engine_Demo_for_iOS_v${release_version}_${BUILD_VERSION}"
+if [[ "$bundle_id" == *"test"* ]]; then
+    PACKAGE_VARIANT="test"
+else
+    PACKAGE_VARIANT="appstore"
+fi
+export ARTIFACT_NAME="ShengWang_Conversational_Al_Engine_Demo_for_iOS_${PACKAGE_VARIANT}_v${release_version}_${BUILD_VERSION}"
 
 KEYCENTER_PATH=${PROJECT_PATH}"/"${PROJECT_NAME}"/KeyCenter.swift"
 
