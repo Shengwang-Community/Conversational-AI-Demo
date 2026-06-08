@@ -32,6 +32,18 @@ if [ ! -d "${PROJECT_PATH}" ]; then
     exit 1
 fi
 
+if [ -z "$IOS_APPSTORE_DEVELOPER_DIR" ]; then
+    export IOS_APPSTORE_DEVELOPER_DIR="/Applications/Xcode_26.3.app/Contents/Developer"
+fi
+
+# Both test and App Store packages are distributed through TestFlight.
+if [ -d "$IOS_APPSTORE_DEVELOPER_DIR" ]; then
+    export DEVELOPER_DIR="$IOS_APPSTORE_DEVELOPER_DIR"
+else
+    echo "Error: TestFlight build requires Xcode 26.3, but IOS_APPSTORE_DEVELOPER_DIR was not found: $IOS_APPSTORE_DEVELOPER_DIR"
+    exit 1
+fi
+
 if [ -z "$toolbox_url" ]; then
     export toolbox_url="https://service.apprtc.cn/toolbox"
 fi
@@ -95,6 +107,7 @@ echo "APP_ID: ${APP_ID}"
 echo "bundle_id: ${bundle_id}"
 # Check key environment variables
 echo "Checking iOS build environment variables:"
+echo "DEVELOPER_DIR: ${DEVELOPER_DIR}"
 echo "Xcode version: $(xcodebuild -version | head -n 1)"
 echo "Swift version: $(swift --version | head -n 1)"
 echo "Ruby version: $(ruby --version)"
