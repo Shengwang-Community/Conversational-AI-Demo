@@ -97,18 +97,22 @@ object ServerConfig {
     val serviceVersion = "v5"
 
     @JvmStatic
-    var rtcAppId: String = ""
-        private set
+    val rtcAppId: String
+        get() = temporaryRtcAppId ?: baseRtcAppId
 
     @JvmStatic
-    var rtcAppCert: String = ""
-        private set
+    val rtcAppCert: String
+        get() = if (temporaryRtcAppId == null) baseRtcAppCert else temporaryRtcAppCert
 
     @JvmStatic
     var labTestingVid: String = ""
         private set
 
     private val buildEnvConfig: EnvConfig = EnvConfig()
+    private var baseRtcAppId: String = ""
+    private var baseRtcAppCert: String = ""
+    private var temporaryRtcAppId: String? = null
+    private var temporaryRtcAppCert: String = ""
 
     val isBuildEnv: Boolean get() = buildEnvConfig.toolboxServerHost == toolBoxUrl
 
@@ -136,7 +140,7 @@ object ServerConfig {
             }?.envName?.also {
                 buildEnvConfig.envName = it
                 val isSameEnv = buildEnvConfig.toolboxServerHost == toolBoxUrl &&
-                        buildEnvConfig.rtcAppId == rtcAppId
+                        buildEnvConfig.rtcAppId == baseRtcAppId
                 if (isSameEnv){
                     envName = it
                 }
@@ -147,21 +151,29 @@ object ServerConfig {
     fun updateDebugConfig(debugConfig: EnvConfig) {
         this.envName = debugConfig.envName
         this.toolBoxUrl = debugConfig.toolboxServerHost
-        this.rtcAppId = debugConfig.rtcAppId
-        this.rtcAppCert = debugConfig.rtcAppCertificate
+        this.baseRtcAppId = debugConfig.rtcAppId
+        this.baseRtcAppCert = debugConfig.rtcAppCertificate
+        updateTemporaryRtcConfig(null)
         ApiManager.setBaseURL(toolBoxUrl)
     }
 
     fun updateLabTestingConfig(appId: String, vid: String) {
-        this.rtcAppId = appId
+        this.baseRtcAppId = appId
         this.labTestingVid = vid
+        updateTemporaryRtcConfig(null)
+    }
+
+    fun updateTemporaryRtcConfig(appId: String?, appCert: String = "") {
+        temporaryRtcAppId = appId?.takeIf { it.isNotEmpty() }
+        temporaryRtcAppCert = if (temporaryRtcAppId == null) "" else appCert
     }
 
     fun reset() {
         envName = buildEnvConfig.envName
         toolBoxUrl = buildEnvConfig.toolboxServerHost
-        rtcAppId = buildEnvConfig.rtcAppId
-        rtcAppCert = buildEnvConfig.rtcAppCertificate
+        baseRtcAppId = buildEnvConfig.rtcAppId
+        baseRtcAppCert = buildEnvConfig.rtcAppCertificate
+        updateTemporaryRtcConfig(null)
         ApiManager.setBaseURL(toolBoxUrl)
     }
 }
