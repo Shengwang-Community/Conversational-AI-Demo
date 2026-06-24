@@ -16,6 +16,8 @@
 		AB7A7DA92D43B145000B3034 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AB7A7DA42D43B145000B3034 /* Localizable.strings */; };
 		ABBD05EF2D7FE093000F890A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = ABBD05ED2D7FE093000F890A /* InfoPlist.strings */; };
 		C0AA00162E10000100A10001 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0AA00072E10000100A10001 /* XCTest.framework */; };
+		C0AA00302E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */; };
+		C0AA00322E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */; };
 		F727F8692D5E3292003AF48D /* common_resource.zip in Resources */ = {isa = PBXBuildFile; fileRef = F727F8682D5E3292003AF48D /* common_resource.zip */; };
 		F7D294B92D6C5D9900583343 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F7D294B82D6C5D9900583343 /* Launch Screen.storyboard */; };
 		F7D294BF2D6C6F9C00583343 /* Agora_AiLogo.png in Resources */ = {isa = PBXBuildFile; fileRef = F7D294BE2D6C6F9C00583343 /* Agora_AiLogo.png */; };
@@ -58,6 +60,8 @@
 		ABBD05F02D7FE0C8000F890A /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		C0AA00012E10000100A10001 /* Agent-cnTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Agent-cnTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0AA00072E10000100A10001 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
+		C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContextTemporaryRtcConfigTests.swift; sourceTree = "<group>"; };
+		C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSettingManagerTemporaryRtcConfigTests.swift; sourceTree = "<group>"; };
 		C15F651B9956858BE3FA8B17 /* Pods-Agent-cn.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-cn.debug.xcconfig"; path = "Target Support Files/Pods-Agent-cn/Pods-Agent-cn.debug.xcconfig"; sourceTree = "<group>"; };
 		D50A426C2ED71BDFC45A5B54 /* Pods_Agent_cn_Agent_cnTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Agent_cn_Agent_cnTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D91E55880AF6C3438FDDFFF6 /* Pods-Agent.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent.release.xcconfig"; path = "Target Support Files/Pods-Agent/Pods-Agent.release.xcconfig"; sourceTree = "<group>"; };
@@ -181,6 +185,8 @@
 		C0AA00212E10000100A10001 /* AgentTests */ = {
 			isa = PBXGroup;
 			children = (
+				C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */,
+				C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */,
 			);
 			path = AgentTests;
 			sourceTree = SOURCE_ROOT;
@@ -301,13 +307,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -322,13 +324,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn/Pods-Agent-cn-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn/Pods-Agent-cn-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -343,13 +341,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn/Pods-Agent-cn-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn/Pods-Agent-cn-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -408,13 +402,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -438,6 +428,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0AA00322E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift in Sources */,
+				C0AA00302E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -608,7 +600,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Agent-cn.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26042810;
+				CURRENT_PROJECT_VERSION = 26062612;
 				DEVELOPMENT_TEAM = 48TB6ZZL5S;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -637,7 +629,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.0;
+				MARKETING_VERSION = 2.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = shengwang.convoai.test;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -659,7 +651,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Agent-cn.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26042810;
+				CURRENT_PROJECT_VERSION = 26062612;
 				DEVELOPMENT_TEAM = 48TB6ZZL5S;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -688,7 +680,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.0;
+				MARKETING_VERSION = 2.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = shengwang.convoai.test;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

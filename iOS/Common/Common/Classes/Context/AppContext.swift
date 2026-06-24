@@ -41,6 +41,8 @@ import Bugly
     private var _isOpenSource: Bool = false
     private var _appId: String = ""
     private var _certificate: String = ""
+    private var _temporaryRtcAppId: String?
+    private var _temporaryRtcCertificate: String = ""
     private var _baseServerUrl: String = ""
     private var _environments: [[String : String]] = []
     
@@ -93,18 +95,24 @@ import Bugly
 
     
     @objc public var appId: String {
-        get { return _appId }
-        set { _appId = newValue }
+        get { return _temporaryRtcAppId ?? _appId }
+        set {
+            _appId = newValue
+            clearTemporaryRtcConfig()
+        }
     }
     
     @objc public var certificate: String {
-        get { return _certificate }
+        get { return _temporaryRtcAppId == nil ? _certificate : _temporaryRtcCertificate }
         set { _certificate = newValue }
     }
     
     @objc public var baseServerUrl: String {
         get { return _baseServerUrl }
-        set { _baseServerUrl = newValue }
+        set {
+            _baseServerUrl = newValue
+            clearTemporaryRtcConfig()
+        }
     }
     
     @objc public var environments: [[String : String]] {
@@ -141,6 +149,15 @@ import Bugly
         }
         
         return nil
+    }
+
+    public func updateTemporaryRtcConfig(appId: String?, appCert: String = "") {
+        guard let appId = appId, !appId.isEmpty else {
+            clearTemporaryRtcConfig()
+            return
+        }
+        _temporaryRtcAppId = appId
+        _temporaryRtcCertificate = appCert
     }
     
     @objc public var basicAuthKey: String {
@@ -201,5 +218,10 @@ import Bugly
     @objc public var avatarParams: [String: Any] {
         get { return _avatarParams }
         set { _avatarParams = newValue }
+    }
+
+    private func clearTemporaryRtcConfig() {
+        _temporaryRtcAppId = nil
+        _temporaryRtcCertificate = ""
     }
 }

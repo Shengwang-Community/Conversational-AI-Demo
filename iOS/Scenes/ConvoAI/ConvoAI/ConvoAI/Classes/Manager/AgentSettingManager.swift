@@ -92,6 +92,9 @@ class AgentSettingManager {
     /// Configuration data model
     private var preference = AgentPreference()
     private let kLatencyMetricsVisibleKey = "latency_metrics_visible"
+    private let specialSipOutboundPresetName = "sip_outbound_cn_2"
+    private let specialSipOutboundAppId = "fc9e334319ff4cb0a57b5c190f3e9733"
+    private let prodToolboxHost = "service.apprtc.cn"
      
     // MARK: - Delegate Management
     private var delegates = NSHashTable<AnyObject>.weakObjects()
@@ -185,6 +188,7 @@ class AgentSettingManager {
     func updatePreset(_ preset: AgentPreset?) {
         preference.preset = preset
         preference.isCustomPreset = preset?.isCustom == true
+        updateTemporaryRtcConfig(for: preset)
 
         if let preset = preset {
             // Update language based on preset
@@ -300,9 +304,16 @@ class AgentSettingManager {
     func resetToDefaults() {
         preference = AgentPreference()
         preference.latencyMetricsVisible = UserDefaults.standard.bool(forKey: kLatencyMetricsVisibleKey)
+        AppContext.shared.updateTemporaryRtcConfig(appId: nil)
     }
      
     // MARK: - Private Methods
+
+    private func updateTemporaryRtcConfig(for preset: AgentPreset?) {
+        let shouldUseSpecialAppId = preset?.name == specialSipOutboundPresetName &&
+            AppContext.shared.baseServerUrl.range(of: prodToolboxHost, options: .caseInsensitive) != nil
+        AppContext.shared.updateTemporaryRtcConfig(appId: shouldUseSpecialAppId ? specialSipOutboundAppId : nil)
+    }
      
     private func notifyDelegates(_ notification: (AgentSettingDelegate) -> Void) {
         for delegate in delegates.allObjects {
