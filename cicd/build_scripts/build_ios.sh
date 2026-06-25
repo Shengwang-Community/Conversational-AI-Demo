@@ -18,7 +18,6 @@ if [ -z "$build_time" ]; then
     export build_time=$(date +%H%M%S)
 fi
 
-BUILD_VERSION=$(date +%Y%m%d%H%M%S)
 CURRENT_PATH=$PWD
 # Project target name
 PROJECT_NAME=Agent
@@ -172,6 +171,13 @@ if [ -z "$release_version" ]; then
 fi
 echo "Version number read from project configuration: ${release_version}"
 
+export BUILD_VERSION=$(xcodebuild -workspace "${PROJECT_PATH}/${PROJECT_NAME}.xcworkspace" -scheme "${TARGET_NAME}" -showBuildSettings | grep "CURRENT_PROJECT_VERSION" | head -n 1 | cut -d "=" -f 2 | tr -d " ")
+if [ -z "$BUILD_VERSION" ]; then
+    echo "Error: Unable to read build number from project configuration"
+    exit 1
+fi
+echo "Build number read from project configuration: ${BUILD_VERSION}"
+
 KEYCENTER_PATH=${PROJECT_PATH}"/"${PROJECT_NAME}"/KeyCenter.swift"
 
 # Build environment
@@ -218,16 +224,12 @@ fi
 
 security unlock-keychain -p "123456" ~/Library/Keychains/login.keychain
 # Main project configuration
-# Debug
-sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_VERSION};|g" $PBXPROJ_PATH
 sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = .*;|PRODUCT_BUNDLE_IDENTIFIER = \"${bundle_id}\";|g" $PBXPROJ_PATH
 sed -i '' "s|CODE_SIGN_STYLE = .*;|CODE_SIGN_STYLE = \"Manual\";|g" $PBXPROJ_PATH
 sed -i '' "s|DEVELOPMENT_TEAM = .*;|DEVELOPMENT_TEAM = \"${DEVELOPMENT_TEAM}\";|g" $PBXPROJ_PATH
 sed -i '' "s|PROVISIONING_PROFILE_SPECIFIER = .*;|PROVISIONING_PROFILE_SPECIFIER = \"${PROVISIONING_PROFILE}\";|g" $PBXPROJ_PATH
 sed -i '' "s|CODE_SIGN_IDENTITY = .*;|CODE_SIGN_IDENTITY = \"${CODE_SIGN_IDENTITY}\";|g" $PBXPROJ_PATH
 
-# Release
-sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_VERSION};|g" $PBXPROJ_PATH
 sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = .*;|PRODUCT_BUNDLE_IDENTIFIER = \"${bundle_id}\";|g" $PBXPROJ_PATH
 sed -i '' "s|CODE_SIGN_STYLE = .*;|CODE_SIGN_STYLE = \"Manual\";|g" $PBXPROJ_PATH
 sed -i '' "s|DEVELOPMENT_TEAM = .*;|DEVELOPMENT_TEAM = \"${DEVELOPMENT_TEAM}\";|g" $PBXPROJ_PATH
