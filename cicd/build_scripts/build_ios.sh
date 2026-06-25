@@ -178,6 +178,9 @@ if [ -z "$BUILD_VERSION" ]; then
 fi
 echo "Build number read from project configuration: ${BUILD_VERSION}"
 
+export ARTIFACT_TIMESTAMP=$(date +%Y%m%d%H%M%S)
+echo "Artifact timestamp: ${ARTIFACT_TIMESTAMP}"
+
 KEYCENTER_PATH=${PROJECT_PATH}"/"${PROJECT_NAME}"/KeyCenter.swift"
 
 # Build environment
@@ -197,7 +200,7 @@ else
 fi
 
 # Artifact name
-export ARTIFACT_NAME="ShengWang_Conversational_Al_Engine_Demo_for_iOS_${PROVISIONING_PROFILE}_v${release_version}_${BUILD_VERSION}"
+export ARTIFACT_NAME="ShengWang_Conversational_Al_Engine_Demo_for_iOS_${PROVISIONING_PROFILE}_v${release_version}_${BUILD_VERSION}_${ARTIFACT_TIMESTAMP}"
 
 # Project file path
 APP_PATH="${PROJECT_PATH}/${PROJECT_NAME}.xcworkspace"
@@ -346,28 +349,7 @@ cd "${PACKAGE_DIR}"
 zip -r "${WORKSPACE}/${ARTIFACT_NAME}.zip" ./
 cd "${WORKSPACE}"
 
-# Upload file and delete local zip for non-local builds
-if [ "$LOCALPACKAGE" != "true" ]; then
-    echo "Uploading artifact to artifact repository..."
-    
-    # Upload file to artifact repository and save output
-    UPLOAD_RESULT=$(python3 artifactory_utils.py --action=upload_file --file="${ARTIFACT_NAME}.zip" --project)
-    
-    # Check if upload result is a URL
-    if [[ "$UPLOAD_RESULT" =~ ^https?:// ]]; then
-        echo "====🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉========="
-        echo "Artifact uploaded successfully! Download URL:"
-        echo "$UPLOAD_RESULT"
-        echo "===================================================="
-    else
-        echo "Warning: Upload result format is abnormal"
-        echo "Complete upload result:"
-        echo "$UPLOAD_RESULT"
-    fi
-    
-    # Clean up local artifact
-    rm -f "${ARTIFACT_NAME}.zip"
-fi
+# Artifact upload is handled by the Jenkins publish stage.
 
 # Clean up files
 rm -rf ${TARGET_NAME}_${BUILD_VERSION}.xcarchive
