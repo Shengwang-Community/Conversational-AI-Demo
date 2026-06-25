@@ -65,7 +65,9 @@ public class DeveloperBasicSettingView: UIView  {
         appVersionLabel.font = UIFont.systemFont(ofSize: 16)
         appVersionValueLabel.textColor = .lightGray
         appVersionValueLabel.font = UIFont.systemFont(ofSize: 16)
-        appVersionValueLabel.text = "\(ConversationalAIAPIImpl.version)(Build \(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""))"
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+        appVersionValueLabel.text = "\(appVersion)(\(buildVersion))"
         let appStack = UIStackView(arrangedSubviews: [appVersionLabel, appVersionValueLabel])
         appStack.axis = .horizontal
         appStack.distribution = .equalSpacing

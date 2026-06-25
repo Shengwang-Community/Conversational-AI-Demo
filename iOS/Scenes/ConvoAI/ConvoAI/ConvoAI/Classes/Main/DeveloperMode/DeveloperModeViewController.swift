@@ -222,7 +222,7 @@ public class DeveloperModeViewController: UIViewController {
     
     private func setupUI() {
         // Set App Version
-        let version = ConversationalAIAPIImpl.version
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
         basicSettingView.appVersionValueLabel.text = "\(version)(\(build))"
         
