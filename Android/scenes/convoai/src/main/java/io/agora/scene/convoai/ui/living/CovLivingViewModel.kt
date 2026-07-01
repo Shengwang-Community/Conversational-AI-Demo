@@ -78,6 +78,28 @@ import kotlin.coroutines.suspendCoroutine
 /**
  * view model
  */
+internal fun resolveAudioScenario(
+    defaultScenario: Int,
+    isDebug: Boolean,
+    debugAudioScenario: Int?
+): Int {
+    return if (isDebug) {
+        debugAudioScenario ?: defaultScenario
+    } else {
+        defaultScenario
+    }
+}
+
+internal fun resolveDebugServerAudioScenario(
+    isDebug: Boolean,
+    serverAudioScenario: String?
+): String? {
+    if (!isDebug) {
+        return null
+    }
+    return serverAudioScenario
+}
+
 class CovLivingViewModel : ViewModel() {
 
     private val TAG = "CovLivingViewModel"
@@ -522,7 +544,11 @@ class CovLivingViewModel : ViewModel() {
                         Constants.AUDIO_SCENARIO_AI_CLIENT
                     }
                 }
-                val scenario = DebugConfigSettings.audioScenario ?: defaultScenario
+                val scenario = resolveAudioScenario(
+                    defaultScenario = defaultScenario,
+                    isDebug = DebugConfigSettings.isDebug,
+                    debugAudioScenario = DebugConfigSettings.audioScenario
+                )
                 conversationalAIAPI?.loadAudioSettings(scenario)
 
                 // Join RTC channel
@@ -1201,7 +1227,10 @@ class CovLivingViewModel : ViewModel() {
                     "data_channel" to "rtm",
                     "enable_metrics" to CovAgentManager.isMetricsEnabled,
                     "enable_error_message" to true,
-                    "audio_scenario" to DebugConfigSettings.serverAudioScenario,
+                    "audio_scenario" to resolveDebugServerAudioScenario(
+                        isDebug = DebugConfigSettings.isDebug,
+                        serverAudioScenario = DebugConfigSettings.serverAudioScenario
+                    ),
                     "transcript" to mapOf(
                         "enable" to true,
                         "enable_words" to CovAgentManager.isWordRenderMode,
@@ -1370,7 +1399,10 @@ class CovLivingViewModel : ViewModel() {
                 "data_channel" to "rtm",
                 "enable_metrics" to true,
                 "enable_error_message" to true,
-                "audio_scenario" to DebugConfigSettings.serverAudioScenario,
+                "audio_scenario" to resolveDebugServerAudioScenario(
+                    isDebug = DebugConfigSettings.isDebug,
+                    serverAudioScenario = DebugConfigSettings.serverAudioScenario
+                ),
                 "transcript" to mutableMapOf<String, Any?>(
                     "enable" to true,
                     "enable_words" to CovAgentManager.isWordRenderMode,

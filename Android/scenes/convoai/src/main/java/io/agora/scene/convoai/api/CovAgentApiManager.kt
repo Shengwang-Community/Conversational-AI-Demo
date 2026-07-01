@@ -26,6 +26,38 @@ import org.json.JSONObject
 import java.io.IOException
 import kotlin.math.roundToInt
 
+internal fun createStartRequestConfig(
+    baseUrl: String,
+    namespace: String
+): Map<String, Any>? {
+    val trimmedBaseUrl = baseUrl.trim()
+    val trimmedNamespace = namespace.trim()
+    if (trimmedBaseUrl.isEmpty() && trimmedNamespace.isEmpty()) {
+        return null
+    }
+
+    val convoaiConfig = mutableMapOf<String, Any>()
+    if (trimmedBaseUrl.isNotEmpty()) {
+        convoaiConfig["base_url"] = trimmedBaseUrl
+    }
+    if (trimmedNamespace.isNotEmpty()) {
+        convoaiConfig["headers"] = mapOf("X-Service-Namespace" to trimmedNamespace)
+    }
+
+    return mapOf("convoai" to convoaiConfig)
+}
+
+internal fun buildDebugStartRequestConfig(
+    isDebug: Boolean,
+    baseUrl: String,
+    namespace: String
+): Map<String, Any>? {
+    if (!isDebug) {
+        return null
+    }
+    return createStartRequestConfig(baseUrl, namespace)
+}
+
 object CovAgentApiManager {
 
     private const val TAG = "CovServerManager"
@@ -61,23 +93,7 @@ object CovAgentApiManager {
     internal fun buildStartRequestConfig(
         baseUrl: String,
         namespace: String
-    ): Map<String, Any>? {
-        val trimmedBaseUrl = baseUrl.trim()
-        val trimmedNamespace = namespace.trim()
-        if (trimmedBaseUrl.isEmpty() && trimmedNamespace.isEmpty()) {
-            return null
-        }
-
-        val convoaiConfig = mutableMapOf<String, Any>()
-        if (trimmedBaseUrl.isNotEmpty()) {
-            convoaiConfig["base_url"] = trimmedBaseUrl
-        }
-        if (trimmedNamespace.isNotEmpty()) {
-            convoaiConfig["headers"] = mapOf("X-Service-Namespace" to trimmedNamespace)
-        }
-
-        return mapOf("convoai" to convoaiConfig)
-    }
+    ): Map<String, Any>? = createStartRequestConfig(baseUrl, namespace)
 
     fun startAgentWithMap(
         channelName: String,
@@ -115,9 +131,10 @@ object CovAgentApiManager {
             // Process convoaiBody, convert Map to JSONObject and filter out null values
             val convoaiJsonObject = mapToJsonObjectWithFilter(convoaiBody)
             postBody.put("convoai_body", convoaiJsonObject)
-            buildStartRequestConfig(
-                DebugConfigSettings.convoAiRequestBaseUrl,
-                DebugConfigSettings.convoAiRequestHeaderNamespace
+            buildDebugStartRequestConfig(
+                isDebug = DebugConfigSettings.isDebug,
+                baseUrl = DebugConfigSettings.convoAiRequestBaseUrl,
+                namespace = DebugConfigSettings.convoAiRequestHeaderNamespace
             )?.let { requestConfig ->
                 postBody.put("request_config", mapToJsonObjectWithFilter(requestConfig))
             }
