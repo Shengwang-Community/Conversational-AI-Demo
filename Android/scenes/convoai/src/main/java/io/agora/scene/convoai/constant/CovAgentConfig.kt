@@ -2,6 +2,7 @@ package io.agora.scene.convoai.constant
 
 import io.agora.scene.common.BuildConfig
 import io.agora.scene.common.constant.SSOUserManager
+import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.debugMode.DebugConfigSettings
 import io.agora.scene.common.util.LocalStorageUtil
 import io.agora.scene.convoai.api.CovAgentLanguage
@@ -34,6 +35,9 @@ object CovAgentManager {
 
     private val TAG = "CovAgentManager"
     private const val REAL_TIME_DATA_ENABLED = "cov_real_time_data_enabled"
+    private const val SPECIAL_SIP_OUTBOUND_PRESET_NAME = "sip_outbound_cn_2"
+    private const val SPECIAL_SIP_OUTBOUND_APP_ID = "fc9e334319ff4cb0a57b5c190f3e9733"
+    private const val PROD_TOOLBOX_HOST = "service.apprtc.cn"
 
     // Settings
     private var preset: CovAgentPreset? = null
@@ -100,6 +104,12 @@ object CovAgentManager {
 
     fun setPreset(p: CovAgentPreset?) {
         preset = p
+        ServerConfig.updateTemporaryRtcConfig(
+            appId = SPECIAL_SIP_OUTBOUND_APP_ID.takeIf {
+                p?.name == SPECIAL_SIP_OUTBOUND_PRESET_NAME &&
+                        ServerConfig.toolBoxUrl.contains(PROD_TOOLBOX_HOST, ignoreCase = true)
+            }
+        )
         language = if (p?.default_language_code?.isNotEmpty() == true) {
             p.support_languages.firstOrNull { it.language_code == p.default_language_code }
         } else {
@@ -175,6 +185,7 @@ object CovAgentManager {
         avatar = null
         renderMode = CovRenderMode.WORD
         voiceprintMode = VoiceprintMode.OFF
+        ServerConfig.updateTemporaryRtcConfig(null)
     }
 
     val isOpenSource: Boolean get() = BuildConfig.IS_OPEN_SOURCE

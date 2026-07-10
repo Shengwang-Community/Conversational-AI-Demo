@@ -51,6 +51,10 @@ def doPublish(buildVariables) {
     archiveUrls = archiveUrls as Set
     if (archiveUrls) {
         def content = archiveUrls.join("\n")
+        echo "====🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉========="
+        echo "Artifact uploaded successfully! Download URL:"
+        echo content
+        echo "===================================================="
         writeFile(file: 'package_urls', text: content, encoding: "utf-8")
     }
     archiveArtifacts(artifacts: "package_urls", allowEmptyArchive:true)

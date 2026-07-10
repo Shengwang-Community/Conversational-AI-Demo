@@ -18,7 +18,6 @@ if [ -z "$build_time" ]; then
     export build_time=$(date +%H%M%S)
 fi
 
-BUILD_VERSION=$(date +%Y%m%d%H%M%S)
 CURRENT_PATH=$PWD
 # Project target name
 PROJECT_NAME=Agent
@@ -172,6 +171,16 @@ if [ -z "$release_version" ]; then
 fi
 echo "Version number read from project configuration: ${release_version}"
 
+export BUILD_VERSION=$(xcodebuild -workspace "${PROJECT_PATH}/${PROJECT_NAME}.xcworkspace" -scheme "${TARGET_NAME}" -showBuildSettings | grep "CURRENT_PROJECT_VERSION" | head -n 1 | cut -d "=" -f 2 | tr -d " ")
+if [ -z "$BUILD_VERSION" ]; then
+    echo "Error: Unable to read build number from project configuration"
+    exit 1
+fi
+echo "Build number read from project configuration: ${BUILD_VERSION}"
+
+export ARTIFACT_TIMESTAMP=$(date +%Y%m%d%H%M%S)
+echo "Artifact timestamp: ${ARTIFACT_TIMESTAMP}"
+
 KEYCENTER_PATH=${PROJECT_PATH}"/"${PROJECT_NAME}"/KeyCenter.swift"
 
 # Build environment
@@ -191,7 +200,7 @@ else
 fi
 
 # Artifact name
-export ARTIFACT_NAME="ShengWang_Conversational_Al_Engine_Demo_for_iOS_${PROVISIONING_PROFILE}_v${release_version}_${BUILD_VERSION}"
+export ARTIFACT_NAME="ShengWang_Conversational_Al_Engine_Demo_for_iOS_${PROVISIONING_PROFILE}_v${release_version}_${BUILD_VERSION}_${ARTIFACT_TIMESTAMP}"
 
 # Project file path
 APP_PATH="${PROJECT_PATH}/${PROJECT_NAME}.xcworkspace"
@@ -218,16 +227,12 @@ fi
 
 security unlock-keychain -p "123456" ~/Library/Keychains/login.keychain
 # Main project configuration
-# Debug
-sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_VERSION};|g" $PBXPROJ_PATH
 sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = .*;|PRODUCT_BUNDLE_IDENTIFIER = \"${bundle_id}\";|g" $PBXPROJ_PATH
 sed -i '' "s|CODE_SIGN_STYLE = .*;|CODE_SIGN_STYLE = \"Manual\";|g" $PBXPROJ_PATH
 sed -i '' "s|DEVELOPMENT_TEAM = .*;|DEVELOPMENT_TEAM = \"${DEVELOPMENT_TEAM}\";|g" $PBXPROJ_PATH
 sed -i '' "s|PROVISIONING_PROFILE_SPECIFIER = .*;|PROVISIONING_PROFILE_SPECIFIER = \"${PROVISIONING_PROFILE}\";|g" $PBXPROJ_PATH
 sed -i '' "s|CODE_SIGN_IDENTITY = .*;|CODE_SIGN_IDENTITY = \"${CODE_SIGN_IDENTITY}\";|g" $PBXPROJ_PATH
 
-# Release
-sed -i '' "s|CURRENT_PROJECT_VERSION = .*;|CURRENT_PROJECT_VERSION = ${BUILD_VERSION};|g" $PBXPROJ_PATH
 sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = .*;|PRODUCT_BUNDLE_IDENTIFIER = \"${bundle_id}\";|g" $PBXPROJ_PATH
 sed -i '' "s|CODE_SIGN_STYLE = .*;|CODE_SIGN_STYLE = \"Manual\";|g" $PBXPROJ_PATH
 sed -i '' "s|DEVELOPMENT_TEAM = .*;|DEVELOPMENT_TEAM = \"${DEVELOPMENT_TEAM}\";|g" $PBXPROJ_PATH
@@ -344,28 +349,7 @@ cd "${PACKAGE_DIR}"
 zip -r "${WORKSPACE}/${ARTIFACT_NAME}.zip" ./
 cd "${WORKSPACE}"
 
-# Upload file and delete local zip for non-local builds
-if [ "$LOCALPACKAGE" != "true" ]; then
-    echo "Uploading artifact to artifact repository..."
-    
-    # Upload file to artifact repository and save output
-    UPLOAD_RESULT=$(python3 artifactory_utils.py --action=upload_file --file="${ARTIFACT_NAME}.zip" --project)
-    
-    # Check if upload result is a URL
-    if [[ "$UPLOAD_RESULT" =~ ^https?:// ]]; then
-        echo "====🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉========="
-        echo "Artifact uploaded successfully! Download URL:"
-        echo "$UPLOAD_RESULT"
-        echo "===================================================="
-    else
-        echo "Warning: Upload result format is abnormal"
-        echo "Complete upload result:"
-        echo "$UPLOAD_RESULT"
-    fi
-    
-    # Clean up local artifact
-    rm -f "${ARTIFACT_NAME}.zip"
-fi
+# Artifact upload is handled by the Jenkins publish stage.
 
 # Clean up files
 rm -rf ${TARGET_NAME}_${BUILD_VERSION}.xcarchive
