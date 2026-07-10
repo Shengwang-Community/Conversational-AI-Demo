@@ -19,4 +19,13 @@ Pods
 **/build/*
 **/AgoraMetaKitSDK/*
 *.lock
+__pycache__/
+*.py[cod]
 /iOS/AgoraHyLibs/*
+
+# Local AI engineering review artifacts. These may contain internal source refs
+# or draft decisions and should not be committed to the open-source repo.
+docs/superpowers/specs/
+docs/superpowers/plans/
+docs/ai-engineering/hld-drafts/
+docs/ai-engineering/pilot-runs/
