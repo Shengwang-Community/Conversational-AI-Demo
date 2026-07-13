@@ -161,6 +161,28 @@ def expanded_targets(state, targets):
     return [target for target in result if target in state["nodes"]]
 
 
+def discard_node_output(state, node_id):
+    result = state.get("results", {}).pop(node_id, None)
+    owned_paths = {
+        item.get("path")
+        for item in (result or {}).get("artifacts", [])
+        if isinstance(item, dict) and isinstance(item.get("path"), str)
+    }
+    if owned_paths:
+        remaining_paths = {
+            item.get("path")
+            for current in state.get("results", {}).values()
+            for item in current.get("artifacts", [])
+            if isinstance(item, dict) and isinstance(item.get("path"), str)
+        }
+        state["artifacts"] = [
+            path
+            for path in state.get("artifacts", [])
+            if path not in owned_paths or path in remaining_paths
+        ]
+    state.get("execution", {}).get("runs", {}).pop(node_id, None)
+
+
 def invalidate_from(state, node_id, reason):
     queue = list(INVALIDATES.get(node_id, []))
     visited = set()
@@ -173,6 +195,7 @@ def invalidate_from(state, node_id, reason):
             visited.add(concrete)
             node = state["nodes"][concrete]
             if node["status"] != "not_required":
+                discard_node_output(state, concrete)
                 node.update(
                     {
                         "status": "pending",

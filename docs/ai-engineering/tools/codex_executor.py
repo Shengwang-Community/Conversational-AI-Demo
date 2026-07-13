@@ -8,6 +8,9 @@ from pathlib import Path
 from workflow_workspace import atomic_write_json, attempt_result_path
 
 
+DEFAULT_TIMEOUT_SECONDS = 30 * 60
+
+
 REQUIRED_ROLE_RESULT_FIELDS = {
     "agent",
     "phase",
@@ -83,11 +86,15 @@ class CodexExecutor:
         output_schema,
         privacy_module,
         subprocess_run=subprocess.run,
+        timeout_seconds=DEFAULT_TIMEOUT_SECONDS,
     ):
         self.root = Path(root).resolve()
         self.output_schema = Path(output_schema).resolve()
         self.privacy = privacy_module
         self.subprocess_run = subprocess_run
+        if not isinstance(timeout_seconds, (int, float)) or timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        self.timeout_seconds = timeout_seconds
 
     def build_command(self, run_path, node, pending_output):
         relative_working_directory = Path(node["working_directory"])
@@ -146,6 +153,7 @@ class CodexExecutor:
                 text=True,
                 capture_output=True,
                 cwd=working_directory,
+                timeout=self.timeout_seconds,
             )
             if completed.returncode != 0:
                 raise RuntimeError(

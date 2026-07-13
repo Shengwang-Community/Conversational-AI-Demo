@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -103,6 +104,14 @@ def _load_state(run_path):
     return workflow_workspace.load_json(_state_path(run_path))
 
 
+def _validated_resume_path(run_path):
+    resolved = Path(run_path).resolve()
+    runs_root = Path(RUNS_DIR).resolve()
+    if resolved != runs_root and runs_root not in resolved.parents:
+        raise ValueError("resume path must be under pilot-runs")
+    return resolved
+
+
 def create_run(
     name,
     goal,
@@ -169,7 +178,16 @@ def build_prompt(run_path, state, node, attempt):
         agent,
         "Follow the existing platform workflow, implement only this platform, and return changed files and validation evidence.",
     )
-    entrypoints = node.get("workflow_entrypoints", [])
+    entrypoints = []
+    repository_root = Path(ROOT).resolve()
+    for raw_path in node.get("workflow_entrypoints", []):
+        relative_path = Path(raw_path)
+        if relative_path.is_absolute():
+            raise ValueError("platform workflow entrypoint must be repository-relative")
+        resolved = (repository_root / relative_path).resolve()
+        if resolved != repository_root and repository_root not in resolved.parents:
+            raise ValueError("platform workflow entrypoint escapes repository root")
+        entrypoints.append(str(resolved))
     context = {
         "run_id": state["run_id"],
         "attempt": attempt,
@@ -180,6 +198,7 @@ def build_prompt(run_path, state, node, attempt):
         "routing": state["routing"],
         "expected_artifact": node["artifact"],
         "upstream_artifacts": list(state.get("artifacts", [])),
+        "finalization_errors": list(state.get("finalization_errors", [])),
         "workflow_entrypoints": entrypoints,
         "run_workspace": str(Path(run_path).resolve()),
     }
@@ -261,6 +280,7 @@ def update_routing_from_product(state, role_result):
         if ux_required and node["status"] == "not_required":
             node.update({"status": "pending", "reason": None})
         elif not ux_required:
+            workflow_workspace.discard_node_output(state, node_id)
             node.update({"status": "not_required", "reason": ux_reason})
     for platform in set(declared) - set(selected):
         state["nodes"][platform].update(
@@ -348,7 +368,7 @@ def _persist_execution(run_path, state, role_result, provenance):
 
 
 def repository_fingerprint():
-    completed = subprocess.run(
+    tracked = subprocess.run(
         [
             "git",
             "diff",
@@ -361,9 +381,43 @@ def repository_fingerprint():
         cwd=ROOT,
         capture_output=True,
     )
-    if completed.returncode != 0:
+    if tracked.returncode != 0:
         raise RuntimeError("unable to fingerprint repository changes")
-    return hashlib.sha256(completed.stdout).hexdigest()
+    untracked = subprocess.run(
+        [
+            "git",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z",
+            "--",
+            ".",
+            ":(exclude)docs/ai-engineering/pilot-runs",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+    )
+    if untracked.returncode != 0:
+        raise RuntimeError("unable to fingerprint untracked repository files")
+    digest = hashlib.sha256()
+    digest.update(tracked.stdout)
+    repository_root = Path(ROOT).resolve()
+    for raw_path in sorted(filter(None, untracked.stdout.split(b"\0"))):
+        relative_path = Path(os.fsdecode(raw_path))
+        path = (repository_root / relative_path).resolve()
+        if path != repository_root and repository_root not in path.parents:
+            raise RuntimeError("untracked repository path escapes root")
+        try:
+            content = path.read_bytes()
+        except OSError as error:
+            raise RuntimeError(
+                f"unable to fingerprint untracked repository file: {relative_path}"
+            ) from error
+        digest.update(b"\0untracked\0")
+        digest.update(raw_path)
+        digest.update(b"\0")
+        digest.update(content)
+    return digest.hexdigest()
 
 
 def _blocked_execution(node, attempt, error):
@@ -496,12 +550,14 @@ def _failed_nodes(state):
 
 def _schedule_target(state, target, reason):
     if target in {"android", "ios"}:
+        workflow_workspace.discard_node_output(state, target)
         state["nodes"][target].update({"status": "pending", "reason": reason})
         workflow_workspace.invalidate_from(state, "platforms", reason)
         return
     if target not in state["nodes"]:
         raise ValueError(f"repair target is not in the run DAG: {target}")
     if state["nodes"][target]["status"] != "not_required":
+        workflow_workspace.discard_node_output(state, target)
         state["nodes"][target].update({"status": "pending", "reason": reason})
     workflow_workspace.invalidate_from(state, target, reason)
 
@@ -527,9 +583,18 @@ def _route_findings(run_path, state, policy, results):
     ]
     if not findings:
         return None
-    targets = workflow_policy.targets_for_findings(
-        policy, findings, state["routing"]["platforms"]
-    )
+    try:
+        targets = workflow_policy.targets_for_findings(
+            policy, findings, state["routing"]["platforms"]
+        )
+    except ValueError as error:
+        for result in results:
+            if result.get("findings"):
+                state["nodes"][result["agent"]].update(
+                    {"status": "blocked", "reason": str(error)}
+                )
+        _write_state(run_path, state)
+        return "blocked"
     if "blocked" in targets:
         for result in results:
             if result.get("findings"):
@@ -612,6 +677,7 @@ def execute_run(run_path, executor=None):
         if failed:
             if _prepare_retry(run_path, state, failed, "retry failed design gate"):
                 continue
+            _run_acceptance_for_blocked(run_path, state, policy, executor)
             return finalize_run(run_path, state, policy)
 
         phase_results = _execute_platforms(
@@ -649,16 +715,14 @@ def execute_run(run_path, executor=None):
         if failed:
             if _prepare_retry(run_path, state, failed, "retry failed acceptance gate"):
                 continue
+            _run_acceptance_for_blocked(run_path, state, policy, executor)
             return finalize_run(run_path, state, policy)
 
         return finalize_run(run_path, state, policy)
 
 
 def resume_run(run_path, executor=None):
-    run_path = Path(run_path).resolve()
-    runs_root = Path(RUNS_DIR).resolve()
-    if run_path != runs_root and runs_root not in run_path.parents:
-        raise ValueError("resume path must be under pilot-runs")
+    run_path = _validated_resume_path(run_path)
     state = _load_state(run_path)
     state.setdefault("repair_attempt", 1)
     state["execution"].setdefault("repair_attempt", state["repair_attempt"])
@@ -667,6 +731,7 @@ def resume_run(run_path, executor=None):
     if current_hash != state["input_hash"]:
         state["input"] = current_input
         state["input_hash"] = current_hash
+        workflow_workspace.discard_node_output(state, "product")
         state["nodes"]["product"].update(
             {"status": "pending", "reason": "run input changed"}
         )
@@ -709,7 +774,20 @@ def _manifest_from_state(state):
     stages = []
     for agent in state["nodes"]:
         if agent in state["results"]:
-            stages.append(state["results"][agent])
+            stage = dict(state["results"][agent])
+            node = state["nodes"][agent]
+            if node["status"] in {"blocked", "failed"} and stage.get(
+                "status"
+            ) != node["status"]:
+                reason = node.get("reason") or f"{agent} {node['status']}"
+                stage.update(
+                    {
+                        "status": node["status"],
+                        "summary": reason,
+                        "gaps": [*stage.get("gaps", []), reason],
+                    }
+                )
+            stages.append(stage)
         elif state["nodes"][agent]["status"] == "not_required":
             stages.append(_not_required_result(agent, state))
     validation = []
@@ -745,6 +823,7 @@ def _manifest_from_state(state):
         "artifacts": list(state["artifacts"]),
         "validation": validation,
         "accepted_gaps": accepted_gaps,
+        "finalization_errors": list(state.get("finalization_errors", [])),
         "private_content_check": {"contains_private_source_bodies": False},
     }
 
@@ -763,6 +842,27 @@ def finalize_run(run_path, state, policy):
             status = "passed"
         else:
             status = "blocked"
+    terminal_nodes = {
+        node["status"] for node in state["nodes"].values()
+    }.issubset({"passed", "not_required"})
+    if status == "blocked" and terminal_nodes:
+        candidate = dict(manifest)
+        candidate["status"] = "passed"
+        errors = manifest_validator.validate(candidate, policy, run_path=run_path)
+        state["finalization_errors"] = errors
+        reviewer = state["nodes"]["acceptance-reviewer"]
+        reviewer.update(
+            {
+                "status": "blocked",
+                "reason": errors[0] if errors else "final acceptance gate blocked",
+            }
+        )
+        _write_state(run_path, state)
+        manifest = _manifest_from_state(state)
+    elif status == "passed":
+        state.pop("finalization_errors", None)
+        _write_state(run_path, state)
+        manifest = _manifest_from_state(state)
     manifest["status"] = status
     workflow_workspace.atomic_write_json(Path(run_path) / MANIFEST_FILE, manifest)
     return status
@@ -786,7 +886,7 @@ def main(argv):
     if args.resume:
         if not args.execute:
             raise ValueError("--resume requires --execute")
-        run_path = Path(args.resume)
+        run_path = _validated_resume_path(args.resume)
         run_input_path = run_path / INPUT_FILE
         run_input = workflow_workspace.load_json(run_input_path)
         if not run_input.get("implementation_authorized"):

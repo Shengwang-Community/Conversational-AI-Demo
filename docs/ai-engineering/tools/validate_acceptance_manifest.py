@@ -187,6 +187,57 @@ def validate_execution(manifest, run_path):
         return ["execution.history must be a list"]
     results = latest_attempt_results(manifest)
     thread_ids = []
+
+    def validate_record(record, label, expected_agent=None, history_record=False):
+        record_errors = []
+        prefix = "execution history" if history_record else "execution"
+        if not isinstance(record, dict):
+            return [f"{prefix} record must be an object: {label}"]
+        agent = record.get("agent")
+        if not isinstance(agent, str) or not agent:
+            record_errors.append(f"{prefix} agent is invalid: {label}")
+        if expected_agent is not None and agent != expected_agent:
+            record_errors.append(f"execution agent mismatch: {expected_agent}")
+        attempt = record.get("attempt")
+        if not isinstance(attempt, int) or attempt < 1:
+            record_errors.append(f"{prefix} attempt is invalid: {label}")
+        result = record.get("result")
+        if result not in {"completed", "blocked"}:
+            record_errors.append(f"{prefix} result is invalid: {label}")
+        thread_id = record.get("thread_id")
+        if result == "completed" and (
+            not isinstance(thread_id, str) or not thread_id
+        ):
+            record_errors.append(f"execution thread ID is missing: {label}")
+        elif thread_id is not None and not isinstance(thread_id, str):
+            record_errors.append(f"{prefix} thread ID is invalid: {label}")
+        if agent == "acceptance-reviewer" and record.get("sandbox") != "read-only":
+            record_errors.append("acceptance-reviewer must be read-only")
+        output = record.get("output")
+        if not isinstance(output, str) or not output:
+            record_errors.append(f"{prefix} output is missing: {label}")
+        elif run_path is not None:
+            try:
+                _resolve_under(run_path, output)
+            except ValueError:
+                if history_record:
+                    record_errors.append(
+                        "execution history output path escapes run workspace"
+                    )
+                else:
+                    record_errors.append(
+                        f"execution output path escapes run workspace: {label}"
+                    )
+        return record_errors
+
+    for agent, record in runs.items():
+        errors.extend(validate_record(record, agent, expected_agent=agent))
+    for index, record in enumerate(history):
+        label = f"history[{index}]"
+        errors.extend(validate_record(record, label, history_record=True))
+        if isinstance(record, dict) and isinstance(record.get("thread_id"), str):
+            thread_ids.append(record["thread_id"])
+
     for agent in required_nodes(manifest, {}):
         result = results.get(agent)
         if not result or result.get("status") == "not_required":
@@ -199,22 +250,8 @@ def validate_execution(manifest, run_path):
             errors.append(f"execution agent mismatch: {agent}")
         if record.get("attempt") != result.get("attempt"):
             errors.append(f"execution attempt mismatch: {agent}")
-        if record.get("result") != "completed":
+        if manifest.get("status") == "passed" and record.get("result") != "completed":
             errors.append(f"execution result must be completed: {agent}")
-        thread_id = record.get("thread_id")
-        if not isinstance(thread_id, str) or not thread_id:
-            errors.append(f"execution thread ID is missing: {agent}")
-        if agent == "acceptance-reviewer" and record.get("sandbox") != "read-only":
-            errors.append("acceptance-reviewer must be read-only")
-        output = record.get("output")
-        if run_path is not None and isinstance(output, str):
-            try:
-                _resolve_under(run_path, output)
-            except ValueError as error:
-                errors.append(str(error))
-    for record in history:
-        if isinstance(record, dict) and isinstance(record.get("thread_id"), str):
-            thread_ids.append(record["thread_id"])
     if len(thread_ids) != len(set(thread_ids)):
         errors.append("execution thread IDs must be unique")
     return errors
@@ -286,6 +323,8 @@ def validate(manifest, policy, run_path=None):
     private_check = manifest.get("private_content_check", {})
     if private_check.get("contains_private_source_bodies") is not False:
         errors.append("private content check must be false")
+    errors.extend(validate_execution(manifest, run_path))
+    errors.extend(_validate_artifacts(manifest, run_path))
     if manifest.get("status") != "passed":
         return errors
 
@@ -311,8 +350,6 @@ def validate(manifest, policy, run_path=None):
     errors.extend(validate_hld(manifest))
     errors.extend(validate_test_coverage(manifest))
     errors.extend(validate_ux(manifest))
-    errors.extend(validate_execution(manifest, run_path))
-
     for platform in [*manifest.get("platforms", []), "test-verification"]:
         result = results.get(platform, {})
         validations = result.get("validation", [])
@@ -334,7 +371,6 @@ def validate(manifest, policy, run_path=None):
         errors.append("manifest sources do not match declared inputs")
     if not manifest.get("input", {}).get("implementation_authorized"):
         errors.append("implementation was not authorized")
-    errors.extend(_validate_artifacts(manifest, run_path))
     return errors
 
 

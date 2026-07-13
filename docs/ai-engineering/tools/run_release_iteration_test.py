@@ -5,6 +5,7 @@ import tempfile
 import threading
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 
 TOOLS_DIR = Path(__file__).parent
@@ -238,6 +239,41 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual("not_required", by_agent["ux-design"]["status"])
         self.assertEqual("not_required", by_agent["ux-acceptance"]["status"])
 
+    def test_product_reroute_to_non_ux_discards_stale_optional_results(self):
+        run_path = self.create_run()
+        state = self.read_json(run_path, "run-state.json")
+        for agent, artifact in (
+            ("ux-design", "ux-spec.json"),
+            ("ux-acceptance", "ux-acceptance.json"),
+        ):
+            state["nodes"][agent]["status"] = "passed"
+            state["results"][agent] = {
+                "agent": agent,
+                "artifacts": [{"path": artifact}],
+            }
+            state["artifacts"].append(artifact)
+            state["execution"]["runs"][agent] = {"agent": agent}
+
+        runner.update_routing_from_product(
+            state,
+            {
+                "outputs": {
+                    "platforms": ["android", "ios"],
+                    "ux_required": False,
+                    "ux_reason": "no user-visible behavior changes",
+                }
+            },
+        )
+
+        manifest = runner._manifest_from_state(state)
+        stages = {stage["agent"]: stage for stage in manifest["stages"]}
+        self.assertEqual("not_required", stages["ux-design"]["status"])
+        self.assertEqual("not_required", stages["ux-acceptance"]["status"])
+        self.assertNotIn("ux-spec.json", manifest["artifacts"])
+        self.assertNotIn("ux-acceptance.json", manifest["artifacts"])
+        self.assertNotIn("ux-design", state["execution"]["runs"])
+        self.assertNotIn("ux-acceptance", state["execution"]["runs"])
+
     def test_failed_android_retries_without_rerunning_passed_ios(self):
         run_path = self.create_run()
         executor = FakeExecutor(
@@ -284,6 +320,95 @@ class RunnerTest(unittest.TestCase):
             [1, 2, 3],
             [attempt for agent, attempt in executor.calls if agent == "test-verification"],
         )
+        self.assertEqual(
+            1, sum(agent == "acceptance-reviewer" for agent, _ in executor.calls)
+        )
+
+    def test_design_failure_exhaustion_still_runs_acceptance_reviewer(self):
+        run_path = self.create_run()
+        failure = {"status": "failed", "summary": "test design failed"}
+        executor = FakeExecutor(scripted={"test-design": [failure, failure, failure]})
+
+        self.assertEqual("failed", runner.execute_run(run_path, executor=executor))
+        self.assertEqual(
+            [1, 2, 3],
+            [attempt for agent, attempt in executor.calls if agent == "test-design"],
+        )
+        self.assertEqual(
+            1, sum(agent == "acceptance-reviewer" for agent, _ in executor.calls)
+        )
+
+    def test_finalizer_block_can_resume_through_acceptance_reviewer(self):
+        run_path = self.create_run()
+        executor = FakeExecutor(
+            scripted={"test-verification": [{"validation": []}]}
+        )
+
+        self.assertEqual("blocked", runner.execute_run(run_path, executor=executor))
+        blocked_state = self.read_json(run_path, "run-state.json")
+        self.assertEqual(
+            "blocked", blocked_state["nodes"]["acceptance-reviewer"]["status"]
+        )
+        self.assertTrue(blocked_state["finalization_errors"])
+        blocked_manifest = self.read_json(run_path, "acceptance-manifest.json")
+        reviewer_stage = next(
+            stage
+            for stage in blocked_manifest["stages"]
+            if stage["agent"] == "acceptance-reviewer"
+        )
+        self.assertEqual("blocked", reviewer_stage["status"])
+        self.assertEqual(
+            blocked_state["finalization_errors"],
+            blocked_manifest["finalization_errors"],
+        )
+
+        resumed = FakeExecutor(
+            scripted={
+                "acceptance-reviewer": [
+                    {
+                        "findings": [
+                            {
+                                "id": "F-FINALIZER",
+                                "category": "test_evidence",
+                                "owner": "test-verification",
+                                "severity": "high",
+                                "description": "Independent validation evidence is missing",
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
+
+        self.assertEqual("passed", runner.resume_run(run_path, executor=resumed))
+        self.assertEqual("acceptance-reviewer", resumed.calls[0][0])
+        self.assertIn("test-verification", [agent for agent, _ in resumed.calls])
+
+    def test_unknown_finding_category_blocks_reviewer_instead_of_raising(self):
+        run_path = self.create_run()
+        executor = FakeExecutor(
+            scripted={
+                "acceptance-reviewer": [
+                    {
+                        "findings": [
+                            {
+                                "id": "F-UNKNOWN",
+                                "category": "unexpected-category",
+                                "owner": "android",
+                                "severity": "high",
+                                "description": "Category is outside the policy contract",
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
+
+        self.assertEqual("blocked", runner.execute_run(run_path, executor=executor))
+        state = self.read_json(run_path, "run-state.json")
+        reviewer = state["nodes"]["acceptance-reviewer"]
+        self.assertEqual("blocked", reviewer["status"])
+        self.assertIn("unknown finding category", reviewer["reason"])
 
     def test_reviewer_platform_finding_repairs_affected_path(self):
         run_path = self.create_run()
@@ -468,6 +593,27 @@ class RunnerTest(unittest.TestCase):
             (run_path / "attempts/04/role-results/product.json").is_file()
         )
 
+    def test_cli_rejects_external_resume_path_before_modifying_run_input(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            external_run = Path(tmp)
+            input_path = external_run / "run-input.json"
+            original = json.dumps(
+                {"implementation_authorized": False}, indent=2
+            ) + "\n"
+            input_path.write_text(original, encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "resume path must be under pilot-runs"):
+                runner.main(
+                    [
+                        "run_release_iteration.py",
+                        "--resume",
+                        str(external_run),
+                        "--execute",
+                    ]
+                )
+
+            self.assertEqual(original, input_path.read_text(encoding="utf-8"))
+
     def test_prompts_include_role_contract_and_platform_entrypoints(self):
         run_path = self.create_run()
         state = self.read_json(run_path, "run-state.json")
@@ -479,8 +625,42 @@ class RunnerTest(unittest.TestCase):
 
         self.assertIn("acceptance_criteria", product_prompt)
         self.assertIn("ux_required", product_prompt)
-        self.assertIn("Android/AGENTS.md", android_prompt)
-        self.assertIn("Android/.agents/skills/ac-workflow/SKILL.md", android_prompt)
+        self.assertIn(
+            f"- {(runner.ROOT / 'Android/AGENTS.md').resolve()}", android_prompt
+        )
+        self.assertIn(
+            f"- {(runner.ROOT / 'Android/.agents/skills/ac-workflow/SKILL.md').resolve()}",
+            android_prompt,
+        )
+
+    def test_repository_fingerprint_hashes_untracked_file_contents(self):
+        original_run = runner.subprocess.run
+        untracked_content = b"first"
+
+        def fake_run(command, **kwargs):
+            if command[1] == "diff":
+                return SimpleNamespace(returncode=0, stdout=b"tracked-diff")
+            self.assertEqual("ls-files", command[1])
+            return SimpleNamespace(returncode=0, stdout=b"new-file.txt\0")
+
+        original_read_bytes = Path.read_bytes
+
+        def fake_read_bytes(path):
+            if path == runner.ROOT / "new-file.txt":
+                return untracked_content
+            return original_read_bytes(path)
+
+        runner.subprocess.run = fake_run
+        Path.read_bytes = fake_read_bytes
+        try:
+            first = runner.repository_fingerprint()
+            untracked_content = b"second"
+            second = runner.repository_fingerprint()
+        finally:
+            Path.read_bytes = original_read_bytes
+            runner.subprocess.run = original_run
+
+        self.assertNotEqual(first, second)
 
     def test_product_must_report_exact_declared_sources(self):
         run_path = self.create_run()

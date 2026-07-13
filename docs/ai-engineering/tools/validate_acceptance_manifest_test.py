@@ -327,6 +327,48 @@ class AcceptanceManifestTest(unittest.TestCase):
         )
         self.assert_error("private source marker found", self.manifest)
 
+    def test_blocked_manifest_still_checks_artifact_privacy_and_paths(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest["status"] = "blocked"
+        marker = "raw_" + "jira_body:"
+        (self.run_path / "requirement-brief.md").write_text(
+            marker + " private text\n", encoding="utf-8"
+        )
+        manifest["artifacts"].append("../outside.md")
+
+        self.assert_error("private source marker found", manifest)
+        self.assert_error("artifact path escapes run workspace", manifest)
+
+    def test_failed_manifest_still_checks_existing_execution_provenance(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest["status"] = "failed"
+        manifest["execution"]["runs"]["android"]["attempt"] = 2
+        manifest["execution"]["runs"]["ios"]["output"] = "../outside.json"
+
+        self.assert_error("execution attempt mismatch: android", manifest)
+        self.assert_error("execution output path escapes run workspace: ios", manifest)
+
+    def test_blocked_manifest_checks_history_and_extra_run_provenance(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest["status"] = "blocked"
+        manifest["execution"]["history"][0] = {
+            **manifest["execution"]["history"][0],
+            "output": "../outside.json",
+        }
+        manifest["execution"]["runs"]["stale-agent"] = {
+            "agent": "different-agent",
+            "attempt": 0,
+            "thread_id": "stale-thread",
+            "sandbox": "workspace-write",
+            "output": "../stale.json",
+            "result": "completed",
+        }
+
+        self.assert_error("execution history output path escapes run workspace", manifest)
+        self.assert_error("execution agent mismatch: stale-agent", manifest)
+        self.assert_error("execution attempt is invalid: stale-agent", manifest)
+        self.assert_error("execution output path escapes run workspace: stale-agent", manifest)
+
     def test_product_source_evidence_must_cover_declared_inputs(self):
         manifest = copy.deepcopy(self.manifest)
         product = next(

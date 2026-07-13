@@ -274,6 +274,50 @@ class WorkflowWorkspaceTest(unittest.TestCase):
             timezone.utc, datetime.fromisoformat(event["at"]).tzinfo
         )
 
+    def test_invalidation_discards_dependent_results_artifacts_and_current_runs(self):
+        state = workspace.initial_state(
+            "run-1",
+            {"goal": "Goal"},
+            ["architect", "test-design", "android", "acceptance-reviewer"],
+            3,
+        )
+        for node in state["nodes"].values():
+            node["status"] = "passed"
+        state["results"] = {
+            "architect": {
+                "agent": "architect",
+                "artifacts": [{"path": "architecture-decision.json"}],
+            },
+            "test-design": {
+                "agent": "test-design",
+                "artifacts": [{"path": "test-matrix.json"}],
+            },
+            "android": {
+                "agent": "android",
+                "artifacts": [{"path": "android-result.json"}],
+            },
+            "acceptance-reviewer": {
+                "agent": "acceptance-reviewer",
+                "artifacts": [{"path": "acceptance-review.json"}],
+            },
+        }
+        state["artifacts"] = [
+            "architecture-decision.json",
+            "test-matrix.json",
+            "android-result.json",
+            "acceptance-review.json",
+        ]
+        state["execution"] = {
+            "runs": {agent: {"agent": agent} for agent in state["results"]},
+            "history": [],
+        }
+
+        workspace.invalidate_from(state, "architect", "architecture changed")
+
+        self.assertEqual({"architect"}, set(state["results"]))
+        self.assertEqual(["architecture-decision.json"], state["artifacts"])
+        self.assertEqual({"architect"}, set(state["execution"]["runs"]))
+
     def test_invalidation_preserves_not_required_nodes(self):
         state = workspace.initial_state(
             "run-1",

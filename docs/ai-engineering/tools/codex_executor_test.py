@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import importlib.util
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -201,6 +202,7 @@ class CodexExecutorTest(unittest.TestCase):
                 "text": True,
                 "capture_output": True,
                 "cwd": (self.root / "Android").resolve(),
+                "timeout": executor_module.DEFAULT_TIMEOUT_SECONDS,
             },
             kwargs,
         )
@@ -217,6 +219,35 @@ class CodexExecutorTest(unittest.TestCase):
             persisted_files,
         )
         self.assertFalse(any(path.name.endswith(".pending") for path in self.root.rglob("*")))
+
+    def test_execute_applies_configured_subprocess_timeout(self):
+        runner = FakeSubprocessRunner()
+        executor = executor_module.CodexExecutor(
+            self.root,
+            self.output_schema,
+            privacy,
+            subprocess_run=runner,
+            timeout_seconds=42,
+        )
+
+        executor.execute(self.run_path, self.android, "prompt", 3)
+
+        self.assertEqual(42, runner.calls[0][1]["timeout"])
+
+    def test_timeout_cleans_owned_pending_output(self):
+        class TimeoutRunner:
+            def __call__(self, command, **kwargs):
+                Path(command[command.index("-o") + 1]).write_text(
+                    "partial", encoding="utf-8"
+                )
+                raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+
+        with self.assertRaises(subprocess.TimeoutExpired):
+            self.make_executor(TimeoutRunner()).execute(
+                self.run_path, self.android, "prompt", 3
+            )
+
+        self.assert_no_output_or_pending()
 
     def test_ios_execute_uses_ios_cwd_and_promotes_output(self):
         node = {
