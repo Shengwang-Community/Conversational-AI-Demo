@@ -1,20 +1,25 @@
 # Knowledge Index
 
-The Knowledge role runs for every product requirement and links to platform-owned guidance instead of copying it. Architect, Test Design, and platform roles use this index to find current repository evidence.
+Product/Intake reads this index for every profile. Full runs delegate deeper repository grounding to Knowledge, Architect, Test Design, and platform roles. Keep knowledge at its existing owner instead of copying it into prompts.
 
 ## Android
 
-- `Android/AGENTS.md`: workflow gate, risk routing, state management, and engineering rules.
+- `Android/AGENTS.md`: durable project facts, engineering constraints, profile selection, and validation requirements.
 - `Android/ARCHITECTURE.md`: modules, primary flows, and high-risk paths.
-- `Android/.agents/skills/ac-workflow/SKILL.md`: Android workflow orchestrator.
+- `Android/.agents/skills/ac-workflow/SKILL.md`: risk-based Android delivery playbook.
 
 ## iOS
 
-- `iOS/.agents/skills/convoai-ios-workflow/SKILL.md`: controller, developer, tester, retry, and acceptance loop.
-- `iOS/.agents/skills/convoai-ios-workflow/references/contracts.md`: platform role result contracts.
+- `iOS/AGENTS.md`: durable project facts, engineering constraints, and runtime acceptance requirements.
+- `iOS/.agents/skills/convoai-ios-workflow/SKILL.md`: risk-based iOS delivery playbook.
+- `iOS/.agents/skills/convoai-ios-workflow/references/ios_logic_ut.md`: focused UT helpers and retry rules.
+- `iOS/.agents/skills/convoai-ios-workflow/references/contracts.md`: explicit multi-Agent handoff contracts.
 
-Update platform knowledge at its existing owner. Add root documentation only for cross-platform orchestration behavior.
+## Web
 
-## Run Artifacts
+- `Web/Scenes/VoiceAgent/README.md`: application setup and development entrypoint.
+- `Web/Scenes/VoiceAgent/package.json`: validation commands and dependency scripts.
 
-Requirement briefs, repository summaries, HLD, UX Design evidence, Test Design matrices, Test Verification results, and UX Acceptance evidence remain inside the ignored run workspace. This committed index contains links only; it must not contain requirement-specific source bodies or internal publishing targets.
+## Knowledge Maintenance
+
+Update platform guidance at its owner. Add a durable rule only when it changes future behavior and has evidence; keep one-off requirement detail inside the ignored run workspace. Requirement briefs, source summaries, HLD, UX artifacts, test matrices, verification, and runtime evidence must not be committed here.

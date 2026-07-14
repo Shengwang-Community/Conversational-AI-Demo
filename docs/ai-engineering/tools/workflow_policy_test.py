@@ -21,7 +21,9 @@ def load_schema(name):
 class WorkflowPolicyTest(unittest.TestCase):
     def test_complete_dag_contains_all_product_stages(self):
         policy = policy_module.load_policy()
-        nodes = policy_module.expand_dag(policy, ["android", "ios"], ux_required=True)
+        nodes = policy_module.expand_dag(
+            policy, ["android", "ios", "web"], ux_required=True
+        )
         self.assertEqual(
             [
                 "product",
@@ -31,6 +33,7 @@ class WorkflowPolicyTest(unittest.TestCase):
                 "test-design",
                 "android",
                 "ios",
+                "web",
                 "test-verification",
                 "ux-acceptance",
                 "acceptance-reviewer",
@@ -53,6 +56,47 @@ class WorkflowPolicyTest(unittest.TestCase):
         self.assertEqual("ios-result.json", by_id["ios"]["artifact"])
         self.assertEqual(["ios"], by_id["test-verification"]["depends_on"])
 
+    def test_standard_profile_skips_experts_but_keeps_independent_verification(self):
+        policy = policy_module.load_policy()
+        nodes = policy_module.expand_dag(
+            policy,
+            ["android"],
+            ux_required=False,
+            workflow_profile="standard",
+        )
+        by_id = {node["id"]: node for node in nodes}
+
+        self.assertEqual(["product"], by_id["android"]["depends_on"])
+        self.assertEqual("pending", by_id["test-verification"]["initial_status"])
+        self.assertEqual("not_required", by_id["knowledge"]["initial_status"])
+        self.assertEqual(
+            "not_required", by_id["acceptance-reviewer"]["initial_status"]
+        )
+
+    def test_direct_profile_stops_after_platform_validation(self):
+        policy = policy_module.load_policy()
+        nodes = policy_module.expand_dag(
+            policy,
+            ["android"],
+            ux_required=False,
+            workflow_profile="direct",
+        )
+        by_id = {node["id"]: node for node in nodes}
+
+        self.assertEqual(["product"], by_id["android"]["depends_on"])
+        self.assertEqual(
+            "not_required", by_id["test-verification"]["initial_status"]
+        )
+
+    def test_web_platform_uses_voice_agent_working_directory(self):
+        policy = policy_module.load_policy()
+        nodes = policy_module.expand_dag(policy, ["web"], ux_required=False)
+        by_id = {node["id"]: node for node in nodes}
+
+        self.assertEqual("Web/Scenes/VoiceAgent", by_id["web"]["working_directory"])
+        self.assertEqual([], by_id["web"]["workflow_entrypoints"])
+        self.assertEqual(["web"], by_id["test-verification"]["depends_on"])
+
     def test_model_and_sandbox_policy_are_applied(self):
         policy = policy_module.load_policy()
         nodes = policy_module.expand_dag(
@@ -61,12 +105,13 @@ class WorkflowPolicyTest(unittest.TestCase):
             ux_required=True,
             environ={
                 "AI_ENGINEERING_PRIMARY_MODEL": "primary-override",
+                "AI_ENGINEERING_SUPPORT_MODEL": "support-override",
                 "AI_ENGINEERING_REVIEW_MODEL": "review-override",
             },
         )
         by_id = {node["id"]: node for node in nodes}
         self.assertEqual(
-            ("primary-override", "read-only"),
+            ("support-override", "read-only"),
             (by_id["product"]["model"], by_id["product"]["sandbox"]),
         )
         self.assertEqual(
@@ -85,6 +130,23 @@ class WorkflowPolicyTest(unittest.TestCase):
     def test_policy_uses_three_attempts(self):
         self.assertEqual(3, policy_module.load_policy()["max_attempts"])
 
+    def test_policy_defaults_to_standard_profile_and_medium_effort(self):
+        policy = policy_module.load_policy()
+
+        self.assertEqual("standard", policy["default_profile"])
+        self.assertEqual("medium", policy["roles"]["product"]["reasoning_effort"])
+        self.assertEqual("medium", policy["platforms"]["android"]["reasoning_effort"])
+        self.assertEqual("high", policy["roles"]["architect"]["reasoning_effort"])
+
+    def test_policy_requires_native_execution_mode(self):
+        policy = policy_module.load_policy()
+        self.assertEqual("native", policy["execution_mode"])
+
+        invalid = dict(policy)
+        invalid["execution_mode"] = "nested-cli"
+        with self.assertRaisesRegex(ValueError, "execution mode must be native"):
+            policy_module.validate_policy(invalid)
+
     def test_findings_route_through_policy(self):
         policy = policy_module.load_policy()
         findings = [
@@ -94,9 +156,9 @@ class WorkflowPolicyTest(unittest.TestCase):
         ]
 
         self.assertEqual(
-            ["android", "ios", "architect"],
+            ["android", "ios", "web", "architect"],
             policy_module.targets_for_findings(
-                policy, findings, ["android", "ios"]
+                policy, findings, ["android", "ios", "web"]
             ),
         )
 
@@ -119,6 +181,29 @@ class WorkflowPolicyTest(unittest.TestCase):
             for entrypoint in definition["workflow_entrypoints"]:
                 self.assertTrue((policy_module.ROOT / entrypoint).is_file())
 
+    def test_standard_profile_routes_split_planning_findings_back_to_product(self):
+        policy = policy_module.load_policy()
+        findings = [
+            {
+                "category": "architecture",
+                "owner": "product",
+            },
+            {
+                "category": "test_coverage",
+                "owner": "product",
+            },
+        ]
+
+        self.assertEqual(
+            ["product"],
+            policy_module.targets_for_findings(
+                policy,
+                findings,
+                ["android"],
+                workflow_profile="standard",
+            ),
+        )
+
     def test_role_result_schema_requires_complete_stage_evidence(self):
         schema = load_schema("role-result.schema.json")
         self.assertEqual(
@@ -134,6 +219,7 @@ class WorkflowPolicyTest(unittest.TestCase):
                 "findings",
                 "gaps",
                 "accepted_gaps",
+                "accepted_gap_refs",
                 "validation",
             ],
             schema["required"],
@@ -143,9 +229,10 @@ class WorkflowPolicyTest(unittest.TestCase):
             schema["properties"]["status"]["enum"],
         )
         expected_items = {
-            "artifacts": ["path", "content"],
+            "artifacts": ["path", "sha256"],
             "findings": ["id", "category", "owner", "severity", "description"],
             "accepted_gaps": [
+                "gap_id",
                 "gap",
                 "rationale",
                 "owner",
@@ -185,7 +272,14 @@ class WorkflowPolicyTest(unittest.TestCase):
         )
 
     def assert_accepted_gap_contract(self, item_schema):
-        fields = ["gap", "rationale", "owner", "release_impact", "approved_at"]
+        fields = [
+            "gap_id",
+            "gap",
+            "rationale",
+            "owner",
+            "release_impact",
+            "approved_at",
+        ]
         self.assertEqual(fields, item_schema["required"])
         self.assertEqual(fields, list(item_schema["properties"]))
         self.assertFalse(item_schema["additionalProperties"])

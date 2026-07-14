@@ -1,4 +1,6 @@
 interface:
-  display_name: "AC Task"
-  short_description: "Route workflow entry, guard continue intent, and own final summary closeout"
-  default_prompt: "Use $ac-workflow as the workflow entrypoint and final summary owner: inspect `.agents/state/INDEX.md` first, resolve whether this is a new task or a continue target by `TASK_TITLE` or `task-id`, then bind the selected task state through $ac-memory, route into the correct execution role, and reclaim control after $ac-review pass for summary closeout."
+  display_name: "Android Delivery"
+  short_description: "Deliver Android changes with risk-based scope and targeted validation"
+  default_prompt: "Use $ac-workflow to deliver this Android change. Choose Direct, Standard, or Full from the actual risk, implement the smallest coherent change, run targeted validation, and report exact evidence and gaps."
+policy:
+  allow_implicit_invocation: false

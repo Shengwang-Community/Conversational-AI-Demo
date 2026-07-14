@@ -18,7 +18,13 @@
     "run_id": {"type": "string", "minLength": 1},
     "status": {
       "type": "string",
-      "enum": ["passed", "failed", "blocked"]
+      "enum": [
+        "in_progress",
+        "blocked",
+        "failed",
+        "passed_with_mock_contract",
+        "passed"
+      ]
     },
     "platforms": {
       "type": "array",
@@ -44,8 +50,9 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["gap", "rationale", "owner", "release_impact", "approved_at"],
+        "required": ["gap_id", "gap", "rationale", "owner", "release_impact", "approved_at"],
         "properties": {
+          "gap_id": {"type": "string", "minLength": 1},
           "gap": {"type": "string", "minLength": 1},
           "rationale": {"type": "string", "minLength": 1},
           "owner": {"type": "string", "minLength": 1},

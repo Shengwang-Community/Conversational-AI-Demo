@@ -59,6 +59,17 @@ INVALIDATES = {
     "ux-acceptance": ["acceptance-reviewer"],
 }
 
+ROLE_NODE_IDS = {
+    "product",
+    "knowledge",
+    "architect",
+    "ux-design",
+    "test-design",
+    "test-verification",
+    "ux-acceptance",
+    "acceptance-reviewer",
+}
+
 
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
@@ -152,8 +163,15 @@ def initial_state(run_id, run_input, node_ids, max_attempts):
 
 
 def expanded_targets(state, targets):
+    selected_platforms = state.get("routing", {}).get("platforms") or state.get(
+        "input", {}
+    ).get("platforms", [])
+    if not selected_platforms:
+        selected_platforms = [
+            node_id for node_id in state["nodes"] if node_id not in ROLE_NODE_IDS
+        ]
     platform_ids = [
-        node_id for node_id in state["nodes"] if node_id in {"android", "ios"}
+        platform for platform in selected_platforms if platform in state["nodes"]
     ]
     result = []
     for target in targets:
@@ -180,6 +198,9 @@ def discard_node_output(state, node_id):
             for path in state.get("artifacts", [])
             if path not in owned_paths or path in remaining_paths
         ]
+        artifact_index = state.get("artifact_index", {})
+        for path in owned_paths - remaining_paths:
+            artifact_index.pop(path, None)
     state.get("execution", {}).get("runs", {}).pop(node_id, None)
 
 

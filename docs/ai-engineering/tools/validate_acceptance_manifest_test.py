@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import copy
+import hashlib
 import importlib.util
 import json
 import tempfile
@@ -40,6 +41,7 @@ def stage(agent, outputs=None, validation=None):
         "findings": [],
         "gaps": [],
         "accepted_gaps": [],
+        "accepted_gap_refs": [],
         "validation": validation or [],
     }
 
@@ -53,6 +55,14 @@ def passing_manifest():
                 "ux_reason": "user-visible change",
                 "platforms": ["android", "ios"],
                 "acceptance_criteria": ["criterion-1"],
+                "contract_status": "confirmed",
+                "contract_evidence": [
+                    {
+                        "type": "json_schema",
+                        "path": "contract-evidence/contract.schema.json",
+                        "sha256": "0" * 64,
+                    }
+                ],
             },
         ),
         stage("knowledge"),
@@ -119,6 +129,7 @@ def passing_manifest():
         "test-verification.json",
         "ux-acceptance.json",
         "acceptance-review.json",
+        "contract-evidence/contract.schema.json",
     ]
     runs = {}
     history = []
@@ -178,6 +189,14 @@ def passing_manifest():
                 "reviewed_by": "architecture-reviewer",
                 "reviewed_at": "2026-07-10T00:00:00+00:00",
             },
+            "contract_status": "confirmed",
+            "contract_evidence": [
+                {
+                    "type": "json_schema",
+                    "path": "contract-evidence/contract.schema.json",
+                    "sha256": "0" * 64,
+                }
+            ],
         },
         "stages": stages,
         "attempts": {item["agent"]: 1 for item in stages},
@@ -198,6 +217,13 @@ class AcceptanceManifestTest(unittest.TestCase):
             path = self.run_path / artifact
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(f"safe evidence for {artifact}\n", encoding="utf-8")
+        evidence = self.run_path / "contract-evidence/contract.schema.json"
+        digest = hashlib.sha256(evidence.read_bytes()).hexdigest()
+        self.manifest["routing"]["contract_evidence"][0]["sha256"] = digest
+        product = next(
+            item for item in self.manifest["stages"] if item["agent"] == "product"
+        )
+        product["outputs"]["contract_evidence"][0]["sha256"] = digest
 
     def tearDown(self):
         self.tempdir.cleanup()
@@ -220,12 +246,158 @@ class AcceptanceManifestTest(unittest.TestCase):
             validator.derive_status(self.manifest, POLICY, run_path=self.run_path),
         )
 
+    def test_mock_contract_passes_local_gates_but_not_production_gate(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest["status"] = "passed_with_mock_contract"
+        manifest["routing"].update(
+            {"contract_status": "mock", "contract_evidence": []}
+        )
+        product = next(
+            item for item in manifest["stages"] if item["agent"] == "product"
+        )
+        product["outputs"].update(
+            {"contract_status": "mock", "contract_evidence": []}
+        )
+        manifest["accepted_gaps"] = [
+            {
+                "gap_id": "production-contract-unavailable",
+                "gap": "Production contract is unavailable.",
+                "rationale": "Mock delivery was approved.",
+                "owner": "server-contract",
+                "release_impact": "Production readiness is blocked.",
+                "approved_at": "2026-07-14T00:00:00+00:00",
+            }
+        ]
+        product["accepted_gaps"] = copy.deepcopy(manifest["accepted_gaps"])
+
+        self.assertEqual([], self.errors(manifest))
+        self.assertEqual(
+            "passed_with_mock_contract",
+            validator.derive_status(manifest, POLICY, run_path=self.run_path),
+        )
+
+        execution = manifest["execution"]["runs"]["android"]
+        execution.update({"result": "blocked", "thread_id": None})
+        self.assert_error("execution result must be completed: android", manifest)
+
+        manifest["status"] = "passed"
+        self.assert_error("requires confirmed contract", manifest)
+
+    def test_contract_evidence_hash_must_match_file(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest["routing"]["contract_evidence"][0]["sha256"] = "f" * 64
+        product = next(
+            item for item in manifest["stages"] if item["agent"] == "product"
+        )
+        product["outputs"]["contract_evidence"][0]["sha256"] = "f" * 64
+
+        self.assert_error("contract evidence hash mismatch", manifest)
+
     def test_missing_knowledge_is_rejected(self):
         manifest = copy.deepcopy(self.manifest)
         manifest["stages"] = [
             item for item in manifest["stages"] if item["agent"] != "knowledge"
         ]
         self.assert_error("required stage missing: knowledge", manifest)
+
+    def test_standard_profile_does_not_require_split_planning_or_reviewer_stages(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest["routing"].update(
+            {
+                "workflow_profile": "standard",
+                "ux_required": False,
+                "ux_reason": "no user-visible behavior changes",
+                "hld_required": False,
+                "hld_rationale": "no cross-component design is required",
+                "hld_review": None,
+            }
+        )
+        product = next(
+            item for item in manifest["stages"] if item["agent"] == "product"
+        )
+        product["outputs"].update(
+            {
+                "workflow_profile": "standard",
+                "covered_criteria": ["criterion-1"],
+                "hld_required": False,
+                "hld_rationale": "no cross-component design is required",
+            }
+        )
+        skipped = {
+            "knowledge",
+            "architect",
+            "ux-design",
+            "test-design",
+            "ux-acceptance",
+            "acceptance-reviewer",
+        }
+        manifest["stages"] = [
+            item for item in manifest["stages"] if item["agent"] not in skipped
+        ]
+        manifest["execution"]["runs"] = {
+            key: value
+            for key, value in manifest["execution"]["runs"].items()
+            if key not in skipped
+        }
+        manifest["execution"]["history"] = [
+            item
+            for item in manifest["execution"]["history"]
+            if item["agent"] not in skipped
+        ]
+
+        self.assertEqual([], self.errors(manifest))
+
+    def test_direct_profile_uses_platform_validation_without_verifier(self):
+        manifest = copy.deepcopy(self.manifest)
+        manifest["routing"].update(
+            {
+                "workflow_profile": "direct",
+                "ux_required": False,
+                "ux_reason": "no user-visible behavior changes",
+                "hld_required": False,
+                "hld_rationale": "no cross-component design is required",
+                "hld_review": None,
+            }
+        )
+        product = next(
+            item for item in manifest["stages"] if item["agent"] == "product"
+        )
+        product["outputs"].update(
+            {
+                "workflow_profile": "direct",
+                "covered_criteria": ["criterion-1"],
+                "hld_required": False,
+                "hld_rationale": "no cross-component design is required",
+            }
+        )
+        for platform in ("android", "ios"):
+            next(
+                item for item in manifest["stages"] if item["agent"] == platform
+            )["outputs"]["covered_criteria"] = ["criterion-1"]
+        skipped = {
+            "knowledge",
+            "architect",
+            "ux-design",
+            "test-design",
+            "test-verification",
+            "ux-acceptance",
+            "acceptance-reviewer",
+        }
+        manifest["stages"] = [
+            item for item in manifest["stages"] if item["agent"] not in skipped
+        ]
+        manifest["execution"]["runs"] = {
+            key: value
+            for key, value in manifest["execution"]["runs"].items()
+            if key not in skipped
+        }
+        manifest["execution"]["history"] = [
+            item
+            for item in manifest["execution"]["history"]
+            if item["agent"] not in skipped
+        ]
+
+        self.assertEqual([], self.errors(manifest))
 
     def test_architect_cannot_be_skipped(self):
         manifest = copy.deepcopy(self.manifest)
@@ -307,6 +479,7 @@ class AcceptanceManifestTest(unittest.TestCase):
         manifest = copy.deepcopy(self.manifest)
         manifest["accepted_gaps"] = [
             {
+                "gap_id": "manual-evidence-missing",
                 "gap": "manual evidence missing",
                 "rationale": "external device unavailable",
                 "release_impact": "limited device coverage",
@@ -377,7 +550,7 @@ class AcceptanceManifestTest(unittest.TestCase):
         product["source_refs"] = ["product:OTHER"]
         self.assert_error("Product source evidence does not match declared inputs", manifest)
 
-    def test_accepted_gap_must_match_the_actual_stage_gap(self):
+    def test_non_product_stage_cannot_approve_a_gap(self):
         manifest = copy.deepcopy(self.manifest)
         android = next(
             item for item in manifest["stages"] if item["agent"] == "android"
@@ -385,6 +558,7 @@ class AcceptanceManifestTest(unittest.TestCase):
         android["gaps"] = ["physical device evidence missing"]
         android["accepted_gaps"] = [
             {
+                "gap_id": "different-gap",
                 "gap": "different gap",
                 "rationale": "approved exception",
                 "owner": "release-owner",
@@ -394,7 +568,44 @@ class AcceptanceManifestTest(unittest.TestCase):
         ]
         manifest["accepted_gaps"] = list(android["accepted_gaps"])
 
+        self.assert_error("only Product may approve accepted gaps: android", manifest)
+        self.assert_error("manifest accepted_gaps must come from Product", manifest)
         self.assert_error("unaccepted gap remains: physical device evidence missing", manifest)
+
+    def test_downstream_gap_reference_must_exist_in_product_approvals(self):
+        manifest = copy.deepcopy(self.manifest)
+        android = next(
+            item for item in manifest["stages"] if item["agent"] == "android"
+        )
+        android["accepted_gap_refs"] = ["unknown-gap"]
+
+        self.assert_error(
+            "accepted gap reference was not approved by Product: android: unknown-gap",
+            manifest,
+        )
+
+    def test_duplicate_and_conflicting_gap_ids_are_rejected(self):
+        manifest = copy.deepcopy(self.manifest)
+        first = {
+            "gap_id": "server-contract",
+            "gap": "Server contract is unavailable.",
+            "rationale": "Mock delivery is approved.",
+            "owner": "server",
+            "release_impact": "Mock-only acceptance.",
+            "approved_at": "2026-07-10T00:00:00+00:00",
+        }
+        duplicate = copy.deepcopy(first)
+        conflict = {**first, "owner": "client"}
+        manifest["accepted_gaps"] = [first, duplicate, conflict]
+        product = next(
+            item for item in manifest["stages"] if item["agent"] == "product"
+        )
+        product["accepted_gaps"] = copy.deepcopy(manifest["accepted_gaps"])
+
+        self.assert_error("duplicate accepted gap ID: server-contract", manifest)
+        self.assert_error(
+            "accepted gap approval conflicts for ID: server-contract", manifest
+        )
 
 
 if __name__ == "__main__":

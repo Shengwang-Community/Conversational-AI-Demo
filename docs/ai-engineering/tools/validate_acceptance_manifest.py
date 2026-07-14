@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import copy
+import hashlib
 import importlib.util
 import json
 import sys
@@ -58,6 +59,11 @@ def latest_attempt_results(manifest):
 def required_nodes(manifest, policy):
     platforms = manifest.get("platforms", [])
     routing = manifest.get("routing", {})
+    profile = routing.get("workflow_profile", "full")
+    if profile == "direct":
+        return ["product", *platforms]
+    if profile == "standard":
+        return ["product", *platforms, "test-verification"]
     nodes = ["product", "knowledge", "architect"]
     if routing.get("ux_required") is True:
         nodes.append("ux-design")
@@ -86,6 +92,11 @@ def validate_routing(manifest, policy):
         errors.append(f"unknown platform: {', '.join(unknown)}")
     if routing.get("platforms") != platforms:
         errors.append("routing platforms must match manifest platforms")
+    workflow_profile = routing.get("workflow_profile", "full")
+    if workflow_profile not in {"direct", "standard", "full"}:
+        errors.append(
+            "routing.workflow_profile must be direct, standard, or full"
+        )
     ux_required = routing.get("ux_required")
     if not isinstance(ux_required, bool):
         errors.append("routing.ux_required must be boolean")
@@ -96,6 +107,10 @@ def validate_routing(manifest, policy):
         errors.append("routing.hld_required must be boolean")
     if not str(routing.get("hld_rationale") or "").strip():
         errors.append("HLD routing rationale is required")
+    if workflow_profile in {"direct", "standard"} and (
+        ux_required or hld_required
+    ):
+        errors.append(f"{workflow_profile} profile cannot require UX or HLD")
     return errors
 
 
@@ -124,15 +139,34 @@ def validate_test_coverage(manifest):
     if not isinstance(criteria, list) or not criteria:
         return ["Product acceptance criteria are required"]
     errors = []
-    design_coverage = test_design.get("covered_criteria", [])
+    profile = manifest.get("routing", {}).get("workflow_profile", "full")
+    design_coverage = (
+        product.get("covered_criteria", [])
+        if profile in {"direct", "standard"}
+        else test_design.get("covered_criteria", [])
+    )
     verification_coverage = verification.get("covered_criteria", [])
+    design_owner = (
+        "Product planning" if profile in {"direct", "standard"} else "Test Matrix"
+    )
     for criterion in criteria:
         if criterion not in design_coverage:
-            errors.append(f"Test Matrix does not cover criterion: {criterion}")
-        if criterion not in verification_coverage:
+            errors.append(f"{design_owner} does not cover criterion: {criterion}")
+        if profile == "direct":
+            for platform in manifest.get("platforms", []):
+                platform_coverage = results.get(platform, {}).get("outputs", {}).get(
+                    "covered_criteria", []
+                )
+                if criterion not in platform_coverage:
+                    errors.append(
+                        f"platform does not cover criterion: {platform}: {criterion}"
+                    )
+        elif criterion not in verification_coverage:
             errors.append(
                 f"Test Verification does not cover criterion: {criterion}"
             )
+    if profile == "direct":
+        return errors
     verified_platforms = verification.get("verified_platforms", [])
     for platform in manifest.get("platforms", []):
         if platform not in verified_platforms:
@@ -144,6 +178,8 @@ def validate_test_coverage(manifest):
 
 def validate_ux(manifest):
     routing = manifest.get("routing", {})
+    if routing.get("workflow_profile") in {"direct", "standard"}:
+        return []
     results = latest_attempt_results(manifest)
     errors = []
     if routing.get("ux_required") is True:
@@ -211,7 +247,24 @@ def validate_execution(manifest, run_path):
             record_errors.append(f"execution thread ID is missing: {label}")
         elif thread_id is not None and not isinstance(thread_id, str):
             record_errors.append(f"{prefix} thread ID is invalid: {label}")
-        if agent == "acceptance-reviewer" and record.get("sandbox") != "read-only":
+        attestation_status = record.get("attestation_status")
+        if attestation_status not in {None, "unavailable", "provided"}:
+            record_errors.append(f"{prefix} attestation status is invalid: {label}")
+        if attestation_status == "unavailable":
+            for field in (
+                "requested_model",
+                "requested_sandbox",
+                "requested_working_directory",
+            ):
+                if not isinstance(record.get(field), str) or not record[field]:
+                    record_errors.append(f"{prefix} {field} is missing: {label}")
+            for claimed in ("model", "sandbox", "working_directory"):
+                if claimed in record:
+                    record_errors.append(
+                        f"unattested execution must not claim {claimed}: {label}"
+                    )
+        sandbox = record.get("sandbox") or record.get("requested_sandbox")
+        if agent == "acceptance-reviewer" and sandbox != "read-only":
             record_errors.append("acceptance-reviewer must be read-only")
         output = record.get("output")
         if not isinstance(output, str) or not output:
@@ -250,7 +303,10 @@ def validate_execution(manifest, run_path):
             errors.append(f"execution agent mismatch: {agent}")
         if record.get("attempt") != result.get("attempt"):
             errors.append(f"execution attempt mismatch: {agent}")
-        if manifest.get("status") == "passed" and record.get("result") != "completed":
+        if manifest.get("status") in {
+            "passed",
+            "passed_with_mock_contract",
+        } and record.get("result") != "completed":
             errors.append(f"execution result must be completed: {agent}")
     if len(thread_ids) != len(set(thread_ids)):
         errors.append("execution thread IDs must be unique")
@@ -262,7 +318,16 @@ def validate_accepted_gaps(manifest):
     gaps = manifest.get("accepted_gaps")
     if not isinstance(gaps, list):
         return ["accepted_gaps must be a list"]
-    required = ["gap", "rationale", "owner", "release_impact", "approved_at"]
+    required = [
+        "gap_id",
+        "gap",
+        "rationale",
+        "owner",
+        "release_impact",
+        "approved_at",
+    ]
+    by_id = {}
+    by_description = {}
     for gap in gaps:
         if not isinstance(gap, dict):
             errors.append("accepted gap must be an object")
@@ -276,6 +341,59 @@ def validate_accepted_gaps(manifest):
                 datetime.fromisoformat(approved_at.replace("Z", "+00:00"))
             except (AttributeError, ValueError):
                 errors.append("accepted gap approved_at must be ISO-8601")
+        gap_id = str(gap.get("gap_id") or "").strip()
+        description = str(gap.get("gap") or "").strip()
+        approval = (gap.get("owner"), gap.get("release_impact"))
+        if gap_id in by_id:
+            if approval != by_id[gap_id]:
+                errors.append(f"accepted gap approval conflicts for ID: {gap_id}")
+            else:
+                errors.append(f"duplicate accepted gap ID: {gap_id}")
+        elif gap_id:
+            by_id[gap_id] = approval
+        if description in by_description:
+            previous_id, previous_approval = by_description[description]
+            if approval != previous_approval:
+                errors.append(
+                    f"accepted gap approval conflicts for gap: {description}"
+                )
+            elif gap_id != previous_id:
+                errors.append(f"duplicate accepted gap description: {description}")
+        elif description:
+            by_description[description] = (gap_id, approval)
+    return errors
+
+
+def validate_stage_gap_contract(manifest):
+    errors = []
+    results = latest_attempt_results(manifest)
+    approved = {
+        gap.get("gap_id"): gap
+        for gap in manifest.get("accepted_gaps", [])
+        if isinstance(gap, dict) and gap.get("gap_id")
+    }
+    product_gaps = results.get("product", {}).get("accepted_gaps", [])
+    if product_gaps != manifest.get("accepted_gaps", []):
+        errors.append("manifest accepted_gaps must come from Product")
+    for agent, result in results.items():
+        accepted_gaps = result.get("accepted_gaps", [])
+        refs = result.get("accepted_gap_refs", [])
+        if agent != "product" and accepted_gaps:
+            errors.append(f"only Product may approve accepted gaps: {agent}")
+        if agent == "product" and refs:
+            errors.append("Product must approve gaps directly, not by reference")
+        if not isinstance(refs, list):
+            errors.append(f"accepted_gap_refs must be a list: {agent}")
+            refs = []
+        elif len(refs) != len(set(refs)):
+            errors.append(f"accepted_gap_refs must be unique: {agent}")
+        for gap_id in refs:
+            if gap_id not in approved:
+                errors.append(
+                    f"accepted gap reference was not approved by Product: {agent}: {gap_id}"
+                )
+        for gap in result.get("gaps", []):
+            errors.append(f"unaccepted gap remains: {gap}")
     return errors
 
 
@@ -308,8 +426,17 @@ def _validate_structure(manifest):
     errors = [f"manifest field is required: {field}" for field in missing]
     if manifest.get("schema_version") != 1:
         errors.append("schema_version must be 1")
-    if manifest.get("status") not in {"passed", "failed", "blocked"}:
-        errors.append("status must be passed, failed, or blocked")
+    if manifest.get("status") not in {
+        "in_progress",
+        "blocked",
+        "failed",
+        "passed_with_mock_contract",
+        "passed",
+    }:
+        errors.append(
+            "status must be in_progress, blocked, failed, "
+            "passed_with_mock_contract, or passed"
+        )
     if not isinstance(manifest.get("stages"), list):
         errors.append("stages must be a list")
     if not isinstance(manifest.get("attempts"), dict):
@@ -320,16 +447,61 @@ def _validate_structure(manifest):
 def validate(manifest, policy, run_path=None):
     errors = _validate_structure(manifest)
     errors.extend(validate_accepted_gaps(manifest))
+    errors.extend(validate_stage_gap_contract(manifest))
     private_check = manifest.get("private_content_check", {})
     if private_check.get("contains_private_source_bodies") is not False:
         errors.append("private content check must be false")
     errors.extend(validate_execution(manifest, run_path))
     errors.extend(_validate_artifacts(manifest, run_path))
-    if manifest.get("status") != "passed":
+    if manifest.get("status") not in {"passed", "passed_with_mock_contract"}:
         return errors
+
+    contract_status = manifest.get("routing", {}).get("contract_status")
+    contract_evidence = manifest.get("routing", {}).get("contract_evidence", [])
+    if manifest.get("status") == "passed" and contract_status != "confirmed":
+        errors.append("production-ready passed status requires confirmed contract")
+    if (
+        manifest.get("status") == "passed_with_mock_contract"
+        and contract_status != "mock"
+    ):
+        errors.append("passed_with_mock_contract requires mock contract_status")
+    if contract_status == "mock" and not manifest.get("accepted_gaps"):
+        errors.append("mock contract requires an explicitly accepted gap")
+    if contract_status == "confirmed" and not contract_evidence:
+        errors.append(
+            "confirmed contract requires sanitized response, JSON Schema, or OpenAPI evidence"
+        )
+    allowed_contract_evidence = {"sanitized_response", "json_schema", "openapi"}
+    for item in contract_evidence:
+        if not isinstance(item, dict) or set(item) != {"type", "path", "sha256"}:
+            errors.append("contract evidence requires type, path, and sha256")
+            continue
+        if item["type"] not in allowed_contract_evidence:
+            errors.append(f"unsupported contract evidence type: {item['type']}")
+        if item["path"] not in manifest.get("artifacts", []):
+            errors.append(f"contract evidence is not indexed: {item['path']}")
+        if run_path is not None:
+            try:
+                evidence_path = _resolve_under(run_path, item["path"])
+            except ValueError as error:
+                errors.append(str(error))
+            else:
+                if evidence_path.is_file():
+                    actual = hashlib.sha256(evidence_path.read_bytes()).hexdigest()
+                    if actual != item["sha256"]:
+                        errors.append(f"contract evidence hash mismatch: {item['path']}")
 
     errors.extend(validate_routing(manifest, policy))
     results = latest_attempt_results(manifest)
+    product_contract = results.get("product", {}).get("outputs", {})
+    product_profile = product_contract.get("workflow_profile", "full")
+    routing_profile = manifest.get("routing", {}).get("workflow_profile", "full")
+    if product_profile != routing_profile:
+        errors.append("Product workflow_profile does not match routing")
+    if product_contract.get("contract_status") != contract_status:
+        errors.append("Product contract_status does not match routing")
+    if product_contract.get("contract_evidence", []) != contract_evidence:
+        errors.append("Product contract_evidence does not match routing")
     for agent in required_nodes(manifest, policy):
         result = results.get(agent)
         if result is None:
@@ -339,18 +511,13 @@ def validate(manifest, policy, run_path=None):
             errors.append(f"required stage must pass: {agent}")
         if result.get("findings"):
             errors.append(f"open findings remain: {agent}")
-        accepted = {
-            item.get("gap")
-            for item in result.get("accepted_gaps", [])
-            if isinstance(item, dict)
-        }
-        for gap in result.get("gaps", []):
-            if gap not in accepted:
-                errors.append(f"unaccepted gap remains: {gap}")
     errors.extend(validate_hld(manifest))
     errors.extend(validate_test_coverage(manifest))
     errors.extend(validate_ux(manifest))
-    for platform in [*manifest.get("platforms", []), "test-verification"]:
+    validation_agents = list(manifest.get("platforms", []))
+    if routing_profile != "direct":
+        validation_agents.append("test-verification")
+    for platform in validation_agents:
         result = results.get(platform, {})
         validations = result.get("validation", [])
         if not validations:
@@ -384,10 +551,25 @@ def derive_status(manifest, policy, run_path=None):
         repair_attempt = manifest.get("execution", {}).get("repair_attempt", 1)
         if repair_attempt >= policy.get("max_attempts", 3):
             return "failed"
-        return "blocked"
+        return "in_progress"
+    required = set(required_nodes(manifest, policy))
+    completed = {
+        agent
+        for agent, status in statuses.items()
+        if status in {"passed", "not_required"}
+    }
+    if not required.issubset(completed):
+        return "in_progress"
     candidate = copy.deepcopy(manifest)
-    candidate["status"] = "passed"
-    return "passed" if not validate(candidate, policy, run_path=run_path) else "blocked"
+    contract_status = manifest.get("routing", {}).get("contract_status")
+    candidate["status"] = (
+        "passed" if contract_status == "confirmed" else "passed_with_mock_contract"
+    )
+    return (
+        candidate["status"]
+        if not validate(candidate, policy, run_path=run_path)
+        else "blocked"
+    )
 
 
 def validate_file(path, policy=None):

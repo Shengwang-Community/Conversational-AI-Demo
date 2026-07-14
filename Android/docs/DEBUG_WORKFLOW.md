@@ -1,203 +1,69 @@
-# Android Debug / 联调 Workflow
+# Android Debugging and Integration
 
-用途：用于 debugging、开发态联调、难稳定复现、强依赖运行时条件的任务。  
-目标：在不伪造结论的前提下，提高问题定位、证据收集、假设管理和收尾质量。
+The goal of debugging is to isolate the responsible boundary with the least sufficient evidence and leave a conclusion that another engineer can reproduce.
 
-## 1. 适用场景
+## Before Investigation
 
-适用于以下任务：
+- Record the observed behavior, expected behavior, first known occurrence, and impact.
+- Record the device or emulator, Android version, variant, network, permissions, account state, and backend environment.
+- Declare local-cache or debug-data behavior, active mocks, backend assumptions, and non-goals.
+- Build the smallest reproduction before considering broad refactoring.
 
-- RTC / RTM 消息或回调异常
-- 字幕链路、`convoaiApi`、`subRender` 相关问题
-- toolbox / backend contract / agent 行为联调
-- IoT / BLE / Wi-Fi / 权限 / 真机状态相关问题
-- 生命周期、前后台、旋转屏、权限再次申请等运行时问题
-- 无法仅靠静态代码阅读确认的问题
+## Investigation Order
 
-不适用于以下任务：
+1. Reproduce the issue and retain fresh logs, screenshots, recordings, or a failing test.
+2. Narrow the boundary along UI -> ViewModel/state -> API/SDK -> server/device.
+3. Design one check that can confirm or reject each leading hypothesis.
+4. Mark conclusions as confirmed, rejected, or unverified. Put unverified items in Gaps.
+5. Fix the root cause and retest the original path, the failure path, and adjacent successful paths.
 
-- 纯文档同步
-- 纯模板修改
-- 已有明确修复路径且无需进一步定位的简单问题
+## Evidence Priority
 
-## 2. 调试目标
+1. A repeatable automated test.
+2. Actual command output and Logcat, network, or SDK logs.
+3. Runtime interaction and screenshots from an emulator or device.
+4. Static call-chain and diff inspection.
 
-每次 debugging / 联调任务都应尽量回答以下问题：
+Historical logs provide context only. When the problem cannot be reproduced, record why and identify the missing environment or input. Do not present static inference as a runtime result.
 
-- 现象是什么
-- 复现条件是什么
-- 哪些前提已经确认
-- 哪些假设尚未证实
-- 当前最可能的责任边界在哪一层
-- 本轮真正修复了什么，哪些仍然只是 `Gaps`
+## Development-Integration Boundary
 
-## 3. 标准流程
+For development-integration review, state:
 
-### 3.1 现象确认
+- which values come from a mock, local cache, fixture, or temporary configuration;
+- which server behavior is assumed;
+- what is explicitly out of scope;
+- which concerns remain assumptions or open questions.
 
-- 用一句话描述现象
-- 区分“用户观察到的表现”和“代码层推测”
-- 若现象本身仍不稳定，先记录为“待稳定复现”
+A declared development assumption is not automatically a release defect, but report it when current code evidence contradicts the assumption.
 
-### 3.2 复现路径
+## When to Expand Scope
 
-至少记录：
+Stop the current repair and reassess the profile and scope when:
 
-- 入口页面 / 模块
-- 账号、设备、网络、权限、系统版本等前提
-- 操作步骤
-- 实际结果
-- 期望结果
+- responsibility crosses into another module or shared contract;
+- the solution requires a new backend, permission, device, migration, or compatibility policy;
+- the planned validation no longer covers the discovered risk;
+- rollback behavior or user-data impact changes.
 
-### 3.3 最小定位
+## Completion Language
 
-优先收敛责任边界：
+Use "fixed" only when the symptom is defined, the root cause is supported by evidence, the change matches that cause, and fresh validation passes. Otherwise use a precise state:
 
-- UI 展示问题
-- ViewModel / 状态传播问题
-- 网络 / 配置问题
-- RTC / RTM / 字幕链路问题
-- 权限 / 生命周期 / 系统状态问题
-- IoT / BLE / 真机环境问题
+- implementation updated; validation pending;
+- implementation passed local checks; acceptance is incomplete;
+- root cause identified; repair pending;
+- blocked: missing <specific environment or external input>.
 
-原则：
+## Result Template
 
-- 先定位边界，再决定修复方式
-- 避免一边猜一边顺手大改
-
-### 3.4 假设列表
-
-对每个待验证假设，至少写明：
-
-- 假设内容
-- 为什么怀疑它
-- 用什么证据验证或排除
-- 若本轮无法验证，应如何进入 `Gaps`
-
-### 3.5 证据采集
-
-优先采集以下证据：
-
-- 日志 / Logcat
-- 截图 / 录屏
-- 命令输出
-- 关键代码路径
-- 网络请求 / 返回
-- 设备、网络、权限、蓝牙、Wi-Fi 等前提状态
-
-要求：
-
-- 区分“本轮 fresh Evidence”和“历史 Evidence”
-- 不得把旧截图、旧日志直接当成本轮结论
-- 无法复现时，也要记录“为什么无法复现”
-
-### 3.6 排除与收敛
-
-对于每条主要假设，结论只能是：
-
-- 已证实
-- 已排除
-- 暂未证实，进入 `Gaps`
-
-若发现以下任一情况，应回到 `ac-plan`：
-
-- 修复范围扩大
-- 需要改动的文件超出原 Contract
-- 原 Checks 不足以覆盖当前问题
-- 新出现关键约束或回滚风险
-
-### 3.7 修复验证
-
-修复后至少明确：
-
-- 本轮做了哪些改动
-- 跑了哪些检查
-- 哪些路径已回归
-- 哪些条件仍未验证
-- 当前结论是“已修复”还是“实现通过但验证未闭环”
-
-## 4. Evidence 记录要求
-
-`Evidence` 建议至少覆盖：
-
-- 复现或定位依据
-- 本轮变更说明
-- 本轮 fresh checks / logs / manual paths
-- 与问题直接相关的验证结果
-
-示例：
-
-- 已在真机上按“进入 Living -> 开启字幕 -> 收到 RTM 消息”路径复现
-- 已执行 `./gradlew :scenes:convoai:compileDebugKotlin`，结果 `BUILD SUCCESSFUL`
-- 已确认问题仅在蓝牙关闭且定位服务未开启时出现
-- 已查看 `TranscriptController` 回调链路，本轮新增日志表明消息已到达 API 层但未进入 UI 渲染层
-
-## 5. Gaps 记录要求
-
-以下内容应优先进入 `Gaps`：
-
-- 真机未验证
-- 低版本系统未验证
-- 平板 / 横竖屏未验证
-- 后端契约尚未确认
-- 联调环境不稳定
-- 无法稳定复现
-- 缺少账号、设备、网络条件
-
-示例：
-
-- 尚未在 Android 12 真机验证蓝牙权限拒绝路径
-- 当前后端是否保证消息顺序仍未确认，因此乱序风险暂记为 `open question`
-- 字幕渲染层已调整，但深色模式下是否仍存在可读性问题未验证
-
-## 6. 开发态联调边界
-
-若任务属于开发态联调 / debugging，必须显式写清：
-
-- 本地缓存或调试数据是否清空
-- 哪些后端行为按联调前提默认成立
-- 本轮明确非目标是什么
-- 哪些看起来可疑的问题目前只能记为 `assumption` / `open question`
-
-原则：
-
-- 未证实的问题优先进入 `Gaps`
-- 不在缺证据时直接上升为“已确认回归”
-- 已声明的联调前提，不应在 review 时被误判成发布态缺陷
-
-## 7. 何时可以写“已修复”
-
-只有同时满足以下条件时，才可写“已修复”：
-
-- 问题现象已被清晰界定
-- 修复范围与 Contract 一致
-- 本轮存在 fresh Evidence
-- 必要验证已完成，或剩余风险已明确压缩到不影响“修复成立”的范围
-
-否则应改写为：
-
-- “代码已调整，待验证”
-- “实现通过，验证未闭环”
-- “现象已收敛，但仍有 Gaps”
-- “当前按开发态联调假设处理，待后端或真机进一步确认”
-
-## 8. 推荐输出模板
-
-### 调试记录
-
-- 现象：
-- 复现条件：
-- 最小责任边界：
-- 核心假设：
-- 本轮改动：
-- 本轮 fresh Evidence：
-- 未验证项（Gaps）：
-- 当前结论：
-
-### 当前结论可选值
-
-- 已修复
-- 实现通过，验证未闭环
-- 已定位，待修复
-- 尚未定位完成
-- 需回到 `ac-plan` 重规划
+```markdown
+- Symptom:
+- Reproduction conditions:
+- Responsible boundary:
+- Root cause or leading hypothesis:
+- Change:
+- Fresh evidence:
+- Gaps:
+- Conclusion:
+```

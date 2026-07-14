@@ -13,6 +13,7 @@
     "findings",
     "gaps",
     "accepted_gaps",
+    "accepted_gap_refs",
     "validation"
   ],
   "properties": {
@@ -34,10 +35,10 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["path", "content"],
+        "required": ["path", "sha256"],
         "properties": {
           "path": {"type": "string", "minLength": 1},
-          "content": {}
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
         },
         "additionalProperties": false
       }
@@ -51,7 +52,10 @@
           "id": {"type": "string", "minLength": 1},
           "category": {"type": "string", "minLength": 1},
           "owner": {"type": "string", "minLength": 1},
-          "severity": {"type": "string", "minLength": 1},
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
           "description": {"type": "string", "minLength": 1}
         },
         "additionalProperties": false
@@ -65,8 +69,9 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["gap", "rationale", "owner", "release_impact", "approved_at"],
+        "required": ["gap_id", "gap", "rationale", "owner", "release_impact", "approved_at"],
         "properties": {
+          "gap_id": {"type": "string", "minLength": 1},
           "gap": {"type": "string", "minLength": 1},
           "rationale": {"type": "string", "minLength": 1},
           "owner": {"type": "string", "minLength": 1},
@@ -76,10 +81,19 @@
         "additionalProperties": false
       }
     },
+    "accepted_gap_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
     "files_changed": {
       "type": "array",
       "items": {"type": "string"},
       "uniqueItems": true
+    },
+    "repository_fingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
     },
     "validation": {
       "type": "array",

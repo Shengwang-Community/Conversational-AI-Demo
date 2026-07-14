@@ -229,11 +229,17 @@ class WorkflowWorkspaceTest(unittest.TestCase):
             "test-design",
             "ios",
             "android",
+            "web",
             "test-verification",
             "ux-acceptance",
             "acceptance-reviewer",
         ]
-        state = workspace.initial_state("run-1", {"goal": "Goal"}, node_ids, 3)
+        state = workspace.initial_state(
+            "run-1",
+            {"goal": "Goal", "platforms": ["ios", "android", "web"]},
+            node_ids,
+            3,
+        )
         state["events"].append({"type": "existing"})
         for node in state["nodes"].values():
             node.update(
@@ -253,6 +259,7 @@ class WorkflowWorkspaceTest(unittest.TestCase):
             "test-design",
             "ios",
             "android",
+            "web",
             "test-verification",
             "ux-acceptance",
             "acceptance-reviewer",

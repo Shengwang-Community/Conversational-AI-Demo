@@ -1,65 +1,79 @@
 ---
 name: release-iteration
-description: Run a repo-level Android/iOS release iteration from product-source alignment through platform implementation and independent acceptance. Use for Jira, Confluence, Feishu/Lark, Figma, or direct-user requirements that should be executed through Codex without mixing private requirement data into committed infrastructure.
+description: Deliver a repo-level Android, iOS, or Web release iteration from Jira, Confluence, Feishu/Lark, Figma, or direct requirements through implementation and deterministic acceptance without committing private source content.
 ---
 
 # Release Iteration
 
-## Purpose
+Deliver the requested ConvoAI Demo outcome across the selected platforms. The Lead owns orchestration; native Codex Agents own judgment and implementation; repository tools own state, privacy, provenance, retries, and final status.
 
-ConvoAI Demo is the Android and iOS showcase for Shengwang Conversational AI Engine capabilities. Requirements are proposed by the product team and carried through a complete engineering and acceptance workflow before delivery to users.
+## Select A Profile
 
-The root workflow does not define another platform state machine. Platform entrypoints, model routing, and sandbox policy come only from `references/workflow-policy.json`.
+Product/Intake reads every declared source and selects:
 
-## Flow
+- `direct`: low-risk, non-UX work with no HLD, security, migration, compatibility, shared-contract, or cross-platform design risk. Flow: Product -> platforms -> Finalizer.
+- `standard`: default for ordinary delivery. Flow: Product -> platforms -> Test Verification -> Finalizer.
+- `full`: UX, HLD, security, migration, compatibility, shared-contract, or cross-platform design risk. Flow: Product -> Knowledge -> Architect -> UX when required -> Test Design -> platforms -> Test Verification -> UX Acceptance when required -> Acceptance Reviewer -> Finalizer.
 
-1. Collect an explicit goal, source references, and affected platforms.
-2. Create an ignored run workspace with `docs/ai-engineering/tools/run_release_iteration.py`.
-3. Product reads the declared sources, confirms product intent, platforms, acceptance criteria, and whether UX is affected.
-4. Knowledge grounds the requirement in repository behavior and platform-owned guidance.
-5. Architect reviews every requirement and records whether a reviewed HLD is required.
-6. UX Design runs for user-visible changes, followed by mandatory Test Design.
-7. Selected Android and iOS workflows implement independently from their platform directories.
-8. Test Verification independently checks platform and acceptance evidence.
-9. UX Acceptance runs when UX Design was required.
-10. A fresh read-only Acceptance Reviewer checks successful or blocked evidence.
-11. The deterministic Finalizer derives `passed`, `failed`, or `blocked`.
+An explicit `--profile` is a hard constraint. With `auto`, Product chooses using the criteria above.
 
-## Rules
+## Run
 
-- Keep real issue keys, requirement details, source summaries, dependency targets, versions, and run evidence inside `docs/ai-engineering/pilot-runs/`.
-- Do not copy raw private Jira, Confluence, Feishu/Lark, or Figma bodies into artifacts.
-- Do not run with `--execute` until the user explicitly authorizes implementation.
-- Let each platform workflow own its planning, code changes, tests, review loop, and local state rules.
-- Do not introduce generic Android/iOS platform agents or duplicate platform workflow rules at the root.
-- Knowledge, Architect, Test Design, Test Verification, and Acceptance Reviewer are required for every completed run.
-- HLD is conditional, but the Architect decision and rationale are mandatory.
-- UX Design and UX Acceptance are conditional and share one explicit Product routing decision.
-- Repair is bounded by policy `max_attempts` of three; unchanged passed platforms are not rerun.
-- Internal CI integration is outside this workflow.
+1. Collect the outcome, source references, declared platforms, and implementation authorization.
+2. Verify source MCP access and create an ignored run workspace with `docs/ai-engineering/tools/run_release_iteration.py`.
+3. Dispatch every ready native Agent with the exact model, reasoning, sandbox, working directory, prompt, and result path returned by the runner.
+4. Dispatch independent ready platforms in parallel and ingest their results as one batch.
+5. Continue until no dispatch is ready and the deterministic Finalizer returns a terminal status.
 
-## Command
+Do not ask the user to manage runner commands. Do not use `--execute` or start nested `codex exec` processes.
+
+## Invariants
+
+- Keep raw Jira, Confluence, Feishu/Lark, Figma, internal links, source summaries, and run evidence inside `docs/ai-engineering/pilot-runs/`.
+- Do not authorize platform implementation until the user explicitly asks to implement.
+- Follow platform entrypoints for local engineering and validation rules.
+- Preserve the native Agent ID and requested/attested provenance distinction.
+- Let Agents choose efficient steps; retain hard constraints, acceptance criteria, permissions, evidence, and stopping conditions.
+- Use multi-Agent execution only for ready workstreams that are genuinely independent. Keep dependent design, implementation, and acceptance sequential.
+- Retry actionable findings at most policy `max_attempts` times. Do not rerun unchanged passed platforms.
+- Internal CI integration and HLD publication remain outside the default workflow.
+
+## Accepted Gaps
+
+Product is the only approval authority. Each approval requires a stable `gap_id`, rationale, owner, release impact, and timestamp. Other Agents leave `accepted_gaps` empty and cite approved IDs through `accepted_gap_refs`. Keep `gaps` for unresolved, unapproved blockers; do not repeat approved exceptions there. The Finalizer deduplicates Product approvals and the validator rejects duplicate or conflicting IDs.
+
+## Native Result Protocol
+
+Create a run internally; include `--implementation-authorized` only after explicit authorization:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 docs/ai-engineering/tools/run_release_iteration.py \
   --name <run-name> \
   --goal "<product outcome>" \
   --source <type:reference> \
+  --profile auto \
   --platform android \
   --platform ios \
-  --execute
+  --platform web
 ```
 
-Omit `--execute` to inspect the generated local workspace and prompts without invoking Codex roles.
-
-Resume a blocked or failed run after its input or environment is corrected:
+For each dispatch, write artifacts under the ignored run workspace and return only `path` + `sha256` references in role-result JSON. Ingest parallel results together:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 docs/ai-engineering/tools/run_release_iteration.py \
   --resume docs/ai-engineering/pilot-runs/<run> \
-  --execute
+  --native-result docs/ai-engineering/pilot-runs/<run>/native-results/<attempt>-android.json \
+  --native-agent-id <android-agent-id> \
+  --native-result docs/ai-engineering/pilot-runs/<run>/native-results/<attempt>-ios.json \
+  --native-agent-id <ios-agent-id>
 ```
 
-## Privacy And Publishing
+Resume after correcting an external blocker with `--retry-blocked`.
 
-Real requirements, source summaries, HLD, UX evidence, role attempts, and acceptance evidence remain in the Git-ignored run workspace. HLD is published only after review and an explicit publishing instruction. Committed files contain only generic workflow infrastructure.
+## Terminal Status
+
+- `in_progress`: ready or repairable work remains.
+- `blocked`: missing authority, input, environment, protocol, privacy, or acceptance evidence prevents progress.
+- `failed`: actionable retries are exhausted.
+- `passed_with_mock_contract`: local implementation and validation passed against a Product-approved mock contract.
+- `passed`: all required gates passed with confirmed sanitized contract evidence.

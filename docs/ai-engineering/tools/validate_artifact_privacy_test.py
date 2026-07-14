@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import importlib.util
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,7 +18,7 @@ class PrivacyScanTest(unittest.TestCase):
         errors = privacy.scan_text(f"{marker} private requirement", source="role output")
 
         self.assertEqual(
-            [f"role output: private source marker found: {marker}"],
+            [f"role output:1: private source marker found: {marker}"],
             errors,
         )
 
@@ -26,7 +27,7 @@ class PrivacyScanTest(unittest.TestCase):
 
         errors = privacy.scan_text(f'{key}="abc123"')
 
-        self.assertEqual(["<memory>: possible credential or token literal"], errors)
+        self.assertEqual(["<memory>:1: possible credential or token literal"], errors)
 
     def test_scan_text_detects_json_and_prefixed_environment_credentials(self):
         secret_key = "client" + "_secret"
@@ -110,6 +111,111 @@ class PrivacyScanTest(unittest.TestCase):
             key = "App" + " Certificate"
             path.write_text(f"{key}: abcdef123456\n", encoding="utf-8")
             self.assertTrue(any("credential" in error for error in privacy.scan([str(path)])))
+
+    def test_type_annotation_and_standard_test_placeholder_pass(self):
+        self.assertEqual([], privacy.scan_text("app_id: String?", source="fixture.kt"))
+        self.assertEqual([], privacy.scan_text('app_id = "test-app-id"'))
+
+    def test_environment_value_with_dot_is_not_treated_as_code(self):
+        self.assertTrue(
+            privacy.scan_text("app_id=real.secret", source="config.env")
+        )
+
+    def test_privacy_error_reports_file_and_line(self):
+        key = "APP" + "_ID"
+
+        errors = privacy.scan_text(
+            f"safe line\n{key}=real-value\n", source="fixture.kt"
+        )
+
+        self.assertEqual(
+            ["fixture.kt:2: possible credential or token literal"], errors
+        )
+
+    def test_32_character_app_id_literal_is_rejected(self):
+        value = "a" * 32
+
+        self.assertEqual(
+            ["fixture.kt:1: possible 32-character APPID literal"],
+            privacy.scan_text(f'assertEquals("{value}", actual)', source="fixture.kt"),
+        )
+
+    def test_changed_lines_gate_ignores_baseline_and_reports_new_literal(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            key = "app" + "_id"
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            config = root / "Config.kt"
+            config.write_text(
+                f'{key} = "existing-production-value"\nmode = "old"\n',
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "add", "Config.kt"], cwd=root, check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=Test",
+                    "-c",
+                    "user.email=test@example.com",
+                    "-c",
+                    "core.hooksPath=/dev/null",
+                    "commit",
+                    "-qm",
+                    "baseline",
+                ],
+                cwd=root,
+                check=True,
+            )
+            config.write_text(
+                f'{key} = "existing-production-value"\nmode = "new"\n',
+                encoding="utf-8",
+            )
+            self.assertEqual([], privacy.scan_changed_lines(root))
+
+            config.write_text(
+                f'{key} = "existing-production-value"\nmode = "new"\n'
+                f'{key} = "new-production-value"\n',
+                encoding="utf-8",
+            )
+
+            self.assertEqual(
+                ["Config.kt:3: possible credential or token literal"],
+                privacy.scan_changed_lines(root),
+            )
+
+    def test_changed_lines_gate_detects_multiline_yaml_credential(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            key = "app" + "_id"
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            config = root / "config.yaml"
+            config.write_text("mode: baseline\n", encoding="utf-8")
+            subprocess.run(["git", "add", "config.yaml"], cwd=root, check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=Test",
+                    "-c",
+                    "user.email=test@example.com",
+                    "-c",
+                    "core.hooksPath=/dev/null",
+                    "commit",
+                    "-qm",
+                    "baseline",
+                ],
+                cwd=root,
+                check=True,
+            )
+            config.write_text(
+                f"mode: baseline\n{key}:\n  abc123\n", encoding="utf-8"
+            )
+
+            self.assertEqual(
+                ["config.yaml:3: possible credential or token literal"],
+                privacy.scan_changed_lines(root),
+            )
 
 
 if __name__ == "__main__":
