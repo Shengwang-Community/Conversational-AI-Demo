@@ -1,189 +1,80 @@
-# Android 与 AI 工程化工作流模板
+# Android Workflow Templates
 
-开始任务前，先识别 mode 与任务类型；若当前只是读代码、看 diff、定位根因，可先停留在 `analysis`。一旦进入执行，再由 workflow 绑定到当前任务状态文件。
+Use these templates to define completion, not to create repository plan or state files. Read the requirement, current diff, call sites, tests, and relevant architecture before selecting the smallest profile that can prove the outcome.
 
-**仓库范围提示**
+## Profile Selection
 
-- 业务模块：`app`、`common`、`scenes/convoai`、`scenes/convoai:iot`、`scenes/convoai:bleManager`
-- AI 工程化资产：`AGENTS.md`、`.agents/skills/`、`.agents/state/INDEX.md`、`.agents/state/tasks/`、`docs/*.md`
-- UI 现状：默认按当前 `Activity` / `Fragment` / `ViewBinding` 体系思考，除非需求明确要求 Compose
+| Profile | Use when | Minimum acceptance |
+|---|---|---|
+| Direct | Local, low-risk, and clearly bounded | Focused affected test, narrow compile, and diff review |
+| Standard | Ordinary feature or fix; default | Direct evidence plus independent acceptance review |
+| Full | Cross-module, UI/UX, shared contract, build/configuration, permission, migration, compatibility, security, device, RTC/RTM, SIP, transcript, or uncertain external contract | Explicit design and risk, expanded tests, runtime evidence where required, and independent acceptance |
 
-**通用约束**
+A task that needs an HLD or UI/interaction design is Full. A small file count does not make a task low risk.
 
-- workflow 任务每次阶段结束必须更新当前任务状态文件，并同步 `.agents/state/INDEX.md`
-- analysis 模式允许只读命令，不写任务状态
-- 纯文档 / skill / template 任务也属于 workflow，不按 general 模式处理
-- 存在未完成任务不等于自动 continue；只有用户明确说“继续 / 接着做 / 继续 <TASK_TITLE> / 继续 <task-id>”时，才按 continue 恢复
-- continue 进入前，先由 `ac-workflow` 从索引和未完成任务摘要中解析目标任务；若未精确命中，可先生成候选列表，再等用户确认后交给 `ac-memory` 绑定状态文件
-- 若存在多个未完成任务，先要求用户指定 `TASK_TITLE` 或 `task-id`；候选匹配只能缩小范围，不能替代最终确认
-- 带 reviewer 的路线在 `✅ 校验` 通过后，统一回交 `ac-workflow` 执行最终 `📝 总结`
-- 代码任务优先跑 `gradlew` 检查；docs-only 任务优先做路径、术语、模板一致性检查
-- 触及 `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/` 或 `subRender/` 字幕组件时，默认按高风险处理，扩大验证范围
+## Completion Contract
 
----
+- Outcome: the user-observable result.
+- Scope: allowed modules, files, interfaces, and behavior.
+- Constraints: compatibility, permissions, threading, lifecycle, privacy, and external boundaries.
+- Acceptance criteria: individually decidable statements, not "works correctly."
+- Evidence: commands, tests, screenshots, logs, or manual paths actually completed in this run.
+- Gaps: missing environment, device, server, design, production contract, or runtime evidence.
 
-## feat（新功能 / 新页面 / 新模块）
+## Feature
 
-### 入口分流
+1. Trace the existing entry, state, network or SDK, and UI call path.
+2. Put backend fields, defaults, error states, and fallback behavior in the acceptance criteria.
+3. Implement the smallest coherent change in the owning module and update consumers and tests.
+4. Run focused tests and the affected compile task; add runtime evidence for UI, media, permission, or device behavior.
+5. For Standard or Full, perform an independent diff and requirement-coverage review.
 
-1. 是否新增 `Activity` / `Fragment` / 自定义 View / 对话页面？
-2. 是否新增模块、导航入口、权限、接口、配置项或资源文件？
-3. 是否影响 `common` 公共能力或 `scenes/convoai` 主场景？
+## Fix
 
-### 最小问题集
+1. Bound the symptom and root cause with logs, a test, or a concrete code path.
+2. Add the smallest regression test first, or explain why automation is not feasible.
+3. Fix the root cause without unrelated refactoring.
+4. Validate the failure path, adjacent branches, and the original success path.
+5. When reproduction or an external input is unavailable, report incomplete acceptance instead of claiming the issue is fixed.
 
-- 目标功能是什么，入口在哪个模块？
-- 期望行为、失败行为、验收标准是什么？
-- 是否涉及 RTC / RTM / RESTful / IoT / 权限 / 生命周期？
+## Refactor
 
-### 动作清单
+1. Define the behavior that must remain unchanged and list affected consumers.
+2. Establish a baseline with existing tests; add coverage for critical behavior when needed.
+3. Keep each step compilable and avoid changing a public contract and its internal implementation at the same time.
+4. Validate affected modules and consumers.
 
-- [ ] 确认模块与目录归属
-- [ ] 明确 Loading / Empty / Error / Success 态
-- [ ] 明确导航、返回栈、权限、生命周期影响
-- [ ] 补充必要的数据层、接口、类型和测试
-- [ ] 运行 `./gradlew lint`
-- [ ] 运行 `./gradlew test`
+## UI
 
-### 完成标准
+1. Extract layout, copy, loading, empty, error, success, interaction, accessibility, and responsive requirements from the product source and Figma.
+2. Preserve the existing Activity, Fragment, ViewBinding, and design-system patterns.
+3. Build the affected variant and, when possible, inspect required states and interactions on an emulator or device with screenshots.
+4. Without the required runtime environment, report `blocked` or a Product-approved gap. Static inspection alone cannot pass UI acceptance.
 
-- 功能可用且符合验收标准
-- 关键状态、错误态、返回路径可用
-- Evidence 与 Gaps 记录完整
+## Documentation or Skill
 
----
+1. Keep durable engineering facts, domain constraints, and executable acceptance rules.
+2. Use English for repository-maintained Android AI and workflow documentation.
+3. Check paths, commands, Skill frontmatter, entrypoint references, and terminology.
+4. Remove dangling references, duplicated policy, and process scaffolding that the model can derive.
+5. Do not run unrelated full Android builds.
 
-## fix（问题修复）
+## Validation Selection
 
-### 入口分流
+- Use `./gradlew tasks` or the target module's `tasks --all` to confirm the real task name when uncertain.
+- For logic, prefer a focused `:<module>:test... --tests '<TestClass>'` and the affected `compile...Kotlin` task.
+- For shared modules, Gradle, manifests, resources, or dependencies, add affected consumers, variants, assemble, or lint.
+- For UI, permissions, BLE, IoT, RTC/RTM, SIP, or transcripts, add emulator, device, or integration evidence as required.
+- Record exact commands and results. Never rewrite "not run" as "passed."
 
-1. 是否可稳定复现？
-2. 是否与系统版本、机型、网络、权限、音视频链路或设备连接相关？
-3. 是否与最近一次改动或某个模块边界有关？
+## Consistency Checks
 
-### 最小问题集
+Run these from `Android/`. The language scan passes when it returns no matches.
 
-- 复现步骤、期望行为、实际表现分别是什么？
-- 涉及页面、模块、日志、崩溃栈或接口是什么？
-- 是否影响登录、入会、对话、录音、IoT 配网等关键路径？
-- 是否涉及 `convoaiApi` / `subRender` 字幕组件、RTM 消息解析、字幕回调或包名结构？
-
-### 动作清单
-
-- [ ] 定位触发路径与责任边界
-- [ ] 做最小修复，避免顺手重构
-- [ ] 若涉及字幕组件，检查包名结构、消息解析、字幕渲染与回调链路
-- [ ] 回归相邻路径（返回、重试、旋转屏、前后台切换、权限再次申请）
-- [ ] 保留必要日志、截图或手工路径作为 Evidence
-
-### 完成标准
-
-- 缺陷不再复现
-- 无明显行为回归
-- 必要检查通过或已在 Gaps 中说明未验证原因
-
----
-
-## refactor（重构）
-
-### 入口分流
-
-1. 是否改变外部行为、数据结构或对外接口？
-2. 是否跨 `common`、`scenes/convoai`、`scenes/convoai:iot`、`scenes/convoai:bleManager` 等边界？
-3. 是否需要分阶段推进、保留兼容层或拆成多次提交？
-
-### 最小问题集
-
-- 重构目标和范围是什么？
-- 哪些行为必须保持不变？
-- 是否涉及公共基类、导航、Repository、并发、缓存、权限流程，或 `convoaiApi` 字幕组件链路？
-
-### 动作清单
-
-- [ ] 定义边界与不变量
-- [ ] 小步替换并验证
-- [ ] 记录兼容性风险与回滚方式
-- [ ] 更新相关文档与模板
-
-### 完成标准
-
-- 外部行为保持一致
-- 关键测试与人工验证通过
-- 回滚路径清晰
-
----
-
-## chore（工程化 / 依赖 / 配置）
-
-### 入口分流
-
-1. 是否涉及 `settings.gradle`、任一 `build.gradle(.kts)`、`gradle/libs.versions.toml`？
-2. 是否影响构建、CI、签名、混淆、版本管理或产物？
-3. 是否会影响多个模块或三方 SDK 兼容性？
-
-### 最小问题集
-
-- 目标依赖或配置是什么？
-- 变更动机与风险是什么？
-- 是否有官方迁移说明、版本兼容性要求或回滚方案？
-
-### 动作清单
-
-- [ ] 更新依赖或配置
-- [ ] 运行 `./gradlew lint` / `./gradlew test`
-- [ ] 运行必要的 `assemble` 或 instrumentation
-- [ ] 记录兼容性变化与潜在回滚方案
-
-### 完成标准
-
-- 变更生效
-- 关键脚本通过
-- 风险已记录
-
----
-
-## docs（文档 / skills / templates / workflow 规范）
-
-适用范围：`AGENTS.md`、`.agents/skills/*.md`、`docs/*.md`、模块 README 等文档资产。
-
-### 入口分流
-
-1. 是否修改 workflow 规则、Execution Contract、review 标准或模板？
-2. 是否修改 `.agents/skills` 的 `description`、交接边界或使用场景？
-3. 是否需要同步 `AGENTS.md`、模板文档与 skill 文档，避免规则漂移？
-
-### 最小问题集
-
-- 要解决的是触发不清、规则冲突、路径不准，还是模板不可执行？
-- 涉及哪些文档必须联动更新？
-- 这次改动会不会改变 docs-only 任务、continue 流程或 reviewer 结论？
-
-### 动作清单
-
-- [ ] 对照仓库实际结构，校准模块名、路径和命令示例
-- [ ] 检查 `AGENTS.md`、`.agents/skills`、`docs/*.md` 的术语与阶段定义是否一致
-- [ ] 为 `SKILL.md` 补足清晰的 `description`、交接边界和禁止项
-- [ ] 若按轻量 workflow 执行，确认资格先看任务形态与禁区，评分只决定是否补 reviewer
-- [ ] 若使用聚合写回，确保它只覆盖本轮回复前的连续执行窗口，且不超过 `3` 步或约 `50` 行净变更
-- [ ] 若本轮聚合接近或触达阈值，在 `Evidence` 或 `Gaps` 中留一条简短校准观察，供后续调整 `3` / `50`
-- [ ] 在 Evidence 中记录本次一致性检查结果，在 Gaps 中记录未演练场景
-
-### 完成标准
-
-- 文档内容与当前仓库结构一致
-- workflow、template、skill 之间无明显冲突
-- docs-only 检查方式清晰，不伪造代码构建结论
-- 轻量 workflow 的资格、reviewer 升级和聚合写回边界描述一致
-- continue 的候选匹配、确认绑定和状态同步边界描述一致
-
----
-
-## 通用检查清单
-
-在任何工作流结束前，确保：
-
-- [ ] 当前任务状态文件与 `.agents/state/INDEX.md` 已更新
-- [ ] Evidence 与 Gaps 已补充
-- [ ] 如用户要求提交，提交策略已明确
-- [ ] 代码任务：相关 `gradlew` 检查通过或已说明未运行原因
-- [ ] docs-only 任务：路径、术语、模板、skill 描述一致性已核对
+```bash
+rg -n 'ac-(plan|execute|review|memory)|TASK_STATE_TEMPLATE|STATE_INDEX_TEMPLATE|PLAN_FROZEN|WORKFLOW_STATUS' \
+  AGENTS.md .agents/skills docs --glob '!WORKFLOW_TEMPLATES.md'
+rg -n 'Direct|Standard|Full|accepted_gap_refs' AGENTS.md .agents/skills docs
+rg -n -P '[\p{Han}]' AGENTS.md ARCHITECTURE.md .agents/skills docs
+git diff --check -- AGENTS.md ARCHITECTURE.md .agents/skills docs
+```

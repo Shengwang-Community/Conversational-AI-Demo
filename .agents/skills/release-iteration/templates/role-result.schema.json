@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "agent",
+    "phase",
+    "attempt",
+    "status",
+    "summary",
+    "source_refs",
+    "outputs",
+    "artifacts",
+    "findings",
+    "gaps",
+    "accepted_gaps",
+    "accepted_gap_refs",
+    "validation"
+  ],
+  "properties": {
+    "agent": {"type": "string", "minLength": 1},
+    "phase": {"type": "string", "minLength": 1},
+    "attempt": {"type": "integer", "minimum": 1},
+    "status": {
+      "type": "string",
+      "enum": ["passed", "failed", "blocked", "not_required"]
+    },
+    "summary": {"type": "string", "minLength": 1},
+    "source_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "outputs": {"type": "object"},
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "category", "owner", "severity", "description"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "category": {"type": "string", "minLength": 1},
+          "owner": {"type": "string", "minLength": 1},
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "description": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "accepted_gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gap_id", "gap", "rationale", "owner", "release_impact", "approved_at"],
+        "properties": {
+          "gap_id": {"type": "string", "minLength": 1},
+          "gap": {"type": "string", "minLength": 1},
+          "rationale": {"type": "string", "minLength": 1},
+          "owner": {"type": "string", "minLength": 1},
+          "release_impact": {"type": "string", "minLength": 1},
+          "approved_at": {"type": "string", "format": "date-time", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "accepted_gap_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "files_changed": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "repository_fingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "validation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["command", "result", "evidence"],
+        "properties": {
+          "command": {"type": "string", "minLength": 1},
+          "result": {"type": "string", "enum": ["passed", "failed", "blocked"]},
+          "evidence": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,58 +1,48 @@
 ---
 name: ac-workflow
-description: Workflow entrypoint for feat/fix/refactor/chore/docs/continue tasks in this Android repo. Use when the user asks to change code, AGENTS.md, .agents/skills, docs templates, or explicitly resume an unfinished task state under `.agents/state/tasks/`.
+description: Deliver Android features, fixes, refactors, docs, or workflow changes in this ConvoAI repo with risk-based planning and targeted validation. Use when Codex must modify Android files or independently verify an Android delivery.
 ---
 
-1. Inspect `.agents/state/INDEX.md` plus unfinished task summaries first; do not bind, select, or create any task state file yet.
-2. Resolve workflow context before calling `$ac-memory`:
-- identify task type (`feat` / `fix` / `refactor` / `chore` / `docs`)
-- determine whether this is a new task or `continue`
-- check whether the request is a pure copy-edit exempted by AGENTS; if yes, do not enter workflow state handling
-- treat `active` / `blocked` as resumable only when the user explicitly indicates `continue`
-- if unfinished task-state files exist but the user intent is a new task, create a new task instead of auto-resuming
-- if the user says `continue`, first try explicit `task-id` or exact `TASK_TITLE`
-- if exact resolution fails, build a small candidate set from stable substring / keyword matches against unfinished `TASK_TITLE`
-- if the candidate set has one clear match, surface it and let the user confirm before binding
-- if the candidate set has multiple matches, list the candidates and require user confirmation before binding
-3. Call `$ac-memory` only after the target task is resolved, so `.agents/state/INDEX.md` and the selected or newly created task state file are valid and ready for routing.
-4. Determine route using the AGENTS risk score:
-- `single` for low-risk work: run minimal `ac-plan` then `ac-execute` responsibilities in the same thread, do not edit files before the Contract is written and `PLAN_FROZEN=true`, and after execution perform summary closeout by writing `CURRENT_ROLE: single` and `WORKFLOW_STATUS: completed`
-- `single + reviewer` when review must be forced: complete the same collapsed planning/execution path, hand off to `$ac-review`, then reclaim control after a pass for final summary closeout
-- `planner -> executor -> reviewer` for multi-file, high-risk, or workflow-rule changes; reclaim control after `$ac-review` passes for final summary closeout
-- for low-risk work that is not AGENTS copy-edit exempt, prefer `single` unless workflow routing semantics, AGENTS core rules, review conclusions, or shared terminology across multiple workflow assets also change
-5. Echo a concise state line such as `[STATE] <task-id> | <role> | <status> | 已检查/已更新` when helpful, then emit the standard workflow progress display and keep it aligned with the real phase in the active task state file.
-5.5. When running a low-risk non-copy-edit task, the caller may echo a concise line such as `当前按轻量 workflow 执行（简版 Contract、聚合验证、按需 review）`; the workflow progress display may be shortened as long as the active task state remains accurate.
-5.6. AGENTS lightweight workflow eligibility is decided by task shape and exclusions first; use the risk score to decide whether the route stays `single`, upgrades to `single + reviewer`, or exits lightweight handling for a fuller route.
-6. For docs / skills / templates tasks, ensure the Contract uses consistency checks instead of default `gradlew` commands unless code or build files are touched.
-7. On phase or status change, update the active task state file and `.agents/state/INDEX.md` before handoff.
-8. On `continue`, long-running tasks, or context risk, trigger the forced wrap-up pattern:
-- pause work
-- set `WORKFLOW_STATUS: blocked`
-- refresh the active task state file and `.agents/state/INDEX.md`
-- echo the updated `[STATE]` line when helpful
-- output completed work, remaining work, and the next resume hint with both `TASK_TITLE` and `task-id`
-9. Summary closeout ownership:
-- `$ac-workflow` is the only owner of final `📝 总结`
-- after `$ac-review` passes, echo the final `[STATE]` line when helpful and output the summary in the same thread
-- for reviewed routes, keep `CURRENT_ROLE: reviewer` and `WORKFLOW_STATUS: completed`; do not rewrite reviewed tasks to `single`
+# Android Delivery Workflow
 
-Outputs:
+Deliver the requested Android outcome end to end. Read `Android/AGENTS.md` and the relevant implementation before choosing a path.
 
-- valid `.agents/state/INDEX.md`
-- valid selected or newly created active task state file
-- active route (`single`, `single + reviewer`, or `planner -> executor -> reviewer`)
-- current phase and `WORKFLOW_STATUS` aligned across user-facing output and state file
+## Choose A Profile
 
-Hard rules:
+- Use `Direct` for a low-risk, local change with clear acceptance criteria and no UI, shared-contract, build, permission, migration, compatibility, security, or device risk.
+- Use `Standard` by default. Implement with focused tests, then perform a separate diff and acceptance pass.
+- Use `Full` when the change crosses modules or system boundaries, affects UI/UX, shared APIs, configuration, build files, permissions, devices, RTC/RTM/subtitles, migration, compatibility, or security.
 
-- Always resolve `new task` versus `continue`, plus the target `TASK_TITLE` / `task-id`, before calling `$ac-memory` in a way that binds or creates a task state file.
-- Candidate matching may narrow `continue` choices, but it never replaces explicit user confirmation when exact `TASK_TITLE` / `task-id` resolution failed.
-- Do not replace planner / executor / reviewer responsibilities; orchestrate them, and collapse them only when `single` is explicitly selected.
-- Do not create workflow state for AGENTS copy-edit-exempt requests.
-- Do not let `$ac-memory` auto-create or auto-select a task while continue intent is unresolved or ambiguous.
-- Do not leave a finished `single` task in `CURRENT_ROLE: executor` or `WORKFLOW_STATUS: active`.
-- Do not treat docs-only file changes as general chat once workflow assets are being edited.
-- Do not auto-resume from `.agents/state/INDEX.md` or `.agents/state/tasks/*.md` without explicit user intent to continue.
-- Do not auto-resume a `WORKFLOW_STATUS: completed` task as `continue`.
-- Do not leave passed reviewed routes without returning to `$ac-workflow` for final summary closeout.
-- Keep user-facing workflow progress and `[STATE]` echo aligned with actual state in the active task state file.
+Upgrade when exploration reveals more risk. Do not create repository task-state files for any profile.
+
+## Execute
+
+1. Ground the task in the requirement, current diff, call sites, tests, and `ARCHITECTURE.md` when relevant.
+2. State the outcome, in-scope files, hard constraints, acceptance criteria, and missing external inputs. Keep this proportional to the task.
+3. Implement the smallest coherent change. Preserve existing patterns and unrelated user edits.
+4. Add or update focused tests for changed logic and regressions.
+5. Run the narrowest checks that prove the acceptance criteria. Expand only when the affected boundary requires it.
+6. Review the resulting diff for behavior, edge cases, lifecycle/threading, privacy, and requirement coverage.
+7. Report delivered behavior, changed files, exact checks and results, and unresolved gaps.
+
+When invoked by the repository release runner, also return the configured role-result JSON with `files_changed`, `outputs.covered_criteria`, validation evidence, findings, and artifact hashes. Only cite Product-approved gaps through `accepted_gap_refs`; never approve a gap locally.
+
+## Validation Ladder
+
+- Docs/Skill only: reference, terminology, command, and diff checks.
+- Logic/API: focused unit tests plus affected-module Kotlin/Java compile.
+- UI: affected build plus runtime inspection of relevant states and interactions when an emulator/device is available.
+- Shared/build/config/permission/device changes: add affected consumer, variant, lint, integration, or device checks as justified by risk.
+
+Do not claim passed when a required executable check is blocked. Return the blocker and the exact missing evidence.
+
+## Delegation
+
+Stay single-Agent unless the user or parent orchestrator explicitly authorizes delegation. When authorized, delegate only independent read-heavy exploration, test execution, or review; keep implementation ownership and final synthesis unambiguous.
+
+## Boundaries
+
+- Do not commit or push unless explicitly requested.
+- Do not invent backend values, credentials, assets, or production contracts.
+- Do not replace focused proof with default full-repository builds.
+- Do not treat platform self-report as independent acceptance when the selected profile requires a reviewer.

@@ -1,0 +1,170 @@
+{
+  "schema_version": 2,
+  "surface": "codex",
+  "execution_mode": "native",
+  "default_profile": "standard",
+  "max_attempts": 3,
+  "finding_routes": {
+    "direct": {
+      "implementation": "platform",
+      "unit_test": "platform",
+      "cross_platform_parity": "platforms",
+      "test_coverage": "product",
+      "test_evidence": "platform",
+      "ux_requirement": "product",
+      "ux_implementation": "platform",
+      "architecture": "product",
+      "requirement": "product",
+      "environment": "blocked"
+    },
+    "standard": {
+      "implementation": "platform",
+      "unit_test": "platform",
+      "cross_platform_parity": "platforms",
+      "test_coverage": "product",
+      "test_evidence": "test-verification",
+      "ux_requirement": "product",
+      "ux_implementation": "platform",
+      "architecture": "product",
+      "requirement": "product",
+      "environment": "blocked"
+    },
+    "full": {
+      "implementation": "platform",
+      "unit_test": "platform",
+      "cross_platform_parity": "platforms",
+      "test_coverage": "test-design",
+      "test_evidence": "test-verification",
+      "ux_requirement": "ux-design",
+      "ux_implementation": "platform",
+      "architecture": "architect",
+      "requirement": "product",
+      "environment": "blocked"
+    }
+  },
+  "models": {
+    "primary": {
+      "default": "gpt-5.6-sol",
+      "env": "AI_ENGINEERING_PRIMARY_MODEL"
+    },
+    "support": {
+      "default": "gpt-5.6-terra",
+      "env": "AI_ENGINEERING_SUPPORT_MODEL"
+    },
+    "review": {
+      "default": "gpt-5.6-sol",
+      "env": "AI_ENGINEERING_REVIEW_MODEL"
+    }
+  },
+  "roles": {
+    "product": {
+      "required": true,
+      "condition": "always",
+      "depends_on": [],
+      "model": "support",
+      "reasoning_effort": "medium",
+      "sandbox": "read-only",
+      "working_directory": ".",
+      "artifact": "requirement-brief.md"
+    },
+    "knowledge": {
+      "required": true,
+      "condition": "full_profile",
+      "depends_on": ["product"],
+      "model": "support",
+      "reasoning_effort": "medium",
+      "sandbox": "read-only",
+      "working_directory": ".",
+      "artifact": "repo-context.md"
+    },
+    "architect": {
+      "required": true,
+      "condition": "full_profile",
+      "depends_on": ["knowledge"],
+      "model": "primary",
+      "reasoning_effort": "high",
+      "sandbox": "read-only",
+      "working_directory": ".",
+      "artifact": "architecture-decision.json"
+    },
+    "ux-design": {
+      "required": false,
+      "condition": "full_profile_and_ux_required",
+      "depends_on": ["architect"],
+      "model": "primary",
+      "reasoning_effort": "high",
+      "sandbox": "read-only",
+      "working_directory": ".",
+      "artifact": "ux-spec.json"
+    },
+    "test-design": {
+      "required": true,
+      "condition": "full_profile",
+      "depends_on": ["architect", "ux-design"],
+      "model": "support",
+      "reasoning_effort": "medium",
+      "sandbox": "read-only",
+      "working_directory": ".",
+      "artifact": "test-matrix.json"
+    },
+    "test-verification": {
+      "required": true,
+      "condition": "standard_or_full_profile",
+      "depends_on": ["platforms"],
+      "model": "review",
+      "reasoning_effort": "high",
+      "sandbox": "workspace-write",
+      "working_directory": ".",
+      "artifact": "test-verification.json"
+    },
+    "ux-acceptance": {
+      "required": false,
+      "condition": "full_profile_and_ux_required",
+      "depends_on": ["test-verification"],
+      "model": "review",
+      "reasoning_effort": "high",
+      "sandbox": "read-only",
+      "working_directory": ".",
+      "artifact": "ux-acceptance.json"
+    },
+    "acceptance-reviewer": {
+      "required": true,
+      "condition": "full_profile",
+      "depends_on": ["test-verification", "ux-acceptance"],
+      "model": "review",
+      "reasoning_effort": "high",
+      "sandbox": "read-only",
+      "working_directory": ".",
+      "artifact": "acceptance-review.json"
+    }
+  },
+  "platforms": {
+    "android": {
+      "model": "primary",
+      "reasoning_effort": "medium",
+      "sandbox": "workspace-write",
+      "working_directory": "Android",
+      "workflow_entrypoints": [
+        "Android/AGENTS.md",
+        "Android/.agents/skills/ac-workflow/SKILL.md"
+      ]
+    },
+    "ios": {
+      "model": "primary",
+      "reasoning_effort": "medium",
+      "sandbox": "workspace-write",
+      "working_directory": "iOS",
+      "workflow_entrypoints": [
+        "iOS/AGENTS.md",
+        "iOS/.agents/skills/convoai-ios-workflow/SKILL.md"
+      ]
+    },
+    "web": {
+      "model": "primary",
+      "reasoning_effort": "medium",
+      "sandbox": "workspace-write",
+      "working_directory": "Web/Scenes/VoiceAgent",
+      "workflow_entrypoints": []
+    }
+  }
+}

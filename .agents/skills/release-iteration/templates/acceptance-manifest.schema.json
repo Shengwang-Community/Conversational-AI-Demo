@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "status",
+    "platforms",
+    "routing",
+    "stages",
+    "attempts",
+    "execution",
+    "accepted_gaps",
+    "private_content_check"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "status": {
+      "type": "string",
+      "enum": [
+        "in_progress",
+        "blocked",
+        "failed",
+        "passed_with_mock_contract",
+        "passed"
+      ]
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "routing": {"type": "object"},
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "role-result.schema.json"}
+    },
+    "attempts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "execution": {"type": "object"},
+    "accepted_gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gap_id", "gap", "rationale", "owner", "release_impact", "approved_at"],
+        "properties": {
+          "gap_id": {"type": "string", "minLength": 1},
+          "gap": {"type": "string", "minLength": 1},
+          "rationale": {"type": "string", "minLength": 1},
+          "owner": {"type": "string", "minLength": 1},
+          "release_impact": {"type": "string", "minLength": 1},
+          "approved_at": {"type": "string", "format": "date-time", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "private_content_check": {
+      "type": "object",
+      "required": ["contains_private_source_bodies"],
+      "properties": {
+        "contains_private_source_bodies": {"const": false}
+      },
+      "additionalProperties": false
+    }
+  }
+}
