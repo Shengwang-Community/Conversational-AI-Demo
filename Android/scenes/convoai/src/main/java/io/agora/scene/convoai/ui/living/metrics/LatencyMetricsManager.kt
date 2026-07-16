@@ -3,7 +3,7 @@ package io.agora.scene.convoai.ui.living.metrics
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.util.GsonTools
 import io.agora.scene.common.util.LocalStorageUtil
-import io.agora.scene.convoai.convoaiApi.Turn
+import io.agora.conversational.api.Turn
 import kotlin.math.roundToInt
 
 interface LatencyMetricsStorage {

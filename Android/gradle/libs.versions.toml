@@ -22,6 +22,7 @@ swiperefreshlayout = "1.1.0"
 commons-codec = "1.17.0"
 agora-rtc-full = "4.5.1"
 agora-rtm = "2.2.3"
+agora-agent-client-toolkit = "2.9.0"
 
 okhttp = "5.0.0-alpha.14"
 retrofit = "2.11.0"
@@ -75,6 +76,7 @@ commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons
 # rtc
 agora-rtc = { module = "io.agora.rtc:full-sdk", version.ref = "agora-rtc-full" }
 agora-rtm = { module = "io.agora:agora-rtm", version.ref = "agora-rtm" }
+agora-agent-client-toolkit = { module = "io.agora.agents:agora-agent-client-toolkit", version.ref = "agora-agent-client-toolkit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

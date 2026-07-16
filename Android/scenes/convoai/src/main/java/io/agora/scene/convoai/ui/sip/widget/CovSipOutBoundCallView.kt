@@ -16,7 +16,7 @@ import androidx.fragment.app.FragmentActivity
 import io.agora.scene.common.ui.CommonDialog
 import io.agora.scene.convoai.R
 import io.agora.scene.convoai.api.CovAgentPreset
-import io.agora.scene.convoai.convoaiApi.ImageMessage
+import io.agora.conversational.api.ImageMessage
 import io.agora.scene.convoai.databinding.CovOutboundCallLayoutBinding
 import io.agora.scene.convoai.ui.sip.CallState
 
