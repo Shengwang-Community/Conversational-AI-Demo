@@ -22,7 +22,7 @@ import io.agora.scene.convoai.R
 import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
-import io.agora.scene.convoai.convoaiApi.VoiceprintStatus
+import io.agora.conversational.api.VoiceprintStatus
 import io.agora.scene.convoai.databinding.CovAgentInfoFragmentBinding
 import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.ui.ActivateStatus

@@ -8,7 +8,7 @@ import android.view.LayoutInflater
 import android.widget.LinearLayout
 import io.agora.scene.common.R
 
-import io.agora.scene.convoai.convoaiApi.AgentState
+import io.agora.conversational.api.AgentState
 import io.agora.scene.convoai.databinding.CovWidgetAgentStateBinding
 
 /**

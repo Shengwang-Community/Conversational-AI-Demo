@@ -15,9 +15,9 @@
 
 ### 📱 1.1 环境准备
 
-- 最低兼容 Android 7.0（SDK API Level 24）
+- 最低兼容 Android 8.0（SDK API Level 26）
 - Android Studio 3.5 及以上版本
-- Android 7.0 及以上的手机设备
+- Android 8.0 及以上的手机设备
 
 ### ⚙️ 1.2 运行项目
 
@@ -103,7 +103,7 @@ AVATAR_PARAMS=<AVATAR 参数>
 | [api/](src/main/java/io/agora/scene/convoai/api)                                                          | 对话式 AI 引擎 RESTful 接口实现和数据模型 |
 | [animation/](src/main/java/io/agora/scene/convoai/animation)                                              | 智能体交互动画效果实现                 |
 | [constant/](src/main/java/io/agora/scene/convoai/constant)                                                | 常量和枚举类型定义                   |
-| [convoaiApi/](src/main/java/io/agora/scene/convoai/convoaiApi/)                                           | ConversationalAI组件          |
+| [ui/living/legacy/](src/main/java/io/agora/scene/convoai/ui/living/legacy/)                               | Demo 自有的旧版 v1 字幕兼容实现       |
 | [rtc/](src/main/java/io/agora/scene/convoai/rtc)                                                          | RTC 音视频通信相关实现               |
 | [rtm/](src/main/java/io/agora/scene/convoai/rtm)                                                          | RTM 实时消息相关实现                |
 | [ui/](src/main/java/io/agora/scene/convoai/ui)                                                            | UI 界面组件和交互页面                |
@@ -115,8 +115,8 @@ AVATAR_PARAMS=<AVATAR 参数>
 ### 2.2 实时字幕
 与对话式智能体进行实时互动时，你可能需要实时字幕显示你与智能体的对话内容。
 - 📖 查看我们的 [实时字幕功能指南](https://doc.shengwang.cn/doc/convoai/restful/user-guides/realtime-sub) 了解如何实现该功能
-- 实现该功能请参考 [convoaiApi 目录下的 README.md](src/main/java/io/agora/scene/convoai/convoaiApi/README.md) 进行集成
-- ⚠️ 开源字幕处理模块由 Kotlin 语言开发，如果您的项目是纯 Java 项目，您可以参考 Google 官方文档 [将 Kotlin 添加到现有应用](https://developer.android.com/kotlin/add-kotlin?hl=zh-cn) 把对应文件集成进您的项目
+- 当前字幕和对话事件由 Maven 组件 `io.agora.agents:agora-agent-client-toolkit:2.9.0` 提供，集成方式请参考 [Agent Client Toolkit for Kotlin](https://github.com/AgoraIO-Conversational-AI/agent-client-toolkit-kotlin)
+- `ui/living/legacy` 仅保留组件尚未提供的旧版 v1 RTC 流消息渲染能力，不作为新的组件集成入口
 
 ## 📚 三、相关资源
 

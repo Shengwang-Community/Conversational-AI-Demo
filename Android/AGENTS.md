@@ -6,7 +6,7 @@ This file records durable engineering facts, permission boundaries, and acceptan
 
 - Product: Shengwang Convo AI Demo for Android. The primary UI stack is Android Views with ViewBinding.
 - Modules: `app` is the entry shell, `common` is the shared foundation, `scenes:convoai` owns the main product, and `iot` / `bleManager` own device connectivity.
-- Build: the app currently has one `china` flavor. `app`, `common`, and `scenes:convoai` use Java 17; `iot` and `bleManager` use Java 11.
+- Build: the app currently has one `china` flavor and requires API 26 or newer. `app`, `common`, and `scenes:convoai` use Java 17; `iot` and `bleManager` use Java 11.
 - Configuration: `gradle.properties` is the main local configuration source. Never commit real App IDs, certificates, tokens, credentials, or private source content.
 - Architecture: use `ARCHITECTURE.md` for module ownership, runtime flows, contract boundaries, and high-risk areas. Do not duplicate those details here.
 
@@ -32,7 +32,7 @@ Do not select a profile by file count. Upgrade when exploration reveals a new bo
 
 - Keep `app` limited to flavor, manifest, signing, and entry responsibilities. Product logic belongs in its owning feature module.
 - Explain consumer impact when changing `common`.
-- Treat Agent REST payloads and presets, `convoaiApi/subRender`, RTC/RTM, subtitles, Gradle, manifests, and configuration injection as high-risk boundaries.
+- Treat Agent REST payloads and presets, the published Agent Client Toolkit, the Demo-owned legacy transcript renderer, RTC/RTM, subtitles, Gradle, manifests, and configuration injection as high-risk boundaries.
 - Preserve Activity, Fragment, and ViewBinding patterns unless the requirement explicitly calls for Compose or a new architecture.
 - For `CAMERA`, `RECORD_AUDIO`, Bluetooth, location, or Wi-Fi, cover request timing, denial, retry, and recovery.
 - Mark IoT/BLE, media, and device-dependent behavior as unverified when no suitable device evidence exists.

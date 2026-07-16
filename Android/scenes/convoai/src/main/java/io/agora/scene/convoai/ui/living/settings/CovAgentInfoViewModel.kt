@@ -5,7 +5,7 @@ import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.constant.VoiceprintMode
-import io.agora.scene.convoai.convoaiApi.VoiceprintStatus
+import io.agora.conversational.api.VoiceprintStatus
 import io.agora.scene.convoai.ui.ActivateStatus
 import io.agora.scene.convoai.ui.ConnectionStatus
 import io.agora.scene.convoai.ui.VoiceprintUIStatus
