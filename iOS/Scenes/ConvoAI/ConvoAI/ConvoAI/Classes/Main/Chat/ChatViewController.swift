@@ -7,6 +7,7 @@
 
 import UIKit
 import Common
+import AgoraAgentClientToolkit
 
 class ChatViewController: BaseViewController {
     internal var agentIsJoined = false

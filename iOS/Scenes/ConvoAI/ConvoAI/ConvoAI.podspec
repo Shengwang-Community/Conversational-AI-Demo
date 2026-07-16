@@ -45,11 +45,12 @@ TODO: Add long description of the pod here.
   s.dependency 'SnapKit'
   s.dependency 'SVProgressHUD'
   s.dependency 'AgoraRtcEngine_iOS'
+  s.dependency 'AgoraRtm/RtmKit', '2.2.3'
+  s.dependency 'agent-client-toolkit-swift', '2.9.0'
   s.dependency 'SwifterSwift/UIKit', '6.2.0'
   s.dependency 'Common'
   s.dependency 'BLEManager'
   s.dependency 'IoT'
-  s.dependency 'AgoraRtm'
   s.dependency 'Kingfisher'
 
 end

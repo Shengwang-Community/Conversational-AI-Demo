@@ -7,6 +7,7 @@
 
 import Foundation
 import Common
+import AgoraAgentClientToolkit
 
 enum ImageState {
     case sending, success, failed

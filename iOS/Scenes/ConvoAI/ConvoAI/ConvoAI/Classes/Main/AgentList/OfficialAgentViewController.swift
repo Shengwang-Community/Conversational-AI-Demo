@@ -7,6 +7,7 @@
 
 import UIKit
 import Common
+import AgoraAgentClientToolkit
 import SVProgressHUD
 import Kingfisher
 
@@ -233,4 +234,3 @@ extension OfficialAgentViewController: UITableViewDelegate, UITableViewDataSourc
         }
     }
 }
-

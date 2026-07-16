@@ -7,6 +7,7 @@
 
 import Foundation
 import Common
+import AgoraAgentClientToolkit
 
 struct ReportEvent {
     let appId: String?

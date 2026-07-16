@@ -26,11 +26,14 @@ flowchart LR
   app --> convo["ConvoAI local pod\nAuthentication, Agent catalog, chat, SIP, transcripts, settings"]
   app --> iot["IoT local pod\nProvisioning and device management"]
   app --> ble["BLEManager local pod\nBluetooth and Wi-Fi primitives"]
-  app --> rtm["AgoraRtm local pod\nLocal RTM binary wrapper"]
+  app --> toolkit["agent-client-toolkit-swift 2.9.0\nCurrent API and transcript implementation"]
+  app --> rtm["AgoraRtm/RtmKit 2.2.3\nPublished RTM dependency"]
   convo --> common
   convo --> iot
   convo --> ble
+  convo --> toolkit
   convo --> rtm
+  toolkit --> rtm
   iot --> common
   iot --> ble
 ```
@@ -39,10 +42,11 @@ flowchart LR
 |---|---|---|
 | `Agent-cn` / `Agent` | App lifecycle, root window, configuration injection, app resources, permissions, signing, versioning | Entry files: `AppDelegate.swift` and `SceneDelegate.swift` |
 | `Common` | `AppContext`, networking, user state, permissions, logging, resource lookup, shared UI | Broad consumer impact |
-| `ConvoAI` | Login, Agent catalog, chat, SIP, settings, RTC/RTM coordination, ConversationalAI API, transcripts | Main product pod |
+| `ConvoAI` | Login, Agent catalog, chat, SIP, settings, RTC/RTM coordination, Toolkit consumers, and Demo-owned legacy subtitle renderers | Main product pod |
+| `agent-client-toolkit-swift` | Current Conversational AI public API, RTM/Presence event handling, Agent state, and transcript rendering | Published CocoaPod, imported as `AgoraAgentClientToolkit` |
 | `IoT` | Device list, setup, permission flow, scan, Wi-Fi provisioning, device API | Depends on Common and BLEManager |
 | `BLEManager` | Bluetooth and Wi-Fi primitives | Device-dependent |
-| `AgoraRtm` | Local RTM XCFramework wrapper | Used by ConvoAI runtime messaging |
+| `AgoraRtm/RtmKit` | Published RTM 2.2.3 subspec | Shared by ConvoAI and the Toolkit without a duplicate local wrapper |
 | `Agent-cnTests` | Focused application and contract unit tests | Run through the workspace and `Agent-cn` scheme |
 
 The app target depends on local pods through `Podfile`. `ConvoAI.podspec` also declares its module dependencies, so Podfile and podspec changes must remain consistent.
@@ -107,7 +111,7 @@ sequenceDiagram
   participant RTM as "RTMManager"
   participant REST as "AgentManager"
   participant RTC as "RTCManager"
-  participant API as "ConversationalAIAPIImpl"
+  participant API as "AgoraAgentClientToolkit"
   participant Transcript as "TranscriptController"
 
   UI->>RTM: login
@@ -124,8 +128,9 @@ sequenceDiagram
 
 - `ChatViewController` composes behavior through focused extensions for RTC, RTM, REST, UI, lifecycle, settings, and transcript modes.
 - `RTCManager` and `RTMManager` own SDK lifecycle and delegate forwarding.
-- `ConversationalAIAPIImpl` bridges RTM/Presence events and the public callback contract.
-- `TranscriptController` combines RTM messages with RTC timing and emits ordered transcript and interruption updates.
+- The published `AgoraAgentClientToolkit` module bridges RTM/Presence events and the public callback contract.
+- The Toolkit combines RTM messages with RTC timing and emits ordered transcript and interruption updates.
+- Demo-owned v1 and v2 subtitle renderers remain under `Utils/TranscriptionV1` and `Utils/TranscriptionV2` for legacy compatibility.
 - Outbound SIP uses a dedicated controller but shares the RTM, ConversationalAI API, settings, and server-contract boundaries.
 
 ### 3.4 IoT and BLE
@@ -167,8 +172,8 @@ flowchart LR
 | Session preferences and selected preset | `AgentSettingManager.swift` | Cross-screen state, feature enablement, temporary RTC configuration |
 | Shared environment and credentials | `KeyCenter.swift`, `AppContext.swift` | Endpoint selection, RTC identity, provider behavior, privacy |
 | RTC and RTM lifecycle | `RTCManager.swift`, `RTMManager.swift` | Login/join order, reconnect, delegate lifetime, teardown |
-| Conversational AI callbacks | `ConversationalAIAPI.swift`, `ConversationalAIAPIImpl.swift` | Public API, thread behavior, Presence and message compatibility |
-| Transcript ordering and interruption | `TranscriptController.swift` and chat transcript adapters | Missing fields, out-of-order turns, timing, UI consistency |
+| Conversational AI callbacks | `AgoraAgentClientToolkit` and the chat/SIP handler extensions | Public API, thread behavior, Presence and message compatibility |
+| Transcript ordering and interruption | Published Toolkit plus Demo chat transcript adapters and legacy v1/v2 renderers | Missing fields, out-of-order turns, timing, UI consistency |
 | Local pod graph and resources | `Podfile` and local podspecs | Workspace resolution, consumer linkage, bundles, CI |
 
 When an external contract is unavailable, use an explicitly authorized fixture and keep the missing server evidence visible. Do not infer production behavior from a local preset or mock response.
@@ -177,7 +182,7 @@ When an external contract is unavailable, use an explicitly authorized fixture a
 
 Primary dependencies include:
 
-- Agora RTC 4.5.1 and the local Agora RTM XCFramework;
+- Agora RTC 4.5.1, Agora RTM RtmKit 2.2.3, and Agent Client Toolkit 2.9.0;
 - Toolbox and Agent services;
 - LLM, TTS, and Avatar providers;
 - SIP services;
@@ -192,7 +197,7 @@ The app declares camera, microphone, photo-library, Bluetooth, and location usag
 
 1. Agent preset and REST contracts: small key, default, or omission changes can alter standard, custom, SIP, open-source, and debug behavior.
 2. `AppContext` and `KeyCenter`: shared server, credential, RTC, and provider configuration reaches most runtime paths.
-3. RTC/RTM and `ConversationalAIAPIImpl`: asynchronous login, join, subscribe, reconnect, delegate, and teardown behavior meet here.
+3. RTC/RTM and `AgoraAgentClientToolkit`: asynchronous login, join, subscribe, reconnect, delegate, and teardown behavior meet here.
 4. Transcript processing: message ordering, turn state, interruption, RTC timestamps, and UI updates are tightly coupled.
 5. UIKit lifecycle: chat and SIP behavior spans multiple controller extensions, delegates, timers, tasks, and main-thread updates.
 6. IoT and BLE: behavior depends on authorization, radios, Wi-Fi, hardware, firmware, and backend state.
@@ -214,8 +219,7 @@ Use `Agent-cnTests` and the focused helpers under `scripts/` for logic whenever 
 
 1. `AGENTS.md` for collaboration, permissions, profiles, and acceptance.
 2. `ARCHITECTURE.md` for the repository model and risk boundaries.
-3. `Scenes/ConvoAI/README.md` for product setup and navigation.
-4. `Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/ConversationalAIAPI/README.md` for component integration.
-5. `.agents/skills/convoai-ios-workflow/references/ios_logic_ut.md` for focused test execution.
+3. `Scenes/ConvoAI/README.md` for product setup, Toolkit integration, navigation, and legacy subtitle ownership.
+4. `.agents/skills/convoai-ios-workflow/references/ios_logic_ut.md` for focused test execution.
 
 Keep task execution rules out of this document. Keep setup instructions, localized product documentation, and component-specific API details in their owning README files.

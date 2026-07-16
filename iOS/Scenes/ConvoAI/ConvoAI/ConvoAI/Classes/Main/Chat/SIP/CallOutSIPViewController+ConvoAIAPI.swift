@@ -7,6 +7,7 @@
 
 import Foundation
 import Common
+import AgoraAgentClientToolkit
 
 extension CallOutSipViewController: ConversationalAIAPIEventHandler {
     public func onAgentVoiceprintStateChanged(agentUserId: String, event: VoiceprintStateChangeEvent) {

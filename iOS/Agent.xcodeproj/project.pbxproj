@@ -18,6 +18,7 @@
 		C0AA00162E10000100A10001 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0AA00072E10000100A10001 /* XCTest.framework */; };
 		C0AA00302E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */; };
 		C0AA00322E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */; };
+		C0AA00342E12000100A10001 /* AgentToolkitIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA00332E12000100A10001 /* AgentToolkitIntegrationTests.swift */; };
 		F727F8692D5E3292003AF48D /* common_resource.zip in Resources */ = {isa = PBXBuildFile; fileRef = F727F8682D5E3292003AF48D /* common_resource.zip */; };
 		F7D294B92D6C5D9900583343 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F7D294B82D6C5D9900583343 /* Launch Screen.storyboard */; };
 		F7D294BF2D6C6F9C00583343 /* Agora_AiLogo.png in Resources */ = {isa = PBXBuildFile; fileRef = F7D294BE2D6C6F9C00583343 /* Agora_AiLogo.png */; };
@@ -62,6 +63,7 @@
 		C0AA00072E10000100A10001 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 		C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContextTemporaryRtcConfigTests.swift; sourceTree = "<group>"; };
 		C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSettingManagerTemporaryRtcConfigTests.swift; sourceTree = "<group>"; };
+		C0AA00332E12000100A10001 /* AgentToolkitIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentToolkitIntegrationTests.swift; sourceTree = "<group>"; };
 		C15F651B9956858BE3FA8B17 /* Pods-Agent-cn.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-cn.debug.xcconfig"; path = "Target Support Files/Pods-Agent-cn/Pods-Agent-cn.debug.xcconfig"; sourceTree = "<group>"; };
 		D50A426C2ED71BDFC45A5B54 /* Pods_Agent_cn_Agent_cnTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Agent_cn_Agent_cnTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D91E55880AF6C3438FDDFFF6 /* Pods-Agent.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent.release.xcconfig"; path = "Target Support Files/Pods-Agent/Pods-Agent.release.xcconfig"; sourceTree = "<group>"; };
@@ -185,6 +187,7 @@
 		C0AA00212E10000100A10001 /* AgentTests */ = {
 			isa = PBXGroup;
 			children = (
+				C0AA00332E12000100A10001 /* AgentToolkitIntegrationTests.swift */,
 				C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */,
 				C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */,
 			);
@@ -307,13 +310,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -328,13 +327,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn/Pods-Agent-cn-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn/Pods-Agent-cn-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -349,13 +344,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn/Pods-Agent-cn-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn/Pods-Agent-cn-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -414,13 +405,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -444,6 +431,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0AA00342E12000100A10001 /* AgentToolkitIntegrationTests.swift in Sources */,
 				C0AA00322E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift in Sources */,
 				C0AA00302E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift in Sources */,
 			);

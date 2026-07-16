@@ -7,6 +7,7 @@
 
 import Foundation
 import Common
+import AgoraAgentClientToolkit
 
 extension ChatViewController: AgentSettingDelegate {
     func settingManager(_ manager: AgentSettingManager, avatarDidUpdated avatar: Avatar?) {

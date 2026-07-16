@@ -7,6 +7,7 @@
 
 import UIKit
 import Common
+import AgoraAgentClientToolkit
 
 class AgentStateView: UIView {
     private var isAnimating = false
@@ -128,6 +129,8 @@ class AgentStateView: UIView {
             stopButton.isHidden = false
             stopVolumeAnimation(hidden: true)
         case .unknown:
+            return
+        @unknown default:
             return
         }
     }

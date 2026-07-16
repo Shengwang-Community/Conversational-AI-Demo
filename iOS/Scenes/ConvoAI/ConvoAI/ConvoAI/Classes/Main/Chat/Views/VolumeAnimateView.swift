@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AgoraAgentClientToolkit
 
 class VolumeAnimateView: UIView {
     private var state: AgentState = .idle
@@ -112,6 +113,8 @@ class VolumeAnimateView: UIView {
             volumeContainerView.isHidden = false
             startVolumeAnimation()
         case .unknown:
+            return
+        @unknown default:
             return
         }
     }

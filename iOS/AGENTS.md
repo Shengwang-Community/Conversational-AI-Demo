@@ -5,7 +5,7 @@ This file records durable engineering facts, permission boundaries, and acceptan
 ## Project Facts
 
 - Workspace and targets: use `Agent.xcworkspace`, the `Agent-cn` scheme, and CocoaPods. The app deployment target is iOS 15.0 and the project uses Swift 5.
-- Ownership: `Agent` contains the application entry, `Scenes/ConvoAI/ConvoAI` owns the main product, and `Common`, `IoT`, `BLEManager`, and the local `AgoraRtm` pod provide adjacent capabilities.
+- Ownership: `Agent` contains the application entry, `Scenes/ConvoAI/ConvoAI` owns the main product, `agent-client-toolkit-swift` owns the current Conversational AI API and transcript implementation, and `Common`, `IoT`, `BLEManager`, RTC, and RTM provide adjacent capabilities.
 - UI: the app is UIKit and view-controller based. Preserve the current framework and patterns unless an explicit migration is required.
 - Tests: `Agent-cnTests` is the application unit-test target. Prefer the focused test helpers under `scripts/`.
 - Configuration: `Agent/KeyCenter.swift` feeds runtime values into `AppContext`. Never commit real App IDs, certificates, REST keys, LLM/TTS tokens, credentials, private requirement bodies, or user data.
@@ -38,6 +38,7 @@ Use Full when the task needs an HLD, interaction design, or production-contract 
 - For camera, microphone, photos, Bluetooth, location, or background audio, cover authorization denial, retry, recovery, and device limitations.
 - Explain workspace, CI, test, and consumer impact when modifying Pods, the project file, schemes, test plans, build settings, or resources.
 - Update sample integration, focused tests, and adjacent README files when shared behavior changes.
+- Keep Demo-owned v1 and v2 subtitle renderers separate from the published Toolkit-owned current transcript implementation.
 
 ## Validation
 

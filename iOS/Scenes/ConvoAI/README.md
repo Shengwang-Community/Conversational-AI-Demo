@@ -98,13 +98,15 @@
 | [AgentInformationViewController.swift](ConvoAI/ConvoAI/Classes/Main/Setting/VC/AgentInformationViewController.swift)  | 智能体运行状态信息展示对话框                   |
 | [AgentSettingViewController.swift](ConvoAI/ConvoAI/Classes/Main/Setting/VC/AgentSettingViewController.swift)          | 智能体参数配置设置对话框                       |
 | [Utils/](ConvoAI/ConvoAI/Classes/Utils)                                                                               | 实用工具类和辅助函数                          |
-| [ConversationalAIAPI/](ConvoAI/ConvoAI/Classes/ConversationalAIAPI)                                                   | 实时对话字幕渲染组件                          |
+| `agent-client-toolkit-swift` 2.9.0                                                                                   | 当前对话式 AI API、状态回调和实时字幕组件       |
+| [TranscriptionV1/](ConvoAI/ConvoAI/Classes/Utils/TranscriptionV1)                                                    | Demo 保留的 v1 legacy 字幕实现                 |
+| [TranscriptionV2/](ConvoAI/ConvoAI/Classes/Utils/TranscriptionV2)                                                    | Demo 保留的 v2 legacy 字幕实现                 |
 
 ### 2.2 实时字幕
 与对话式智能体进行实时互动时，你可能需要实时字幕显示你与智能体的对话内容。
 - 📖 查看我们的 [实时字幕功能指南](https://doc.shengwang.cn/doc/convoai/restful/user-guides/realtime-sub) 了解如何实现该功能
-- 实现该功能需要使用 [开源字幕处理模块](ConvoAI/ConvoAI/Classes/ConversationalAIAPI)，请参考上述文档将对应文件集成进您的项目
-- ⚠️ 开源字幕处理模块由 Swift 语言开发，如果您的项目是纯 OC 项目，您可以参考 Apple 官方文档 [在Objective-C中导入Swift](https://developer.apple.com/documentation/swift/importing-swift-into-objective-c) 把对应文件集成进您的项目
+- 当前 API 和实时字幕由 CocoaPods 组件 `agent-client-toolkit-swift` 2.9.0 提供，Swift 模块名为 `AgoraAgentClientToolkit`
+- Demo 仍保留 v1、v2 legacy 字幕实现，当前默认流程使用 Toolkit 实现
 
 ## 📚 三、相关资源
 

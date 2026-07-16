@@ -7,6 +7,7 @@
 
 import Foundation
 import AgoraRtcKit
+import AgoraAgentClientToolkit
 import SVProgressHUD
 import Common
 

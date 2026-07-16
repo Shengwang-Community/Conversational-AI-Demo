@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AgoraAgentClientToolkit
 
 // MARK: - ConversationSubtitleDelegate2
 extension ChatViewController: ConversationSubtitleDelegate2 {
