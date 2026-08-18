@@ -1262,9 +1262,9 @@ class CovLivingViewModel : ViewModel() {
             ),
             // Automatic Speech Recognition (ASR) configuration.
             "asr" to mutableMapOf(
-                "language" to null,
                 "vendor" to null,
-                "vendor_model" to null,
+                "language" to null,
+                "params" to mutableMapOf<String,Any?>()
             ),
             // Text-to-speech (TTS) module configuration.
             "tts" to mutableMapOf(

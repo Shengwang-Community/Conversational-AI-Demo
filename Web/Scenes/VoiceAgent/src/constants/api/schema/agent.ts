@@ -28,7 +28,7 @@ const convoaiBodyPropertiesSchema = z.object({
     .object({
       language: z.string().optional(),
       vendor: z.string().optional(),
-      vendor_model: z.string().optional()
+      params: z.record(z.unknown()).optional()
     })
     .optional(),
 
@@ -66,15 +66,6 @@ const convoaiBodyPropertiesSchema = z.object({
       enable: z.boolean().optional(),
       vendor: z.string().optional(),
       params: z.record(z.unknown()).optional()
-    })
-    .optional(),
-
-  vad: z
-    .object({
-      interrupt_duration_ms: z.number().optional(),
-      prefix_padding_ms: z.number().optional(),
-      silence_duration_ms: z.number().optional(),
-      threshold: z.number().optional()
     })
     .optional(),
 

@@ -80,9 +80,7 @@ extension ChatViewController {
                         "enable_sal": AppContext.settingManager().voiceprintMode != .off
                     ],
                     "asr": [
-                        "language": AppContext.settingManager().language?.languageCode,
-                        "vendor": nil,
-                        "vendor_model": nil
+                        "language": AppContext.settingManager().language?.languageCode
                     ],
                     "llm": [
                         "url": nil,
@@ -104,12 +102,6 @@ extension ChatViewController {
                         "vendor": nil,
                         "params": nil,
                         "adjust_volume": nil,
-                    ],
-                    "vad": [
-                        "interrupt_duration_ms": nil,
-                        "prefix_padding_ms": nil,
-                        "silence_duration_ms": nil,
-                        "threshold": nil
                     ],
                     "sal": getSalParams(),
                     "avatar": [
@@ -175,7 +167,7 @@ extension ChatViewController {
                     "asr": [
                         "language": nil,
                         "vendor": nil,
-                        "vendor_model": nil
+                        "params": nil
                     ],
                     "llm": [
                         "url": AppContext.shared.llmUrl,
@@ -197,12 +189,6 @@ extension ChatViewController {
                         "vendor": AppContext.shared.ttsVendor as Any,
                         "params": AppContext.shared.ttsParams,
                         "adjust_volume": nil,
-                    ],
-                    "vad": [
-                        "interrupt_duration_ms": nil,
-                        "prefix_padding_ms": nil,
-                        "silence_duration_ms": nil,
-                        "threshold": nil
                     ],
                     "sal": getSalParams(),
                     "avatar": [
