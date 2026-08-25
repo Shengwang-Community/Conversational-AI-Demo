@@ -144,6 +144,7 @@ export default function AgentControl(props: { className?: string }) {
   const {
     showSubtitle,
     isDevMode,
+    isAinsEnabled,
     isRTCCompatible,
     onClickSubtitle,
     setShowSubtitle,
@@ -237,7 +238,9 @@ export default function AgentControl(props: { className?: string }) {
 
       conversationalAIAPI.subscribeMessage(channel_name)
 
-      await rtcHelper.initDenoiserProcessor()
+      if (isDevMode && isAinsEnabled) {
+        await rtcHelper.initDenoiserProcessor()
+      }
       await rtcHelper.createTracks()
       // !TODO: will be removed after preset_type is removed
       const presetType = presets.find(

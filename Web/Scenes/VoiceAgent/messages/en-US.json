@@ -242,6 +242,7 @@
     "agentUrl": "Agent URL",
     "title": "Dev Mode",
     "description": "In dev mode, you can debug the Agent",
+    "ains": "On-device AINS",
     "userChatHistory": "User Message History",
     "historyNumber": "{sum} messages",
     "userID": "User ID",

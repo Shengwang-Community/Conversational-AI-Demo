@@ -13,6 +13,8 @@ export interface IGlobalStore {
   setShowLiveMetrics: (showLiveMetrics: boolean) => void
   isDevMode: boolean
   setIsDevMode: (isDevMode: boolean) => void
+  isAinsEnabled: boolean
+  setIsAinsEnabled: (isAinsEnabled: boolean) => void
   customAppId: string
   setCustomAppId: (customAppId: string) => void
   isCustomAppIdOverrideEnabled: boolean
@@ -75,13 +77,20 @@ export const useGlobalStore = create<IGlobalStore>()(
       setShowLiveMetrics: (showLiveMetrics: boolean) =>
         set({ showLiveMetrics }),
       isDevMode: false,
-      setIsDevMode: (isDevMode: boolean) => set({ isDevMode }),
+      setIsDevMode: (isDevMode: boolean) =>
+        set((state) => ({
+          isDevMode,
+          isAinsEnabled: isDevMode ? state.isAinsEnabled : false
+        })),
+      isAinsEnabled: false,
+      setIsAinsEnabled: (isAinsEnabled: boolean) => set({ isAinsEnabled }),
       customAppId: '',
       setCustomAppId: (customAppId: string) => set({ customAppId }),
       isCustomAppIdOverrideEnabled: false,
       setCustomAppIdOverrideEnabled: (isCustomAppIdOverrideEnabled: boolean) =>
         set({ isCustomAppIdOverrideEnabled }),
-      resetDevModeOverrides: () => set({ isCustomAppIdOverrideEnabled: false }),
+      resetDevModeOverrides: () =>
+        set({ isCustomAppIdOverrideEnabled: false, isAinsEnabled: false }),
       isRTCCompatible: true,
       setIsRTCCompatible: (isRTCCompatible: boolean) =>
         set({ isRTCCompatible }),

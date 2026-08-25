@@ -16,13 +16,16 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
+import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
 import { useChatStore, useGlobalStore, useRTCStore } from '@/store'
 
 export const DevModeBadge = () => {
   const t = useTranslations('devMode')
-  const { isDevMode } = useGlobalStore()
+  const { isDevMode, isAinsEnabled, setIsAinsEnabled } = useGlobalStore()
   const { agent_url, remote_rtc_uid } = useRTCStore()
   const { history } = useChatStore()
+  const isDemoCalling = useIsDemoCalling()
 
   const userChatHistoryListMemo = React.useMemo(() => {
     return history.filter((item) => item.uid === `${remote_rtc_uid}`)
@@ -46,6 +49,20 @@ export const DevModeBadge = () => {
           </DialogTitle>
           <DialogDescription>{t('description')}</DialogDescription>
           <div className='flex flex-col divide-y p-2'>
+            <div className='flex items-center gap-4 py-3'>
+              <div className='w-24 font-medium text-muted-foreground text-sm'>
+                {t('ains')}
+              </div>
+              <div className='flex flex-1 justify-end'>
+                <Switch
+                  aria-label={t('ains')}
+                  checked={isAinsEnabled}
+                  disabled={isDemoCalling}
+                  onCheckedChange={setIsAinsEnabled}
+                />
+              </div>
+            </div>
+            <Separator />
             {/* convoAI endpoint */}
             <div className='flex items-center gap-4 py-3'>
               <div className='w-24 font-medium text-muted-foreground text-sm'>
