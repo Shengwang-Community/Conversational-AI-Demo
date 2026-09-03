@@ -16,6 +16,7 @@ public protocol DeveloperConfigDelegate: AnyObject {
     func devConfigDidCopy(_ config: DeveloperConfig)
     func devConfig(_ config: DeveloperConfig, sessionLimitDidChange enabled: Bool)
     func devConfig(_ config: DeveloperConfig, audioDumpDidChange enabled: Bool)
+    func devConfig(_ config: DeveloperConfig, ainsDidChange enabled: Bool)
     func devConfig(_ config: DeveloperConfig, metricsDidChange enabled: Bool)
     func devConfig(_ config: DeveloperConfig, sdkParamsDidChange params: String)
 }
@@ -27,6 +28,7 @@ public extension DeveloperConfigDelegate {
     func devConfigDidCopy(_ config: DeveloperConfig) {}
     func devConfig(_ config: DeveloperConfig, sessionLimitDidChange enabled: Bool) {}
     func devConfig(_ config: DeveloperConfig, audioDumpDidChange enabled: Bool) {}
+    func devConfig(_ config: DeveloperConfig, ainsDidChange enabled: Bool) {}
     func devConfig(_ config: DeveloperConfig, metricsDidChange enabled: Bool) {}
     func devConfig(_ config: DeveloperConfig, sdkParamsDidChange params: String) {}
 }
@@ -66,6 +68,7 @@ public class DeveloperConfig {
     public var sdkParams: [String] = []
     public var metrics: Bool = false
     public var audioDump: Bool = false
+    public var ainsEnabled: Bool = false
     
     public lazy var devModeButton: UIButton = {
         let button = DebugButton(type: .custom)
@@ -187,6 +190,12 @@ public class DeveloperConfig {
         }
     }
 
+    public func notifyAinsChanged(enabled: Bool) {
+        for delegate in delegates.allObjects {
+            (delegate as? DeveloperConfigDelegate)?.devConfig(self, ainsDidChange: enabled)
+        }
+    }
+
     public func notifyMetricsChanged(enabled: Bool) {
         for delegate in delegates.allObjects {
             (delegate as? DeveloperConfigDelegate)?.devConfig(self, metricsDidChange: enabled)
@@ -217,6 +226,7 @@ public class DeveloperConfig {
         isDeveloperMode = false
         self.graphId = nil
         self.metrics = false
+        self.ainsEnabled = false
         self.sdkParams.removeAll()
         self.convoaiServerConfig = nil
         

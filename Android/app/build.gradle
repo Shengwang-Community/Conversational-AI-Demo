@@ -18,8 +18,8 @@ android {
         ndk.abiFilters 'arm64-v8a', 'armeabi-v7a'
         minSdk rootProject.ext.minSdkVersion
         targetSdk rootProject.ext.targetSdkVersion
-        versionCode 26081814
-        versionName "2.3.0"
+        versionCode 26090312
+        versionName "2.3.1"
         
         buildConfigField("String", "BUILD_TIMESTAMP", "\"${buildTimestamp}\"")
 

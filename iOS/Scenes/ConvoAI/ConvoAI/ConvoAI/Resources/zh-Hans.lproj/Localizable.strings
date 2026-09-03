@@ -164,6 +164,7 @@
 "devmode.rtm" = "RTM 版本";
 "devmode.metric" = "性能指标";
 "devmode.dump" = "音频 Dump";
+"devmode.ains" = "端上 AINS";
 "devmode.sessionLimit" = "会话时间限制";
 "devmode.copy.click" = "点击复制";
 "devmode.close" = "退出开发者模式";

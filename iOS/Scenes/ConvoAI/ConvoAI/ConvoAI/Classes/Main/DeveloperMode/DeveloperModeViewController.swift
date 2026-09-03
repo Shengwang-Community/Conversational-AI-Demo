@@ -234,6 +234,7 @@ public class DeveloperModeViewController: UIViewController {
         agentSettingView.graphTextField.text = config.graphId
         agentSettingView.sessionLimitSwitch.isOn = config.getSessionLimit()
         agentSettingView.audioDumpSwitch.isOn = config.audioDump
+        agentSettingView.ainsSwitch.isOn = config.ainsEnabled
         agentSettingView.metricsSwitch.isOn = config.metrics
         
         // Find matching environment and update UI
@@ -250,6 +251,7 @@ public class DeveloperModeViewController: UIViewController {
     
     private func setupActions() {
         agentSettingView.audioDumpSwitch.addTarget(self, action: #selector(onClickAudioDump(_:)), for: .valueChanged)
+        agentSettingView.ainsSwitch.addTarget(self, action: #selector(onClickAins(_:)), for: .valueChanged)
         agentSettingView.metricsSwitch.addTarget(self, action: #selector(onClickMetricsButton(_:)), for: .valueChanged)
         agentSettingView.sessionLimitSwitch.addTarget(self, action: #selector(onClickSessionLimit(_:)), for: .valueChanged)
         agentSettingView.copyButton.addTarget(self, action: #selector(onClickCopy), for: .touchUpInside)
@@ -361,6 +363,11 @@ public class DeveloperModeViewController: UIViewController {
     
     @objc private func onClickAudioDump(_ sender: UISwitch) {
         config.notifyAudioDumpChanged(enabled: sender.isOn)
+    }
+
+    @objc private func onClickAins(_ sender: UISwitch) {
+        config.ainsEnabled = sender.isOn
+        config.notifyAinsChanged(enabled: sender.isOn)
     }
     
     @objc private func onClickMetricsButton(_ sender: UISwitch) {

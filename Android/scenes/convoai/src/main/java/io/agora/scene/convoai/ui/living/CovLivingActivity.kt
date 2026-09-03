@@ -999,6 +999,11 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                 ToastUtil.show("onAudioDumpEnable: $enable")
             }
 
+            override fun onAinsEnable(enable: Boolean) {
+                CovRtcManager.setAinsEnabled(enable)
+                ToastUtil.show("onAinsEnable: $enable")
+            }
+
             override fun onSeamlessPlayMode(enable: Boolean) {
                 // Handle seamless play mode toggle
                 CovLogger.d(TAG, "Seamless play mode: $enable")

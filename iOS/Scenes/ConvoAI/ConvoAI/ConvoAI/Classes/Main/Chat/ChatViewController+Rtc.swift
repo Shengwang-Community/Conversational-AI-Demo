@@ -21,6 +21,13 @@ extension ChatViewController: AgoraRtcEngineDelegate {
         addLog("[RTC Call Back] didLeaveChannelWith : \(stats)")
         print("didLeaveChannelWith")
     }
+
+    public func rtcEngine(_ engine: AgoraRtcEngineKit, didAudioRouteChanged routing: AgoraAudioOutputRouting) {
+        // ConvoAI API reapplies its audio defaults for route changes; restore the Demo override last.
+        DispatchQueue.main.async { [weak self] in
+            self?.rtcManager.reapplyAins()
+        }
+    }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, connectionChangedTo state: AgoraConnectionState, reason: AgoraConnectionChangedReason) {
         addLog("[RTC Call Back] connectionChangedToState: \(state), reason: \(reason)")
@@ -249,6 +256,10 @@ extension ChatViewController {
             return independent ? .chorus : .aiClient
         }()
         convoAIAPI.loadAudioSettings(secnario: secnario)
+        rtcManager.setAinsEnabled(OnDeviceAins.resolve(
+            isDeveloperMode: DeveloperConfig.shared.isDeveloperMode,
+            debugEnabled: DeveloperConfig.shared.ainsEnabled
+        ))
         rtcManager.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
         AppContext.stateManager().updateRoomState(.connected)
         AppContext.stateManager().updateRoomId(channelName)
@@ -258,6 +269,7 @@ extension ChatViewController {
             addLog("rtc setParameter \($0)")
             rtcManager.getRtcEntine().setParameters($0)
         }
+        rtcManager.reapplyAins()
     }
     
     internal func leaveChannel() {

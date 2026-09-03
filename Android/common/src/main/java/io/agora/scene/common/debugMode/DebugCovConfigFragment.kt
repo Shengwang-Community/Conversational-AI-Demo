@@ -65,6 +65,14 @@ class DebugCovConfigFragment : BaseFragment<CommonDebugCovConfigFragmentBinding>
 
         mBinding?.apply {
 
+            cbAins.setChecked(DebugConfigSettings.isAinsEnabled)
+            cbAins.setOnCheckedChangeListener { buttonView, isChecked ->
+                if (buttonView.isPressed) {
+                    DebugConfigSettings.enableAins(isChecked)
+                    onDebugCallback?.onAinsEnable(isChecked)
+                }
+            }
+
             cbAudioDump.setChecked(DebugConfigSettings.isAudioDumpEnabled)
             cbAudioDump.setOnCheckedChangeListener { buttonView, isChecked ->
                 if (buttonView.isPressed) {

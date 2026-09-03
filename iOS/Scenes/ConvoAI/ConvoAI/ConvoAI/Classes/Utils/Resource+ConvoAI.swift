@@ -218,6 +218,7 @@ extension ResourceManager {
             public static let rtm = ResourceManager.localizedString("devmode.rtm")
             public static let metrics = ResourceManager.localizedString("devmode.metric")
             public static let dump = ResourceManager.localizedString("devmode.dump")
+            public static let ains = ResourceManager.localizedString("devmode.ains")
             public static let sessionLimit = ResourceManager.localizedString("devmode.sessionLimit")
             public static let copyClick = ResourceManager.localizedString("devmode.copy.click")
             public static let close = ResourceManager.localizedString("devmode.close")
