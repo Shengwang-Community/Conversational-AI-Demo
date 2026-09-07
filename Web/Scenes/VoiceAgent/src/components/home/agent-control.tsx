@@ -197,7 +197,7 @@ export default function AgentControl(props: { className?: string }) {
       logger.info('startCall try and subscribe events')
       // init rtc helper
       const rtcHelper = RTCHelper.getInstance()
-      rtcHelper.configureAudioScenario(
+      await rtcHelper.configureAudioScenario(
         resolveAudioScenarioMode({
           isDevMode,
           debugMode: audioScenarioMode
@@ -655,7 +655,7 @@ export default function AgentControl(props: { className?: string }) {
     updateRoomStatus(EConnectionStatus.CONNECTING)
     // init rtc helper
     const rtcHelper = RTCHelper.getInstance()
-    rtcHelper.configureAudioScenario(DEFAULT_AUDIO_SCENARIO_MODE)
+    await rtcHelper.configureAudioScenario(DEFAULT_AUDIO_SCENARIO_MODE)
     await rtcHelper.retrieveToken(`${remote_rtc_uid}`, channel_name, false, {
       devMode: isDevMode
     })

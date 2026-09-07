@@ -44,4 +44,30 @@ class OnDeviceAinsTest {
             OnDeviceAins.parametersWithOverride(rawParameter, enabled = true)
         )
     }
+
+    @Test
+    fun loadAudioSettings_reappliesCurrentAinsOverrideLast() {
+        val parameters = mutableListOf<String>()
+        val controller = OnDeviceAinsController(parameters::add)
+
+        controller.loadAudioSettings(enabled = false) {
+            parameters += "{\"che.audio.sf.enabled\":true}"
+            parameters += "{\"che.audio.sf.stftType\":6}"
+        }
+
+        assertEquals("{\"che.audio.sf.enabled\":false}", parameters.last())
+    }
+
+    @Test
+    fun routeChange_reappliesCurrentAinsOverrideLast() {
+        val parameters = mutableListOf<String>()
+        val controller = OnDeviceAinsController(parameters::add)
+        controller.setEnabled(true)
+        parameters.clear()
+
+        parameters += "{\"che.audio.sf.enabled\":false}"
+        controller.reapply()
+
+        assertEquals("{\"che.audio.sf.enabled\":true}", parameters.last())
+    }
 }

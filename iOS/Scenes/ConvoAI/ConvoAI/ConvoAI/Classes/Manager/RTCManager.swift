@@ -54,6 +54,9 @@ protocol RTCManagerProtocol {
     /// Enables or disables on-device AINS
     func setAinsEnabled(_ enabled: Bool)
 
+    /// Loads SDK audio settings and restores the Demo AINS override last
+    func loadAudioSettings(ainsEnabled: Bool, _ loadAudioSettings: () -> Void)
+
     /// Restores the current on-device AINS state
     func reapplyAins()
     
@@ -65,6 +68,20 @@ class RTCManager: NSObject {
     private var rtcEngine: AgoraRtcEngineKit!
     private var audioDumpEnabled: Bool = false
     private var isAinsEnabled: Bool = false
+    private let injectedParameterWriter: ((String) -> Void)?
+
+    init(parameterWriter: ((String) -> Void)? = nil) {
+        injectedParameterWriter = parameterWriter
+        super.init()
+    }
+
+    private func writeParameter(_ parameter: String) {
+        if let injectedParameterWriter {
+            injectedParameterWriter(parameter)
+        } else {
+            rtcEngine?.setParameters(parameter)
+        }
+    }
 }
 
 extension RTCManager: RTCManagerProtocol {
@@ -127,8 +144,14 @@ extension RTCManager: RTCManagerProtocol {
         reapplyAins()
     }
 
+    func loadAudioSettings(ainsEnabled: Bool, _ loadAudioSettings: () -> Void) {
+        isAinsEnabled = ainsEnabled
+        loadAudioSettings()
+        reapplyAins()
+    }
+
     func reapplyAins() {
-        rtcEngine?.setParameters(OnDeviceAins.rtcParameter(enabled: isAinsEnabled))
+        writeParameter(OnDeviceAins.rtcParameter(enabled: isAinsEnabled))
     }
     
     func getAudioDump() -> Bool {

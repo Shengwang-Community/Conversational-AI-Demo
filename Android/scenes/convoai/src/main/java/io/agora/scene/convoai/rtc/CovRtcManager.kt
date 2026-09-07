@@ -26,6 +26,35 @@ internal object OnDeviceAins {
         listOf(parameter, rtcParameter(enabled))
 }
 
+internal class OnDeviceAinsController(
+    private val parameterWriter: (String) -> Unit
+) {
+    private var isEnabled = false
+
+    fun loadAudioSettings(enabled: Boolean, loadAudioSettings: () -> Unit) {
+        isEnabled = enabled
+        loadAudioSettings()
+        reapply()
+    }
+
+    fun setEnabled(enabled: Boolean) {
+        isEnabled = enabled
+        reapply()
+    }
+
+    fun setParameter(parameter: String) {
+        OnDeviceAins.parametersWithOverride(parameter, isEnabled).forEach(parameterWriter)
+    }
+
+    fun reapply() {
+        parameterWriter(OnDeviceAins.rtcParameter(isEnabled))
+    }
+
+    fun reset() {
+        isEnabled = false
+    }
+}
+
 object CovRtcManager {
 
     private const val TAG = "CovAgoraManager"
@@ -34,7 +63,7 @@ object CovRtcManager {
 
     private var mediaPlayer: IMediaPlayer? = null
 
-    private var isAinsEnabled = false
+    private val onDeviceAins = OnDeviceAinsController(::setRawParameter)
 
     // create rtc engine
     fun createRtcEngine(rtcCallback: IRtcEngineEventHandler): RtcEngineEx {
@@ -101,17 +130,20 @@ object CovRtcManager {
     }
 
     fun setParameter(parameter: String) {
-        OnDeviceAins.parametersWithOverride(parameter, isAinsEnabled).forEach(::setRawParameter)
+        onDeviceAins.setParameter(parameter)
+    }
+
+    fun loadAudioSettings(enabled: Boolean, loadAudioSettings: () -> Unit) {
+        onDeviceAins.loadAudioSettings(enabled, loadAudioSettings)
     }
 
     fun setAinsEnabled(enabled: Boolean) {
         CovLogger.d(TAG, "setAinsEnabled $enabled")
-        isAinsEnabled = enabled
-        reapplyAins()
+        onDeviceAins.setEnabled(enabled)
     }
 
     fun reapplyAins() {
-        setRawParameter(OnDeviceAins.rtcParameter(isAinsEnabled))
+        onDeviceAins.reapply()
     }
 
     private fun setRawParameter(parameter: String) {
@@ -188,7 +220,7 @@ object CovRtcManager {
         rtcEngine?.leaveChannel()
         rtcEngine = null
         mediaPlayer = null
-        isAinsEnabled = false
+        onDeviceAins.reset()
         RtcEngine.destroy()
     }
 }

@@ -12,8 +12,6 @@ import AgoraRTC, {
   type NetworkQuality,
   type UID
 } from 'agora-rtc-sdk-ng'
-import { AiAudioModeService } from 'agora-rtc-sdk-ng/services/ai-audio-mode'
-import { InterceptFrameService } from 'agora-rtc-sdk-ng/services/intercept-frame'
 import {
   ERTCCustomEvents,
   ERTCEvents,
@@ -66,6 +64,12 @@ export class RTCHelper extends EventHelper<
   private processor: IAIDenoiserProcessor | null = null
   private audioScenarioMode = DEFAULT_AUDIO_SCENARIO_MODE
   private areAiQosServicesInstalled = false
+  private aiQosServiceModulesPromise: Promise<
+    [
+      typeof import('agora-rtc-sdk-ng/services/ai-audio-mode'),
+      typeof import('agora-rtc-sdk-ng/services/intercept-frame')
+    ]
+  > | null = null
 
   // Bound event handlers (to ensure same reference for on/off)
   private _boundHandleAudioPTS = this._eHandleAudioPTS.bind(this)
@@ -110,17 +114,33 @@ export class RTCHelper extends EventHelper<
     })
   }
 
-  private getAiQosServicesInstaller() {
-    return () => {
-      if (this.areAiQosServicesInstalled) return
+  private async getAiQosServicesInstaller() {
+    if (this.areAiQosServicesInstalled) return () => undefined
 
-      this.agoraRTC.use(InterceptFrameService)
-      this.agoraRTC.use(AiAudioModeService)
-      this.areAiQosServicesInstalled = true
+    if (!this.aiQosServiceModulesPromise) {
+      this.aiQosServiceModulesPromise = Promise.all([
+        import('agora-rtc-sdk-ng/services/ai-audio-mode'),
+        import('agora-rtc-sdk-ng/services/intercept-frame')
+      ])
+    }
+
+    try {
+      const [{ AiAudioModeService }, { InterceptFrameService }] =
+        await this.aiQosServiceModulesPromise
+      return () => {
+        if (this.areAiQosServicesInstalled) return
+
+        this.agoraRTC.use(InterceptFrameService)
+        this.agoraRTC.use(AiAudioModeService)
+        this.areAiQosServicesInstalled = true
+      }
+    } catch (error) {
+      this.aiQosServiceModulesPromise = null
+      throw error
     }
   }
 
-  public configureAudioScenario(mode: TAudioScenarioMode) {
+  public async configureAudioScenario(mode: TAudioScenarioMode) {
     if (this.joined) {
       throw new Error('Cannot change audio scenario while joined')
     }
@@ -128,7 +148,7 @@ export class RTCHelper extends EventHelper<
 
     const { requiresAiQosServices } = getRtcAudioScenarioConfig(mode)
     const installAiQosServices = requiresAiQosServices
-      ? this.getAiQosServicesInstaller()
+      ? await this.getAiQosServicesInstaller()
       : undefined
 
     this.client = this.createRtcClient(mode, installAiQosServices)

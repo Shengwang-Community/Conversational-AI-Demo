@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.inputmethod.InputMethodManager
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.scene.common.R
@@ -65,11 +66,15 @@ class DebugCovConfigFragment : BaseFragment<CommonDebugCovConfigFragmentBinding>
 
         mBinding?.apply {
 
-            cbAins.setChecked(DebugConfigSettings.isAinsEnabled)
-            cbAins.setOnCheckedChangeListener { buttonView, isChecked ->
-                if (buttonView.isPressed) {
-                    DebugConfigSettings.enableAins(isChecked)
-                    onDebugCallback?.onAinsEnable(isChecked)
+            val isAinsVisible = onDebugCallback?.isAinsVisible() != false
+            layoutAins.isVisible = isAinsVisible
+            if (isAinsVisible) {
+                cbAins.setChecked(DebugConfigSettings.isAinsEnabled)
+                cbAins.setOnCheckedChangeListener { buttonView, isChecked ->
+                    if (buttonView.isPressed) {
+                        DebugConfigSettings.enableAins(isChecked)
+                        onDebugCallback?.onAinsEnable(isChecked)
+                    }
                 }
             }
 

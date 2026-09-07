@@ -35,6 +35,8 @@ class DebugTabDialog : BaseDialogFragment<CommonDebugTabDialogBinding>() {
 
         fun onAinsEnable(enable: Boolean) = Unit
 
+        fun isAinsVisible(): Boolean = true
+
         fun onSeamlessPlayMode(enable: Boolean) = Unit  // Default implementation
 
         fun onMetricsEnable(enable: Boolean) = Unit  // Default implementation

@@ -255,11 +255,14 @@ extension ChatViewController {
             }
             return independent ? .chorus : .aiClient
         }()
-        convoAIAPI.loadAudioSettings(secnario: secnario)
-        rtcManager.setAinsEnabled(OnDeviceAins.resolve(
-            isDeveloperMode: DeveloperConfig.shared.isDeveloperMode,
-            debugEnabled: DeveloperConfig.shared.ainsEnabled
-        ))
+        rtcManager.loadAudioSettings(
+            ainsEnabled: OnDeviceAins.resolve(
+                isDeveloperMode: DeveloperConfig.shared.isDeveloperMode,
+                debugEnabled: DeveloperConfig.shared.ainsEnabled
+            )
+        ) {
+            convoAIAPI.loadAudioSettings(secnario: secnario)
+        }
         rtcManager.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
         AppContext.stateManager().updateRoomState(.connected)
         AppContext.stateManager().updateRoomId(channelName)
