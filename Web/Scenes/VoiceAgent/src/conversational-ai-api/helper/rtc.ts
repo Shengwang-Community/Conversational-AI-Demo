@@ -12,6 +12,8 @@ import AgoraRTC, {
   type NetworkQuality,
   type UID
 } from 'agora-rtc-sdk-ng'
+import { AiAudioModeService } from 'agora-rtc-sdk-ng/services/ai-audio-mode'
+import { InterceptFrameService } from 'agora-rtc-sdk-ng/services/intercept-frame'
 import {
   ERTCCustomEvents,
   ERTCEvents,
@@ -20,8 +22,15 @@ import {
   NotFoundError
 } from '@/conversational-ai-api/type'
 import { EventHelper } from '@/conversational-ai-api/utils/event'
-import { factoryFormatLog, logger } from '../utils/logger'
+import {
+  createRtcClientForAudioScenario,
+  DEFAULT_AUDIO_SCENARIO_MODE,
+  getRtcAudioScenarioConfig,
+  type TAudioScenarioMode
+} from '@/lib/audio-scenario'
 import { getAgentToken } from '@/services/agent'
+import type { TDevModeQuery } from '@/type/dev'
+import { factoryFormatLog, logger } from '../utils/logger'
 
 const formatLog = factoryFormatLog({ tag: 'RTCHelper' })
 
@@ -55,6 +64,8 @@ export class RTCHelper extends EventHelper<
   public channelName: string | null = null
   public userId: string | null = null
   private processor: IAIDenoiserProcessor | null = null
+  private audioScenarioMode = DEFAULT_AUDIO_SCENARIO_MODE
+  private areAiQosServicesInstalled = false
 
   // Bound event handlers (to ensure same reference for on/off)
   private _boundHandleAudioPTS = this._eHandleAudioPTS.bind(this)
@@ -71,16 +82,58 @@ export class RTCHelper extends EventHelper<
     super()
 
     this.agoraRTC = AgoraRTC
+    const agoraRTCWithParams = AgoraRTC as typeof AgoraRTC & {
+      setParameter: (...args: unknown[]) => void
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // ;(AgoraRTC as any).setParameter('ENABLE_AUDIO_PTS_METADATA', true)
-    ;(AgoraRTC as any).setParameter('ENABLE_AUDIO_PTS', true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(AgoraRTC as any).setParameter('{"rtc.log_external_input": true}')
+    agoraRTCWithParams.setParameter('ENABLE_AUDIO_PTS', true)
+    agoraRTCWithParams.setParameter('{"rtc.log_external_input": true}')
 
     AgoraRTC.enableLogUpload()
-    this.client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
+    this.client = this.createRtcClient(DEFAULT_AUDIO_SCENARIO_MODE)
     logger.info(formatLog('constructor', 'RTC client created'))
+  }
+
+  private createRtcClient(
+    mode: TAudioScenarioMode,
+    installAiQosServices?: () => void
+  ) {
+    const rtc = this.agoraRTC as typeof AgoraRTC & {
+      setParameter: (key: string, value: unknown, force?: boolean) => void
+    }
+    return createRtcClientForAudioScenario({
+      rtc,
+      mode,
+      installAiQosServices
+    })
+  }
+
+  private getAiQosServicesInstaller() {
+    return () => {
+      if (this.areAiQosServicesInstalled) return
+
+      this.agoraRTC.use(InterceptFrameService)
+      this.agoraRTC.use(AiAudioModeService)
+      this.areAiQosServicesInstalled = true
+    }
+  }
+
+  public configureAudioScenario(mode: TAudioScenarioMode) {
+    if (this.joined) {
+      throw new Error('Cannot change audio scenario while joined')
+    }
+    if (this.audioScenarioMode === mode) return
+
+    const { requiresAiQosServices } = getRtcAudioScenarioConfig(mode)
+    const installAiQosServices = requiresAiQosServices
+      ? this.getAiQosServicesInstaller()
+      : undefined
+
+    this.client = this.createRtcClient(mode, installAiQosServices)
+    this.audioScenarioMode = mode
+    logger.info(formatLog('configureAudioScenario', `mode: ${mode}`))
   }
 
   public static getInstance(): RTCHelper {
@@ -102,7 +155,7 @@ export class RTCHelper extends EventHelper<
     userId: string | number,
     channel?: string,
     force?: boolean,
-    options?: { devMode?: boolean }
+    options?: TDevModeQuery
   ) {
     if (!force && this.appId && this.token) {
       logger.debug(formatLog('retrieveToken', 'Using cached token'))
@@ -140,7 +193,7 @@ export class RTCHelper extends EventHelper<
   }: {
     channel: string
     userId: number
-    options?: { devMode?: boolean }
+    options?: TDevModeQuery
   }) {
     if (this.joined) {
       logger.warn(
@@ -156,11 +209,13 @@ export class RTCHelper extends EventHelper<
     if (!this.appId || !this.token) {
       await this.retrieveToken(userId, undefined, false, options)
     }
+    const { joinOptions } = getRtcAudioScenarioConfig(this.audioScenarioMode)
     await this.client.join(
       this.appId as string,
       channel,
       this.token as string,
-      userId
+      userId,
+      joinOptions
     )
     logger.info(
       formatLog('join', `Joined channel: ${channel}, userId: ${userId}`)
@@ -281,8 +336,8 @@ export class RTCHelper extends EventHelper<
       logger.error(formatLog('createTracks', 'Failed to create tracks', error))
     } finally {
       this.emit(ERTCCustomEvents.LOCAL_TRACKS_CHANGED, this.localTracks)
-      return this.localTracks
     }
+    return this.localTracks
   }
 
   /**
@@ -317,6 +372,7 @@ export class RTCHelper extends EventHelper<
    */
   public async exitAndCleanup() {
     logger.info(formatLog('exitAndCleanup', 'Starting cleanup'))
+    const client = this.client
     // Unbind RTC events first
     this.unbindRtcEvents()
 
@@ -345,14 +401,14 @@ export class RTCHelper extends EventHelper<
     this.localTracks = {}
     this.joined = false
     try {
-      await this.client?.leave()
+      await client.leave()
     } catch (error) {
       logger.error(
         formatLog('exitAndCleanup', 'Failed to leave channel', error)
       )
     }
     try {
-      this.client?.removeAllListeners()
+      client.removeAllListeners()
     } catch (error) {
       logger.error(
         formatLog('exitAndCleanup', 'Failed to remove all listeners', error)

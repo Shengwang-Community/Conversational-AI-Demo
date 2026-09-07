@@ -7,7 +7,46 @@ import {
 } from '@/app/api/_utils'
 import { REMOTE_CONVOAI_AGENT_START } from '@/constants'
 import { startAgentRequestBodySchema } from '@/constants/api/schema/agent'
+import { DEFAULT_SERVER_AUDIO_SCENARIO } from '@/lib/audio-scenario'
 import { logger } from '@/lib/logger'
+
+const INVALID_ASR_KEYWORDS_MESSAGE = 'Invalid value at properties.asr.keywords'
+
+function shouldRetryWithoutAsrKeywords(data: unknown) {
+  if (!data || typeof data !== 'object') {
+    return false
+  }
+
+  const { msg, detail } = data as Record<string, unknown>
+  return [msg, detail].some(
+    (value) =>
+      typeof value === 'string' && value.includes(INVALID_ASR_KEYWORDS_MESSAGE)
+  )
+}
+
+function clearAsrKeywords<
+  T extends {
+    convoai_body: {
+      properties: {
+        asr?: object
+      }
+    }
+  }
+>(body: T) {
+  return {
+    ...body,
+    convoai_body: {
+      ...body.convoai_body,
+      properties: {
+        ...body.convoai_body.properties,
+        asr: {
+          ...body.convoai_body.properties.asr,
+          keywords: null
+        }
+      }
+    }
+  }
+}
 
 // Start Agent
 export async function POST(request: NextRequest) {
@@ -17,7 +56,8 @@ export async function POST(request: NextRequest) {
     endpoint,
     appId,
     authorizationHeader,
-    appCert
+    appCert,
+    serverAudioScenario
   } = getEndpointFromNextRequest(request)
 
   const url = `${agentServer}${REMOTE_CONVOAI_AGENT_START}`
@@ -89,7 +129,8 @@ export async function POST(request: NextRequest) {
             : {}),
           parameters: {
             ...nextParameters,
-            audio_scenario: 'default',
+            audio_scenario:
+              serverAudioScenario ?? DEFAULT_SERVER_AUDIO_SCENARIO,
             transcript: {
               enable: true,
               enable_words: !properties?.avatar, // Disable words for avatar
@@ -105,18 +146,37 @@ export async function POST(request: NextRequest) {
 
     logger.info({ body }, 'REMOTE request body')
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authorizationHeader && { Authorization: authorizationHeader })
-      },
-      body: JSON.stringify(body)
-    })
+    const requestAgent = (requestBody: unknown) =>
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authorizationHeader && { Authorization: authorizationHeader })
+        },
+        body: JSON.stringify(requestBody)
+      })
 
-    console.log('start agent request body', JSON.stringify(body), 'url', url)
+    let finalBody = body
+    let res = await requestAgent(finalBody)
+    let data = await res.json()
 
-    const data = await res.json()
+    if (shouldRetryWithoutAsrKeywords(data)) {
+      finalBody = clearAsrKeywords(body)
+      logger.info(
+        { presetName: preset_name },
+        'Retrying agent start without ASR keywords'
+      )
+      res = await requestAgent(finalBody)
+      data = await res.json()
+    }
+
+    console.log(
+      'start agent request body',
+      JSON.stringify(finalBody),
+      'url',
+      url
+    )
+
     logger.info({ data }, 'REMOTE response')
 
     if (res.status === 401) {

@@ -1,6 +1,11 @@
 import type * as React from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import {
+  isAudioScenarioMode,
+  resolveLegacyAudioScenarioMode,
+  type TAudioScenarioMode
+} from '@/lib/audio-scenario'
 
 export interface IGlobalStore {
   showSidebar: boolean
@@ -15,6 +20,8 @@ export interface IGlobalStore {
   setIsDevMode: (isDevMode: boolean) => void
   isAinsEnabled: boolean
   setIsAinsEnabled: (isAinsEnabled: boolean) => void
+  audioScenarioMode: TAudioScenarioMode | null
+  setAudioScenarioMode: (mode: TAudioScenarioMode | null) => void
   customAppId: string
   setCustomAppId: (customAppId: string) => void
   isCustomAppIdOverrideEnabled: boolean
@@ -62,6 +69,29 @@ export interface IGlobalStore {
   setIsRoomInfoOpen: (isRoomInfoOpen: boolean) => void
 }
 
+type TLegacyPersistedGlobalStore = Partial<IGlobalStore> & {
+  clientAudioScenario?: unknown
+  serverAudioScenario?: unknown
+}
+
+export const migratePersistedGlobalStore = (persistedState: unknown) => {
+  const legacyState =
+    persistedState && typeof persistedState === 'object'
+      ? (persistedState as TLegacyPersistedGlobalStore)
+      : {}
+  const { clientAudioScenario, serverAudioScenario, ...state } = legacyState
+
+  return {
+    ...state,
+    audioScenarioMode: isAudioScenarioMode(state.audioScenarioMode)
+      ? state.audioScenarioMode
+      : resolveLegacyAudioScenarioMode({
+          clientScenario: clientAudioScenario,
+          serverScenario: serverAudioScenario
+        })
+  }
+}
+
 export const useGlobalStore = create<IGlobalStore>()(
   persist(
     (set) => ({
@@ -80,17 +110,24 @@ export const useGlobalStore = create<IGlobalStore>()(
       setIsDevMode: (isDevMode: boolean) =>
         set((state) => ({
           isDevMode,
-          isAinsEnabled: isDevMode ? state.isAinsEnabled : false
+          isAinsEnabled: isDevMode ? state.isAinsEnabled : false,
+          audioScenarioMode: isDevMode ? state.audioScenarioMode : null
         })),
       isAinsEnabled: false,
       setIsAinsEnabled: (isAinsEnabled: boolean) => set({ isAinsEnabled }),
+      audioScenarioMode: null,
+      setAudioScenarioMode: (audioScenarioMode) => set({ audioScenarioMode }),
       customAppId: '',
       setCustomAppId: (customAppId: string) => set({ customAppId }),
       isCustomAppIdOverrideEnabled: false,
       setCustomAppIdOverrideEnabled: (isCustomAppIdOverrideEnabled: boolean) =>
         set({ isCustomAppIdOverrideEnabled }),
       resetDevModeOverrides: () =>
-        set({ isCustomAppIdOverrideEnabled: false, isAinsEnabled: false }),
+        set({
+          isCustomAppIdOverrideEnabled: false,
+          isAinsEnabled: false,
+          audioScenarioMode: null
+        }),
       isRTCCompatible: true,
       setIsRTCCompatible: (isRTCCompatible: boolean) =>
         set({ isRTCCompatible }),
@@ -131,8 +168,11 @@ export const useGlobalStore = create<IGlobalStore>()(
     }),
     {
       name: 'global-store',
+      version: 1,
+      migrate: migratePersistedGlobalStore,
       partialize: (state) => ({
         isPresetDigitalReminderIgnored: state.isPresetDigitalReminderIgnored,
+        audioScenarioMode: state.audioScenarioMode,
         customAppId: state.customAppId,
         isCustomAppIdOverrideEnabled: state.isCustomAppIdOverrideEnabled
       })
