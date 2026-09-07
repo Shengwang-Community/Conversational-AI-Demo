@@ -18,6 +18,7 @@
 		C0AA00162E10000100A10001 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0AA00072E10000100A10001 /* XCTest.framework */; };
 		C0AA00302E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */; };
 		C0AA00322E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */; };
+		C0AA00342E12000100A10001 /* OnDeviceAinsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA00332E12000100A10001 /* OnDeviceAinsTests.swift */; };
 		F727F8692D5E3292003AF48D /* common_resource.zip in Resources */ = {isa = PBXBuildFile; fileRef = F727F8682D5E3292003AF48D /* common_resource.zip */; };
 		F7D294B92D6C5D9900583343 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F7D294B82D6C5D9900583343 /* Launch Screen.storyboard */; };
 		F7D294BF2D6C6F9C00583343 /* Agora_AiLogo.png in Resources */ = {isa = PBXBuildFile; fileRef = F7D294BE2D6C6F9C00583343 /* Agora_AiLogo.png */; };
@@ -37,10 +38,8 @@
 
 /* Begin PBXFileReference section */
 		07B78001A80B50822C790D23 /* Pods-Agent-global.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-global.debug.xcconfig"; path = "Target Support Files/Pods-Agent-global/Pods-Agent-global.debug.xcconfig"; sourceTree = "<group>"; };
-		14285B5FCE1DF2A0D45D7A72 /* Pods-Agent-CN.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-CN.release.xcconfig"; path = "Target Support Files/Pods-Agent-CN/Pods-Agent-CN.release.xcconfig"; sourceTree = "<group>"; };
 		1EB5085410A4166EDC4A73F5 /* Pods-Agent-global.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-global.release.xcconfig"; path = "Target Support Files/Pods-Agent-global/Pods-Agent-global.release.xcconfig"; sourceTree = "<group>"; };
 		2B3880852627BC2508DF19CF /* Pods-Agent-cn.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-cn.release.xcconfig"; path = "Target Support Files/Pods-Agent-cn/Pods-Agent-cn.release.xcconfig"; sourceTree = "<group>"; };
-		31931724A3B221D8FE67979B /* Pods-Agent-CN.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-CN.debug.xcconfig"; path = "Target Support Files/Pods-Agent-CN/Pods-Agent-CN.debug.xcconfig"; sourceTree = "<group>"; };
 		33830E0FDBA56EB89705F6DD /* Pods-Agent-cn-Agent-cnTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-cn-Agent-cnTests.debug.xcconfig"; path = "Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests.debug.xcconfig"; sourceTree = "<group>"; };
 		41EDC0989083BDAA1E253C28 /* Pods-Agent-cn-Agent-cnTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-cn-Agent-cnTests.release.xcconfig"; path = "Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests.release.xcconfig"; sourceTree = "<group>"; };
 		858F8FE72B9C7DF4F92E91EC /* Pods-Agent-cnTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-cnTests.release.xcconfig"; path = "Target Support Files/Pods-Agent-cnTests/Pods-Agent-cnTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -62,6 +61,7 @@
 		C0AA00072E10000100A10001 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 		C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContextTemporaryRtcConfigTests.swift; sourceTree = "<group>"; };
 		C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSettingManagerTemporaryRtcConfigTests.swift; sourceTree = "<group>"; };
+		C0AA00332E12000100A10001 /* OnDeviceAinsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceAinsTests.swift; sourceTree = "<group>"; };
 		C15F651B9956858BE3FA8B17 /* Pods-Agent-cn.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-cn.debug.xcconfig"; path = "Target Support Files/Pods-Agent-cn/Pods-Agent-cn.debug.xcconfig"; sourceTree = "<group>"; };
 		D50A426C2ED71BDFC45A5B54 /* Pods_Agent_cn_Agent_cnTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Agent_cn_Agent_cnTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D91E55880AF6C3438FDDFFF6 /* Pods-Agent.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent.release.xcconfig"; path = "Target Support Files/Pods-Agent/Pods-Agent.release.xcconfig"; sourceTree = "<group>"; };
@@ -110,8 +110,6 @@
 			children = (
 				8F37A343475E6E1B40E1C17B /* Pods-Agent.debug.xcconfig */,
 				D91E55880AF6C3438FDDFFF6 /* Pods-Agent.release.xcconfig */,
-				31931724A3B221D8FE67979B /* Pods-Agent-CN.debug.xcconfig */,
-				14285B5FCE1DF2A0D45D7A72 /* Pods-Agent-CN.release.xcconfig */,
 				A6F99B57ED93027F333D85BC /* Pods-Agent-oversea.debug.xcconfig */,
 				FFC83CF1A80017C399C30BA7 /* Pods-Agent-oversea.release.xcconfig */,
 				07B78001A80B50822C790D23 /* Pods-Agent-global.debug.xcconfig */,
@@ -185,6 +183,7 @@
 		C0AA00212E10000100A10001 /* AgentTests */ = {
 			isa = PBXGroup;
 			children = (
+				C0AA00332E12000100A10001 /* OnDeviceAinsTests.swift */,
 				C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */,
 				C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */,
 			);
@@ -444,6 +443,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0AA00342E12000100A10001 /* OnDeviceAinsTests.swift in Sources */,
 				C0AA00322E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift in Sources */,
 				C0AA00302E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift in Sources */,
 			);
@@ -616,7 +616,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Agent-cn.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26081814;
+				CURRENT_PROJECT_VERSION = 26090312;
 				DEVELOPMENT_TEAM = 48TB6ZZL5S;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -645,7 +645,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.0;
+				MARKETING_VERSION = 2.3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = shengwang.convoai.test;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -667,7 +667,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Agent-cn.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26081814;
+				CURRENT_PROJECT_VERSION = 26090312;
 				DEVELOPMENT_TEAM = 48TB6ZZL5S;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -696,7 +696,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.0;
+				MARKETING_VERSION = 2.3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = shengwang.convoai.test;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

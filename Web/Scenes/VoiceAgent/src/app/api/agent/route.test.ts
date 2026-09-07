@@ -1,26 +1,16 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
-const getEndpointFromNextRequest = mock(() => ({
+const defaultEndpointConfig = {
   agentServer: 'https://agent.example.com',
   devMode: false,
   endpoint: 'https://agent.example.com',
   appId: 'app-123',
   authorizationHeader: 'Bearer token',
-  appCert: undefined
-}))
+  appCert: undefined,
+  serverAudioScenario: undefined as string | undefined
+}
 
-mock.module('@/app/api/_utils', () => ({
-  basicAuthKey: undefined,
-  basicAuthSecret: undefined,
-  getEndpointFromNextRequest
-}))
-
-mock.module('@/lib/logger', () => ({
-  logger: {
-    info: () => {},
-    error: () => {}
-  }
-}))
+const getEndpointFromNextRequest = mock(() => defaultEndpointConfig)
 
 describe('POST /api/agent', () => {
   const fetchMock = mock(
@@ -45,6 +35,18 @@ describe('POST /api/agent', () => {
   beforeEach(() => {
     fetchMock.mockClear()
     getEndpointFromNextRequest.mockClear()
+    getEndpointFromNextRequest.mockImplementation(() => defaultEndpointConfig)
+    mock.module('@/app/api/_utils', () => ({
+      basicAuthKey: undefined,
+      basicAuthSecret: undefined,
+      getEndpointFromNextRequest
+    }))
+    mock.module('@/lib/logger', () => ({
+      logger: {
+        info: () => {},
+        error: () => {}
+      }
+    }))
     globalThis.fetch = fetchMock as typeof fetch
   })
 
@@ -111,6 +113,76 @@ describe('POST /api/agent', () => {
     })
     expect(remoteBody.convoai_body.properties.parameters.enable_flexible).toBe(
       undefined
+    )
+  })
+
+  test('uses chorus audio scenario when no dev override is provided', async () => {
+    const { POST } = await import('@/app/api/agent/route')
+
+    const response = await POST({
+      json: async () => ({
+        preset_name: 'intelligent_assistant',
+        channel: 'demo',
+        agent_rtc_uid: 'agent-uid',
+        remote_rtc_uids: ['user-uid'],
+        asr: {
+          language: 'zh-CN'
+        }
+      })
+    } as never)
+
+    expect(response.status).toBe(200)
+
+    const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit]
+    const remoteBody = JSON.parse(String(init.body)) as {
+      convoai_body: {
+        properties: {
+          parameters: {
+            audio_scenario: string
+          }
+        }
+      }
+    }
+
+    expect(remoteBody.convoai_body.properties.parameters.audio_scenario).toBe(
+      'chorus'
+    )
+  })
+
+  test('uses the server audio scenario selected in dev mode', async () => {
+    getEndpointFromNextRequest.mockReturnValue({
+      ...defaultEndpointConfig,
+      devMode: true,
+      serverAudioScenario: 'aiserver'
+    })
+    const { POST } = await import('@/app/api/agent/route')
+
+    const response = await POST({
+      json: async () => ({
+        preset_name: 'intelligent_assistant',
+        channel: 'demo',
+        agent_rtc_uid: 'agent-uid',
+        remote_rtc_uids: ['user-uid'],
+        asr: {
+          language: 'zh-CN'
+        }
+      })
+    } as never)
+
+    expect(response.status).toBe(200)
+    const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit]
+    const remoteBody = JSON.parse(String(init.body)) as {
+      convoai_body: {
+        properties: {
+          parameters: {
+            audio_scenario: string
+          }
+        }
+      }
+    }
+
+    expect(remoteBody.convoai_body.properties.parameters.audio_scenario).toBe(
+      'aiserver'
     )
   })
 })

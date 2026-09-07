@@ -150,6 +150,7 @@
 "devmode.rtm" = "RTM Version";
 "devmode.metric" = "Metrics";
 "devmode.dump" = "Audio Dump";
+"devmode.ains" = "On-device AINS";
 "devmode.sessionLimit" = "Session Limit";
 "devmode.copy.click" = "Click to Copy";
 "devmode.close" = "Close Developer Mode";

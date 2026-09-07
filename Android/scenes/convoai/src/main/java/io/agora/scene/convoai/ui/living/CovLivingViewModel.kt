@@ -49,6 +49,7 @@ import io.agora.scene.convoai.convoaiApi.TranscriptType
 import io.agora.scene.convoai.convoaiApi.Turn
 import io.agora.scene.convoai.convoaiApi.VoiceprintStateChangeEvent
 import io.agora.scene.convoai.rtc.CovRtcManager
+import io.agora.scene.convoai.rtc.OnDeviceAins
 import io.agora.scene.convoai.rtm.CovRtmManager
 import io.agora.scene.convoai.rtm.IRtmManagerListener
 import io.agora.scene.convoai.ui.CovRenderMode
@@ -68,6 +69,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -549,7 +551,13 @@ class CovLivingViewModel : ViewModel() {
                     isDebug = DebugConfigSettings.isDebug,
                     debugAudioScenario = DebugConfigSettings.audioScenario
                 )
-                conversationalAIAPI?.loadAudioSettings(scenario)
+                CovRtcManager.loadAudioSettings(
+                    enabled = OnDeviceAins.resolve(
+                        isDebugMode = DebugConfigSettings.isDebug,
+                        debugEnabled = DebugConfigSettings.isAinsEnabled
+                    ),
+                    loadAudioSettings = { conversationalAIAPI?.loadAudioSettings(scenario) }
+                )
 
                 // Join RTC channel
                 CovRtcManager.joinChannel(
@@ -705,6 +713,14 @@ class CovLivingViewModel : ViewModel() {
             override fun onError(err: Int) {
                 viewModelScope.launch(Dispatchers.Main) {
                     CovLogger.e(TAG, "RTC Error code: $err")
+                }
+            }
+
+            override fun onAudioRouteChanged(routing: Int) {
+                viewModelScope.launch(Dispatchers.Main) {
+                    // ConvoAI API reapplies its audio defaults for route changes; restore the Demo override last.
+                    yield()
+                    CovRtcManager.reapplyAins()
                 }
             }
 

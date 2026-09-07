@@ -11,7 +11,7 @@
     "format": "biome format --write"
   },
   "dependencies": {
-    "@agora-js/report": "^4.24.0",
+    "@agora-js/report": "^4.24.8",
     "@autoform/react": "^4.0.0",
     "@autoform/zod": "^4.0.0",
     "@hookform/resolvers": "^5.2.1",
@@ -39,7 +39,7 @@
     "@tsparticles/slim": "^3.9.1",
     "@types/mdx": "^2.0.13",
     "agora-conversational-ai-denoiser": "^1.0.0-beta2",
-    "agora-rtc-sdk-ng": "^4.24.0",
+    "agora-rtc-sdk-ng": "^4.24.8",
     "agora-rtm": "^2.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

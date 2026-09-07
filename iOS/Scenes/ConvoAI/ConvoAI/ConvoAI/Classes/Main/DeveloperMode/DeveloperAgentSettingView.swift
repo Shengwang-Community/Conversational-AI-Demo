@@ -28,6 +28,9 @@ class DeveloperAgentSettingView: UIView {
     // Audio Dump
     private let audioDumpLabel = UILabel()
     public let audioDumpSwitch = UISwitch()
+    // On-device AINS
+    private let ainsLabel = UILabel()
+    public let ainsSwitch = UISwitch()
     // Session Time Limit
     private let sessionLimitLabel = UILabel()
     public let sessionLimitSwitch = UISwitch()
@@ -128,6 +131,14 @@ class DeveloperAgentSettingView: UIView {
         stackView.addArrangedSubview(userSettingHeaderStack)
         stackView.addArrangedSubview(createDivider())
         stackView.setCustomSpacing(20, after: userSettingHeaderStack)
+        // On-device AINS
+        ainsLabel.text = ResourceManager.L10n.DevMode.ains
+        ainsLabel.textColor = .white
+        ainsLabel.font = UIFont.systemFont(ofSize: 16)
+        let ainsStack = UIStackView(arrangedSubviews: [ainsLabel, ainsSwitch])
+        ainsStack.axis = .horizontal
+        ainsStack.distribution = .equalSpacing
+        stackView.addArrangedSubview(ainsStack)
         // Audio Dump
         audioDumpLabel.text = ResourceManager.L10n.DevMode.dump
         audioDumpLabel.textColor = .white

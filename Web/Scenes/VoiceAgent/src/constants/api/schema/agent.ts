@@ -1,4 +1,7 @@
 import * as z from 'zod'
+import { SERVER_AUDIO_SCENARIOS } from '@/lib/audio-scenario'
+
+export const serverAudioScenarioSchema = z.enum(SERVER_AUDIO_SCENARIOS)
 
 const appFeatureSchema = z.object({
   enable_aivad: z.boolean().optional(),
@@ -84,7 +87,7 @@ const convoaiBodyPropertiesSchema = z.object({
       aivad_force_threshold: z.number().optional(),
       data_channel: z.string().optional(),
       output_audio_codec: z.string().optional(),
-      audio_scenario: z.string().optional(),
+      audio_scenario: serverAudioScenarioSchema.optional(),
       transcript: z
         .object({
           enable: z.boolean().optional(),

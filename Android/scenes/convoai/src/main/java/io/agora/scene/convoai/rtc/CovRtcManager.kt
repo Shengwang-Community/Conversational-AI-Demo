@@ -15,6 +15,46 @@ import io.agora.scene.common.AgentApp
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.convoai.CovLogger
 
+internal object OnDeviceAins {
+    fun resolve(isDebugMode: Boolean, debugEnabled: Boolean): Boolean =
+        isDebugMode && debugEnabled
+
+    fun rtcParameter(enabled: Boolean): String =
+        "{\"che.audio.sf.enabled\":$enabled}"
+
+    fun parametersWithOverride(parameter: String, enabled: Boolean): List<String> =
+        listOf(parameter, rtcParameter(enabled))
+}
+
+internal class OnDeviceAinsController(
+    private val parameterWriter: (String) -> Unit
+) {
+    private var isEnabled = false
+
+    fun loadAudioSettings(enabled: Boolean, loadAudioSettings: () -> Unit) {
+        isEnabled = enabled
+        loadAudioSettings()
+        reapply()
+    }
+
+    fun setEnabled(enabled: Boolean) {
+        isEnabled = enabled
+        reapply()
+    }
+
+    fun setParameter(parameter: String) {
+        OnDeviceAins.parametersWithOverride(parameter, isEnabled).forEach(parameterWriter)
+    }
+
+    fun reapply() {
+        parameterWriter(OnDeviceAins.rtcParameter(isEnabled))
+    }
+
+    fun reset() {
+        isEnabled = false
+    }
+}
+
 object CovRtcManager {
 
     private const val TAG = "CovAgoraManager"
@@ -22,6 +62,8 @@ object CovRtcManager {
     private var rtcEngine: RtcEngineEx? = null
 
     private var mediaPlayer: IMediaPlayer? = null
+
+    private val onDeviceAins = OnDeviceAinsController(::setRawParameter)
 
     // create rtc engine
     fun createRtcEngine(rtcCallback: IRtcEngineEventHandler): RtcEngineEx {
@@ -88,6 +130,23 @@ object CovRtcManager {
     }
 
     fun setParameter(parameter: String) {
+        onDeviceAins.setParameter(parameter)
+    }
+
+    fun loadAudioSettings(enabled: Boolean, loadAudioSettings: () -> Unit) {
+        onDeviceAins.loadAudioSettings(enabled, loadAudioSettings)
+    }
+
+    fun setAinsEnabled(enabled: Boolean) {
+        CovLogger.d(TAG, "setAinsEnabled $enabled")
+        onDeviceAins.setEnabled(enabled)
+    }
+
+    fun reapplyAins() {
+        onDeviceAins.reapply()
+    }
+
+    private fun setRawParameter(parameter: String) {
         CovLogger.d(TAG, "setParameter $parameter")
         rtcEngine?.setParameters(parameter)
     }
@@ -161,6 +220,7 @@ object CovRtcManager {
         rtcEngine?.leaveChannel()
         rtcEngine = null
         mediaPlayer = null
+        onDeviceAins.reset()
         RtcEngine.destroy()
     }
 }

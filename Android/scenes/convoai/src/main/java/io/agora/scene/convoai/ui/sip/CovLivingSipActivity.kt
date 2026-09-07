@@ -284,6 +284,8 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
 
             override fun getConvoAiHost(): String = CovAgentApiManager.currentHost ?: ""
 
+            override fun isAinsVisible(): Boolean = false
+
             override fun onAudioDumpEnable(enable: Boolean) {
                 CovRtcManager.onAudioDump(enable)
                 ToastUtil.show("onAudioDumpEnable: $enable")
