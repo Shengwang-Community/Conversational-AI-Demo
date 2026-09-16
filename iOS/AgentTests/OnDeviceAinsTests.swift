@@ -1,5 +1,4 @@
 import XCTest
-@testable import ConvoAI
 
 final class OnDeviceAinsTests: XCTestCase {
     func testResolveIsDisabledByDefault() {
@@ -19,9 +18,9 @@ final class OnDeviceAinsTests: XCTestCase {
 
     func testLoadAudioSettingsReappliesCurrentAinsOverrideLast() {
         var parameters: [String] = []
-        let manager = RTCManager(parameterWriter: { parameters.append($0) })
+        let controller = OnDeviceAinsController { parameters.append($0) }
 
-        manager.loadAudioSettings(ainsEnabled: false) {
+        controller.loadAudioSettings(enabled: false) {
             parameters.append("{\"che.audio.sf.enabled\":true}")
             parameters.append("{\"che.audio.sf.stftType\":6}")
         }
@@ -31,13 +30,26 @@ final class OnDeviceAinsTests: XCTestCase {
 
     func testRouteChangeReappliesCurrentAinsOverrideLast() {
         var parameters: [String] = []
-        let manager = RTCManager(parameterWriter: { parameters.append($0) })
-        manager.setAinsEnabled(true)
+        let controller = OnDeviceAinsController { parameters.append($0) }
+        controller.setEnabled(true)
         parameters.removeAll()
 
         parameters.append("{\"che.audio.sf.enabled\":false}")
-        manager.reapplyAins()
+        controller.reapply()
 
         XCTAssertEqual(parameters.last, "{\"che.audio.sf.enabled\":true}")
+    }
+
+    func testResetClearsSelectionWithoutWritingParameters() {
+        var parameters: [String] = []
+        let controller = OnDeviceAinsController { parameters.append($0) }
+        controller.setEnabled(true)
+        parameters.removeAll()
+
+        controller.reset()
+
+        XCTAssertTrue(parameters.isEmpty)
+        controller.reapply()
+        XCTAssertEqual(parameters, ["{\"che.audio.sf.enabled\":false}"])
     }
 }

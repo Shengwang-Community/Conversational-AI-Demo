@@ -8,7 +8,7 @@
 适用于以下任务：
 
 - RTC / RTM 消息或回调异常
-- 字幕链路、`convoaiApi`、`subRender` 相关问题
+- Issues involving transcripts, Toolkit, or `ui/living/legacy`
 - toolbox / backend contract / agent 行为联调
 - IoT / BLE / Wi-Fi / 权限 / 真机状态相关问题
 - 生命周期、前后台、旋转屏、权限再次申请等运行时问题

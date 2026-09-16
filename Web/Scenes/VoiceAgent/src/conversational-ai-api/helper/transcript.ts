@@ -1,10 +1,14 @@
-import type { UID } from 'agora-rtc-sdk-ng'
-
 import {
+  type EAgentState,
   EConversationalAIAPIEvents,
   ETranscriptHelperMode as EMessageServiceMode,
+  EMessageType,
+  ETurnStatus,
+  type IAgentTranscription as EventAgentTranscription,
+  type IUserTranscription as EventUserTranscription,
   type ITranscriptHelperItem as IMessageServiceItem
-} from '@/conversational-ai-api/type'
+} from 'agora-agent-client-toolkit'
+import type { UID } from 'agora-rtc-sdk-ng'
 import { EventHelper } from '@/conversational-ai-api/utils/event'
 import { logger } from '@/lib/logger'
 import { decodeStreamMessage } from '@/lib/utils'
@@ -48,26 +52,12 @@ export type TMessageServiceObjectWord = TDataChunkMessageWord & {
   word_status?: ETurnStatus
 }
 
-export enum ETurnStatus {
-  IN_PROGRESS = 0,
-  END = 1,
-  INTERRUPTED = 2
-}
-
 /** @deprecated */
 export enum ETranscriptionObjectType {
   USER_TRANSCRIPTION = 'user.transcription',
   AGENT_TRANSCRIPTION = 'assistant.transcription',
   MSG_INTERRUPTED = 'message.interrupt',
   MSG_STATE = 'message.state'
-}
-
-export enum EAgentState {
-  IDLE = 'idle',
-  LISTENING = 'listening',
-  THINKING = 'thinking',
-  SPEAKING = 'speaking',
-  SILENT = 'silent'
 }
 
 export interface ITranscriptionBase {
@@ -259,7 +249,7 @@ export class MessageServiceV2 extends MessageService {
   public static localUserId: number = 0
 
   public chatHistory: IMessageServiceItem<
-    Partial<IUserTranscription | IAgentTranscription>
+    Partial<EventUserTranscription | EventAgentTranscription>
   >[] = []
   private _mode: EMessageServiceMode = EMessageServiceMode.UNKNOWN // mode should only be set once
   private _queue: TQueueItem[] = []
@@ -274,7 +264,7 @@ export class MessageServiceV2 extends MessageService {
   onChatHistoryUpdated:
     | ((
         chatHistory: IMessageServiceItem<
-          Partial<IUserTranscription | IAgentTranscription>
+          Partial<EventUserTranscription | EventAgentTranscription>
         >[]
       ) => void)
     | null = null
@@ -286,7 +276,7 @@ export class MessageServiceV2 extends MessageService {
       interval?: number
       onChatHistoryUpdated?: (
         chatHistory: IMessageServiceItem<
-          Partial<IUserTranscription | IAgentTranscription>
+          Partial<EventUserTranscription | EventAgentTranscription>
         >[]
       ) => void
       onAgentStateChange?: (state: IMessageState) => void
@@ -524,6 +514,10 @@ export class MessageServiceV2 extends MessageService {
   }
 
   public handleTextMessage(uid: UID, message: IUserTranscription) {
+    const metadata: EventUserTranscription = {
+      ...message,
+      object: EMessageType.USER_TRANSCRIPTION
+    }
     const turn_id = message.turn_id
     const text = message.text || ''
     const stream_id = message.stream_id
@@ -541,13 +535,13 @@ export class MessageServiceV2 extends MessageService {
         _time: Date.now(),
         text,
         status: turn_status,
-        metadata: message
+        metadata
       })
     } else {
       // if found, update text and status
       targetChatHistoryItem.text = text
       targetChatHistoryItem.status = turn_status
-      targetChatHistoryItem.metadata = message
+      targetChatHistoryItem.metadata = metadata
       targetChatHistoryItem._time = Date.now()
     }
     this._mutateChatHistory()
@@ -981,7 +975,9 @@ export class MessageServiceV2 extends MessageService {
   }
 
   private _appendChatHistory(
-    item: IMessageServiceItem<Partial<IUserTranscription | IAgentTranscription>>
+    item: IMessageServiceItem<
+      Partial<EventUserTranscription | EventAgentTranscription>
+    >
   ) {
     // if item.turn_id is 0, append to the front of chatHistory(greeting message)
     if (item.turn_id === 0) {

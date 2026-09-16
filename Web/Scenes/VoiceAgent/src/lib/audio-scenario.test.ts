@@ -203,7 +203,9 @@ describe('audio scenario mode', () => {
 describe('server audio scenario', () => {
   test('derives request values from the Agent schema', () => {
     expect(SERVER_AUDIO_SCENARIOS).toEqual(['default', 'chorus', 'aiserver'])
-    expect(serverAudioScenarioSchema.options).toEqual(SERVER_AUDIO_SCENARIOS)
+    expect(serverAudioScenarioSchema.options).toEqual([
+      ...SERVER_AUDIO_SCENARIOS
+    ])
   })
 
   test('rejects values outside the Agent API contract', () => {

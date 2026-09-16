@@ -1,5 +1,19 @@
 'use client'
 
+import {
+  ConversationalAIAPI,
+  EAgentState,
+  EConversationalAIAPIEvents,
+  EMessageSalStatus,
+  ERTCCustomEvents,
+  ERTCEvents,
+  type IAgentTranscription,
+  type IMessageSalStatus,
+  type ITranscriptHelperItem,
+  type IUserTranscription,
+  type TAgentTurnFinished,
+  type TStateChangeEvent
+} from 'agora-agent-client-toolkit'
 import AgoraRTC, {
   type ConnectionDisconnectedReason,
   type ConnectionState,
@@ -48,23 +62,9 @@ import {
   SIP_ERROR_CODE,
   sipCallPayloadSchema
 } from '@/constants'
-import { ConversationalAIAPI } from '@/conversational-ai-api'
 import { RTCHelper } from '@/conversational-ai-api/helper/rtc'
 import { RTMHelper } from '@/conversational-ai-api/helper/rtm'
 import { LegacyMessageHelper } from '@/conversational-ai-api/helper/transcript'
-import {
-  EAgentState,
-  EConversationalAIAPIEvents,
-  EMessageSalStatus,
-  ERTCCustomEvents,
-  ERTCEvents,
-  type IAgentTranscription,
-  type IMessageSalStatus,
-  type ITranscriptHelperItem,
-  type IUserTranscription,
-  type TAgentTurnFinished,
-  type TStateChangeEvent
-} from '@/conversational-ai-api/type'
 import {
   useIsAgentCalling,
   useIsAgentSipCalling
@@ -215,7 +215,7 @@ export default function AgentControl(props: { className?: string }) {
       })
       const rtmEngine = await rtmHelper.login(rtcHelper.token)
       // init conversational AI API
-      const conversationalAIAPI = ConversationalAIAPI.init({
+      const conversationalAIAPI = await ConversationalAIAPI.init({
         rtcEngine: rtcHelper.client,
         rtmEngine,
         enableLog: isDevMode || process.env.NODE_ENV === 'development',
@@ -223,6 +223,12 @@ export default function AgentControl(props: { className?: string }) {
         renderMode: transcriptionRenderMode,
         enableRenderModeFallback
       })
+      conversationalAIAPI.on(
+        EConversationalAIAPIEvents.DEBUG_LOG,
+        (message) => {
+          logger.debug(message)
+        }
+      )
 
       rtcHelper.on(ERTCCustomEvents.LOCAL_TRACKS_CHANGED, onLocalTracksChanged)
       rtcHelper.on(ERTCCustomEvents.REMOTE_USER_JOINED, onRemoteUserJoined)
@@ -519,14 +525,16 @@ export default function AgentControl(props: { className?: string }) {
     // clear event listeners
     // const rtcService = getRtcService()
     // rtcService.removeAllEventListeners()
+    // Detach Toolkit listeners before its RTC/RTM engines disconnect.
+    // Initialization can fail before a Toolkit instance is available.
+    if (ConversationalAIAPI.getState()) {
+      ConversationalAIAPI.getInstance().destroy()
+    }
     const rtcHelper = RTCHelper.getInstance()
     rtcHelper.removeAllEventListeners()
     rtcHelper.exitAndCleanup()
     const rtmHelper = RTMHelper.getInstance()
     rtmHelper.exitAndCleanup()
-    const conversationalAIAPI = ConversationalAIAPI.getInstance()
-    conversationalAIAPI.removeAllEventListeners()
-    conversationalAIAPI.unsubscribe()
     const legacyMessageHelper = LegacyMessageHelper.getInstance()
     legacyMessageHelper.removeAllEventListeners()
     legacyMessageHelper.messageService.cleanup()
@@ -667,13 +675,16 @@ export default function AgentControl(props: { className?: string }) {
     })
     const rtmEngine = await rtmHelper.login(rtcHelper.token)
     // init conversational AI API
-    const conversationalAIAPI = ConversationalAIAPI.init({
+    const conversationalAIAPI = await ConversationalAIAPI.init({
       rtcEngine: rtcHelper.client,
       rtmEngine,
       enableLog: isDevMode || process.env.NODE_ENV === 'development',
       // custom private preset mode is unknown as default and set value by ConversationalAIAPI logic
       renderMode: transcriptionRenderMode,
       enableRenderModeFallback
+    })
+    conversationalAIAPI.on(EConversationalAIAPIEvents.DEBUG_LOG, (message) => {
+      logger.debug(message)
     })
 
     // conversationalAIAPI.on(

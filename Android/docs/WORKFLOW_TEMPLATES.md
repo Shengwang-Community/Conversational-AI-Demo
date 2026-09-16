@@ -18,7 +18,7 @@
 - 若存在多个未完成任务，先要求用户指定 `TASK_TITLE` 或 `task-id`；候选匹配只能缩小范围，不能替代最终确认
 - 带 reviewer 的路线在 `✅ 校验` 通过后，统一回交 `ac-workflow` 执行最终 `📝 总结`
 - 代码任务优先跑 `gradlew` 检查；docs-only 任务优先做路径、术语、模板一致性检查
-- 触及 `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/` 或 `subRender/` 字幕组件时，默认按高风险处理，扩大验证范围
+- Treat changes to `io.agora.conversational.api` (Toolkit Maven component) or `ui/living/legacy/` transcript components as high risk and expand validation.
 
 ---
 
@@ -66,7 +66,7 @@
 - 复现步骤、期望行为、实际表现分别是什么？
 - 涉及页面、模块、日志、崩溃栈或接口是什么？
 - 是否影响登录、入会、对话、录音、IoT 配网等关键路径？
-- 是否涉及 `convoaiApi` / `subRender` 字幕组件、RTM 消息解析、字幕回调或包名结构？
+- Does this involve Toolkit / `ui/living/legacy` transcript components, RTM message parsing, transcript callbacks, or package structure?
 
 ### 动作清单
 
@@ -96,7 +96,7 @@
 
 - 重构目标和范围是什么？
 - 哪些行为必须保持不变？
-- 是否涉及公共基类、导航、Repository、并发、缓存、权限流程，或 `convoaiApi` 字幕组件链路？
+- Does this involve shared base classes, navigation, repositories, concurrency, caches, permission flows, or Toolkit transcript components?
 
 ### 动作清单
 

@@ -5,6 +5,13 @@
 *.framework
 *.xcworkspacedata
 xcshareddata
+
+# Share the standalone AINS test scheme.
+!/Agent.xcodeproj/xcshareddata/
+/Agent.xcodeproj/xcshareddata/*
+!/Agent.xcodeproj/xcshareddata/xcschemes/
+/Agent.xcodeproj/xcshareddata/xcschemes/*
+!/Agent.xcodeproj/xcshareddata/xcschemes/Agent-cnLogicTests.xcscheme
 **/dev_env_config.json
 agora_sdk
 *.xcarchive

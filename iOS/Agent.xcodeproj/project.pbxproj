@@ -18,12 +18,16 @@
 		C0AA00162E10000100A10001 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0AA00072E10000100A10001 /* XCTest.framework */; };
 		C0AA00302E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */; };
 		C0AA00322E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */; };
-		C0AA00342E12000100A10001 /* OnDeviceAinsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA00332E12000100A10001 /* OnDeviceAinsTests.swift */; };
+		C0AA00342E12000100A10001 /* RTCManagerAinsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA00332E12000100A10001 /* RTCManagerAinsTests.swift */; };
+		C90DB238F58E4FD00DF62C12 /* AgentToolkitIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1D11A41AC1D3652DECE4BCF /* AgentToolkitIntegrationTests.swift */; };
 		F727F8692D5E3292003AF48D /* common_resource.zip in Resources */ = {isa = PBXBuildFile; fileRef = F727F8682D5E3292003AF48D /* common_resource.zip */; };
 		F7D294B92D6C5D9900583343 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F7D294B82D6C5D9900583343 /* Launch Screen.storyboard */; };
 		F7D294BF2D6C6F9C00583343 /* Agora_AiLogo.png in Resources */ = {isa = PBXBuildFile; fileRef = F7D294BE2D6C6F9C00583343 /* Agora_AiLogo.png */; };
 		F7E1531A2D71E479000C528A /* ball_video_rotating.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = F7E153182D71E479000C528A /* ball_video_rotating.mp4 */; };
 		F7E1531C2D71E479000C528A /* ball_video_start.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = F7E153192D71E479000C528A /* ball_video_start.mp4 */; };
+		C0C100012E10000100B10001 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0AA00072E10000100A10001 /* XCTest.framework */; };
+		C0C100032E10000100B10001 /* OnDeviceAins.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C100042E10000100B10001 /* OnDeviceAins.swift */; };
+		C0C100052E10000100B10001 /* OnDeviceAinsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C100062E10000100B10001 /* OnDeviceAinsTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,10 +65,11 @@
 		C0AA00072E10000100A10001 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 		C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContextTemporaryRtcConfigTests.swift; sourceTree = "<group>"; };
 		C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSettingManagerTemporaryRtcConfigTests.swift; sourceTree = "<group>"; };
-		C0AA00332E12000100A10001 /* OnDeviceAinsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceAinsTests.swift; sourceTree = "<group>"; };
+		C0AA00332E12000100A10001 /* RTCManagerAinsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTCManagerAinsTests.swift; sourceTree = "<group>"; };
 		C15F651B9956858BE3FA8B17 /* Pods-Agent-cn.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-cn.debug.xcconfig"; path = "Target Support Files/Pods-Agent-cn/Pods-Agent-cn.debug.xcconfig"; sourceTree = "<group>"; };
 		D50A426C2ED71BDFC45A5B54 /* Pods_Agent_cn_Agent_cnTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Agent_cn_Agent_cnTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D91E55880AF6C3438FDDFFF6 /* Pods-Agent.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent.release.xcconfig"; path = "Target Support Files/Pods-Agent/Pods-Agent.release.xcconfig"; sourceTree = "<group>"; };
+		F1D11A41AC1D3652DECE4BCF /* AgentToolkitIntegrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AgentToolkitIntegrationTests.swift; sourceTree = "<group>"; };
 		F727F8682D5E3292003AF48D /* common_resource.zip */ = {isa = PBXFileReference; lastKnownFileType = archive.zip; path = common_resource.zip; sourceTree = "<group>"; };
 		F7CEFFF62D7B050D0029BD3B /* Agent-cn.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Agent-cn.entitlements"; sourceTree = "<group>"; };
 		F7D294B82D6C5D9900583343 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
@@ -72,6 +77,9 @@
 		F7E153182D71E479000C528A /* ball_video_rotating.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = ball_video_rotating.mp4; sourceTree = "<group>"; };
 		F7E153192D71E479000C528A /* ball_video_start.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = ball_video_start.mp4; sourceTree = "<group>"; };
 		FFC83CF1A80017C399C30BA7 /* Pods-Agent-oversea.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-oversea.release.xcconfig"; path = "Target Support Files/Pods-Agent-oversea/Pods-Agent-oversea.release.xcconfig"; sourceTree = "<group>"; };
+		C0C100042E10000100B10001 /* OnDeviceAins.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OnDeviceAins.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Manager/OnDeviceAins.swift; sourceTree = SOURCE_ROOT; };
+		C0C100062E10000100B10001 /* OnDeviceAinsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceAinsTests.swift; sourceTree = "<group>"; };
+		C0C100072E10000100B10001 /* Agent-cnLogicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Agent-cnLogicTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,6 +97,14 @@
 			files = (
 				C0AA00162E10000100A10001 /* XCTest.framework in Frameworks */,
 				9E4E15CEF943EABE43548192 /* Pods_Agent_cn_Agent_cnTests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0C100082E10000100B10001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C0C100012E10000100B10001 /* XCTest.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -141,6 +157,7 @@
 			children = (
 				AB297B5B2CA935A4007FB93B /* Agent-cn.app */,
 				C0AA00012E10000100A10001 /* Agent-cnTests.xctest */,
+				C0C100072E10000100B10001 /* Agent-cnLogicTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -183,9 +200,12 @@
 		C0AA00212E10000100A10001 /* AgentTests */ = {
 			isa = PBXGroup;
 			children = (
-				C0AA00332E12000100A10001 /* OnDeviceAinsTests.swift */,
+				C0AA00332E12000100A10001 /* RTCManagerAinsTests.swift */,
+				C0C100042E10000100B10001 /* OnDeviceAins.swift */,
+				C0C100062E10000100B10001 /* OnDeviceAinsTests.swift */,
 				C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */,
 				C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */,
+				F1D11A41AC1D3652DECE4BCF /* AgentToolkitIntegrationTests.swift */,
 			);
 			path = AgentTests;
 			sourceTree = SOURCE_ROOT;
@@ -234,6 +254,23 @@
 			productReference = C0AA00012E10000100A10001 /* Agent-cnTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		C0C1000A2E10000100B10001 /* Agent-cnLogicTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C0C1000B2E10000100B10001 /* Build configuration list for PBXNativeTarget "Agent-cnLogicTests" */;
+			buildPhases = (
+				C0C1000C2E10000100B10001 /* Sources */,
+				C0C100082E10000100B10001 /* Frameworks */,
+				C0C1000D2E10000100B10001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Agent-cnLogicTests";
+			productName = "Agent-cnLogicTests";
+			productReference = C0C100072E10000100B10001 /* Agent-cnLogicTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -268,6 +305,7 @@
 			targets = (
 				AB297B5A2CA935A4007FB93B /* Agent-cn */,
 				C0AA00092E10000100A10001 /* Agent-cnTests */,
+				C0C1000A2E10000100B10001 /* Agent-cnLogicTests */,
 			);
 		};
 /* End PBXProject section */
@@ -289,6 +327,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C0AA00232E10000100A10001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0C1000D2E10000100B10001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -443,9 +488,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C0AA00342E12000100A10001 /* OnDeviceAinsTests.swift in Sources */,
+				C0AA00342E12000100A10001 /* RTCManagerAinsTests.swift in Sources */,
 				C0AA00322E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift in Sources */,
 				C0AA00302E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift in Sources */,
+				C90DB238F58E4FD00DF62C12 /* AgentToolkitIntegrationTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C0C1000C2E10000100B10001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C0C100032E10000100B10001 /* OnDeviceAins.swift in Sources */,
+				C0C100052E10000100B10001 /* OnDeviceAinsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -616,7 +671,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Agent-cn.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26090312;
+				CURRENT_PROJECT_VERSION = 26091612;
 				DEVELOPMENT_TEAM = 48TB6ZZL5S;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -667,7 +722,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Agent-cn.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26090312;
+				CURRENT_PROJECT_VERSION = 26091612;
 				DEVELOPMENT_TEAM = 48TB6ZZL5S;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -770,6 +825,52 @@
 			};
 			name = Release;
 		};
+		C0C1000E2E10000100B10001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = shengwang.convoai.ains.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		C0C1000F2E10000100B10001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = shengwang.convoai.ains.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -796,6 +897,15 @@
 			buildConfigurations = (
 				C0AA00262E10000100A10001 /* Debug */,
 				C0AA00272E10000100A10001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C0C1000B2E10000100B10001 /* Build configuration list for PBXNativeTarget "Agent-cnLogicTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0C1000E2E10000100B10001 /* Debug */,
+				C0C1000F2E10000100B10001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

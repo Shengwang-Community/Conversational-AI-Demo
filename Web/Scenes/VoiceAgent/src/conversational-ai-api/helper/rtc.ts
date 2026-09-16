@@ -1,9 +1,15 @@
 import {
+  ERTCCustomEvents,
+  ERTCEvents,
+  type IHelperRTCEvents
+} from 'agora-agent-client-toolkit'
+import {
   AIDenoiserExtension,
   type AIDenoiserProcessorLevel,
   type IAIDenoiserProcessor
 } from 'agora-conversational-ai-denoiser'
 import AgoraRTC, {
+  type ConnectionDisconnectedReason,
   type ConnectionState,
   type DeviceInfo,
   type IAgoraRTCClient,
@@ -12,13 +18,6 @@ import AgoraRTC, {
   type NetworkQuality,
   type UID
 } from 'agora-rtc-sdk-ng'
-import {
-  ERTCCustomEvents,
-  ERTCEvents,
-  type IHelperRTCEvents,
-  type IUserTracks,
-  NotFoundError
-} from '@/conversational-ai-api/type'
 import { EventHelper } from '@/conversational-ai-api/utils/event'
 import {
   createRtcClientForAudioScenario,
@@ -26,14 +25,26 @@ import {
   getRtcAudioScenarioConfig,
   type TAudioScenarioMode
 } from '@/lib/audio-scenario'
+import { logger } from '@/lib/logger'
 import { getAgentToken } from '@/services/agent'
 import type { TDevModeQuery } from '@/type/dev'
-import { factoryFormatLog, logger } from '../utils/logger'
+import type { IUserTracks } from '@/type/rtc'
+import { factoryFormatLog } from '../utils'
 
 const formatLog = factoryFormatLog({ tag: 'RTCHelper' })
 
 export class RTCHelper extends EventHelper<
-  IHelperRTCEvents & {
+  Omit<
+    IHelperRTCEvents,
+    ERTCEvents.NETWORK_QUALITY | ERTCEvents.CONNECTION_STATE_CHANGE
+  > & {
+    [ERTCEvents.NETWORK_QUALITY]: (quality: NetworkQuality) => void
+    [ERTCEvents.CONNECTION_STATE_CHANGE]: (data: {
+      curState: ConnectionState
+      revState: ConnectionState
+      reason?: ConnectionDisconnectedReason
+      channel: string
+    }) => void
     [ERTCCustomEvents.MICROPHONE_CHANGED]: (info: DeviceInfo) => void
     [ERTCCustomEvents.REMOTE_USER_CHANGED]: (data: {
       user: IAgoraRTCRemoteUser
@@ -363,11 +374,11 @@ export class RTCHelper extends EventHelper<
   /**
    * Publishes local audio/video tracks to the channel.
    *
-   * @throws {@link NotFoundError} When RTC client is not initialized
+   * @throws {@link Error} When RTC client is not initialized
    */
   public async publishTracks() {
     if (!this.client) {
-      throw new NotFoundError('RTC client is not initialized')
+      throw new Error('RTC client is not initialized')
     }
     const tracks = []
     if (this.localTracks.audioTrack) {
@@ -607,7 +618,7 @@ export class RTCHelper extends EventHelper<
   private _eHandleConnectionStateChange(
     curState: ConnectionState,
     revState: ConnectionState,
-    reason: string
+    reason?: ConnectionDisconnectedReason
   ) {
     const curChannelName = this.client.channelName
     logger.info(

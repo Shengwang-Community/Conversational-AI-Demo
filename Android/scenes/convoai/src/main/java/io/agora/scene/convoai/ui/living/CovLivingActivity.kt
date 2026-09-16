@@ -35,10 +35,10 @@ import io.agora.scene.convoai.animation.CovBallAnimCallback
 import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
-import io.agora.scene.convoai.convoaiApi.AgentState
-import io.agora.scene.convoai.convoaiApi.VoiceprintStatus
-import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfRenderConfig
-import io.agora.scene.convoai.convoaiApi.subRender.v1.SelfSubRenderController
+import io.agora.conversational.api.AgentState
+import io.agora.conversational.api.VoiceprintStatus
+import io.agora.scene.convoai.ui.living.legacy.SelfRenderConfig
+import io.agora.scene.convoai.ui.living.legacy.SelfSubRenderController
 import io.agora.scene.convoai.databinding.CovActivityLivingBinding
 import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.rtm.CovRtmManager

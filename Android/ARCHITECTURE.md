@@ -27,6 +27,7 @@ flowchart LR
   app["app\n入口壳层 / flavor / WelcomeActivity"] --> common["common\n共享 UI / 网络 / Agora / 存储 / 配置基座"]
   app --> convo["scenes:convoai\n登录 / 主页面 / Living / SIP / 字幕 / 设置"]
   convo --> common
+  convo --> toolkit["agent-client-toolkit\nToolkit 2.10.1 Maven component"]
   convo --> iot["scenes:convoai:iot\n设备准备 / 扫描 / 连接 / Wi-Fi"]
   iot --> common
   iot --> ble["scenes:convoai:bleManager\nBLE 基础能力"]
@@ -38,6 +39,7 @@ flowchart LR
 |---|---|---|
 | `app` | 应用入口、启动页、flavor、签名、APK 命名、App 级 `BuildConfig` | 当前启动入口是 `WelcomeActivity` |
 | `common` | 公共 UI 基类、调试能力、网络层、Agora 依赖、存储、通用工具 | 影响范围最大 |
+| `agent-client-toolkit` | RTC/RTM messaging, transcripts, and metrics APIs | Maven `io.agora.agents:agora-agent-client-toolkit:2.10.1` |
 | `scenes:convoai` | 登录、主页面、Living/SIP、Agent 列表、字幕、头像、设置等主业务 | 项目核心场景 |
 | `scenes:convoai:iot` | 设备准备、权限检查、蓝牙/Wi-Fi 配网、设备列表与连接 | 依赖 `bleManager` |
 | `scenes:convoai:bleManager` | BLE 基础能力 | 被 IoT 场景消费 |
@@ -50,7 +52,7 @@ flowchart LR
 - `scenes/convoai/src/main/java/io/agora/scene/convoai/api`
 - `scenes/convoai/src/main/java/io/agora/scene/convoai/rtc`
 - `scenes/convoai/src/main/java/io/agora/scene/convoai/rtm`
-- `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi`
+- `io.agora.conversational.api` (Toolkit Maven component)
 - `scenes/convoai/iot/src/main/java/io/agora/scene/convoai/iot/ui`
 
 ## 3. 主链路
@@ -81,7 +83,7 @@ sequenceDiagram
   participant RTC as "Agora RTC"
   participant RTM as "Agora RTM"
   participant API as "ConversationalAIAPIImpl"
-  participant Subtitle as "TranscriptController / subRender"
+  participant Subtitle as "Toolkit TranscriptController / legacy renderer"
   participant Server as "Toolbox / Vendor Config"
 
   UI->>API: initializeAPIs(rtcEngine, rtmClient)
@@ -97,7 +99,7 @@ sequenceDiagram
 
 - `CovLivingViewModel` 中会创建 `ConversationalAIAPIImpl`，同时接入 RTC 与 RTM
 - 消息、字幕、打断、指标、图片消息等都从 `IConversationalAIAPIEventHandler` 回到 UI 层
-- `convoaiApi/subRender` 是字幕链路关键点，兼容性和包名结构都很敏感
+- Toolkit and `ui/living/legacy` are critical to transcripts; preserve compatibility and package structure.
 
 ### 3.3 IoT / BLE 链路
 
@@ -193,17 +195,19 @@ flowchart LR
 
 - 它是共享底座，持有公共 UI、网络、Agora、工具类和大部分配置注入
 
-### 6.3 `convoaiApi` 与字幕组件
+### 6.3 Toolkit dependency and transcript components
+
+Toolkit is downloaded as the Maven dependency `io.agora.agents:agora-agent-client-toolkit:2.10.1`. Its version is managed in `gradle/libs.versions.toml`; see `scenes/convoai/README.md` for setup. No local Toolkit subproject or source path is required.
 
 路径：
 
-- `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/`
-- `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/subRender/`
+- `io.agora.conversational.api` (Toolkit Maven component)
+- `scenes/convoai/src/main/java/io/agora/scene/convoai/ui/living/legacy/`
 
 原因：
 
 - 同时连接 RTC、RTM、消息解析、字幕渲染和 UI 回调
-- `README` 明确要求保持包名结构稳定
+- Toolkit public types use `io.agora.conversational.api`; the legacy v1 RTC stream renderer remains in the Demo.
 - 改动很容易影响字幕、消息、打断、指标和转录兼容性
 
 ### 6.4 IoT / BLE
@@ -226,7 +230,7 @@ flowchart LR
 - 改 `app`：验证启动链路、登录跳转、flavor 产物、Manifest 权限
 - 改 `common`：验证网络、Agora 基础能力、BuildConfig 注入是否影响所有场景
 - 改 `scenes:convoai`：验证登录、主页面、Living/SIP、字幕、Agent 列表与 Mine 页面
-- 改 `convoaiApi/subRender`：验证 RTC/RTM、字幕更新、消息解析、回调派发、包名结构
+- Changes to Toolkit or `ui/living/legacy`: verify RTC/RTM, transcript updates, message parsing, callback dispatch, and package structure.
 - 改 `iot/bleManager`：至少覆盖权限申请、蓝牙开启、定位服务、扫描、连接、Wi-Fi 选择
 - 改 `gradle.properties` 或构建脚本：验证配置是否正确进入 `BuildConfig`，并确认无敏感信息泄露
 
@@ -235,7 +239,7 @@ flowchart LR
 1. `AGENTS.md`
 2. `ARCHITECTURE.md`（本文）
 3. `scenes/convoai/README.md`
-4. `scenes/convoai/src/main/java/io/agora/scene/convoai/convoaiApi/README.md`
+4. [Toolkit component documentation](https://github.com/AgoraIO-Conversational-AI/agent-client-toolkit-kotlin/blob/main/conversational-ai/README.md)
 
 ## 9. 文档边界
 
@@ -243,4 +247,4 @@ flowchart LR
 
 - workflow 协作、状态机和评审规则：看 `AGENTS.md`
 - 运行前配置与快速开始：看 `scenes/convoai/README.md`
-- `convoaiApi` 组件的接入细节：看 `convoaiApi/README.md`
+- Toolkit integration: see `scenes/convoai/README.md` and the [Toolkit component documentation](https://github.com/AgoraIO-Conversational-AI/agent-client-toolkit-kotlin/blob/main/conversational-ai/README.md).

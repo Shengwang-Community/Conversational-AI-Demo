@@ -15,7 +15,7 @@
 - 模块骨架：`app` 是入口壳层，`common` 是共享基座，`scenes:convoai` 是主业务，`scenes:convoai:iot` / `scenes:convoai:bleManager` 是外设链路
 - 配置与构建：主要配置来自 `gradle.properties`；`app` 当前只有 `china` flavor；`app/common/scenes:convoai` 使用 Java 17，`iot/bleManager` 使用 Java 11
 - UI 现状：当前仓库以 `Activity` / `Fragment` / `ViewBinding` 为主；无明确需求时，不要把方案默认成 Compose-first
-- 高风险区域：构建脚本、`gradle.properties`、Manifest，以及 `scenes/convoai/.../convoaiApi/subRender` 字幕链路
+- High-risk areas: build scripts, `gradle.properties`, Manifest, and the `scenes/convoai/.../ui/living/legacy` transcript flow.
 - AI 工程化资产：`AGENTS.md`、`ARCHITECTURE.md`、`.agents/skills/`、`.agents/state/INDEX.md`、`.agents/state/tasks/`、`docs/*.md`
 
 ## 对话模式
@@ -92,7 +92,7 @@
 - 单文件 README/SKILL.md 微调 → `0-2` → `single`
 - 同步 AGENTS.md + skills + docs 术语 → `5` → `single + reviewer`
 - 修改 common 公共能力 → `7` → 完整三角色
-- 修改 convoaiApi/subRender 字幕链路 → `9` → 完整三角色
+- Changes to Toolkit / legacy transcript flows → `9` → full planner / executor / reviewer workflow
 
 路由语义：
 - `single`：由 `ac-workflow` 折叠执行 `ac-plan → ac-execute → summary closeout`，收尾写 `CURRENT_ROLE: single`、`WORKFLOW_STATUS: completed`
@@ -195,7 +195,7 @@ review 通过收尾时，`WORKFLOW_STATUS → completed`。
 以下为项目特有约束，模块详情与主链路见 `ARCHITECTURE.md`。
 
 - **模块边界**：`app` 只承载壳层（flavor/Manifest/签名/入口），业务不回灌；`common` 是高影响底座，改动需说明对上层模块的影响；`scenes/convoai` 主业务；`iot → bleManager` 外设链路
-- **高风险路径**：`convoaiApi/subRender` 字幕链路、`settings.gradle`、`build.gradle(.kts)`、`gradle/libs.versions.toml`、`AndroidManifest.xml`
+- **High-risk paths**: Toolkit / `ui/living/legacy` transcript flows, `settings.gradle`, `build.gradle(.kts)`, `gradle/libs.versions.toml`, and `AndroidManifest.xml`.
 - **配置**：`gradle.properties` 是配置入口，涉及 `AG_APP_ID`/`BASIC_AUTH_*`/`LLM_*`/`TTS_*`/`AVATAR_*`/`TOOLBOX_SERVER_HOST` 时说明影响范围；禁止扩散密钥，优先占位值
 - **构建**：仅 `china` flavor，Java 17 (`app/common/convoai`) 与 Java 11 (`iot/bleManager`) 混用
 - **UI**：默认 ViewBinding + Activity/Fragment，无需求不引入 Compose

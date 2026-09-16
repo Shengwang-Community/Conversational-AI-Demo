@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
+const originalFetch = globalThis.fetch
+
 const defaultEndpointConfig = {
   agentServer: 'https://agent.example.com',
   devMode: false,
@@ -47,10 +49,11 @@ describe('POST /api/agent', () => {
         error: () => {}
       }
     }))
-    globalThis.fetch = fetchMock as typeof fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
   })
 
   afterEach(() => {
+    globalThis.fetch = originalFetch
     mock.restore()
   })
 

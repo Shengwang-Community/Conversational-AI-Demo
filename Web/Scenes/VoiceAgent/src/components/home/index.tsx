@@ -2,6 +2,7 @@
 
 import Spline from '@splinetool/react-spline'
 import type { Application, SPEObject } from '@splinetool/runtime'
+import { EAgentState } from 'agora-agent-client-toolkit'
 import dynamic from 'next/dynamic'
 import * as React from 'react'
 import {
@@ -16,7 +17,6 @@ import { GreetingTypewriter } from '@/components/home/typewriter'
 import { PresetPlaceholderIcon } from '@/components/icon/agent'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AVATAR_PLACEHOLDER_IMAGE, DEFAULT_AVATAR_DOM_ID } from '@/constants'
-import { EAgentState } from '@/conversational-ai-api/type'
 import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
 import { logger } from '@/lib/logger'
 import { cn, isCN } from '@/lib/utils'
@@ -146,9 +146,9 @@ export function AgentBlock() {
             avatar={
               selectedPreset.type === 'default'
                 ? {
-                  src: selectedPreset.preset.avatar_url,
-                  alt: selectedPreset.preset.display_name
-                }
+                    src: selectedPreset.preset.avatar_url,
+                    alt: selectedPreset.preset.display_name
+                  }
                 : undefined
             }
           >
@@ -187,7 +187,7 @@ export function AgentBlock() {
           className={cn(
             'flex h-full flex-col items-center justify-between gap-3 pt-12 pb-6 md:pt-12 md:pb-12',
             selectedPreset?.preset.preset_type.includes('sip_call') &&
-            'md:pb-0 lg:pb-6'
+              'md:pb-0 lg:pb-6'
           )}
         >
           <div
@@ -250,7 +250,7 @@ export function AgentBlock() {
                           selectedPreset.preset.preset_type.includes(
                             'sip_call'
                           )) &&
-                          selectedPreset.preset.avatar_url ? (
+                        selectedPreset.preset.avatar_url ? (
                           <AvatarImage
                             src={selectedPreset.preset.avatar_url}
                             alt={selectedPreset.preset.display_name}

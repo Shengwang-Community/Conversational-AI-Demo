@@ -98,13 +98,53 @@
 | [AgentInformationViewController.swift](ConvoAI/ConvoAI/Classes/Main/Setting/VC/AgentInformationViewController.swift)  | 智能体运行状态信息展示对话框                   |
 | [AgentSettingViewController.swift](ConvoAI/ConvoAI/Classes/Main/Setting/VC/AgentSettingViewController.swift)          | 智能体参数配置设置对话框                       |
 | [Utils/](ConvoAI/ConvoAI/Classes/Utils)                                                                               | 实用工具类和辅助函数                          |
-| [ConversationalAIAPI/](ConvoAI/ConvoAI/Classes/ConversationalAIAPI)                                                   | 实时对话字幕渲染组件                          |
+| `agent-client-toolkit-swift`（2.10.1 正式包）                                                                                   | 当前对话式 AI API、状态回调和实时字幕组件       |
+| [TranscriptionV1/](ConvoAI/ConvoAI/Classes/Utils/TranscriptionV1)                                                    | Demo 保留的 v1 legacy 字幕实现                 |
+| [TranscriptionV2/](ConvoAI/ConvoAI/Classes/Utils/TranscriptionV2)                                                    | Demo 保留的 v2 legacy 字幕实现                 |
 
 ### 2.2 实时字幕
 与对话式智能体进行实时互动时，你可能需要实时字幕显示你与智能体的对话内容。
 - 📖 查看我们的 [实时字幕功能指南](https://doc.shengwang.cn/doc/convoai/restful/user-guides/realtime-sub) 了解如何实现该功能
-- 实现该功能需要使用 [开源字幕处理模块](ConvoAI/ConvoAI/Classes/ConversationalAIAPI)，请参考上述文档将对应文件集成进您的项目
-- ⚠️ 开源字幕处理模块由 Swift 语言开发，如果您的项目是纯 OC 项目，您可以参考 Apple 官方文档 [在Objective-C中导入Swift](https://developer.apple.com/documentation/swift/importing-swift-into-objective-c) 把对应文件集成进您的项目
+- 当前 API 和实时字幕由 CocoaPods 组件 `agent-client-toolkit-swift`（2.10.1 正式包） 提供，Swift 模块名为 `AgoraAgentClientToolkit`
+- Demo 仍保留 v1、v2 legacy 字幕实现，当前默认流程使用 Toolkit 实现
+
+### 2.3 Toolkit 正式包接入
+
+`iOS/Podfile` 已配置以下发布包依赖，并通过清华 CocoaPods Specs 镜像解析：
+
+```ruby
+pod 'agent-client-toolkit-swift', '2.10.1'
+pod 'AgoraRtm', '2.2.3', :subspecs => ['RtmKit']
+```
+
+首次切换或本地索引尚未更新时，在 Demo 仓库根目录执行：
+
+```bash
+cd iOS
+pod _1.16.2_ install --repo-update
+```
+
+打开 `Agent.xcworkspace` 编译运行。本地和 Jenkins 都通过 CocoaPods 下载正式 XCFramework，无需拉取 Toolkit 源码。
+
+Swift 代码使用 `import AgoraAgentClientToolkit`。Toolkit 无需配置 `:path` 或手动添加 XCFramework；Podfile 中 `ConvoAI`、`Common` 等 Demo 自有模块的 `:path` 配置仍用于加载本仓库业务代码。升级 Toolkit 时同步更新 `iOS/Podfile` 与 `iOS/Scenes/ConvoAI/ConvoAI/ConvoAI.podspec` 中的版本。
+
+Demo 将 AINS 开关传给 `loadAudioSettings(scenario:enableAins:)`，默认关闭，切换音频路由后保持相同选择。
+
+### 2.4 AINS 逻辑测试
+
+`Agent-cnLogicTests` 直接编译 App 使用的 `OnDeviceAins.swift`，验证默认关闭、开发模式开关、参数写入顺序、路由切换后恢复选择和状态重置。该 target 无需启动 App，也无需安装 Pods，可以在 ARM64 iOS 模拟器上运行。
+
+在 `iOS` 目录执行（模拟器名称按本机安装情况调整）：
+
+```bash
+xcodebuild -project Agent.xcodeproj -scheme Agent-cnLogicTests \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO test
+```
+
+Xcode 中也可打开 `Agent.xcodeproj`，选择 `Agent-cnLogicTests` scheme 和可用模拟器，再运行 Test。
+
+`Agent-cnTests` 继续保留 `RTCManagerAinsTests` 和其他 App 集成测试，需要完整 App 及 Pods。当前 Bugly 依赖对 ARM64 模拟器的限制仍适用于这类测试；AINS 逻辑测试不验证真机音效。
 
 ## 📚 三、相关资源
 

@@ -119,7 +119,7 @@ docs-only / skills-only 任务还应补充：
 - [ ] 只做了声明范围内的改动
 - [ ] 未意外改动无关模块
 - [ ] 公共 API、导航、权限、数据库、构建配置的影响已说明
-- [ ] 若改动 `convoaiApi` / `subRender`，已说明对字幕组件、包名结构和转录链路的影响
+- [ ] For Toolkit / `ui/living/legacy` changes, explain the impact on transcript components, package structure, and transcription flows.
 
 ### Kotlin 与并发
 

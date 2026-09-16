@@ -1,4 +1,10 @@
 import type {
+  EAgentState,
+  IAgentTranscription,
+  ITranscriptHelperItem,
+  IUserTranscription
+} from 'agora-agent-client-toolkit'
+import type {
   ConnectionDisconnectedReason,
   ConnectionState,
   ICameraVideoTrack,
@@ -6,13 +12,6 @@ import type {
   NetworkQuality,
   UID
 } from 'agora-rtc-sdk-ng'
-
-import type {
-  EAgentState,
-  IAgentTranscription,
-  ITranscriptHelperItem,
-  IUserTranscription
-} from '@/conversational-ai-api/type'
 
 export interface IUserTracks {
   videoTrack?: ICameraVideoTrack
@@ -78,7 +77,7 @@ export enum EConnectionStatus {
   RECONNECTING = 'reconnecting'
 }
 
-/** @deprecated use EAgentState from '@/conversational-ai-api/type' */
+/** @deprecated use EAgentState from 'agora-agent-client-toolkit' */
 export enum EAgentRunningStatus {
   DEFAULT = 'default',
   SPEAKING = 'speaking',

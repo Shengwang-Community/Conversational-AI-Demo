@@ -1,11 +1,10 @@
-import { create } from 'zustand'
-
 import type {
   IAgentTranscription,
   ILocalImageTranscription,
   ITranscriptHelperItem,
   IUserTranscription
-} from '@/conversational-ai-api/type'
+} from 'agora-agent-client-toolkit'
+import { create } from 'zustand'
 
 export interface IChatStore {
   history: ITranscriptHelperItem<

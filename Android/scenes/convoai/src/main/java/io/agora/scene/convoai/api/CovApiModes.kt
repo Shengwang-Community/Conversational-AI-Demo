@@ -1,9 +1,9 @@
 package io.agora.scene.convoai.api
 
 import android.os.Parcelable
-import io.agora.scene.convoai.convoaiApi.MessageType
-import io.agora.scene.convoai.convoaiApi.MessageType.UNKNOWN
-import io.agora.scene.convoai.convoaiApi.MessageType.entries
+import io.agora.conversational.api.MessageType
+import io.agora.conversational.api.MessageType.UNKNOWN
+import io.agora.conversational.api.MessageType.entries
 import kotlinx.parcelize.Parcelize
 
 data class CovAgentPreset(

@@ -3,18 +3,6 @@ type RawSegmentedLatency = {
   latency?: number
 }
 
-type RawTurnFinishedPayload = {
-  turn_id?: number
-  agent_id?: string
-  start?: {
-    start_at?: number
-  }
-  metrics?: {
-    e2e_latency_ms?: number
-    segmented_latency_ms?: RawSegmentedLatency[]
-  }
-}
-
 export type LatencyTurn = {
   agentId: string
   turnId: number
@@ -142,40 +130,6 @@ function mapSegments(segments: RawSegmentedLatency[] | undefined) {
     llmTtftMs: byName.get('llm_ttft') ?? 0,
     transportMs: byName.get('transport') ?? 0,
     ttsTtfbMs: byName.get('tts_ttfb') ?? 0
-  }
-}
-
-function normalizePayload(message: unknown): RawTurnFinishedPayload | null {
-  if (!message || typeof message !== 'object') {
-    return null
-  }
-
-  const raw = message as {
-    event_type?: string
-    object?: string
-    payload?: RawTurnFinishedPayload
-  } & RawTurnFinishedPayload
-
-  const messageType = raw.event_type || raw.object
-  if (messageType !== 'turn.finished') {
-    return null
-  }
-
-  return raw.payload ?? raw
-}
-
-export function parseTurnFinishedMessage(message: unknown): LatencyTurn | null {
-  const payload = normalizePayload(message)
-  if (!payload?.agent_id || typeof payload.turn_id !== 'number') {
-    return null
-  }
-
-  return {
-    agentId: payload.agent_id,
-    turnId: payload.turn_id,
-    timestamp: numberOrZero(payload.start?.start_at),
-    e2eLatencyMs: numberOrZero(payload.metrics?.e2e_latency_ms),
-    segmentedLatency: mapSegments(payload.metrics?.segmented_latency_ms)
   }
 }
 

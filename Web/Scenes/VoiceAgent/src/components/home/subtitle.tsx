@@ -1,5 +1,15 @@
 'use client'
 
+import {
+  ConversationalAIAPI,
+  EChatMessageType,
+  ELocalTranscriptStatus,
+  ETurnStatus,
+  type IAgentTranscription,
+  type ILocalImageTranscription,
+  type ITranscriptHelperItem,
+  type IUserTranscription
+} from 'agora-agent-client-toolkit'
 import { ChevronDownIcon, CircleAlertIcon, RotateCcwIcon } from 'lucide-react'
 import NextImage from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
@@ -16,16 +26,6 @@ import { MessageLoading } from '@/components/message/message-loading'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ImageZoom } from '@/components/zoomable-image'
-import { ConversationalAIAPI } from '@/conversational-ai-api'
-import {
-  EChatMessageType,
-  ELocalTranscriptStatus,
-  ETurnStatus,
-  type IAgentTranscription,
-  type ILocalImageTranscription,
-  type ITranscriptHelperItem,
-  type IUserTranscription
-} from '@/conversational-ai-api/type'
 import { useAutoScroll } from '@/hooks/use-auto-scroll'
 import {
   buildLatencySummary,

@@ -4,48 +4,10 @@ import {
   buildLatencyReportPayload,
   buildLatencySummary,
   buildReportRows,
-  buildTranscriptByTurnId,
-  parseTurnFinishedMessage
+  buildTranscriptByTurnId
 } from '@/lib/latency-metrics'
 
 describe('latency metrics helpers', () => {
-  test('parses turn.finished payload into normalized turn metrics', () => {
-    const turn = parseTurnFinishedMessage({
-      event_type: 'turn.finished',
-      payload: {
-        turn_id: 2,
-        agent_id: 'agent-123',
-        start: {
-          start_at: 1773901219000
-        },
-        metrics: {
-          e2e_latency_ms: 1294,
-          segmented_latency_ms: [
-            { name: 'algorithm_processing', latency: 120 },
-            { name: 'asr_ttlw', latency: 598 },
-            { name: 'llm_ttft', latency: 202 },
-            { name: 'tts_ttfb', latency: 178 },
-            { name: 'transport', latency: 196 }
-          ]
-        }
-      }
-    })
-
-    expect(turn).toEqual({
-      agentId: 'agent-123',
-      turnId: 2,
-      timestamp: 1773901219000,
-      e2eLatencyMs: 1294,
-      segmentedLatency: {
-        algorithmProcessingMs: 120,
-        asrTtlwMs: 598,
-        llmTtftMs: 202,
-        transportMs: 196,
-        ttsTtfbMs: 178
-      }
-    })
-  })
-
   test('builds a UI summary from a normalized turn', () => {
     const summary = buildLatencySummary({
       agentId: 'agent-123',

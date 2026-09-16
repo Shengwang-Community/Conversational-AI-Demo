@@ -7,6 +7,7 @@
 
 import Foundation
 import Common
+import AgoraAgentClientToolkit
 import SVProgressHUD
 
 // MARK: - Image Upload Error Models

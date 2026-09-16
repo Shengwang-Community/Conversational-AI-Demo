@@ -38,6 +38,7 @@ android {
 dependencies {
     implementation project(':common')
     implementation project(':scenes:convoai:iot')
+    implementation libs.agora.agent.client.toolkit
     
     // CameraX dependencies
     implementation libs.camerax.core

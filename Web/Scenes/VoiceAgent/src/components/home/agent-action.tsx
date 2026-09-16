@@ -1,5 +1,13 @@
 'use client'
 
+import {
+  ConversationalAIAPI,
+  EAgentState,
+  EChatMessageType,
+  ELocalTranscriptStatus,
+  ERTCCustomEvents,
+  type ILocalImageTranscription
+} from 'agora-agent-client-toolkit'
 import type { IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng'
 import { ChevronUpIcon, XIcon } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
@@ -34,15 +42,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip'
-import { ConversationalAIAPI } from '@/conversational-ai-api'
 import { RTCHelper } from '@/conversational-ai-api/helper/rtc'
-import {
-  EAgentState,
-  EChatMessageType,
-  ELocalTranscriptStatus,
-  ERTCCustomEvents,
-  type ILocalImageTranscription
-} from '@/conversational-ai-api/type'
 import { useMultibandTrackVolume } from '@/hooks/use-rtc'
 import { logger } from '@/lib/logger'
 import { cn, genUUID, getImageDimensions } from '@/lib/utils'

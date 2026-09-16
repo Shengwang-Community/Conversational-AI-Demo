@@ -15,7 +15,7 @@
 
 ### 💻 1.1 环境准备
 
-- 安装 nodejs 22+和 git
+- 安装 Node.js 22+、Git 和 Bun 1.4.0。
 
 ```bash
 # Linux/MacOS 可以直接在终端执行
@@ -72,17 +72,15 @@ sudo dnf install git-all
 - 安装依赖
 
 ```bash
-# 使用你喜爱的包管理器安装依赖 npm/pnpm/bun
-# 不建议使用yarn
-# 使用npm 安装
-npm i
-# 使用pnpm 安装
-# npm install -g pnpm
-pnpm i
-# 使用bun 安装
-# npm install -g bun
-bun i
+# 在仓库根目录执行
+cd Web/Scenes/VoiceAgent
+npm install -g bun@1.4.0
+bun install --frozen-lockfile
 ```
+
+本项目通过公开 npm 包 `agora-agent-client-toolkit` 接入 Toolkit，版本固定为 `2.10.0`，完整依赖由 `bun.lock` 锁定。安装和构建仅需当前仓库。npm/pnpm 也可解析 `package.json`；项目验证和可复现安装使用 Bun。
+
+依赖安装会同时下载 Toolkit，无需本地 `file:`/`link:` 依赖或预先构建 Toolkit。`src/conversational-ai-api/` 仅保留 Demo helpers 与旧版字幕兼容代码；公共 API 从 `agora-agent-client-toolkit` 导入。
 
 - 设置环境变量
 
@@ -113,8 +111,23 @@ NEXT_PUBLIC_CUSTOM_TTS_PARAMS="<your-TTS-params>"
 - 本地运行
 
 ```bash
-bun dev
+bun run dev
 ```
+
+### 1.3 Toolkit 接入与验证
+
+- Toolkit 提供公共 API、状态事件、字幕和 metrics 解析；示例见 [Toolkit 接入说明](src/conversational-ai-api/README.md)。
+- Demo 保留 RTC/RTM 初始化、音频采集、legacy 字幕兼容和报表展示/上传。端上 AINS 默认关闭，仅在开发模式和 AINS 开关同时开启时启用。
+- 普通通话和 SIP 均等待 Toolkit 异步初始化完成，退出时先销毁 Toolkit，再清理 RTC/RTM。
+
+```bash
+bun run test
+bun run typecheck
+bun run build
+bun run start
+```
+
+升级 Toolkit 时同时更新精确版本和 `bun.lock`，再执行上述检查。自动构建使用 `bun install --frozen-lockfile`，从公开 npm 下载正式包。
 
 ## 🗂️ 项目结构导览
 

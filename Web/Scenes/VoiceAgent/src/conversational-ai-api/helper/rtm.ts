@@ -1,7 +1,6 @@
 import AgoraRTM, { type RTMClient, type SubscribeOptions } from 'agora-rtm'
-
-import { NotFoundError } from '@/conversational-ai-api/type'
-import { factoryFormatLog, logger } from  '../utils/logger'
+import { logger } from '@/lib/logger'
+import { factoryFormatLog } from '../utils'
 
 const formatLog = factoryFormatLog({ tag: 'RTMHelper' })
 
@@ -67,14 +66,14 @@ export class RTMHelper {
    *
    * @param token - The authentication token
    * @returns The authenticated RTM client
-   * @throws {@link NotFoundError} When client is not initialized or token is missing
+   * @throws {@link Error} When client is not initialized or token is missing
    */
   public async login(token?: string | null): Promise<RTMClient> {
     if (!this.client) {
-      throw new NotFoundError('RTM client is not initialized')
+      throw new Error('RTM client is not initialized')
     }
     if (!token) {
-      throw new NotFoundError('Token is required for RTM login')
+      throw new Error('Token is required for RTM login')
     }
     try {
       await this.client.login({ token })
@@ -91,14 +90,14 @@ export class RTMHelper {
    *
    * @param channel - The channel name to subscribe to
    * @param options - Optional subscription options
-   * @throws {@link NotFoundError} When client is not initialized
+   * @throws {@link Error} When client is not initialized
    */
   public async join(
     channel: string,
     options?: SubscribeOptions
   ): Promise<void> {
     if (!this.client) {
-      throw new NotFoundError('RTM client is not initialized')
+      throw new Error('RTM client is not initialized')
     }
     try {
       await this.client.subscribe(channel, options)

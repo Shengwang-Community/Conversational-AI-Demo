@@ -7,6 +7,7 @@
 
 import Foundation
 import AgoraRtcKit
+import AgoraAgentClientToolkit
 import SVProgressHUD
 import Common
 
@@ -255,13 +256,12 @@ extension ChatViewController {
             }
             return independent ? .chorus : .aiClient
         }()
-        rtcManager.loadAudioSettings(
-            ainsEnabled: OnDeviceAins.resolve(
-                isDeveloperMode: DeveloperConfig.shared.isDeveloperMode,
-                debugEnabled: DeveloperConfig.shared.ainsEnabled
-            )
-        ) {
-            convoAIAPI.loadAudioSettings(secnario: secnario)
+        let ainsEnabled = OnDeviceAins.resolve(
+            isDeveloperMode: DeveloperConfig.shared.isDeveloperMode,
+            debugEnabled: DeveloperConfig.shared.ainsEnabled
+        )
+        rtcManager.loadAudioSettings(ainsEnabled: ainsEnabled) {
+            convoAIAPI.loadAudioSettings(scenario: secnario, enableAins: ainsEnabled)
         }
         rtcManager.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
         AppContext.stateManager().updateRoomState(.connected)
