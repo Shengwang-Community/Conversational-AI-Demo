@@ -153,7 +153,7 @@ if [[ ! -z ${sdk_url} && "${sdk_url}" != 'none' ]]; then
 fi
 
 cd ${PROJECT_PATH}
-pod install
+pod install --repo-update
 
 if [ $? -eq 0 ]; then
     echo "success"
