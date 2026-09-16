@@ -261,7 +261,10 @@ extension ChatViewController {
             debugEnabled: DeveloperConfig.shared.ainsEnabled
         )
         rtcManager.loadAudioSettings(ainsEnabled: ainsEnabled) {
-            convoAIAPI.loadAudioSettings(scenario: secnario, enableAins: ainsEnabled)
+            convoAIAPI.loadAudioSettings(
+                scenario: DeveloperConfig.shared.resolvedClientAudioScenario(fallback: secnario),
+                enableAins: ainsEnabled
+            )
         }
         rtcManager.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
         AppContext.stateManager().updateRoomState(.connected)

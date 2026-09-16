@@ -288,19 +288,31 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
 
             override fun onAudioDumpEnable(enable: Boolean) {
                 CovRtcManager.onAudioDump(enable)
-                ToastUtil.show("onAudioDumpEnable: $enable")
+                ToastUtil.show(getString(
+                    if (enable) io.agora.scene.common.R.string.common_debug_field_enabled
+                    else io.agora.scene.common.R.string.common_debug_field_disabled,
+                    getString(io.agora.scene.common.R.string.common_debug_audio_dump)
+                ))
             }
 
             override fun onSeamlessPlayMode(enable: Boolean) {
                 // Handle seamless play mode toggle
                 CovLogger.d(TAG, "Seamless play mode: $enable")
 
-                ToastUtil.show("onSeamlessPlayMode: $enable")
+                ToastUtil.show(getString(
+                    if (enable) io.agora.scene.common.R.string.common_debug_field_enabled
+                    else io.agora.scene.common.R.string.common_debug_field_disabled,
+                    getString(io.agora.scene.common.R.string.common_debug_session_limit)
+                ))
             }
 
             override fun onMetricsEnable(enable: Boolean) {
                 CovLogger.d(TAG, "Metrics enabled: $enable")
-                ToastUtil.show("onMetricsEnable: $enable")
+                ToastUtil.show(getString(
+                    if (enable) io.agora.scene.common.R.string.common_debug_field_enabled
+                    else io.agora.scene.common.R.string.common_debug_field_disabled,
+                    getString(io.agora.scene.common.R.string.common_debug_metrics)
+                ))
             }
 
             override fun onClickCopy() {
@@ -308,7 +320,7 @@ class CovLivingSipActivity : DebugSupportActivity<CovActivityLivingSipBinding>()
                     val messageContents =
                         messageListViewV2.getAllMessages().filter { it.isMe }.joinToString("\n") { it.content }
                     this@CovLivingSipActivity.copyToClipboard(messageContents)
-                    ToastUtil.show(getString(io.agora.scene.convoai.R.string.cov_copy_succeed))
+                    ToastUtil.show(getString(io.agora.scene.common.R.string.common_debug_copied))
                 }
             }
 

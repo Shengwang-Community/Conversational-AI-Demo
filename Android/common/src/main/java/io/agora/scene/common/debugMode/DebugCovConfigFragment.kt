@@ -110,32 +110,29 @@ class DebugCovConfigFragment : BaseFragment<CommonDebugCovConfigFragmentBinding>
             // Add underline to copy button text
             btnCopy.paintFlags = btnCopy.paintFlags or Paint.UNDERLINE_TEXT_FLAG
 
-            etGraphId.setHint("1.3.0-12-ga443e7e")
+            etGraphId.setHint(R.string.common_debug_graph_hint)
             etGraphId.setText(DebugConfigSettings.graphId)
             etGraphId.setOnFocusChangeListener { _, hasFocus ->
                 if (!hasFocus) {
-                    ToastUtil.show("etGraphId")
-                    DebugConfigSettings.setGraphId(etGraphId.text.toString().trim())
+                    val value = etGraphId.text.toString().trim()
+                    if (value != DebugConfigSettings.graphId) {
+                        DebugConfigSettings.setGraphId(value)
+                        showFieldSaved(R.string.common_debug_graph_id, value.isEmpty())
+                    }
                 }
             }
 
-            etSdkAudioParameter.setHint("{\"che.audio.sf.enabled\":true}|{\"che.audio.sf.stftType\":6}")
-            if (DebugConfigSettings.sdkAudioParameters.isNotEmpty()) {
-                etSdkAudioParameter.setText(DebugConfigSettings.sdkAudioParameters.joinToString("|"))
-            }
+            etSdkAudioParameter.setHint(R.string.common_debug_sdk_parameters_hint)
+            etSdkAudioParameter.setText(DebugConfigSettings.sdkAudioParameters.joinToString("|"))
             etSdkAudioParameter.setOnFocusChangeListener { _, hasFocus ->
                 if (!hasFocus) {
-                    ToastUtil.show("etSdkAudioParameter")
-                    val sdkAudioParameter = etSdkAudioParameter.text.toString().trim()
-                    if (sdkAudioParameter.isNotEmpty()) {
-                        val audioParams = mutableListOf<String>()
-                        sdkAudioParameter.split("|").forEach { param ->
-                            if (param.trim().isNotEmpty()) {
-                                audioParams.add(param)
-                                onDebugCallback?.onAudioParameter(param)
-                            }
-                        }
+                    val audioParams = etSdkAudioParameter.text.toString().split("|")
+                        .map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+                    etSdkAudioParameter.setText(audioParams.joinToString("|"))
+                    if (audioParams != DebugConfigSettings.sdkAudioParameters) {
                         DebugConfigSettings.updateSdkAudioParameter(audioParams)
+                        audioParams.forEach { onDebugCallback?.onAudioParameter(it) }
+                        showFieldSaved(R.string.common_debug_sdk_parameters, audioParams.isEmpty())
                     }
                 }
             }
@@ -164,30 +161,37 @@ class DebugCovConfigFragment : BaseFragment<CommonDebugCovConfigFragmentBinding>
                 }
             }
 
-            etApiParameter.setHint("sess_ctrl_dev")
+            etApiParameter.setHint(R.string.common_debug_preset_hint)
             etApiParameter.setText(DebugConfigSettings.convoAIParameter)
             etApiParameter.setOnFocusChangeListener { _, hasFocus ->
                 if (!hasFocus) {
-                    DebugConfigSettings.setConvoAIParameter(etApiParameter.text.toString().trim())
-                    ToastUtil.show("etApiParameter")
+                    val value = etApiParameter.text.toString().trim()
+                    if (value != DebugConfigSettings.convoAIParameter) {
+                        DebugConfigSettings.setConvoAIParameter(value)
+                        showFieldSaved(R.string.common_debug_sc_config, value.isEmpty())
+                    }
                 }
             }
 
             etConvoaiRequestBaseUrl.setText(DebugConfigSettings.convoAiRequestBaseUrl)
             etConvoaiRequestBaseUrl.setOnFocusChangeListener { _, hasFocus ->
                 if (!hasFocus) {
-                    DebugConfigSettings.setConvoAiRequestBaseUrl(
-                        etConvoaiRequestBaseUrl.text.toString().trim()
-                    )
+                    val value = etConvoaiRequestBaseUrl.text.toString().trim()
+                    if (value != DebugConfigSettings.convoAiRequestBaseUrl) {
+                        DebugConfigSettings.setConvoAiRequestBaseUrl(value)
+                        showFieldSaved(R.string.common_debug_convoai_request_base_url, value.isEmpty())
+                    }
                 }
             }
 
             etConvoaiRequestHeader.setText(DebugConfigSettings.convoAiRequestHeaderNamespace)
             etConvoaiRequestHeader.setOnFocusChangeListener { _, hasFocus ->
                 if (!hasFocus) {
-                    DebugConfigSettings.setConvoAiRequestHeaderNamespace(
-                        etConvoaiRequestHeader.text.toString().trim()
-                    )
+                    val value = etConvoaiRequestHeader.text.toString().trim()
+                    if (value != DebugConfigSettings.convoAiRequestHeaderNamespace) {
+                        DebugConfigSettings.setConvoAiRequestHeaderNamespace(value)
+                        showFieldSaved(R.string.common_debug_convoai_request_header, value.isEmpty())
+                    }
                 }
             }
 
@@ -220,6 +224,11 @@ class DebugCovConfigFragment : BaseFragment<CommonDebugCovConfigFragmentBinding>
             // Setup keyboard visibility listener
             setupKeyboardVisibilityListener(view)
         }
+    }
+
+    private fun showFieldSaved(titleRes: Int, isEmpty: Boolean) {
+        val messageRes = if (isEmpty) R.string.common_debug_field_cleared else R.string.common_debug_field_saved
+        ToastUtil.show(getString(messageRes, getString(titleRes)))
     }
 
     private fun commonAudioScenarioOptions(): List<AudioScenarioOption> {

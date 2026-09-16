@@ -43,6 +43,7 @@ extension ChatViewController: DeveloperConfigDelegate {
     
     public func devConfigDidCloseDevMode(_ config: DeveloperConfig) {
         self.sendMessageButton.isHidden = true
+        self.rtcManager.enableAudioDump(enabled: false)
         self.rtcManager.setAinsEnabled(false)
     }
     
@@ -60,7 +61,7 @@ extension ChatViewController: DeveloperConfigDelegate {
             .joined(separator: "\n")
         let pasteboard = UIPasteboard.general
         pasteboard.string = messageContents
-        SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.DevMode.copyQuestion)
+        SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.DevMode.copied)
     }
 
     public func devConfig(_ config: DeveloperConfig, sessionLimitDidChange enabled: Bool) {
