@@ -398,26 +398,23 @@ export class RTCHelper extends EventHelper<
   }
 
   /**
-   * Cleans up all RTC resources: unbinds events, closes tracks, disables
-   * denoiser, leaves channel, and removes all listeners.
+   * Cleans up all RTC resources: unbinds events, releases local track state,
+   * disables the denoiser, closes tracks, and leaves the channel.
    */
   public async exitAndCleanup() {
     logger.info(formatLog('exitAndCleanup', 'Starting cleanup'))
     const client = this.client
+    const audioTrack = this.localTracks.audioTrack
     // Unbind RTC events first
     this.unbindRtcEvents()
 
-    try {
-      this.localTracks?.audioTrack?.close()
-    } catch (error) {
-      logger.error(formatLog('exitAndCleanup', 'Failed to close tracks', error))
-    }
+    this.localTracks = {}
+    this.emit(ERTCCustomEvents.LOCAL_TRACKS_CHANGED, this.localTracks)
 
     // Cleanup denoiser processor
     try {
       if (this.processor) {
         await this.processor.disable()
-        this.processor = null
       }
     } catch (error) {
       logger.error(
@@ -427,9 +424,16 @@ export class RTCHelper extends EventHelper<
           error
         )
       )
+    } finally {
+      this.processor = null
     }
 
-    this.localTracks = {}
+    try {
+      audioTrack?.close()
+    } catch (error) {
+      logger.error(formatLog('exitAndCleanup', 'Failed to close tracks', error))
+    }
+
     this.joined = false
     try {
       await client.leave()

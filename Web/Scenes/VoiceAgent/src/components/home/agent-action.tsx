@@ -438,12 +438,16 @@ export const AgentActionAudio = (props: {
   }, [audioTrack])
 
   React.useEffect(() => {
-    try {
-      logger.info({ audioMute }, 'audio mute')
-      audioTrack?.setMuted(audioMute)
-    } catch (error) {
-      logger.error({ error }, 'Failed to set audio mute')
+    const updateAudioMute = async () => {
+      try {
+        logger.info({ audioMute }, 'audio mute')
+        await audioTrack?.setMuted(audioMute)
+      } catch (error) {
+        logger.error({ error }, 'Failed to set audio mute')
+      }
     }
+
+    void updateAudioMute()
   }, [audioTrack, audioMute])
 
   const subscribedVolumes = useMultibandTrackVolume(mediaStreamTrack, 20)
