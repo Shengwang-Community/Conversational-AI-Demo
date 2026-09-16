@@ -91,6 +91,17 @@
             "source": "AgentTests/AgentToolkitIntegrationTests.swift"
           }
         ]
+      },
+      "environment": {
+        "container": "Agent.xcodeproj",
+        "scheme": "Agent-cnLogicTests",
+        "target": "Agent-cnLogicTests",
+        "tests": [
+          {
+            "class": "DeveloperEnvironmentTests",
+            "source": "AgentTests/DeveloperEnvironmentTests.swift"
+          }
+        ]
       }
     },
     "integration_scheme": "Agent-cnIntegrationTests"

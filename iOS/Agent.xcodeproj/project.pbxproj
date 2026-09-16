@@ -28,6 +28,8 @@
 		C0C100012E10000100B10001 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0AA00072E10000100A10001 /* XCTest.framework */; };
 		C0C100032E10000100B10001 /* OnDeviceAins.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C100042E10000100B10001 /* OnDeviceAins.swift */; };
 		C0C100052E10000100B10001 /* OnDeviceAinsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C100062E10000100B10001 /* OnDeviceAinsTests.swift */; };
+		D0E100012E10000100D10001 /* DeveloperEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E100022E10000100D10001 /* DeveloperEnvironment.swift */; };
+		D0E100032E10000100D10001 /* DeveloperEnvironmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E100042E10000100D10001 /* DeveloperEnvironmentTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -80,6 +82,8 @@
 		C0C100042E10000100B10001 /* OnDeviceAins.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OnDeviceAins.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Manager/OnDeviceAins.swift; sourceTree = SOURCE_ROOT; };
 		C0C100062E10000100B10001 /* OnDeviceAinsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceAinsTests.swift; sourceTree = "<group>"; };
 		C0C100072E10000100B10001 /* Agent-cnLogicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Agent-cnLogicTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0E100022E10000100D10001 /* DeveloperEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DeveloperEnvironment.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Main/DeveloperMode/DeveloperEnvironment.swift; sourceTree = SOURCE_ROOT; };
+		D0E100042E10000100D10001 /* DeveloperEnvironmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperEnvironmentTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -203,6 +207,8 @@
 				C0AA00332E12000100A10001 /* RTCManagerAinsTests.swift */,
 				C0C100042E10000100B10001 /* OnDeviceAins.swift */,
 				C0C100062E10000100B10001 /* OnDeviceAinsTests.swift */,
+				D0E100022E10000100D10001 /* DeveloperEnvironment.swift */,
+				D0E100042E10000100D10001 /* DeveloperEnvironmentTests.swift */,
 				C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */,
 				C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */,
 				F1D11A41AC1D3652DECE4BCF /* AgentToolkitIntegrationTests.swift */,
@@ -501,6 +507,8 @@
 			files = (
 				C0C100032E10000100B10001 /* OnDeviceAins.swift in Sources */,
 				C0C100052E10000100B10001 /* OnDeviceAinsTests.swift in Sources */,
+				D0E100012E10000100D10001 /* DeveloperEnvironment.swift in Sources */,
+				D0E100032E10000100D10001 /* DeveloperEnvironmentTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

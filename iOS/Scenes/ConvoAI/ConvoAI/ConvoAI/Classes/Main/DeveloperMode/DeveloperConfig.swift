@@ -63,8 +63,8 @@ public class DeveloperConfig {
     
     public var defaultHost: String = AppContext.shared.baseServerUrl
     public var defaultAppId: String = AppContext.shared.appId
-    // Testing and labtesting share a host, so remember the chosen environment separately.
-    var selectedEnvironmentName: String?
+    // Keep the identity used for a dynamically selected App ID.
+    var selectedEnvironment: DeveloperEnvironment?
     var selectedVID: String?
     
     public var convoaiServerConfig: String? = nil
@@ -273,7 +273,7 @@ public class DeveloperConfig {
     
     public func resetDevParams() {
         isDeveloperMode = false
-        selectedEnvironmentName = nil
+        selectedEnvironment = nil
         selectedVID = nil
         clientAudioScenario = nil
         serverAudioScenario = nil

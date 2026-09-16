@@ -45,13 +45,17 @@ public class DeveloperModeViewController: UIViewController {
     private let kHost = "toolbox_server_host"
     private let kAppId = "rtc_app_id"
     private let kEnvName = "env_name"
-    private var selectedEnvironmentIndex: Int = 0 {
+    private var selectedEnvironmentIndex: Int = -1 {
         didSet {
             let environments = AppContext.shared.environments
-            guard environments.indices.contains(selectedEnvironmentIndex) else { return }
-            let env = environments[selectedEnvironmentIndex]
-            basicSettingView.envValueLabel.text = env[kEnvName] ?? ""
-            basicSettingView.envDetailLabel.text = env[kHost] ?? ""
+            if environments.indices.contains(selectedEnvironmentIndex) {
+                let env = environments[selectedEnvironmentIndex]
+                basicSettingView.envValueLabel.text = env[kEnvName] ?? ""
+                basicSettingView.envDetailLabel.text = env[kHost] ?? ""
+            } else {
+                basicSettingView.envValueLabel.text = ResourceManager.L10n.DevMode.unavailable
+                basicSettingView.envDetailLabel.text = AppContext.shared.baseServerUrl
+            }
             basicSettingView.envMenuButton.menu = updateEnvironmentMenu()
             basicSettingView.envMenuButton.showsMenuAsPrimaryAction = true
         }
@@ -244,9 +248,7 @@ public class DeveloperModeViewController: UIViewController {
         agentSettingView.ainsSwitch.isOn = config.ainsEnabled
         agentSettingView.metricsSwitch.isOn = config.metrics
         
-        if let index = currentEnvironmentIndex() {
-            selectedEnvironmentIndex = index
-        }
+        selectedEnvironmentIndex = currentEnvironmentIndex() ?? -1
         basicSettingView.appIdValueLabel.text = VIDAppIDModel(
             vid: config.selectedVID ?? "",
             appId: AppContext.shared.appId
@@ -255,21 +257,12 @@ public class DeveloperModeViewController: UIViewController {
     }
 
     private func currentEnvironmentIndex() -> Int? {
-        let environments = AppContext.shared.environments
-        // A dynamically selected App ID need not exist in the bundled config.
-        // Preserve the environment name instead of confusing testing with labtesting.
-        let selectedNameIndex = environments.firstIndex {
-            $0[kHost] == AppContext.shared.baseServerUrl &&
-                $0[kEnvName] == config.selectedEnvironmentName
-        }
-        let exactMatchIndex = environments.firstIndex {
-            $0[kHost] == AppContext.shared.baseServerUrl &&
-                $0[kAppId] == AppContext.shared.appId
-        }
-        let hostMatchIndex = environments.firstIndex {
-            $0[kHost] == AppContext.shared.baseServerUrl
-        }
-        return selectedNameIndex ?? exactMatchIndex ?? hostMatchIndex
+        DeveloperEnvironment.currentIndex(
+            in: AppContext.shared.environments,
+            host: AppContext.shared.baseServerUrl,
+            appId: AppContext.shared.appId,
+            selection: config.selectedEnvironment
+        )
     }
     
     private func setupActions() {
@@ -436,9 +429,10 @@ public class DeveloperModeViewController: UIViewController {
         }
         let envi = environments[selectedEnvironmentIndex]
         guard let host = envi[kHost],
+              let name = envi[kEnvName],
               let selectedModel = availableVIDs.first(where: { $0.selected }) else { return }
         let appIdToUse = selectedModel.appId
-        config.selectedEnvironmentName = envi[kEnvName]
+        config.selectedEnvironment = DeveloperEnvironment(name: name, host: host, appId: appIdToUse)
         isEnvironmentSelectionPending = false
         
         // Check if we're actually switching

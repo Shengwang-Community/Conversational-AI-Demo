@@ -6,9 +6,12 @@ Use Python 3.9+ and Xcode 16+ command-line tools. Run from the repository root:
 python3 scripts/validate.py ios --list
 python3 scripts/validate.py ios --suite ains --preflight
 python3 scripts/validate.py ios --suite ains
+python3 scripts/validate.py ios --suite environment
 ```
 
 Standalone AINS uses `Agent.xcodeproj` / `Agent-cnLogicTests` and does not require Pods. Hosted tests use `Agent-cnIntegrationTests` in `Agent.xcworkspace`; install Pods first. Available suites include `app-integration`, `temporary-config`, `rtc-ains` and `toolkit-integration`. Keep the local `Agent-cn` app scheme intact.
+
+The `environment` suite checks host + RTC App ID matching and remembered dynamic selections without an app host.
 
 ## Options and results
 

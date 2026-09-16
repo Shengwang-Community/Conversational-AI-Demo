@@ -150,7 +150,7 @@ public class DeveloperBasicSettingView: UIView  {
         envTitleLabel.numberOfLines = 0
         envContainerView.addSubview(envTitleLabel)
         
-        envValueLabel.text = "Prod"
+        envValueLabel.text = ResourceManager.L10n.DevMode.unavailable
         envValueLabel.textColor = UIColor.themColor(named: "ai_icontext1")
         envValueLabel.font = UIFont.systemFont(ofSize: 14)
         envValueLabel.numberOfLines = 0
