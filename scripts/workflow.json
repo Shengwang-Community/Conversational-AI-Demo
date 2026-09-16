@@ -1,0 +1,98 @@
+{
+  "brand": "Shengwang",
+  "android": {
+    "flavor": "china",
+    "test_tasks": [
+      ":app:testChinaDebugUnitTest",
+      ":scenes:convoai:testDebugUnitTest",
+      ":scenes:convoai:iot:testDebugUnitTest",
+      ":scenes:convoai:bleManager:testDebugUnitTest"
+    ],
+    "lint_tasks": [
+      ":app:lintChinaDebug"
+    ],
+    "test_reports": [
+      "app/build/test-results/testChinaDebugUnitTest",
+      "scenes/convoai/build/test-results/testDebugUnitTest",
+      "scenes/convoai/iot/build/test-results/testDebugUnitTest",
+      "scenes/convoai/bleManager/build/test-results/testDebugUnitTest"
+    ]
+  },
+  "ios": {
+    "app_target": "Agent-cn",
+    "suites": {
+      "ains": {
+        "container": "Agent.xcodeproj",
+        "scheme": "Agent-cnLogicTests",
+        "target": "Agent-cnLogicTests",
+        "tests": [
+          {
+            "class": "OnDeviceAinsTests",
+            "source": "AgentTests/OnDeviceAinsTests.swift"
+          }
+        ]
+      },
+      "app-integration": {
+        "container": "Agent.xcworkspace",
+        "scheme": "Agent-cnIntegrationTests",
+        "target": "Agent-cnTests",
+        "tests": [
+          {
+            "class": "AppContextTemporaryRtcConfigTests",
+            "source": "AgentTests/AppContextTemporaryRtcConfigTests.swift"
+          },
+          {
+            "class": "AgentSettingManagerTemporaryRtcConfigTests",
+            "source": "AgentTests/AgentSettingManagerTemporaryRtcConfigTests.swift"
+          },
+          {
+            "class": "RTCManagerAinsTests",
+            "source": "AgentTests/RTCManagerAinsTests.swift"
+          },
+          {
+            "class": "AgentToolkitIntegrationTests",
+            "source": "AgentTests/AgentToolkitIntegrationTests.swift"
+          }
+        ]
+      },
+      "temporary-config": {
+        "container": "Agent.xcworkspace",
+        "scheme": "Agent-cnIntegrationTests",
+        "target": "Agent-cnTests",
+        "tests": [
+          {
+            "class": "AppContextTemporaryRtcConfigTests",
+            "source": "AgentTests/AppContextTemporaryRtcConfigTests.swift"
+          },
+          {
+            "class": "AgentSettingManagerTemporaryRtcConfigTests",
+            "source": "AgentTests/AgentSettingManagerTemporaryRtcConfigTests.swift"
+          }
+        ]
+      },
+      "rtc-ains": {
+        "container": "Agent.xcworkspace",
+        "scheme": "Agent-cnIntegrationTests",
+        "target": "Agent-cnTests",
+        "tests": [
+          {
+            "class": "RTCManagerAinsTests",
+            "source": "AgentTests/RTCManagerAinsTests.swift"
+          }
+        ]
+      },
+      "toolkit-integration": {
+        "container": "Agent.xcworkspace",
+        "scheme": "Agent-cnIntegrationTests",
+        "target": "Agent-cnTests",
+        "tests": [
+          {
+            "class": "AgentToolkitIntegrationTests",
+            "source": "AgentTests/AgentToolkitIntegrationTests.swift"
+          }
+        ]
+      }
+    },
+    "integration_scheme": "Agent-cnIntegrationTests"
+  }
+}

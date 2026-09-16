@@ -1,250 +1,38 @@
-# ARCHITECTURE.md
+# Shengwang Android architecture
 
-本文档描述当前 Android 工程的全局架构，面向两类读者：
+This demo combines conversational AI, Agora RTC/RTM, transcripts, vendor configuration and IoT/BLE connectivity. See [project guidance](AGENTS.md) and [setup](scenes/convoai/README.md) for commands and configuration.
 
-- 新接手项目的开发者
-- 需要快速建立仓库心智模型的 AI Agent
+## Modules
 
-本文档关注“模块关系、主链路、配置注入、外部依赖、高风险区域”。
-运行步骤、组件接入细节、workflow 协作规则分别看对应 README / AGENTS 文档。
+| Module | Responsibility |
+|---|---|
+| `app` | Startup, `china` flavor, Manifest, signing, APK naming and app BuildConfig |
+| `common` | Shared UI, networking, storage, Agora configuration and utilities |
+| `scenes:convoai` | Login, agent list, Living/SIP sessions, transcripts, avatars and settings |
+| `scenes:convoai:iot` | Device setup, permissions, scanning, Wi-Fi provisioning and connections |
+| `scenes:convoai:bleManager` | BLE support used by IoT |
+| External Toolkit | RTC/RTM messaging, transcript and metrics APIs |
 
-## 1. 项目定位
+`app` uses `common` and `scenes:convoai`; the scene uses `common`, Toolkit and IoT. IoT uses `common` and BLEManager. Toolkit is downloaded as `io.agora.agents:agora-agent-client-toolkit`; the version is maintained in `gradle/libs.versions.toml`.
 
-这是一个 `Shengwang Convo AI Demo for Android`，核心目标是演示以下能力在 Android 端的组合接入：
+## Main paths
 
-- 对话式 AI 主场景
-- Agora RTC / RTM 实时音视频与消息能力
-- 字幕渲染与会话消息链路
-- LLM / TTS / Avatar 厂商参数注入
-- IoT / BLE 设备配网与连接
+- Startup: `WelcomeActivity` checks login state through `SSOUserManager`, then opens `CovLoginActivity` or `CovMainActivity`. The main screen leads to agent selection, Living and SIP sessions.
+- Conversation: Living/SIP ViewModels initialize `ConversationalAIAPIImpl` with RTC and RTM clients. `IConversationalAIAPIEventHandler` returns messages, transcripts, interruption events and metrics to the UI. The public Toolkit package is `io.agora.conversational.api`; the demo retains a legacy transcript renderer under `ui/living/legacy`.
+- Devices: device list -> setup and permission checks -> scan -> Wi-Fi selection -> connection. Bluetooth, location, Wi-Fi and device state affect this path; simulator coverage is limited.
 
-它是一个 Demo 工程，不应默认等同生产环境实现。
+Useful source roots:
 
-## 2. 模块关系
-
-```mermaid
-flowchart LR
-  app["app\n入口壳层 / flavor / WelcomeActivity"] --> common["common\n共享 UI / 网络 / Agora / 存储 / 配置基座"]
-  app --> convo["scenes:convoai\n登录 / 主页面 / Living / SIP / 字幕 / 设置"]
-  convo --> common
-  convo --> toolkit["agent-client-toolkit\nToolkit 2.10.1 Maven component"]
-  convo --> iot["scenes:convoai:iot\n设备准备 / 扫描 / 连接 / Wi-Fi"]
-  iot --> common
-  iot --> ble["scenes:convoai:bleManager\nBLE 基础能力"]
-```
-
-### 模块职责
-
-| 模块 | 主要职责 | 备注 |
-|---|---|---|
-| `app` | 应用入口、启动页、flavor、签名、APK 命名、App 级 `BuildConfig` | 当前启动入口是 `WelcomeActivity` |
-| `common` | 公共 UI 基类、调试能力、网络层、Agora 依赖、存储、通用工具 | 影响范围最大 |
-| `agent-client-toolkit` | RTC/RTM messaging, transcripts, and metrics APIs | Maven `io.agora.agents:agora-agent-client-toolkit:2.10.1` |
-| `scenes:convoai` | 登录、主页面、Living/SIP、Agent 列表、字幕、头像、设置等主业务 | 项目核心场景 |
-| `scenes:convoai:iot` | 设备准备、权限检查、蓝牙/Wi-Fi 配网、设备列表与连接 | 依赖 `bleManager` |
-| `scenes:convoai:bleManager` | BLE 基础能力 | 被 IoT 场景消费 |
-
-### 关键包结构
-
-- `common/src/main/java/io/agora/scene/common/ui`
-- `common/src/main/java/io/agora/scene/common/net`
-- `scenes/convoai/src/main/java/io/agora/scene/convoai/ui`
-- `scenes/convoai/src/main/java/io/agora/scene/convoai/api`
-- `scenes/convoai/src/main/java/io/agora/scene/convoai/rtc`
-- `scenes/convoai/src/main/java/io/agora/scene/convoai/rtm`
-- `io.agora.conversational.api` (Toolkit Maven component)
+- `common/src/main/java/io/agora/scene/common/{ui,net}`
+- `scenes/convoai/src/main/java/io/agora/scene/convoai/{ui,api,rtc,rtm}`
 - `scenes/convoai/iot/src/main/java/io/agora/scene/convoai/iot/ui`
 
-## 3. 主链路
+## Configuration and compatibility
 
-### 3.1 启动与登录链路
+Android `gradle.properties` supplies toolbox, Agora and vendor settings. `app/build.gradle` emits app configuration; `common/build.gradle` emits shared `BuildConfig` values for networking and LLM/TTS/Avatar requests. Trace runtime overrides in the consuming code when changing configuration. Keep local credentials private.
 
-```mermaid
-flowchart LR
-  splash["WelcomeActivity"] --> token{"SSOUserManager\n是否已有 token"}
-  token -- 是 --> main["CovMainActivity"]
-  token -- 否 --> login["CovLoginActivity"]
-  login --> main
-  main --> list["Agent List / Mine"]
-  list --> living["CovLivingActivity / CovLivingSipActivity"]
-```
+App/common/convoai use Java 17; IoT/BLEManager use Java 11. Build files, the version catalog and Manifests affect dependency compatibility, flavor selection, configuration and permissions. Runtime paths depend on the toolbox/agent service, Agora SDKs and configured providers.
 
-说明：
+For changes in shared code, consider all consuming scenes. For session or transcript changes, check callback delivery, ordering, threads and release. For device changes, include relevant permission denial, Bluetooth/location availability and reconnect behavior. Use [the review checklist](docs/PR_CHECKLIST.md) when helpful.
 
-- `app` 只决定“从启动页进入登录还是主页面”
-- 登录态检查由 `SSOUserManager` 与用户相关 ViewModel 协同完成
-- 主页面使用 `ViewPager + BottomNavigation` 组织 Agent 列表与我的页面
-
-### 3.2 对话式 AI 主链路
-
-```mermaid
-sequenceDiagram
-  participant UI as "CovLivingActivity / ViewModel"
-  participant RTC as "Agora RTC"
-  participant RTM as "Agora RTM"
-  participant API as "ConversationalAIAPIImpl"
-  participant Subtitle as "Toolkit TranscriptController / legacy renderer"
-  participant Server as "Toolbox / Vendor Config"
-
-  UI->>API: initializeAPIs(rtcEngine, rtmClient)
-  API->>RTC: bind RTC callbacks
-  API->>RTM: subscribe / listen message events
-  RTM-->>API: agent events / transcript messages
-  API-->>Subtitle: parse & render transcript
-  API-->>UI: IConversationalAIAPIEventHandler callbacks
-  UI->>Server: use LLM / TTS / Avatar config when needed
-```
-
-说明：
-
-- `CovLivingViewModel` 中会创建 `ConversationalAIAPIImpl`，同时接入 RTC 与 RTM
-- 消息、字幕、打断、指标、图片消息等都从 `IConversationalAIAPIEventHandler` 回到 UI 层
-- Toolkit and `ui/living/legacy` are critical to transcripts; preserve compatibility and package structure.
-
-### 3.3 IoT / BLE 链路
-
-```mermaid
-flowchart LR
-  main["CovMainActivity"] --> deviceList["CovIotDeviceListActivity"]
-  deviceList --> setup["CovIotDeviceSetupActivity"]
-  setup --> perms["蓝牙 / 定位 / 系统开关检查"]
-  perms --> scan["CovDeviceScanActivity"]
-  scan --> wifi["CovWifiSelectActivity"]
-  wifi --> connect["CovDeviceConnectActivity"]
-```
-
-说明：
-
-- IoT 链路依赖蓝牙、定位、Wi-Fi 与真机能力
-- `CovIotDeviceSetupActivity` 是权限、蓝牙、定位、前置准备的关键入口
-- 这条链路天然不适合只靠模拟器验证
-
-## 4. 配置与依赖注入
-
-### 4.1 配置源
-
-项目的主要配置入口是根目录 `gradle.properties`，包括：
-
-- `TOOLBOX_SERVER_HOST`
-- `AG_APP_ID`
-- `AG_APP_CERTIFICATE`
-- `BASIC_AUTH_KEY` / `BASIC_AUTH_SECRET`
-- `IS_OPEN_SOURCE`
-- `LLM_*`
-- `TTS_*`
-- `AVATAR_*`
-
-### 4.2 注入路径
-
-```mermaid
-flowchart LR
-  props["gradle.properties"] --> appGradle["app/build.gradle"]
-  props --> commonGradle["common/build.gradle"]
-  appGradle --> appConfig["app BuildConfig / AppDataProvider"]
-  commonGradle --> commonConfig["io.agora.scene.common.BuildConfig"]
-  commonConfig --> serverConfig["ServerConfig / ApiManager"]
-  commonConfig --> sceneApi["CovAgentApiManager / CovLivingViewModel"]
-```
-
-说明：
-
-- `app/build.gradle` 主要注入 App 级标识和 `TOOLBOX_SERVER_HOST`
-- `common/build.gradle` 注入对话式 AI 场景所需的大多数厂商参数
-- `scenes:convoai` 中的业务代码会直接 import `io.agora.scene.common.BuildConfig` 来消费这些配置
-- `ServerConfig` 会把 toolbox 地址和 RTC 凭据推进到运行时网络层
-- Living 场景会继续消费 LLM / TTS / Avatar 相关 `BuildConfig`
-
-## 5. 外部依赖与系统能力
-
-### 外部依赖
-
-- Agora RTC
-- Agora RTM
-- toolbox server / agent 服务端
-- LLM 厂商
-- TTS 厂商
-- Avatar 厂商
-
-### 关键系统能力
-
-- `INTERNET`
-- `CAMERA`
-- `RECORD_AUDIO`
-- `FOREGROUND_SERVICE`
-- `POST_NOTIFICATIONS`
-- `READ_MEDIA_IMAGES`
-- IoT 模块额外使用 `BLUETOOTH_*`、`ACCESS_FINE_LOCATION`、`ACCESS_COARSE_LOCATION`
-
-## 6. 高风险区域
-
-### 6.1 构建与配置
-
-- `settings.gradle`
-- 各模块 `build.gradle(.kts)`
-- `gradle/libs.versions.toml`
-- `gradle.properties`
-- `AndroidManifest.xml`
-
-原因：
-
-- 直接影响 flavor、依赖版本、权限、签名、BuildConfig 注入和网络基址
-
-### 6.2 `common`
-
-原因：
-
-- 它是共享底座，持有公共 UI、网络、Agora、工具类和大部分配置注入
-
-### 6.3 Toolkit dependency and transcript components
-
-Toolkit is downloaded as the Maven dependency `io.agora.agents:agora-agent-client-toolkit:2.10.1`. Its version is managed in `gradle/libs.versions.toml`; see `scenes/convoai/README.md` for setup. No local Toolkit subproject or source path is required.
-
-路径：
-
-- `io.agora.conversational.api` (Toolkit Maven component)
-- `scenes/convoai/src/main/java/io/agora/scene/convoai/ui/living/legacy/`
-
-原因：
-
-- 同时连接 RTC、RTM、消息解析、字幕渲染和 UI 回调
-- Toolkit public types use `io.agora.conversational.api`; the legacy v1 RTC stream renderer remains in the Demo.
-- 改动很容易影响字幕、消息、打断、指标和转录兼容性
-
-### 6.4 IoT / BLE
-
-原因：
-
-- 强依赖权限、蓝牙、定位、Wi-Fi 和真机状态
-- Android 版本差异对权限行为影响明显
-
-### 6.5 混合语言级别
-
-原因：
-
-- `app/common/scenes:convoai` 使用 Java 17
-- `scenes:convoai:iot` 和 `scenes:convoai:bleManager` 使用 Java 11
-- 跨模块构建或语言级别调整时，容易带来编译与兼容性问题
-
-## 7. 变更时的验证建议
-
-- 改 `app`：验证启动链路、登录跳转、flavor 产物、Manifest 权限
-- 改 `common`：验证网络、Agora 基础能力、BuildConfig 注入是否影响所有场景
-- 改 `scenes:convoai`：验证登录、主页面、Living/SIP、字幕、Agent 列表与 Mine 页面
-- Changes to Toolkit or `ui/living/legacy`: verify RTC/RTM, transcript updates, message parsing, callback dispatch, and package structure.
-- 改 `iot/bleManager`：至少覆盖权限申请、蓝牙开启、定位服务、扫描、连接、Wi-Fi 选择
-- 改 `gradle.properties` 或构建脚本：验证配置是否正确进入 `BuildConfig`，并确认无敏感信息泄露
-
-## 8. 推荐阅读顺序
-
-1. `AGENTS.md`
-2. `ARCHITECTURE.md`（本文）
-3. `scenes/convoai/README.md`
-4. [Toolkit component documentation](https://github.com/AgoraIO-Conversational-AI/agent-client-toolkit-kotlin/blob/main/conversational-ai/README.md)
-
-## 9. 文档边界
-
-本文档不重复以下内容：
-
-- workflow 协作、状态机和评审规则：看 `AGENTS.md`
-- 运行前配置与快速开始：看 `scenes/convoai/README.md`
-- Toolkit integration: see `scenes/convoai/README.md` and the [Toolkit component documentation](https://github.com/AgoraIO-Conversational-AI/agent-client-toolkit-kotlin/blob/main/conversational-ai/README.md).
+Toolkit details: [component documentation](https://github.com/AgoraIO-Conversational-AI/agent-client-toolkit-kotlin/blob/main/conversational-ai/README.md).

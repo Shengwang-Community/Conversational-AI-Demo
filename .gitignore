@@ -21,3 +21,7 @@ Pods
 *.lock
 /iOS/AgoraHyLibs/*
 /docs
+
+# Python workflow utilities.
+__pycache__/
+*.pyc

@@ -1,4 +1,6 @@
 interface:
-  display_name: "AC Review"
-  short_description: "Review contract completion and hand passed work back for summary"
-  default_prompt: "Use $ac-review to validate contract completion with Evidence, Gaps, and `Review Findings（闭环）`, then return passed work to $ac-workflow for final summary closeout."
+  display_name: "ac-review"
+  short_description: "reviewing Android changes for correctness, regressions and validation gaps"
+  default_prompt: "Use $ac-review as needed with Android/AGENTS.md and AI_WORKFLOW.md. Choose an approach that fits the task."
+policy:
+  allow_implicit_invocation: true

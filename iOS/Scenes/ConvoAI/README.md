@@ -161,3 +161,8 @@ Xcode 中也可打开 `Agent.xcodeproj`，选择 `Agent-cnLogicTests` scheme 和
 ## 📜 五、许可证
 
 本项目采用 MIT 许可证 (The MIT License)。
+
+
+### AI workflow and validation
+
+See [iOS workflow](../../AGENTS.md) and [validation guide](../../docs/VALIDATION.md). From the repository root, run `python3 scripts/validate.py ios --suite ains` for standalone AINS tests; `--list` shows the available suites and their scope is defined in `scripts/workflow.json`.

@@ -112,3 +112,9 @@ fastlane/test_output
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
+
+# Local workflow state.
+.agents/state/
+
+# Portable hosted-test entrypoint.
+!/Agent.xcodeproj/xcshareddata/xcschemes/Agent-cnIntegrationTests.xcscheme
