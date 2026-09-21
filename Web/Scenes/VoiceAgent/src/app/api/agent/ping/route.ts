@@ -6,12 +6,20 @@ import {
   REMOTE_CONVOAI_AGENT_PING,
   remoteAgentPingReqSchema
 } from '@/constants'
+import { buildConvoaiRequestConfig, mergeConvoaiRequestConfig } from '@/lib/dev'
 
 import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
-  const { agentServer, devMode, endpoint, appId, authorizationHeader } =
-    getEndpointFromNextRequest(request)
+  const {
+    agentServer,
+    devMode,
+    endpoint,
+    appId,
+    authorizationHeader,
+    requestDomain,
+    requestHeaders
+  } = getEndpointFromNextRequest(request)
 
   if (!authorizationHeader) {
     return NextResponse.json(
@@ -21,6 +29,10 @@ export async function POST(request: NextRequest) {
   }
 
   const url = `${agentServer}${REMOTE_CONVOAI_AGENT_PING}`
+  const devRequestConfig = buildConvoaiRequestConfig({
+    requestDomain,
+    xServiceNamespace: requestHeaders['X-Service-Namespace']
+  })
 
   logger.info(
     { agentServer, devMode, endpoint, appId, url },
@@ -40,7 +52,11 @@ export async function POST(request: NextRequest) {
 
   const reqBody = remoteAgentPingReqSchema.parse({
     ...reqBodyParsed.data,
-    app_id: appId
+    app_id: appId,
+    request_config: mergeConvoaiRequestConfig(
+      reqBodyParsed.data.request_config,
+      devRequestConfig
+    )
   })
 
   const res = await fetch(url, {

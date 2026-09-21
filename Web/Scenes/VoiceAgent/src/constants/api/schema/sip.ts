@@ -16,6 +16,17 @@ const convoaiBodySchema = z.object({
   })
 })
 
+const requestConfigSchema = z
+  .object({
+    convoai: z
+      .object({
+        base_url: z.string().optional(),
+        headers: z.record(z.string(), z.string()).optional()
+      })
+      .optional()
+  })
+  .optional()
+
 export const sipCallRequestBodySchema = z.object({
   app_id: z.string(),
   app_cert: z.string().optional(),
@@ -23,5 +34,6 @@ export const sipCallRequestBodySchema = z.object({
   basic_auth_password: z.string().optional(),
   preset_name: z.string().optional(),
   preset_type: z.string().optional(),
-  convoai_body: convoaiBodySchema
+  convoai_body: convoaiBodySchema,
+  request_config: requestConfigSchema
 })

@@ -9,6 +9,8 @@ const defaultEndpointConfig = {
   appId: 'app-123',
   authorizationHeader: 'Bearer token',
   appCert: undefined,
+  requestDomain: undefined as string | undefined,
+  requestHeaders: {} as Record<string, string>,
   serverAudioScenario: undefined as string | undefined
 }
 
@@ -46,7 +48,8 @@ describe('POST /api/agent', () => {
     mock.module('@/lib/logger', () => ({
       logger: {
         info: () => {},
-        error: () => {}
+        error: () => {},
+        debug: () => {}
       }
     }))
     globalThis.fetch = fetchMock as unknown as typeof fetch
@@ -187,5 +190,175 @@ describe('POST /api/agent', () => {
     expect(remoteBody.convoai_body.properties.parameters.audio_scenario).toBe(
       'aiserver'
     )
+  })
+
+  test('maps dev overrides into request_config.convoai', async () => {
+    getEndpointFromNextRequest.mockReturnValue({
+      ...defaultEndpointConfig,
+      devMode: true,
+      endpoint: 'https://agent.example.com',
+      appId: 'app-123',
+      authorizationHeader: 'Bearer token',
+      appCert: undefined,
+      requestDomain: 'https://override.example.com/convoai',
+      requestHeaders: {
+        'X-Service-Namespace': 'tenant-a'
+      }
+    })
+
+    const { POST } = await import('@/app/api/agent/route')
+
+    const response = await POST({
+      json: async () => ({
+        preset_name: 'intelligent_assistant',
+        channel: 'demo',
+        agent_rtc_uid: 'agent-uid',
+        remote_rtc_uids: ['user-uid'],
+        request_config: {
+          convoai: { headers: { 'X-Existing': 'keep' } }
+        },
+        asr: {
+          language: 'zh-CN'
+        }
+      })
+    } as never)
+
+    expect(response.status).toBe(200)
+
+    const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit]
+    const remoteBody = JSON.parse(String(init.body)) as {
+      request_config: {
+        convoai: {
+          base_url: string
+          headers: Record<string, string>
+        }
+      }
+    }
+
+    expect(init.headers).toEqual({
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer token'
+    })
+    expect(remoteBody.request_config).toEqual({
+      convoai: {
+        base_url: 'https://override.example.com/convoai',
+        headers: {
+          'X-Existing': 'keep',
+          'X-Service-Namespace': 'tenant-a'
+        }
+      }
+    })
+  })
+
+  test.each(['msg', 'detail'] as const)(
+    'retries once when %s reports unsupported ASR keywords',
+    async (field) => {
+      fetchMock.mockImplementationOnce(
+        async () =>
+          new Response(
+            JSON.stringify({
+              code: 1,
+              [field]:
+                'start convoai agent error. detail: Invalid value at properties.asr.keywords: can only be set when properties.asr.vendor is unset, ares, or fengming., reason: InvalidModuleParameter'
+            }),
+            {
+              status: 400,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }
+          )
+      )
+      const { POST } = await import('@/app/api/agent/route')
+
+      const response = await POST({
+        json: async () => ({
+          preset_name: 'intelligent_assistant',
+          channel: 'demo',
+          agent_rtc_uid: 'agent-uid',
+          remote_rtc_uids: ['user-uid'],
+          asr: {
+            language: 'zh-CN'
+          }
+        })
+      } as never)
+
+      expect(response.status).toBe(200)
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+
+      const [, firstInit] = fetchMock.mock.calls.at(-2) as [string, RequestInit]
+      const [, retryInit] = fetchMock.mock.calls.at(-1) as [string, RequestInit]
+      const firstBody = JSON.parse(String(firstInit.body))
+      const retryBody = JSON.parse(String(retryInit.body))
+
+      expect(firstBody.convoai_body.properties.asr).toEqual({
+        language: 'zh-CN'
+      })
+      expect(retryBody.convoai_body.properties.asr).toEqual({
+        language: 'zh-CN',
+        keywords: null
+      })
+    }
+  )
+
+  test('does not retry unrelated agent start failures', async () => {
+    fetchMock.mockImplementationOnce(
+      async () =>
+        new Response(
+          JSON.stringify({
+            code: 1,
+            msg: 'start convoai agent error. detail: invalid TTS parameters'
+          }),
+          {
+            status: 400,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+    )
+    const { POST } = await import('@/app/api/agent/route')
+
+    const response = await POST({
+      json: async () => ({
+        preset_name: 'intelligent_assistant',
+        channel: 'demo',
+        agent_rtc_uid: 'agent-uid',
+        remote_rtc_uids: ['user-uid'],
+        asr: {
+          language: 'zh-CN'
+        }
+      })
+    } as never)
+
+    expect(response.status).toBe(400)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  test('returns the second failure without retrying again', async () => {
+    const rejectKeywords = async () =>
+      new Response(
+        JSON.stringify({
+          code: 1,
+          msg: 'Invalid value at properties.asr.keywords'
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    fetchMock.mockImplementationOnce(rejectKeywords)
+    fetchMock.mockImplementationOnce(rejectKeywords)
+    const { POST } = await import('@/app/api/agent/route')
+
+    const response = await POST({
+      json: async () => ({
+        preset_name: 'intelligent_assistant',
+        channel: 'demo',
+        agent_rtc_uid: 'agent-uid',
+        remote_rtc_uids: ['user-uid'],
+        asr: { language: 'zh-CN' }
+      })
+    } as never)
+
+    expect(response.status).toBe(400)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 })

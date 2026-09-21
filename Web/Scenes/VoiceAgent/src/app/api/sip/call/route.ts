@@ -7,6 +7,7 @@ import {
 } from '@/app/api/_utils'
 import { REMOTE_CONVOAI_SIP_START } from '@/constants'
 import { sipCallRequestBodySchema } from '@/constants/api/schema/sip'
+import { buildConvoaiRequestConfig, mergeConvoaiRequestConfig } from '@/lib/dev'
 import { logger } from '@/lib/logger'
 
 // Start SIP
@@ -17,10 +18,16 @@ export async function POST(request: NextRequest) {
     endpoint,
     appId,
     authorizationHeader,
-    appCert
+    appCert,
+    requestDomain,
+    requestHeaders
   } = getEndpointFromNextRequest(request)
 
   const url = `${agentServer}${REMOTE_CONVOAI_SIP_START}`
+  const devRequestConfig = buildConvoaiRequestConfig({
+    requestDomain,
+    xServiceNamespace: requestHeaders['X-Service-Namespace']
+  })
 
   logger.info(
     {
@@ -46,7 +53,11 @@ export async function POST(request: NextRequest) {
       ...(basicAuthSecret && { basic_auth_password: basicAuthSecret }),
       preset_name: reqBody.preset_name,
       preset_type: reqBody.preset_type,
-      convoai_body: reqBody.convoai_body
+      convoai_body: reqBody.convoai_body,
+      request_config: mergeConvoaiRequestConfig(
+        reqBody.request_config,
+        devRequestConfig
+      )
     })
 
     logger.info({ body }, 'REMOTE request body')

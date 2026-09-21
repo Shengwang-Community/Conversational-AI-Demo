@@ -26,6 +26,10 @@ export interface IGlobalStore {
   setCustomAppId: (customAppId: string) => void
   isCustomAppIdOverrideEnabled: boolean
   setCustomAppIdOverrideEnabled: (isCustomAppIdOverrideEnabled: boolean) => void
+  requestDomain: string
+  setRequestDomain: (requestDomain: string) => void
+  xServiceNamespace: string
+  setXServiceNamespace: (xServiceNamespace: string) => void
   resetDevModeOverrides: () => void
   isRTCCompatible: boolean
   showCompatibilityDialog: boolean
@@ -122,11 +126,18 @@ export const useGlobalStore = create<IGlobalStore>()(
       isCustomAppIdOverrideEnabled: false,
       setCustomAppIdOverrideEnabled: (isCustomAppIdOverrideEnabled: boolean) =>
         set({ isCustomAppIdOverrideEnabled }),
+      requestDomain: '',
+      setRequestDomain: (requestDomain: string) => set({ requestDomain }),
+      xServiceNamespace: '',
+      setXServiceNamespace: (xServiceNamespace: string) =>
+        set({ xServiceNamespace }),
       resetDevModeOverrides: () =>
         set({
-          isCustomAppIdOverrideEnabled: false,
           isAinsEnabled: false,
-          audioScenarioMode: null
+          audioScenarioMode: null,
+          isCustomAppIdOverrideEnabled: false,
+          requestDomain: '',
+          xServiceNamespace: ''
         }),
       isRTCCompatible: true,
       setIsRTCCompatible: (isRTCCompatible: boolean) =>
@@ -174,7 +185,9 @@ export const useGlobalStore = create<IGlobalStore>()(
         isPresetDigitalReminderIgnored: state.isPresetDigitalReminderIgnored,
         audioScenarioMode: state.audioScenarioMode,
         customAppId: state.customAppId,
-        isCustomAppIdOverrideEnabled: state.isCustomAppIdOverrideEnabled
+        isCustomAppIdOverrideEnabled: state.isCustomAppIdOverrideEnabled,
+        requestDomain: state.requestDomain,
+        xServiceNamespace: state.xServiceNamespace
       })
     }
   )

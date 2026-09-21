@@ -116,6 +116,17 @@ const convoaiBodySchema = z.object({
   properties: convoaiBodyPropertiesSchema
 })
 
+const requestConfigSchema = z
+  .object({
+    convoai: z
+      .object({
+        base_url: z.string().optional(),
+        headers: z.record(z.string(), z.string()).optional()
+      })
+      .optional()
+  })
+  .optional()
+
 export const startAgentRequestBodySchema = z.object({
   app_id: z.string(),
   app_cert: z.string().optional(),
@@ -126,5 +137,6 @@ export const startAgentRequestBodySchema = z.object({
   preset_type: z
     .enum(['standard', 'standard_avatar', 'independent', 'custom_private'])
     .optional(),
-  convoai_body: convoaiBodySchema
+  convoai_body: convoaiBodySchema,
+  request_config: requestConfigSchema
 })

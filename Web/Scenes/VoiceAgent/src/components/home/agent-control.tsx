@@ -73,6 +73,8 @@ import {
   DEFAULT_AUDIO_SCENARIO_MODE,
   resolveAudioScenarioMode
 } from '@/lib/audio-scenario'
+import { cleanupCallResources } from '@/lib/call-cleanup'
+import { runActiveCallAction, runAgentStartAttempt } from '@/lib/call-lifecycle'
 import {
   buildLatencyReportPayload,
   type TranscriptLikeItem
@@ -112,6 +114,8 @@ import { GenerateAIInfoTypewriter } from './typewriter'
 export default function AgentControl(props: { className?: string }) {
   const [audioTrack, setAudioTrack] = React.useState<IMicrophoneAudioTrack>()
   const [disableHangUp, setDisableHangUp] = React.useState<boolean>(false)
+  const [isExiting, setIsExiting] = React.useState(false)
+  const isExitingRef = React.useRef(false)
   const refShowCallingPage = React.useRef<boolean>(false)
 
   const tAgent = useTranslations('agent')
@@ -150,6 +154,10 @@ export default function AgentControl(props: { className?: string }) {
     isDevMode,
     isAinsEnabled,
     audioScenarioMode,
+    customAppId,
+    isCustomAppIdOverrideEnabled,
+    requestDomain,
+    xServiceNamespace,
     isRTCCompatible,
     onClickSubtitle,
     setShowSubtitle,
@@ -179,6 +187,24 @@ export default function AgentControl(props: { className?: string }) {
     null
   )
   const [showCallingPage, setShowCallingPage] = React.useState(false)
+  const devModeOptions = React.useMemo(
+    () => ({
+      devMode: isDevMode,
+      customAppId,
+      isCustomAppIdOverrideEnabled,
+      requestDomain,
+      xServiceNamespace,
+      audioScenarioMode
+    }),
+    [
+      customAppId,
+      audioScenarioMode,
+      isCustomAppIdOverrideEnabled,
+      isDevMode,
+      requestDomain,
+      xServiceNamespace
+    ]
+  )
 
   const isSupportVision = React.useMemo(() => {
     const targetPreset = presets.find((p) => p.name === settings.preset_name)
@@ -186,6 +212,7 @@ export default function AgentControl(props: { className?: string }) {
   }, [presets, settings.preset_name])
 
   const startCall = async () => {
+    if (isExitingRef.current) return
     logger.info('startCall')
 
     updateRoomStatus(EConnectionStatus.CONNECTING)
@@ -203,10 +230,12 @@ export default function AgentControl(props: { className?: string }) {
           debugMode: audioScenarioMode
         })
       )
-      await rtcHelper.retrieveToken(`${remote_rtc_uid}`, channel_name, false, {
-        devMode: isDevMode,
-        audioScenarioMode
-      })
+      await rtcHelper.retrieveToken(
+        `${remote_rtc_uid}`,
+        channel_name,
+        false,
+        devModeOptions
+      )
       // init rtm helper
       const rtmHelper = RTMHelper.getInstance()
       rtmHelper.initClient({
@@ -314,10 +343,7 @@ export default function AgentControl(props: { className?: string }) {
       await rtcHelper.join({
         channel: channel_name,
         userId: remote_rtc_uid,
-        options: {
-          devMode: isDevMode,
-          audioScenarioMode
-        }
+        options: devModeOptions
       })
       await rtcHelper.publishTracks()
 
@@ -382,80 +408,76 @@ export default function AgentControl(props: { className?: string }) {
     console.log('settings', settings)
     // updateAgentStatus(EConnectionStatus.CONNECTING)
     // updateRoomStatus(EConnectionStatus.CONNECTING)
-    try {
-      const targetSchema =
-        presets?.length > 0
-          ? localStartAgentPropertiesSchema
-          : localOpensourceStartAgentPropertiesSchema
-      const payload = targetSchema.parse({
-        ...settings,
-        // avatar releated
-        avatar: settings.avatar
-          ? {
-              enable: true,
-              vendor: settings.avatar.vendor,
-              params: {
-                agora_uid: `${avatar_rtc_uid}`,
-                avatar_id: settings.avatar.avatar_id
+    return runAgentStartAttempt({
+      start: async () => {
+        const targetSchema =
+          presets?.length > 0
+            ? localStartAgentPropertiesSchema
+            : localOpensourceStartAgentPropertiesSchema
+        const payload = targetSchema.parse({
+          ...settings,
+          // avatar releated
+          avatar: settings.avatar
+            ? {
+                enable: true,
+                vendor: settings.avatar.vendor,
+                params: {
+                  agora_uid: `${avatar_rtc_uid}`,
+                  avatar_id: settings.avatar.avatar_id
+                }
               }
-            }
-          : undefined,
-        channel: channel_name,
-        agent_rtc_uid: `${agent_rtc_uid}`,
-        remote_rtc_uids: [`${remote_rtc_uid}`]
-      })
-      logger.info({ payload }, 'startAgentService payload')
-      const abortController = new AbortController()
-      startAgentAbortControllerRef.current = abortController
-      const res = await startAgent(
-        payload,
-        { devMode: isDevMode, audioScenarioMode },
-        abortController
-      )
-      updateAgentId(res.agent_id)
-      startSession({
-        agentId: res.agent_id,
-        channel: channel_name,
-        presetName: settings.preset_name,
-        presetDisplayName:
-          selectedPreset?.preset.display_name || settings.preset_name,
-        callStartAt: Date.now()
-      })
+            : undefined,
+          channel: channel_name,
+          agent_rtc_uid: `${agent_rtc_uid}`,
+          remote_rtc_uids: [`${remote_rtc_uid}`]
+        })
+        logger.info({ payload }, 'startAgentService payload')
+        const abortController = new AbortController()
+        startAgentAbortControllerRef.current = abortController
+        const res = await startAgent(payload, devModeOptions, abortController)
+        updateAgentId(res.agent_id)
+        startSession({
+          agentId: res.agent_id,
+          channel: channel_name,
+          presetName: settings.preset_name,
+          presetDisplayName:
+            selectedPreset?.preset.display_name || settings.preset_name,
+          callStartAt: Date.now()
+        })
 
-      setConversationTimerEndTimestamp(Date.now() + conversationDuration * 1000)
-      setHeartBeat()
-    } catch (error: unknown) {
-      logger.error({ error }, 'startAgentService error')
-      console.log('startAgentService error', (error as Error).message)
-      setConversationTimerEndTimestamp(null)
-      if (
-        (error as Error).message === ERROR_MESSAGE.UNAUTHORIZED_ERROR_MESSAGE
-      ) {
-        logger.log('startAgentService unauthorizedError')
-        toast.error(tLogin('unauthorizedError'))
-        clearAndExit()
-        clearUserInfo()
-        return
-      }
-      if (error instanceof ResourceLimitError) {
-        if (error.code === ERROR_CODE.AVATAR_LIMIT_EXCEEDED) {
-          toast.error(tAgentAction('avatar-busy-error'))
+        setConversationTimerEndTimestamp(
+          Date.now() + conversationDuration * 1000
+        )
+        setHeartBeat()
+      },
+      onFailure: (error: unknown) => {
+        logger.error({ error }, 'startAgentService error')
+        console.log('startAgentService error', (error as Error).message)
+        setConversationTimerEndTimestamp(null)
+        if (
+          (error as Error).message === ERROR_MESSAGE.UNAUTHORIZED_ERROR_MESSAGE
+        ) {
+          logger.log('startAgentService unauthorizedError')
+          toast.error(tLogin('unauthorizedError'))
+          clearUserInfo()
+          return 'cleanup'
         }
-        clearAndExit()
-        return
-      }
-      if (error instanceof Error && error.name === 'AbortError') {
-        logger.info('startAgentService aborted')
-        updateAgentStatus(EConnectionStatus.DISCONNECTED)
-        updateRoomStatus(EConnectionStatus.DISCONNECTED)
-        clearHeartBeat()
-        return
-      }
-      toast.error(tAgent('startAgentError'))
-      updateAgentStatus(EConnectionStatus.DISCONNECTED)
-      updateRoomStatus(EConnectionStatus.DISCONNECTED)
-      clearHeartBeat()
-    }
+        if (error instanceof ResourceLimitError) {
+          if (error.code === ERROR_CODE.AVATAR_LIMIT_EXCEEDED) {
+            toast.error(tAgentAction('avatar-busy-error'))
+          }
+          return 'cleanup'
+        }
+        if (error instanceof Error && error.name === 'AbortError') {
+          logger.info('startAgentService aborted')
+          clearHeartBeat()
+          return isExitingRef.current ? 'ignore' : 'cleanup'
+        }
+        toast.error(tAgent('startAgentError'))
+        return 'cleanup'
+      },
+      cleanup: clearAndExit
+    })
   }
 
   const setHeartBeat = () => {
@@ -471,9 +493,7 @@ export default function AgentControl(props: { className?: string }) {
             channel_name,
             preset_name: settings.preset_name
           },
-          {
-            devMode: isDevMode
-          }
+          devModeOptions
         )
         logger.info({ res }, 'heartBeat')
       } catch (error) {
@@ -511,7 +531,7 @@ export default function AgentControl(props: { className?: string }) {
     clearHistory()
   }
 
-  const clearCommon = () => {
+  const clearCommon = async () => {
     // set conversation timer end timestamp to null
     setConversationTimerEndTimestamp(null)
     // abort start agent
@@ -520,40 +540,45 @@ export default function AgentControl(props: { className?: string }) {
     // clear heart beat and first start timeout
     clearHeartBeat()
     clearAgentConnectedTimeout()
-    // clear status
-    clearStatus()
     // clear event listeners
     // const rtcService = getRtcService()
     // rtcService.removeAllEventListeners()
-    // Detach Toolkit listeners before its RTC/RTM engines disconnect.
-    // Initialization can fail before a Toolkit instance is available.
+    // Detach the Toolkit before its RTC/RTM engines disconnect. Initialization
+    // can fail before a Toolkit instance exists, so cleanup must also handle it.
     if (ConversationalAIAPI.getState()) {
       ConversationalAIAPI.getInstance().destroy()
     }
     const rtcHelper = RTCHelper.getInstance()
     setAudioTrack(undefined)
     rtcHelper.removeAllEventListeners()
-    void rtcHelper.exitAndCleanup()
     const rtmHelper = RTMHelper.getInstance()
-    rtmHelper.exitAndCleanup()
     const legacyMessageHelper = LegacyMessageHelper.getInstance()
     legacyMessageHelper.removeAllEventListeners()
     legacyMessageHelper.messageService.cleanup()
+
+    await cleanupCallResources({
+      rtc: rtcHelper,
+      rtm: rtmHelper,
+      clearStatus,
+      onError: (resource, error) => {
+        logger.error({ resource, error }, 'clearCommon cleanup failed')
+      }
+    })
   }
 
   const clearAndExit = async () => {
+    if (isExitingRef.current) return
+    isExitingRef.current = true
+    setIsExiting(true)
     logger.info('clearAndExit')
-    clearCommon()
-
-    // force update channel name
-    const prevChannelName = channel_name
-    updateChannelName()
-
-    // // destroy rtc service
-    // await rtcService.destroy()
-
-    // stop last agent
     try {
+      await clearCommon()
+
+      // Start the next session only after both transports finish cleanup.
+      const prevChannelName = channel_name
+      updateChannelName()
+
+      // stop last agent
       logger.info('clearAndExit stop agent')
 
       if (agent_id) {
@@ -563,9 +588,7 @@ export default function AgentControl(props: { className?: string }) {
             channel_name: prevChannelName,
             preset_name: settings.preset_name
           },
-          {
-            devMode: isDevMode
-          }
+          devModeOptions
         )
       }
     } catch (error) {
@@ -578,7 +601,12 @@ export default function AgentControl(props: { className?: string }) {
         toast.error(tLogin('unauthorizedError'))
       }
     } finally {
-      await uploadLatencyReport()
+      try {
+        await uploadLatencyReport()
+      } finally {
+        isExitingRef.current = false
+        setIsExiting(false)
+      }
     }
   }
 
@@ -617,6 +645,7 @@ export default function AgentControl(props: { className?: string }) {
       startAgentAbortControllerRef.current = abortController
       const res = await startSip(
         payload as z.infer<typeof sipCallPayloadSchema>,
+        devModeOptions,
         abortController
       )
       updateSipStatus(ESipStatus.CALLING)
@@ -661,13 +690,17 @@ export default function AgentControl(props: { className?: string }) {
   }
 
   const startSipCall = async () => {
+    if (isExitingRef.current) return
     updateRoomStatus(EConnectionStatus.CONNECTING)
     // init rtc helper
     const rtcHelper = RTCHelper.getInstance()
     await rtcHelper.configureAudioScenario(DEFAULT_AUDIO_SCENARIO_MODE)
-    await rtcHelper.retrieveToken(`${remote_rtc_uid}`, channel_name, false, {
-      devMode: isDevMode
-    })
+    await rtcHelper.retrieveToken(
+      `${remote_rtc_uid}`,
+      channel_name,
+      false,
+      devModeOptions
+    )
     // init rtm helper
     const rtmHelper = RTMHelper.getInstance()
     rtmHelper.initClient({
@@ -723,15 +756,25 @@ export default function AgentControl(props: { className?: string }) {
   }
 
   const clearAndExitSip = async () => {
-    setShowCallingPage(false)
-    refShowCallingPage.current = false
-    updateSipStatus(ESipStatus.IDLE)
-    cleanUpSip()
-    startAgentAbortControllerRef?.current?.abort()
-    startAgentAbortControllerRef.current = null
-    clearCommon()
-    updateChannelName()
-    await uploadLatencyReport()
+    if (isExitingRef.current) return
+    isExitingRef.current = true
+    setIsExiting(true)
+    try {
+      setShowCallingPage(false)
+      refShowCallingPage.current = false
+      cleanUpSip()
+      startAgentAbortControllerRef.current?.abort()
+      startAgentAbortControllerRef.current = null
+      await clearCommon()
+      updateChannelName()
+    } finally {
+      try {
+        await uploadLatencyReport()
+      } finally {
+        isExitingRef.current = false
+        setIsExiting(false)
+      }
+    }
   }
 
   const onLocalTracksChanged = (tracks: IUserTracks) => {
@@ -922,9 +965,7 @@ export default function AgentControl(props: { className?: string }) {
         turns: session.turns,
         transcriptByTurnId: session.transcriptByTurnId
       })
-      const res = await reportAgentMetrics(payload, {
-        devMode: isDevMode
-      })
+      const res = await reportAgentMetrics(payload, devModeOptions)
       markUploaded(session.agentId, res.data?.uploaded_at)
     } catch (error) {
       logger.error({ error, agentId: session.agentId }, 'uploadLatencyReport')
@@ -934,20 +975,20 @@ export default function AgentControl(props: { className?: string }) {
   }
 
   const handleInterrupt = async () => {
-    console.info('handleInterrupt')
-    const conversationalAIAPI = ConversationalAIAPI.getInstance()
-    if (conversationalAIAPI) {
-      console.info('interrupting agent')
-      await conversationalAIAPI.interrupt(`${agent_rtc_uid}`)
-    } else {
-      console.error('ConversationalAIAPI instance not found')
-    }
+    await runActiveCallAction({
+      isExiting: () => isExitingRef.current,
+      isReady: () => Boolean(ConversationalAIAPI.getState()),
+      action: async () => {
+        console.info('interrupting agent')
+        await ConversationalAIAPI.getInstance().interrupt(`${agent_rtc_uid}`)
+      }
+    })
   }
 
   const isAgentCalling = useIsAgentCalling()
   const isAgentSipCalling = useIsAgentSipCalling()
 
-  const showActionMemo = isAgentCalling || isAgentSipCalling
+  const showActionMemo = isAgentCalling || isAgentSipCalling || isExiting
   // const showActionMemo = true
 
   const isFormValid = React.useMemo(() => {
@@ -973,15 +1014,18 @@ export default function AgentControl(props: { className?: string }) {
     // }
     const init = async () => {
       const rtcHelper = RTCHelper.getInstance()
-      await rtcHelper.retrieveToken(`${remote_rtc_uid}`, channel_name, false, {
-        devMode: isDevMode
-      })
+      await rtcHelper.retrieveToken(
+        `${remote_rtc_uid}`,
+        channel_name,
+        false,
+        devModeOptions
+      )
     }
 
     if (remote_rtc_uid) {
       init()
     }
-  }, [channel_name, remote_rtc_uid, isDevMode])
+  }, [channel_name, remote_rtc_uid, devModeOptions])
 
   // listen to global events
   React.useEffect(() => {
@@ -1008,7 +1052,7 @@ export default function AgentControl(props: { className?: string }) {
     if (agent_id && showCallingPage) {
       if (!sipStatusRef.current) {
         sipStatusRef.current = setInterval(() => {
-          getSipStatus({ agent_id }).then((v) => {
+          getSipStatus({ agent_id }, devModeOptions).then((v) => {
             if (v.data.state === ESipCallingStatus.HANGUP) {
               updateSipStatus(ESipStatus.DISCONNECTED)
             }
@@ -1038,7 +1082,7 @@ export default function AgentControl(props: { className?: string }) {
     return () => {
       cleanUpSip()
     }
-  }, [agent_id, showCallingPage, updateSipStatus, cleanUpSip])
+  }, [agent_id, showCallingPage, updateSipStatus, cleanUpSip, devModeOptions])
 
   React.useEffect(() => {
     if (sipStatus === ESipStatus.CONNECTED) {
@@ -1115,7 +1159,10 @@ export default function AgentControl(props: { className?: string }) {
             />
           ) : (
             <>
-              <AgentStateIndicator />
+              <AgentStateIndicator
+                disabled={isExiting}
+                onInterrupt={handleInterrupt}
+              />
 
               <div
                 className={cn(
@@ -1124,17 +1171,19 @@ export default function AgentControl(props: { className?: string }) {
                 )}
               >
                 <AgentActionSubtitle
+                  disabled={isExiting}
                   enabled={showSubtitle}
                   onClick={onClickSubtitle}
                 />
                 <AgentActionAudio
                   audioTrack={audioTrack}
+                  disabled={isExiting}
                   showInterrupt={agentState === EAgentState.SPEAKING}
                   onInterrupt={handleInterrupt}
                 />
-                {isSupportVision && <AgentUploadPicture />}
+                {isSupportVision && <AgentUploadPicture disabled={isExiting} />}
                 <AgentActionHangUp
-                  disabled={disableHangUp}
+                  disabled={disableHangUp || isExiting}
                   onClick={clearAndExit}
                 />
               </div>

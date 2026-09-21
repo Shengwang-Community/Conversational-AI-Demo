@@ -6,7 +6,11 @@ describe('dev mode state', () => {
     useGlobalStore.setState({
       isDevMode: false,
       isAinsEnabled: false,
-      audioScenarioMode: null
+      audioScenarioMode: null,
+      customAppId: '',
+      isCustomAppIdOverrideEnabled: false,
+      requestDomain: '',
+      xServiceNamespace: ''
     })
   })
 
@@ -33,6 +37,23 @@ describe('dev mode state', () => {
 
     expect(useGlobalStore.getState().isAinsEnabled).toBe(false)
     expect(useGlobalStore.getState().audioScenarioMode).toBeNull()
+  })
+
+  test('clears active request overrides on exit while remembering the App ID input', () => {
+    const store = useGlobalStore.getState()
+    store.setCustomAppId('app-123')
+    store.setCustomAppIdOverrideEnabled(true)
+    store.setRequestDomain('https://override.example.com')
+    store.setXServiceNamespace('tenant-a')
+
+    store.resetDevModeOverrides()
+
+    expect(useGlobalStore.getState()).toMatchObject({
+      customAppId: 'app-123',
+      isCustomAppIdOverrideEnabled: false,
+      requestDomain: '',
+      xServiceNamespace: ''
+    })
   })
 
   test('migrates legacy audio scenario fields to one mode', () => {

@@ -1,4 +1,3 @@
-// import _ from 'lodash'
 import { type NextRequest, NextResponse } from 'next/server'
 import z from 'zod'
 import { getEndpointFromNextRequest } from '@/app/api/_utils'
@@ -7,6 +6,8 @@ import {
   basicRemoteResSchema,
   REMOTE_CONVOAI_AGENT_PRESETS
 } from '@/constants'
+import { buildConvoaiRequestConfig, mergeConvoaiRequestConfig } from '@/lib/dev'
+
 import { logger } from '@/lib/logger'
 
 const remoteResSchema = basicRemoteResSchema.extend({
@@ -14,8 +15,15 @@ const remoteResSchema = basicRemoteResSchema.extend({
 })
 
 const getAgentPresets = async (request: NextRequest) => {
-  const { agentServer, devMode, endpoint, appId, authorizationHeader } =
-    getEndpointFromNextRequest(request)
+  const {
+    agentServer,
+    devMode,
+    endpoint,
+    appId,
+    authorizationHeader,
+    requestDomain,
+    requestHeaders
+  } = getEndpointFromNextRequest(request)
   if (!authorizationHeader) {
     return NextResponse.json(
       { code: 1, msg: 'Authorization header missing' },
@@ -24,17 +32,22 @@ const getAgentPresets = async (request: NextRequest) => {
   }
 
   const url = `${agentServer}${REMOTE_CONVOAI_AGENT_PRESETS}`
+  const devRequestConfig = buildConvoaiRequestConfig({
+    requestDomain,
+    xServiceNamespace: requestHeaders['X-Service-Namespace']
+  })
 
   logger.info(
     { agentServer, devMode, endpoint, url, appId },
     'getEndpointFromNextRequest'
   )
 
-  const res = await fetch(url + `?app_id=${appId}`, {
+  const res = await fetch(`${url}?app_id=${appId}`, {
     cache: 'no-store',
     method: 'POST',
     body: JSON.stringify({
-      app_id: appId
+      app_id: appId,
+      request_config: mergeConvoaiRequestConfig(undefined, devRequestConfig)
     }),
     headers: {
       ...(authorizationHeader && { Authorization: authorizationHeader })
@@ -55,10 +68,6 @@ export const revalidate = 60
 
 export async function GET(request: NextRequest) {
   const presets = await getAgentPresets(request)
-  // if (_.isArray(presets) && presets.length === 0) {
-  //   logger.info('No presets found, returning fallback data')
-  //   return NextResponse.json([agentPresetFallbackData])
-  // }
 
   return NextResponse.json(presets)
 }

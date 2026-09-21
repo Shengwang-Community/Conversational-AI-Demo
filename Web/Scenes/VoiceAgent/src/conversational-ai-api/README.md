@@ -55,6 +55,10 @@ if (ConversationalAIAPI.getState()) {
 // Disconnect and release your RTC/RTM clients after Toolkit is destroyed.
 ```
 
+The Demo waits for both RTC and RTM cleanup to settle before restoring the call controls, even if one cleanup fails. While exiting, it blocks repeated hangup, redial, interrupt, microphone selection, and image upload. Agent startup failures use the same cleanup path.
+
+The Agent API route retries once with `asr.keywords: null` only when the backend explicitly rejects `properties.asr.keywords`. Other failures are returned without retry.
+
 需要导出调试日志时，可开启 `enableLog` 并订阅 `DEBUG_LOG`，将日志交给应用的日志工具。
 
 ## Demo 保留的职责
@@ -72,3 +76,9 @@ if (ConversationalAIAPI.getState()) {
 `bun run test` 包含真实 npm Toolkit 包的状态、RTC/RTM 字幕、metrics 和销毁后重建验证；传输层使用模拟事件。另执行 `bun run typecheck` 和 `bun run build`，音频效果需要实际通话验证。
 
 [Toolkit 官方文档](https://github.com/AgoraIO-Conversational-AI/agent-client-toolkit-ts#readme)
+
+## Developer request overrides
+
+Open `?dev=true` and select the developer badge to configure a custom App ID, a ConvoAI base URL, or `X-Service-Namespace`. The App ID only takes effect after its override switch is enabled; toggling the switch refreshes the page, and an active badge identifies the override. Settings persist locally. Exiting developer mode clears active overrides and keeps the App ID text for later use.
+
+The same dev options accompany preset loading, token retrieval, Agent start/stop/ping, SIP start/status, and metrics reports. The server accepts query overrides only in developer mode. ConvoAI base URL and namespace settings are merged into `request_config.convoai`, preserving existing headers. Token generation continues through the configured environment's token endpoint with the effective App ID. RTC token caching follows the selected App ID and rejects stale prefetch results after a switch.

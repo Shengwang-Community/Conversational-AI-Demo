@@ -8,7 +8,46 @@ import {
 import { REMOTE_CONVOAI_AGENT_START } from '@/constants'
 import { startAgentRequestBodySchema } from '@/constants/api/schema/agent'
 import { DEFAULT_SERVER_AUDIO_SCENARIO } from '@/lib/audio-scenario'
+import { buildConvoaiRequestConfig, mergeConvoaiRequestConfig } from '@/lib/dev'
 import { logger } from '@/lib/logger'
+
+const INVALID_ASR_KEYWORDS_MESSAGE = 'Invalid value at properties.asr.keywords'
+
+function shouldRetryWithoutAsrKeywords(data: unknown) {
+  if (!data || typeof data !== 'object') {
+    return false
+  }
+
+  const { msg, detail } = data as Record<string, unknown>
+  return [msg, detail].some(
+    (value) =>
+      typeof value === 'string' && value.includes(INVALID_ASR_KEYWORDS_MESSAGE)
+  )
+}
+
+function clearAsrKeywords<
+  T extends {
+    convoai_body: {
+      properties: {
+        asr?: object
+      }
+    }
+  }
+>(body: T) {
+  return {
+    ...body,
+    convoai_body: {
+      ...body.convoai_body,
+      properties: {
+        ...body.convoai_body.properties,
+        asr: {
+          ...body.convoai_body.properties.asr,
+          keywords: null
+        }
+      }
+    }
+  }
+}
 
 // Start Agent
 export async function POST(request: NextRequest) {
@@ -19,10 +58,16 @@ export async function POST(request: NextRequest) {
     appId,
     authorizationHeader,
     appCert,
+    requestDomain,
+    requestHeaders,
     serverAudioScenario
   } = getEndpointFromNextRequest(request)
 
   const url = `${agentServer}${REMOTE_CONVOAI_AGENT_START}`
+  const devRequestConfig = buildConvoaiRequestConfig({
+    requestDomain,
+    xServiceNamespace: requestHeaders['X-Service-Namespace']
+  })
 
   logger.info(
     {
@@ -48,6 +93,7 @@ export async function POST(request: NextRequest) {
       app_feature,
       parameters,
       advanced_features,
+      request_config,
       ...properties
     } = reqBody
     const nextParameters = { ...(parameters || {}) }
@@ -72,6 +118,10 @@ export async function POST(request: NextRequest) {
       preset_name,
       preset_type,
       app_feature: nextAppFeature,
+      request_config: mergeConvoaiRequestConfig(
+        request_config,
+        devRequestConfig
+      ),
       convoai_body: {
         graph_id,
         preset,
@@ -108,18 +158,36 @@ export async function POST(request: NextRequest) {
 
     logger.info({ body }, 'REMOTE request body')
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authorizationHeader && { Authorization: authorizationHeader })
-      },
-      body: JSON.stringify(body)
-    })
+    const requestAgent = (requestBody: unknown) =>
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authorizationHeader && { Authorization: authorizationHeader })
+        },
+        body: JSON.stringify(requestBody)
+      })
 
-    console.log('start agent request body', JSON.stringify(body), 'url', url)
+    let finalBody = body
+    let res = await requestAgent(finalBody)
+    let data = await res.json()
 
-    const data = await res.json()
+    if (shouldRetryWithoutAsrKeywords(data)) {
+      finalBody = clearAsrKeywords(body)
+      logger.info(
+        { presetName: preset_name },
+        'Retrying agent start without ASR keywords'
+      )
+      res = await requestAgent(finalBody)
+      data = await res.json()
+    }
+
+    console.log(
+      'start agent request body',
+      JSON.stringify(finalBody),
+      'url',
+      url
+    )
 
     logger.info({ data }, 'REMOTE response')
 
