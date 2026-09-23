@@ -25,30 +25,31 @@ import io.agora.scene.convoai.api.CovAvatar
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.constant.VoiceprintMode
-import io.agora.scene.convoai.convoaiApi.AgentState
-import io.agora.scene.convoai.convoaiApi.ChatMessageType
-import io.agora.scene.convoai.convoaiApi.ConversationalAIAPIConfig
-import io.agora.scene.convoai.convoaiApi.ConversationalAIAPIError
-import io.agora.scene.convoai.convoaiApi.ConversationalAIAPIImpl
-import io.agora.scene.convoai.convoaiApi.IConversationalAIAPI
-import io.agora.scene.convoai.convoaiApi.IConversationalAIAPIEventHandler
-import io.agora.scene.convoai.convoaiApi.ImageMessage
-import io.agora.scene.convoai.convoaiApi.InterruptEvent
-import io.agora.scene.convoai.convoaiApi.MessageError
-import io.agora.scene.convoai.convoaiApi.MessageReceipt
-import io.agora.scene.convoai.convoaiApi.Metric
-import io.agora.scene.convoai.convoaiApi.ModuleError
-import io.agora.scene.convoai.convoaiApi.ModuleType
-import io.agora.scene.convoai.convoaiApi.Priority
-import io.agora.scene.convoai.convoaiApi.StateChangeEvent
-import io.agora.scene.convoai.convoaiApi.TextMessage
-import io.agora.scene.convoai.convoaiApi.Transcript
-import io.agora.scene.convoai.convoaiApi.TranscriptRenderMode
-import io.agora.scene.convoai.convoaiApi.TranscriptStatus
-import io.agora.scene.convoai.convoaiApi.TranscriptType
-import io.agora.scene.convoai.convoaiApi.Turn
-import io.agora.scene.convoai.convoaiApi.VoiceprintStateChangeEvent
+import io.agora.conversational.api.AgentState
+import io.agora.conversational.api.ChatMessageType
+import io.agora.conversational.api.ConversationalAIAPIConfig
+import io.agora.conversational.api.ConversationalAIAPIError
+import io.agora.conversational.api.ConversationalAIAPIImpl
+import io.agora.conversational.api.IConversationalAIAPI
+import io.agora.conversational.api.IConversationalAIAPIEventHandler
+import io.agora.conversational.api.ImageMessage
+import io.agora.conversational.api.InterruptEvent
+import io.agora.conversational.api.MessageError
+import io.agora.conversational.api.MessageReceipt
+import io.agora.conversational.api.Metric
+import io.agora.conversational.api.ModuleError
+import io.agora.conversational.api.ModuleType
+import io.agora.conversational.api.Priority
+import io.agora.conversational.api.StateChangeEvent
+import io.agora.conversational.api.TextMessage
+import io.agora.conversational.api.Transcript
+import io.agora.conversational.api.TranscriptRenderMode
+import io.agora.conversational.api.TranscriptStatus
+import io.agora.conversational.api.TranscriptType
+import io.agora.conversational.api.Turn
+import io.agora.conversational.api.VoiceprintStateChangeEvent
 import io.agora.scene.convoai.rtc.CovRtcManager
+import io.agora.scene.convoai.rtc.OnDeviceAins
 import io.agora.scene.convoai.rtm.CovRtmManager
 import io.agora.scene.convoai.rtm.IRtmManagerListener
 import io.agora.scene.convoai.ui.CovRenderMode
@@ -68,6 +69,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -549,7 +551,16 @@ class CovLivingViewModel : ViewModel() {
                     isDebug = DebugConfigSettings.isDebug,
                     debugAudioScenario = DebugConfigSettings.audioScenario
                 )
-                conversationalAIAPI?.loadAudioSettings(scenario)
+                val enableAins = OnDeviceAins.resolve(
+                    isDebugMode = DebugConfigSettings.isDebug,
+                    debugEnabled = DebugConfigSettings.isAinsEnabled
+                )
+                CovRtcManager.loadAudioSettings(
+                    enabled = enableAins,
+                    loadAudioSettings = {
+                        conversationalAIAPI?.loadAudioSettings(scenario, enableAins)
+                    }
+                )
 
                 // Join RTC channel
                 CovRtcManager.joinChannel(
@@ -705,6 +716,14 @@ class CovLivingViewModel : ViewModel() {
             override fun onError(err: Int) {
                 viewModelScope.launch(Dispatchers.Main) {
                     CovLogger.e(TAG, "RTC Error code: $err")
+                }
+            }
+
+            override fun onAudioRouteChanged(routing: Int) {
+                viewModelScope.launch(Dispatchers.Main) {
+                    // ConvoAI API reapplies its audio defaults for route changes; restore the Demo override last.
+                    yield()
+                    CovRtcManager.reapplyAins()
                 }
             }
 

@@ -1,29 +1,11 @@
-#!/bin/zsh
+#!/bin/bash
 set -euo pipefail
-
-WORKSPACE_PATH="${1:-Agent.xcworkspace}"
-SCHEME_NAME="${2:-Agent-cn}"
-DESTINATION_ID="${3:-}"
-ONLY_TESTING_ID="${4:-}"
-DERIVED_DATA_PATH="${5:-/tmp/AgentDerivedData}"
-
-if [[ -z "${DESTINATION_ID}" ]]; then
-  echo "[run-ut][error] destination UUID is required" >&2
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+runner="$script_dir/../../scripts/validate.py"
+if [[ $# -lt 4 || $# -gt 5 ]]; then
+  echo "usage: $0 <container> <scheme> <simulator_uuid> <only_testing> [derived_data]" >&2
   exit 2
 fi
-
-if [[ -z "${ONLY_TESTING_ID}" ]]; then
-  echo "[run-ut][error] only-testing identifier is required" >&2
-  exit 2
-fi
-
-echo "[run-ut] ensuring simulator is booted: ${DESTINATION_ID}"
-xcrun simctl boot "${DESTINATION_ID}" 2>/dev/null || true
-
-echo "[run-ut] workspace=${WORKSPACE_PATH} scheme=${SCHEME_NAME} only-testing=${ONLY_TESTING_ID}"
-xcodebuild test \
-  -workspace "${WORKSPACE_PATH}" \
-  -scheme "${SCHEME_NAME}" \
-  -destination "id=${DESTINATION_ID}" \
-  -only-testing:"${ONLY_TESTING_ID}" \
-  -derivedDataPath "${DERIVED_DATA_PATH}"
+args=(ios --container "$1" --scheme "$2" --destination "$3" --only-testing "$4")
+if [[ -n "${5:-}" ]]; then args+=(--derived-data "$5"); fi
+exec python3 "$runner" "${args[@]}"

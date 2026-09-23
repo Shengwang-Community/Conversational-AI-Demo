@@ -1,6 +1,6 @@
+import { EAgentState } from 'agora-agent-client-toolkit'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { EAgentState } from '@/conversational-ai-api/type'
 import { genAgentId, genChannelName, genUserId } from '@/lib/utils'
 import {
   EAgentRunningStatus,

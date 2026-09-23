@@ -8,7 +8,7 @@ import io.agora.rtm.RtmClient
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.constant.CovAgentManager
-import io.agora.scene.convoai.convoaiApi.*
+import io.agora.conversational.api.*
 import io.agora.scene.convoai.rtc.CovRtcManager
 import io.agora.scene.convoai.rtm.CovRtmManager
 import io.agora.scene.convoai.rtm.IRtmManagerListener

@@ -15,9 +15,9 @@
 
 ### 📱 1.1 环境准备
 
-- 最低兼容 Android 7.0（SDK API Level 24）
+- 最低兼容 Android 8.0（SDK API Level 26）
 - Android Studio 3.5 及以上版本
-- Android 7.0 及以上的手机设备
+- Android 8.0 及以上的手机设备
 
 ### ⚙️ 1.2 运行项目
 
@@ -103,7 +103,7 @@ AVATAR_PARAMS=<AVATAR 参数>
 | [api/](src/main/java/io/agora/scene/convoai/api)                                                          | 对话式 AI 引擎 RESTful 接口实现和数据模型 |
 | [animation/](src/main/java/io/agora/scene/convoai/animation)                                              | 智能体交互动画效果实现                 |
 | [constant/](src/main/java/io/agora/scene/convoai/constant)                                                | 常量和枚举类型定义                   |
-| [convoaiApi/](src/main/java/io/agora/scene/convoai/convoaiApi/)                                           | ConversationalAI组件          |
+| [ui/living/legacy/](src/main/java/io/agora/scene/convoai/ui/living/legacy/)                               | Demo 自有的旧版 v1 字幕兼容实现       |
 | [rtc/](src/main/java/io/agora/scene/convoai/rtc)                                                          | RTC 音视频通信相关实现               |
 | [rtm/](src/main/java/io/agora/scene/convoai/rtm)                                                          | RTM 实时消息相关实现                |
 | [ui/](src/main/java/io/agora/scene/convoai/ui)                                                            | UI 界面组件和交互页面                |
@@ -115,8 +115,24 @@ AVATAR_PARAMS=<AVATAR 参数>
 ### 2.2 实时字幕
 与对话式智能体进行实时互动时，你可能需要实时字幕显示你与智能体的对话内容。
 - 📖 查看我们的 [实时字幕功能指南](https://doc.shengwang.cn/doc/convoai/restful/user-guides/realtime-sub) 了解如何实现该功能
-- 实现该功能请参考 [convoaiApi 目录下的 README.md](src/main/java/io/agora/scene/convoai/convoaiApi/README.md) 进行集成
-- ⚠️ 开源字幕处理模块由 Kotlin 语言开发，如果您的项目是纯 Java 项目，您可以参考 Google 官方文档 [将 Kotlin 添加到现有应用](https://developer.android.com/kotlin/add-kotlin?hl=zh-cn) 把对应文件集成进您的项目
+- 精确依赖 `io.agora.agents:agora-agent-client-toolkit:2.10.1`，按 `Android/settings.gradle` 中的仓库顺序解析，优先使用阿里云镜像。版本配置位于 `Android/gradle/libs.versions.toml`，业务模块使用 `implementation libs.agora.agent.client.toolkit`。
+- 本地和 Jenkins 均由 Gradle 下载正式制品；无需准备 Toolkit 源码或设置本地路径。
+- Demo 将开发模式下的 AINS 选择传入 `loadAudioSettings(scenario, enableAins)`；默认关闭，Toolkit 和业务 RTC 层保持相同选择。
+- 验证命令（在 Android 目录执行）：`./gradlew lint test :app:assembleChinaDebug`。legacy v1 RTC stream renderer 保留在 `ui/living/legacy`。
+- `ui/living/legacy` 仅保留组件尚未提供的旧版 v1 RTC 流消息渲染能力，不作为新的组件集成入口
+
+### 2.3 Toolkit 发布包安装
+
+当前 Demo 已配置版本目录，在 `Android/scenes/convoai/build.gradle` 中使用：
+
+```groovy
+implementation libs.agora.agent.client.toolkit
+// 解析为 io.agora.agents:agora-agent-client-toolkit:2.10.1
+```
+
+在 Android Studio 中同步 Gradle 即可下载 AAR。该制品发布于 Maven Central；本 Demo 按 `settings.gradle` 优先从阿里云镜像解析。若镜像已同步新版本，但 Gradle 仍缓存此前的缺包结果，可在 `Android` 目录执行 `./gradlew :scenes:convoai:assembleDebug --refresh-dependencies`。
+
+升级时修改 `gradle/libs.versions.toml` 中的版本并同步验证；无需配置本地 Gradle 子项目、`includeBuild` 或手动复制 AAR。
 
 ## 📚 三、相关资源
 

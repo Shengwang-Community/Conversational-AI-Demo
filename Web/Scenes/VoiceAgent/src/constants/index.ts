@@ -2,6 +2,7 @@ export * from '@/constants/agent'
 export * from '@/constants/api'
 
 export const DEV_MODE_QUERY_KEY = 'dev'
+export const DEV_MODE_SERVER_AUDIO_SCENARIO_QUERY_KEY = 'serverAudioScenario'
 
 export const SSO_TOKEN = 'code'
 export const SSO_LOGIN_ID = 'loginId'

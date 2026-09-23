@@ -1,4 +1,6 @@
 interface:
-  display_name: "AC Execute"
-  short_description: "Execute frozen contracts and record evidence"
-  default_prompt: "Use $ac-execute to implement only the frozen contract scope and checks."
+  display_name: "ac-execute"
+  short_description: "implementing or fixing Android code with focused validation"
+  default_prompt: "Use $ac-execute as needed with Android/AGENTS.md and AI_WORKFLOW.md. Choose an approach that fits the task."
+policy:
+  allow_implicit_invocation: true

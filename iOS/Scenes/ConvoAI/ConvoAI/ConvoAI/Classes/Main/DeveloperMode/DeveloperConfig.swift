@@ -8,6 +8,7 @@
 import UIKit
 import SnapKit
 import Common
+import AgoraRtcKit
 
 public protocol DeveloperConfigDelegate: AnyObject {
     func devConfigDidOpenDevMode(_ config: DeveloperConfig)
@@ -16,6 +17,7 @@ public protocol DeveloperConfigDelegate: AnyObject {
     func devConfigDidCopy(_ config: DeveloperConfig)
     func devConfig(_ config: DeveloperConfig, sessionLimitDidChange enabled: Bool)
     func devConfig(_ config: DeveloperConfig, audioDumpDidChange enabled: Bool)
+    func devConfig(_ config: DeveloperConfig, ainsDidChange enabled: Bool)
     func devConfig(_ config: DeveloperConfig, metricsDidChange enabled: Bool)
     func devConfig(_ config: DeveloperConfig, sdkParamsDidChange params: String)
 }
@@ -27,6 +29,7 @@ public extension DeveloperConfigDelegate {
     func devConfigDidCopy(_ config: DeveloperConfig) {}
     func devConfig(_ config: DeveloperConfig, sessionLimitDidChange enabled: Bool) {}
     func devConfig(_ config: DeveloperConfig, audioDumpDidChange enabled: Bool) {}
+    func devConfig(_ config: DeveloperConfig, ainsDidChange enabled: Bool) {}
     func devConfig(_ config: DeveloperConfig, metricsDidChange enabled: Bool) {}
     func devConfig(_ config: DeveloperConfig, sdkParamsDidChange params: String) {}
 }
@@ -60,12 +63,61 @@ public class DeveloperConfig {
     
     public var defaultHost: String = AppContext.shared.baseServerUrl
     public var defaultAppId: String = AppContext.shared.appId
+    // Keep the identity used for a dynamically selected App ID.
+    var selectedEnvironment: DeveloperEnvironment?
+    var selectedVID: String?
     
     public var convoaiServerConfig: String? = nil
     public var graphId: String? = nil
     public var sdkParams: [String] = []
     public var metrics: Bool = false
     public var audioDump: Bool = false
+    public var ainsEnabled: Bool = false
+
+    // Session overrides are kept in memory and cleared when developer mode closes.
+    var clientAudioScenario: Int?
+    var serverAudioScenario: String?
+    var requestBaseURL = ""
+    var requestNamespace = ""
+
+    func resolvedClientAudioScenario(fallback: AgoraAudioScenario) -> AgoraAudioScenario {
+        guard isDeveloperMode,
+              let rawValue = clientAudioScenario,
+              let scenario = AgoraAudioScenario(rawValue: rawValue) else { return fallback }
+        return scenario
+    }
+
+    func applyingStartOverrides(to parameters: [String: Any]) -> [String: Any] {
+        guard isDeveloperMode else { return parameters }
+        var result = parameters
+        if let scenario = serverAudioScenario {
+            var body = result["convoai_body"] as? [String: Any] ?? [:]
+            var properties = body["properties"] as? [String: Any] ?? [:]
+            var audioParameters = properties["parameters"] as? [String: Any] ?? [:]
+            audioParameters["audio_scenario"] = scenario
+            properties["parameters"] = audioParameters
+            body["properties"] = properties
+            result["convoai_body"] = body
+        }
+
+        let baseURL = requestBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let namespace = requestNamespace.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !baseURL.isEmpty || !namespace.isEmpty {
+            var requestConfig = result["request_config"] as? [String: Any] ?? [:]
+            var convoai = requestConfig["convoai"] as? [String: Any] ?? [:]
+            if !baseURL.isEmpty {
+                convoai["base_url"] = baseURL
+            }
+            if !namespace.isEmpty {
+                var headers = convoai["headers"] as? [String: Any] ?? [:]
+                headers["X-Service-Namespace"] = namespace
+                convoai["headers"] = headers
+            }
+            requestConfig["convoai"] = convoai
+            result["request_config"] = requestConfig
+        }
+        return result
+    }
     
     public lazy var devModeButton: UIButton = {
         let button = DebugButton(type: .custom)
@@ -187,6 +239,12 @@ public class DeveloperConfig {
         }
     }
 
+    public func notifyAinsChanged(enabled: Bool) {
+        for delegate in delegates.allObjects {
+            (delegate as? DeveloperConfigDelegate)?.devConfig(self, ainsDidChange: enabled)
+        }
+    }
+
     public func notifyMetricsChanged(enabled: Bool) {
         for delegate in delegates.allObjects {
             (delegate as? DeveloperConfigDelegate)?.devConfig(self, metricsDidChange: enabled)
@@ -215,8 +273,16 @@ public class DeveloperConfig {
     
     public func resetDevParams() {
         isDeveloperMode = false
+        selectedEnvironment = nil
+        selectedVID = nil
+        clientAudioScenario = nil
+        serverAudioScenario = nil
+        requestBaseURL = ""
+        requestNamespace = ""
         self.graphId = nil
         self.metrics = false
+        self.audioDump = false
+        self.ainsEnabled = false
         self.sdkParams.removeAll()
         self.convoaiServerConfig = nil
         

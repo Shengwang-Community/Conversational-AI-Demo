@@ -1,6 +1,6 @@
 {
   "name": "convoai-v2",
-  "version": "1.8.5",
+  "version": "2.3.1",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -8,10 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit --incremental false"
   },
   "dependencies": {
-    "@agora-js/report": "^4.24.0",
+    "@agora-js/report": "^4.24.8",
     "@autoform/react": "^4.0.0",
     "@autoform/zod": "^4.0.0",
     "@hookform/resolvers": "^5.2.1",
@@ -34,12 +36,14 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@redux-devtools/extension": "^3.3.0",
     "@splinetool/react-spline": "^4.1.0",
+    "@splinetool/runtime": "1.12.98",
     "@tsparticles/engine": "^3.9.1",
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.9.1",
     "@types/mdx": "^2.0.13",
+    "agora-agent-client-toolkit": "2.10.0",
     "agora-conversational-ai-denoiser": "^1.0.0-beta2",
-    "agora-rtc-sdk-ng": "^4.24.0",
+    "agora-rtc-sdk-ng": "^4.24.8",
     "agora-rtm": "^2.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -77,6 +81,7 @@
     "@biomejs/biome": "2.2.4",
     "@tailwindcss/postcss": "^4.1.13",
     "@tailwindcss/typography": "^0.5.16",
+    "@types/bun": "1.4.2",
     "@types/js-cookie": "^3.0.6",
     "@types/lodash": "^4.17.20",
     "@types/node": "^20.19.13",
@@ -86,5 +91,6 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2"
-  }
+  },
+  "packageManager": "bun@1.4.0"
 }

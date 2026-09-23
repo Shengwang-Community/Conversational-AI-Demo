@@ -45,3 +45,6 @@ next-env.d.ts
 certificates
 
 packages/*
+
+# Reproducible Web dependencies (overrides the repository-wide *.lock rule).
+!/bun.lock

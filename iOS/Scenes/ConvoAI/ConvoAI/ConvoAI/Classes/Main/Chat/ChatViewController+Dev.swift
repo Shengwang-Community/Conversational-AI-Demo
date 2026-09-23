@@ -30,6 +30,10 @@ extension ChatViewController: DeveloperConfigDelegate {
         DeveloperConfig.shared.sdkParams.forEach { p in
             self.rtcManager.getRtcEntine().setParameters(p)
         }
+        self.rtcManager.setAinsEnabled(OnDeviceAins.resolve(
+            isDeveloperMode: DeveloperConfig.shared.isDeveloperMode,
+            debugEnabled: DeveloperConfig.shared.ainsEnabled
+        ))
     }
     
     public func devConfigDidOpenDevMode(_ config: DeveloperConfig) {
@@ -39,6 +43,8 @@ extension ChatViewController: DeveloperConfigDelegate {
     
     public func devConfigDidCloseDevMode(_ config: DeveloperConfig) {
         self.sendMessageButton.isHidden = true
+        self.rtcManager.enableAudioDump(enabled: false)
+        self.rtcManager.setAinsEnabled(false)
     }
     
     public func devConfigDidSwitchServer(_ config: DeveloperConfig) {
@@ -55,7 +61,7 @@ extension ChatViewController: DeveloperConfigDelegate {
             .joined(separator: "\n")
         let pasteboard = UIPasteboard.general
         pasteboard.string = messageContents
-        SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.DevMode.copyQuestion)
+        SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.DevMode.copied)
     }
 
     public func devConfig(_ config: DeveloperConfig, sessionLimitDidChange enabled: Bool) {
@@ -66,11 +72,16 @@ extension ChatViewController: DeveloperConfigDelegate {
         self.rtcManager.enableAudioDump(enabled: enabled)
     }
 
+    public func devConfig(_ config: DeveloperConfig, ainsDidChange enabled: Bool) {
+        self.rtcManager.setAinsEnabled(enabled)
+    }
+
     public func devConfig(_ config: DeveloperConfig, metricsDidChange enabled: Bool) {
     }
 
     public func devConfig(_ config: DeveloperConfig, sdkParamsDidChange params: String) {
         self.rtcManager.getRtcEntine().setParameters(params)
+        self.rtcManager.reapplyAins()
     }
     
     @objc func onClickLogo() {

@@ -1,4 +1,6 @@
 interface:
-  display_name: "AC Plan"
-  short_description: "Plan and freeze workflow execution contracts"
-  default_prompt: "Use $ac-plan to create and freeze an Execution Contract for this workflow task."
+  display_name: "ac-plan"
+  short_description: "an Android task benefits from an explicit plan or tradeoff analysis"
+  default_prompt: "Use $ac-plan as needed with Android/AGENTS.md and AI_WORKFLOW.md. Choose an approach that fits the task."
+policy:
+  allow_implicit_invocation: true

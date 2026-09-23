@@ -10,6 +10,7 @@ import SnapKit
 import Common
 
 public class DeveloperBasicSettingView: UIView  {
+    public let convoaiHostValueLabel = UILabel()
     private let appVersionLabel = UILabel()
     public let appVersionValueLabel = UILabel()
     private let bundleIdLabel = UILabel()
@@ -54,41 +55,54 @@ public class DeveloperBasicSettingView: UIView  {
         stackView.spacing = 16
         stackView.alignment = .fill
         stackView.distribution = .fill
-        addSubview(stackView)
+        let scrollView = UIScrollView()
+        addSubview(scrollView)
+        scrollView.snp.makeConstraints { $0.edges.equalToSuperview() }
+        scrollView.addSubview(stackView)
         stackView.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(20)
+            make.edges.equalTo(scrollView.contentLayoutGuide).inset(20)
+            make.width.equalTo(scrollView.frameLayoutGuide).offset(-40)
         }
         
         // App Version
-        appVersionLabel.text = "App Version"
+        appVersionLabel.text = ResourceManager.L10n.DevMode.appVersion
         appVersionLabel.textColor = .white
         appVersionLabel.font = UIFont.systemFont(ofSize: 16)
         appVersionValueLabel.textColor = .lightGray
         appVersionValueLabel.font = UIFont.systemFont(ofSize: 16)
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
         let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
-        appVersionValueLabel.text = "\(appVersion)(\(buildVersion))"
+        appVersionValueLabel.text = "\(appVersion) (\(buildVersion))"
         let appStack = UIStackView(arrangedSubviews: [appVersionLabel, appVersionValueLabel])
         appStack.axis = .horizontal
         appStack.distribution = .equalSpacing
         stackView.addArrangedSubview(appStack)
         appStack.snp.makeConstraints { make in
-            make.height.equalTo(44)
+            make.height.greaterThanOrEqualTo(44)
         }
         
         // Bundle ID
-        bundleIdLabel.text = "Bundle ID"
+        bundleIdLabel.text = ResourceManager.L10n.DevMode.bundleId
         bundleIdLabel.textColor = .white
         bundleIdLabel.font = UIFont.systemFont(ofSize: 16)
         bundleIdValueLabel.textColor = .lightGray
         bundleIdValueLabel.font = UIFont.systemFont(ofSize: 16)
-        bundleIdValueLabel.text = Bundle.main.bundleIdentifier ?? "Unknown"
+        bundleIdValueLabel.text = Bundle.main.bundleIdentifier ?? ResourceManager.L10n.DevMode.unavailable
         let bundleIdStack = UIStackView(arrangedSubviews: [bundleIdLabel, bundleIdValueLabel])
+        bundleIdValueLabel.numberOfLines = 1
+        bundleIdValueLabel.textAlignment = .right
+        bundleIdValueLabel.adjustsFontSizeToFitWidth = true
+        bundleIdValueLabel.minimumScaleFactor = 0.8
+        bundleIdLabel.setContentHuggingPriority(.required, for: .horizontal)
+        bundleIdLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        bundleIdValueLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        bundleIdStack.spacing = 8
         bundleIdStack.axis = .horizontal
-        bundleIdStack.distribution = .equalSpacing
+        bundleIdStack.alignment = .center
+        bundleIdStack.distribution = .fill
         stackView.addArrangedSubview(bundleIdStack)
         bundleIdStack.snp.makeConstraints { make in
-            make.height.equalTo(44)
+            make.height.greaterThanOrEqualTo(44)
         }
         
         // RTC Version
@@ -97,13 +111,13 @@ public class DeveloperBasicSettingView: UIView  {
         rtcVersionLabel.font = UIFont.systemFont(ofSize: 16)
         rtcVersionValueLabel.textColor = .lightGray
         rtcVersionValueLabel.font = UIFont.systemFont(ofSize: 16)
-        rtcVersionValueLabel.text = "4.5.1"
+        rtcVersionValueLabel.text = ResourceManager.L10n.DevMode.unavailable
         let rtcStack = UIStackView(arrangedSubviews: [rtcVersionLabel, rtcVersionValueLabel])
         rtcStack.axis = .horizontal
         rtcStack.distribution = .equalSpacing
         stackView.addArrangedSubview(rtcStack)
         rtcStack.snp.makeConstraints { make in
-            make.height.equalTo(44)
+            make.height.greaterThanOrEqualTo(44)
         }
         // RTM Version - Vertical Layout with StackView
         rtmTitleLabel.text = ResourceManager.L10n.DevMode.rtm
@@ -111,7 +125,7 @@ public class DeveloperBasicSettingView: UIView  {
         rtmTitleLabel.font = UIFont.systemFont(ofSize: 16)
         rtmTitleLabel.numberOfLines = 0
         
-        rtmVersionValueLabel.text = "2.2.3"
+        rtmVersionValueLabel.text = ResourceManager.L10n.DevMode.unavailable
         rtmVersionValueLabel.textColor = UIColor.themColor(named: "ai_icontext1")
         rtmVersionValueLabel.font = UIFont.systemFont(ofSize: 14)
         rtmVersionValueLabel.numberOfLines = 0
@@ -136,7 +150,7 @@ public class DeveloperBasicSettingView: UIView  {
         envTitleLabel.numberOfLines = 0
         envContainerView.addSubview(envTitleLabel)
         
-        envValueLabel.text = "Prod"
+        envValueLabel.text = ResourceManager.L10n.DevMode.unavailable
         envValueLabel.textColor = UIColor.themColor(named: "ai_icontext1")
         envValueLabel.font = UIFont.systemFont(ofSize: 14)
         envValueLabel.numberOfLines = 0
@@ -164,6 +178,7 @@ public class DeveloperBasicSettingView: UIView  {
         envValueLabel.snp.makeConstraints { make in
             make.centerY.equalTo(envTitleLabel)
             make.left.equalTo(envTitleLabel.snp.right).offset(8)
+            make.right.lessThanOrEqualTo(envArrowImageView.snp.left).offset(-12)
         }
         
         envDetailLabel.snp.makeConstraints { make in
@@ -190,13 +205,13 @@ public class DeveloperBasicSettingView: UIView  {
         // AppID Selection - Vertical Layout
         stackView.addArrangedSubview(appIdContainerView)
         
-        appIdTitleLabel.text = "VID-AppID"
+        appIdTitleLabel.text = ResourceManager.L10n.DevMode.appId
         appIdTitleLabel.textColor = .white
         appIdTitleLabel.font = UIFont.systemFont(ofSize: 16)
         appIdTitleLabel.numberOfLines = 0
         appIdContainerView.addSubview(appIdTitleLabel)
         
-        appIdValueLabel.text = "Select App ID"
+        appIdValueLabel.text = ResourceManager.L10n.DevMode.notSelected
         appIdValueLabel.textColor = UIColor.themColor(named: "ai_icontext1")
         appIdValueLabel.font = UIFont.systemFont(ofSize: 14)
         appIdValueLabel.numberOfLines = 0
@@ -236,5 +251,18 @@ public class DeveloperBasicSettingView: UIView  {
         appIdContainerView.snp.makeConstraints { make in
             make.height.greaterThanOrEqualTo(60)
         }
+
+        let hostLabel = UILabel()
+        hostLabel.text = ResourceManager.L10n.DevMode.convoaiHost
+        hostLabel.textColor = .white
+        hostLabel.font = .systemFont(ofSize: 16)
+        hostLabel.numberOfLines = 0
+        convoaiHostValueLabel.textColor = UIColor.themColor(named: "ai_icontext1")
+        convoaiHostValueLabel.font = .systemFont(ofSize: 14)
+        convoaiHostValueLabel.numberOfLines = 0
+        let hostStack = UIStackView(arrangedSubviews: [hostLabel, convoaiHostValueLabel])
+        hostStack.axis = .vertical
+        hostStack.spacing = 8
+        stackView.addArrangedSubview(hostStack)
     }
 }

@@ -13,15 +13,7 @@ struct VIDAppIDModel {
     var selected: Bool = false
     
     var displayTitle: String {
-        return "\(vid)-\(maskedAppId)"
-    }
-    
-    var maskedAppId: String {
-        guard appId.count > 8 else { return appId }
-        let startIndex = appId.index(appId.startIndex, offsetBy: 4)
-        let endIndex = appId.index(appId.endIndex, offsetBy: -4)
-        let masked = String(appId[..<startIndex]) + "***" + String(appId[endIndex...])
-        return masked
+        return vid.isEmpty ? appId : "\(appId)(\(vid))"
     }
 }
 
@@ -53,17 +45,24 @@ public class DeveloperModeViewController: UIViewController {
     private let kHost = "toolbox_server_host"
     private let kAppId = "rtc_app_id"
     private let kEnvName = "env_name"
-    private var selectedEnvironmentIndex: Int = 0 {
+    private var selectedEnvironmentIndex: Int = -1 {
         didSet {
             let environments = AppContext.shared.environments
-            let env = environments[selectedEnvironmentIndex]
-            basicSettingView.envValueLabel.text = env[kEnvName] ?? ""
-            basicSettingView.envDetailLabel.text = env[kHost] ?? ""
+            if environments.indices.contains(selectedEnvironmentIndex) {
+                let env = environments[selectedEnvironmentIndex]
+                basicSettingView.envValueLabel.text = env[kEnvName] ?? ""
+                basicSettingView.envDetailLabel.text = env[kHost] ?? ""
+            } else {
+                basicSettingView.envValueLabel.text = ResourceManager.L10n.DevMode.unavailable
+                basicSettingView.envDetailLabel.text = AppContext.shared.baseServerUrl
+            }
             basicSettingView.envMenuButton.menu = updateEnvironmentMenu()
             basicSettingView.envMenuButton.showsMenuAsPrimaryAction = true
         }
     }
     private var availableVIDs: [VIDAppIDModel] = []
+    private var appIdRequestGeneration = 0
+    private var isEnvironmentSelectionPending = false
 
     override public func viewDidLoad() {
         super.viewDidLoad()
@@ -97,6 +96,8 @@ public class DeveloperModeViewController: UIViewController {
         titleLabel.text = ResourceManager.L10n.DevMode.title
         titleLabel.textColor = .white
         titleLabel.font = UIFont.boldSystemFont(ofSize: 18)
+        titleLabel.numberOfLines = 2
+        titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         headerView.addSubview(titleLabel)
         titleLabel.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
@@ -111,6 +112,9 @@ public class DeveloperModeViewController: UIViewController {
         exitButton.clipsToBounds = true
         exitButton.addTarget(self, action: #selector(onExit), for: .touchUpInside)
         headerView.addSubview(exitButton)
+        titleLabel.snp.makeConstraints { make in
+            make.right.lessThanOrEqualTo(exitButton.snp.left).offset(-8)
+        }
         exitButton.snp.makeConstraints { make in
             make.right.equalToSuperview().offset(-12)
             make.centerY.equalToSuperview()
@@ -160,7 +164,7 @@ public class DeveloperModeViewController: UIViewController {
         
         contentContainer.addSubview(basicSettingView)
         basicSettingView.snp.makeConstraints { make in
-            make.top.left.right.equalToSuperview()
+            make.edges.equalToSuperview()
         }
         
         contentContainer.addSubview(agentSettingView)
@@ -174,6 +178,7 @@ public class DeveloperModeViewController: UIViewController {
         switchTab(.agent)
     }
     private func switchTab(_ tab: TabType) {
+        view.endEditing(true)
         currentTab = tab
         // Indicator animation
         let leftOffset = tab == .basic ? 0 : view.frame.width / 2
@@ -201,6 +206,7 @@ public class DeveloperModeViewController: UIViewController {
     }
     
     private func dismiss(endDevMode: Bool) {
+        view.endEditing(true)
         self.dismiss(animated: true)
         isDebugPageShow = false
         if endDevMode {
@@ -224,32 +230,46 @@ public class DeveloperModeViewController: UIViewController {
         // Set App Version
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
-        basicSettingView.appVersionValueLabel.text = "\(version)(\(build))"
+        basicSettingView.appVersionValueLabel.text = "\(version) (\(build))"
         
         basicSettingView.rtcVersionValueLabel.text = AgoraRtcEngineKit.getSdkVersion()
         basicSettingView.rtmVersionValueLabel.text = AgoraRtmClientKit.getVersion()
+        let host = AppContext.stateManager().targetServer
+        basicSettingView.convoaiHostValueLabel.text = host.isEmpty ? ResourceManager.L10n.DevMode.unavailable : host
+        agentSettingView.requestBaseURLTextField.text = config.requestBaseURL
+        agentSettingView.requestNamespaceTextField.text = config.requestNamespace
+        updateAudioScenarioMenus()
         
         agentSettingView.sdkParamsTextField.text = config.sdkParams.joined(separator: "|")
         agentSettingView.convoaiTextField.text = config.convoaiServerConfig
         agentSettingView.graphTextField.text = config.graphId
         agentSettingView.sessionLimitSwitch.isOn = config.getSessionLimit()
         agentSettingView.audioDumpSwitch.isOn = config.audioDump
+        agentSettingView.ainsSwitch.isOn = config.ainsEnabled
         agentSettingView.metricsSwitch.isOn = config.metrics
         
-        // Find matching environment and update UI
-        for (index, envi) in AppContext.shared.environments.enumerated() {
-            let host = envi[kHost]
-            if host == AppContext.shared.baseServerUrl {
-                selectedEnvironmentIndex = index
-                break
-            }
-        }
-        self.basicSettingView.appIdValueLabel.text = AppContext.shared.appId
+        selectedEnvironmentIndex = currentEnvironmentIndex() ?? -1
+        basicSettingView.appIdValueLabel.text = VIDAppIDModel(
+            vid: config.selectedVID ?? "",
+            appId: AppContext.shared.appId
+        ).displayTitle
         reloadAppIdList()
+    }
+
+    private func currentEnvironmentIndex() -> Int? {
+        DeveloperEnvironment.currentIndex(
+            in: AppContext.shared.environments,
+            host: AppContext.shared.baseServerUrl,
+            appId: AppContext.shared.appId,
+            selection: config.selectedEnvironment
+        )
     }
     
     private func setupActions() {
+        agentSettingView.requestBaseURLTextField.addTarget(self, action: #selector(onRequestBaseURLEndEditing(_:)), for: .editingDidEnd)
+        agentSettingView.requestNamespaceTextField.addTarget(self, action: #selector(onRequestNamespaceEndEditing(_:)), for: .editingDidEnd)
         agentSettingView.audioDumpSwitch.addTarget(self, action: #selector(onClickAudioDump(_:)), for: .valueChanged)
+        agentSettingView.ainsSwitch.addTarget(self, action: #selector(onClickAins(_:)), for: .valueChanged)
         agentSettingView.metricsSwitch.addTarget(self, action: #selector(onClickMetricsButton(_:)), for: .valueChanged)
         agentSettingView.sessionLimitSwitch.addTarget(self, action: #selector(onClickSessionLimit(_:)), for: .valueChanged)
         agentSettingView.copyButton.addTarget(self, action: #selector(onClickCopy), for: .touchUpInside)
@@ -266,107 +286,134 @@ public class DeveloperModeViewController: UIViewController {
             let isSelected = index == selectedEnvironmentIndex
             let displayTitle = isSelected ? "\(title) ✅" : title
             return UIAction(title: displayTitle) { [weak self] _ in
-                self?.selectedEnvironmentIndex = index
-                self?.reloadAppIdList {
-                    guard let self = self else { return }
-                    if self.availableVIDs.count == 1 {
-                        self.availableVIDs[0].selected = true
-                        self.switchEnvironment()
-                    }
+                guard let self = self else { return }
+                if index != self.selectedEnvironmentIndex {
+                    self.isEnvironmentSelectionPending = true
+                    self.selectedEnvironmentIndex = index
+                    self.basicSettingView.appIdValueLabel.text = ResourceManager.L10n.DevMode.notSelected
                 }
+                self.reloadAppIdList()
             }
         }
         return UIMenu(children: actions)
     }
     // reload current and selectable app id list
-    private func reloadAppIdList(completion: (() -> Void)? = nil) {
+    private func reloadAppIdList() {
+        appIdRequestGeneration += 1
+        let requestGeneration = appIdRequestGeneration
+        let requestedEnvironmentIndex = selectedEnvironmentIndex
+        availableVIDs.removeAll()
+        updateAvailableVIDMenu()
+
         let environments = AppContext.shared.environments
+        guard environments.indices.contains(selectedEnvironmentIndex) else { return }
         let selectedEnv = environments[selectedEnvironmentIndex]
         guard let hostUrl = selectedEnv[kHost],
-              let envName = selectedEnv[kEnvName]
-        else {
-            completion?()
-            return
-        }
-        var envAvailableAppIds: [String] = []
-        for env in environments {
-            if let envHost = env[kHost], envHost == hostUrl,
-               let envAppId = env[kAppId], !envAppId.isEmpty {
-                if !envAvailableAppIds.contains(envAppId) {
-                    envAvailableAppIds.append(envAppId)
-                }
-            }
-        }
+              let envName = selectedEnv[kEnvName] else { return }
         
         // Use env_name from config to determine env tag for dynamic configs
         // staging and prod do not support dynamically fetching app_id_vid_List yet
-        var env: String = ""
-        if envName.hasPrefix("dev(") {
+        let baseEnvName = envName
+            .split(separator: "(", maxSplits: 1)
+            .first
+            .map(String.init)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased() ?? ""
+        let env: String
+        switch baseEnvName {
+        case "dev":
             env = "dev"
-        } else if envName.hasPrefix("testing(") {
+        case "testing":
             env = "testing"
-        } else if envName.hasPrefix("labtesting(") {
+        case "labtesting", "lab_testing":
             env = "lab_testing"
-        } else if envName.hasPrefix("staging(") || envName.hasPrefix("prod(") {
+        default:
             env = ""
         }
         if env.isEmpty {
-            let defaultAppId = selectedEnv[kAppId] ?? AppContext.shared.appId
+            guard let defaultAppId = selectedEnv[kAppId], !defaultAppId.isEmpty else { return }
             // Create a default VID model with empty VID
-            let defaultModel = VIDAppIDModel(vid: "default", appId: defaultAppId, selected: false)
+            let isCurrentAppId = !isEnvironmentSelectionPending &&
+                hostUrl == AppContext.shared.baseServerUrl &&
+                defaultAppId == AppContext.shared.appId
+            let defaultModel = VIDAppIDModel(
+                vid: "",
+                appId: defaultAppId,
+                selected: isCurrentAppId
+            )
             self.availableVIDs = [defaultModel]
             self.updateAvailableVIDMenu()
-            completion?()
+            // Only static environments switch immediately. Dynamic ones require a choice,
+            // even when the server returns a single App ID, as on Android.
+            if isEnvironmentSelectionPending {
+                selectAppId(at: 0)
+            }
         } else {
             // Use the new API to fetch environment dynamic configs
             let toolBoxManager = ToolBoxApiManager()
             toolBoxManager.getEnvDynamicConfigs(hostUrl: hostUrl, env: env, success: { [weak self] response in
-                    guard let self = self else {
-                        completion?()
+                    guard let self = self,
+                          requestGeneration == self.appIdRequestGeneration,
+                          requestedEnvironmentIndex == self.selectedEnvironmentIndex else {
                         return
                     }
-                    // Parse the response to extract available VIDs and AppIDs
-                    if let data = response["data"] as? [String: Any],
+                    // The selected environment's response is the complete list.
+                    // Bundled App IDs sharing this host may belong to another environment.
+                    if response["code"] as? Int == 0,
+                       let data = response["data"] as? [String: Any],
                        let appIdVidList = data["app_id_vid_List"] as? [[String: Any]] {
                         // Extract VID and AppID pairs from the list
                         let vidModels = appIdVidList.compactMap { item -> VIDAppIDModel? in
                             guard let appId = item["app_id"] as? String,
+                                  !appId.isEmpty,
                                   let vid = item["vid"] as? String else {
                                 return nil
                             }
-                            return VIDAppIDModel(vid: vid, appId: appId, selected: false)
+                            let isCurrentAppId = !self.isEnvironmentSelectionPending &&
+                                hostUrl == AppContext.shared.baseServerUrl &&
+                                appId == AppContext.shared.appId
+                            return VIDAppIDModel(
+                                vid: vid,
+                                appId: appId,
+                                selected: isCurrentAppId
+                            )
                         }
                         self.availableVIDs = vidModels
                         
-                        // Add appIds from envAvailableAppIds that don't exist in availableVIDs
-                        for appId in envAvailableAppIds {
-                            if !self.availableVIDs.contains(where: { $0.appId == appId }) {
-                                let defaultModel = VIDAppIDModel(vid: "default", appId: appId, selected: false)
-                                self.availableVIDs.append(defaultModel)
-                            }
-                        }
-                        
                         self.updateAvailableVIDMenu()
-                        completion?()
                     } else {
-                        completion?()
+                        SVProgressHUD.showError(withStatus: ResourceManager.L10n.DevMode.loadAppIdsFailed)
                     }
-                }, failure: { error in
+                }, failure: { [weak self] error in
+                    guard let self = self,
+                          requestGeneration == self.appIdRequestGeneration,
+                          requestedEnvironmentIndex == self.selectedEnvironmentIndex else {
+                        return
+                    }
                     print("Failed to fetch environment dynamic configs: \(error)")
-                    completion?()
+                    SVProgressHUD.showError(withStatus: ResourceManager.L10n.DevMode.loadAppIdsFailed)
                 }
             )
         }
     }
     
     @objc private func onClickAudioDump(_ sender: UISwitch) {
+        config.audioDump = sender.isOn
         config.notifyAudioDumpChanged(enabled: sender.isOn)
+        showFieldEnabled(ResourceManager.L10n.DevMode.dump, enabled: sender.isOn)
+    }
+
+    @objc private func onClickAins(_ sender: UISwitch) {
+        config.ainsEnabled = sender.isOn
+        config.notifyAinsChanged(enabled: sender.isOn)
+        showFieldEnabled(ResourceManager.L10n.DevMode.ains, enabled: sender.isOn)
     }
     
     @objc private func onClickMetricsButton(_ sender: UISwitch) {
         let state = sender.isOn
         config.metrics = state
         config.notifyMetricsChanged(enabled: state)
+        showFieldEnabled(ResourceManager.L10n.DevMode.metrics, enabled: state)
     }
     
     @objc private func onClickCopy() {
@@ -381,15 +428,12 @@ public class DeveloperModeViewController: UIViewController {
             return
         }
         let envi = environments[selectedEnvironmentIndex]
-        guard let host = envi[kHost] else { return }
-        
-        var appIdToUse: String
-        // Use selected AppID if available, otherwise fallback to environment's AppID
-        if let selectedModel = availableVIDs.first(where: { $0.selected }) {
-            appIdToUse = selectedModel.appId
-        } else {
-            appIdToUse = envi[kAppId] ?? AppContext.shared.appId
-        }
+        guard let host = envi[kHost],
+              let name = envi[kEnvName],
+              let selectedModel = availableVIDs.first(where: { $0.selected }) else { return }
+        let appIdToUse = selectedModel.appId
+        config.selectedEnvironment = DeveloperEnvironment(name: name, host: host, appId: appIdToUse)
+        isEnvironmentSelectionPending = false
         
         // Check if we're actually switching
         guard AppContext.shared.baseServerUrl != host || AppContext.shared.appId != appIdToUse else {
@@ -399,68 +443,145 @@ public class DeveloperModeViewController: UIViewController {
         AppContext.shared.baseServerUrl = host
         AppContext.shared.appId = appIdToUse
         
-        let statusMessage = "\(host) | AppID: \(appIdToUse)"
+        let statusMessage = String(format: ResourceManager.L10n.DevMode.switchedEnvironment, envi[kEnvName] ?? "")
         SVProgressHUD.showInfo(withStatus: statusMessage)
         config.notifySwitchServer()
         dismiss(endDevMode: false)
     }
     
     private func updateAvailableVIDMenu() {
-        for i in 0..<availableVIDs.count {
-            availableVIDs[i].selected = false
+        if let selectedModel = availableVIDs.first(where: { $0.selected }) {
+            config.selectedVID = selectedModel.vid
+            basicSettingView.appIdValueLabel.text = selectedModel.displayTitle
         }
+        let requestGeneration = appIdRequestGeneration
         let actions = availableVIDs.enumerated().map { index, vidModel in
-            return UIAction(title: vidModel.displayTitle) { [weak self] _ in
-                guard let self = self else { return }
+            let title = vidModel.selected ? "\(vidModel.displayTitle) ✅" : vidModel.displayTitle
+            return UIAction(title: title) { [weak self] _ in
+                guard let self = self,
+                      requestGeneration == self.appIdRequestGeneration,
+                      self.availableVIDs.indices.contains(index) else { return }
                 if self.availableVIDs[index].selected {
                     return
                 }
-                self.availableVIDs[index].selected = true
-                self.switchEnvironment()
+                self.selectAppId(at: index)
             }
         }
         let menu = UIMenu(children: actions)
         basicSettingView.appIdMenuButton.menu = menu
+        basicSettingView.appIdMenuButton.isEnabled = !actions.isEmpty
         basicSettingView.appIdMenuButton.showsMenuAsPrimaryAction = true
+    }
+
+    private func selectAppId(at index: Int) {
+        guard availableVIDs.indices.contains(index) else { return }
+        for modelIndex in availableVIDs.indices {
+            availableVIDs[modelIndex].selected = modelIndex == index
+        }
+        updateAvailableVIDMenu()
+        switchEnvironment()
     }
     
     @objc private func onClickSessionLimit(_ sender: UISwitch) {
         DeveloperConfig.shared.setSessionLimit(sender.isOn)
         config.notifySessionLimitChanged(enabled: sender.isOn)
+        showFieldEnabled(ResourceManager.L10n.DevMode.sessionLimit, enabled: sender.isOn)
     }
     
-    @objc private func onSDKParamsEndEditing(_ sender: UITextField) {
-        if let text = sender.text, !text.isEmpty {
-            config.sdkParams.removeAll()
-            let params = text.components(separatedBy: "|")
-            for param in params {
-                if !config.sdkParams.contains(param) {
-                    config.sdkParams.append(param)
-                    config.notifySDKParamsChanged(params: param)
-                }
+    private func updateAudioScenarioMenus() {
+        let clientOptions: [(String, Int?)] = [
+            (ResourceManager.L10n.DevMode.noOverride, nil),
+            ("AUDIO_SCENARIO_DEFAULT (0)", 0),
+            ("AUDIO_SCENARIO_GAME_STREAMING (3)", 3),
+            ("AUDIO_SCENARIO_CHATROOM (5)", 5),
+            ("AUDIO_SCENARIO_CHORUS (7)", 7),
+            ("AUDIO_SCENARIO_MEETING (8)", 8),
+            ("AUDIO_SCENARIO_AI_CLIENT (10)", 10)
+        ]
+        let clientTitle = clientOptions.first { $0.1 == config.clientAudioScenario }?.0
+            ?? ResourceManager.L10n.DevMode.noOverride
+        agentSettingView.clientAudioScenarioButton.setTitle(clientTitle + " ▾", for: .normal)
+        agentSettingView.clientAudioScenarioButton.menu = UIMenu(children: clientOptions.map { title, value in
+            UIAction(title: title, state: value == config.clientAudioScenario ? .on : .off) { [weak self] _ in
+                guard let self = self else { return }
+                self.view.endEditing(true)
+                self.config.clientAudioScenario = value
+                self.updateAudioScenarioMenus()
             }
-            SVProgressHUD.showInfo(withStatus: "sdk parameters did set: \(text)")
-            sender.text = config.sdkParams.joined(separator: "|")
+        })
+        let serverOptions: [(String, String?)] = [
+            (ResourceManager.L10n.DevMode.noOverride, nil),
+            ("default", "default"), ("chorus", "chorus"), ("aiserver", "aiserver")
+        ]
+        let serverTitle = serverOptions.first { $0.1 == config.serverAudioScenario }?.0
+            ?? ResourceManager.L10n.DevMode.noOverride
+        agentSettingView.serverAudioScenarioButton.setTitle(serverTitle + " ▾", for: .normal)
+        agentSettingView.serverAudioScenarioButton.menu = UIMenu(children: serverOptions.map { title, value in
+            UIAction(title: title, state: value == config.serverAudioScenario ? .on : .off) { [weak self] _ in
+                guard let self = self else { return }
+                self.view.endEditing(true)
+                self.config.serverAudioScenario = value
+                self.updateAudioScenarioMenus()
+            }
+        })
+    }
+
+    private func showFieldSaved(_ title: String, isEmpty: Bool) {
+        let format = isEmpty ? ResourceManager.L10n.DevMode.fieldCleared : ResourceManager.L10n.DevMode.fieldSaved
+        SVProgressHUD.showInfo(withStatus: String(format: format, title))
+    }
+
+    private func showFieldEnabled(_ title: String, enabled: Bool) {
+        let format = enabled ? ResourceManager.L10n.DevMode.fieldEnabled : ResourceManager.L10n.DevMode.fieldDisabled
+        SVProgressHUD.showInfo(withStatus: String(format: format, title))
+    }
+
+    @objc private func onRequestBaseURLEndEditing(_ sender: UITextField) {
+        let text = (sender.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        sender.text = text
+        guard config.requestBaseURL != text else { return }
+        config.requestBaseURL = text
+        showFieldSaved(ResourceManager.L10n.DevMode.requestBaseURL, isEmpty: text.isEmpty)
+    }
+
+    @objc private func onRequestNamespaceEndEditing(_ sender: UITextField) {
+        let text = (sender.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        sender.text = text
+        guard config.requestNamespace != text else { return }
+        config.requestNamespace = text
+        showFieldSaved(ResourceManager.L10n.DevMode.requestNamespace, isEmpty: text.isEmpty)
+    }
+
+    @objc private func onSDKParamsEndEditing(_ sender: UITextField) {
+        var params: [String] = []
+        for component in (sender.text ?? "").components(separatedBy: "|") {
+            let param = component.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !param.isEmpty && !params.contains(param) {
+                params.append(param)
+            }
         }
+        sender.text = params.joined(separator: "|")
+        guard config.sdkParams != params else { return }
+        config.sdkParams = params
+        params.forEach { config.notifySDKParamsChanged(params: $0) }
+        showFieldSaved(ResourceManager.L10n.DevMode.sdkParams, isEmpty: params.isEmpty)
     }
 
     @objc private func onConvoaiEndEditing(_ sender: UITextField) {
-        if let text = sender.text, !text.isEmpty {
-            config.convoaiServerConfig = text
-            SVProgressHUD.showInfo(withStatus: "convo ai presets did set: \(text)")
-        } else {
-            config.convoaiServerConfig = nil
-            SVProgressHUD.showInfo(withStatus: "convo ai presets did set: nil")
-        }
+        let text = (sender.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        sender.text = text
+        let value = text.isEmpty ? nil : text
+        guard config.convoaiServerConfig != value else { return }
+        config.convoaiServerConfig = value
+        showFieldSaved(ResourceManager.L10n.DevMode.convoai, isEmpty: text.isEmpty)
     }
 
     @objc private func onGraphIdEndEditing(_ sender: UITextField) {
-        if let text = sender.text, !text.isEmpty {
-            config.graphId = text
-            SVProgressHUD.showInfo(withStatus: "graphId did set: \(text)")
-        } else {
-            config.graphId = nil
-            SVProgressHUD.showInfo(withStatus: "graphId did set: nil")
-        }
+        let text = (sender.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        sender.text = text
+        let value = text.isEmpty ? nil : text
+        guard config.graphId != value else { return }
+        config.graphId = value
+        showFieldSaved(ResourceManager.L10n.DevMode.graph, isEmpty: text.isEmpty)
     }
 }

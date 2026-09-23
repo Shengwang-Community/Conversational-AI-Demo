@@ -7,6 +7,7 @@
 
 import Foundation
 import Common
+import AgoraAgentClientToolkit
 
 enum TranscriptDisplayMode: CaseIterable {
     //Transcript appear word by word, with subtitles and audio synchronized.

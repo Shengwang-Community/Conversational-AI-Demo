@@ -15,14 +15,38 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
+import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
+import {
+  AUDIO_SCENARIO_MODES,
+  AUDIO_SCENARIOS_BY_MODE,
+  isAudioScenarioMode,
+  type TAudioScenarioMode
+} from '@/lib/audio-scenario'
 import { useChatStore, useGlobalStore, useRTCStore } from '@/store'
+
+const NOT_SELECTED = 'not-selected'
 
 export const DevModeBadge = () => {
   const t = useTranslations('devMode')
-  const { isDevMode } = useGlobalStore()
+  const {
+    isDevMode,
+    isAinsEnabled,
+    setIsAinsEnabled,
+    audioScenarioMode,
+    setAudioScenarioMode
+  } = useGlobalStore()
   const { agent_url, remote_rtc_uid } = useRTCStore()
   const { history } = useChatStore()
+  const isDemoCalling = useIsDemoCalling()
 
   const userChatHistoryListMemo = React.useMemo(() => {
     return history.filter((item) => item.uid === `${remote_rtc_uid}`)
@@ -46,6 +70,57 @@ export const DevModeBadge = () => {
           </DialogTitle>
           <DialogDescription>{t('description')}</DialogDescription>
           <div className='flex flex-col divide-y p-2'>
+            <div className='flex items-center gap-4 py-3'>
+              <div className='w-24 font-medium text-muted-foreground text-sm'>
+                {t('ains')}
+              </div>
+              <div className='flex flex-1 justify-end'>
+                <Switch
+                  aria-label={t('ains')}
+                  checked={isAinsEnabled}
+                  disabled={isDemoCalling}
+                  onCheckedChange={setIsAinsEnabled}
+                />
+              </div>
+            </div>
+            <Separator />
+            <div className='flex items-center gap-4 py-3'>
+              <div className='w-24 font-medium text-muted-foreground text-sm'>
+                {t('audioScenario')}
+              </div>
+              <div className='flex flex-1 justify-end'>
+                <Select
+                  value={
+                    isAudioScenarioMode(audioScenarioMode)
+                      ? audioScenarioMode
+                      : NOT_SELECTED
+                  }
+                  disabled={isDemoCalling}
+                  onValueChange={(value) => {
+                    setAudioScenarioMode(
+                      value === NOT_SELECTED
+                        ? null
+                        : (value as TAudioScenarioMode)
+                    )
+                  }}
+                >
+                  <SelectTrigger className='w-full max-w-52'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NOT_SELECTED}>
+                      {t('audioScenarioNotSelected')}
+                    </SelectItem>
+                    {AUDIO_SCENARIO_MODES.map((mode) => (
+                      <SelectItem key={mode} value={mode}>
+                        {`${AUDIO_SCENARIOS_BY_MODE[mode].client} + ${AUDIO_SCENARIOS_BY_MODE[mode].server}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <Separator />
             {/* convoAI endpoint */}
             <div className='flex items-center gap-4 py-3'>
               <div className='w-24 font-medium text-muted-foreground text-sm'>
@@ -55,7 +130,9 @@ export const DevModeBadge = () => {
                 <div className='flex-1 overflow-auto text-sm'>
                   {`${process.env.NEXT_PUBLIC_DEMO_SERVER_URL}`}
                 </div>
-                <CopyButton text={`${process.env.NEXT_PUBLIC_DEMO_SERVER_URL}`} />
+                <CopyButton
+                  text={`${process.env.NEXT_PUBLIC_DEMO_SERVER_URL}`}
+                />
               </div>
             </div>
             <Separator />

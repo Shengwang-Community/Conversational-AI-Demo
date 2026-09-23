@@ -221,9 +221,11 @@ export const startAgent = async (
     | typeof localStartAgentPropertiesSchema
     | typeof localOpensourceStartAgentPropertiesSchema
   >,
+  options?: TDevModeQuery,
   abortController?: AbortController
 ) => {
-  const url = API_AGENT
+  const query = generateDevModeQuery(options ?? {})
+  const url = `${API_AGENT}${query}`
   const data = (payload as z.infer<typeof localStartAgentPropertiesSchema>)
     ?.preset_name
     ? localStartAgentPropertiesSchema.parse(payload)

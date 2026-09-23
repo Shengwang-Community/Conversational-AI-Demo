@@ -1,6 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ETranscriptHelperMode } from 'agora-agent-client-toolkit'
 import { ChevronRight } from 'lucide-react'
 import { motion } from 'motion/react'
 import NextImage from 'next/image'
@@ -9,7 +10,6 @@ import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { type UseFormSetValue, useForm } from 'react-hook-form'
 import type z from 'zod'
-
 import packageJson from '@/../package.json'
 import { InnerCard } from '@/components/home/agent-setting/base'
 import { FilledTooltipIcon } from '@/components/icon/agent'
@@ -45,7 +45,6 @@ import {
   CONSOLE_URL,
   publicAgentSettingSchema
 } from '@/constants'
-import { ETranscriptHelperMode } from '@/conversational-ai-api/type'
 import { useIsDemoCalling } from '@/hooks/use-is-agent-calling'
 import { cn, isCN } from '@/lib/utils'
 import { useAgentSettingsStore, useGlobalStore, useReportStore } from '@/store'

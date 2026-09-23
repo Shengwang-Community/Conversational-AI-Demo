@@ -102,7 +102,8 @@ class AgentManager: AgentAPI {
     func startAgent(parameters: [String: Any],
                     channelName: String,
                     completion: @escaping ((ConvoAIError?, String, StartAgentResponseModel?) -> Void)) {
-        sendRequest(endpoint: .startAgent, parameters: parameters) { (result: Result<StartAgentResponseModel, ConvoAIError>) in
+        let startParameters = DeveloperConfig.shared.applyingStartOverrides(to: parameters)
+        sendRequest(endpoint: .startAgent, parameters: startParameters) { (result: Result<StartAgentResponseModel, ConvoAIError>) in
             switch result {
             case .success(let response):
                 completion(nil, channelName, response)

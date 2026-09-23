@@ -1,0 +1,135 @@
+name: Compile CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compile-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PLACEHOLDER_APP_ID: "00000000000000000000000000000000"
+
+jobs:
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            Android/**/*.gradle*
+            Android/gradle/libs.versions.toml
+            Android/gradle/wrapper/gradle-wrapper.properties
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0"
+      - name: Compile
+        working-directory: Android
+        run: |
+          ./gradlew --no-daemon --stacktrace \
+            -PAG_APP_ID="$PLACEHOLDER_APP_ID" \
+            :app:assembleChinaDebug
+
+      - name: Unit tests
+        env:
+          ORG_GRADLE_PROJECT_AG_APP_ID: ${{ env.PLACEHOLDER_APP_ID }}
+        run: python3 scripts/validate.py android --tests-only --results-dir "$RUNNER_TEMP/android-tests"
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-test-results
+          path: ${{ runner.temp }}/android-tests
+          if-no-files-found: ignore
+          retention-days: 7
+
+  ios:
+    name: iOS
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure compile-only App ID
+        working-directory: iOS
+        run: |
+          perl -0pi -e 's/static let AG_APP_ID: String = "[^"]*"/static let AG_APP_ID: String = "$ENV{PLACEHOLDER_APP_ID}"/g' Agent/KeyCenter.swift
+          grep -F "static let AG_APP_ID: String = \"$PLACEHOLDER_APP_ID\"" Agent/KeyCenter.swift
+      - name: Install CocoaPods dependencies
+        working-directory: iOS
+        run: |
+          for attempt in 1 2 3; do
+            if pod install --repo-update; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
+      - name: Compile
+        working-directory: iOS
+        run: |
+          xcodebuild \
+            -workspace Agent.xcworkspace \
+            -scheme Agent-cn \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/ios" \
+            CODE_SIGNING_ALLOWED=NO \
+            EXCLUDED_ARCHS=arm64 \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
+            build
+
+      - name: AINS unit tests
+        run: python3 scripts/validate.py ios --suite ains --results-dir "$RUNNER_TEMP/ios-tests"
+      - name: Environment unit tests
+        run: python3 scripts/validate.py ios --suite environment --results-dir "$RUNNER_TEMP/ios-tests"
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-results
+          path: ${{ runner.temp }}/ios-tests
+          if-no-files-found: ignore
+          retention-days: 7
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: Web/Scenes/VoiceAgent
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_LOCALE: zh-CN
+      NEXT_PUBLIC_CHANNEL_PREFIX: compile-ci
+      NEXT_PUBLIC_DEMO_SERVER_URL: https://service.apprtc.cn/toolbox
+      NEXT_PUBLIC_SSO_LOGIN_URL: https://service.apprtc.cn/toolbox
+      AGORA_APP_ID: "00000000000000000000000000000000"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Test
+        run: bun test
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Compile
+        run: bun run build

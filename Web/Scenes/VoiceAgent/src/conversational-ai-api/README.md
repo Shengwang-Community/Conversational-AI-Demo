@@ -1,182 +1,74 @@
-# ConversationalAI API (Web)
+# Web Toolkit 接入
 
-> Version: 2.2.0
+当前 Demo 精确依赖公开 npm 包 `agora-agent-client-toolkit@2.10.0`。公共 API、状态、字幕和 metrics 协议解析由 Toolkit 维护。
 
-## Prerequisites
+## 安装
 
-- Agora RTC SDK version **4.23.4** or above
-- Agora RTM SDK integrated and logged in
+在 `Web/Scenes/VoiceAgent` 执行 `bun install --frozen-lockfile`。在自己的应用中可使用：
 
-**Important:**
-
-> Users need to integrate and manage the initialization, lifecycle, and login status of RTC and RTM by themselves.
->
-> Please ensure that the lifecycle of RTC and RTM instances is greater than the lifecycle of this component.
->
-> Before using this component, please ensure that RTC is available and RTM is logged in.
-
----
-
-## File Structure
-
-```
-conversational-ai-api/
-├── index.ts              # API entry, ConversationalAIAPI class
-├── type.ts               # Interfaces, data structures and enums
-├── utils/
-│   ├── index.ts          # Utility functions
-│   ├── event.ts          # Event helper base class
-│   ├── logger.ts         # Logger utility
-│   └── sub-render.ts     # Subtitle render controller
-├── helper/               # !! DO NOT COPY - Demo only !!
-│   ├── rtc.ts            # RTC helper (demo-specific)
-│   ├── rtm.ts            # RTM helper (demo-specific)
-│   └── transcript.ts     # Transcript helper (demo-specific)
-└── README.md
+```bash
+npm install --save-exact agora-agent-client-toolkit@2.10.0
 ```
 
-### About `helper/`
+RTC SDK 需要 `>=4.23.4`；此 Demo 同时使用已登录的 RTM SDK（`>=2.0.0`）。Toolkit 接收应用创建的 RTC/RTM 实例；音频采集、设备管理和登录由应用负责。
 
-The `helper/` directory contains RTC/RTM wrapper classes used **only by this demo application**. These files are tightly coupled to the demo's specific business logic and should **NOT** be copied into your project. You should implement your own RTC/RTM initialization and lifecycle management according to your application's needs.
+## 初始化、事件和清理
 
----
-
-## Integration Steps
-
-1. Copy the following files into your project:
-
-   - `index.ts`
-   - `type.ts`
-   - `utils/index.ts`
-   - `utils/event.ts`
-   - `utils/logger.ts`
-   - `utils/sub-render.ts`
-
-2. Update import paths as needed (e.g. the logger import uses a relative path `../utils/logger`).
-
-3. Ensure your project has Agora RTC (>= 4.23.4) and RTM SDKs installed.
-
----
-
-## Quick Start
-
-### 1. Enable RTC Private Parameters (Required)
-
-Before creating an RTC client, you **must** enable PTS metadata:
+在浏览器客户端中创建 RTC、登录 RTM 后，等待 Toolkit 初始化完成，再绑定事件、订阅频道，并启动 Agent。以下变量 `rtcClient`、`rtmClient`、`channelName` 由应用提供：
 
 ```typescript
-AgoraRTC.setParameter("ENABLE_AUDIO_PTS_METADATA", true);
+import {
+  ConversationalAIAPI,
+  EConversationalAIAPIEvents,
+  ETranscriptHelperMode
+} from 'agora-agent-client-toolkit'
 
-const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-```
-
-### 2. Initialize
-
-```typescript
-import { ConversationalAIAPI } from "./conversational-ai-api";
-import { ETranscriptHelperMode } from "./conversational-ai-api/type";
-
-const conversationalAIAPI = ConversationalAIAPI.init({
+// rtcClient is already created; rtmClient is already logged in.
+const api = await ConversationalAIAPI.init({
   rtcEngine: rtcClient,
   rtmEngine: rtmClient,
-  enableLog: true,
-  // Optional: specify render mode, defaults to auto-detect (UNKNOWN)
-  renderMode: ETranscriptHelperMode.WORD,
-  // Optional: enable fallback to TEXT mode when WORD data is missing (default: true)
-  enableRenderModeFallback: true,
-});
+  renderMode: ETranscriptHelperMode.TEXT,
+  enableLog: false
+})
+
+api.on(EConversationalAIAPIEvents.TRANSCRIPT_UPDATED, (history) => {
+  console.log(history)
+})
+api.on(EConversationalAIAPIEvents.AGENT_STATE_CHANGED, (uid, event) => {
+  console.log(uid, event.state)
+})
+api.on(EConversationalAIAPIEvents.AGENT_TURN_FINISHED, (uid, turn) => {
+  console.log(uid, turn.turnId, turn.e2eLatencyMs, turn.segmentedLatency)
+})
+api.on(EConversationalAIAPIEvents.AGENT_METRICS, (uid, metric) => {
+  console.log(uid, metric)
+})
+api.subscribeMessage(channelName)
 ```
 
-### 3. Register Event Callbacks
+退出通话时先销毁 Toolkit，再退出 RTC/RTM。初始化失败时也可执行以下清理；重新通话时重新 `await init(...)`：
 
 ```typescript
-import { EConversationalAIAPIEvents } from "./conversational-ai-api/type";
-
-conversationalAIAPI.on(
-  EConversationalAIAPIEvents.TRANSCRIPT_UPDATED,
-  (chatHistory) => {
-    // chatHistory is the complete conversation list, render UI based on this
-  }
-);
-
-conversationalAIAPI.on(
-  EConversationalAIAPIEvents.AGENT_STATE_CHANGED,
-  (agentUserId, event) => {
-    console.log(`Agent ${agentUserId} state: ${event.state}`);
-  }
-);
-
-conversationalAIAPI.on(
-  EConversationalAIAPIEvents.AGENT_INTERRUPTED,
-  (agentUserId, event) => {
-    console.log(`Agent ${agentUserId} interrupted at turn ${event.turnID}`);
-  }
-);
-
-conversationalAIAPI.on(
-  EConversationalAIAPIEvents.AGENT_METRICS,
-  (agentUserId, metrics) => {
-    console.log(`Agent ${agentUserId} metrics:`, metrics);
-  }
-);
-
-conversationalAIAPI.on(
-  EConversationalAIAPIEvents.AGENT_ERROR,
-  (agentUserId, error) => {
-    console.error(`Agent ${agentUserId} error:`, error);
-  }
-);
+if (ConversationalAIAPI.getState()) {
+  ConversationalAIAPI.getInstance().destroy()
+}
+// Disconnect and release your RTC/RTM clients after Toolkit is destroyed.
 ```
 
-### 4. Subscribe to Channel Messages
+需要导出调试日志时，可开启 `enableLog` 并订阅 `DEBUG_LOG`，将日志交给应用的日志工具。
 
-Call before starting the session:
+## Demo 保留的职责
 
-```typescript
-conversationalAIAPI.subscribeMessage(channelName);
-```
+- `helper/rtc.ts`、`helper/rtm.ts`：RTC/RTM 初始化、登录、采集、设备和连接生命周期。
+- `helper/transcript.ts`：旧协议字幕兼容；当前协议使用 Toolkit。
+- `utils/event.ts`、`utils/index.ts`：Demo helper 使用的事件和日志格式工具。
+- `src/lib/latency-metrics.ts`：已解析 metrics 的 UI 映射、报表组装；`turn.finished` 原始协议由 Toolkit 解析。
+- 端上 AINS 由 Demo RTC 层控制，默认关闭，仅开发模式和 AINS 开关同时开启时启用。
 
-### 5. Send Messages (Optional)
+`helper/` 与 Demo 业务绑定。集成到自己的应用时，使用 Toolkit 的公共 API，并按自身需求管理 RTC/RTM。
 
-```typescript
-// Send text
-await conversationalAIAPI.chat(agentUserId, {
-  messageType: EChatMessageType.TEXT,
-  text: "Hello",
-  priority: EChatMessagePriority.HIGH,
-  responseInterruptable: true,
-});
+## 验证
 
-// Interrupt agent
-await conversationalAIAPI.interrupt(agentUserId);
-```
+`bun run test` 包含真实 npm Toolkit 包的状态、RTC/RTM 字幕、metrics 和销毁后重建验证；传输层使用模拟事件。另执行 `bun run typecheck` 和 `bun run build`，音频效果需要实际通话验证。
 
-### 6. Cleanup
-
-```typescript
-// Unsubscribe from channel
-conversationalAIAPI.unsubscribe();
-
-// Destroy instance
-conversationalAIAPI.destroy();
-```
-
----
-
-## Configuration Options
-
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `rtcEngine` | `IAgoraRTCClient` | (required) | Agora RTC client instance |
-| `rtmEngine` | `RTMClient` | (required) | Agora RTM client instance |
-| `renderMode` | `ETranscriptHelperMode` | `UNKNOWN` | Transcript render mode (`WORD`, `TEXT`, `CHUNK`, or `UNKNOWN` for auto-detect) |
-| `enableLog` | `boolean` | `false` | Enable internal debug logging |
-| `enableRenderModeFallback` | `boolean` | `true` | When in WORD mode, automatically fall back to TEXT mode if word-level data is missing |
-
----
-
-## Notes
-
-- **TRANSCRIPT_UPDATED** callbacks return the **complete** conversation list each time. Render your UI based on this full list rather than incremental updates.
-- When `renderMode` is set to `UNKNOWN`, the mode is automatically determined by the first agent message received.
-- When `enableRenderModeFallback` is `true` and the mode is `WORD`, if an agent message arrives without word-level timing data, the controller will automatically fall back to `TEXT` mode for the remainder of the session.
+[Toolkit 官方文档](https://github.com/AgoraIO-Conversational-AI/agent-client-toolkit-ts#readme)

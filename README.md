@@ -29,6 +29,16 @@
 |   📱 iOS   |   [iOS Demo](iOS/Scenes/ConvoAI)   |
 |   🌐 Web   |   [Web Demo](Web/Scenes/VoiceAgent)   |
 
+### Toolkit 依赖
+
+各端当前使用已发布的 Toolkit 包，克隆此 Demo 仓库后按对应平台文档安装依赖即可，无需额外克隆 Toolkit 仓库或引用本地包。
+
+| 平台 | 发布包 | 固定版本 | 接入说明 |
+| --- | --- | --- | --- |
+| Android | Maven `io.agora.agents:agora-agent-client-toolkit` | `2.10.1` | [Android](Android/scenes/convoai/README.md) |
+| iOS | CocoaPods `agent-client-toolkit-swift` | `2.10.1` | [iOS](iOS/Scenes/ConvoAI/README.md) |
+| Web | npm `agora-agent-client-toolkit` | `2.10.0` | [Web](Web/Scenes/VoiceAgent/README.md) |
+
 ---
 
 ## ❓ 遇到困难，该如何联系声网获取协助

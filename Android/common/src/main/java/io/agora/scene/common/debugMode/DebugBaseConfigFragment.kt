@@ -110,7 +110,8 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
             divider.setDrawable(resources.getDrawable(R.drawable.shape_divider_line, null))
             rcOptions.addItemDecoration(divider)
 
-            mtvAppVersion.text = ServerConfig.appVersionName + "-" + ServerConfig.appVersionCode
+            mtvAppVersion.text = "${ServerConfig.appVersionName} (${ServerConfig.appVersionCode})"
+            mtvApplicationId.text = requireContext().packageName
             mtvRtcVersion.text = RtcEngine.getSdkVersion()
             mtvRtmVersion.text = RtmClient.getVersion()
 
@@ -147,15 +148,17 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
         // Extract base environment name for comparison
         val baseEnvName = extractBaseEnvName(currentEnvName)
         // Only preload for environments that require AppId selection
-        if (requiresAppIdSelection(baseEnvName) && cachedEnvConfigs.isEmpty()) {
+        if (requiresAppIdSelection(baseEnvName) &&
+            (cachedEnvConfigs.isEmpty() || cachedToolboxHost != currentUrl || cachedEnvName != baseEnvName)) {
             // Pre-fetch configs in background for current environment
             fetchEnvConfigsByEnvName(baseEnvName, currentUrl) { error, configs ->
                 activity?.runOnUiThread {
-                    if (error == null && configs.isNotEmpty()) {
-                        // Cache the configs for later use
+                    if (!isCurrentConfigRequest(currentUrl, baseEnvName)) return@runOnUiThread
+                    if (error == null) {
                         cachedEnvConfigs = configs
                         cachedToolboxHost = currentUrl
                         cachedEnvName = baseEnvName
+                        updateEnvConfig()
                     }
                 }
             }
@@ -283,9 +286,10 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
                 // Use base environment name for API call
                 fetchEnvConfigsByEnvName(baseEnvName, toolboxHost) { error, configs ->
                     activity?.runOnUiThread {
+                        if (!isCurrentConfigRequest(toolboxHost, baseEnvName)) return@runOnUiThread
                         if (error != null) {
                             // Handle error - show toast or fallback
-                            ToastUtil.show("Failed to load $baseEnvName configs: ${error.message}")
+                            ToastUtil.show(getString(R.string.common_debug_load_app_ids_failed))
                             onClickMaskView() // Hide the dialog
                             return@runOnUiThread
                         }
@@ -324,6 +328,7 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
         // Fetch environment configs in background if cache is not available
         fetchEnvConfigsByEnvName(baseEnvName, toolboxHost) { error, configs ->
             activity?.runOnUiThread {
+                if (!isCurrentConfigRequest(toolboxHost, baseEnvName)) return@runOnUiThread
                 if (error != null) {
                     // Handle error silently, user will see error when they click layout_labtesting_appaid
                     cachedEnvConfigs = emptyList()
@@ -364,6 +369,15 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
         }
     }
     
+    private fun isCurrentConfigRequest(toolboxHost: String, envName: String): Boolean {
+        val displayedHost = pendingEnvConfig?.toolboxServerHost ?: ServerConfig.toolBoxUrl
+        val displayedEnvName = pendingEnvConfig?.envName?.ifEmpty {
+            getEnvTypeFromUrl(displayedHost)
+        } ?: currentEnvName
+        return mBinding != null && toolboxHost == displayedHost &&
+            envName == extractBaseEnvName(displayedEnvName)
+    }
+
     private fun clearPendingConfig() {
         pendingEnvConfig = null
     }
@@ -386,7 +400,7 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
         updateEnvConfig()
         mBinding?.vOptionsMask?.visibility = View.INVISIBLE
         ToastUtil.show(
-            getString(R.string.common_debug_current_server, ServerConfig.envName, ServerConfig.toolBoxUrl)
+            getString(R.string.common_debug_current_server, ServerConfig.envName)
         )
         // Close the dialog after environment change
         (parentFragment as? DebugTabDialog)?.dismissWithCallback()
@@ -403,7 +417,8 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
             val displayEnvName = extractBaseEnvName(fullEnvName)
             val toolBoxUrl = pendingEnvConfig?.toolboxServerHost ?: ServerConfig.toolBoxUrl
             tvServerEnvHost.text = "$displayEnvName - $toolBoxUrl"
-            mtvConvoaiHost.text = onDebugCallback?.getConvoAiHost()
+            mtvConvoaiHost.text = onDebugCallback?.getConvoAiHost()?.takeIf { it.isNotBlank() }
+                ?: getString(R.string.common_debug_unavailable)
 
             // Determine if AppId selection is clickable based on environment
             // Check pendingEnvConfig first, then current environment
@@ -422,17 +437,8 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
             // Hide for prod, staging and other environments that don't require AppId selection
             layoutLabtestingAppaid.visibility = if (isAppIdClickable) View.VISIBLE else View.GONE
             
-            // Set label text based on environment
-            if (isAppIdClickable) {
-                val labelText = when {
-                    envNameForAppIdCheck.lowercase().startsWith("labtesting") -> "LabTesting AppId Selection"
-                    envNameForAppIdCheck.lowercase().startsWith("testing") -> "Testing AppId Selection"
-                    envNameForAppIdCheck.lowercase().startsWith("dev") -> "Dev AppId Selection"
-                    else -> "AppId Selection"
-                }
-                tvLabtestingLabel.text = labelText
-            }
-            
+            tvLabtestingLabel.setText(R.string.common_debug_app_id)
+
             // Set clickable state
             layoutLabtestingAppaid.isEnabled = isAppIdClickable
             layoutLabtestingAppaid.alpha = if (isAppIdClickable) 1.0f else 0.5f
@@ -440,11 +446,18 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
             // Display AppId information
             if (pendingEnvConfig != null) {
                 // Pending state, user hasn't selected AppId yet
-                mtvLabtestingAppaid.text = "Not selected"
+                mtvLabtestingAppaid.text = getString(R.string.common_debug_not_selected)
             } else {
                 // Show current AppId and VID
                 val currentAppId = ServerConfig.rtcAppId
-                val currentVid = ServerConfig.labTestingVid
+                // The default App ID also has a VID in the current environment's API response.
+                // Do not reuse the VID left over from a previously selected App ID/environment.
+                val currentVid = if (cachedToolboxHost == ServerConfig.toolBoxUrl &&
+                    cachedEnvName == extractBaseEnvName(currentEnvName)) {
+                    cachedEnvConfigs.firstOrNull { it.app_id == currentAppId }?.vid.orEmpty()
+                } else {
+                    ""
+                }
                 mtvLabtestingAppaid.text = if (currentAppId.isNotEmpty()) {
                     if (currentVid.isNotEmpty()) {
                         "$currentAppId($currentVid)"
@@ -452,7 +465,7 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
                         currentAppId
                     }
                 } else {
-                    "Not selected"
+                    getString(R.string.common_debug_not_selected)
                 }
             }
         }
@@ -471,6 +484,7 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
     }
 
     private fun showAppIdConfigsInPopup(configs: List<LabTestingConfig>) {
+        updateEnvConfig()
         mBinding?.apply {
             val labTestingParams = cvOptions.layoutParams
             val itemHeight = 56.dp.toInt()
@@ -495,7 +509,7 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
                         clearPendingConfig()
                         updateEnvConfig()
                         onClickMaskView()
-                        ToastUtil.show("Switched to $currentEnvName: ${selectedConfig.app_id}")
+                        ToastUtil.show(getString(R.string.common_debug_current_server, currentEnvName))
                         // Trigger environment change callback to restart to login page
                         onDebugCallback?.onEnvConfigChange()
                         // Close the dialog after AppId selection
@@ -508,7 +522,7 @@ class DebugBaseConfigFragment : BaseFragment<CommonDebugBaseConfigFragmentBindin
                         ServerConfig.updateLabTestingConfig(selectedConfig.app_id, selectedConfig.vid)
                         updateEnvConfig()
                         onClickMaskView()
-                        ToastUtil.show("Switched to $currentEnvName AppId: ${selectedConfig.app_id}")
+                        ToastUtil.show(getString(R.string.common_debug_current_server, currentEnvName))
                         // Trigger environment change callback to restart to login page
                         onDebugCallback?.onEnvConfigChange()
                         // Close the dialog after AppId change

@@ -1,9 +1,15 @@
 import {
+  ERTCCustomEvents,
+  ERTCEvents,
+  type IHelperRTCEvents
+} from 'agora-agent-client-toolkit'
+import {
   AIDenoiserExtension,
   type AIDenoiserProcessorLevel,
   type IAIDenoiserProcessor
 } from 'agora-conversational-ai-denoiser'
 import AgoraRTC, {
+  type ConnectionDisconnectedReason,
   type ConnectionState,
   type DeviceInfo,
   type IAgoraRTCClient,
@@ -12,21 +18,33 @@ import AgoraRTC, {
   type NetworkQuality,
   type UID
 } from 'agora-rtc-sdk-ng'
-import {
-  ERTCCustomEvents,
-  ERTCEvents,
-  type IHelperRTCEvents,
-  type IUserTracks,
-  NotFoundError
-} from '@/conversational-ai-api/type'
 import { EventHelper } from '@/conversational-ai-api/utils/event'
-import { factoryFormatLog, logger } from '../utils/logger'
+import {
+  createRtcClientForAudioScenario,
+  DEFAULT_AUDIO_SCENARIO_MODE,
+  getRtcAudioScenarioConfig,
+  type TAudioScenarioMode
+} from '@/lib/audio-scenario'
+import { logger } from '@/lib/logger'
 import { getAgentToken } from '@/services/agent'
+import type { TDevModeQuery } from '@/type/dev'
+import type { IUserTracks } from '@/type/rtc'
+import { factoryFormatLog } from '../utils'
 
 const formatLog = factoryFormatLog({ tag: 'RTCHelper' })
 
 export class RTCHelper extends EventHelper<
-  IHelperRTCEvents & {
+  Omit<
+    IHelperRTCEvents,
+    ERTCEvents.NETWORK_QUALITY | ERTCEvents.CONNECTION_STATE_CHANGE
+  > & {
+    [ERTCEvents.NETWORK_QUALITY]: (quality: NetworkQuality) => void
+    [ERTCEvents.CONNECTION_STATE_CHANGE]: (data: {
+      curState: ConnectionState
+      revState: ConnectionState
+      reason?: ConnectionDisconnectedReason
+      channel: string
+    }) => void
     [ERTCCustomEvents.MICROPHONE_CHANGED]: (info: DeviceInfo) => void
     [ERTCCustomEvents.REMOTE_USER_CHANGED]: (data: {
       user: IAgoraRTCRemoteUser
@@ -55,6 +73,14 @@ export class RTCHelper extends EventHelper<
   public channelName: string | null = null
   public userId: string | null = null
   private processor: IAIDenoiserProcessor | null = null
+  private audioScenarioMode = DEFAULT_AUDIO_SCENARIO_MODE
+  private areAiQosServicesInstalled = false
+  private aiQosServiceModulesPromise: Promise<
+    [
+      typeof import('agora-rtc-sdk-ng/services/ai-audio-mode'),
+      typeof import('agora-rtc-sdk-ng/services/intercept-frame')
+    ]
+  > | null = null
 
   // Bound event handlers (to ensure same reference for on/off)
   private _boundHandleAudioPTS = this._eHandleAudioPTS.bind(this)
@@ -71,16 +97,74 @@ export class RTCHelper extends EventHelper<
     super()
 
     this.agoraRTC = AgoraRTC
+    const agoraRTCWithParams = AgoraRTC as typeof AgoraRTC & {
+      setParameter: (...args: unknown[]) => void
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // ;(AgoraRTC as any).setParameter('ENABLE_AUDIO_PTS_METADATA', true)
-    ;(AgoraRTC as any).setParameter('ENABLE_AUDIO_PTS', true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(AgoraRTC as any).setParameter('{"rtc.log_external_input": true}')
+    agoraRTCWithParams.setParameter('ENABLE_AUDIO_PTS', true)
+    agoraRTCWithParams.setParameter('{"rtc.log_external_input": true}')
 
     AgoraRTC.enableLogUpload()
-    this.client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
+    this.client = this.createRtcClient(DEFAULT_AUDIO_SCENARIO_MODE)
     logger.info(formatLog('constructor', 'RTC client created'))
+  }
+
+  private createRtcClient(
+    mode: TAudioScenarioMode,
+    installAiQosServices?: () => void
+  ) {
+    const rtc = this.agoraRTC as typeof AgoraRTC & {
+      setParameter: (key: string, value: unknown, force?: boolean) => void
+    }
+    return createRtcClientForAudioScenario({
+      rtc,
+      mode,
+      installAiQosServices
+    })
+  }
+
+  private async getAiQosServicesInstaller() {
+    if (this.areAiQosServicesInstalled) return () => undefined
+
+    if (!this.aiQosServiceModulesPromise) {
+      this.aiQosServiceModulesPromise = Promise.all([
+        import('agora-rtc-sdk-ng/services/ai-audio-mode'),
+        import('agora-rtc-sdk-ng/services/intercept-frame')
+      ])
+    }
+
+    try {
+      const [{ AiAudioModeService }, { InterceptFrameService }] =
+        await this.aiQosServiceModulesPromise
+      return () => {
+        if (this.areAiQosServicesInstalled) return
+
+        this.agoraRTC.use(InterceptFrameService)
+        this.agoraRTC.use(AiAudioModeService)
+        this.areAiQosServicesInstalled = true
+      }
+    } catch (error) {
+      this.aiQosServiceModulesPromise = null
+      throw error
+    }
+  }
+
+  public async configureAudioScenario(mode: TAudioScenarioMode) {
+    if (this.joined) {
+      throw new Error('Cannot change audio scenario while joined')
+    }
+    if (this.audioScenarioMode === mode) return
+
+    const { requiresAiQosServices } = getRtcAudioScenarioConfig(mode)
+    const installAiQosServices = requiresAiQosServices
+      ? await this.getAiQosServicesInstaller()
+      : undefined
+
+    this.client = this.createRtcClient(mode, installAiQosServices)
+    this.audioScenarioMode = mode
+    logger.info(formatLog('configureAudioScenario', `mode: ${mode}`))
   }
 
   public static getInstance(): RTCHelper {
@@ -102,7 +186,7 @@ export class RTCHelper extends EventHelper<
     userId: string | number,
     channel?: string,
     force?: boolean,
-    options?: { devMode?: boolean }
+    options?: TDevModeQuery
   ) {
     if (!force && this.appId && this.token) {
       logger.debug(formatLog('retrieveToken', 'Using cached token'))
@@ -140,7 +224,7 @@ export class RTCHelper extends EventHelper<
   }: {
     channel: string
     userId: number
-    options?: { devMode?: boolean }
+    options?: TDevModeQuery
   }) {
     if (this.joined) {
       logger.warn(
@@ -156,11 +240,13 @@ export class RTCHelper extends EventHelper<
     if (!this.appId || !this.token) {
       await this.retrieveToken(userId, undefined, false, options)
     }
+    const { joinOptions } = getRtcAudioScenarioConfig(this.audioScenarioMode)
     await this.client.join(
       this.appId as string,
       channel,
       this.token as string,
-      userId
+      userId,
+      joinOptions
     )
     logger.info(
       formatLog('join', `Joined channel: ${channel}, userId: ${userId}`)
@@ -281,18 +367,18 @@ export class RTCHelper extends EventHelper<
       logger.error(formatLog('createTracks', 'Failed to create tracks', error))
     } finally {
       this.emit(ERTCCustomEvents.LOCAL_TRACKS_CHANGED, this.localTracks)
-      return this.localTracks
     }
+    return this.localTracks
   }
 
   /**
    * Publishes local audio/video tracks to the channel.
    *
-   * @throws {@link NotFoundError} When RTC client is not initialized
+   * @throws {@link Error} When RTC client is not initialized
    */
   public async publishTracks() {
     if (!this.client) {
-      throw new NotFoundError('RTC client is not initialized')
+      throw new Error('RTC client is not initialized')
     }
     const tracks = []
     if (this.localTracks.audioTrack) {
@@ -312,25 +398,23 @@ export class RTCHelper extends EventHelper<
   }
 
   /**
-   * Cleans up all RTC resources: unbinds events, closes tracks, disables
-   * denoiser, leaves channel, and removes all listeners.
+   * Cleans up all RTC resources: unbinds events, releases local track state,
+   * disables the denoiser, closes tracks, and leaves the channel.
    */
   public async exitAndCleanup() {
     logger.info(formatLog('exitAndCleanup', 'Starting cleanup'))
+    const client = this.client
+    const audioTrack = this.localTracks.audioTrack
     // Unbind RTC events first
     this.unbindRtcEvents()
 
-    try {
-      this.localTracks?.audioTrack?.close()
-    } catch (error) {
-      logger.error(formatLog('exitAndCleanup', 'Failed to close tracks', error))
-    }
+    this.localTracks = {}
+    this.emit(ERTCCustomEvents.LOCAL_TRACKS_CHANGED, this.localTracks)
 
     // Cleanup denoiser processor
     try {
       if (this.processor) {
         await this.processor.disable()
-        this.processor = null
       }
     } catch (error) {
       logger.error(
@@ -340,19 +424,26 @@ export class RTCHelper extends EventHelper<
           error
         )
       )
+    } finally {
+      this.processor = null
     }
 
-    this.localTracks = {}
+    try {
+      audioTrack?.close()
+    } catch (error) {
+      logger.error(formatLog('exitAndCleanup', 'Failed to close tracks', error))
+    }
+
     this.joined = false
     try {
-      await this.client?.leave()
+      await client.leave()
     } catch (error) {
       logger.error(
         formatLog('exitAndCleanup', 'Failed to leave channel', error)
       )
     }
     try {
-      this.client?.removeAllListeners()
+      client.removeAllListeners()
     } catch (error) {
       logger.error(
         formatLog('exitAndCleanup', 'Failed to remove all listeners', error)
@@ -531,7 +622,7 @@ export class RTCHelper extends EventHelper<
   private _eHandleConnectionStateChange(
     curState: ConnectionState,
     revState: ConnectionState,
-    reason: string
+    reason?: ConnectionDisconnectedReason
   ) {
     const curChannelName = this.client.channelName
     logger.info(

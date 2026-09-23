@@ -11,7 +11,7 @@ import android.view.animation.LinearInterpolator
 import androidx.core.content.ContextCompat
 import io.agora.scene.common.R
 import io.agora.scene.common.util.dp
-import io.agora.scene.convoai.convoaiApi.AgentState
+import io.agora.conversational.api.AgentState
 
 /**
  * Agent State Indicator Component

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scheme LastUpgradeVersion="1640" version="1.7">
+   <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
+      <BuildActionEntries>
+         <BuildActionEntry buildForTesting="YES" buildForRunning="NO" buildForProfiling="NO" buildForArchiving="NO" buildForAnalyzing="YES">
+            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="AB297B5A2CA935A4007FB93B" BuildableName="Agent-cn.app" BlueprintName="Agent-cn" ReferencedContainer="container:Agent.xcodeproj" />
+         </BuildActionEntry>
+         <BuildActionEntry buildForTesting="YES" buildForRunning="NO" buildForProfiling="NO" buildForArchiving="NO" buildForAnalyzing="YES">
+            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="C0AA00092E10000100A10001" BuildableName="Agent-cnTests.xctest" BlueprintName="Agent-cnTests" ReferencedContainer="container:Agent.xcodeproj" />
+         </BuildActionEntry>
+      </BuildActionEntries>
+   </BuildAction>
+   <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.PosixSpawn" shouldUseLaunchSchemeArgsEnv="YES">
+      <MacroExpansion>
+         <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="AB297B5A2CA935A4007FB93B" BuildableName="Agent-cn.app" BlueprintName="Agent-cn" ReferencedContainer="container:Agent.xcodeproj" />
+      </MacroExpansion>
+      <Testables>
+         <TestableReference skipped="NO" parallelizable="NO">
+            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="C0AA00092E10000100A10001" BuildableName="Agent-cnTests.xctest" BlueprintName="Agent-cnTests" ReferencedContainer="container:Agent.xcodeproj" />
+         </TestableReference>
+      </Testables>
+   </TestAction>
+</Scheme>

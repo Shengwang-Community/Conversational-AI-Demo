@@ -1,3 +1,4 @@
+import { ETranscriptHelperMode } from 'agora-agent-client-toolkit'
 import type { UseFormSetValue } from 'react-hook-form'
 import type * as z from 'zod'
 import { create } from 'zustand'
@@ -10,7 +11,6 @@ import {
   type publicAgentSettingSchema,
   type remoteAgentCustomPresetItem
 } from '@/constants'
-import { ETranscriptHelperMode } from '@/conversational-ai-api/type'
 import { isCN } from '@/lib/utils'
 
 export type TAgentSettings = z.infer<typeof publicAgentSettingSchema>

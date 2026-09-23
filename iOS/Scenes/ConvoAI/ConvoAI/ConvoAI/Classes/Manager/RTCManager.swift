@@ -40,6 +40,15 @@ protocol RTCManagerProtocol {
     
     /// Enables or disables audio dump
     func enableAudioDump(enabled: Bool)
+
+    /// Enables or disables on-device AINS
+    func setAinsEnabled(_ enabled: Bool)
+
+    /// Loads SDK audio settings and restores the Demo AINS override last
+    func loadAudioSettings(ainsEnabled: Bool, _ loadAudioSettings: () -> Void)
+
+    /// Restores the current on-device AINS state
+    func reapplyAins()
     
     /// Destroys the agent and releases resources
     func destroy()
@@ -48,6 +57,23 @@ protocol RTCManagerProtocol {
 class RTCManager: NSObject {
     private var rtcEngine: AgoraRtcEngineKit!
     private var audioDumpEnabled: Bool = false
+    private let injectedParameterWriter: ((String) -> Void)?
+    private lazy var onDeviceAins = OnDeviceAinsController { [weak self] parameter in
+        self?.writeParameter(parameter)
+    }
+
+    init(parameterWriter: ((String) -> Void)? = nil) {
+        injectedParameterWriter = parameterWriter
+        super.init()
+    }
+
+    private func writeParameter(_ parameter: String) {
+        if let injectedParameterWriter {
+            injectedParameterWriter(parameter)
+        } else {
+            rtcEngine?.setParameters(parameter)
+        }
+    }
 }
 
 extension RTCManager: RTCManagerProtocol {
@@ -56,7 +82,7 @@ extension RTCManager: RTCManagerProtocol {
         let config = AgoraRtcEngineConfig()
         config.appId = AppContext.shared.appId
         config.channelProfile = .liveBroadcasting
-        config.audioScenario = .default
+        config.audioScenario = DeveloperConfig.shared.resolvedClientAudioScenario(fallback: .default)
         rtcEngine = AgoraRtcEngineKit.sharedEngine(with: config, delegate: delegate)
         ConvoAILogger.info("rtc version: \(AgoraRtcEngineKit.getSdkVersion())")
         return rtcEngine
@@ -104,6 +130,18 @@ extension RTCManager: RTCManagerProtocol {
             rtcEngine?.setParameters("{\"che.audio.apm_dump\": false}")
         }
     }
+
+    func setAinsEnabled(_ enabled: Bool) {
+        onDeviceAins.setEnabled(enabled)
+    }
+
+    func loadAudioSettings(ainsEnabled: Bool, _ loadAudioSettings: () -> Void) {
+        onDeviceAins.loadAudioSettings(enabled: ainsEnabled, loadAudioSettings)
+    }
+
+    func reapplyAins() {
+        onDeviceAins.reapply()
+    }
     
     func getAudioDump() -> Bool {
         return audioDumpEnabled
@@ -123,6 +161,7 @@ extension RTCManager: RTCManagerProtocol {
     
     func destroy() {
         audioDumpEnabled = false
+        onDeviceAins.reset()
         rtcEngine = nil
         AgoraRtcEngineKit.destroy()
     }

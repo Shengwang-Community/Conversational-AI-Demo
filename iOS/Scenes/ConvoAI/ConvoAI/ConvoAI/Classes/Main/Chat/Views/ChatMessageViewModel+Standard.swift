@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AgoraAgentClientToolkit
 
 protocol MessageStandard {
     func reduceStandardMessage(turnId: Int, message: String, timestamp: Int64, owner: TranscriptType, isInterrupted: Bool, isFinal: Bool)

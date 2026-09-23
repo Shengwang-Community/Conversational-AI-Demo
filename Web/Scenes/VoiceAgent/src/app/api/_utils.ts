@@ -1,6 +1,10 @@
 import type { NextRequest } from 'next/server'
 
-import { DEV_MODE_QUERY_KEY } from '@/constants'
+import {
+  DEV_MODE_QUERY_KEY,
+  DEV_MODE_SERVER_AUDIO_SCENARIO_QUERY_KEY
+} from '@/constants'
+import { isServerAudioScenario } from '@/lib/audio-scenario'
 
 // --- dev mode ---
 
@@ -17,6 +21,13 @@ const appCert = process.env.AGORA_APP_CERT || undefined
 export const getEndpointFromNextRequest = (request: NextRequest) => {
   const query = request.nextUrl.searchParams
   const isDev = query.get(DEV_MODE_QUERY_KEY) === 'true'
+  const requestedServerAudioScenario = query.get(
+    DEV_MODE_SERVER_AUDIO_SCENARIO_QUERY_KEY
+  )
+  const serverAudioScenario =
+    isDev && isServerAudioScenario(requestedServerAudioScenario)
+      ? requestedServerAudioScenario
+      : undefined
   const authorizationHeader = request.headers.get('Authorization')
   // normal mode: prod
   if (!isDev) {
@@ -30,6 +41,7 @@ export const getEndpointFromNextRequest = (request: NextRequest) => {
       appCert,
       basicAuthKey,
       basicAuthSecret,
+      serverAudioScenario,
       query
     }
   }
@@ -43,6 +55,7 @@ export const getEndpointFromNextRequest = (request: NextRequest) => {
     appCert,
     basicAuthKey,
     basicAuthSecret,
+    serverAudioScenario,
     query
   }
 }

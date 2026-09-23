@@ -7,6 +7,7 @@ import {
 } from '@/app/api/_utils'
 import { REMOTE_CONVOAI_AGENT_START } from '@/constants'
 import { startAgentRequestBodySchema } from '@/constants/api/schema/agent'
+import { DEFAULT_SERVER_AUDIO_SCENARIO } from '@/lib/audio-scenario'
 import { logger } from '@/lib/logger'
 
 // Start Agent
@@ -17,7 +18,8 @@ export async function POST(request: NextRequest) {
     endpoint,
     appId,
     authorizationHeader,
-    appCert
+    appCert,
+    serverAudioScenario
   } = getEndpointFromNextRequest(request)
 
   const url = `${agentServer}${REMOTE_CONVOAI_AGENT_START}`
@@ -89,7 +91,8 @@ export async function POST(request: NextRequest) {
             : {}),
           parameters: {
             ...nextParameters,
-            audio_scenario: 'default',
+            audio_scenario:
+              serverAudioScenario ?? DEFAULT_SERVER_AUDIO_SCENARIO,
             transcript: {
               enable: true,
               enable_words: !properties?.avatar, // Disable words for avatar
@@ -117,6 +120,7 @@ export async function POST(request: NextRequest) {
     console.log('start agent request body', JSON.stringify(body), 'url', url)
 
     const data = await res.json()
+
     logger.info({ data }, 'REMOTE response')
 
     if (res.status === 401) {

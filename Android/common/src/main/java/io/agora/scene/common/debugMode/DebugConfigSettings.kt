@@ -119,6 +119,13 @@ object DebugConfigSettings {
         this.isAudioDumpEnabled = isAudioDumpEnabled
     }
 
+    var isAinsEnabled: Boolean = false
+        private set
+
+    fun enableAins(isAinsEnabled: Boolean) {
+        this.isAinsEnabled = isAinsEnabled
+    }
+
     var isSessionLimitMode: Boolean = LocalStorageUtil.getBoolean(DEV_SESSION_LIMIT_MODE, true)
         private set(value) {
             if (field == value) return
@@ -168,6 +175,7 @@ object DebugConfigSettings {
         graphId = ""
         isDebug = false
         isAudioDumpEnabled = false
+        isAinsEnabled = false
         isMetricsEnabled = false
         _sdkAudioParameters.clear()
         convoAIParameter = ""

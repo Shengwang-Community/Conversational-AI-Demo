@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AgoraAgentClientToolkit
 import SVProgressHUD
 import Common
 import IoT
