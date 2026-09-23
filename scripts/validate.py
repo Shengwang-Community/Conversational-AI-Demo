@@ -209,14 +209,16 @@ def run_ios(args, root, cfg, output, evidence):
         evidence["status"] = "passed"
 
 
-def run_android(root, cfg, output, evidence):
+def run_android(root, cfg, output, evidence, tests_only=False):
     android = cfg["android"]
     command = ["./gradlew", "--console=plain"]
     for task in android["test_tasks"]:
         command += [task, "--rerun"]  # Gradle 8.9: rerun tests, retain incremental dependency builds.
-    command += android["lint_tasks"]
+    if not tests_only:
+        command += android["lint_tasks"]
     log = output / "gradle.log"
-    evidence.update(command=shlex.join(command), log_path=str(log), flavor=android["flavor"])
+    evidence.update(command=shlex.join(command), log_path=str(log), flavor=android["flavor"],
+                    lint="not-run" if tests_only else "requested")
     # Isolate invocations before clearing only generated test reports. Gradle otherwise
     # leaves old XML behind when a test source set becomes empty (NO-SOURCE).
     with build_lock(root / "Android/.gradle/workflow-validation"):
@@ -247,6 +249,7 @@ def parser():
     p = argparse.ArgumentParser(description=__doc__)
     platforms = p.add_subparsers(dest="platform", required=True)
     android = platforms.add_parser("android", help="Run this brand's UT and lint")
+    android.add_argument("--tests-only", action="store_true", help="Run unit tests without app lint")
     ios = platforms.add_parser("ios", help="Run a configured iOS test suite")
     ios.add_argument("--suite", default="ains", help="iOS suite from scripts/workflow.json")
     ios.add_argument("--list", action="store_true", help="List iOS suites without invoking Xcode")
@@ -276,7 +279,7 @@ def main(argv=None):
         if args.platform == "ios":
             run_ios(args, ROOT, cfg, output, evidence)
         else:
-            run_android(ROOT, cfg, output, evidence)
+            run_android(ROOT, cfg, output, evidence, tests_only=args.tests_only)
         return 0
     except (OSError, ValueError, KeyError, ET.ParseError, subprocess.CalledProcessError) as error:
         evidence["error"] = str(error)

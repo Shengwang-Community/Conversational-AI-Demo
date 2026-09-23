@@ -47,7 +47,7 @@ elif tool == "gradlew":
             report = root / "Android" / rel
             report.mkdir(parents=True, exist_ok=True)
             (report / "TEST-current.xml").write_text('<testsuite tests="1"><testcase name="current"/></testsuite>')
-    if os.environ.get("LINT_FAIL"):
+    if os.environ.get("LINT_FAIL") and any(":lint" in arg for arg in sys.argv):
         sys.exit(7)
 '''
 
@@ -178,6 +178,17 @@ class ValidationRegressionTests(unittest.TestCase):
         wrong = "China" if flavor == "global" else "Global"
         self.assertFalse(any(wrong in arg for arg in call))
         self.assertEqual(self.evidence()[0]["tests"]["passed"], len(self.cfg["android"]["test_reports"]))
+
+    def test_tests_only_passes_when_lint_fails_but_still_requires_current_tests(self):
+        result = self.run_cli("android", "--tests-only", env={"LINT_FAIL": "1"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        call = next(call for call in self.calls() if call[0] == "gradlew")
+        self.assertFalse(any(":lint" in arg for arg in call))
+        self.assertEqual(self.evidence()[0]["lint"], "not-run")
+        for failure in [{"NO_SOURCE": "1"}, {"GRADLE_FAIL": "1"}]:
+            with self.subTest(failure=failure):
+                result = self.run_cli("android", "--tests-only", env=failure)
+                self.assertNotEqual(result.returncode, 0)
 
     def test_android_does_not_accept_old_reports_when_tests_become_no_source(self):
         self.assertEqual(self.run_cli("android").returncode, 0)
