@@ -10,7 +10,7 @@ See [shared guidance](../AI_WORKFLOW.md). Paths below are relative to Android un
 
 ## Useful commands
 
-From the repository root, `python3 scripts/validate.py android` runs this brand's debug unit tests and app lint. For a narrower change, choose relevant Gradle tasks instead.
+From the repository root, `python3 scripts/validate.py android` runs this brand's debug unit tests and app lint. CI uses `python3 scripts/validate.py android --tests-only` to run the same unit tests without app lint. For a narrower change, choose relevant Gradle tasks instead.
 
 From Android:
 

@@ -5,7 +5,7 @@ repos:
         name: Detect hardcoded secrets
         description: Ensures no secrets are committed
         entry: gitleaks protect
-        args: ["--config=.gitleaks.toml", "--staged", "--verbose"]
+        args: ["--config=.gitleaks.toml", "--staged", "--redact", "--verbose"]
         language: system
         pass_filenames: false
         stages: [pre-commit]
@@ -16,5 +16,4 @@ repos:
         entry: .git-hooks/check-commit-message.sh
         language: script
         stages: [commit-msg]
-
 

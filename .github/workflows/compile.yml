@@ -22,8 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -42,12 +42,25 @@ jobs:
             -PAG_APP_ID="$PLACEHOLDER_APP_ID" \
             :app:assembleChinaDebug
 
+      - name: Unit tests
+        env:
+          ORG_GRADLE_PROJECT_AG_APP_ID: ${{ env.PLACEHOLDER_APP_ID }}
+        run: python3 scripts/validate.py android --tests-only --results-dir "$RUNNER_TEMP/android-tests"
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-test-results
+          path: ${{ runner.temp }}/android-tests
+          if-no-files-found: ignore
+          retention-days: 7
+
   ios:
     name: iOS
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Configure compile-only App ID
         working-directory: iOS
         run: |
@@ -80,6 +93,19 @@ jobs:
             IPHONEOS_DEPLOYMENT_TARGET=15.0 \
             build
 
+      - name: AINS unit tests
+        run: python3 scripts/validate.py ios --suite ains --results-dir "$RUNNER_TEMP/ios-tests"
+      - name: Environment unit tests
+        run: python3 scripts/validate.py ios --suite environment --results-dir "$RUNNER_TEMP/ios-tests"
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-results
+          path: ${{ runner.temp }}/ios-tests
+          if-no-files-found: ignore
+          retention-days: 7
+
   web:
     name: Web
     runs-on: ubuntu-latest
@@ -95,7 +121,7 @@ jobs:
       NEXT_PUBLIC_SSO_LOGIN_URL: https://service.apprtc.cn/toolbox
       AGORA_APP_ID: "00000000000000000000000000000000"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.0
