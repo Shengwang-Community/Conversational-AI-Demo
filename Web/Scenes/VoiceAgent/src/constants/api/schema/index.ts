@@ -1,5 +1,16 @@
 import * as z from 'zod'
 
+const requestConfigSchema = z
+  .object({
+    convoai: z
+      .object({
+        base_url: z.string().optional(),
+        headers: z.record(z.string(), z.string()).optional()
+      })
+      .optional()
+  })
+  .optional()
+
 export const basicRemoteResSchema = z.object({
   tip: z.string().optional(),
   code: z.number().optional(),
@@ -24,13 +35,15 @@ export const remoteAgentStopSettingsSchema = z.object({
 export const remoteAgentStopReqSchema = remoteAgentStopSettingsSchema.extend({
   app_id: z.string(),
   basic_auth_username: z.string().optional(),
-  basic_auth_password: z.string().optional()
+  basic_auth_password: z.string().optional(),
+  request_config: requestConfigSchema
 })
 
 export const remoteAgentPingReqSchema = z.object({
   app_id: z.string(),
   preset_name: z.string(),
-  channel_name: z.string()
+  channel_name: z.string(),
+  request_config: requestConfigSchema
 })
 
 export const remoteAgentCustomPresetItem = z.object({
@@ -60,5 +73,6 @@ export const remoteUserInfoUpdateSchema = basicRemoteResSchema.extend({
 })
 
 export const remoteSipStatusSchema = z.object({
-  agent_id: z.string()
+  agent_id: z.string(),
+  request_config: requestConfigSchema
 })

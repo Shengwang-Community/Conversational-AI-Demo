@@ -412,9 +412,10 @@ export const AgentActionAudio = (props: {
   className?: string
   audioTrack?: IMicrophoneAudioTrack
   showInterrupt?: boolean
+  disabled?: boolean
   onInterrupt?: (() => void) | (() => Promise<void>)
 }) => {
-  const { className, audioTrack, showInterrupt, onInterrupt } = props
+  const { className, audioTrack, showInterrupt, disabled, onInterrupt } = props
 
   const [mediaStreamTrack, setMediaStreamTrack] =
     React.useState<MediaStreamTrack>()
@@ -478,7 +479,7 @@ export const AgentActionAudio = (props: {
               : EMicrophoneStatus.ALLOW
             : EMicrophoneStatus.DISALLOW
         }
-        disabled={!audioTrack}
+        disabled={disabled || !audioTrack}
         onClick={onClickMute}
       />
       {showInterrupt ? (
@@ -489,6 +490,7 @@ export const AgentActionAudio = (props: {
           />
           <AgentActionInterrupt
             className='bg-transparent shadow-none'
+            disabled={disabled}
             onClick={onInterrupt}
           />
         </>
@@ -500,6 +502,7 @@ export const AgentActionAudio = (props: {
           />
           <AgentActionMicSelector
             className='bg-transparent shadow-none'
+            disabled={disabled}
             audioTrack={audioTrack}
           />
         </>
@@ -508,11 +511,14 @@ export const AgentActionAudio = (props: {
   )
 }
 
-export const AgentStateIndicator = (props: { className?: string }) => {
-  const { className } = props
+export const AgentStateIndicator = (props: {
+  className?: string
+  disabled?: boolean
+  onInterrupt?: (() => void) | (() => Promise<void>)
+}) => {
+  const { className, disabled, onInterrupt } = props
 
   const {
-    agent_rtc_uid,
     remote_rtc_uid,
     roomStatus,
 
@@ -527,17 +533,6 @@ export const AgentStateIndicator = (props: { className?: string }) => {
   const hasUserTranscriptiionMemo = React.useMemo(() => {
     return history.some((item) => item.uid === `${remote_rtc_uid}`)
   }, [history, remote_rtc_uid])
-
-  const handleInterrupt = async () => {
-    console.info('handleInterrupt')
-    const conversationalAIAPI = ConversationalAIAPI.getInstance()
-    if (conversationalAIAPI) {
-      console.info('interrupting agent')
-      await conversationalAIAPI.interrupt(`${agent_rtc_uid}`)
-    } else {
-      console.error('ConversationalAIAPI instance not found')
-    }
-  }
 
   return (
     <div
@@ -568,17 +563,20 @@ export const AgentStateIndicator = (props: { className?: string }) => {
             )}
           {agentStatus === EConnectionStatus.CONNECTED &&
             agentState === EAgentState.SPEAKING && (
-              <div
+              <button
+                type='button'
+                disabled={disabled}
                 className={cn(
                   'bg-transparent text-icontext-hover hover:bg-block',
                   'rounded-md px-3 py-2',
-                  'flex cursor-pointer items-center gap-2'
+                  'flex cursor-pointer items-center gap-2',
+                  'disabled:cursor-not-allowed disabled:opacity-50'
                 )}
-                onClick={handleInterrupt}
+                onClick={onInterrupt}
               >
                 <ChatInterruptInlineActionIcon className='inline size-4' />
                 {tAgent('interruptAgentTip')}
-              </div>
+              </button>
             )}
         </>
       )}
@@ -694,8 +692,11 @@ export function AgentAudioTrack(props: { audioTrack?: IMicrophoneAudioTrack }) {
   return null
 }
 
-export const AgentUploadPicture = (props: { className?: string }) => {
-  const { className } = props
+export const AgentUploadPicture = (props: {
+  className?: string
+  disabled?: boolean
+}) => {
+  const { className, disabled } = props
 
   const [isUploading, setIsUploading] = React.useState(false)
 
@@ -708,6 +709,7 @@ export const AgentUploadPicture = (props: { className?: string }) => {
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
+    if (disabled) return
     const file = event.target.files?.[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -776,16 +778,20 @@ export const AgentUploadPicture = (props: { className?: string }) => {
           accept='image/jpeg,image/jpg,image/png,image/webp'
           className='hidden'
           ref={inputRef}
-          disabled={isUploading}
+          disabled={disabled || isUploading}
           onChange={handleFileChange}
         />
         <TooltipTrigger asChild>
           <Button
             variant='action'
             size='action'
-            disabled={isUploading}
-            className={cn({ 'cursor-not-allowed': isUploading }, className)}
+            disabled={disabled || isUploading}
+            className={cn(
+              { 'cursor-not-allowed': disabled || isUploading },
+              className
+            )}
             onClick={() => {
+              if (disabled) return
               inputRef.current?.click()
             }}
           >

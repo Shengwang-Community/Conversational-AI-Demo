@@ -5,6 +5,7 @@ import {
   REMOTE_CONVOAI_AGENT_STOP,
   remoteAgentStopReqSchema
 } from '@/constants'
+import { buildConvoaiRequestConfig, mergeConvoaiRequestConfig } from '@/lib/dev'
 
 import { logger } from '@/lib/logger'
 
@@ -17,7 +18,9 @@ export async function POST(request: NextRequest) {
     appId,
     authorizationHeader,
     basicAuthKey,
-    basicAuthSecret
+    basicAuthSecret,
+    requestDomain,
+    requestHeaders
   } = getEndpointFromNextRequest(request)
 
   if (!authorizationHeader) {
@@ -28,6 +31,10 @@ export async function POST(request: NextRequest) {
   }
 
   const url = `${agentServer}${REMOTE_CONVOAI_AGENT_STOP}`
+  const devRequestConfig = buildConvoaiRequestConfig({
+    requestDomain,
+    xServiceNamespace: requestHeaders['X-Service-Namespace']
+  })
 
   logger.info(
     { agentServer, devMode, endpoint, appId, url },
@@ -41,7 +48,11 @@ export async function POST(request: NextRequest) {
     ...reqBody,
     app_id: appId,
     basic_auth_username: basicAuthKey,
-    basic_auth_password: basicAuthSecret
+    basic_auth_password: basicAuthSecret,
+    request_config: mergeConvoaiRequestConfig(
+      reqBody.request_config,
+      devRequestConfig
+    )
   })
   logger.info({ body }, 'REMOTE request body')
   const res = await fetch(url, {

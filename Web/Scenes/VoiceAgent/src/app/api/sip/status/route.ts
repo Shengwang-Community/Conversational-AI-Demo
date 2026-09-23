@@ -2,13 +2,21 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { getEndpointFromNextRequest } from '@/app/api/_utils'
 import { REMOTE_CONVOAI_SIP_STATUS, remoteSipStatusSchema } from '@/constants'
+import { buildConvoaiRequestConfig, mergeConvoaiRequestConfig } from '@/lib/dev'
 
 import { logger } from '@/lib/logger'
 
 // SIP Status
 export async function POST(request: NextRequest) {
-  const { agentServer, devMode, endpoint, appId, authorizationHeader } =
-    getEndpointFromNextRequest(request)
+  const {
+    agentServer,
+    devMode,
+    endpoint,
+    appId,
+    authorizationHeader,
+    requestDomain,
+    requestHeaders
+  } = getEndpointFromNextRequest(request)
 
   if (!authorizationHeader) {
     return NextResponse.json(
@@ -18,6 +26,10 @@ export async function POST(request: NextRequest) {
   }
 
   const url = `${agentServer}${REMOTE_CONVOAI_SIP_STATUS}`
+  const devRequestConfig = buildConvoaiRequestConfig({
+    requestDomain,
+    xServiceNamespace: requestHeaders['X-Service-Namespace']
+  })
 
   logger.info(
     { agentServer, devMode, endpoint, appId, url },
@@ -29,7 +41,11 @@ export async function POST(request: NextRequest) {
 
   const body = remoteSipStatusSchema.parse({
     ...reqBody,
-    app_id: appId
+    app_id: appId,
+    request_config: mergeConvoaiRequestConfig(
+      reqBody.request_config,
+      devRequestConfig
+    )
   })
 
   logger.info({ body }, 'REMOTE request body')

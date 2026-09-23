@@ -11,13 +11,18 @@ import {
   sipStatusPayloadSchema
 } from '@/constants'
 
+import { generateDevModeQuery } from '@/lib/dev'
+import type { TDevModeQuery } from '@/type/dev'
+
 import { fetchWithTimeout, ResourceLimitError } from './agent'
 
 export const startSip = async (
   payload: z.infer<typeof sipCallPayloadSchema>,
+  options?: TDevModeQuery,
   abortController?: AbortController
 ) => {
-  const url = API_SIP_CALL
+  const query = generateDevModeQuery(options ?? {})
+  const url = `${API_SIP_CALL}${query}`
   const data = sipCallPayloadSchema.parse(payload)
 
   const resp = await fetchWithTimeout(
@@ -57,9 +62,11 @@ export enum ESipCallingStatus {
 }
 
 export const getSipStatus = async (
-  payload: z.infer<typeof sipStatusPayloadSchema>
+  payload: z.infer<typeof sipStatusPayloadSchema>,
+  options?: TDevModeQuery
 ) => {
-  const url = `${API_SIP_STATUS}`
+  const query = generateDevModeQuery(options ?? {})
+  const url = `${API_SIP_STATUS}${query}`
   const data = sipStatusPayloadSchema.parse(payload)
   const resp = await fetchWithTimeout(url, {
     method: 'POST',

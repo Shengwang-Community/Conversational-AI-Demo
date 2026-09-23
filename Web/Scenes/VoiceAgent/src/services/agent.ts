@@ -55,8 +55,8 @@ export class ResourceLimitError extends Error {
 }
 
 export const useAgentPresets = (options?: TDevModeQuery) => {
-  const { devMode, accountUid } = options ?? {}
-  const query = generateDevModeQuery({ devMode })
+  const { accountUid } = options ?? {}
+  const query = generateDevModeQuery(options ?? {})
   const url = `${API_AGENT_PRESETS}${query}`
   const [{ data, isLoading, error }] = useCancelableSWR<IAgentPreset[]>(
     accountUid ? url : null,
@@ -195,8 +195,7 @@ export const getAgentToken = async (
   channel?: string,
   options?: TDevModeQuery
 ) => {
-  const { devMode } = options ?? {}
-  const query = generateDevModeQuery({ devMode })
+  const query = generateDevModeQuery(options ?? {})
   const url = `${API_TOKEN}${query}`
   const data = {
     request_id: genUUID(),
@@ -252,7 +251,7 @@ export const startAgent = async (
     if (llm_system_messages) {
       opensourceData.llm.system_messages = llm_system_messages
     }
-    const llm_params = opensourceData?.llm.params?.trim()
+    const llm_params = opensourceData.llm?.params?.trim()
       ? JSON.parse(opensourceData.llm.params.trim())
       : undefined
     if (llm_params) {
@@ -317,8 +316,7 @@ export const startAgentDev = async (
   options?: TDevModeQuery,
   abortController?: AbortController
 ) => {
-  const { devMode } = options ?? {}
-  const query = generateDevModeQuery({ devMode })
+  const query = generateDevModeQuery(options ?? {})
   const url = `${API_AGENT}${query}`
   const data = localStartAgentPropertiesSchema.parse(payload)
   const nextData = {
@@ -358,8 +356,7 @@ export const stopAgent = async (
   payload: z.infer<typeof remoteAgentStopSettingsSchema>,
   options?: TDevModeQuery
 ) => {
-  const { devMode } = options ?? {}
-  const query = generateDevModeQuery({ devMode })
+  const query = generateDevModeQuery(options ?? {})
   const url = `${API_AGENT_STOP}${query}`
   const data = remoteAgentStopSettingsSchema.parse(payload)
   const resp = await fetchWithTimeout(url, {
@@ -383,8 +380,7 @@ export const pingAgent = async (
   payload: z.infer<typeof pingAgentReqSchema>,
   options?: TDevModeQuery
 ) => {
-  const { devMode } = options ?? {}
-  const query = generateDevModeQuery({ devMode })
+  const query = generateDevModeQuery(options ?? {})
   const url = `${API_AGENT_PING}${query}`
   const data = pingAgentReqSchema.parse(payload)
   const resp = await fetchWithTimeout(url, {

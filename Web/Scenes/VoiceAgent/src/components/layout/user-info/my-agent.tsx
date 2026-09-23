@@ -136,7 +136,7 @@ export const MyAgentContent = () => {
                           placeholder={t('nickname-placeholder')}
                           className='mt-3 h-11 rounded-sm bg-brand-white-1'
                           // {...field}
-                          value={nickname}
+                          value={nickname ?? ''}
                           onChange={(e) => {
                             setNickname(e.target.value)
                           }}
@@ -275,7 +275,7 @@ export const MyAgentContent = () => {
                       <Textarea
                         placeholder={t('bio-placeholder')}
                         className='mt-3 min-h-35 rounded-sm bg-brand-white-1'
-                        value={bio}
+                        value={bio ?? ''}
                         // {...field}
                         onChange={(e) => {
                           // max length 500

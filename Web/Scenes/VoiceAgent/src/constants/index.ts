@@ -2,6 +2,9 @@ export * from '@/constants/agent'
 export * from '@/constants/api'
 
 export const DEV_MODE_QUERY_KEY = 'dev'
+export const DEV_MODE_CUSTOM_APP_ID_QUERY_KEY = 'customAppId'
+export const DEV_MODE_REQUEST_DOMAIN_QUERY_KEY = 'requestDomain'
+export const DEV_MODE_X_SERVICE_NAMESPACE_QUERY_KEY = 'xServiceNamespace'
 export const DEV_MODE_SERVER_AUDIO_SCENARIO_QUERY_KEY = 'serverAudioScenario'
 
 export const SSO_TOKEN = 'code'

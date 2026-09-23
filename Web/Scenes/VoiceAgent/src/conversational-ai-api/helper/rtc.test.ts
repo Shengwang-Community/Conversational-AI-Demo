@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, mock, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 import { ERTCCustomEvents } from 'agora-agent-client-toolkit'
 
 const calls: string[] = []
@@ -102,5 +102,73 @@ describe('RTCHelper cleanup', () => {
     expect(helper.localTracks).toEqual({})
     expect(processorState.processor).toBeNull()
     expect(calls).toEqual(['disable-processor', 'close-track', 'leave'])
+  })
+})
+
+const originalFetch = globalThis.fetch
+
+describe('RTCHelper App ID overrides', () => {
+  const tokenResponse = (appId: string) =>
+    new Response(
+      JSON.stringify({ code: 0, data: { appId, token: `token-${appId}` } })
+    )
+  const fetchMock = mock(
+    async (input: string | URL | Request, _init?: RequestInit) => {
+      const url = new URL(String(input), 'https://local.example.com')
+      return tokenResponse(url.searchParams.get('customAppId') || 'default-app')
+    }
+  )
+
+  beforeEach(() => {
+    fetchMock.mockClear()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+  })
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+  })
+
+  test('reuses tokens only for the same user, channel and effective App ID', async () => {
+    const { RTCHelper } = await import('@/conversational-ai-api/helper/rtc')
+    const helper = new RTCHelper()
+    await helper.retrieveToken('user-1', 'demo')
+    await helper.retrieveToken('user-1', 'demo')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    const options = {
+      devMode: true,
+      customAppId: 'override-app',
+      isCustomAppIdOverrideEnabled: true
+    }
+    await helper.retrieveToken('user-1', 'demo', false, options)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(helper.appId).toBe('override-app')
+    expect(helper.token).toBe('token-override-app')
+
+    await helper.retrieveToken('user-1', 'demo', false, {
+      ...options,
+      isCustomAppIdOverrideEnabled: false
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(helper.appId).toBe('default-app')
+  })
+
+  test('ignores a stale default token that resolves after an App ID override', async () => {
+    const { RTCHelper } = await import('@/conversational-ai-api/helper/rtc')
+    const helper = new RTCHelper()
+    const delayed = Promise.withResolvers<Response>()
+    fetchMock.mockImplementationOnce(async () => delayed.promise)
+    const prefetch = helper.retrieveToken('user-1', 'demo')
+
+    await helper.retrieveToken('user-1', 'demo', false, {
+      devMode: true,
+      customAppId: 'override-app',
+      isCustomAppIdOverrideEnabled: true
+    })
+    delayed.resolve(tokenResponse('default-app'))
+    await prefetch
+
+    expect(helper.appId).toBe('override-app')
+    expect(helper.token).toBe('token-override-app')
   })
 })

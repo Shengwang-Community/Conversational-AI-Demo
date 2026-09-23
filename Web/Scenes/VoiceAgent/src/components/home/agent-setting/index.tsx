@@ -25,7 +25,13 @@ import { ICPFooter } from './icp-footer'
 import { User } from './tab-user'
 
 export function AgentSettings() {
-  const { isDevMode } = useGlobalStore()
+  const {
+    isDevMode,
+    customAppId,
+    isCustomAppIdOverrideEnabled,
+    requestDomain,
+    xServiceNamespace
+  } = useGlobalStore()
   const {
     settings,
     selectedPreset,
@@ -42,6 +48,10 @@ export function AgentSettings() {
     error
   } = useAgentPresets({
     devMode: isDevMode,
+    customAppId,
+    isCustomAppIdOverrideEnabled,
+    requestDomain,
+    xServiceNamespace,
     accountUid
   })
   const t = useTranslations('settings')

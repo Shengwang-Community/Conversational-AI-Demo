@@ -25,6 +25,7 @@ import {
   getRtcAudioScenarioConfig,
   type TAudioScenarioMode
 } from '@/lib/audio-scenario'
+import { getEffectiveCustomAppId } from '@/lib/dev'
 import { logger } from '@/lib/logger'
 import { getAgentToken } from '@/services/agent'
 import type { TDevModeQuery } from '@/type/dev'
@@ -70,6 +71,8 @@ export class RTCHelper extends EventHelper<
   public localTracks: IUserTracks = {}
   public appId: string | null = null
   public token: string | null = null
+  private tokenCacheKey: string | null = null
+  private latestTokenRequestKey: string | null = null
   public channelName: string | null = null
   public userId: string | null = null
   private processor: IAIDenoiserProcessor | null = null
@@ -188,7 +191,18 @@ export class RTCHelper extends EventHelper<
     force?: boolean,
     options?: TDevModeQuery
   ) {
-    if (!force && this.appId && this.token) {
+    const tokenRequestKey = JSON.stringify([
+      `${userId}`,
+      channel ?? null,
+      getEffectiveCustomAppId(options) ?? null
+    ])
+    this.latestTokenRequestKey = tokenRequestKey
+    if (
+      !force &&
+      this.appId &&
+      this.token &&
+      this.tokenCacheKey === tokenRequestKey
+    ) {
       logger.debug(formatLog('retrieveToken', 'Using cached token'))
       return
     }
@@ -197,6 +211,9 @@ export class RTCHelper extends EventHelper<
     )
     try {
       const resData = await getAgentToken(`${userId}`, channel, options)
+      // An earlier prefetch must not replace the token for a newly selected App ID.
+      if (this.latestTokenRequestKey !== tokenRequestKey) return
+      this.tokenCacheKey = tokenRequestKey
       this.appId = resData.data.appId
       this.token = resData.data.token
       this.channelName = channel ?? null

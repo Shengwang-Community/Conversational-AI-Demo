@@ -52,12 +52,23 @@ export default function SubTitle(props: { className?: string }) {
   const scrollAreaRef = React.useRef<HTMLDivElement>(null)
   const isAutoScrollEnabledRef = React.useRef(true)
 
-  const { isDevMode, showLiveMetrics } = useGlobalStore()
+  const {
+    isDevMode,
+    showLiveMetrics,
+    customAppId,
+    isCustomAppIdOverrideEnabled,
+    requestDomain,
+    xServiceNamespace
+  } = useGlobalStore()
   const { history, userInputHistory } = useChatStore()
   const { activeSession } = useReportStore()
   const { accountUid } = useUserInfoStore()
   const { data: remotePresets = [] } = useAgentPresets({
     devMode: isDevMode,
+    customAppId,
+    isCustomAppIdOverrideEnabled,
+    requestDomain,
+    xServiceNamespace,
     accountUid: accountUid
   })
   const { settings } = useAgentSettingsStore()
