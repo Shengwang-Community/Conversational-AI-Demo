@@ -8,6 +8,7 @@ import io.agora.scene.common.util.LocalStorageUtil
 import io.agora.scene.convoai.api.CovAgentLanguage
 import io.agora.scene.convoai.api.CovAgentPreset
 import io.agora.scene.convoai.api.CovAvatar
+import io.agora.scene.convoai.avatar.SpatiusConfig
 import io.agora.scene.convoai.ui.CovRenderMode
 import io.agora.scene.convoai.ui.living.voiceprint.VoiceprintInfo
 import io.agora.scene.convoai.ui.living.voiceprint.VoiceprintManager
@@ -158,6 +159,8 @@ object CovAgentManager {
     }
 
     val isEnableAvatar: Boolean get() = avatar != null || isCustomEnableAvatar
+
+    val isSpatiusAvatar: Boolean get() = SpatiusConfig.isSelected(preset, avatar)
 
     val isCustomEnableAvatar: Boolean get() = (preset?.isCustom == true) && (preset?.is_support_avatar == true)
 

@@ -1,7 +1,11 @@
 package io.agora.scene.convoai.constant
 
 import io.agora.scene.common.constant.ServerConfig
+import io.agora.scene.common.util.GsonTools
 import io.agora.scene.convoai.api.CovAgentLanguage
+import io.agora.scene.convoai.api.CovAgentPresetExtensions
+import io.agora.scene.convoai.api.CovAvatar
+import io.agora.scene.convoai.avatar.SpatiusConfig
 import io.agora.scene.convoai.api.CovAgentPreset
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -99,6 +103,67 @@ class CovAgentManagerTest {
 
         assertEquals(DEFAULT_APP_ID, ServerConfig.rtcAppId)
     }
+
+    @Test
+    fun spatius_decodesPresetExtensionsWithSelectedAvatarId() {
+        val preset = requireNotNull(GsonTools.toBean("""
+            {
+              "name": "standard", "preset_type": "standard",
+              "extensions": {"spatius_app_id": " backend-app "},
+              "avatar_ids_by_lang": {"zh-CN": [{
+                "vendor": "spatius", "avatar_id": "backend-avatar",
+                "display_vendor": "Spatius", "avatar_name": "Avatar",
+                "thumb_img_url": "", "bg_img_url": "", "region": "cn-beijing"
+              }]}
+            }
+        """.trimIndent(), CovAgentPreset::class.java))
+        val selected = preset.getAvatarsForLang("zh-CN").single()
+        assertEquals(SpatiusConfig("backend-app", "backend-avatar", "cn-beijing"),
+            SpatiusConfig.resolve(preset, selected))
+        assertEquals("backend-app", SpatiusConfig.resolve(preset,
+            selected.copy(spatius_app_id = "legacy-avatar"))?.appId)
+    }
+
+    @Test
+    fun spatius_usesOnlyBackendMetadataWithLegacyCompatibility() {
+        val preset = createPreset(presetType = "standard").copy(spatius_app_id = "preset", region = "auto")
+        val avatar = avatar().copy(spatius_app_id = " selected ", region = " cn-beijing ")
+        assertEquals(SpatiusConfig("selected", "avatar", "cn-beijing"), SpatiusConfig.resolve(preset, avatar))
+        assertEquals("preset", SpatiusConfig.resolve(preset, avatar.copy(spatius_app_id = " "))?.appId)
+        assertEquals("extensions", SpatiusConfig.resolve(
+            preset.copy(extensions = CovAgentPresetExtensions(" extensions ")), avatar)?.appId)
+        assertEquals("selected", SpatiusConfig.resolve(
+            preset.copy(extensions = CovAgentPresetExtensions(" ")), avatar)?.appId)
+        assertNull(SpatiusConfig.resolve(preset.copy(spatius_app_id = null), avatar()))
+        assertNull(SpatiusConfig.resolve(preset.copy(spatius_app_id = " ",
+            extensions = CovAgentPresetExtensions(" ")), avatar().copy(spatius_app_id = " ")))
+    }
+
+    @Test
+    fun spatius_customPresetUsesBackendCharacterAndIgnoresStaleSelection() {
+        val preset = createPreset(presetType = "custom").copy(is_support_avatar = true,
+            avatar_vendor = "SPATIUS", spatius_app_id = "custom-app", spatius_avatar_id = "custom-avatar")
+        assertEquals(SpatiusConfig("custom-app", "custom-avatar", "auto"),
+            SpatiusConfig.resolve(preset, avatar().copy(spatius_app_id = "stale")))
+        assertEquals(SpatiusConfig("custom-extension", "custom-avatar", "auto"),
+            SpatiusConfig.resolve(preset.copy(extensions = CovAgentPresetExtensions("custom-extension")),
+                avatar().copy(spatius_app_id = "stale")))
+        assertNull(SpatiusConfig.resolve(preset.copy(spatius_avatar_id = null), avatar()))
+        assertFalse(SpatiusConfig.isSelected(preset.copy(is_support_avatar = false), avatar()))
+    }
+
+    @Test
+    fun spatius_missingFieldsAndOtherVendorsDoNotInitialize() {
+        val preset = createPreset(presetType = "standard")
+        assertTrue(SpatiusConfig.isSelected(preset, avatar()))
+        assertNull(SpatiusConfig.resolve(preset, avatar()))
+        val configured = preset.copy(extensions = CovAgentPresetExtensions("backend-app"))
+        assertNull(SpatiusConfig.resolve(configured, avatar().copy(avatar_id = " ")))
+        assertNull(SpatiusConfig.resolve(configured, avatar().copy(vendor = "heygen")))
+        assertFalse(SpatiusConfig.isSelected(preset, null))
+    }
+
+    private fun avatar() = CovAvatar(" Spatius ", "Spatius", "avatar", "Name", "", "")
 
     private fun createPreset(
         name: String = "preset",

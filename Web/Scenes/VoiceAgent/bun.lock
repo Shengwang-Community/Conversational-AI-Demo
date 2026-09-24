@@ -36,7 +36,7 @@
         "agora-agent-client-toolkit": "2.10.0",
         "agora-conversational-ai-denoiser": "^1.0.0-beta2",
         "agora-rtc-sdk-ng": "^4.24.8",
-        "agora-rtm": "^2.2.3",
+        "agora-rtm": "2.3.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "cmdk": "^1.1.1",

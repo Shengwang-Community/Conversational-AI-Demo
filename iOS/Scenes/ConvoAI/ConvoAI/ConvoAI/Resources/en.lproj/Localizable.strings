@@ -379,3 +379,8 @@
 
 "devmode.field.enabled" = "%@ enabled";
 "devmode.field.disabled" = "%@ disabled";
+
+// Local avatar rendering
+"conversation.avatar.render.failed" = "The avatar failed to load. The call has ended. Please try again.";
+
+"conversation.avatar.configuration.changed" = "The avatar configuration changed and the call has ended. Restart the app to try again.";

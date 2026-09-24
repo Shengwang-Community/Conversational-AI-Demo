@@ -19,7 +19,7 @@ android {
         minSdk rootProject.ext.minSdkVersion
         targetSdk rootProject.ext.targetSdkVersion
         versionCode 26091612
-        versionName "2.3.1"
+        versionName "2.4.0"
         
         buildConfigField("String", "BUILD_TIMESTAMP", "\"${buildTimestamp}\"")
 
@@ -74,6 +74,10 @@ android {
     buildFeatures {
         viewBinding true
         buildConfig true
+    }
+    androidResources {
+        // Do not package obsolete models left in assets by an older resource download.
+        ignoreAssetsPatterns.addAll(['common_resource.zip', '._common_resource.zip', 'common_resource'])
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

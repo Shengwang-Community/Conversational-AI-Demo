@@ -110,23 +110,24 @@
 
 ### 2.3 Toolkit 正式包接入
 
-`iOS/Podfile` 已配置以下发布包依赖，并通过清华 CocoaPods Specs 镜像解析：
+The Podfile downloads the official Toolkit binary and uses a local spec to select the domestic RTC and RTM Pods:
 
 ```ruby
-pod 'agent-client-toolkit-swift', '2.10.1'
-pod 'AgoraRtm', '2.2.3', :subspecs => ['RtmKit']
+pod 'ShengwangRtcEngine_iOS', '4.6.4'
+pod 'agent-client-toolkit-swift', :podspec => 'ThirdParty/AgentClientToolkit/agent-client-toolkit-swift.podspec.json'
+pod 'ShengWang-Rtm', '2.3.0', :subspecs => ['RtmKit']
 ```
 
 首次切换或本地索引尚未更新时，在 Demo 仓库根目录执行：
 
 ```bash
 cd iOS
-pod _1.16.2_ install --repo-update
+pod update AvatarKitRTC AvatarKitAgoraBridge agent-client-toolkit-swift ConvoAI IoT --no-repo-update
 ```
 
 打开 `Agent.xcworkspace` 编译运行。本地和 Jenkins 都通过 CocoaPods 下载正式 XCFramework，无需拉取 Toolkit 源码。
 
-Swift 代码使用 `import AgoraAgentClientToolkit`。Toolkit 无需配置 `:path` 或手动添加 XCFramework；Podfile 中 `ConvoAI`、`Common` 等 Demo 自有模块的 `:path` 配置仍用于加载本仓库业务代码。升级 Toolkit 时同步更新 `iOS/Podfile` 与 `iOS/Scenes/ConvoAI/ConvoAI/ConvoAI.podspec` 中的版本。
+Swift imports remain `AgoraAgentClientToolkit`, `AgoraRtcKit` and `AgoraRtmKit`. The local spec changes only the RTC and RTM dependencies; see [the compatibility note](../../ThirdParty/AgentClientToolkit/README.md). When upgrading Toolkit, update that spec and `ConvoAI.podspec`, then validate against the selected RTM version.
 
 Demo 将 AINS 开关传给 `loadAudioSettings(scenario:enableAins:)`，默认关闭，切换音频路由后保持相同选择。
 

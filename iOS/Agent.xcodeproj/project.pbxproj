@@ -19,17 +19,21 @@
 		C0AA00302E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */; };
 		C0AA00322E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */; };
 		C0AA00342E12000100A10001 /* RTCManagerAinsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0AA00332E12000100A10001 /* RTCManagerAinsTests.swift */; };
+		C0C100012E10000100B10001 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0AA00072E10000100A10001 /* XCTest.framework */; };
+		C0C100032E10000100B10001 /* OnDeviceAins.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C100042E10000100B10001 /* OnDeviceAins.swift */; };
+		C0C100052E10000100B10001 /* OnDeviceAinsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C100062E10000100B10001 /* OnDeviceAinsTests.swift */; };
 		C90DB238F58E4FD00DF62C12 /* AgentToolkitIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1D11A41AC1D3652DECE4BCF /* AgentToolkitIntegrationTests.swift */; };
-		F727F8692D5E3292003AF48D /* common_resource.zip in Resources */ = {isa = PBXBuildFile; fileRef = F727F8682D5E3292003AF48D /* common_resource.zip */; };
+		D0E100012E10000100D10001 /* DeveloperEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E100022E10000100D10001 /* DeveloperEnvironment.swift */; };
+		D0E100032E10000100D10001 /* DeveloperEnvironmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E100042E10000100D10001 /* DeveloperEnvironmentTests.swift */; };
+		E0A100012E10000100F10001 /* AgentPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0A100022E10000100F10001 /* AgentPreset.swift */; };
+		E0A100032E10000100F10001 /* SpatiusConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0A100042E10000100F10001 /* SpatiusConfig.swift */; };
+		E0A100052E10000100F10001 /* SpatiusConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0A100062E10000100F10001 /* SpatiusConfigTests.swift */; };
+		E0A100072E10000100F10001 /* SpatiusStageLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0A100082E10000100F10001 /* SpatiusStageLayout.swift */; };
+		E0A100092E10000100F10001 /* SpatiusStageLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0A1000A2E10000100F10001 /* SpatiusStageLayoutTests.swift */; };
 		F7D294B92D6C5D9900583343 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F7D294B82D6C5D9900583343 /* Launch Screen.storyboard */; };
 		F7D294BF2D6C6F9C00583343 /* Agora_AiLogo.png in Resources */ = {isa = PBXBuildFile; fileRef = F7D294BE2D6C6F9C00583343 /* Agora_AiLogo.png */; };
 		F7E1531A2D71E479000C528A /* ball_video_rotating.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = F7E153182D71E479000C528A /* ball_video_rotating.mp4 */; };
 		F7E1531C2D71E479000C528A /* ball_video_start.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = F7E153192D71E479000C528A /* ball_video_start.mp4 */; };
-		C0C100012E10000100B10001 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C0AA00072E10000100A10001 /* XCTest.framework */; };
-		C0C100032E10000100B10001 /* OnDeviceAins.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C100042E10000100B10001 /* OnDeviceAins.swift */; };
-		C0C100052E10000100B10001 /* OnDeviceAinsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0C100062E10000100B10001 /* OnDeviceAinsTests.swift */; };
-		D0E100012E10000100D10001 /* DeveloperEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E100022E10000100D10001 /* DeveloperEnvironment.swift */; };
-		D0E100032E10000100D10001 /* DeveloperEnvironmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E100042E10000100D10001 /* DeveloperEnvironmentTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,22 +72,26 @@
 		C0AA002F2E11000100A10001 /* AppContextTemporaryRtcConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContextTemporaryRtcConfigTests.swift; sourceTree = "<group>"; };
 		C0AA00312E11000100A10001 /* AgentSettingManagerTemporaryRtcConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSettingManagerTemporaryRtcConfigTests.swift; sourceTree = "<group>"; };
 		C0AA00332E12000100A10001 /* RTCManagerAinsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTCManagerAinsTests.swift; sourceTree = "<group>"; };
+		C0C100042E10000100B10001 /* OnDeviceAins.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OnDeviceAins.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Manager/OnDeviceAins.swift; sourceTree = SOURCE_ROOT; };
+		C0C100062E10000100B10001 /* OnDeviceAinsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceAinsTests.swift; sourceTree = "<group>"; };
+		C0C100072E10000100B10001 /* Agent-cnLogicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Agent-cnLogicTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C15F651B9956858BE3FA8B17 /* Pods-Agent-cn.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-cn.debug.xcconfig"; path = "Target Support Files/Pods-Agent-cn/Pods-Agent-cn.debug.xcconfig"; sourceTree = "<group>"; };
+		D0E100022E10000100D10001 /* DeveloperEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DeveloperEnvironment.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Main/DeveloperMode/DeveloperEnvironment.swift; sourceTree = SOURCE_ROOT; };
+		D0E100042E10000100D10001 /* DeveloperEnvironmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperEnvironmentTests.swift; sourceTree = "<group>"; };
 		D50A426C2ED71BDFC45A5B54 /* Pods_Agent_cn_Agent_cnTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Agent_cn_Agent_cnTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D91E55880AF6C3438FDDFFF6 /* Pods-Agent.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent.release.xcconfig"; path = "Target Support Files/Pods-Agent/Pods-Agent.release.xcconfig"; sourceTree = "<group>"; };
+		E0A100022E10000100F10001 /* AgentPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AgentPreset.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Model/AgentPreset.swift; sourceTree = SOURCE_ROOT; };
+		E0A100042E10000100F10001 /* SpatiusConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SpatiusConfig.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Model/SpatiusConfig.swift; sourceTree = SOURCE_ROOT; };
+		E0A100062E10000100F10001 /* SpatiusConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SpatiusConfigTests.swift; path = AgentTests/SpatiusConfigTests.swift; sourceTree = SOURCE_ROOT; };
+		E0A100082E10000100F10001 /* SpatiusStageLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SpatiusStageLayout.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Model/SpatiusStageLayout.swift; sourceTree = SOURCE_ROOT; };
+		E0A1000A2E10000100F10001 /* SpatiusStageLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SpatiusStageLayoutTests.swift; path = AgentTests/SpatiusStageLayoutTests.swift; sourceTree = SOURCE_ROOT; };
 		F1D11A41AC1D3652DECE4BCF /* AgentToolkitIntegrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AgentToolkitIntegrationTests.swift; sourceTree = "<group>"; };
-		F727F8682D5E3292003AF48D /* common_resource.zip */ = {isa = PBXFileReference; lastKnownFileType = archive.zip; path = common_resource.zip; sourceTree = "<group>"; };
 		F7CEFFF62D7B050D0029BD3B /* Agent-cn.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Agent-cn.entitlements"; sourceTree = "<group>"; };
 		F7D294B82D6C5D9900583343 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		F7D294BE2D6C6F9C00583343 /* Agora_AiLogo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Agora_AiLogo.png; sourceTree = "<group>"; };
 		F7E153182D71E479000C528A /* ball_video_rotating.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = ball_video_rotating.mp4; sourceTree = "<group>"; };
 		F7E153192D71E479000C528A /* ball_video_start.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = ball_video_start.mp4; sourceTree = "<group>"; };
 		FFC83CF1A80017C399C30BA7 /* Pods-Agent-oversea.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-oversea.release.xcconfig"; path = "Target Support Files/Pods-Agent-oversea/Pods-Agent-oversea.release.xcconfig"; sourceTree = "<group>"; };
-		C0C100042E10000100B10001 /* OnDeviceAins.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OnDeviceAins.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Manager/OnDeviceAins.swift; sourceTree = SOURCE_ROOT; };
-		C0C100062E10000100B10001 /* OnDeviceAinsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceAinsTests.swift; sourceTree = "<group>"; };
-		C0C100072E10000100B10001 /* Agent-cnLogicTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Agent-cnLogicTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		D0E100022E10000100D10001 /* DeveloperEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DeveloperEnvironment.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Main/DeveloperMode/DeveloperEnvironment.swift; sourceTree = SOURCE_ROOT; };
-		D0E100042E10000100D10001 /* DeveloperEnvironmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperEnvironmentTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -191,7 +199,6 @@
 		AB7A7DA72D43B145000B3034 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				F727F8682D5E3292003AF48D /* common_resource.zip */,
 				F7D294BE2D6C6F9C00583343 /* Agora_AiLogo.png */,
 				F7E153182D71E479000C528A /* ball_video_rotating.mp4 */,
 				F7E153192D71E479000C528A /* ball_video_start.mp4 */,
@@ -206,6 +213,11 @@
 			children = (
 				C0AA00332E12000100A10001 /* RTCManagerAinsTests.swift */,
 				C0C100042E10000100B10001 /* OnDeviceAins.swift */,
+				E0A100062E10000100F10001 /* SpatiusConfigTests.swift */,
+				E0A100082E10000100F10001 /* SpatiusStageLayout.swift */,
+				E0A1000A2E10000100F10001 /* SpatiusStageLayoutTests.swift */,
+				E0A100042E10000100F10001 /* SpatiusConfig.swift */,
+				E0A100022E10000100F10001 /* AgentPreset.swift */,
 				C0C100062E10000100B10001 /* OnDeviceAinsTests.swift */,
 				D0E100022E10000100D10001 /* DeveloperEnvironment.swift */,
 				D0E100042E10000100D10001 /* DeveloperEnvironmentTests.swift */,
@@ -326,7 +338,6 @@
 				AB7A7DA92D43B145000B3034 /* Localizable.strings in Resources */,
 				F7D294B92D6C5D9900583343 /* Launch Screen.storyboard in Resources */,
 				F7E1531C2D71E479000C528A /* ball_video_start.mp4 in Resources */,
-				F727F8692D5E3292003AF48D /* common_resource.zip in Resources */,
 				AB7A7DA82D43B145000B3034 /* Assets.xcassets in Resources */,
 				F7E1531A2D71E479000C528A /* ball_video_rotating.mp4 in Resources */,
 			);
@@ -357,13 +368,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -378,13 +385,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn/Pods-Agent-cn-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn/Pods-Agent-cn-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -399,13 +402,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn/Pods-Agent-cn-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn/Pods-Agent-cn-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -464,13 +463,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Agent-cn-Agent-cnTests/Pods-Agent-cn-Agent-cnTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -506,6 +501,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0C100032E10000100B10001 /* OnDeviceAins.swift in Sources */,
+				E0A100052E10000100F10001 /* SpatiusConfigTests.swift in Sources */,
+				E0A100072E10000100F10001 /* SpatiusStageLayout.swift in Sources */,
+				E0A100092E10000100F10001 /* SpatiusStageLayoutTests.swift in Sources */,
+				E0A100032E10000100F10001 /* SpatiusConfig.swift in Sources */,
+				E0A100012E10000100F10001 /* AgentPreset.swift in Sources */,
 				C0C100052E10000100B10001 /* OnDeviceAinsTests.swift in Sources */,
 				D0E100012E10000100D10001 /* DeveloperEnvironment.swift in Sources */,
 				D0E100032E10000100D10001 /* DeveloperEnvironmentTests.swift in Sources */,
@@ -703,12 +703,12 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.1;
+				MARKETING_VERSION = 2.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = shengwang.convoai.test;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -754,12 +754,12 @@
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.1;
+				MARKETING_VERSION = 2.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = shengwang.convoai.test;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -783,7 +783,7 @@
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -814,7 +814,7 @@
 				DEVELOPMENT_TEAM = 48TB6ZZL5S;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -840,7 +840,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -863,7 +863,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

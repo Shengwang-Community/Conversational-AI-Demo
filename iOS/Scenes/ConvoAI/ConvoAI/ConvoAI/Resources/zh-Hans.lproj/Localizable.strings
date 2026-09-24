@@ -365,3 +365,8 @@
 
 "devmode.field.enabled" = "%@已开启";
 "devmode.field.disabled" = "%@已关闭";
+
+// Local avatar rendering
+"conversation.avatar.render.failed" = "数字人加载失败，通话已结束，请重试。";
+
+"conversation.avatar.configuration.changed" = "数字人配置已变更，通话已结束。请重启应用后重试。";

@@ -14,6 +14,9 @@ struct Avatar: Codable {
     let avatarName: String?
     let thumbImageUrl: String?
     let bgImageUrl: String?
+    var webBgImageUrl: String? = nil
+    var spatiusAppId: String? = nil
+    var region: String? = nil
     
     enum CodingKeys: String, CodingKey {
         case vendor = "vendor"
@@ -22,6 +25,9 @@ struct Avatar: Codable {
         case avatarName = "avatar_name"
         case thumbImageUrl = "thumb_img_url"
         case bgImageUrl = "bg_img_url"
+        case webBgImageUrl = "web_bg_img_url"
+        case spatiusAppId = "spatius_app_id"
+        case region
     }
 }
 
@@ -57,6 +63,14 @@ struct SupportLanguage: Codable, Equatable {
     }
 }
 
+struct AgentPresetExtensions: Codable {
+    let spatiusAppId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case spatiusAppId = "spatius_app_id"
+    }
+}
+
 struct AgentPreset: Codable {
     let name: String?
     let displayName: String?
@@ -76,6 +90,10 @@ struct AgentPreset: Codable {
     let sipVendorCalleeNumbers:[VendorCalleeNumber]?
     let avatarVendor: String?
     let isSupportAvatar: Bool?
+    var spatiusAppId: String? = nil
+    var spatiusAvatarId: String? = nil
+    var region: String? = nil
+    var extensions: AgentPresetExtensions? = nil
 
     enum CodingKeys: String, CodingKey {
         case name
@@ -96,6 +114,10 @@ struct AgentPreset: Codable {
         case supportSal = "is_support_sal"
         case avatarVendor = "avatar_vendor"
         case isSupportAvatar = "is_support_avatar"
+        case spatiusAppId = "spatius_app_id"
+        case spatiusAvatarId = "spatius_avatar_id"
+        case region
+        case extensions
     }
 
     var isIndependent: Bool {

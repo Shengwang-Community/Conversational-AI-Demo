@@ -1,7 +1,8 @@
 # Uncomment the next line to define a global platform for your project
 source 'https://cdn.cocoapods.org/'
 
-platform :ios, '15.0'
+minimum_ios_version = '16.0'
+platform :ios, minimum_ios_version
 
 target 'Agent-cn' do
   # Comment the next line if you don't want to use dynamic frameworks
@@ -12,10 +13,16 @@ target 'Agent-cn' do
   pod 'SwiftyBeaver', '1.9.5'
   pod 'ZSwiftBaseLib', '0.1.6.2'
   pod 'Bugly'
-#  pod 'AgoraRtcEngine_iOS', :path => 'sdk.podspec'
-  pod 'AgoraRtcEngine_iOS', '4.5.1'
-  pod 'agent-client-toolkit-swift', '2.10.1'
-  pod 'AgoraRtm', '2.2.3', :subspecs => ['RtmKit']
+#  pod 'ShengwangRtcEngine_iOS', :path => 'sdk.podspec'
+  # The full SDK includes and loads the AINS/AIAEC extension frameworks.
+  pod 'ShengwangRtcEngine_iOS', '4.6.4'
+  # Upstream 1.0.1 pins RTC 4.5.2; these overrides adapt its native observer to 4.6.4.
+  pod 'AvatarKitRTC', :podspec => 'ThirdParty/Spatius/AvatarKitRTC.podspec.json'
+  pod 'AvatarKitAgoraBridge', :path => 'ThirdParty/Spatius/AvatarKitAgoraBridge'
+  # Keep the official Toolkit binary, selecting the domestic RTC and RTM Pod names.
+  pod 'agent-client-toolkit-swift', :podspec => 'ThirdParty/AgentClientToolkit/agent-client-toolkit-swift.podspec.json'
+  # RTC supplies AOSL through ShengwangInfra_iOS; do not also include RTM's RtmBasic.
+  pod 'ShengWang-Rtm', '2.3.0', :subspecs => ['RtmKit']
   #pod 'LookinServer', :subspecs => ['Swift'], :configurations => ['Debug']
   
   pod 'Common', :path => 'Common'
@@ -31,15 +38,18 @@ target 'Agent-cn' do
 end
 
 post_install do |installer|
-  resource_url = "https://accktvpic.oss-cn-beijing.aliyuncs.com/ConvoAI/Resource/Convo_AI_Demo_v1.0.0_Resource.zip"
-  download_path = "#{Dir.pwd}/Agent/Resources/Convo_AI_Demo_v1.0.0_Resource.zip"
+  resource_url = "https://accktvpic.oss-cn-beijing.aliyuncs.com/ConvoAI/Resource/Convo_AI_Demo_v2.0.0_Resource.zip"
+  download_path = "#{Dir.pwd}/Agent/Resources/Convo_AI_Demo_v2.0.0_Resource.zip"
   extract_path = "#{Dir.pwd}/Agent/Resources"
+  video_names = %w[ball_video_start.mp4 ball_video_rotating.mp4]
 
-  if ENV["SKIP_DEMO_RESOURCE_DOWNLOAD"] == "1"
-    Pod::UI.puts "Skipping Convo AI Demo resource download because SKIP_DEMO_RESOURCE_DOWNLOAD=1."
+  if video_names.all? { |name| File.file?(File.join(extract_path, name)) }
+    Pod::UI.puts "Convo AI Demo animation videos already exist."
+  elsif ENV["SKIP_DEMO_RESOURCE_DOWNLOAD"] == "1"
+    raise Pod::Informative, "Animation videos are missing; rerun without SKIP_DEMO_RESOURCE_DOWNLOAD."
   else
     Pod::UI.puts "Downloading Convo AI Demo resources..."
-    download_success = system "curl -L #{resource_url} -o #{download_path}"
+    download_success = system('curl', '-fL', resource_url, '-o', download_path)
 
     unless download_success
       Pod::UI.warn "[!] Resource download failed. Please check your network connection and try again."
@@ -50,14 +60,16 @@ post_install do |installer|
       Pod::UI.puts "Download completed successfully."
 
       Pod::UI.puts "Extracting resources..."
-      extract_success = system "unzip -j -o #{download_path} -d #{extract_path}"
+      # Extract only the UI videos, excluding macOS archive metadata.
+      extract_success = system('unzip', '-j', '-o', download_path,
+                               *video_names.map { |name| "*/#{name}" }, '-d', extract_path)
 
       unless extract_success
         Pod::UI.warn "[!] Resource extraction failed."
         raise Pod::Informative, "Resource extraction failed"
       end
 
-      system "rm #{download_path}"
+      File.delete(download_path)
 
       Pod::UI.puts "Resource settings completed."
     else
@@ -68,7 +80,12 @@ post_install do |installer|
   
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
-      # Additional post-install configuration can be added here.
+      # Xcode 27 rejects legacy Pod deployment targets below iOS 15. Keep every
+      # dependency compatible with the app's minimum, preserving higher requirements.
+      deployment_target = config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+      if deployment_target.nil? || Gem::Version.new(deployment_target) < Gem::Version.new(minimum_ios_version)
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = minimum_ios_version
+      end
     end
   end
 end

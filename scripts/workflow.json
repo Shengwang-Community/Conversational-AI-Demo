@@ -102,6 +102,28 @@
             "source": "AgentTests/DeveloperEnvironmentTests.swift"
           }
         ]
+      },
+      "spatius-layout": {
+        "container": "Agent.xcodeproj",
+        "scheme": "Agent-cnLogicTests",
+        "target": "Agent-cnLogicTests",
+        "tests": [
+          {
+            "class": "SpatiusStageLayoutTests",
+            "source": "AgentTests/SpatiusStageLayoutTests.swift"
+          }
+        ]
+      },
+      "spatius-config": {
+        "container": "Agent.xcodeproj",
+        "scheme": "Agent-cnLogicTests",
+        "target": "Agent-cnLogicTests",
+        "tests": [
+          {
+            "class": "SpatiusConfigTests",
+            "source": "AgentTests/SpatiusConfigTests.swift"
+          }
+        ]
       }
     },
     "integration_scheme": "Agent-cnIntegrationTests"

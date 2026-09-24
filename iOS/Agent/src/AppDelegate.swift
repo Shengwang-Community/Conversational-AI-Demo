@@ -9,7 +9,6 @@ import UIKit
 import Common
 import SVProgressHUD
 import ConvoAI
-import SSZipArchive
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -34,8 +33,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         AppContext.shared.loadInnerEnvironment()
                 
-        copyResource()
-        
         SVProgressHUD.setMaximumDismissTimeInterval(2)
         SVProgressHUD.setBackgroundColor(UIColor.themColor(named: "ai_fill1").withAlphaComponent(0.8))
         SVProgressHUD.setForegroundColor(.white)
@@ -44,49 +41,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
     
-    func copyResource() {
-        guard let bundleId = Bundle.main.bundleIdentifier else { return }
-        
-        let cachesPath = NSSearchPathForDirectoriesInDomains(.cachesDirectory, .userDomainMask, true).first!
-        let destinationPath = (cachesPath as NSString).appendingPathComponent(bundleId)
-        
-        if !FileManager.default.fileExists(atPath: destinationPath) {
-            do {
-                try FileManager.default.createDirectory(atPath: destinationPath, withIntermediateDirectories: true)
-            } catch {
-                ConvoAILogger.info("[Resource] Failed to create directory: \(error)")
-                return
-            }
-        }
-        
-        guard let zipPath = Bundle.main.path(forResource: "common_resource", ofType: "zip") else {
-            print("[Resource] common_resource.zip not found in bundle")
-            return
-        }
-        
-        do {
-            let fileManager = FileManager.default
-            if fileManager.fileExists(atPath: destinationPath) {
-                let contents = try fileManager.contentsOfDirectory(atPath: destinationPath)
-                for file in contents {
-                    let filePath = (destinationPath as NSString).appendingPathComponent(file)
-                    try fileManager.removeItem(atPath: filePath)
-                }
-            }
-            
-            let success = SSZipArchive.unzipFile(atPath: zipPath, toDestination: destinationPath)
-            
-            if success {
-                ConvoAILogger.info("[Resource] Successfully unzipped common_resource to: \(destinationPath)")
-            } else {
-                ConvoAILogger.info("[Resource] Failed to unzip file")
-            }
-        } catch {
-            ConvoAILogger.info("[Resource] Error during unzip: \(error)")
-        }
-    }
-    
-
     // MARK: UISceneSession Lifecycle
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
         // Called when a new scene session is being created.

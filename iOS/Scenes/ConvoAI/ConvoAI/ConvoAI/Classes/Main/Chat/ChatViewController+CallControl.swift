@@ -149,20 +149,27 @@ extension ChatViewController {
         startLoading()
         generateUid()
         
-        Task {
+        callPreparationTask?.cancel()
+        callPreparationId = UUID()
+        let attempt = callPreparationId
+        callPreparationTask = Task { [weak self] in
+            guard let self else { return }
             do {
                 if !rtmManager.isLogin {
                     try await loginRTM()
                 }
-                
+                try Task.checkCancellation()
                 try await fetchTokenIfNeeded()
+                try Task.checkCancellation()
                 try await fetchOpenSourceAvatarTokenIfNeeded()
-                await MainActor.run {
-                    if callControlBar.style == .startButton { return }
-                    startAgentRequest()
-                    joinChannel()
-                }
+                try Task.checkCancellation()
+                try await prepareSpatiusAvatar()
+                try Task.checkCancellation()
+                guard callPreparationId == attempt, callControlBar.style != .startButton else { return }
+                startAgentRequest()
+                joinChannel()
             } catch {
+                guard !Task.isCancelled, callPreparationId == attempt else { return }
                 addLog("Failed to prepare agent: \(error)")
                 handleStartError()
             }

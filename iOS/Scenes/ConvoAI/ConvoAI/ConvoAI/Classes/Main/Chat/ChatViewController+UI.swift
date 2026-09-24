@@ -100,7 +100,9 @@ extension ChatViewController {
         }
         
         miniView.snp.makeConstraints { make in
-            make.top.equalTo(215)
+            make.top.equalTo(215).priority(.high)
+            make.top.greaterThanOrEqualTo(view.safeAreaLayoutGuide.snp.top)
+            make.bottom.lessThanOrEqualTo(view.safeAreaLayoutGuide.snp.bottom).offset(-10)
             make.right.equalTo(-10)
             make.width.equalTo(90)
             make.height.equalTo(130)

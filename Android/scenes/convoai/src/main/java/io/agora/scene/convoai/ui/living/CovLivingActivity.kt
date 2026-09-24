@@ -13,6 +13,10 @@ import androidx.activity.viewModels
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.window.layout.FoldingFeature
+import androidx.window.layout.WindowInfoTracker
 import io.agora.rtc2.Constants
 import io.agora.rtc2.video.VideoCanvas
 import io.agora.scene.common.R
@@ -29,6 +33,8 @@ import io.agora.scene.common.util.copyToClipboard
 import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
+import io.agora.scene.convoai.avatar.SpatiusAvatarSession
+import io.agora.scene.convoai.avatar.SpatiusAvatarStage
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.animation.CovBallAnim
 import io.agora.scene.convoai.animation.CovBallAnimCallback
@@ -83,6 +89,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
 
     override fun initView() {
         setupView()
+        observeWindowLayout()
 
         // Create RTC and RTM engines
         val rtcEngine = CovRtcManager.createRtcEngine(viewModel.handleRtcEvents())
@@ -90,6 +97,9 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
 
         // Initialize ViewModel
         viewModel.initializeAPIs(rtcEngine, rtmClient)
+        viewModel.avatarSession = SpatiusAvatarSession(
+            spatiusStage.content, rtcEngine, onRenderReady = spatiusStage::setRenderReady
+        ) { failure -> viewModel.onSpatiusFailure(failure) }
 
         // v1 Subtitle Rendering Controller
         selfRenderController = SelfSubRenderController(SelfRenderConfig(rtcEngine, mBinding?.messageListViewV1))
@@ -106,6 +116,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
     }
 
     override fun onDestroy() {
+        release()
         super.onDestroy()
         CovLogger.d(TAG, "activity onDestroy")
     }
@@ -285,6 +296,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                 // Update agentInfoViewModel connection state to keep it in sync
                 agentInfoViewModel.updateConnectionState(state)
                 updateStateView(state)
+                updateWindowContent()
                 mBinding?.clTop?.updateAgentState(state)
 
                 // Update animation and timer display based on state
@@ -396,7 +408,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
         lifecycleScope.launch {
             viewModel.isAvatarJoinedRtc.collect { joined ->
                 mBinding?.apply {
-                    if (joined) {
+                    if (joined && !CovAgentManager.isSpatiusAvatar) {
                         CovRtcManager.setupRemoteVideo(
                             VideoCanvas(remoteAvatarView, Constants.RENDER_MODE_HIDDEN, CovAgentManager.avatarUID)
                         )
@@ -412,7 +424,8 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
         lifecycleScope.launch {
             viewModel.avatar.collect { avatar ->
                 mBinding?.apply {
-                    if (avatar == null) {
+                    val localAvatar = CovAgentManager.isSpatiusAvatar
+                    if (avatar == null && !localAvatar) {
                         clAnimationContent.isVisible = true
                         vDragBigWindow.isVisible = false
                         ivAvatarPreview.isVisible = false
@@ -421,10 +434,15 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                     } else {
                         clAnimationContent.isVisible = false
                         vDragBigWindow.isVisible = true
-                        ivAvatarPreview.isVisible = true
+                        ivAvatarPreview.isVisible = !localAvatar
+                        val preview = if (localAvatar) {
+                            avatar?.bg_img_url?.takeIf { it.isNotBlank() } ?: avatar?.web_bg_img_url
+                        } else {
+                            avatar?.bg_img_url
+                        }
                         GlideImageLoader.load(
-                            ivAvatarPreview,
-                            avatar.bg_img_url,
+                            if (localAvatar) spatiusStage.previewImage else ivAvatarPreview,
+                            preview,
                             null,
                             io.agora.scene.convoai.R.drawable.cov_default_avatar
                         )
@@ -443,6 +461,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                     }
                     clTop.updateTitleName(viewModel.agentName, viewModel.agentUrl, defaultImage)
                 }
+                updateWindowContent()
             }
         }
         lifecycleScope.launch {  // Observe transcript updates
@@ -548,11 +567,57 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
         }
     }
 
+    private val spatiusStage by lazy { SpatiusAvatarStage(this) }
+
     private var lastBigWindowContent: View? = null
     private var lastSmallWindowContent: View? = null
 
+    private var separatingFolds = emptyList<FoldingFeature>()
+
+    private fun observeWindowLayout() {
+        mBinding?.root?.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+            if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) updateWindowPane()
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                WindowInfoTracker.getOrCreate(this@CovLivingActivity)
+                    .windowLayoutInfo(this@CovLivingActivity).collect { info ->
+                        separatingFolds = info.displayFeatures.filterIsInstance<FoldingFeature>().filter {
+                            it.isSeparating || it.occlusionType == FoldingFeature.OcclusionType.FULL
+                        }
+                        updateWindowPane()
+                    }
+            }
+        }
+    }
+
+    private fun updateWindowPane() {
+        val root = mBinding?.root ?: return
+        if (root.width == 0 || root.height == 0) return
+        val location = IntArray(2)
+        root.getLocationInWindow(location)
+        val dividers = separatingFolds.map { fold ->
+            val rect = fold.bounds
+            LivingWindowLayout.Divider(
+                LivingWindowLayout.Bounds(rect.left - location[0], rect.top - location[1],
+                    rect.right - location[0], rect.bottom - location[1]),
+                fold.orientation == FoldingFeature.Orientation.VERTICAL
+            )
+        }
+        val pane = LivingWindowLayout.pane(root.width, root.height, dividers)
+        val right = root.width - pane.right
+        val bottom = root.height - pane.bottom
+        if (root.paddingLeft != pane.left || root.paddingTop != pane.top ||
+            root.paddingRight != right || root.paddingBottom != bottom) {
+            root.setPadding(pane.left, pane.top, right, bottom)
+        }
+    }
+
     private fun updateWindowContent() {
-        val showAvatar = viewModel.isAvatarJoinedRtc.value
+        val localAvatar = CovAgentManager.isSpatiusAvatar
+        // Keep the Spatius container mounted; its poster covers loading until the first rendered frame.
+        val showAvatar = localAvatar || viewModel.isAvatarJoinedRtc.value
+        val avatarContent: View = if (localAvatar) spatiusStage else remoteAvatarView
         val showVideo = viewModel.isPublishVideo.value
         val showTranscript = viewModel.isShowMessageList.value
         mBinding?.apply {
@@ -561,19 +626,19 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
 
             if (showTranscript) {
                 if (showAvatar && showVideo) {
-                    newBigContent = remoteAvatarView
+                    newBigContent = avatarContent
                     newSmallContent = localVisionView
                 } else if (showAvatar) {
-                    newBigContent = remoteAvatarView
+                    newBigContent = avatarContent
                 } else if (showVideo) {
                     newSmallContent = localVisionView
                 }
             } else {
                 if (showAvatar && showVideo) {
                     newBigContent = localVisionView
-                    newSmallContent = remoteAvatarView
+                    newSmallContent = avatarContent
                 } else if (showAvatar) {
-                    newBigContent = remoteAvatarView
+                    newBigContent = avatarContent
                 } else if (showVideo) {
                     newBigContent = localVisionView
                 }
@@ -585,7 +650,9 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                 newBigContent?.let {
                     val parent = it.parent as? ViewGroup
                     parent?.removeView(it)
-                    vDragBigWindow.container.addView(it)
+                    vDragBigWindow.container.addView(
+                        it, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+                    )
                 }
                 lastBigWindowContent = newBigContent
             }
@@ -595,7 +662,9 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                 newSmallContent?.let {
                     val parent = it.parent as? ViewGroup
                     parent?.removeView(it)
-                    vDragSmallWindow.container.addView(it)
+                    vDragSmallWindow.container.addView(
+                        it, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+                    )
                 }
                 lastSmallWindowContent = newSmallContent
             }
@@ -973,6 +1042,8 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             }
             try {
                 isReleased = true   // Mark as releasing
+                viewModel.stopAgentAndLeaveChannel()
+                viewModel.avatarSession = null
                 // lifecycleScope will be automatically cancelled when activity is destroyed
                 // Release animation resources
                 mCovBallAnim?.let { anim ->

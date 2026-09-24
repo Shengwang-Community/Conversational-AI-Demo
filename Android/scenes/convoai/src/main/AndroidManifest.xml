@@ -32,10 +32,11 @@
 
         <activity
             android:name="io.agora.scene.convoai.ui.living.CovLivingActivity"
-            android:configChanges="locale|layoutDirection"
+            android:configChanges="locale|layoutDirection|screenSize|smallestScreenSize|screenLayout|orientation"
             android:exported="false"
             android:keepScreenOn="true"
             android:launchMode="singleTask"
+            android:resizeableActivity="true"
             android:screenOrientation="portrait" />
 
         <activity

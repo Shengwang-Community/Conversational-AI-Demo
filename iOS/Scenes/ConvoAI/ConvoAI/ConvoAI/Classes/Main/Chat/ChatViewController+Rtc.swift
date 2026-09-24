@@ -216,6 +216,7 @@ extension ChatViewController {
     }
     
     internal func startRenderRemoteVideoStream(renderView: UIView) {
+        guard !isSpatiusAvatar else { return }
         let rtcEngine = rtcManager.getRtcEntine()
         let videoCanvas = AgoraRtcVideoCanvas()
         videoCanvas.uid = UInt(avatarUid)
@@ -280,6 +281,11 @@ extension ChatViewController {
     
     internal func leaveChannel() {
         addLog("[Call] leaveChannel()")
+        callPreparationId = UUID()
+        callPreparationTask?.cancel()
+        callPreparationTask = nil
+        localAvatarSession?.close()
+        localAvatarSession = nil
         channelName = ""
         agentUid = 0
         avatarUid = 0

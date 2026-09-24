@@ -22,6 +22,8 @@ import io.agora.scene.convoai.R
 import io.agora.scene.convoai.animation.BallAnimState
 import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.api.CovAvatar
+import io.agora.scene.convoai.avatar.SpatiusAvatarSession
+import io.agora.scene.convoai.avatar.SpatiusRenderFailure
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.constant.VoiceprintMode
@@ -62,6 +64,9 @@ import io.agora.scene.convoai.ui.living.metrics.LatencyMetricsManager
 import io.agora.scene.convoai.ui.living.metrics.TurnTranscription
 import io.agora.scene.convoai.ui.living.metrics.TurnFinishedMetricsState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -103,6 +108,9 @@ internal fun resolveDebugServerAudioScenario(
 }
 
 class CovLivingViewModel : ViewModel() {
+
+    internal var avatarSession: SpatiusAvatarSession? = null
+    private var startConnectionJob: Job? = null
 
     private val TAG = "CovLivingViewModel"
 
@@ -520,11 +528,12 @@ class CovLivingViewModel : ViewModel() {
             CovAgentManager.channelPrefix + UUID.randomUUID().toString().replace("-", "")
                 .substring(0, 8)
 
-        viewModelScope.launch {
+        startConnectionJob = viewModelScope.launch {
             try {
                 // Fetch token if needed
                 if (integratedToken == null) {
                     val tokenResult = updateTokenAsync()
+                    currentCoroutineContext().ensureActive()
                     if (!tokenResult) {
                         clearLatencyMetricsSession()
                         _connectionState.value = AgentConnectionState.IDLE
@@ -533,6 +542,11 @@ class CovLivingViewModel : ViewModel() {
                         return@launch
                     }
                 }
+
+                currentCoroutineContext().ensureActive()
+                // Attach motion decoding before joining RTC.
+                avatarSession?.prepare()
+                currentCoroutineContext().ensureActive()
 
                 // Configure audio settings
                 val isIndependent = CovAgentManager.getPreset()?.isIndependent == true
@@ -570,6 +584,7 @@ class CovLivingViewModel : ViewModel() {
                 )
                 // Login RTM
                 val loginRtm = loginRtmClientAsync()
+                currentCoroutineContext().ensureActive()
                 if (!loginRtm) {
                     stopAgentAndLeaveChannel()
                     return@launch
@@ -583,26 +598,46 @@ class CovLivingViewModel : ViewModel() {
                 }
                 // Start Agent
                 val startResult = startAgentAsync()
+                currentCoroutineContext().ensureActive()
                 handleAgentStartResult(startResult)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 CovLogger.e(TAG, "Start agent connection error: ${e.message}")
+                stopAgentAndLeaveChannel()
             }
         }
     }
 
     // Stop Agent connection
+    internal fun onSpatiusFailure(failure: SpatiusRenderFailure) {
+        if (_connectionState.value == AgentConnectionState.IDLE) return
+        stopAgentAndLeaveChannel()
+        ToastUtil.show(
+            if (failure == SpatiusRenderFailure.RESTART_REQUIRED) R.string.cov_avatar_configuration_changed
+            else R.string.cov_avatar_render_failed,
+            Toast.LENGTH_LONG
+        )
+    }
+
     fun stopAgentAndLeaveChannel() {
         cancelJobs()
 
-        CovRtcManager.leaveChannel()
-        conversationalAIAPI?.unsubscribeMessage(CovAgentManager.channelName) {}
+        avatarSession?.close()
+
+        runCatching { CovRtcManager.leaveChannel() }
+            .onFailure { CovLogger.w(TAG, "RTC leave failed") }
+        runCatching { conversationalAIAPI?.unsubscribeMessage(CovAgentManager.channelName) {} }
+            .onFailure { CovLogger.w(TAG, "Message unsubscribe failed") }
 
         if (_connectionState.value != AgentConnectionState.IDLE) {
             _connectionState.value = AgentConnectionState.IDLE
-            CovAgentApiManager.stopAgent(
-                CovAgentManager.channelName,
-                CovAgentManager.getPreset()?.name
-            ) {}
+            runCatching {
+                CovAgentApiManager.stopAgent(
+                    CovAgentManager.channelName,
+                    CovAgentManager.getPreset()?.name
+                ) {}
+            }.onFailure { CovLogger.w(TAG, "Agent stop failed") }
         }
 
         CovAgentManager.channelName = ""
@@ -1152,6 +1187,8 @@ class CovLivingViewModel : ViewModel() {
     }
 
     private fun cancelJobs() {
+        startConnectionJob?.cancel()
+        startConnectionJob = null
         // Cancel ping job safely
         runCatching {
             pingJob?.cancel()
@@ -1200,6 +1237,8 @@ class CovLivingViewModel : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         cancelJobs()
+        avatarSession?.close()
+        avatarSession = null
         conversationalAIAPI?.removeHandler(covEventHandler)
         conversationalAIAPI?.destroy()
         conversationalAIAPI = null

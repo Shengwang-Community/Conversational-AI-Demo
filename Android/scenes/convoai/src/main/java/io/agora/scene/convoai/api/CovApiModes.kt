@@ -25,6 +25,10 @@ data class CovAgentPreset(
     val sip_vendor_callee_numbers: List<CovSipCallee>? = null,
     val is_support_avatar: Boolean? = null,
     val avatar_vendor: String? = null,
+    val spatius_app_id: String? = null,
+    val spatius_avatar_id: String? = null,
+    val region: String? = null,
+    val extensions: CovAgentPresetExtensions? = null,
 ) {
     val isIndependent: Boolean
         get() {
@@ -60,6 +64,10 @@ data class CovAgentPreset(
     }
 }
 
+data class CovAgentPresetExtensions(
+    val spatius_app_id: String? = null,
+)
+
 data class CovAgentLanguage(
     val language_code: String,
     val language_name: String,
@@ -80,6 +88,9 @@ data class CovAvatar(
     val avatar_name: String,
     val thumb_img_url: String,
     val bg_img_url: String,
+    val web_bg_img_url: String? = null,
+    val spatius_app_id: String? = null,
+    val region: String? = null,
 ) : Parcelable
 
 @Parcelize

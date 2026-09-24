@@ -92,7 +92,7 @@ dependencies {
         api fileTree(dir: "${localSdkPath}", include: ['*.jar'])
     } else {
         api(libs.agora.rtc) {
-            exclude group: 'io.agora.rtc', module: 'full-screen-sharing'
+            exclude group: 'cn.shengwang.rtc', module: 'full-screen-sharing'
         }
     }
     api libs.agora.rtm

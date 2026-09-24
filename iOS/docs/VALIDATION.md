@@ -7,11 +7,17 @@ python3 scripts/validate.py ios --list
 python3 scripts/validate.py ios --suite ains --preflight
 python3 scripts/validate.py ios --suite ains
 python3 scripts/validate.py ios --suite environment
+python3 scripts/validate.py ios --suite spatius-config
+python3 scripts/validate.py ios --suite spatius-layout
 ```
 
 Standalone AINS uses `Agent.xcodeproj` / `Agent-cnLogicTests` and does not require Pods. Hosted tests use `Agent-cnIntegrationTests` in `Agent.xcworkspace`; install Pods first. Available suites include `app-integration`, `temporary-config`, `rtc-ains` and `toolkit-integration`. Keep the local `Agent-cn` app scheme intact.
 
 The `environment` suite checks host + RTC App ID matching and remembered dynamic selections without an app host.
+
+The `spatius-config` suite checks backend avatar metadata decoding, selection and configuration precedence without Pods or an app host. It does not exercise the renderer or RTC.
+The `spatius-layout` suite checks shared portrait framing across phone, iPad, split and floating window sizes without Pods. It does not validate UIKit composition, GPU rendering or live resizing during a call.
+See [Spatius mobile integration](../../Android/docs/SPATIUS_MOBILE.md) for SDK requirements and device checks.
 
 ## Options and results
 

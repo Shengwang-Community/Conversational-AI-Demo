@@ -12,6 +12,9 @@ import AgoraAgentClientToolkit
 class ChatViewController: BaseViewController {
     internal var agentIsJoined = false
     internal var avatarIsJoined = false
+    internal var callPreparationTask: Task<Void, Never>?
+    internal var callPreparationId = UUID()
+    internal var localAvatarSession: LocalAvatarRendering?
     internal var channelName = ""
     internal var token = ""
     internal var openSourceAvatarToken = ""
@@ -247,6 +250,7 @@ class ChatViewController: BaseViewController {
     }
     
     override func viewWillDisappearAndPop() {
+        stopAgent()
         AppContext.settingManager().resetToDefaults()
         rtcManager.destroy()
         rtmManager.destroy()
