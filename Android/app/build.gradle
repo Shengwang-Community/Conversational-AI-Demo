@@ -31,8 +31,8 @@ android {
     productFlavors {
         china {
             dimension "region"
-            applicationId "cn.shengwang.convoai"
-            resValue "string", "app_name", "对话式 AI 引擎"
+            applicationId "cn.shengwang.convoai.test"
+            resValue "string", "app_name", "对话式 AI 引擎体验"
             buildConfigField("String", "TOOLBOX_SERVER_HOST", "\"${project.getProperty("TOOLBOX_SERVER_HOST")}\"")
             buildConfigField("String", "AG_APP_ID", "\"${project.getProperty("AG_APP_ID")}\"")
             buildConfigField("String", "AG_APP_CERTIFICATE", "\"${project.getProperty("AG_APP_CERTIFICATE")}\"")
