@@ -99,7 +99,7 @@ AGENT_BASIC_AUTH_SECRET=<声网 RESTful API SECRET>
 
 #----------- LLM -----------
 NEXT_PUBLIC_CUSTOM_LLM_URL="<your-LLM-url>"
-NEXT_PUBLIC_CUSTOM_LLM_KEY="<your-LLM-key>"
+NEXT_PUBLIC_CUSTOM_LLM_KEY="<restricted-demo-LLM-key>"
 NEXT_PUBLIC_CUSTOM_LLM_SYSTEM_MESSAGES="<your-LLM-system-messages>"
 NEXT_PUBLIC_CUSTOM_LLM_PARAMS="<your-LLM-params>"
 
@@ -107,6 +107,8 @@ NEXT_PUBLIC_CUSTOM_LLM_PARAMS="<your-LLM-params>"
 NEXT_PUBLIC_CUSTOM_TTS_VENDOR="<your-TTS-vendor>"
 NEXT_PUBLIC_CUSTOM_TTS_PARAMS="<your-TTS-params>"
 ```
+
+`NEXT_PUBLIC_*` 的值会进入浏览器代码，Demo 中的 LLM Key 和 TTS 参数可能被用户看到。这里只能使用受限、可随时撤销的演示凭据；生产密钥应保存在服务端，并通过服务端接口发起请求。`.env.local` 虽然不会提交到 Git，但不能隐藏 `NEXT_PUBLIC_*` 的值。
 
 - 本地运行
 
@@ -136,7 +138,7 @@ bun run start
 | [api/](./src/app/api/)                       | 对话式 AI 引擎 API 接口实现和数据模型 |
 | [app/page](./src/app/page.tsx)               | 页面主要内容                       |
 | [components/](./src/components/)             | 页面组件                          |
-| [logger/](./src/lib/logger)                  |日志处理                           |
+| [logger.ts](./src/lib/logger.ts)             |日志处理                           |
 | [type/rtc](./src/type/rtc.ts)                |  RTC的类型和枚举  |
 
 ## 📚 三、相关资源
