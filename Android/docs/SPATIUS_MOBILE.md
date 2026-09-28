@@ -4,15 +4,15 @@ The mobile clients attach AvatarKitRTC to the existing Agora engine before joini
 
 ## Backend metadata
 
-Standard presets select a record from `avatar_ids_by_lang`. A Spatius record uses `vendor: "spatius"`, `avatar_id` and the existing display/image fields. Supply the public App ID in `data[i].extensions.spatius_app_id` in the `/convoai/v5/presets/list` response: `extensions` is a preset-level object alongside `name` and `avatar_ids_by_lang`. Both clients prefer this value, with compatibility for the legacy `spatius_app_id` on the selected avatar and then the preset. Optional `region` is read from the selected avatar, then the preset, and defaults to `auto`.
+Standard presets select a record from `avatar_ids_by_lang`. A Spatius record uses `vendor: "spatius"`, `avatar_id` and the existing display/image fields. Supply the public App ID in `data[i].extensions.spatius_app_id` in the `/convoai/v5/presets/list` response: `extensions` is a preset-level object alongside `name` and `avatar_ids_by_lang`. The supplied response has no preset or avatar `region`; the clients use `auto`.
 
-Custom presets use `is_support_avatar: true`, `avatar_vendor: "spatius"` and `spatius_avatar_id` on the preset. Their App ID comes from `extensions.spatius_app_id` or the legacy preset-level `spatius_app_id`. A stale standard avatar selection is ignored for custom presets.
+The supplied response has no custom preset or preset-level `spatius_avatar_id`. A custom Spatius selection cannot resolve a client avatar ID and follows the missing-metadata path; it never reuses a stale standard avatar. Confirm the custom search response before enabling local rendering for custom presets.
 
 The client does not add these rendering fields to business REST requests. Standard requests retain the generic avatar vendor, avatar ID and Agora UID; custom requests retain the existing server-controlled selection. Spatius API keys remain on the server.
 
 App IDs come only from backend metadata in both Debug and Release. Neither client reads a local environment variable or uses a local default. Missing or blank backend App IDs follow the rendering-warning behavior described below.
 
-Both clients use `bg_img_url` (falling back to `web_bg_img_url`) as a loading poster, center-cropped directly to fill the display window. They keep the same poster from idle through connecting, hide it on the current session's first rendered frame, and restore it on cleanup. A poster containing a person must not remain behind the transparent renderer: it can show through as a second static person. Until a separate, matching background without the avatar is supplied, the renderer uses the application's opaque background color.
+Both clients use `bg_img_url` as a loading poster, center-cropped directly to fill the display window. `web_bg_img_url` is Web-only and is not read by either mobile client. They keep the same poster from idle through connecting, hide it on the current session's first rendered frame, and restore it on cleanup. A poster containing a person must not remain behind the transparent renderer: it can show through as a second static person. Until a separate, matching background without the avatar is supplied, the renderer uses the application's opaque background color.
 
 ## Adaptive windows
 

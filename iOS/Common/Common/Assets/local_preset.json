@@ -5,8 +5,7 @@
             "avatar_name": "NaNa",
             "bg_img_url": "https://demo-app-download.agora.io/convoai/avatar/sensetime_bg_a2296686b0694a92bce529edc1d329fc_s1.jpg",
             "thumb_img_url": "https://demo-app-download.agora.io/convoai/avatar/sensetime_thumb_a2296686b0694a92bce529edc1d329fc_s1.jpg",
-            "vendor": "sensetime",
-            "web_bg_img_url": "https://demo-app-download.agora.io/convoai/avatar/web_sensetime_bg_a2296686b0694a92bce529edc1d329fc_s1.jpg"
+            "vendor": "sensetime"
         }]
     },
     "call_time_limit_avatar_second": 300,

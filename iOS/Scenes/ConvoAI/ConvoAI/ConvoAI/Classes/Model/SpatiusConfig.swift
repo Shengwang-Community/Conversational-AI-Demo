@@ -16,12 +16,12 @@ struct SpatiusConfig: Equatable {
     static func resolve(preset: AgentPreset?, avatar: Avatar?) -> SpatiusConfig? {
         guard isSelected(preset: preset, avatar: avatar) else { return nil }
         let selected = preset?.isCustom == true ? nil : avatar
-        guard let appId = clean(preset?.extensions?.spatiusAppId)
-                ?? clean(selected?.spatiusAppId) ?? clean(preset?.spatiusAppId),
-              let avatarId = preset?.isCustom == true ? clean(preset?.spatiusAvatarId) : clean(selected?.avatarId)
+        let appId = clean(preset?.extensions?.spatiusAppId)
+        guard let appId,
+              let avatarId = clean(selected?.avatarId)
         else { return nil }
         return SpatiusConfig(appId: appId, avatarId: avatarId,
-                             region: clean(selected?.region) ?? clean(preset?.region) ?? "auto")
+                             region: "auto")
     }
 
     private static func clean(_ value: String?) -> String? {

@@ -17,10 +17,9 @@ internal data class SpatiusConfig(val appId: String, val avatarId: String, val r
             if (!isSelected(preset, avatar)) return null
             val selected = avatar.takeUnless { preset?.isCustom == true }
             val appId = clean(preset?.extensions?.spatius_app_id)
-                ?: clean(selected?.spatius_app_id) ?: clean(preset?.spatius_app_id)
-            val avatarId = if (preset?.isCustom == true) clean(preset.spatius_avatar_id) else clean(selected?.avatar_id)
+            val avatarId = clean(selected?.avatar_id)
             if (appId == null || avatarId == null) return null
-            return SpatiusConfig(appId, avatarId, clean(selected?.region) ?: clean(preset?.region) ?: "auto")
+            return SpatiusConfig(appId, avatarId, "auto")
         }
 
         private fun clean(value: String?) = value?.trim()?.takeIf { it.isNotEmpty() }

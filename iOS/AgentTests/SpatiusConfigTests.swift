@@ -11,60 +11,47 @@ final class SpatiusConfigTests: XCTestCase {
           "name": "standard", "preset_type": "standard",
           "extensions": {"spatius_app_id": " backend-app "},
           "avatar_ids_by_lang": {"zh-CN": [{
-            "vendor": "spatius", "avatar_id": "backend-avatar", "region": "cn-beijing"
+            "vendor": "spatius", "avatar_id": "backend-avatar"
           }]}
         }
         """#, as: AgentPreset.self)
-        var avatar = try XCTUnwrap(preset.avatarIdsByLang?["zh-CN"]?.first)
+        let avatar = try XCTUnwrap(preset.avatarIdsByLang?["zh-CN"]?.first)
         XCTAssertEqual(SpatiusConfig.resolve(preset: preset, avatar: avatar),
-                       SpatiusConfig(appId: "backend-app", avatarId: "backend-avatar", region: "cn-beijing"))
-        avatar.spatiusAppId = "legacy-avatar"
-        XCTAssertEqual(SpatiusConfig.resolve(preset: preset, avatar: avatar)?.appId, "backend-app")
+                       SpatiusConfig(appId: "backend-app", avatarId: "backend-avatar", region: "auto"))
     }
 
-    func testLegacyBackendAvatarMetadataTakesPrecedenceOverFlatPreset() throws {
-        let preset = try decode(#"{"preset_type":"standard","spatius_app_id":"preset","region":"auto"}"#, as: AgentPreset.self)
-        let avatar = try decode(#"{"vendor":" Spatius ","avatar_id":"avatar","spatius_app_id":" selected ","region":" cn-beijing ","web_bg_img_url":"https://example.com/stage.jpg"}"#, as: Avatar.self)
-        XCTAssertEqual(avatar.webBgImageUrl, "https://example.com/stage.jpg")
-        XCTAssertEqual(SpatiusConfig.resolve(preset: preset, avatar: avatar),
-                       SpatiusConfig(appId: "selected", avatarId: "avatar", region: "cn-beijing"))
+    func testStandardPresetRequiresExtensions() throws {
+        let preset = try decode(#"{"preset_type":"standard"}"#, as: AgentPreset.self)
+        let avatar = try decode(#"{"vendor":" Spatius ","avatar_id":"avatar","bg_img_url":"https://example.com/stage.jpg"}"#, as: Avatar.self)
+        XCTAssertEqual(avatar.bgImageUrl, "https://example.com/stage.jpg")
+        XCTAssertNil(SpatiusConfig.resolve(preset: preset, avatar: avatar))
+        let configured = try decode(#"{"preset_type":"standard","extensions":{"spatius_app_id":" extensions "}}"#, as: AgentPreset.self)
+        XCTAssertEqual(SpatiusConfig.resolve(preset: configured, avatar: avatar),
+                       SpatiusConfig(appId: "extensions", avatarId: "avatar", region: "auto"))
     }
 
-    func testBlankAvatarAppIdFallsBackToBackendPresetOnly() throws {
-        let avatar = try decode(#"{"vendor":"spatius","avatar_id":"avatar","spatius_app_id":" "}"#, as: Avatar.self)
-        let preset = try decode(#"{"spatius_app_id":"preset"}"#, as: AgentPreset.self)
-        XCTAssertEqual(SpatiusConfig.resolve(preset: preset, avatar: avatar)?.appId, "preset")
-        XCTAssertNil(SpatiusConfig.resolve(preset: nil, avatar: avatar))
-    }
-
-    func testExtensionsTakePrecedenceAndBlankBackendIdsDoNotResolve() throws {
-        var preset = try decode(#"{"preset_type":"standard","spatius_app_id":"preset","extensions":{"spatius_app_id":" extensions "}}"#, as: AgentPreset.self)
-        var avatar = try decode(#"{"vendor":"spatius","avatar_id":"avatar","spatius_app_id":"selected"}"#, as: Avatar.self)
+    func testBlankExtensionsDoNotResolve() throws {
+        var preset = try decode(#"{"preset_type":"standard","extensions":{"spatius_app_id":" extensions "}}"#, as: AgentPreset.self)
+        let avatar = try decode(#"{"vendor":"spatius","avatar_id":"avatar"}"#, as: Avatar.self)
         XCTAssertEqual(SpatiusConfig.resolve(preset: preset, avatar: avatar)?.appId, "extensions")
         preset.extensions = AgentPresetExtensions(spatiusAppId: " ")
-        XCTAssertEqual(SpatiusConfig.resolve(preset: preset, avatar: avatar)?.appId, "selected")
-        preset.spatiusAppId = " "
-        avatar.spatiusAppId = " "
         XCTAssertNil(SpatiusConfig.resolve(preset: preset, avatar: avatar))
     }
 
-    func testCustomPresetUsesBackendCharacterAndIgnoresStaleSelection() throws {
-        var preset = try decode(#"{"preset_type":"custom","is_support_avatar":true,"avatar_vendor":"SPATIUS","spatius_app_id":"custom-app","spatius_avatar_id":"custom-avatar"}"#, as: AgentPreset.self)
-        let staleAvatar = try decode(#"{"vendor":"heygen","avatar_id":"stale","spatius_app_id":"stale"}"#, as: Avatar.self)
-        XCTAssertEqual(SpatiusConfig.resolve(preset: preset, avatar: staleAvatar),
-                       SpatiusConfig(appId: "custom-app", avatarId: "custom-avatar", region: "auto"))
-        preset.extensions = AgentPresetExtensions(spatiusAppId: "custom-extension")
-        XCTAssertEqual(SpatiusConfig.resolve(preset: preset, avatar: staleAvatar),
-                       SpatiusConfig(appId: "custom-extension", avatarId: "custom-avatar", region: "auto"))
+    func testCustomPresetWithoutAvatarIdDoesNotUseStaleSelection() throws {
+        let preset = try decode(#"{"preset_type":"custom","is_support_avatar":true,"avatar_vendor":"SPATIUS","extensions":{"spatius_app_id":"custom-app"}}"#, as: AgentPreset.self)
+        let staleAvatar = try decode(#"{"vendor":"heygen","avatar_id":"stale"}"#, as: Avatar.self)
+        XCTAssertTrue(SpatiusConfig.isSelected(preset: preset, avatar: staleAvatar))
+        XCTAssertNil(SpatiusConfig.resolve(preset: preset, avatar: staleAvatar))
     }
 
     func testMissingRenderMetadataDoesNotResolveButKeepsSpatiusSelection() throws {
         let avatar = try decode(#"{"vendor":"spatius","avatar_id":"avatar"}"#, as: Avatar.self)
         XCTAssertTrue(SpatiusConfig.isSelected(preset: nil, avatar: avatar))
         XCTAssertNil(SpatiusConfig.resolve(preset: nil, avatar: avatar))
-        let blankId = try decode(#"{"vendor":"spatius","avatar_id":" ","spatius_app_id":"backend-app"}"#, as: Avatar.self)
+        let blankId = try decode(#"{"vendor":"spatius","avatar_id":" "}"#, as: Avatar.self)
         XCTAssertNil(SpatiusConfig.resolve(preset: nil, avatar: blankId))
-        let custom = try decode(#"{"preset_type":"custom","is_support_avatar":true,"avatar_vendor":"spatius","spatius_app_id":"app"}"#, as: AgentPreset.self)
+        let custom = try decode(#"{"preset_type":"custom","is_support_avatar":true,"avatar_vendor":"spatius","extensions":{"spatius_app_id":"app"}}"#, as: AgentPreset.self)
         XCTAssertNil(SpatiusConfig.resolve(preset: custom, avatar: avatar))
     }
 

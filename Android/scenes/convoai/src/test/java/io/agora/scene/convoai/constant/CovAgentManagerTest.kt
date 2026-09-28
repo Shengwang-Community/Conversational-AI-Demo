@@ -113,42 +113,32 @@ class CovAgentManagerTest {
               "avatar_ids_by_lang": {"zh-CN": [{
                 "vendor": "spatius", "avatar_id": "backend-avatar",
                 "display_vendor": "Spatius", "avatar_name": "Avatar",
-                "thumb_img_url": "", "bg_img_url": "", "region": "cn-beijing"
+                "thumb_img_url": "", "bg_img_url": ""
               }]}
             }
         """.trimIndent(), CovAgentPreset::class.java))
         val selected = preset.getAvatarsForLang("zh-CN").single()
-        assertEquals(SpatiusConfig("backend-app", "backend-avatar", "cn-beijing"),
+        assertEquals(SpatiusConfig("backend-app", "backend-avatar", "auto"),
             SpatiusConfig.resolve(preset, selected))
-        assertEquals("backend-app", SpatiusConfig.resolve(preset,
-            selected.copy(spatius_app_id = "legacy-avatar"))?.appId)
     }
 
     @Test
-    fun spatius_usesOnlyBackendMetadataWithLegacyCompatibility() {
-        val preset = createPreset(presetType = "standard").copy(spatius_app_id = "preset", region = "auto")
-        val avatar = avatar().copy(spatius_app_id = " selected ", region = " cn-beijing ")
-        assertEquals(SpatiusConfig("selected", "avatar", "cn-beijing"), SpatiusConfig.resolve(preset, avatar))
-        assertEquals("preset", SpatiusConfig.resolve(preset, avatar.copy(spatius_app_id = " "))?.appId)
-        assertEquals("extensions", SpatiusConfig.resolve(
-            preset.copy(extensions = CovAgentPresetExtensions(" extensions ")), avatar)?.appId)
-        assertEquals("selected", SpatiusConfig.resolve(
-            preset.copy(extensions = CovAgentPresetExtensions(" ")), avatar)?.appId)
-        assertNull(SpatiusConfig.resolve(preset.copy(spatius_app_id = null), avatar()))
-        assertNull(SpatiusConfig.resolve(preset.copy(spatius_app_id = " ",
-            extensions = CovAgentPresetExtensions(" ")), avatar().copy(spatius_app_id = " ")))
+    fun spatius_standardPresetRequiresExtensions() {
+        val preset = createPreset(presetType = "standard")
+        val avatar = avatar()
+        assertNull(SpatiusConfig.resolve(preset, avatar))
+        assertEquals(SpatiusConfig("extensions", "avatar", "auto"), SpatiusConfig.resolve(
+            preset.copy(extensions = CovAgentPresetExtensions(" extensions ")), avatar))
+        assertNull(SpatiusConfig.resolve(
+            preset.copy(extensions = CovAgentPresetExtensions(" ")), avatar))
     }
 
     @Test
-    fun spatius_customPresetUsesBackendCharacterAndIgnoresStaleSelection() {
+    fun spatius_customPresetWithoutAvatarIdDoesNotUseStaleSelection() {
         val preset = createPreset(presetType = "custom").copy(is_support_avatar = true,
-            avatar_vendor = "SPATIUS", spatius_app_id = "custom-app", spatius_avatar_id = "custom-avatar")
-        assertEquals(SpatiusConfig("custom-app", "custom-avatar", "auto"),
-            SpatiusConfig.resolve(preset, avatar().copy(spatius_app_id = "stale")))
-        assertEquals(SpatiusConfig("custom-extension", "custom-avatar", "auto"),
-            SpatiusConfig.resolve(preset.copy(extensions = CovAgentPresetExtensions("custom-extension")),
-                avatar().copy(spatius_app_id = "stale")))
-        assertNull(SpatiusConfig.resolve(preset.copy(spatius_avatar_id = null), avatar()))
+            avatar_vendor = "SPATIUS", extensions = CovAgentPresetExtensions("custom-app"))
+        assertTrue(SpatiusConfig.isSelected(preset, avatar().copy(vendor = "heygen")))
+        assertNull(SpatiusConfig.resolve(preset, avatar().copy(vendor = "heygen")))
         assertFalse(SpatiusConfig.isSelected(preset.copy(is_support_avatar = false), avatar()))
     }
 

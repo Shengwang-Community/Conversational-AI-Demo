@@ -435,14 +435,9 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                         clAnimationContent.isVisible = false
                         vDragBigWindow.isVisible = true
                         ivAvatarPreview.isVisible = !localAvatar
-                        val preview = if (localAvatar) {
-                            avatar?.bg_img_url?.takeIf { it.isNotBlank() } ?: avatar?.web_bg_img_url
-                        } else {
-                            avatar?.bg_img_url
-                        }
                         GlideImageLoader.load(
                             if (localAvatar) spatiusStage.previewImage else ivAvatarPreview,
-                            preview,
+                            avatar?.bg_img_url,
                             null,
                             io.agora.scene.convoai.R.drawable.cov_default_avatar
                         )

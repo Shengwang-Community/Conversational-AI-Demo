@@ -124,6 +124,17 @@
             "source": "AgentTests/SpatiusConfigTests.swift"
           }
         ]
+      },
+      "spatius-load": {
+        "container": "Agent.xcodeproj",
+        "scheme": "Agent-cnLogicTests",
+        "target": "Agent-cnLogicTests",
+        "tests": [
+          {
+            "class": "SpatiusLoadDeadlineTests",
+            "source": "AgentTests/SpatiusLoadDeadlineTests.swift"
+          }
+        ]
       }
     },
     "integration_scheme": "Agent-cnIntegrationTests"

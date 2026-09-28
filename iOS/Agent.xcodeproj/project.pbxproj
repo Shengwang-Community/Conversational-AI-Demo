@@ -30,6 +30,8 @@
 		E0A100052E10000100F10001 /* SpatiusConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0A100062E10000100F10001 /* SpatiusConfigTests.swift */; };
 		E0A100072E10000100F10001 /* SpatiusStageLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0A100082E10000100F10001 /* SpatiusStageLayout.swift */; };
 		E0A100092E10000100F10001 /* SpatiusStageLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0A1000A2E10000100F10001 /* SpatiusStageLayoutTests.swift */; };
+		E0A1000B2E10000100F10001 /* SpatiusLoadDeadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0A1000C2E10000100F10001 /* SpatiusLoadDeadline.swift */; };
+		E0A1000D2E10000100F10001 /* SpatiusLoadDeadlineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0A1000E2E10000100F10001 /* SpatiusLoadDeadlineTests.swift */; };
 		F7D294B92D6C5D9900583343 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F7D294B82D6C5D9900583343 /* Launch Screen.storyboard */; };
 		F7D294BF2D6C6F9C00583343 /* Agora_AiLogo.png in Resources */ = {isa = PBXBuildFile; fileRef = F7D294BE2D6C6F9C00583343 /* Agora_AiLogo.png */; };
 		F7E1531A2D71E479000C528A /* ball_video_rotating.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = F7E153182D71E479000C528A /* ball_video_rotating.mp4 */; };
@@ -85,6 +87,8 @@
 		E0A100062E10000100F10001 /* SpatiusConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SpatiusConfigTests.swift; path = AgentTests/SpatiusConfigTests.swift; sourceTree = SOURCE_ROOT; };
 		E0A100082E10000100F10001 /* SpatiusStageLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SpatiusStageLayout.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Model/SpatiusStageLayout.swift; sourceTree = SOURCE_ROOT; };
 		E0A1000A2E10000100F10001 /* SpatiusStageLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SpatiusStageLayoutTests.swift; path = AgentTests/SpatiusStageLayoutTests.swift; sourceTree = SOURCE_ROOT; };
+		E0A1000C2E10000100F10001 /* SpatiusLoadDeadline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SpatiusLoadDeadline.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Manager/SpatiusLoadDeadline.swift; sourceTree = SOURCE_ROOT; };
+		E0A1000E2E10000100F10001 /* SpatiusLoadDeadlineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SpatiusLoadDeadlineTests.swift; path = AgentTests/SpatiusLoadDeadlineTests.swift; sourceTree = SOURCE_ROOT; };
 		F1D11A41AC1D3652DECE4BCF /* AgentToolkitIntegrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AgentToolkitIntegrationTests.swift; sourceTree = "<group>"; };
 		F7CEFFF62D7B050D0029BD3B /* Agent-cn.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Agent-cn.entitlements"; sourceTree = "<group>"; };
 		F7D294B82D6C5D9900583343 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
@@ -216,6 +220,8 @@
 				E0A100062E10000100F10001 /* SpatiusConfigTests.swift */,
 				E0A100082E10000100F10001 /* SpatiusStageLayout.swift */,
 				E0A1000A2E10000100F10001 /* SpatiusStageLayoutTests.swift */,
+				E0A1000C2E10000100F10001 /* SpatiusLoadDeadline.swift */,
+				E0A1000E2E10000100F10001 /* SpatiusLoadDeadlineTests.swift */,
 				E0A100042E10000100F10001 /* SpatiusConfig.swift */,
 				E0A100022E10000100F10001 /* AgentPreset.swift */,
 				C0C100062E10000100B10001 /* OnDeviceAinsTests.swift */,
@@ -504,6 +510,8 @@
 				E0A100052E10000100F10001 /* SpatiusConfigTests.swift in Sources */,
 				E0A100072E10000100F10001 /* SpatiusStageLayout.swift in Sources */,
 				E0A100092E10000100F10001 /* SpatiusStageLayoutTests.swift in Sources */,
+				E0A1000B2E10000100F10001 /* SpatiusLoadDeadline.swift in Sources */,
+				E0A1000D2E10000100F10001 /* SpatiusLoadDeadlineTests.swift in Sources */,
 				E0A100032E10000100F10001 /* SpatiusConfig.swift in Sources */,
 				E0A100012E10000100F10001 /* AgentPreset.swift in Sources */,
 				C0C100052E10000100B10001 /* OnDeviceAinsTests.swift in Sources */,
@@ -679,7 +687,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Agent-cn.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26091612;
+				CURRENT_PROJECT_VERSION = 26092814;
 				DEVELOPMENT_TEAM = 48TB6ZZL5S;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -730,7 +738,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Agent-cn.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26091612;
+				CURRENT_PROJECT_VERSION = 26092814;
 				DEVELOPMENT_TEAM = 48TB6ZZL5S;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;

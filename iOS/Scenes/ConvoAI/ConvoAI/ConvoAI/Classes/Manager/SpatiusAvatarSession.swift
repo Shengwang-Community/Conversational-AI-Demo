@@ -24,6 +24,7 @@ final class SpatiusAvatarSession: LocalAvatarRendering {
     private var player: AvatarPlayer?
     // cancelLoading addresses an avatar ID globally; finish cancellation before retrying that ID.
     private static var pendingLoadCancellation: Task<Void, Never>?
+    private static let avatarLoadGate = SpatiusLoadGate()
 
     init(onRenderReady: @escaping (Bool) -> Void, onFailure: @escaping (SpatiusRenderFailure) -> Void) {
         self.onRenderReady = onRenderReady
@@ -53,15 +54,13 @@ final class SpatiusAvatarSession: LocalAvatarRendering {
             guard attempt == generation else { throw CancellationError() }
             AvatarSDK.setRenderResolutionCap(enabled: true, maxHeight: 1080)
             loadingId = config.avatarId
-            let avatar = try await withThrowingTaskGroup(of: AvatarKit.Avatar.self) { group in
-                group.addTask { try await AvatarManager.shared.load(id: config.avatarId) }
-                group.addTask {
-                    try await Task.sleep(nanoseconds: 90_000_000_000)
-                    await AvatarManager.shared.cancelLoading(id: config.avatarId)
-                    throw LoadError.timeout
+            let avatarId = config.avatarId
+            let avatar = try await SpatiusLoadDeadline<AvatarKit.Avatar>().wait(
+                timeoutNanoseconds: 90_000_000_000
+            ) {
+                try await Self.avatarLoadGate.run {
+                    try await AvatarManager.shared.load(id: avatarId)
                 }
-                defer { group.cancelAll() }
-                return try await group.next()!
             }
             try Task.checkCancellation()
             guard attempt == generation else { throw CancellationError() }
@@ -149,6 +148,4 @@ final class SpatiusAvatarSession: LocalAvatarRendering {
             oldView?.controller.close()
         }
     }
-
-    private enum LoadError: Error { case timeout }
 }
