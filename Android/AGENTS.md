@@ -1,6 +1,6 @@
 # Shengwang Android
 
-See [shared guidance](../AI_WORKFLOW.md). Paths below are relative to Android unless stated otherwise.
+See [shared guidance](../AI_WORKFLOW.md) and the [documentation map](../AI_ENGINEERING.md). Paths below are relative to Android unless stated otherwise.
 
 - This repository uses only the `china` flavor. Build and test this brand's variant.
 - `app` owns startup, Manifest and packaging; `common` provides shared UI, networking and configuration; `scenes:convoai` owns the main experience; `iot` uses `bleManager` for device connectivity.
@@ -10,7 +10,7 @@ See [shared guidance](../AI_WORKFLOW.md). Paths below are relative to Android un
 
 ## Useful commands
 
-From the repository root, `python3 scripts/validate.py android` runs this brand's debug unit tests and app lint. CI uses `python3 scripts/validate.py android --tests-only` to run the same unit tests without app lint. For a narrower change, choose relevant Gradle tasks instead.
+From the repository root, `python3 scripts/validate.py android` runs this brand's debug unit tests and app lint. CI runs the same command. For a narrower change, choose relevant Gradle tasks instead.
 
 From Android:
 

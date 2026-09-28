@@ -13,8 +13,11 @@ from validate import ROOT, config, suite_checks
 
 SKILLS = ["ac-workflow", "ac-memory", "ac-plan", "ac-execute", "ac-review",
           "requesting-code-review", "receiving-code-review", "writing-skills"]
-SHARED_FILES = ["AGENTS.md", "CLAUDE.md", "AI_WORKFLOW.md", "scripts/validate.py",
+SHARED_FILES = ["AGENTS.md", "CLAUDE.md", "AI_ENGINEERING.md", "AI_WORKFLOW.md",
+                ".github/pull_request_template.md", ".github/PULL_REQUEST_TEMPLATE/mobile.md",
+                "scripts/validate.py",
                 "scripts/check_workflow.py", "scripts/tests/test_validation.py",
+                "scripts/tests/test_workflow.py",
                 "Android/docs/TASK_STATE_TEMPLATE.md", "Android/docs/STATE_INDEX_TEMPLATE.md",
                 "Android/docs/REVIEW_TEMPLATES.md", "iOS/docs/TASK_STATE_TEMPLATE.md",
                 "iOS/docs/STATE_INDEX_TEMPLATE.md",
@@ -23,6 +26,19 @@ SHARED_FILES += [f"Android/.agents/skills/{name}/SKILL.md" for name in SKILLS]
 SHARED_FILES += [f"Android/.agents/skills/{name}/agents/openai.yaml" for name in SKILLS[:5]]
 SHARED_FILES += ["iOS/.agents/skills/convoai-ios-workflow/" + name for name in
                  ["SKILL.md", "agents/openai.yaml", "references/contracts.md", "references/ios_logic_ut.md"]]
+
+
+def mobile_template_targets(text):
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if line.startswith("| Target in this repository |"):
+            targets = []
+            for row in lines[index + 2:]:
+                if not row.startswith("|"):
+                    break
+                targets.append(row.split("|", 2)[1].strip())
+            return targets
+    return []
 
 
 def check(root, peer=None):
@@ -76,6 +92,9 @@ def check(root, peer=None):
             dest = path.parent / target.split("#", 1)[0]
             if not dest.exists():
                 errors.append(f"Broken link in {rel}: {target}")
+    mobile_template = root / ".github/PULL_REQUEST_TEMPLATE/mobile.md"
+    if mobile_template.is_file() and mobile_template_targets(mobile_template.read_text()) != ["Android", "iOS"]:
+        errors.append("Mobile PR template must list only this repository's Android and iOS targets")
     policy = root / "iOS/.agents/skills/convoai-ios-workflow/agents/openai.yaml"
     if "allow_implicit_invocation: true" not in policy.read_text():
         errors.append("Normal iOS requests must be able to invoke the workflow")

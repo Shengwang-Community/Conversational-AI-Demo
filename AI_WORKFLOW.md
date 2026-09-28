@@ -3,6 +3,8 @@
 Use the agent's judgment to solve the task. These guidelines provide project context, not a prescribed execution sequence. User instructions take precedence.
 
 - Work directly from the request and current code. Choose the depth of planning, tools, collaboration, review and validation that the task needs, within available permissions.
+- For a product requirement, define shared behavior once, then record affected platforms and intentional brand differences. One developer owns the affected targets; separate role handoffs and task contracts are not required.
+- For Android or iOS requirements, keep cross-repository scope in the requirement or issue record. In each repository's PR, record only its own Android and iOS decisions and link related PRs using the mobile PR template.
 - Plans, skills, templates and local notes are optional aids. Start implementation without a frozen contract, risk score or role handoff.
 - Ask when unresolved intent or missing authorization affects the outcome. Make routine decisions and continue work already authorized.
 - On continue, use the conversation and any relevant notes, verify the current files and resume unfinished work. Save a short checkpoint when useful for recovery.

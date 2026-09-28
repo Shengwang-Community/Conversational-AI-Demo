@@ -42,10 +42,10 @@ jobs:
             -PAG_APP_ID="$PLACEHOLDER_APP_ID" \
             :app:assembleChinaDebug
 
-      - name: Unit tests
+      - name: Unit tests and lint
         env:
           ORG_GRADLE_PROJECT_AG_APP_ID: ${{ env.PLACEHOLDER_APP_ID }}
-        run: python3 scripts/validate.py android --tests-only --results-dir "$RUNNER_TEMP/android-tests"
+        run: python3 scripts/validate.py android --results-dir "$RUNNER_TEMP/android-tests"
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -97,6 +97,10 @@ jobs:
         run: python3 scripts/validate.py ios --suite ains --results-dir "$RUNNER_TEMP/ios-tests"
       - name: Environment unit tests
         run: python3 scripts/validate.py ios --suite environment --results-dir "$RUNNER_TEMP/ios-tests"
+      - name: Spatius configuration unit tests
+        run: python3 scripts/validate.py ios --suite spatius-config --results-dir "$RUNNER_TEMP/ios-tests"
+      - name: Spatius layout unit tests
+        run: python3 scripts/validate.py ios --suite spatius-layout --results-dir "$RUNNER_TEMP/ios-tests"
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
