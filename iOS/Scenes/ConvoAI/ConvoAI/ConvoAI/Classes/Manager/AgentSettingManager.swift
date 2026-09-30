@@ -138,6 +138,18 @@ class AgentSettingManager {
         get { preference.avatar }
         set { updateAvatar(newValue) }
     }
+
+    var isCustomAvatarEnabled: Bool {
+        !AppContext.shared.isOpenSource &&
+            preset?.isCustom == true && preset?.isSupportAvatar == true
+    }
+
+    var isAvatarEnabled: Bool {
+        if AppContext.shared.isOpenSource {
+            return false
+        }
+        return avatar != nil || isCustomAvatarEnabled
+    }
      
     /// AI interruption feature switch
     var aiVad: Bool {

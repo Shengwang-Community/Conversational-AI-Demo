@@ -75,6 +75,11 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
 
     private fun setupAgentSettings() {
         mBinding?.apply {
+            llAvatar.visibility = if (CovAgentManager.isOpenSource || CovAgentManager.isCustomEnableAvatar) {
+                View.GONE
+            } else {
+                View.VISIBLE
+            }
             rcOptions.layoutManager = LinearLayoutManager(context)
             rcOptions.context.getDrawable(R.drawable.shape_divider_line)?.let {
                 rcOptions.addItemDecoration(LastItemDividerDecoration(it))
@@ -389,6 +394,7 @@ class CovAgentSettingsFragment : BaseFragment<CovAgentSettingsFragmentBinding>()
     }
 
     private fun onClickAvatar() {
+        if (CovAgentManager.isOpenSource || CovAgentManager.isCustomEnableAvatar) return
         val activity = activity ?: return
 
         val avatarSelectorDialog = CovAvatarSelectorDialog.Companion.newInstance(

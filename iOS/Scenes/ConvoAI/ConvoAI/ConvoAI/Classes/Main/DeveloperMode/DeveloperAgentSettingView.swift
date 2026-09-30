@@ -14,7 +14,6 @@ class DeveloperAgentSettingView: UIView {
     public let requestNamespaceTextField = UITextField()
     public let sdkParamsTextField = UITextField()
     public let clientAudioScenarioButton = UIButton(type: .system)
-    public let serverAudioScenarioButton = UIButton(type: .system)
     public let convoaiTextField = UITextField()
     public let graphTextField = UITextField()
     public let ainsSwitch = UISwitch()
@@ -63,7 +62,6 @@ class DeveloperAgentSettingView: UIView {
         addInput(sdkParamsTextField, title: ResourceManager.L10n.DevMode.sdkParams,
                  hint: ResourceManager.L10n.DevMode.sdkParamsHint, to: stack)
         addSelection(clientAudioScenarioButton, title: ResourceManager.L10n.DevMode.clientAudioScenario, to: stack)
-        addSelection(serverAudioScenarioButton, title: ResourceManager.L10n.DevMode.serverAudioScenario, to: stack)
         addInput(convoaiTextField, title: ResourceManager.L10n.DevMode.convoai, hint: "sess_ctrl_dev", to: stack)
         addInput(graphTextField, title: ResourceManager.L10n.DevMode.graph, hint: "1.3.0-12-ga443e7e", to: stack)
         stack.setCustomSpacing(30, after: graphTextField)

@@ -408,7 +408,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
         lifecycleScope.launch {
             viewModel.isAvatarJoinedRtc.collect { joined ->
                 mBinding?.apply {
-                    if (joined && !CovAgentManager.isSpatiusAvatar) {
+                    if (joined && CovAgentManager.isEnableAvatar && !CovAgentManager.isSpatiusAvatar) {
                         CovRtcManager.setupRemoteVideo(
                             VideoCanvas(remoteAvatarView, Constants.RENDER_MODE_HIDDEN, CovAgentManager.avatarUID)
                         )
@@ -425,7 +425,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             viewModel.avatar.collect { avatar ->
                 mBinding?.apply {
                     val localAvatar = CovAgentManager.isSpatiusAvatar
-                    if (avatar == null && !localAvatar) {
+                    if (!CovAgentManager.isEnableAvatar || (avatar == null && !localAvatar)) {
                         clAnimationContent.isVisible = true
                         vDragBigWindow.isVisible = false
                         ivAvatarPreview.isVisible = false
@@ -611,7 +611,8 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
     private fun updateWindowContent() {
         val localAvatar = CovAgentManager.isSpatiusAvatar
         // Keep the Spatius container mounted; its poster covers loading until the first rendered frame.
-        val showAvatar = localAvatar || viewModel.isAvatarJoinedRtc.value
+        val showAvatar = CovAgentManager.isEnableAvatar &&
+            (localAvatar || viewModel.isAvatarJoinedRtc.value)
         val avatarContent: View = if (localAvatar) spatiusStage else remoteAvatarView
         val showVideo = viewModel.isPublishVideo.value
         val showTranscript = viewModel.isShowMessageList.value

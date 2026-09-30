@@ -60,9 +60,9 @@
 
 > 说明：
 > - `IS_OPEN_SOURCE=true` 表示开启开源模式。此时项目会使用开源模式参数组装对话链路，不依赖官方预置 agent 列表。
-> - 对外部开发者来说，开启该模式后，需要自行准备第三方 `LLM`、`TTS` 配置；如果还要启用数字人，则还需要自行准备第三方 `Avatar` 配置。
-> - 如果这些参数为空，相关能力链路可能无法正常启动；尤其是 `LLM_*`、`TTS_*`、`AVATAR_*` 需要与你接入的厂商参数格式保持一致。
-> - 如果你希望走非开源模式，请按实际环境调整 `IS_OPEN_SOURCE`，并确认服务端预置能力与配置可用。
+> - 对外部开发者来说，开启该模式后，需要自行准备第三方 `LLM`、`TTS` 配置；`gradle.properties` 不再提供数字人配置项。开源模式不支持数字人。
+> - 如果这些参数为空，相关能力链路可能无法正常启动；`LLM_*`、`TTS_*` 需要与你接入的厂商参数格式保持一致。
+> - 非开源模式仍可通过支持数字人的预置或自定义智能体使用数字人；请按实际环境调整 `IS_OPEN_SOURCE` 并确认所选智能体可用。
 
 ```
 #----------- AppId --------------
@@ -74,7 +74,7 @@ BASIC_AUTH_KEY=<声网 RESTful API KEY>
 BASIC_AUTH_SECRET=<声网 RESTful API SECRET>
 
 #----------- Open Source --------------
-# 开启开源模式后，需自行准备第三方 LLM / TTS / Avatar 配置
+# 开启开源模式后，需自行准备第三方 LLM / TTS 配置
 IS_OPEN_SOURCE=true
 
 #----------- LLM -----------
@@ -87,10 +87,6 @@ LLM_SYSTEM_MESSAGES=<LLM Prompt>(可选)
 TTS_VENDOR=<TTS 厂商>
 TTS_PARAMS=<TTS 参数>
 
-#----------- AVATAR -----------
-# 若不启用数字人，可按实际能力留空；若启用，则需提供对应厂商参数
-AVATAR_VENDOR=<AVATAR 厂商>
-AVATAR_PARAMS=<AVATAR 参数>
 ```
 
 - 用 Android Studio 运行项目即可开始您的体验

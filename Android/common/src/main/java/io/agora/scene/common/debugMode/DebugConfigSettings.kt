@@ -70,13 +70,6 @@ object DebugConfigSettings {
         this.audioScenario = scenario
     }
 
-    var serverAudioScenario: String? = null
-        private set
-
-    fun setServerAudioScenario(scenario: String?) {
-        this.serverAudioScenario = scenario
-    }
-
     @Volatile
     private var _isDebug: Boolean = false
     
@@ -182,7 +175,6 @@ object DebugConfigSettings {
         convoAiRequestBaseUrl = ""
         convoAiRequestHeaderNamespace = ""
         audioScenario = null
-        serverAudioScenario = null
     }
 
     // Counter for debug mode activation

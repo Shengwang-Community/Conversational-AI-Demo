@@ -198,7 +198,6 @@
 "devmode.request.namespace.hint" = "输入服务命名空间";
 "devmode.request.namespace.desc" = "留空不覆盖；填写后设置 X-Service-Namespace，保留其他请求头。";
 "devmode.client.audio.scenario" = "客户端 Audio Scenario";
-"devmode.server.audio.scenario" = "服务端 Audio Scenario";
 "devmode.switched.environment" = "已切换到 %@";
 "devmode.field.saved" = "%@已保存";
 "devmode.field.cleared" = "%@已清空";

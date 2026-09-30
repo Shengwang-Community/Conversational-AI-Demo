@@ -58,30 +58,27 @@
 ``` Swift
     static var IS_OPEN_SOURCE: Bool = true
     
-    #----------- AppId --------------
-    static let APP_ID: String = <声网 App ID>
-    static let CERTIFICATE: String? = <声网 App Certificate>
+    //----------- AppId --------------
+    static let AG_APP_ID: String = <声网 App ID>
+    static let AG_APP_CERTIFICATE: String = <声网 App Certificate>
     
-    #----------- Basic Auth ---------------
+    //----------- Basic Auth ---------------
     static let BASIC_AUTH_KEY: String = <声网 RESTful API KEY>
     static let BASIC_AUTH_SECRET: String = <声网 RESTful API SECRET>
     
-    #----------- LLM -----------
+    //----------- LLM -----------
     static let LLM_URL: String = <LLM 厂商的 API BASE URL>
-    static let LLM_API_KEY: String? = <LLM 厂商的 API KEY>
-    static let LLM_SYSTEM_MESSAGES: String? = <LLM Prompt>
-    static let LLM_MODEL: String? = <LLM Model>
+    static let LLM_API_KEY: String = <LLM 厂商的 API KEY>
+    static let LLM_SYSTEM_MESSAGES: [[String: Any]] = <LLM Prompt>
+    static let LLM_PARAMS: [String: Any] = <LLM 厂商参数>
     
-    #----------- TTS -----------
+    //----------- TTS -----------
     static let TTS_VENDOR: String = <TTS 厂商>
     static let TTS_PARAMS: [String : Any] = <TTS 参数>
 
-    #----------- AVATAR -----------
-    static let AVATAR_ENABLE: Bool = <是否启用AVATAR功能>
-    static let AVATAR_VENDOR: String = <AVATAR 厂商>
-    static let AVATAR_PARAMS: [String: Any] = <AVATAR 参数>
 ```
 
+- 开源模式不支持数字人，`KeyCenter.swift` 不再提供数字人配置项，通话设置中不会显示数字人入口。非开源模式仍可通过支持数字人的预置或自定义智能体使用数字人。
 - 在 iOS 目录执行 `pod install` 后运行项目，即可开始您的体验
 
 ## 🗂️ 二、项目结构导览

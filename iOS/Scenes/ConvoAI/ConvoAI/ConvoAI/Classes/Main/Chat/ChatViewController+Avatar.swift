@@ -13,8 +13,9 @@ import SVProgressHUD
 
 extension ChatViewController {
     internal var isSpatiusAvatar: Bool {
-        SpatiusConfig.isSelected(preset: AppContext.settingManager().preset,
-                                 avatar: AppContext.settingManager().avatar)
+        !AppContext.shared.isOpenSource &&
+            SpatiusConfig.isSelected(preset: AppContext.settingManager().preset,
+                                     avatar: AppContext.settingManager().avatar)
     }
 
     @MainActor
@@ -50,6 +51,7 @@ extension ChatViewController {
     }
 
     internal func startShowAvatar() {
+        guard isEnableAvatar() else { return }
         windowState.showAvatar = true
         remoteAvatarView.useSpatiusStage = isSpatiusAvatar
         let avatar = AppContext.settingManager().avatar
@@ -75,8 +77,6 @@ extension ChatViewController {
     }
     
     internal func isEnableAvatar() -> Bool {
-        let preset = AppContext.settingManager().preset
-        let isPresetSupportAvatar = preset?.isSupportAvatar == true
-        return AppContext.shared.avatarEnable || AppContext.settingManager().avatar != nil || isPresetSupportAvatar
+        AppContext.settingManager().isAvatarEnabled
     }
 }

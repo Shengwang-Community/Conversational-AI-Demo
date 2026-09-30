@@ -44,7 +44,60 @@ final class AgentSettingManagerTemporaryRtcConfigTests: XCTestCase {
         XCTAssertEqual(AppContext.shared.appId, defaultAppId)
     }
 
-    private func makePreset(name: String, presetType: String) -> AgentPreset {
+    func testStandardAvatarSupportRequiresSelectionAndOpenSourceDisablesStaleSelection() {
+        let previousOpenSource = AppContext.shared.isOpenSource
+        let previousDeveloperMode = DeveloperConfig.shared.isDeveloperMode
+        defer {
+            AppContext.shared.isOpenSource = previousOpenSource
+            DeveloperConfig.shared.isDeveloperMode = previousDeveloperMode
+        }
+
+        AppContext.shared.isOpenSource = false
+        DeveloperConfig.shared.isDeveloperMode = false
+        let manager = AgentSettingManager()
+        manager.updatePreset(makePreset(name: "standard", presetType: "standard", isSupportAvatar: true))
+        XCTAssertFalse(manager.isAvatarEnabled)
+
+        let avatar = Avatar(vendor: "spatius", displayVendor: nil, avatarId: "avatar",
+                            avatarName: nil, thumbImageUrl: nil, bgImageUrl: nil)
+        manager.updateAvatar(avatar)
+        XCTAssertTrue(manager.isAvatarEnabled)
+        manager.updateAvatar(nil)
+        XCTAssertFalse(manager.isAvatarEnabled)
+
+        manager.updateAvatar(avatar)
+        AppContext.shared.isOpenSource = true
+        XCTAssertFalse(manager.isAvatarEnabled)
+
+        manager.updatePreset(makePreset(name: "custom", presetType: "custom_private", isSupportAvatar: true))
+        XCTAssertFalse(manager.isAvatarEnabled)
+        XCTAssertEqual(DeveloperConfig.shared.resolvedClientAudioScenario(
+            isAvatarEnabled: manager.isAvatarEnabled, isIndependent: false), .aiClient)
+    }
+
+    func testCustomPrivateAvatarFlagControlsClientAudioScenario() {
+        let previousOpenSource = AppContext.shared.isOpenSource
+        let previousDeveloperMode = DeveloperConfig.shared.isDeveloperMode
+        defer {
+            AppContext.shared.isOpenSource = previousOpenSource
+            DeveloperConfig.shared.isDeveloperMode = previousDeveloperMode
+        }
+
+        AppContext.shared.isOpenSource = false
+        DeveloperConfig.shared.isDeveloperMode = false
+        let manager = AgentSettingManager()
+        manager.updatePreset(makePreset(name: "custom", presetType: "custom_private", isSupportAvatar: true))
+        XCTAssertTrue(manager.isAvatarEnabled)
+        XCTAssertEqual(DeveloperConfig.shared.resolvedClientAudioScenario(
+            isAvatarEnabled: manager.isAvatarEnabled, isIndependent: false), .default)
+
+        manager.updatePreset(makePreset(name: "custom", presetType: "custom_private", isSupportAvatar: false))
+        XCTAssertFalse(manager.isAvatarEnabled)
+        XCTAssertEqual(DeveloperConfig.shared.resolvedClientAudioScenario(
+            isAvatarEnabled: manager.isAvatarEnabled, isIndependent: false), .aiClient)
+    }
+
+    private func makePreset(name: String, presetType: String, isSupportAvatar: Bool? = nil) -> AgentPreset {
         AgentPreset(
             name: name,
             displayName: "Preset",
@@ -63,7 +116,7 @@ final class AgentSettingManagerTemporaryRtcConfigTests: XCTestCase {
             defaultAvatar: nil,
             sipVendorCalleeNumbers: nil,
             avatarVendor: nil,
-            isSupportAvatar: nil
+            isSupportAvatar: isSupportAvatar
         )
     }
 }

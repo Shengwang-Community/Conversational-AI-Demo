@@ -509,21 +509,6 @@ public class DeveloperModeViewController: UIViewController {
                 self.updateAudioScenarioMenus()
             }
         })
-        let serverOptions: [(String, String?)] = [
-            (ResourceManager.L10n.DevMode.noOverride, nil),
-            ("default", "default"), ("chorus", "chorus"), ("aiserver", "aiserver")
-        ]
-        let serverTitle = serverOptions.first { $0.1 == config.serverAudioScenario }?.0
-            ?? ResourceManager.L10n.DevMode.noOverride
-        agentSettingView.serverAudioScenarioButton.setTitle(serverTitle + " ▾", for: .normal)
-        agentSettingView.serverAudioScenarioButton.menu = UIMenu(children: serverOptions.map { title, value in
-            UIAction(title: title, state: value == config.serverAudioScenario ? .on : .off) { [weak self] _ in
-                guard let self = self else { return }
-                self.view.endEditing(true)
-                self.config.serverAudioScenario = value
-                self.updateAudioScenarioMenus()
-            }
-        })
     }
 
     private func showFieldSaved(_ title: String, isEmpty: Bool) {

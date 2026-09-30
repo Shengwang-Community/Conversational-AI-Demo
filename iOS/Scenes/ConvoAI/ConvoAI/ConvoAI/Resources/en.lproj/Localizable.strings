@@ -184,7 +184,6 @@
 "devmode.request.namespace.hint" = "Enter service namespace";
 "devmode.request.namespace.desc" = "Leave empty to keep the existing headers. Sets X-Service-Namespace and preserves other headers.";
 "devmode.client.audio.scenario" = "Client Audio Scenario";
-"devmode.server.audio.scenario" = "Server Audio Scenario";
 "devmode.switched.environment" = "Switched to %@";
 "devmode.field.saved" = "%@ saved";
 "devmode.field.cleared" = "%@ cleared";

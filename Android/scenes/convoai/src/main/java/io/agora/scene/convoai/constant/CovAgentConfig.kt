@@ -32,6 +32,12 @@ enum class VoiceprintMode {
     PERSONALIZED
 }
 
+internal fun resolveAvatarEnabled(
+    isOpenSource: Boolean,
+    hasSelectedAvatar: Boolean,
+    customAvatarEnabled: Boolean
+): Boolean = !isOpenSource && (hasSelectedAvatar || customAvatarEnabled)
+
 object CovAgentManager {
 
     private val TAG = "CovAgentManager"
@@ -144,25 +150,21 @@ object CovAgentManager {
 
     fun getAvatars(): List<CovAvatar> {
         if (isOpenSource) {
-            return listOf(
-                CovAvatar(
-                    avatar_name = "Avatar",
-                    vendor = "",
-                    display_vendor = "",
-                    avatar_id = "",
-                    thumb_img_url = "",
-                    bg_img_url = "",
-                )
-            )
+            return emptyList()
         }
         return preset?.getAvatarsForLang(language?.language_code) ?: emptyList()
     }
 
-    val isEnableAvatar: Boolean get() = avatar != null || isCustomEnableAvatar
+    val isEnableAvatar: Boolean get() = resolveAvatarEnabled(
+        isOpenSource = isOpenSource,
+        hasSelectedAvatar = avatar != null,
+        customAvatarEnabled = isCustomEnableAvatar
+    )
 
-    val isSpatiusAvatar: Boolean get() = SpatiusConfig.isSelected(preset, avatar)
+    val isSpatiusAvatar: Boolean get() = isEnableAvatar && SpatiusConfig.isSelected(preset, avatar)
 
-    val isCustomEnableAvatar: Boolean get() = (preset?.isCustom == true) && (preset?.is_support_avatar == true)
+    val isCustomEnableAvatar: Boolean get() = !isOpenSource &&
+        (preset?.isCustom == true) && (preset?.is_support_avatar == true)
 
     val customAvatarVendor: String? get() = preset?.avatar_vendor?.takeIf { isCustomEnableAvatar }
 

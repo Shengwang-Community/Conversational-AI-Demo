@@ -48,7 +48,7 @@ extension ChatViewController {
         }
     }
 
-    private func getStartAgentParametersForConvoAI() -> [String: Any] {
+    internal func getStartAgentParametersForConvoAI() -> [String: Any] {
         var local_bvc = true
         if AppContext.settingManager().voiceprintMode != .off {
             local_bvc = false
@@ -107,7 +107,9 @@ extension ChatViewController {
                     "sal": getSalParams(),
                     "avatar": [
                         "enable": isEnableAvatar(),
-                        "vendor": AppContext.settingManager().avatar?.vendor ?? "",
+                        "vendor": AppContext.settingManager().isCustomAvatarEnabled
+                            ? AppContext.settingManager().preset?.avatarVendor
+                            : (AppContext.settingManager().avatar?.vendor ?? ""),
                         "params": [
                             "agora_uid": "\(avatarUid)",
                             "avatar_id": AppContext.settingManager().avatar?.avatarId
@@ -120,7 +122,6 @@ extension ChatViewController {
                         "enable_error_message": true,
                         "aivad_force_threshold": nil,
                         "output_audio_codec": nil,
-                        "audio_scenario": nil,
                         "transcript": [
                             "enable": true,
                             "enable_words": enableWords(),
@@ -140,9 +141,7 @@ extension ChatViewController {
         return (CommonFeature.removeNilValues(from: parameters) as? [String: Any]) ?? [:]
     }
     
-    private func getStartAgentParametersForOpenSouce() -> [String: Any] {
-        AppContext.shared.avatarParams["agora_uid"] = "\(avatarUid)"
-        AppContext.shared.avatarParams["agora_token"] = openSourceAvatarToken
+    internal func getStartAgentParametersForOpenSouce() -> [String: Any] {
         let parameters: [String: Any?] = [
             "app_id": AppContext.shared.appId,
             "preset_name": nil,
@@ -193,9 +192,7 @@ extension ChatViewController {
                     ],
                     "sal": getSalParams(),
                     "avatar": [
-                        "enable": AppContext.shared.avatarEnable,
-                        "vendor": AppContext.shared.avatarVendor,
-                        "params": AppContext.shared.avatarParams
+                        "enable": false
                     ],
                     "parameters": [
                         "data_channel": "rtm",
@@ -204,7 +201,6 @@ extension ChatViewController {
                         "enable_error_message": true,
                         "aivad_force_threshold": nil,
                         "output_audio_codec": nil,
-                        "audio_scenario": nil,
                         "transcript": [
                             "enable": true,
                             "enable_words": enableWords(),
@@ -280,43 +276,6 @@ extension ChatViewController {
                 } else {
                     continuation.resume(throwing: NSError(domain: "", code: -1,
                         userInfo: [NSLocalizedDescriptionKey: "generate token error"]))
-                }
-            }
-        }
-    }
-    
-    internal func fetchOpenSourceAvatarTokenIfNeeded() async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            if !AppContext.shared.isOpenSource {
-                continuation.resume()
-                return
-            }
-            
-            if !AppContext.shared.avatarEnable {
-                continuation.resume()
-                return
-            }
-            
-            if AppContext.shared.certificate.isEmpty {
-                self.openSourceAvatarToken = AppContext.shared.appId
-                continuation.resume()
-                return
-            }
-            
-            NetworkManager.shared.generateToken(
-                channelName: "",
-                uid: "\(avatarUid)",
-                types: [.rtc, .rtm]
-            ) { [weak self] token in
-                guard let self = self else { return }
-                
-                if let token = token {
-                    print("avatar rtc token is : \(token)")
-                    self.openSourceAvatarToken = token
-                    continuation.resume()
-                } else {
-                    continuation.resume(throwing: NSError(domain: "", code: -1,
-                        userInfo: [NSLocalizedDescriptionKey: "generate avatar token error"]))
                 }
             }
         }

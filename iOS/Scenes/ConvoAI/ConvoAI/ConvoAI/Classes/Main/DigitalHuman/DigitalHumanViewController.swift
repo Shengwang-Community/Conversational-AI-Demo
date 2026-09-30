@@ -78,6 +78,10 @@ class DigitalHumanViewController: BaseViewController {
     }
     
     private func loadData() {
+        if AppContext.shared.isOpenSource || AppContext.settingManager().isCustomAvatarEnabled {
+            createDefaultGroup()
+            return
+        }
         guard
             let language = AppContext.settingManager().language,
             let avatarIdsByLang = AppContext.settingManager().preset?.avatarIdsByLang,

@@ -1,5 +1,6 @@
 package io.agora.scene.convoai.constant
 
+import io.agora.rtc2.Constants
 import io.agora.scene.common.constant.ServerConfig
 import io.agora.scene.common.util.GsonTools
 import io.agora.scene.convoai.api.CovAgentLanguage
@@ -7,6 +8,7 @@ import io.agora.scene.convoai.api.CovAgentPresetExtensions
 import io.agora.scene.convoai.api.CovAvatar
 import io.agora.scene.convoai.avatar.SpatiusConfig
 import io.agora.scene.convoai.api.CovAgentPreset
+import io.agora.scene.convoai.ui.living.resolveAudioScenario
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -80,6 +82,53 @@ class CovAgentManagerTest {
         assertTrue(CovAgentManager.isAiVadSupported)
         assertTrue(CovAgentManager.enableAiVad)
         assertTrue(CovAgentManager.enableAiPause)
+    }
+
+    @Test
+    fun customPrivateAvatarFlagControlsClientAudioScenario() {
+        val preset = createPreset(presetType = "custom_private")
+
+        CovAgentManager.setPreset(preset.copy(is_support_avatar = true, avatar_vendor = "spatius"))
+        assertTrue(CovAgentManager.isEnableAvatar)
+        assertEquals(Constants.AUDIO_SCENARIO_DEFAULT, resolveAudioScenario(
+            isAvatarEnabled = CovAgentManager.isEnableAvatar,
+            isIndependent = false,
+            isDebug = false,
+            debugAudioScenario = null
+        ))
+
+        CovAgentManager.setPreset(preset.copy(is_support_avatar = false, avatar_vendor = "spatius"))
+        assertFalse(CovAgentManager.isEnableAvatar)
+        assertEquals(Constants.AUDIO_SCENARIO_AI_CLIENT, resolveAudioScenario(
+            isAvatarEnabled = CovAgentManager.isEnableAvatar,
+            isIndependent = false,
+            isDebug = false,
+            debugAudioScenario = null
+        ))
+    }
+
+    @Test
+    fun openSourceModeDisablesAvatarEvenWithExistingSelectionOrCustomPresetFlag() {
+        assertFalse(resolveAvatarEnabled(
+            isOpenSource = true,
+            hasSelectedAvatar = true,
+            customAvatarEnabled = false
+        ))
+        assertFalse(resolveAvatarEnabled(
+            isOpenSource = true,
+            hasSelectedAvatar = false,
+            customAvatarEnabled = true
+        ))
+        assertTrue(resolveAvatarEnabled(
+            isOpenSource = false,
+            hasSelectedAvatar = true,
+            customAvatarEnabled = false
+        ))
+        assertTrue(resolveAvatarEnabled(
+            isOpenSource = false,
+            hasSelectedAvatar = false,
+            customAvatarEnabled = true
+        ))
     }
 
     @Test

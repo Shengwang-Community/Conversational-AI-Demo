@@ -216,7 +216,7 @@ extension ChatViewController {
     }
     
     internal func startRenderRemoteVideoStream(renderView: UIView) {
-        guard !isSpatiusAvatar else { return }
+        guard isEnableAvatar(), !isSpatiusAvatar else { return }
         let rtcEngine = rtcManager.getRtcEntine()
         let videoCanvas = AgoraRtcVideoCanvas()
         videoCanvas.uid = UInt(avatarUid)
@@ -251,19 +251,17 @@ extension ChatViewController {
             return
         }
         let independent = (AppContext.settingManager().preset?.presetType?.hasPrefix("independent") == true)
-        let secnario: AgoraAudioScenario = {
-            if isEnableAvatar() {
-                return .default
-            }
-            return independent ? .chorus : .aiClient
-        }()
+        let scenario = DeveloperConfig.shared.resolvedClientAudioScenario(
+            isAvatarEnabled: isEnableAvatar(),
+            isIndependent: independent
+        )
         let ainsEnabled = OnDeviceAins.resolve(
             isDeveloperMode: DeveloperConfig.shared.isDeveloperMode,
             debugEnabled: DeveloperConfig.shared.ainsEnabled
         )
         rtcManager.loadAudioSettings(ainsEnabled: ainsEnabled) {
             convoAIAPI.loadAudioSettings(
-                scenario: DeveloperConfig.shared.resolvedClientAudioScenario(fallback: secnario),
+                scenario: scenario,
                 enableAins: ainsEnabled
             )
         }

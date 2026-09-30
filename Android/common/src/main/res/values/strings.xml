@@ -23,7 +23,6 @@
     <string name="common_debug_session_limit">会话时长限制</string>
     <string name="common_debug_metrics">性能指标</string>
     <string name="common_debug_audio_scenario">客户端 Audio Scenario</string>
-    <string name="common_debug_server_audio_scenario">服务端 Audio Scenario</string>
     <string name="common_debug_audio_scenario_not_selected">不覆盖</string>
     <string name="common_debug_graph_id">Graph ID</string>
     <string name="common_debug_sdk_parameters">SDK 音频参数</string>

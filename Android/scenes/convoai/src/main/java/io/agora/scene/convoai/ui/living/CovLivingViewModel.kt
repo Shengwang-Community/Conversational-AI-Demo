@@ -86,25 +86,19 @@ import kotlin.coroutines.suspendCoroutine
  * view model
  */
 internal fun resolveAudioScenario(
-    defaultScenario: Int,
+    isAvatarEnabled: Boolean,
+    isIndependent: Boolean,
     isDebug: Boolean,
     debugAudioScenario: Int?
 ): Int {
-    return if (isDebug) {
-        debugAudioScenario ?: defaultScenario
-    } else {
-        defaultScenario
+    if (isDebug && debugAudioScenario != null) {
+        return debugAudioScenario
     }
-}
-
-internal fun resolveDebugServerAudioScenario(
-    isDebug: Boolean,
-    serverAudioScenario: String?
-): String? {
-    if (!isDebug) {
-        return null
+    return when {
+        isAvatarEnabled -> Constants.AUDIO_SCENARIO_DEFAULT
+        isIndependent -> Constants.AUDIO_SCENARIO_CHORUS
+        else -> Constants.AUDIO_SCENARIO_AI_CLIENT
     }
-    return serverAudioScenario
 }
 
 class CovLivingViewModel : ViewModel() {
@@ -550,18 +544,9 @@ class CovLivingViewModel : ViewModel() {
 
                 // Configure audio settings
                 val isIndependent = CovAgentManager.getPreset()?.isIndependent == true
-                val defaultScenario = if (CovAgentManager.isEnableAvatar) {
-                    // If digital avatar is enabled, use AUDIO_SCENARIO_DEFAULT for better audio mixing
-                    Constants.AUDIO_SCENARIO_DEFAULT
-                } else {
-                    if (isIndependent) {
-                        Constants.AUDIO_SCENARIO_CHORUS
-                    } else {
-                        Constants.AUDIO_SCENARIO_AI_CLIENT
-                    }
-                }
                 val scenario = resolveAudioScenario(
-                    defaultScenario = defaultScenario,
+                    isAvatarEnabled = CovAgentManager.isEnableAvatar,
+                    isIndependent = isIndependent,
                     isDebug = DebugConfigSettings.isDebug,
                     debugAudioScenario = DebugConfigSettings.audioScenario
                 )
@@ -1078,6 +1063,7 @@ class CovLivingViewModel : ViewModel() {
             convoaiBody = if (CovAgentManager.isOpenSource) {
                 getConvoaiOpenSourceBodyMap(channel)
             } else {
+                CovLogger.d(TAG, "preset: ${CovAgentManager.convoAIParameter}")
                 getConvoaiBodyMap(channel)
             },
             completion = { err, channelName ->
@@ -1244,12 +1230,16 @@ class CovLivingViewModel : ViewModel() {
         conversationalAIAPI = null
     }
 
-    private fun getConvoaiBodyMap(channel: String): Map<String, Any?> {
-        CovLogger.d(TAG, "preset: ${CovAgentManager.convoAIParameter}")
+    internal fun getConvoaiBodyMap(
+        channel: String,
+        graphId: String = CovAgentManager.graphId,
+        preset: String = CovAgentManager.convoAIParameter,
+        isMetricsEnabled: Boolean = CovAgentManager.isMetricsEnabled
+    ): Map<String, Any?> {
         val uidStr = CovAgentManager.uid.toString()
         return mapOf(
-            "graph_id" to CovAgentManager.graphId.takeIf { it.isNotEmpty() },
-            "preset" to CovAgentManager.convoAIParameter.takeIf { it.isNotEmpty() },
+            "graph_id" to graphId.takeIf { it.isNotEmpty() },
+            "preset" to preset.takeIf { it.isNotEmpty() },
             "name" to null,
             "properties" to mapOf(
                 "channel" to channel,
@@ -1283,12 +1273,8 @@ class CovLivingViewModel : ViewModel() {
                 ),
                 "parameters" to mapOf(
                     "data_channel" to "rtm",
-                    "enable_metrics" to CovAgentManager.isMetricsEnabled,
+                    "enable_metrics" to isMetricsEnabled,
                     "enable_error_message" to true,
-                    "audio_scenario" to resolveDebugServerAudioScenario(
-                        isDebug = DebugConfigSettings.isDebug,
-                        serverAudioScenario = DebugConfigSettings.serverAudioScenario
-                    ),
                     "transcript" to mapOf(
                         "enable" to true,
                         "enable_words" to CovAgentManager.isWordRenderMode,
@@ -1300,7 +1286,7 @@ class CovLivingViewModel : ViewModel() {
     }
 
     // open source convoai parameter
-    private fun getConvoaiOpenSourceBodyMap(channel: String): Map<String, Any?> {
+    internal fun getConvoaiOpenSourceBodyMap(channel: String): Map<String, Any?> {
         val uidStr = CovAgentManager.uid.toString()
         // Developers can edit this map template directly when customizing the
         // open-source ConvoAI /join payload. Only the dynamic runtime fields
@@ -1385,19 +1371,7 @@ class CovLivingViewModel : ViewModel() {
             ),
             // Avatar configuration.
             "avatar" to mutableMapOf(
-                "enable" to CovAgentManager.isEnableAvatar,
-                "vendor" to BuildConfig.AVATAR_VENDOR.takeIf { it.isNotEmpty() },
-                "params" to try {
-                    BuildConfig.AVATAR_PARAMS.takeIf { it.isNotEmpty() }?.let {
-                        JSONObject(it).apply {
-                            put("agora_uid", CovAgentManager.avatarUID.toString())
-//                            put("agora_token", ServerConfig.rtcAppId)
-                        }
-                    }
-                } catch (e: Exception) {
-                    CovLogger.e(TAG, "Failed to parse AVATAR params as JSON: ${e.message}")
-                    BuildConfig.AVATAR_PARAMS.takeIf { it.isNotEmpty() }
-                },
+                "enable" to false,
             ),
             // Conversation turn detection settings.
             "turn_detection" to mutableMapOf<String, Any?>(
@@ -1457,10 +1431,6 @@ class CovLivingViewModel : ViewModel() {
                 "data_channel" to "rtm",
                 "enable_metrics" to true,
                 "enable_error_message" to true,
-                "audio_scenario" to resolveDebugServerAudioScenario(
-                    isDebug = DebugConfigSettings.isDebug,
-                    serverAudioScenario = DebugConfigSettings.serverAudioScenario
-                ),
                 "transcript" to mutableMapOf<String, Any?>(
                     "enable" to true,
                     "enable_words" to CovAgentManager.isWordRenderMode,

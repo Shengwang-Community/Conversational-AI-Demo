@@ -1,5 +1,7 @@
 # Spatius mobile rendering (Android and iOS)
 
+This guide applies to non-open-source mode, where business presets can enable digital humans. Open-source mode is voice-only and does not offer an avatar selection.
+
 The mobile clients attach AvatarKitRTC to the existing Agora engine before joining the channel. Agora continues to own microphone capture, audio playback and channel membership. Keep video subscriptions enabled: the avatar publisher's encoded video carries the animation data. Do not bind that video to the ordinary remote video view for Spatius.
 
 ## Backend metadata

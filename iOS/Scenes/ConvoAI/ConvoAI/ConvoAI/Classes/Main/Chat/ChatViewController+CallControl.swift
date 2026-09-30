@@ -161,8 +161,6 @@ extension ChatViewController {
                 try Task.checkCancellation()
                 try await fetchTokenIfNeeded()
                 try Task.checkCancellation()
-                try await fetchOpenSourceAvatarTokenIfNeeded()
-                try Task.checkCancellation()
                 try await prepareSpatiusAvatar()
                 try Task.checkCancellation()
                 guard callPreparationId == attempt, callControlBar.style != .startButton else { return }
