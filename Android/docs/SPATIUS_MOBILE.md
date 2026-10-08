@@ -14,13 +14,25 @@ The client does not add these rendering fields to business REST requests. Standa
 
 App IDs come only from backend metadata in both Debug and Release. Neither client reads a local environment variable or uses a local default. Missing or blank backend App IDs follow the rendering-warning behavior described below.
 
-Both clients use `bg_img_url` as a loading poster, center-cropped directly to fill the display window. `web_bg_img_url` is Web-only and is not read by either mobile client. They keep the same poster from idle through connecting, hide it on the current session's first rendered frame, and restore it on cleanup. A poster containing a person must not remain behind the transparent renderer: it can show through as a second static person. Until a separate, matching background without the avatar is supplied, the renderer uses the application's opaque background color.
+Both clients use `bg_img_url` as a loading poster, center-cropped directly to fill the display window. `web_bg_img_url` is Web-only and is not read by either mobile client. They keep the same poster from idle through connecting, hide it on the current session's first rendered frame, and restore it on cleanup. A poster containing a person must not remain behind the transparent renderer: it can show through as a second static person.
+
+The optional `scene_bg_img_url` is a sibling of `thumb_img_url` and `bg_img_url` in each avatar record. It supplies a pure background without a person. Both clients preload it and reveal it behind the transparent Spatius avatar after the current session's first frame. Missing, null, empty or failed images use the application's opaque background color; they do not reuse the loading poster or stop the call. Selecting another avatar cancels the previous scene image request and clears its image. Cleanup hides the scene background and restores the loading poster. The scene URL is display metadata and is not added to Agent start parameters.
+
+```json
+{
+  "vendor": "spatius",
+  "avatar_id": "selected-avatar-id",
+  "thumb_img_url": "https://example.com/avatar-thumb.png",
+  "bg_img_url": "https://example.com/avatar-poster.png",
+  "scene_bg_img_url": "https://example.com/avatar-scene.png"
+}
+```
 
 ## Adaptive windows
 
 The display window follows its parent bounds, including compact/expanded foldable screens, split windows and the floating preview. The internal 16:9 stage preserves AvatarKit's coordinate system; it does not impose a 16:9 UI. Both clients cover the complete window, using `stageHeight = max(windowHeight, windowWidth * 9 / 16)`, and center the 16:9 stage. Tall windows crop horizontal overflow; windows wider than 16:9 crop vertical overflow. Scaling is uniform, and no height cap leaves an uncovered strip at the top or bottom. The opaque background prevents an underlying preview from leaking through the transparent model. Dimensions are resolved before rendering in Android measurement and iOS layout; window changes do not create a new avatar session. Extreme aspect ratios necessarily crop more of the model and need device-level framing checks.
 
-The loading poster remains outside this stage and receives only one crop. A Spatius Studio background, when integrated, must share the renderer's stage and transform; promotional posters do not establish that alignment. The static poster's composition may still differ from the model's first frame.
+The loading poster remains outside this stage and receives only one crop. The pure scene background is inside the renderer's stage and shares its transform, including window resizing and floating-window moves. The supplied image should match the avatar's Studio scene; promotional posters do not establish that alignment. The static poster's composition may still differ from the model's first frame.
 
 On iOS, switching the poster and stage from SnapKit constraints to manual frames must also restore `translatesAutoresizingMaskIntoConstraints`. Otherwise AvatarKit's internally constrained views can resolve to zero size even while the outer stage has a nonzero frame, preventing the Metal layer from producing a drawable. Restore ordinary constraints when switching back to another avatar vendor.
 
@@ -71,6 +83,6 @@ python3 scripts/validate.py ios --suite spatius-config
 python3 scripts/validate.py ios --suite spatius-layout
 ```
 
-The geometry tests cover phone, tablet, foldable, narrow split and ultrawide viewports, plus Android vertical/horizontal hinges, zero-width folds, multiple hinges and window offsets. These establish layout policy, not GPU output or call continuity.
+The geometry tests cover phone, tablet, foldable, narrow split and ultrawide viewports, plus Android vertical/horizontal hinges, zero-width folds, multiple hinges and window offsets. Metadata tests verify that the optional scene field stays separate from the poster. These establish layout policy and decoding, not GPU output or call continuity. Device checks must cover the first-frame poster/scene transition, missing/failed scene images, avatar changes and hangup/reconnect without a stale background.
 
 Install iOS dependencies with `pod install`, or `pod update AvatarKitRTC AvatarKitAgoraBridge agent-client-toolkit-swift ConvoAI IoT --no-repo-update` when migrating an existing lockfile. Once the domestic Pods are installed, include `ShengwangRtcEngine_iOS` or `ShengWang-Rtm` when changing their versions. Set `SKIP_DEMO_RESOURCE_DOWNLOAD=1` only when the demo resources already exist locally. Build the `Agent-cn` workspace scheme. On real arm64 devices, verify first download and cached reconnect, speaking animation with audio and subtitles, camera/transcript window switching, Agent stop on rendering failure, and hangup while downloading followed by immediate retry. During a call, also fold/unfold, enter split-window mode, resize the window, and move the floating view before shrinking its parent. Check head/shoulder framing, pane containment, and usable hangup. Automated tests do not validate GPU rendering or a live Spatius call.

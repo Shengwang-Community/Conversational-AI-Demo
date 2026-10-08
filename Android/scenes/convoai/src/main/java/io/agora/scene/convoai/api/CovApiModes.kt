@@ -85,6 +85,7 @@ data class CovAvatar(
     val avatar_name: String,
     val thumb_img_url: String,
     val bg_img_url: String,
+    val scene_bg_img_url: String? = null,
 ) : Parcelable
 
 @Parcelize

@@ -55,6 +55,14 @@ extension ChatViewController {
         windowState.showAvatar = true
         remoteAvatarView.useSpatiusStage = isSpatiusAvatar
         let avatar = AppContext.settingManager().avatar
+        let sceneImage = remoteAvatarView.sceneBackgroundImageView
+        sceneImage.kf.cancelDownloadTask()
+        sceneImage.image = nil
+        if isSpatiusAvatar,
+           let scene = avatar?.sceneBgImageUrl?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !scene.isEmpty, let url = URL(string: scene) {
+            sceneImage.kf.setImage(with: url)
+        }
         let background = avatar?.bgImageUrl
         remoteAvatarView.backgroundImageView.kf.cancelDownloadTask()
         if let url = URL(string: background.stringValue()) {

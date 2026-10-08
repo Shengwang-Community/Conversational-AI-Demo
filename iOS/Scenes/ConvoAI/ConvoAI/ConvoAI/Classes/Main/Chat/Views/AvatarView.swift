@@ -38,12 +38,24 @@ class AvatarView: UIView {
         guard useSpatiusStage else { return }
         backgroundImageView.frame = bounds
         renderView.frame = SpatiusStageLayout.frame(in: bounds)
+        sceneBackgroundImageView.frame = renderView.bounds
     }
 
     func setSpatiusRenderReady(_ ready: Bool) {
         // Backend posters contain a person; never keep them behind a transparent live avatar.
         backgroundImageView.isHidden = useSpatiusStage && ready
+        sceneBackgroundImageView.isHidden = !useSpatiusStage || !ready
     }
+
+    // Pure background shares the avatar's stage; the loading poster fills the outer window.
+    lazy var sceneBackgroundImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        imageView.isHidden = true
+        return imageView
+    }()
 
     lazy var backgroundImageView: UIImageView = {
         let imageView = UIImageView()
@@ -71,6 +83,7 @@ class AvatarView: UIView {
     func setupSubviews() {
         addSubview(backgroundImageView)
         addSubview(renderView)
+        renderView.addSubview(sceneBackgroundImageView)
     }
     
     func setupConstraints() {

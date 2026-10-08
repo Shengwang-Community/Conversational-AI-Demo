@@ -14,6 +14,7 @@ struct Avatar: Codable {
     let avatarName: String?
     let thumbImageUrl: String?
     let bgImageUrl: String?
+    var sceneBgImageUrl: String? = nil
     
     enum CodingKeys: String, CodingKey {
         case vendor = "vendor"
@@ -22,6 +23,7 @@ struct Avatar: Codable {
         case avatarName = "avatar_name"
         case thumbImageUrl = "thumb_img_url"
         case bgImageUrl = "bg_img_url"
+        case sceneBgImageUrl = "scene_bg_img_url"
     }
 }
 

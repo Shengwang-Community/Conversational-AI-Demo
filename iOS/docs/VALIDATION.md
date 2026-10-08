@@ -16,7 +16,7 @@ Standalone AINS uses `Agent.xcodeproj` / `Agent-cnLogicTests` and does not requi
 
 The `environment` suite checks host + RTC App ID matching and remembered dynamic selections without an app host.
 
-The `spatius-config` suite checks backend avatar metadata decoding, selection and configuration precedence without Pods or an app host. It does not exercise the renderer or RTC.
+The `spatius-config` suite checks backend avatar metadata decoding (including optional `scene_bg_img_url` independently of the loading poster), selection and configuration precedence without Pods or an app host. It does not exercise the renderer or RTC. Use a device to verify the scene/poster transition, failed-image fallback and background alignment during window changes.
 The `spatius-layout` suite checks shared portrait framing across phone, iPad, split and floating window sizes without Pods. It does not validate UIKit composition, GPU rendering or live resizing during a call.
 The `spatius-load` suite checks that timeout and caller cancellation finish waiting even when model loading ignores cancellation, releases deadline state, and blocks additional SDK loads until the stalled load ends.
 See [Spatius mobile integration](../../Android/docs/SPATIUS_MOBILE.md) for SDK requirements and device checks.

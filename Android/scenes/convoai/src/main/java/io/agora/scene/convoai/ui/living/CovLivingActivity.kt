@@ -425,6 +425,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             viewModel.avatar.collect { avatar ->
                 mBinding?.apply {
                     val localAvatar = CovAgentManager.isSpatiusAvatar
+                    spatiusStage.setSceneBackground(if (localAvatar) avatar?.scene_bg_img_url else null)
                     if (!CovAgentManager.isEnableAvatar || (avatar == null && !localAvatar)) {
                         clAnimationContent.isVisible = true
                         vDragBigWindow.isVisible = false

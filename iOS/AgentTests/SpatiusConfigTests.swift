@@ -1,6 +1,17 @@
 import XCTest
 
 final class SpatiusConfigTests: XCTestCase {
+    func testSceneBackgroundIsOptionalAndSeparateFromPoster() throws {
+        let avatar = try decode(#"{"thumb_img_url":"thumb.png","bg_img_url":"poster.png","scene_bg_img_url":"scene.png"}"#, as: Avatar.self)
+        XCTAssertEqual(avatar.thumbImageUrl, "thumb.png")
+        XCTAssertEqual(avatar.bgImageUrl, "poster.png")
+        XCTAssertEqual(avatar.sceneBgImageUrl, "scene.png")
+        for json in [#"{}"#, #"{"scene_bg_img_url":null}"#] {
+            XCTAssertNil(try decode(json, as: Avatar.self).sceneBgImageUrl)
+        }
+        XCTAssertEqual(try decode(#"{"bg_img_url":"poster.png","scene_bg_img_url":""}"#, as: Avatar.self).sceneBgImageUrl, "")
+    }
+
     private func decode<T: Decodable>(_ json: String, as type: T.Type) throws -> T {
         try JSONDecoder().decode(type, from: Data(json.utf8))
     }
