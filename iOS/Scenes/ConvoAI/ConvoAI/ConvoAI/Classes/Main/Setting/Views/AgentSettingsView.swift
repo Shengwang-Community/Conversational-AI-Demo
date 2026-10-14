@@ -8,6 +8,7 @@
 import UIKit
 import Common
 import Kingfisher
+import SnapKit
 import SVProgressHUD
 
 protocol AgentSettingsViewDelegate: AnyObject {
@@ -15,6 +16,7 @@ protocol AgentSettingsViewDelegate: AnyObject {
     func agentSettingsViewDidTapDigitalHuman(_ view: AgentSettingsView, sender: UIButton)
     func agentSettingsViewDidToggleAiVad(_ view: AgentSettingsView, isOn: Bool)
     func agentSettingsViewDidToggleSmartPause(_ view: AgentSettingsView, isOn: Bool)
+    func agentSettingsViewDidToggleManualEos(_ view: AgentSettingsView, isOn: Bool)
     func agentSettingsViewDidTapTranscriptRender(_ view: AgentSettingsView, sender: UIButton)
     func agentSettingsViewDidTapVoiceprintMode(_ view: AgentSettingsView, sender: UIButton)
 }
@@ -52,18 +54,20 @@ class AgentSettingsView: UIView {
         return view
     }()
     
+    /// Dims the avatar thumbnail while call settings are locked.
+    private lazy var avatarDimView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+        return view
+    }()
+
     private lazy var avatarImageView: UIImageView = {
         let imageView = UIImageView()
-        let state = AppContext.stateManager().agentState
-        if state != .unload,
-           let _ = AppContext.settingManager().avatar {
-            let view = UIView()
-            view.backgroundColor = UIColor.black.withAlphaComponent(0.3)
-            imageView.addSubview(view)
-            view.snp.makeConstraints { make in
-                make.edges.equalTo(UIEdgeInsets.zero)
-            }
+        imageView.addSubview(avatarDimView)
+        avatarDimView.snp.makeConstraints { make in
+            make.edges.equalTo(UIEdgeInsets.zero)
         }
+        avatarDimView.isHidden = !(AppContext.stateManager().agentState != .unload && AppContext.settingManager().avatar != nil)
         return imageView
     }()
     
@@ -134,9 +138,7 @@ class AgentSettingsView: UIView {
         view.tipsButton.addTarget(self, action: #selector(onClickAIVadTips), for: .touchUpInside)
         view.tipsButton.isHidden = false
         
-        let settingManager = AppContext.settingManager()
-        view.setEnable(canEditInterruptFeatures(settingManager: settingManager))
-        view.setOn(settingManager.aiVad)
+        // Display value and editability are set by syncInterruptFeatureAvailability().
         return view
     }()
 
@@ -147,12 +149,56 @@ class AgentSettingsView: UIView {
         view.tipsButton.setImage(UIImage.ag_named("ic_aivad_tips_icon"), for: .normal)
         view.tipsButton.addTarget(self, action: #selector(onClickSmartPauseTips), for: .touchUpInside)
         view.tipsButton.isHidden = false
-
-        let settingManager = AppContext.settingManager()
-        view.setEnable(canEditInterruptFeatures(settingManager: settingManager) && settingManager.aiVad)
-        view.setOn(settingManager.smartPause)
+        // Display value and editability are set by syncInterruptFeatureAvailability().
         return view
     }()
+
+    private lazy var manualEosItem: AgentSettingSwitchItemView = {
+        let view = AgentSettingSwitchItemView(frame: .zero)
+        view.titleLabel.text = ResourceManager.localizedString("settings.manual_eos")
+        view.switcher.addTarget(self, action: #selector(onClickManualEos(_:)), for: .valueChanged)
+        view.tipsButton.setImage(UIImage.ag_named("ic_aivad_tips_icon"), for: .normal)
+        view.tipsButton.addTarget(self, action: #selector(onClickManualEosTips), for: .touchUpInside)
+        view.tipsButton.isHidden = false
+        // Display value and editability are set by syncInterruptFeatureAvailability().
+        return view
+    }()
+
+    /// Always visible below the switch while Walkie-Talkie Mode masks AI VAD and smart pause.
+    private lazy var manualEosHintLabel: UILabel = {
+        let label = UILabel()
+        label.text = ResourceManager.localizedString("settings.manual_eos.active_hint")
+        label.font = UIFont.systemFont(ofSize: 12)
+        label.textColor = UIColor.themColor(named: "ai_icontext3")
+        label.numberOfLines = 0
+        return label
+    }()
+
+    private lazy var manualEosHintView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.themColor(named: "ai_block2")
+        view.clipsToBounds = true
+        view.isHidden = true
+        let line = UIView()
+        line.backgroundColor = UIColor.themColor(named: "ai_line1")
+        view.addSubview(manualEosHintLabel)
+        view.addSubview(line)
+        manualEosHintLabel.snp.makeConstraints { make in
+            make.top.equalToSuperview()
+            make.left.equalTo(16)
+            make.right.equalTo(-16)
+            // Breakable so the collapsed (height 0) state does not conflict with the label.
+            make.bottom.equalToSuperview().offset(-12).priority(.high)
+        }
+        line.snp.makeConstraints { make in
+            make.left.equalTo(16)
+            make.right.equalToSuperview()
+            make.height.equalTo(1)
+            make.bottom.equalToSuperview()
+        }
+        return view
+    }()
+    private var manualEosHintCollapsed: Constraint?
     
     private lazy var transcriptRenderItem: AgentSettingTableItemView = {
         let view = AgentSettingTableItemView(frame: .zero)
@@ -215,7 +261,11 @@ class AgentSettingsView: UIView {
         backgroundColor = .clear
         
         basicSettingItems = [languageItem]
-        advancedSettingItems = [aiVadItem, smartPauseItem, transcriptRenderItem, voiceprintModeItem]
+        advancedSettingItems = [aiVadItem, smartPauseItem]
+        if !AppContext.shared.isOpenSource {
+            advancedSettingItems.append(contentsOf: [manualEosItem, manualEosHintView])
+        }
+        advancedSettingItems.append(contentsOf: [transcriptRenderItem, voiceprintModeItem])
 
         addSubview(basicSettingView)
         if showsDigitalHumanSetting {
@@ -286,7 +336,12 @@ class AgentSettingsView: UIView {
         for (index, item) in advancedSettingItems.enumerated() {
             item.snp.makeConstraints { make in
                 make.left.right.equalToSuperview()
-                make.height.equalTo(62)
+                if item === manualEosHintView {
+                    // Sized by its label while shown; collapsed while hidden.
+                    manualEosHintCollapsed = make.height.equalTo(0).constraint
+                } else {
+                    make.height.equalTo(62)
+                }
                 
                 if index == 0 {
                     make.top.equalTo(0)
@@ -308,8 +363,6 @@ class AgentSettingsView: UIView {
     
     func updateLanguage(_ language: SupportLanguage?) {
         languageItem.detailLabel.text = language?.languageName ?? ""
-        aiVadItem.setOn(AppContext.settingManager().aiVad)
-        smartPauseItem.setOn(AppContext.settingManager().smartPause)
         syncInterruptFeatureAvailability()
     }
     
@@ -318,16 +371,16 @@ class AgentSettingsView: UIView {
     }
     
     func updateAiVadState(_ state: Bool) {
-        aiVadItem.setOn(state)
-        let canEnableSmartPause = canEditInterruptFeatures(settingManager: AppContext.settingManager()) && state
-        smartPauseItem.setEnable(canEnableSmartPause)
-        if !state {
-            smartPauseItem.setOn(false)
-        }
+        syncInterruptFeatureAvailability()
     }
 
     func updateSmartPauseState(_ state: Bool) {
-        smartPauseItem.setOn(state)
+        syncInterruptFeatureAvailability()
+    }
+
+    /// Toggling Walkie-Talkie Mode refreshes the masked values, editability and hint immediately.
+    func updateManualEosState(_ state: Bool) {
+        syncInterruptFeatureAvailability()
     }
     
     func updateAvatar(_ avatar: Avatar?) {
@@ -346,9 +399,20 @@ class AgentSettingsView: UIView {
     }
     
     func updateAgentState(_ agentState: ConnectionStatus) {
+        syncCallLock(agentState)
         syncInterruptFeatureAvailability()
     }
     
+    /// Call settings are editable only while no call is starting or running (Android `updatePageEnable()`).
+    private func syncCallLock(_ agentState: ConnectionStatus) {
+        let editable = agentState == .unload
+        let settingManager = AppContext.settingManager()
+        languageItem.setEnable(editable)
+        digitalHumanItem.setEnable(editable)
+        transcriptRenderItem.setEnable(editable)
+        voiceprintModeItem.setEnable(editable && (settingManager.preset.map { $0.supportSal ?? true } ?? false))
+        avatarDimView.isHidden = editable || settingManager.avatar == nil
+    }
     func updateVoiceprintMode(_ mode: VoiceprintMode) {
         voiceprintModeItem.detailLabel.text = mode.title
     }
@@ -382,6 +446,14 @@ class AgentSettingsView: UIView {
         SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Settings.smartPauseTips)
     }
 
+    @objc private func onClickManualEosTips() {
+        SVProgressHUD.showInfo(withStatus: ResourceManager.localizedString("settings.manual_eos.tips"))
+    }
+
+    @objc private func onClickManualEos(_ sender: UISwitch) {
+        delegate?.agentSettingsViewDidToggleManualEos(self, isOn: sender.isOn)
+    }
+
     @objc private func onClickVoiceprintMode(_ sender: UIButton) {
         delegate?.agentSettingsViewDidTapVoiceprintMode(self, sender: sender)
     }
@@ -410,13 +482,28 @@ class AgentSettingsView: UIView {
         return language.aivadSupported.boolValue()
     }
 
+    /// Single refresh point for AI VAD, smart pause and Walkie-Talkie Mode. The switch masks the two
+    /// features (shown off and locked) without changing their stored values.
     private func syncInterruptFeatureAvailability() {
         let settingManager = AppContext.settingManager()
         let isEnabled = canEditInterruptFeatures(settingManager: settingManager)
-        aiVadItem.setEnable(isEnabled)
-        smartPauseItem.setEnable(isEnabled && settingManager.aiVad)
-        aiVadItem.setOn(settingManager.aiVad)
-        smartPauseItem.setOn(settingManager.smartPause)
+        let isManualEosActive = settingManager.isManualEosActive
+        aiVadItem.setEnable(isEnabled && !isManualEosActive)
+        smartPauseItem.setEnable(isEnabled && settingManager.aiVad && !isManualEosActive)
+        aiVadItem.setOn(settingManager.effectiveAiVad)
+        smartPauseItem.setOn(settingManager.smartPause && !isManualEosActive)
+        if !AppContext.shared.isOpenSource {
+            manualEosItem.setOn(settingManager.manualEos)
+            manualEosItem.setEnable(canEditManualEos())
+            manualEosHintView.isHidden = !isManualEosActive
+            manualEosHintCollapsed?.isActive = !isManualEosActive
+            manualEosItem.bottomLine.isHidden = isManualEosActive
+        }
+    }
+
+    private func canEditManualEos() -> Bool {
+        let settingManager = AppContext.settingManager()
+        return settingManager.isManualEosAdjustable && AppContext.stateManager().agentState == .unload
     }
 
 }

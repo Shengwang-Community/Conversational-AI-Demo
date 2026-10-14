@@ -122,9 +122,12 @@ object CovAgentApiManager {
 
             if (!CovAgentManager.isOpenSource) {
                 val appFeature = JSONObject()
-                appFeature.put("enable_aivad", CovAgentManager.enableAiVad)
-                appFeature.put("pause_state_enabled", CovAgentManager.enableAiPause)
+                // Walkie-Talkie Mode masks AI VAD and Intelligent Pause and adds the manual turn mode.
+                val manualEos = CovAgentManager.isManualEosActive
+                appFeature.put("enable_aivad", CovAgentManager.enableAiVad && !manualEos)
+                appFeature.put("pause_state_enabled", CovAgentManager.enableAiPause && !manualEos)
                 appFeature.put("enable_local_bvc", CovAgentManager.enableBHVS)
+                if (manualEos) appFeature.put("manual_speech_control_mode", "manual_sos_and_eos")
                 postBody.put("app_feature", appFeature)
             }
 

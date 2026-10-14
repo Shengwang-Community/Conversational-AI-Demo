@@ -73,10 +73,10 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     public func onAgentVoiceprintStateChanged(agentUserId: String, event: VoiceprintStateChangeEvent) {
         if event.status == .registerSuccess {
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.voiceprintLockToast)
-            activeFuncsView.setState(voiceprint: true, aivad: AppContext.settingManager().aiVad)
+            activeFuncsView.setState(voiceprint: true, aivad: AppContext.settingManager().effectiveAiVad)
             AppContext.stateManager().updateVoiceprint(true)
         } else {
-            activeFuncsView.setState(voiceprint: false, aivad: AppContext.settingManager().aiVad)
+            activeFuncsView.setState(voiceprint: false, aivad: AppContext.settingManager().effectiveAiVad)
             AppContext.stateManager().updateVoiceprint(false)
         }
     }
@@ -162,6 +162,21 @@ extension ChatViewController: ConversationalAIAPIEventHandler {
     
     public func onAgentError(agentUserId: String, error: ModuleError) {
         addLog("<<< [onAgentError] error: \(error)")
+    }
+
+    // Toolkit delivers these events on the main thread; the controller logs whitelisted fields only.
+    public func onUserManualSosEvent(agentUserId: String, event: UserManualSosEvent) {
+        let payload = event.payload
+        pushToTalk.onUserManualSosResult(requestId: payload.requestId, success: payload.success, turnId: payload.turnId?.intValue)
+    }
+
+    public func onUserManualEosEvent(agentUserId: String, event: UserManualEosEvent) {
+        let payload = event.payload
+        pushToTalk.onUserManualEosResult(requestId: payload.requestId, success: payload.success, turnId: payload.turnId?.intValue)
+    }
+
+    public func onAgentManualEosEvent(agentUserId: String, event: AgentManualEosEvent) {
+        pushToTalk.onAgentManualEos(turnId: event.payload.turnId, reason: event.payload.reason)
     }
     
     public func onTranscriptUpdated(agentUserId: String, transcript: Transcript) {

@@ -32,3 +32,9 @@ See [Spatius mobile integration](../../Android/docs/SPATIUS_MOBILE.md) for SDK r
 `scripts/workflow.json` maps suites to shared schemes, targets and test classes. Update it with test wiring changes. `python3 scripts/check_workflow.py` checks that mapping. The scripts cover the listed suites; select or add other checks when the task needs them.
 
 Legacy helpers under `iOS/scripts/` forward to the root runner. `ios_test_without_building.sh` now runs current-source incremental tests; `ios_feature_validation.sh --list` lists available suites. These local helpers do not change Jenkins `cicd/`.
+
+## Manual turn controller tests
+
+`python3 scripts/test_manual_eos_ios.py` runs `PushToTalkControllerTests` on the native Swift host, without Pods, an app host or a simulator. It copies the current sources into a temporary Swift package, prints the test log and removes the package afterwards (`--keep` keeps it for inspection). A zero-test result fails the runner.
+
+The tests use a controlled clock and publisher. They cover press, hold, release and the 200 ms tail, the short-hold hint, SOS failure, SOS/EOS ordering, `AGENT_MANUAL_EOS` turn ownership, local reset and forced release. The same source is wired into the standalone Xcode target as `manual_eos`. Settings, call-page wiring, microphone audio and server behavior are not covered; check them on a physical device.

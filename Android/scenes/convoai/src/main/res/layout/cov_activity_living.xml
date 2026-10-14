@@ -164,7 +164,27 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="12dp"
+        app:layout_goneMarginBottom="24dp"
+        app:layout_constraintBottom_toTopOf="@+id/btn_hold_to_talk"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_hold_to_talk"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/selector_gradient_button_r99"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:text="@string/cov_manual_eos_hold"
+        android:textAllCaps="false"
+        android:textColor="@color/ai_brand_white10"
+        android:visibility="gone"
+        app:backgroundTint="@null"
         app:layout_constraintBottom_toTopOf="@+id/cl_bottom_logged"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

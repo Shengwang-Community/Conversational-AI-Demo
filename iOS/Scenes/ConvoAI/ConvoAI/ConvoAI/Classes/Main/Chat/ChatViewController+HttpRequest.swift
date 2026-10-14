@@ -53,6 +53,16 @@ extension ChatViewController {
         if AppContext.settingManager().voiceprintMode != .off {
             local_bvc = false
         }
+        // Walkie-Talkie Mode masks AI VAD and smart pause and adds the manual turn mode.
+        let manualEos = AppContext.settingManager().isManualEosActive
+        var appFeature: [String: Any] = [
+            "enable_local_bvc": local_bvc,
+            "enable_aivad": AppContext.settingManager().aiVad && !manualEos,
+            "pause_state_enabled": AppContext.settingManager().smartPause && !manualEos
+        ]
+        if manualEos {
+            appFeature["manual_speech_control_mode"] = "manual_sos_and_eos"
+        }
         let parameters: [String: Any?] = [
             "app_id": AppContext.shared.appId,
             "preset_name": AppContext.settingManager().preset?.name,
@@ -60,11 +70,7 @@ extension ChatViewController {
             "basic_auth_username": nil,
             "basic_auth_password": nil,
             "preset_type": AppContext.settingManager().preset?.presetType,
-            "app_feature": [
-                "enable_local_bvc": local_bvc,
-                "enable_aivad": AppContext.settingManager().aiVad,
-                "pause_state_enabled": AppContext.settingManager().smartPause
-            ],
+            "app_feature": appFeature,
             "convoai_body": [
                 "graph_id": DeveloperConfig.shared.graphId,
                 "name": nil,
@@ -300,9 +306,15 @@ extension ChatViewController {
         agentIsJoined = false
         avatarIsJoined = false
         
-        convoAIAPI.subscribeMessage(channelName: channelName) { [weak self] err in
-            if let error = err {
-                self?.addLog("[subscribeMessage] <<<< error: \(error.message)")
+        let subscribedChannel = channelName
+        convoAIAPI.subscribeMessage(channelName: subscribedChannel) { [weak self] err in
+            guard let error = err else { return }
+            self?.addLog("[subscribeMessage] <<<< error: \(error.message)")
+            DispatchQueue.main.async {
+                guard let self, self.channelName == subscribedChannel else { return }
+                self.stopLoading()
+                self.stopAgent(pttCause: "rtmFailed")
+                SVProgressHUD.showError(withStatus: ResourceManager.L10n.Error.joinError)
             }
         }
         
@@ -350,7 +362,7 @@ extension ChatViewController {
             }
             
             self.stopLoading()
-            self.stopAgent()
+            self.stopAgent(pttCause: "startFailed")
             
             addLog("start agent failed : \(error.message)")
         }
@@ -382,23 +394,56 @@ extension ChatViewController {
         }
     }
     
-    internal func stopAgent() {
-        addLog("[Call] stopAgent()")
+    /// `pttCause` is logged as the push-to-talk reset cause.
+    internal func stopAgent(pttCause: String) {
+        addLog("[Call] stopAgent() cause=\(pttCause)")
+        pushToTalk.endSession(pttCause)
+        isManualCall = false
+        agentStateView.setSilentText(nil)
+        pushToTalkButton.isHidden = true
         uploadLatestLatencyReportIfNeeded()
         rtmManager.logout(completion: nil)
         convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
             
         }
         stopAgentRequest()
+        // One stop request per agent; closing the page from idle sends none.
+        remoteAgentId = ""
         leaveChannel()
+        rtcManager.muteLocalAudio(mute: false)
         stopRenderLocalVideoStream()
         resetUIDisplay()
         AppContext.stateManager().resetToDefaults()
+        AppContext.stateManager().updateAgentState(.unload)
+        updatePushToTalkButton()
     }
     
     internal func handleStartError() {
         stopLoading()
-        stopAgent()
+        stopAgent(pttCause: "startFailed")
         SVProgressHUD.showError(withStatus: ResourceManager.L10n.Error.joinError)
+    }
+
+    /// Mid-call RTM link failure ends the call like Android (`RTM_FAILED`); the next call logs in again with a new token.
+    internal func handleRtmConnectionFailure() {
+        token = ""
+        guard AppContext.stateManager().agentState != .unload else { return }
+        stopLoading()
+        stopAgent(pttCause: "rtmFailed")
+        SVProgressHUD.showError(withStatus: ResourceManager.L10n.Error.networkDisconnected)
+    }
+
+    /// Token renewal failure ends the call like Android (`TOKEN_FAILED`).
+    internal func handleTokenRenewalFailure() {
+        guard AppContext.stateManager().agentState != .unload else { return }
+        stopLoading()
+        stopAgent(pttCause: "tokenFailed")
+        SVProgressHUD.showError(withStatus: ResourceManager.localizedString("error.token.renew.failed"))
+    }
+
+    /// RTM rejected the renewed token: like Android, the call continues and only a hint is shown.
+    internal func handleRtmTokenRenewError() {
+        token = ""
+        SVProgressHUD.showError(withStatus: ResourceManager.localizedString("error.token.renew.failed"))
     }
 }

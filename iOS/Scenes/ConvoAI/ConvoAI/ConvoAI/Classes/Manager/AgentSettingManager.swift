@@ -65,6 +65,7 @@ class AgentPreference {
     var avatar: Avatar?
     var aiVad = false
     var smartPause = false
+    var manualEos = false
     var bhvs = true
     var latencyMetricsVisible = false
     var isCustomPreset = false
@@ -79,6 +80,7 @@ protocol AgentSettingDelegate: AnyObject {
     func settingManager(_ manager: AgentSettingManager, avatarDidUpdated avatar: Avatar?)
     func settingManager(_ manager: AgentSettingManager, aiVadStateDidUpdated state: Bool)
     func settingManager(_ manager: AgentSettingManager, smartPauseStateDidUpdated state: Bool)
+    func settingManager(_ manager: AgentSettingManager, manualEosStateDidUpdated state: Bool)
     func settingManager(_ manager: AgentSettingManager, latencyMetricsVisibilityDidUpdated state: Bool)
     func settingManager(_ manager: AgentSettingManager, transcriptModeDidUpdated mode: TranscriptDisplayMode)
     func settingManager(_ manager: AgentSettingManager, voiceprintModeDidUpdated mode: VoiceprintMode)
@@ -162,6 +164,26 @@ class AgentSettingManager {
         get { preference.smartPause }
         set { updateSmartPauseState(newValue) }
     }
+
+    /// Walkie-Talkie Mode switch.
+    var manualEos: Bool {
+        get { preference.manualEos }
+        set { updateManualEosState(newValue) }
+    }
+
+    var isManualEosAdjustable: Bool {
+        !AppContext.shared.isOpenSource && preference.preset != nil && preference.preset?.isIndependent != true
+    }
+
+    /// Whether the next call is a manual call. Walkie-Talkie Mode then masks AI VAD and smart pause.
+    var isManualEosActive: Bool {
+        isManualEosAdjustable && preference.manualEos
+    }
+
+    /// AI VAD value shown in the UI: false while Walkie-Talkie Mode is on, otherwise the stored value.
+    var effectiveAiVad: Bool {
+        preference.aiVad && !isManualEosActive
+    }
      
     /// Voice lock feature switch
     var bhvs: Bool {
@@ -199,6 +221,10 @@ class AgentSettingManager {
      
     /// Update agent preset
     func updatePreset(_ preset: AgentPreset?) {
+        // Reset Walkie-Talkie Mode before the new language defaults are applied.
+        if preset?.name == nil || preset?.name != preference.preset?.name || preset?.isIndependent == true {
+            preference.manualEos = false
+        }
         preference.preset = preset
         preference.isCustomPreset = preset?.isCustom == true
         updateTemporaryRtcConfig(for: preset)
@@ -246,6 +272,7 @@ class AgentSettingManager {
         notifyDelegates { $0.settingManager(self, presetDidUpdated: preset) }
         notifyDelegates { $0.settingManager(self, aiVadStateDidUpdated: self.preference.aiVad) }
         notifyDelegates { $0.settingManager(self, smartPauseStateDidUpdated: self.preference.smartPause) }
+        notifyDelegates { $0.settingManager(self, manualEosStateDidUpdated: self.preference.manualEos) }
     }
      
     /// Update language setting
@@ -286,6 +313,13 @@ class AgentSettingManager {
         let nextState = preference.aiVad ? state : false
         preference.smartPause = nextState
         notifyDelegates { $0.settingManager(self, smartPauseStateDidUpdated: nextState) }
+    }
+
+    /// Update the Walkie-Talkie Mode switch. It only masks AI VAD and smart pause; their stored values stay unchanged.
+    func updateManualEosState(_ state: Bool) {
+        let nextState = isManualEosAdjustable ? state : false
+        preference.manualEos = nextState
+        notifyDelegates { $0.settingManager(self, manualEosStateDidUpdated: nextState) }
     }
      
     /// Update voice lock function state
@@ -355,6 +389,7 @@ extension AgentSettingDelegate {
     func settingManager(_ manager: AgentSettingManager, avatarDidUpdated avatar: Avatar?) {}
     func settingManager(_ manager: AgentSettingManager, aiVadStateDidUpdated state: Bool) {}
     func settingManager(_ manager: AgentSettingManager, smartPauseStateDidUpdated state: Bool) {}
+    func settingManager(_ manager: AgentSettingManager, manualEosStateDidUpdated state: Bool) {}
     func settingManager(_ manager: AgentSettingManager, latencyMetricsVisibilityDidUpdated state: Bool) {}
     func settingManager(_ manager: AgentSettingManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {}
     func settingManager(_ manager: AgentSettingManager, voiceprintModeDidUpdated mode: VoiceprintMode) {}

@@ -130,6 +130,27 @@ implementation libs.agora.agent.client.toolkit
 
 升级时修改 `gradle/libs.versions.toml` 中的版本并同步验证；无需配置本地 Gradle 子项目、`includeBuild` 或手动复制 AAR。
 
+### 2.4 对讲机模式（按住说话）
+
+业务模式下的标准预设和自定义预设可以在智能体设置中开启 **对讲机模式**，开关位于“智能暂停”下方，默认关闭，切换预设时恢复为关闭。独立预设和开源模式不提供该开关。从发起通话（包括 token 与 RTM 准备阶段）起到通话结束，智能体设置全部锁定。
+
+开关开启时，“优雅打断”和“智能暂停”显示为关闭并锁定，开关下方提示“对讲机模式下，优雅打断和智能暂停不可用。”。两项已保存的值不变，关闭开关后重新显示。对讲机模式的启动请求在 `app_feature` 中发送 `manual_speech_control_mode=manual_sos_and_eos`，并把 `enable_aivad`、`pause_state_enabled` 写为 `false`；其他通话的 `app_feature` 与之前相同。
+
+通话连接后，按住静音按钮上方的“按住说话”说话：按下时发布 Toolkit `manualSOS`，松开后保留 200 ms 尾音，再发布 `manualEOS`。按住不足 1 秒会提示“说话时间太短”。静音按钮始终优先。切到后台、窗口失去焦点、弹出浮层、触摸取消和 RTC 重连都会松开按钮，不提示时间太短。智能体结束一轮（`AGENT_MANUAL_EOS`）时，只结束当前这一轮。
+
+启动失败时，如已加入频道则离开，并显示提示；准备阶段挂断会取消启动。智能体离开、RTM 连接失败或取不到续期 token 时，通话结束并提示；关闭通话页时通话结束。RTM 拒绝续期 token 时只提示，通话继续。
+
+深色模式等配置变化会保留通话。Spatius 数字人通话例外：页面重建时通话结束，并提示“数字人加载失败，通话已结束，请重试。”。
+
+在 `Android` 目录下运行单元测试：
+
+```bash
+./gradlew :scenes:convoai:testDebugUnitTest --tests 'io.agora.scene.convoai.ui.living.ptt.*' \
+  --tests 'io.agora.scene.convoai.constant.CovAgentManagerTest'
+```
+
+然后在真机上开启开关、发起通话，按住按钮说话，松开发送。音频、尾音时长和服务端行为只能在真机上验证。
+
 ## 📚 三、相关资源
 
 - 📖 查看我们的 [对话式 AI 引擎文档](https://doc.shengwang.cn/doc/convoai/restful/landing-page) 了解更多详情

@@ -86,6 +86,16 @@
     <string name="cov_agent_thinking">说话或点击打断</string>
     <string name="cov_agent_speaking">说话或点击打断</string>
     <string name="cov_user_muted">已静音</string>
+    <string name="cov_setting_manual_eos">对讲机模式</string>
+    <string name="cov_setting_manual_eos_desc">开启后，按住说话按钮发言，松开后发送本轮语音；普通模式会自动识别说话结束并支持优雅打断。</string>
+    <string name="cov_setting_manual_eos_active_hint">对讲机模式下，优雅打断和智能暂停不可用。</string>
+    <string name="cov_manual_eos_idle_hint">按住下方按钮说话</string>
+    <string name="cov_manual_eos_hold">按住说话</string>
+    <string name="cov_manual_eos_release">松开发送</string>
+    <string name="cov_manual_eos_unmute_first">请先打开麦克风。</string>
+    <string name="cov_manual_eos_sos_failed">开始说话失败，请重试。</string>
+    <string name="cov_manual_eos_too_short">说话时间太短。</string>
+    <string name="cov_manual_eos_limit_reached">已达到本轮说话时长上限。</string>
 
     <string-array name="cov_setting_microphone_array">
         <item>内置麦克风</item>

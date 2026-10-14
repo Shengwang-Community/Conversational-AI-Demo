@@ -36,6 +36,8 @@
 		F7D294BF2D6C6F9C00583343 /* Agora_AiLogo.png in Resources */ = {isa = PBXBuildFile; fileRef = F7D294BE2D6C6F9C00583343 /* Agora_AiLogo.png */; };
 		F7E1531A2D71E479000C528A /* ball_video_rotating.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = F7E153182D71E479000C528A /* ball_video_rotating.mp4 */; };
 		F7E1531C2D71E479000C528A /* ball_video_start.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = F7E153192D71E479000C528A /* ball_video_start.mp4 */; };
+		F0E050032E10000100E05001 /* PushToTalkController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E050042E10000100E05001 /* PushToTalkController.swift */; };
+		F0E050052E10000100E05001 /* PushToTalkControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E050062E10000100E05001 /* PushToTalkControllerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +98,8 @@
 		F7E153182D71E479000C528A /* ball_video_rotating.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = ball_video_rotating.mp4; sourceTree = "<group>"; };
 		F7E153192D71E479000C528A /* ball_video_start.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = ball_video_start.mp4; sourceTree = "<group>"; };
 		FFC83CF1A80017C399C30BA7 /* Pods-Agent-oversea.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Agent-oversea.release.xcconfig"; path = "Target Support Files/Pods-Agent-oversea/Pods-Agent-oversea.release.xcconfig"; sourceTree = "<group>"; };
+		F0E050042E10000100E05001 /* PushToTalkController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PushToTalkController.swift; path = Scenes/ConvoAI/ConvoAI/ConvoAI/Classes/Main/Chat/PushToTalkController.swift; sourceTree = SOURCE_ROOT; };
+		F0E050062E10000100E05001 /* PushToTalkControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushToTalkControllerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -215,6 +219,8 @@
 		C0AA00212E10000100A10001 /* AgentTests */ = {
 			isa = PBXGroup;
 			children = (
+				F0E050042E10000100E05001 /* PushToTalkController.swift */,
+				F0E050062E10000100E05001 /* PushToTalkControllerTests.swift */,
 				C0AA00332E12000100A10001 /* RTCManagerAinsTests.swift */,
 				C0C100042E10000100B10001 /* OnDeviceAins.swift */,
 				E0A100062E10000100F10001 /* SpatiusConfigTests.swift */,
@@ -507,6 +513,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0C100032E10000100B10001 /* OnDeviceAins.swift in Sources */,
+				F0E050032E10000100E05001 /* PushToTalkController.swift in Sources */,
+				F0E050052E10000100E05001 /* PushToTalkControllerTests.swift in Sources */,
 				E0A100052E10000100F10001 /* SpatiusConfigTests.swift in Sources */,
 				E0A100072E10000100F10001 /* SpatiusStageLayout.swift in Sources */,
 				E0A100092E10000100F10001 /* SpatiusStageLayoutTests.swift in Sources */,

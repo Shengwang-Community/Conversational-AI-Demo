@@ -135,6 +135,17 @@
             "source": "AgentTests/SpatiusLoadDeadlineTests.swift"
           }
         ]
+      },
+      "manual_eos": {
+        "container": "Agent.xcodeproj",
+        "scheme": "Agent-cnLogicTests",
+        "target": "Agent-cnLogicTests",
+        "tests": [
+          {
+            "class": "PushToTalkControllerTests",
+            "source": "AgentTests/PushToTalkControllerTests.swift"
+          }
+        ]
       }
     },
     "integration_scheme": "Agent-cnIntegrationTests"

@@ -34,6 +34,7 @@ import io.agora.scene.common.util.dp
 import io.agora.scene.common.util.getStatusBarHeight
 import io.agora.scene.common.util.toast.ToastUtil
 import io.agora.scene.convoai.avatar.SpatiusAvatarSession
+import io.agora.scene.convoai.avatar.SpatiusRenderFailure
 import io.agora.scene.convoai.avatar.SpatiusAvatarStage
 import io.agora.scene.convoai.CovLogger
 import io.agora.scene.convoai.animation.CovBallAnim
@@ -58,6 +59,11 @@ import io.agora.scene.convoai.ui.photo.CovImagePreviewDialog
 import io.agora.scene.convoai.ui.photo.PhotoNavigationActivity
 import io.agora.scene.convoai.ui.living.settings.CovAgentInfoViewModel
 import io.agora.scene.convoai.ui.living.messages.CovMessageListView
+import io.agora.scene.convoai.ui.living.ptt.PttPhase
+import io.agora.scene.convoai.ui.living.ptt.PttReleaseCause
+import io.agora.scene.convoai.ui.living.ptt.PttResetCause
+import android.view.MotionEvent
+import android.view.ViewConfiguration
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -82,6 +88,8 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
     private var isSelfSubRender = false
     private var selfRenderController: SelfSubRenderController? = null
     private var hasShownTitleAnim = false
+    private var pttPointerId = MotionEvent.INVALID_POINTER_ID
+    private val pttTouchSlop: Int by lazy { ViewConfiguration.get(this).scaledTouchSlop }
 
     override fun getViewBinding(): CovActivityLivingBinding = CovActivityLivingBinding.inflate(layoutInflater)
 
@@ -116,19 +124,42 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
     }
 
     override fun onDestroy() {
-        release()
+        // A real close (finish() or a system destroy) ends the call; a configuration change such as dark mode keeps it.
+        if (!isChangingConfigurations) {
+            release()
+        } else {
+            // The Spatius renderer belongs to this page, and re-attaching it mid-call would reset the RTC audio
+            // scenario, so a Spatius avatar call ends here (brand exception). onSpatiusFailure ignores an idle page.
+            viewModel.avatarSession?.close()
+            if (CovAgentManager.isSpatiusAvatar) {
+                CovLogger.w(TAG, "Page recreated during a Spatius avatar call; ending the call")
+                viewModel.onSpatiusFailure(SpatiusRenderFailure.LOAD_FAILED)
+            }
+        }
         super.onDestroy()
         CovLogger.d(TAG, "activity onDestroy")
     }
 
     override fun onPause() {
         super.onPause()
+        pttPointerId = MotionEvent.INVALID_POINTER_ID
+        viewModel.cancelPushToTalk(PttReleaseCause.PAUSE)
         startRecordingService()
     }
 
     override fun onResume() {
         super.onResume()
         stopRecordingService()
+        updatePttButton()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        // A system overlay (notification shade, dialog) can take focus without pausing the Activity.
+        if (!hasFocus) {
+            pttPointerId = MotionEvent.INVALID_POINTER_ID
+            viewModel.cancelPushToTalk(PttReleaseCause.OVERLAY)
+        }
     }
 
     private fun persistentToast(visible: Boolean, text: String) {
@@ -163,9 +194,42 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
 
             clBottomLogged.setOnEndCallClickListener(object : OnFastClickListener() {
                 override fun onClickJacking(view: View) {
-                    onClickEndCall()
+                    onClickEndCall(PttResetCause.HANG_UP)
                 }
             })
+            btnHoldToTalk.setOnTouchListener { button, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        pttPointerId = event.getPointerId(0)
+                        viewModel.pressPushToTalk()
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        val index = event.findPointerIndex(pttPointerId)
+                        if (index >= 0) {
+                            val x = event.getX(index)
+                            val y = event.getY(index)
+                            val slop = pttTouchSlop
+                            // Dragging out of the button (beyond the touch slop) is a normal release.
+                            if (x < -slop || y < -slop || x >= button.width + slop || y >= button.height + slop) {
+                                pttPointerId = MotionEvent.INVALID_POINTER_ID
+                                viewModel.releasePushToTalk()
+                            }
+                        }
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                        if (event.getPointerId(event.actionIndex) == pttPointerId) {
+                            viewModel.releasePushToTalk()
+                            pttPointerId = MotionEvent.INVALID_POINTER_ID
+                        }
+                        if (event.actionMasked == MotionEvent.ACTION_UP) button.performClick()
+                    }
+                    MotionEvent.ACTION_CANCEL -> {
+                        pttPointerId = MotionEvent.INVALID_POINTER_ID
+                        viewModel.cancelPushToTalk()
+                    }
+                }
+                true
+            }
             clBottomLogged.setOnMicClickListener {
                 val currentAudioMuted = viewModel.isLocalAudioMuted.value
                 checkMicrophonePermission(
@@ -238,6 +302,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                         ToastUtil.show(io.agora.scene.convoai.R.string.cov_vision_connect_and_try_again, Toast.LENGTH_LONG)
                         return@setOnImageContainerClickListener
                     }
+                    viewModel.cancelPushToTalk(PttReleaseCause.OVERLAY)
                     PhotoNavigationActivity.Companion.start(this@CovLivingActivity) {
                         CovLogger.d(TAG, "select image callback:$it")
                         it?.file?.let { file ->
@@ -330,7 +395,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                                 CovAgentManager.isSessionLimitMode,
                                 CovAgentManager.roomExpireTime,
                                 onTimerEnd = {
-                                    onClickEndCall()
+                                    onClickEndCall(PttResetCause.SESSION_LIMIT)
                                     showRoomEndDialog()
                                 }
                             )
@@ -351,6 +416,29 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             viewModel.isLocalAudioMuted.collect { isMuted ->
                 updateMicrophoneView(isMuted)
                 mBinding?.agentStateView?.setMuted(isMuted)
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.isManualCall.collect { manual ->
+                // A manual call replaces the idle "you can start talking" hint.
+                mBinding?.agentStateView?.configureStateTexts(
+                    silent = getString(
+                        if (manual) io.agora.scene.convoai.R.string.cov_manual_eos_idle_hint
+                        else io.agora.scene.convoai.R.string.cov_agent_silent
+                    )
+                )
+                // Redraw the current state so the new text shows without waiting for a state change.
+                viewModel.agentState.value?.let { mBinding?.agentStateView?.updateAgentState(it) }
+                updatePttButton()
+            }
+        }
+        lifecycleScope.launch {
+            viewModel.pttPhase.collect { phase ->
+                mBinding?.btnHoldToTalk?.text = getString(
+                    if (phase == PttPhase.HOLDING) io.agora.scene.convoai.R.string.cov_manual_eos_release
+                    else io.agora.scene.convoai.R.string.cov_manual_eos_hold
+                )
+                updatePttButton()
             }
         }
         lifecycleScope.launch {    // Observe camera state
@@ -715,13 +803,14 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
         viewModel.startAgentConnection()
     }
 
-    private fun onClickEndCall() {
+    private fun onClickEndCall(cause: PttResetCause) {
+        val wasConnected = viewModel.connectionState.value == AgentConnectionState.CONNECTED
         mBinding?.clTop?.stopCountDownTask()
         mBinding?.clTop?.stopTitleAnim()
         viewModel.reportLatencyMetricsIfNeeded()
-        viewModel.stopAgentAndLeaveChannel()
+        viewModel.stopAgentAndLeaveChannel(cause)
         resetSceneState()
-        ToastUtil.show(getString(io.agora.scene.convoai.R.string.cov_detail_agent_leave))
+        if (wasConnected) ToastUtil.show(getString(io.agora.scene.convoai.R.string.cov_detail_agent_leave))
     }
 
     private fun resetSceneState() {
@@ -735,6 +824,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
     private fun updateStateView(connectionState: AgentConnectionState) {
         mBinding?.apply {
             clBottomLogged.updateCallingControlsVisibility(connectionState)
+            updatePttButton()
             when (connectionState) {
                 AgentConnectionState.IDLE -> {
                     vConnecting.visibility = View.GONE
@@ -764,6 +854,21 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                 AgentConnectionState.ERROR -> {
                     // No UI update needed for error state here
                 }
+            }
+        }
+    }
+
+    private fun updatePttButton() {
+        mBinding?.apply {
+            val visible = viewModel.isManualCall.value &&
+                viewModel.connectionState.value == AgentConnectionState.CONNECTED
+            btnHoldToTalk.visibility = if (visible) View.VISIBLE else View.GONE
+            val holding = viewModel.pttPhase.value == PttPhase.HOLDING
+            btnHoldToTalk.isPressed = holding
+            listOf(messageListViewV1, messageListViewV2).forEach { list ->
+                val params = list.layoutParams as ViewGroup.MarginLayoutParams
+                params.bottomMargin = (if (visible) 268 else 200).dp.toInt()
+                list.layoutParams = params
             }
         }
     }
@@ -805,6 +910,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
     }
 
     private fun showSettingDialog(initialTab: Int) {
+        viewModel.cancelPushToTalk(PttReleaseCause.OVERLAY)
         if (isFinishing || isDestroyed || supportFragmentManager.isStateSaved) return
         
         appTabDialog = CovAgentTabDialog.newInstance(
@@ -827,7 +933,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                         getString(io.agora.scene.convoai.R.string.cov_detail_state_error),
                         Toast.LENGTH_LONG
                     )
-                    viewModel.stopAgentAndLeaveChannel()
+                    viewModel.stopAgentAndLeaveChannel(PttResetCause.ANIMATION_ERROR)
                 }
             }
         })
@@ -956,6 +1062,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
     }
 
     private fun showPermissionDialog(title: String, content: String, onResult: (Boolean) -> Unit) {
+        viewModel.cancelPushToTalk(PttReleaseCause.OVERLAY)
         if (isFinishing || isDestroyed || supportFragmentManager.isStateSaved) return
         
         CommonDialog.Builder()
@@ -1002,6 +1109,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
     }
 
     private fun showPreviewDialog(imagePath: String, imageBounds: Rect) {
+        viewModel.cancelPushToTalk(PttReleaseCause.OVERLAY)
         if (isFinishing || isDestroyed || supportFragmentManager.isStateSaved) return
         
         CovImagePreviewDialog.Companion.newInstance(imagePath, imageBounds)
@@ -1039,7 +1147,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             }
             try {
                 isReleased = true   // Mark as releasing
-                viewModel.stopAgentAndLeaveChannel()
+                viewModel.stopAgentAndLeaveChannel(PttResetCause.PAGE_CLOSED)
                 viewModel.avatarSession = null
                 // lifecycleScope will be automatically cancelled when activity is destroyed
                 // Release animation resources
@@ -1134,7 +1242,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
 
     override fun handleEnvironmentChange() {
         // Clean up current session and navigate to login
-        viewModel.stopAgentAndLeaveChannel()
+        viewModel.stopAgentAndLeaveChannel(PttResetCause.ENVIRONMENT_CHANGED)
         release()
         navigateToLogin()
     }

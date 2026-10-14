@@ -18,7 +18,7 @@ extension ChatViewController: LoginManagerDelegate {
     func userDidLogout(reason: LogoutReason) {
         if agentIsJoined {
             stopLoading()
-            stopAgent()
+            stopAgent(pttCause: "logout")
         }
     }
 }

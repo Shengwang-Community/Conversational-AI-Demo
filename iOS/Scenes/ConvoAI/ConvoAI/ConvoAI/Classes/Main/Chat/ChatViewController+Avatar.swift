@@ -43,7 +43,7 @@ extension ChatViewController {
     internal func handleSpatiusFailure(_ failure: SpatiusRenderFailure) {
         guard callControlBar.style != .startButton else { return }
         stopLoading()
-        stopAgent()
+        stopAgent(pttCause: "spatiusFailed")
         let message = failure == .restartRequired
             ? "conversation.avatar.configuration.changed"
             : "conversation.avatar.render.failed"

@@ -85,12 +85,50 @@ class CovAgentManagerTest {
     }
 
     @Test
-    fun customPrivateAvatarFlagControlsClientAudioScenario() {
+    fun walkieTalkieMasksInterruptFeaturesAndOffRestoresStoredValues() {
+        val language = createLanguage("en-US", aiVadSupported = true, aiVadEnabledByDefault = true, aiPauseEnabledByDefault = true)
+        CovAgentManager.setPreset(createPreset(presetType = "standard", supportLanguages = listOf(language)))
+
+        CovAgentManager.enableManualEos = true
+        // Open-source builds have no Walkie-Talkie Mode, so nothing is masked there.
+        assertEquals(!CovAgentManager.isOpenSource, CovAgentManager.isManualEosActive)
+        assertTrue(CovAgentManager.enableAiVad)
+        assertTrue(CovAgentManager.enableAiPause)
+
+        CovAgentManager.enableManualEos = false
+        assertFalse(CovAgentManager.isManualEosActive)
+        assertTrue(CovAgentManager.enableAiVad)
+        assertTrue(CovAgentManager.enableAiPause)
+    }
+
+    @Test
+    fun presetChangeTurnsWalkieTalkieOffBeforeLanguageDefaultsApply() {
+        val vadOn = createLanguage("en-US", aiVadSupported = true, aiVadEnabledByDefault = true, aiPauseEnabledByDefault = true)
+        val vadOff = createLanguage("ja-JP", aiVadSupported = true, aiVadEnabledByDefault = false, aiPauseEnabledByDefault = true)
+        val standard = createPreset(name = "standard_a", presetType = "standard", supportLanguages = listOf(vadOn))
+        CovAgentManager.setPreset(standard)
+        CovAgentManager.enableManualEos = true
+
+        CovAgentManager.setPreset(standard.copy())
+        assertTrue(CovAgentManager.enableManualEos)
+
+        CovAgentManager.setPreset(createPreset(name = "standard_b", presetType = "standard", supportLanguages = listOf(vadOff)))
+        assertFalse(CovAgentManager.enableManualEos)
+        assertEquals(vadOff, CovAgentManager.language)
+        assertFalse(CovAgentManager.enableAiVad)
+        assertFalse(CovAgentManager.enableAiPause)
+    }
+
+    @Test
+    fun customPrivateAvatarFlagFollowsOpenSourceMode() {
         val preset = createPreset(presetType = "custom_private")
 
         CovAgentManager.setPreset(preset.copy(is_support_avatar = true, avatar_vendor = "spatius"))
-        assertTrue(CovAgentManager.isEnableAvatar)
-        assertEquals(Constants.AUDIO_SCENARIO_DEFAULT, resolveAudioScenario(
+        // Open-source builds never support avatars. Business builds follow the
+        // custom preset's avatar flag.
+        val expectAvatar = !CovAgentManager.isOpenSource
+        assertEquals(expectAvatar, CovAgentManager.isEnableAvatar)
+        assertEquals(if (expectAvatar) Constants.AUDIO_SCENARIO_DEFAULT else Constants.AUDIO_SCENARIO_AI_CLIENT, resolveAudioScenario(
             isAvatarEnabled = CovAgentManager.isEnableAvatar,
             isIndependent = false,
             isDebug = false,

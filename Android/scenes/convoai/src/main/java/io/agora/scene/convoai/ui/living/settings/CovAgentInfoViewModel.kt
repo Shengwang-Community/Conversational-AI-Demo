@@ -103,9 +103,11 @@ class CovAgentInfoViewModel : ViewModel() {
      * Update service status information
      */
     private fun updateServiceStatus() {
-        // Update AI VAD status
+        // Update AI VAD status (off in Walkie-Talkie Mode, as in the start request)
         _aiVadStatus.value =
-            if (_agentConnectStatus.value == ConnectionStatus.Connected && CovAgentManager.enableAiVad) {
+            if (_agentConnectStatus.value == ConnectionStatus.Connected &&
+                CovAgentManager.enableAiVad && !CovAgentManager.isManualEosActive
+            ) {
                 ActivateStatus.Activating
             } else {
                 ActivateStatus.NotActivated

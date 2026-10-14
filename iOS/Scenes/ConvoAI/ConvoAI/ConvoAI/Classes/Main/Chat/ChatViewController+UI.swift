@@ -24,7 +24,7 @@ extension ChatViewController {
     internal func setupViews() {
         view.backgroundColor = .black
         naviBar.isHidden = true
-        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, navivationBar, sideNavigationBar, activeFuncsView, callControlBar, volumeAnimateView, annotationView, aiGeneratedLabel, sendMessageButton].forEach { view.addSubview($0) }
+        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, navivationBar, sideNavigationBar, activeFuncsView, pushToTalkButton, callControlBar, volumeAnimateView, annotationView, aiGeneratedLabel, sendMessageButton].forEach { view.addSubview($0) }
 
         [miniView].forEach { smallSizeContainerView.addSubview($0) }
         [remoteAvatarView].forEach { miniView.addSubview($0) }
@@ -71,6 +71,12 @@ extension ChatViewController {
             make.bottom.equalTo(view.safeAreaLayoutGuide.snp.bottom).offset(-30)
             make.left.right.equalTo(0)
             make.height.equalTo(76)
+        }
+
+        pushToTalkButton.snp.makeConstraints { make in
+            make.left.right.equalToSuperview().inset(32)
+            make.height.equalTo(56)
+            make.bottom.equalTo(callControlBar.snp.top).offset(-12)
         }
         
         agentStateView.snp.makeConstraints { make in
@@ -133,6 +139,7 @@ extension ChatViewController {
         }
         
         updateWindowContent()
+        updatePushToTalkButton()
     }
     
     internal func didLayoutSubviews() {
