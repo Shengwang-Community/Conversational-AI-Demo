@@ -246,9 +246,17 @@ extension ChatViewController {
         rtcManager.muteLocalAudio(mute: isUserMuted || (isManualCall && !pushToTalk.gateOpen))
     }
 
-    @objc internal func pushToTalkDown() {
+    @objc internal func pushToTalkDown(_ sender: UIButton, forEvent event: UIEvent) {
         guard AppContext.stateManager().agentState == .connected else { return }
+        pushToTalkMoved(sender, forEvent: event)
         pushToTalk.press()
+        if pushToTalk.phase == .holding { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+    }
+
+    // Passes the finger to the glow, in the glow's coordinates, so its deep spot follows the finger.
+    @objc internal func pushToTalkMoved(_ sender: UIButton, forEvent event: UIEvent) {
+        guard let touch = event.touches(for: sender)?.first else { return }
+        pushToTalkOverlay.setTouchPoint(touch.location(in: pushToTalkOverlay))
     }
 
     @objc internal func pushToTalkUp() {
@@ -263,9 +271,16 @@ extension ChatViewController {
         let visible = isManualCall && AppContext.stateManager().agentState == .connected
         let holding = pushToTalk.phase == .holding
         pushToTalkButton.isHidden = !visible
-        let title = ResourceManager.localizedString(holding ? "conversation.ptt.release" : "conversation.ptt.hold")
-        pushToTalkButton.setTitle(title, for: .normal)
-        pushToTalkButton.alpha = holding ? 0.8 : 1.0
+        // Transparent, not hidden, while holding: the button must keep tracking this touch until the finger lifts.
+        // It fades back with the glow.
+        if holding {
+            pushToTalkButton.layer.removeAllAnimations()
+            pushToTalkButton.alpha = 0
+        } else if pushToTalkButton.alpha < 1 {
+            UIView.animate(withDuration: 0.12) { self.pushToTalkButton.alpha = 1 }
+        }
+        // The overlay only draws; the button keeps the touch, so lifting anywhere releases.
+        pushToTalkOverlay.setHolding(visible && holding)
         agentStateView.snp.updateConstraints { make in
             make.bottom.equalTo(callControlBar.snp.top).offset(visible ? -92 : -24)
         }

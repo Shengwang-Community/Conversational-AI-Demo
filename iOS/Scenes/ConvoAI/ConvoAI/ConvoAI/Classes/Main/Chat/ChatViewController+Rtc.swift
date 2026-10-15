@@ -162,6 +162,8 @@ extension ChatViewController: AgoraRtcEngineDelegate {
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, reportAudioVolumeIndicationOfSpeakers speakers: [AgoraRtcAudioVolumeInfo], totalVolume: Int) {
         speakers.forEach { info in
+            // The local user is reported as uid 0.
+            if info.uid == 0, isManualCall { pushToTalkOverlay.setVolume(Int(info.volume)) }
             if (info.uid == agentUid) {
                 var currentVolume: CGFloat = 0
                 currentVolume = CGFloat(info.volume)

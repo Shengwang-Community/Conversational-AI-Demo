@@ -24,7 +24,7 @@ extension ChatViewController {
     internal func setupViews() {
         view.backgroundColor = .black
         naviBar.isHidden = true
-        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, navivationBar, sideNavigationBar, activeFuncsView, pushToTalkButton, callControlBar, volumeAnimateView, annotationView, aiGeneratedLabel, sendMessageButton].forEach { view.addSubview($0) }
+        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, navivationBar, sideNavigationBar, activeFuncsView, pushToTalkButton, callControlBar, volumeAnimateView, annotationView, aiGeneratedLabel, sendMessageButton, pushToTalkOverlay].forEach { view.addSubview($0) }
 
         [miniView].forEach { smallSizeContainerView.addSubview($0) }
         [remoteAvatarView].forEach { miniView.addSubview($0) }
@@ -136,6 +136,12 @@ extension ChatViewController {
         sendMessageButton.snp.makeConstraints { make in
             make.centerX.equalTo(view)
             make.centerY.equalTo(view)
+        }
+
+        // Covers the bottom 40% of the page; it never takes touches.
+        pushToTalkOverlay.snp.makeConstraints { make in
+            make.left.right.bottom.equalToSuperview()
+            make.height.equalToSuperview().multipliedBy(0.4)
         }
         
         updateWindowContent()

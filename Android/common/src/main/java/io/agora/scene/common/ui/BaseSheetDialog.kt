@@ -113,7 +113,7 @@ abstract class BaseSheetDialog<B : ViewBinding?> : BottomSheetDialogFragment() {
                         or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
                 
-                if (lightStatusBar && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (lightStatusBar) {
                     flags = flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                 }
                 
@@ -125,10 +125,8 @@ abstract class BaseSheetDialog<B : ViewBinding?> : BottomSheetDialogFragment() {
             navigationBarColor = Color.TRANSPARENT
             
             // Step 3: Handle notch screens
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                attributes.layoutInDisplayCutoutMode =
-                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
+            attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             
             // Step 4: Set system UI visibility based on immersive mode
             when(immersiveMode) {

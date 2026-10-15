@@ -2,7 +2,6 @@ package io.agora.scene.convoai.ui.living
 
 import android.content.Intent
 import android.graphics.Rect
-import android.os.Build
 import android.provider.Settings
 import android.view.TextureView
 import android.view.View
@@ -62,8 +61,8 @@ import io.agora.scene.convoai.ui.living.messages.CovMessageListView
 import io.agora.scene.convoai.ui.living.ptt.PttPhase
 import io.agora.scene.convoai.ui.living.ptt.PttReleaseCause
 import io.agora.scene.convoai.ui.living.ptt.PttResetCause
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
-import android.view.ViewConfiguration
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -89,7 +88,8 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
     private var selfRenderController: SelfSubRenderController? = null
     private var hasShownTitleAnim = false
     private var pttPointerId = MotionEvent.INVALID_POINTER_ID
-    private val pttTouchSlop: Int by lazy { ViewConfiguration.get(this).scaledTouchSlop }
+    private val pttButtonLocation = IntArray(2)
+    private val pttOverlayLocation = IntArray(2)
 
     override fun getViewBinding(): CovActivityLivingBinding = CovActivityLivingBinding.inflate(layoutInflater)
 
@@ -201,21 +201,15 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
                         pttPointerId = event.getPointerId(0)
+                        // Moving the finger never ends the turn, so keep ancestors from taking the gesture.
+                        button.parent?.requestDisallowInterceptTouchEvent(true)
+                        forwardPttTouch(button, event)
                         viewModel.pressPushToTalk()
-                    }
-                    MotionEvent.ACTION_MOVE -> {
-                        val index = event.findPointerIndex(pttPointerId)
-                        if (index >= 0) {
-                            val x = event.getX(index)
-                            val y = event.getY(index)
-                            val slop = pttTouchSlop
-                            // Dragging out of the button (beyond the touch slop) is a normal release.
-                            if (x < -slop || y < -slop || x >= button.width + slop || y >= button.height + slop) {
-                                pttPointerId = MotionEvent.INVALID_POINTER_ID
-                                viewModel.releasePushToTalk()
-                            }
+                        if (viewModel.pttPhase.value == PttPhase.HOLDING) {
+                            button.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                         }
                     }
+                    MotionEvent.ACTION_MOVE -> forwardPttTouch(button, event)
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
                         if (event.getPointerId(event.actionIndex) == pttPointerId) {
                             viewModel.releasePushToTalk()
@@ -433,13 +427,10 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             }
         }
         lifecycleScope.launch {
-            viewModel.pttPhase.collect { phase ->
-                mBinding?.btnHoldToTalk?.text = getString(
-                    if (phase == PttPhase.HOLDING) io.agora.scene.convoai.R.string.cov_manual_eos_release
-                    else io.agora.scene.convoai.R.string.cov_manual_eos_hold
-                )
-                updatePttButton()
-            }
+            viewModel.pttPhase.collect { updatePttButton() }
+        }
+        lifecycleScope.launch {
+            viewModel.localVolume.collect { mBinding?.layoutPttOverlay?.setVolume(it) }
         }
         lifecycleScope.launch {    // Observe camera state
             viewModel.isPublishVideo.collect { isPublish ->
@@ -862,15 +853,37 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
         mBinding?.apply {
             val visible = viewModel.isManualCall.value &&
                 viewModel.connectionState.value == AgentConnectionState.CONNECTED
-            btnHoldToTalk.visibility = if (visible) View.VISIBLE else View.GONE
             val holding = viewModel.pttPhase.value == PttPhase.HOLDING
-            btnHoldToTalk.isPressed = holding
+            btnHoldToTalk.visibility = if (visible) View.VISIBLE else View.GONE
+            // Transparent, not hidden, while holding: the button must keep receiving this press until the finger lifts.
+            // It fades back with the glow.
+            if (holding) {
+                btnHoldToTalk.animate().cancel()
+                btnHoldToTalk.alpha = 0f
+            } else if (btnHoldToTalk.alpha < 1f) {
+                btnHoldToTalk.animate().alpha(1f).setDuration(120L).start()
+            }
+            // The overlay only draws; the button keeps the touch stream, so lifting anywhere releases.
+            layoutPttOverlay.setHolding(visible && holding)
             listOf(messageListViewV1, messageListViewV2).forEach { list ->
                 val params = list.layoutParams as ViewGroup.MarginLayoutParams
                 params.bottomMargin = (if (visible) 268 else 200).dp.toInt()
                 list.layoutParams = params
             }
         }
+    }
+
+    // Passes the hold-to-talk finger to the glow, in the glow's coordinates, so its deep spot follows the finger.
+    private fun forwardPttTouch(button: View, event: MotionEvent) {
+        val overlay = mBinding?.layoutPttOverlay ?: return
+        val index = event.findPointerIndex(pttPointerId)
+        if (index < 0) return
+        button.getLocationOnScreen(pttButtonLocation)
+        overlay.getLocationOnScreen(pttOverlayLocation)
+        overlay.setTouchPoint(
+            pttButtonLocation[0] + event.getX(index) - pttOverlayLocation[0],
+            pttButtonLocation[1] + event.getY(index) - pttOverlayLocation[1]
+        )
     }
 
     private fun updateMicrophoneView(isLocalAudioMuted: Boolean) {
@@ -1091,14 +1104,9 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
             .setTitle(getString(io.agora.scene.convoai.R.string.cov_permission_required))
             .setContent(getString(io.agora.scene.convoai.R.string.cov_notifications_enable_tip))
             .setPositiveButton(getString(io.agora.scene.convoai.R.string.cov_setting)) {
-                val intent = Intent()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    intent.action = Settings.ACTION_APP_NOTIFICATION_SETTINGS
-                    intent.putExtra(Settings.EXTRA_APP_PACKAGE, this.packageName)
-                    intent.putExtra(Settings.EXTRA_CHANNEL_ID, this.applicationInfo.uid)
-                } else {
-                    intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                }
+                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                intent.putExtra(Settings.EXTRA_APP_PACKAGE, this.packageName)
+                intent.putExtra(Settings.EXTRA_CHANNEL_ID, this.applicationInfo.uid)
                 startActivity(intent)
             }
             .setNegativeButton(getString(io.agora.scene.convoai.R.string.cov_exit)) {}
@@ -1118,12 +1126,7 @@ class CovLivingActivity : DebugSupportActivity<CovActivityLivingBinding>() {
 
     private fun startRecordingService() {
         if (viewModel.connectionState.value != AgentConnectionState.IDLE) {
-            val intent = Intent(this, CovLocalRecordingService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent)
-            } else {
-                startService(intent)
-            }
+            startForegroundService(Intent(this, CovLocalRecordingService::class.java))
         }
     }
 

@@ -131,6 +131,10 @@ class CovLivingViewModel : ViewModel() {
     private val _pttPhase = MutableStateFlow(PttPhase.IDLE)
     internal val pttPhase: StateFlow<PttPhase> = _pttPhase.asStateFlow()
 
+    // Local microphone level (0-255) for the hold-to-talk volume bars, updated only during a manual call.
+    private val _localVolume = MutableStateFlow(0)
+    internal val localVolume: StateFlow<Int> = _localVolume.asStateFlow()
+
     private val _isPublishVideo = MutableStateFlow(false)
     val isPublishVideo: StateFlow<Boolean> = _isPublishVideo.asStateFlow()
 
@@ -1012,6 +1016,8 @@ class CovLivingViewModel : ViewModel() {
             ) {
                 viewModelScope.launch(Dispatchers.Main) {
                     speakers?.forEach { speaker ->
+                        // The local user is reported as uid 0.
+                        if (speaker.uid == 0 && _isManualCall.value) _localVolume.value = speaker.volume
                         if (speaker.uid == CovAgentManager.agentUID && _connectionState.value != AgentConnectionState.IDLE) {
                             val newState =
                                 if (speaker.volume > 0) BallAnimState.SPEAKING else BallAnimState.LISTENING
@@ -1313,6 +1319,7 @@ class CovLivingViewModel : ViewModel() {
         _isLocalAudioMuted.value = false
         _isManualCall.value = false
         _pttPhase.value = PttPhase.IDLE
+        _localVolume.value = 0
         _isPublishVideo.value = false
         _ballAnimState.value = BallAnimState.STATIC
         _networkQuality.value = -1

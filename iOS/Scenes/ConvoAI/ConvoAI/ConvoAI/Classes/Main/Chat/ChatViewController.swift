@@ -187,15 +187,21 @@ class ChatViewController: BaseViewController {
         button.clipsToBounds = true
         button.setTitle(ResourceManager.localizedString("conversation.ptt.hold"), for: .normal)
         button.setTitleColor(UIColor.themColor(named: "ai_brand_white10"), for: .normal)
-        button.setBackgroundColor(color: UIColor.themColor(named: "ai_brand"), forState: .normal)
-        button.addTarget(self, action: #selector(pushToTalkDown), for: .touchDown)
-        button.addTarget(self, action: #selector(pushToTalkUp), for: [.touchUpInside, .touchUpOutside, .touchDragExit])
+        // Same surface as the round call controls below it.
+        button.setBackgroundColor(color: UIColor.themColor(named: "ai_block1"), forState: .normal)
+        button.addTarget(self, action: #selector(pushToTalkDown(_:forEvent:)), for: .touchDown)
+        // Moving the finger never ends the turn; only lifting it (anywhere) releases.
+        button.addTarget(self, action: #selector(pushToTalkMoved(_:forEvent:)), for: [.touchDragInside, .touchDragOutside])
+        button.addTarget(self, action: #selector(pushToTalkUp), for: [.touchUpInside, .touchUpOutside])
         button.addTarget(self, action: #selector(pushToTalkCancel), for: .touchCancel)
         // A second finger elsewhere must not interact with other controls while talking.
         button.isExclusiveTouch = true
         button.isHidden = true
         return button
     }()
+
+    // Hold-to-talk glow over the bottom 40%, shown only while holding. It never takes touches.
+    internal lazy var pushToTalkOverlay = PushToTalkOverlayView()
     
     internal lazy var animateContentView: UIView = {
         let view = UIView()
