@@ -58,6 +58,9 @@ internal fun buildDebugStartRequestConfig(
     return createStartRequestConfig(baseUrl, namespace)
 }
 
+/** A start or SIP call needs the RTC channel the client joins; a blank one means the call was already stopped. */
+internal fun isStartChannelValid(channelName: String): Boolean = channelName.isNotBlank()
+
 object CovAgentApiManager {
 
     private const val TAG = "CovServerManager"
@@ -100,6 +103,13 @@ object CovAgentApiManager {
         convoaiBody: Map<String, Any?>,
         completion: (error: ApiException?, channelName: String) -> Unit
     ) {
+        if (!isStartChannelValid(channelName)) {
+            CovLogger.e(TAG, "start rejected: blank channel")
+            runOnMainThread {
+                completion.invoke(ApiException(-1), channelName)
+            }
+            return
+        }
         val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/start"
         val postBody = JSONObject()
         try {
@@ -601,6 +611,13 @@ object CovAgentApiManager {
 
     fun startSipCallWithMap(channelName:String,convoaiBody: Map<String,Any?>, completion: (error: ApiException?,
                                                                                            channelName: String) -> Unit) {
+        if (!isStartChannelValid(channelName)) {
+            CovLogger.e(TAG, "start rejected: blank channel")
+            runOnMainThread {
+                completion.invoke(ApiException(-1), channelName)
+            }
+            return
+        }
         agentId = null
         val requestURL = "${ServerConfig.toolBoxUrl}/convoai/$SERVICE_VERSION/call"
         val postBody = JSONObject()

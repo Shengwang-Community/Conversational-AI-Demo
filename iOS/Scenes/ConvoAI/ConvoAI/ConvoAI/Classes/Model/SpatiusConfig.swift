@@ -31,7 +31,12 @@ struct SpatiusConfig: Equatable {
 }
 
 
-enum SpatiusRenderFailure { case loadFailed, restartRequired }
+enum SpatiusRenderFailure {
+    case loadFailed
+    case restartRequired
+    /// `AvatarSDK.isDeviceSupported()` rejected this device.
+    case deviceUnsupported
+}
 
 /// AvatarKit 1.3.4 has process-wide configuration and no public reset API.
 /// Used synchronously on the main actor by all rendering sessions.

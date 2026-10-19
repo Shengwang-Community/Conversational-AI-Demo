@@ -42,16 +42,19 @@ final class SpatiusAvatarSession: LocalAvatarRendering {
             return
         }
         do {
-            try Self.sdkConfiguration.initialize(config: config) {
-                AvatarSDK.initialize(appID: config.appId,
-                                     configuration: Configuration(region: config.region, drivingServiceMode: .rtc))
-            }
+            // Check before initializing: in AvatarKit 1.3.4 the check reads the device model
+            // (benchmark only as a fallback) and does not use SDK configuration, so
+            // unsupported devices never initialize the SDK.
             guard await AvatarSDK.isDeviceSupported() else {
-                fail(attempt, reason: "Device is unsupported")
+                fail(attempt, reason: "Device is unsupported", failure: .deviceUnsupported)
                 return
             }
             try Task.checkCancellation()
             guard attempt == generation else { throw CancellationError() }
+            try Self.sdkConfiguration.initialize(config: config) {
+                AvatarSDK.initialize(appID: config.appId,
+                                     configuration: Configuration(region: config.region, drivingServiceMode: .rtc))
+            }
             AvatarSDK.setRenderResolutionCap(enabled: true, maxHeight: 1080)
             loadingId = config.avatarId
             let avatarId = config.avatarId

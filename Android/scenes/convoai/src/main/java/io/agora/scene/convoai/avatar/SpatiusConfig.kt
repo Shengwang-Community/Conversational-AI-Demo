@@ -27,7 +27,21 @@ internal data class SpatiusConfig(val appId: String, val avatarId: String, val r
 }
 
 
-internal enum class SpatiusRenderFailure { LOAD_FAILED, RESTART_REQUIRED }
+internal enum class SpatiusRenderFailure {
+    LOAD_FAILED,
+    RESTART_REQUIRED,
+    /** AvatarSDK.isDeviceSupported() rejected this device. */
+    DEVICE_UNSUPPORTED,
+}
+
+/** Outcome of preparing the renderer before the call joins RTC. */
+internal sealed interface SpatiusPrepareResult {
+    /** The current selection is not a Spatius avatar. */
+    data object NotRequired : SpatiusPrepareResult
+    data object Ready : SpatiusPrepareResult
+    /** Preparation failed and the renderer is closed; the caller ends the call. */
+    data class Failed(val failure: SpatiusRenderFailure) : SpatiusPrepareResult
+}
 
 /** AvatarKit 1.3.4 can only initialize once per process and has no reset API. */
 internal class SpatiusSDKConfiguration {

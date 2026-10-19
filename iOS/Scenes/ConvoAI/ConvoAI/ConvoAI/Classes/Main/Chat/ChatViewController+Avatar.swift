@@ -44,9 +44,12 @@ extension ChatViewController {
         guard callControlBar.style != .startButton else { return }
         stopLoading()
         stopAgent(pttCause: "spatiusFailed")
-        let message = failure == .restartRequired
-            ? "conversation.avatar.configuration.changed"
-            : "conversation.avatar.render.failed"
+        let message: String
+        switch failure {
+        case .restartRequired: message = "conversation.avatar.configuration.changed"
+        case .deviceUnsupported: message = "conversation.avatar.device.unsupported"
+        case .loadFailed: message = "conversation.avatar.render.failed"
+        }
         SVProgressHUD.showError(withStatus: ResourceManager.localizedString(message))
     }
 

@@ -1,10 +1,9 @@
 package io.agora.scene.convoai.avatar
 
-import android.os.Build
-import android.os.Process
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import ai.spatius.avatarkit.Avatar
 import ai.spatius.avatarkit.AvatarSDK
 import ai.spatius.avatarkit.AvatarView
 import ai.spatius.avatarkit.Configuration
@@ -21,13 +20,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** Main-thread owner of one renderer. The host retains ownership of RTC and audio. */
 internal class SpatiusAvatarSession(
@@ -37,6 +37,9 @@ internal class SpatiusAvatarSession(
     private val onFailure: (SpatiusRenderFailure) -> Unit,
 ) {
     private companion object {
+        const val TAG = "SpatiusAvatar"
+        const val LOAD_TIMEOUT_MS = 90_000L
+        const val FIRST_FRAME_TIMEOUT_MS = 30_000L
         val sdkConfiguration = SpatiusSDKConfiguration()
     }
 
@@ -48,96 +51,130 @@ internal class SpatiusAvatarSession(
     private var provider: AgoraProvider? = null
     private var player: AvatarPlayer? = null
 
-    suspend fun prepare() {
+    /**
+     * Prepares the renderer before the call joins RTC. Failures are returned so the caller can end the call
+     * first; [onFailure] reports only failures after [SpatiusPrepareResult.Ready]. Throws
+     * [CancellationException] when the call is cancelled or a newer [close] supersedes this attempt.
+     */
+    suspend fun prepare(): SpatiusPrepareResult {
         close()
-        if (!CovAgentManager.isSpatiusAvatar) return
+        if (!CovAgentManager.isSpatiusAvatar) return SpatiusPrepareResult.NotRequired
         val attempt = generation
         val config = SpatiusConfig.resolve(CovAgentManager.getPreset(), CovAgentManager.avatar)
-        if (config == null || !Process.is64Bit() || "arm64-v8a" !in Build.SUPPORTED_ABIS) {
-            fail(attempt, "Missing Spatius configuration or unsupported device")
-            return
+            ?: return preparationFailed("Missing Spatius configuration")
+        // Check before initialize(): AvatarKit 1.3.4 needs no initialization for this, and initialize() then
+        // reuses the cached benchmark instead of running a second one. Unsupported devices skip SDK setup.
+        val supported = AvatarSDK.isDeviceSupported()
+        ensureCurrent(attempt)
+        if (!supported) {
+            return preparationFailed("Unsupported rendering device", SpatiusRenderFailure.DEVICE_UNSUPPORTED)
         }
         val renderScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         scope = renderScope
-        val preparationStartedAt = System.nanoTime()
-        try {
-            val avatar = withTimeout(90_000) {
-                sdkConfiguration.initialize(config) {
-                    AvatarSDK.initialize(container.context.applicationContext, config.appId,
-                        Configuration(region = config.region, drivingServiceMode = DrivingServiceMode.RTC))
-                }
-                check(AvatarSDK.isDeviceSupported()) { "Unsupported rendering device" }
-                AvatarSDK.setRenderResolutionCap(true, 1080)
-                AvatarManager.initialize(container.context.applicationContext)
-                val remainingMillis = 90_000 - (System.nanoTime() - preparationStartedAt) / 1_000_000
-                if (remainingMillis <= 0) throw SpatiusLoadTimedOut()
-                loadingId = config.avatarId
-                awaitSpatiusBlockingLoad(
-                    scope = renderScope,
-                    timeoutMillis = remainingMillis,
-                    load = { requireNotNull(AvatarManager.load(config.avatarId)) { "Avatar load failed" } },
-                    cancelLoading = { safely { AvatarManager.cancelLoading(config.avatarId) } },
-                )
+        return try {
+            val avatar = loadAvatar(config, renderScope)
+            ensureCurrent(attempt)
+            if (avatar == null) {
+                preparationFailed("Avatar load failed or timed out")
+            } else {
+                showAvatar(avatar, attempt, renderScope)
+                SpatiusPrepareResult.Ready
             }
-            currentCoroutineContext().ensureActive()
-            if (attempt != generation) return
-            loadingId = null
-            val avatarView = AvatarView(container.context)
-            view = avatarView
-            var firstFrame = false
-            avatarView.onFirstRendering = {
-                renderScope.launch {
-                    if (attempt == generation) {
-                        firstFrame = true
-                        firstFrameTimeout?.cancel()
-                        onRenderReady(true)
-                    }
-                }
+        } catch (e: CancellationException) {
+            // Propagate a cancelled call or a superseded attempt; any other cancellation is a load failure.
+            if (!currentCoroutineContext().isActive || attempt != generation) {
+                if (attempt == generation) close()
+                throw e
             }
-            avatarView.init(avatar, renderScope)
-            requireNotNull(avatarView.controller).onError = {
-                renderScope.launch { fail(attempt, "Avatar controller error") }
-            }
-            container.addView(avatarView, FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER))
-            val agoraProvider = AgoraProvider(container.context.applicationContext)
-            provider = agoraProvider
-            val avatarPlayer = AvatarPlayer(agoraProvider, avatarView)
-            player = avatarPlayer
-            avatarPlayer.subscribe { event ->
-                if (event is AvatarPlayerEvent.Error) {
-                    renderScope.launch { fail(attempt, "Avatar player error: $event") }
-                }
-            }
-            if (attempt != generation) return
-            // The encoded video carries motion data; keep the host's video subscription enabled.
-            avatarPlayer.attach(engine)
-            if (attempt != generation) return
-            firstFrameTimeout = renderScope.launch {
-                delay(30_000)
-                if (!firstFrame) fail(attempt, "Avatar first frame timed out")
-            }
-        } catch (error: Throwable) {
-            if (error is Error && error !is LinkageError) throw error
-            when {
-                error is CancellationException && !currentCoroutineContext().isActive -> {
-                    if (attempt == generation) close()
-                    throw error
-                }
-                error is SpatiusSDKConfiguration.ConfigurationChanged -> {
-                    if (attempt != generation) return
-                    CovLogger.w("SpatiusAvatar", "SDK configuration changed; app restart required")
-                    close()
-                    onFailure(SpatiusRenderFailure.RESTART_REQUIRED)
-                }
-                else -> fail(attempt, error.message ?: error.javaClass.simpleName)
-            }
+            preparationFailed("Avatar loading cancelled")
+        } catch (_: SpatiusSDKConfiguration.ConfigurationChanged) {
+            ensureCurrent(attempt)
+            CovLogger.w(TAG, "SDK configuration changed; app restart required")
+            close()
+            SpatiusPrepareResult.Failed(SpatiusRenderFailure.RESTART_REQUIRED)
+        } catch (e: Exception) {
+            ensureCurrent(attempt)
+            preparationFailed(e.message ?: e.javaClass.simpleName)
+        } catch (_: LinkageError) {
+            ensureCurrent(attempt)
+            preparationFailed("Native library unavailable")
         }
     }
 
+    /** Initializes the SDK once per process and loads the model. Returns null on timeout or an empty result. */
+    private suspend fun loadAvatar(config: SpatiusConfig, renderScope: CoroutineScope): Avatar? {
+        val context = container.context.applicationContext
+        sdkConfiguration.initialize(config) {
+            AvatarSDK.initialize(context, config.appId,
+                Configuration(region = config.region, drivingServiceMode = DrivingServiceMode.RTC))
+        }
+        AvatarSDK.setRenderResolutionCap(true, 1080)
+        AvatarManager.initialize(context)
+        loadingId = config.avatarId
+        // The SDK downloads with blocking I/O that ignores cancellation. Awaiting a separate job lets a timeout or
+        // hang-up return at once; close() then cancels the download and the job.
+        val loading = renderScope.async(Dispatchers.IO) { AvatarManager.load(config.avatarId) }
+        val avatar = withTimeoutOrNull(LOAD_TIMEOUT_MS) { loading.await() }
+        if (avatar != null) loadingId = null
+        return avatar
+    }
+
+    /** Adds the view, attaches the RTC motion data and arms the first-frame watchdog. */
+    private fun showAvatar(avatar: Avatar, attempt: Int, renderScope: CoroutineScope) {
+        val avatarView = AvatarView(container.context)
+        view = avatarView
+        var firstFrame = false
+        avatarView.onFirstRendering = {
+            renderScope.launch {
+                if (attempt != generation) return@launch
+                firstFrame = true
+                firstFrameTimeout?.cancel()
+                onRenderReady(true)
+            }
+        }
+        avatarView.init(avatar, renderScope)
+        requireNotNull(avatarView.controller).onError = {
+            renderScope.launch { fail(attempt, "Avatar controller error") }
+        }
+        container.addView(avatarView, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER))
+        val agoraProvider = AgoraProvider(container.context.applicationContext)
+        provider = agoraProvider
+        val avatarPlayer = AvatarPlayer(agoraProvider, avatarView)
+        player = avatarPlayer
+        avatarPlayer.subscribe { event ->
+            if (event is AvatarPlayerEvent.Error) {
+                renderScope.launch { fail(attempt, "Avatar player error: $event") }
+            }
+        }
+        ensureCurrent(attempt)
+        // The encoded video carries motion data; keep the host's video subscription enabled.
+        avatarPlayer.attach(engine)
+        ensureCurrent(attempt)
+        firstFrameTimeout = renderScope.launch {
+            delay(FIRST_FRAME_TIMEOUT_MS)
+            if (!firstFrame) fail(attempt, "Avatar first frame timed out")
+        }
+    }
+
+    private fun preparationFailed(
+        reason: String,
+        failure: SpatiusRenderFailure = SpatiusRenderFailure.LOAD_FAILED,
+    ): SpatiusPrepareResult {
+        CovLogger.w(TAG, reason)
+        close()
+        return SpatiusPrepareResult.Failed(failure)
+    }
+
+    /** A newer [close] owns the renderer, so this attempt must neither report nor touch it. */
+    private fun ensureCurrent(attempt: Int) {
+        if (attempt != generation) throw CancellationException("Spatius preparation superseded")
+    }
+
+    /** Reports a failure after [SpatiusPrepareResult.Ready]; ignored once the attempt is superseded. */
     private fun fail(attempt: Int, reason: String) {
         if (attempt != generation) return
-        CovLogger.w("SpatiusAvatar", reason)
+        CovLogger.w(TAG, reason)
         close()
         onFailure(SpatiusRenderFailure.LOAD_FAILED)
     }
@@ -169,7 +206,7 @@ internal class SpatiusAvatarSession(
             try {
                 withTimeout(2_000) { oldPlayer?.detach() }
             } catch (_: Exception) {
-                CovLogger.w("SpatiusAvatar", "Avatar player cleanup failed")
+                CovLogger.w(TAG, "Avatar player cleanup failed")
             } finally {
                 oldView?.let { safely { it.dispose() } }
                 oldScope?.cancel()
@@ -179,9 +216,9 @@ internal class SpatiusAvatarSession(
 
     private inline fun safely(action: () -> Unit) {
         try { action() } catch (_: Exception) {
-            CovLogger.w("SpatiusAvatar", "Avatar cleanup failed")
+            CovLogger.w(TAG, "Avatar cleanup failed")
         } catch (_: LinkageError) {
-            CovLogger.w("SpatiusAvatar", "Avatar native cleanup unavailable")
+            CovLogger.w(TAG, "Avatar native cleanup unavailable")
         }
     }
 }

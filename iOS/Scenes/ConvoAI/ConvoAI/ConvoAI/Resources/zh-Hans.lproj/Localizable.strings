@@ -370,6 +370,7 @@
 "conversation.avatar.render.failed" = "数字人加载失败，通话已结束，请重试。";
 
 "conversation.avatar.configuration.changed" = "数字人配置已变更，通话已结束。请重启应用后重试。";
+"conversation.avatar.device.unsupported" = "当前设备性能不足，暂不支持该数字人。请关闭数字人后再发起通话。";
 
 // Walkie-Talkie Mode interaction
 "settings.manual_eos" = "对讲机模式";

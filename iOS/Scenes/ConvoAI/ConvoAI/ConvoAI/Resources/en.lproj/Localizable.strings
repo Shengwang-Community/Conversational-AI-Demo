@@ -384,6 +384,7 @@
 "conversation.avatar.render.failed" = "The avatar failed to load. The call has ended. Please try again.";
 
 "conversation.avatar.configuration.changed" = "The avatar configuration changed and the call has ended. Restart the app to try again.";
+"conversation.avatar.device.unsupported" = "This device can't run this avatar. Turn the avatar off and start the call again.";
 
 // Walkie-Talkie Mode interaction
 "settings.manual_eos" = "Walkie-Talkie Mode";
