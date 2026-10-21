@@ -143,18 +143,15 @@ class AgentStartSequenceTest {
         var stops = 0
         var channelName = "" // CovAgentManager.channelName
         private var connecting = false
-        private var connectionAttempt = 0L
 
         suspend fun start(channel: String) {
             connecting = true
             channelName = channel
-            val attempt = ++connectionAttempt
-            runAgentStart(channel, { attempt == connectionAttempt && channelName == channel && connecting }, this)
+            runAgentStart(channel, { channelName == channel && connecting }, this)
         }
 
         /** stopAgentAndLeaveChannel */
         fun stop() {
-            connectionAttempt++
             stops++
             connecting = false
             channelName = ""

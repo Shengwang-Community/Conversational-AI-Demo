@@ -89,8 +89,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.util.UUID
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 /**
  * view model
@@ -115,8 +115,6 @@ class CovLivingViewModel : ViewModel() {
 
     internal var avatarSession: SpatiusAvatarSession? = null
     private var startConnectionJob: Job? = null
-    // Main thread only. Each start takes a new value; each stop bumps it so in-flight starts become stale.
-    private var connectionAttempt = 0L
 
     private val TAG = "CovLivingViewModel"
 
@@ -611,14 +609,14 @@ class CovLivingViewModel : ViewModel() {
         pttController.setUserMuted(_isLocalAudioMuted.value)
         applyRecordingVolume()
         prepareLatencyMetricsSession()
-        // Bind this start to its own channel. A stop clears the global name and bumps the attempt.
+        // Bind this start to its own channel. A stop cancels the start job, clears the global name and sets IDLE,
+        // so a stopped or replaced start fails this check even inside a step that does not suspend. The agent can
+        // join RTC (CONNECTED) before /start responds, so only IDLE means the call has ended.
         val channel = CovAgentManager.channelPrefix + UUID.randomUUID().toString().replace("-", "")
             .substring(0, 8)
         CovAgentManager.channelName = channel
-        val attempt = ++connectionAttempt
         val isSessionCurrent = {
-            attempt == connectionAttempt && CovAgentManager.channelName == channel &&
-                _connectionState.value == AgentConnectionState.CONNECTING
+            CovAgentManager.channelName == channel && _connectionState.value != AgentConnectionState.IDLE
         }
 
         // Main.immediate runs the body inline until its first suspension, so publish the job before it starts.
@@ -720,7 +718,6 @@ class CovLivingViewModel : ViewModel() {
 
     // Stop Agent connection. [pttCause] is logged as the push-to-talk reset cause.
     internal fun stopAgentAndLeaveChannel(pttCause: PttResetCause) {
-        connectionAttempt++ // Invalidate any start still in flight, even one whose job is not yet published.
         pttController.endSession(pttCause)
         _isManualCall.value = false
         cancelJobs()
@@ -1161,7 +1158,7 @@ class CovLivingViewModel : ViewModel() {
         }
     }
 
-    private suspend fun updateTokenAsync(): Boolean = suspendCoroutine { cont ->
+    private suspend fun updateTokenAsync(): Boolean = suspendCancellableCoroutine { cont ->
         TokenGenerator.generateTokens(
             channelName = "",
             uid = CovAgentManager.uid.toString(),
@@ -1177,7 +1174,7 @@ class CovLivingViewModel : ViewModel() {
         )
     }
 
-    private suspend fun startAgentAsync(channel: String): Pair<String, Int> = suspendCoroutine { cont ->
+    private suspend fun startAgentAsync(channel: String): Pair<String, Int> = suspendCancellableCoroutine { cont ->
         CovAgentApiManager.startAgentWithMap(
             channelName = channel,
             convoaiBody = if (CovAgentManager.isOpenSource) {
@@ -1192,7 +1189,7 @@ class CovLivingViewModel : ViewModel() {
         )
     }
 
-    private suspend fun loginRtmClientAsync(): Boolean = suspendCoroutine { cont ->
+    private suspend fun loginRtmClientAsync(): Boolean = suspendCancellableCoroutine { cont ->
         CovRtmManager.login(integratedToken ?: "", completion = { error ->
             if (error != null) {
                 integratedToken = null
@@ -1249,6 +1246,8 @@ class CovLivingViewModel : ViewModel() {
                     stopAgentAndLeaveChannel(PttResetCause.TOKEN_FAILED)
                     ToastUtil.show(R.string.cov_detail_update_token_error)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 CovLogger.e(TAG, "Exception during token renewal process: ${e.message}")
                 stopAgentAndLeaveChannel(PttResetCause.TOKEN_FAILED)

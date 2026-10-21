@@ -103,6 +103,9 @@ class AgentManager: AgentAPI {
                     channelName: String,
                     completion: @escaping ((ConvoAIError?, String, StartAgentResponseModel?) -> Void)) {
         let startParameters = DeveloperConfig.shared.applyingStartOverrides(to: parameters)
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+        ConvoAILogger.info("request start api - app version: \(appVersion) (\(buildVersion))")
         sendRequest(endpoint: .startAgent, parameters: startParameters) { (result: Result<StartAgentResponseModel, ConvoAIError>) in
             switch result {
             case .success(let response):

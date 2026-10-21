@@ -21,6 +21,8 @@ class CallOutSipViewController: SIPViewController {
     internal var channelName = ""
     internal var agentUid = 0
     internal var remoteAgentId = ""
+    // The call start in flight; closing the call or the page cancels it.
+    internal var callTask: Task<Void, Never>?
 //    internal var agentState: AgentState = .idle
     internal var convoAIAPI: ConversationalAIAPI!
     internal var timer: Timer?
@@ -227,6 +229,8 @@ class CallOutSipViewController: SIPViewController {
     }
     
     override func viewWillDisappearAndPop() {
+        callTask?.cancel() // A start still in flight must not place the call after the page closes.
+        callTask = nil
         convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
             
         }
