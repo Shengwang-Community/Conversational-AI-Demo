@@ -26,8 +26,8 @@ import kotlinx.coroutines.launch
 import io.agora.scene.convoai.iot.manager.CovIotDeviceManager
 import io.agora.scene.convoai.iot.manager.CovIotPresetManager
 import io.agora.scene.convoai.iot.ui.dialog.CovIotDeviceSettingsDialog
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 class CovIotDeviceListActivity : BaseActivity<CovActivityIotDeviceListBinding>() {
 
@@ -260,7 +260,7 @@ class CovIotDeviceListActivity : BaseActivity<CovActivityIotDeviceListBinding>()
         dialog.show(supportFragmentManager, "iot_settings")
     }
 
-    private suspend fun fetchIotPresetsAsync(): Boolean = suspendCoroutine { cont ->
+    private suspend fun fetchIotPresetsAsync(): Boolean = suspendCancellableCoroutine { cont ->
         CovIotApiManager.fetchPresets { err, presets ->
             if (err == null) {
                 CovIotPresetManager.setPresetList(presets)

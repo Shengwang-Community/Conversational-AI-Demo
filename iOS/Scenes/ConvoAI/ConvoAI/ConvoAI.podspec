@@ -26,7 +26,7 @@ TODO: Add long description of the pod here.
   s.author           = { 'Agora Lab' => 'developer@agora.io' }
   s.source           = { :git => 'https://github.com/AgoraIO-Community/Agent.git', :tag => s.version.to_s }
 
-  s.ios.deployment_target = '15.0'
+  s.ios.deployment_target = '16.0'
   
   s.xcconfig = {'ENABLE_BITCODE' => 'NO'}
   
@@ -44,8 +44,9 @@ TODO: Add long description of the pod here.
   
   s.dependency 'SnapKit'
   s.dependency 'SVProgressHUD'
-  s.dependency 'AgoraRtcEngine_iOS'
-  s.dependency 'AgoraRtm/RtmKit', '2.2.3'
+  s.dependency 'ShengwangRtcEngine_iOS'
+  s.dependency 'AvatarKitRTC', '1.0.1'
+  s.dependency 'ShengWang-Rtm/RtmKit', '2.3.0'
   s.dependency 'agent-client-toolkit-swift', '2.10.1'
   s.dependency 'SwifterSwift/UIKit', '6.2.0'
   s.dependency 'Common'

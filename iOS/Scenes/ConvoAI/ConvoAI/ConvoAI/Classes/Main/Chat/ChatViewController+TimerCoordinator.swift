@@ -31,7 +31,7 @@ extension ChatViewController: AgentTimerCoordinatorDelegate {
         addLog("[Call] agentUseLimitedTimerEnd")
         sideNavigationBar.stop()
         stopLoading()
-        stopAgent()
+        stopAgent(pttCause: "sessionLimit")
         let title = ResourceManager.L10n.ChannelInfo.timeLimitdAlertTitle
         if let preset = AppContext.settingManager().preset, let callTimeLimitSecond = preset.callTimeLimitSecond {
             var min = callTimeLimitSecond / 60
@@ -66,7 +66,7 @@ extension ChatViewController: AgentTimerCoordinatorDelegate {
             addLog("agent is not joined in 10 seconds")
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Join.joinTimeoutTips)
             self.stopLoading()
-            self.stopAgent()
+            self.stopAgent(pttCause: "joinTimeout")
         }
         
         timerCoordinator.stopJoinChannelTimer()

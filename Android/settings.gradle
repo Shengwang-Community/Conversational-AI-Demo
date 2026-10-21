@@ -16,6 +16,11 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        // The mirror may publish Spatius metadata before its AARs are available.
+        exclusiveContent {
+            forRepository { mavenCentral() }
+            filter { includeGroup 'ai.spatius' }
+        }
         maven { url 'https://maven.aliyun.com/repository/google' }
         maven { url 'https://maven.aliyun.com/repository/central' }
         maven { url 'https://maven.aliyun.com/repository/public' }

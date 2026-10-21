@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AVFoundation
 import AgoraAgentClientToolkit
 import SVProgressHUD
 import Common
@@ -13,6 +14,7 @@ import Common
 // MARK: - AgentControlToolbarDelegate
 extension ChatViewController: CallControlbarDelegate {
     func openPhotoLibrary() {
+        pushToTalk.forcedRelease("overlay")
         guard let preset = AppContext.settingManager().preset else {
             return
         }
@@ -59,12 +61,13 @@ extension ChatViewController: CallControlbarDelegate {
         
         PermissionManager.checkMicrophonePermission { res in
             Task {
-                await self.prepareToStartAgent()
                 await MainActor.run {
                     if !res {
                         self.callControlBar.setMircophoneButtonSelectState(state: true)
+                        self.setupMuteState(state: true)
                     }
                 }
+                await self.prepareToStartAgent()
             }
         }
     }
@@ -107,6 +110,24 @@ extension ChatViewController: CallControlbarDelegate {
 }
 
 extension ChatViewController {
+    @objc internal func handlePushToTalkAppWillResignActive() {
+        pushToTalk.forcedRelease("appInactive")
+    }
+
+    // AVAudioSession.interruptionNotification is deprecated in the iOS 27 SDK; it is kept here
+    // until a replacement is evaluated on devices. The controller only runs on the main thread.
+    @objc internal func handlePushToTalkAudioInterruption(_ notification: Notification) {
+        guard let typeValue = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+              AVAudioSession.InterruptionType(rawValue: typeValue) == .began else { return }
+        if Thread.isMainThread {
+            pushToTalk.forcedRelease("audioInterruption")
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.pushToTalk.forcedRelease("audioInterruption")
+            }
+        }
+    }
+
     @objc internal func onClickStopSpeakingButton(_ sender: UIButton) {
         convoAIAPI.interrupt(agentUserId: "\(agentUid)") { error in
         }
@@ -118,7 +139,7 @@ extension ChatViewController {
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.endCallLeave)
         }
         stopLoading()
-        stopAgent()
+        stopAgent(pttCause: "hangUp")
     }
     
     private func clickCaptionsButton(state: Bool) {
@@ -147,22 +168,33 @@ extension ChatViewController {
     @MainActor
     func prepareToStartAgent() async {
         startLoading()
+        isManualCall = AppContext.settingManager().isManualEosActive
+        pushToTalk.beginSession(isManualCall)
+        pushToTalk.setUserMuted(isUserMuted)
+        applyRecordingVolume()
+        // A manual call replaces the idle "you may start speaking" hint.
+        agentStateView.setSilentText(isManualCall ? ResourceManager.localizedString("conversation.ptt.idle_hint") : nil)
         generateUid()
         
-        Task {
+        callPreparationTask?.cancel()
+        callPreparationId = UUID()
+        let attempt = callPreparationId
+        callPreparationTask = Task { [weak self] in
+            guard let self else { return }
             do {
                 if !rtmManager.isLogin {
                     try await loginRTM()
                 }
-                
+                try Task.checkCancellation()
                 try await fetchTokenIfNeeded()
-                try await fetchOpenSourceAvatarTokenIfNeeded()
-                await MainActor.run {
-                    if callControlBar.style == .startButton { return }
-                    startAgentRequest()
-                    joinChannel()
-                }
+                try Task.checkCancellation()
+                try await prepareSpatiusAvatar()
+                try Task.checkCancellation()
+                guard callPreparationId == attempt, callControlBar.style != .startButton else { return }
+                startAgentRequest()
+                joinChannel()
             } catch {
+                guard !Task.isCancelled, callPreparationId == attempt else { return }
                 addLog("Failed to prepare agent: \(error)")
                 handleStartError()
             }
@@ -175,6 +207,7 @@ extension ChatViewController {
     }
     
     private func showMicroPhonePermissionAlert() {
+        pushToTalk.forcedRelease("overlay")
         let title = ResourceManager.L10n.Error.microphonePermissionTitle
         let description = ResourceManager.L10n.Error.microphonePermissionDescription
         let cancel = ResourceManager.L10n.Error.permissionCancel
@@ -187,6 +220,7 @@ extension ChatViewController {
     }
     
     private func showCameraPermissionAlert() {
+        pushToTalk.forcedRelease("overlay")
         let title = ResourceManager.L10n.Photo.permissionCameraTitle
         let description = ResourceManager.L10n.Photo.permissionCameraMessage
         let cancel = ResourceManager.L10n.Photo.permissionCancel
@@ -200,11 +234,64 @@ extension ChatViewController {
     
     internal func setupMuteState(state: Bool) {
         addLog("setupMuteState: \(state)")
+        isUserMuted = state
+        pushToTalk.setUserMuted(state)
         agentStateView.setMute(state)
-        rtcManager.muteLocalAudio(mute: state)
+        applyRecordingVolume()
     }
-    
+
+    internal func applyRecordingVolume() {
+        if isManualCall { addLog("[PTT] gateOpen=\(pushToTalk.gateOpen) userMuted=\(isUserMuted)") }
+        // Silent while the user is muted, or while a manual call's gate is closed.
+        rtcManager.muteLocalAudio(mute: isUserMuted || (isManualCall && !pushToTalk.gateOpen))
+    }
+
+    @objc internal func pushToTalkDown(_ sender: UIButton, forEvent event: UIEvent) {
+        guard AppContext.stateManager().agentState == .connected else { return }
+        pushToTalkMoved(sender, forEvent: event)
+        pushToTalk.press()
+        if pushToTalk.phase == .holding { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+    }
+
+    // Passes the finger to the glow, in the glow's coordinates, so its deep spot follows the finger.
+    @objc internal func pushToTalkMoved(_ sender: UIButton, forEvent event: UIEvent) {
+        guard let touch = event.touches(for: sender)?.first else { return }
+        pushToTalkOverlay.setTouchPoint(touch.location(in: pushToTalkOverlay))
+    }
+
+    @objc internal func pushToTalkUp() {
+        pushToTalk.release()
+    }
+
+    @objc internal func pushToTalkCancel() {
+        pushToTalk.forcedRelease("touchCancel")
+    }
+
+    internal func updatePushToTalkButton() {
+        let visible = isManualCall && AppContext.stateManager().agentState == .connected
+        let holding = pushToTalk.phase == .holding
+        pushToTalkButton.isHidden = !visible
+        // Transparent, not hidden, while holding: the button must keep tracking this touch until the finger lifts.
+        // It fades back with the glow.
+        if holding {
+            pushToTalkButton.layer.removeAllAnimations()
+            pushToTalkButton.alpha = 0
+        } else if pushToTalkButton.alpha < 1 {
+            UIView.animate(withDuration: 0.12) { self.pushToTalkButton.alpha = 1 }
+        }
+        // The overlay only draws; the button keeps the touch, so lifting anywhere releases.
+        pushToTalkOverlay.setHolding(visible && holding)
+        agentStateView.snp.updateConstraints { make in
+            make.bottom.equalTo(callControlBar.snp.top).offset(visible ? -92 : -24)
+        }
+        annotationView.snp.updateConstraints { make in
+            make.bottom.equalTo(callControlBar.snp.top).offset(visible ? -162 : -94)
+        }
+    }
+
     internal func startLoading() {
+        // Lock call settings during token/RTM preparation as well as after joining.
+        AppContext.stateManager().updateAgentState(.disconnected)
         callControlBar.style = .controlButtons
         navivationBar.style = .active
         annotationView.showLoading()

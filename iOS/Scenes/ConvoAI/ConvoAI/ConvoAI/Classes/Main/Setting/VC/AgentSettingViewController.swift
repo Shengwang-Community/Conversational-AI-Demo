@@ -281,6 +281,10 @@ extension AgentSettingViewController: AgentSettingsViewDelegate {
         }
         AppContext.settingManager().updateSmartPauseState(isOn)
     }
+
+    func agentSettingsViewDidToggleManualEos(_ view: AgentSettingsView, isOn: Bool) {
+        AppContext.settingManager().manualEos = isOn
+    }
     
     func agentSettingsViewDidTapTranscriptRender(_ view: AgentSettingsView, sender: UIButton) {
         selectTableMask.isHidden = false
@@ -427,6 +431,11 @@ extension AgentSettingViewController: AgentSettingDelegate {
 
     func settingManager(_ manager: AgentSettingManager, smartPauseStateDidUpdated state: Bool) {
         agentSettingsView.updateSmartPauseState(state)
+    }
+
+    func settingManager(_ manager: AgentSettingManager, manualEosStateDidUpdated state: Bool) {
+        agentSettingsView.updateManualEosState(state)
+        channelInfoView.updateAiVadState()
     }
     
     func settingManager(_ manager: AgentSettingManager, transcriptModeDidUpdated mode: TranscriptDisplayMode) {

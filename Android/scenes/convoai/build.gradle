@@ -39,6 +39,9 @@ dependencies {
     implementation project(':common')
     implementation project(':scenes:convoai:iot')
     implementation libs.agora.agent.client.toolkit
+    implementation libs.spatius.avatar
+    implementation libs.spatius.avatar.rtc
+    implementation libs.androidx.window
     
     // CameraX dependencies
     implementation libs.camerax.core
@@ -47,7 +50,12 @@ dependencies {
     implementation libs.camerax.view
     
     // Third-party date time picker library
-    implementation libs.datetime.picker
+    implementation(libs.datetime.picker) {
+        // Kotlin 2.2's Parcelize runtime already contains these legacy parcel classes.
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-android-extensions-runtime'
+    }
+    // AvatarKit exposes Guava only at runtime; CameraX needs ListenableFuture at compile time.
+    implementation 'com.google.guava:guava:33.5.0-android'
     
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit

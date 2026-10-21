@@ -1,6 +1,6 @@
 # Repository guide
 
-For mobile work, read [AI_WORKFLOW.md](AI_WORKFLOW.md) and the relevant [Android](Android/AGENTS.md) or [iOS](iOS/AGENTS.md) guide. Other platforms use their local guidance.
+For a product requirement, start with the [maintainer workflow](AI_ENGINEERING.md) to identify affected platforms and brand differences. Read [AI_WORKFLOW.md](AI_WORKFLOW.md) and the relevant [Android](Android/AGENTS.md), [iOS](iOS/AGENTS.md) or [Web](Web/Scenes/VoiceAgent/AGENTS.md) guide for implementation.
 
 - Use judgment to complete the user's goal with appropriate tools, checks and review.
 - Preserve existing user changes, local App IDs and credentials. Keep secrets out of docs and commits.

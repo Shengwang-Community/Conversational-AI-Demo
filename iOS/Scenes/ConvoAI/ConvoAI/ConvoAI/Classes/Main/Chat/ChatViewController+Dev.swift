@@ -50,7 +50,7 @@ extension ChatViewController: DeveloperConfigDelegate {
     public func devConfigDidSwitchServer(_ config: DeveloperConfig) {
         if agentIsJoined {
             stopLoading()
-            stopAgent()
+            stopAgent(pttCause: "environmentChanged")
         }
     }
     

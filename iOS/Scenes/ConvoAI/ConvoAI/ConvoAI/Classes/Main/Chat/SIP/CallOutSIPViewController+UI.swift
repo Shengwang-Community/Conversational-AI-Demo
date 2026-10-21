@@ -173,37 +173,45 @@ extension CallOutSipViewController {
     
     private func performCall() {
         showCallingView()
-        channelName = "agent_\(UUID().uuidString.prefix(8))"
+        // Bind this call to its own channel and number. Closing the call or the page cancels the task, and the task
+        // checks for cancellation after every await: a call closed before /call never subscribes or sends it, and a
+        // /call result that arrives after the close never updates the UI. The server still places a /call already sent.
+        let channel = "agent_\(UUID().uuidString.prefix(8))"
+        let callee = phoneNumber
+        channelName = channel
         if let presetName = AppContext.settingManager().preset?.name, !presetName.isEmpty {
             LatencyMetricsManager.shared.beginSession(
                 presetName: presetName,
                 presetDisplayName: AppContext.settingManager().preset?.displayName,
-                channelName: channelName
+                channelName: channel
             )
         }
         agentUid = AppContext.agentUid
-        Task {
+        callTask?.cancel()
+        // Inherits the main actor, so nothing else runs between a cancellation check and the code after it.
+        callTask = Task { [self] in
             do {
                 if !rtmManager.isLogin {
                     try await loginRTM()
                 }
-                await MainActor.run {
-                    convoAIAPI.subscribeMessage(channelName: channelName) { [weak self] err in
-                        if let error = err {
-                            self?.addLog("[subscribeMessage] <<<< error: \(error.message)")
-                        }
+                try Task.checkCancellation()
+                convoAIAPI.subscribeMessage(channelName: channel) { [weak self] err in
+                    if let error = err {
+                        self?.addLog("[subscribeMessage] <<<< error: \(error.message)")
                     }
                 }
-                try await startRequest()
-                await MainActor.run {
-                    prepareToFetchSIPState()
-                    AppContext.stateManager().updateRoomId(channelName)
-                    AppContext.stateManager().updateUserId(uid)
-                    startTimer()
-                    navivationBar.netStateView.isHidden = true
-                }
+                let agentId = try await startRequest(channelName: channel, phoneNumber: callee)
+                try Task.checkCancellation()
+                applyStartedCall(agentId: agentId)
+                prepareToFetchSIPState()
+                AppContext.stateManager().updateRoomId(channel)
+                AppContext.stateManager().updateUserId(uid)
+                startTimer()
+                navivationBar.netStateView.isHidden = true
             } catch {
                 addLog("Failed to start call: \(error)")
+                // A cancelled call was already reset by the close path; a late error for it must not report again.
+                guard !(error is CancellationError), !Task.isCancelled else { return }
                 if let convoError = error as? ConvoAIError, convoError.code == 1439 {
                     SVProgressHUD.showError(withStatus: ResourceManager.L10n.Sip.callLimitExceeded)
                 } else {
@@ -215,6 +223,8 @@ extension CallOutSipViewController {
     }
     
     @objc func closeConnect() {
+        callTask?.cancel() // A call start still in flight stops at its next await.
+        callTask = nil
         showPrepareCallView()
         uploadLatestLatencyReportIfNeeded()
         convoAIAPI.unsubscribeMessage(channelName: channelName) { error in

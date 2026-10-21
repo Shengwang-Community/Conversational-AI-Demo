@@ -32,11 +32,6 @@ class DebugCovConfigFragment : BaseFragment<CommonDebugCovConfigFragmentBinding>
         val scenario: Int?
     )
 
-    private data class ServerAudioScenarioOption(
-        val label: String,
-        val scenario: String?
-    )
-
     companion object {
         private const val TAG = "DebugCovConfigFragment"
 
@@ -149,18 +144,6 @@ class DebugCovConfigFragment : BaseFragment<CommonDebugCovConfigFragmentBinding>
                 }
             }
 
-            updateServerAudioScenarioValue()
-            layoutServerAudioScenario.setOnClickListener {
-                showServerAudioScenarioDialog(
-                    title = getString(R.string.common_debug_server_audio_scenario),
-                    options = serverAudioScenarioOptions(),
-                    selectedScenario = DebugConfigSettings.serverAudioScenario
-                ) {
-                    DebugConfigSettings.setServerAudioScenario(it)
-                    updateServerAudioScenarioValue()
-                }
-            }
-
             etApiParameter.setHint(R.string.common_debug_preset_hint)
             etApiParameter.setText(DebugConfigSettings.convoAIParameter)
             etApiParameter.setOnFocusChangeListener { _, hasFocus ->
@@ -246,26 +229,10 @@ class DebugCovConfigFragment : BaseFragment<CommonDebugCovConfigFragmentBinding>
         return commonAudioScenarioOptions() + AudioScenarioOption("AUDIO_SCENARIO_AI_CLIENT (10)", 10)
     }
 
-    private fun serverAudioScenarioOptions(): List<ServerAudioScenarioOption> {
-        return listOf(
-            ServerAudioScenarioOption(getString(R.string.common_debug_audio_scenario_not_selected), null),
-            ServerAudioScenarioOption("default", "default"),
-            ServerAudioScenarioOption("chorus", "chorus"),
-            ServerAudioScenarioOption("aiserver", "aiserver")
-        )
-    }
-
     private fun updateAudioScenarioValue() {
         val selectedScenario = DebugConfigSettings.audioScenario
         val selectedOption = clientAudioScenarioOptions().firstOrNull { it.scenario == selectedScenario }
         mBinding?.tvAudioScenarioValue?.text =
-            selectedOption?.label ?: getString(R.string.common_debug_audio_scenario_not_selected)
-    }
-
-    private fun updateServerAudioScenarioValue() {
-        val selectedScenario = DebugConfigSettings.serverAudioScenario
-        val selectedOption = serverAudioScenarioOptions().firstOrNull { it.scenario == selectedScenario }
-        mBinding?.tvServerAudioScenarioValue?.text =
             selectedOption?.label ?: getString(R.string.common_debug_audio_scenario_not_selected)
     }
 
@@ -306,84 +273,11 @@ class DebugCovConfigFragment : BaseFragment<CommonDebugCovConfigFragmentBinding>
         dialog.show()
     }
 
-    private fun showServerAudioScenarioDialog(
-        title: String,
-        options: List<ServerAudioScenarioOption>,
-        selectedScenario: String?,
-        onSelected: (String?) -> Unit
-    ) {
-        val context = context ?: return
-        val selectedIndex = options.indexOfFirst { it.scenario == selectedScenario }
-            .takeIf { it >= 0 } ?: 0
-        val dialogBinding = CommonDebugAudioScenarioDialogBinding.inflate(LayoutInflater.from(context))
-        dialogBinding.tvTitle.text = title
-
-        val dialog = Dialog(context).apply {
-            requestWindowFeature(Window.FEATURE_NO_TITLE)
-            setContentView(dialogBinding.root)
-            window?.apply {
-                setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-                attributes = attributes.apply {
-                    windowAnimations = 0
-                    width = (resources.displayMetrics.widthPixels * 0.84f).toInt()
-                    height = ViewGroup.LayoutParams.WRAP_CONTENT
-                }
-            }
-        }
-
-        dialogBinding.rvOptions.layoutManager = LinearLayoutManager(context)
-        dialogBinding.rvOptions.adapter = ServerAudioScenarioOptionsAdapter(options, selectedIndex) { which ->
-            onSelected(options[which].scenario)
-            dialog.dismiss()
-        }
-        dialogBinding.btnCancel.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        dialog.show()
-    }
-
     private class AudioScenarioOptionsAdapter(
         private val options: List<AudioScenarioOption>,
         private val selectedIndex: Int,
         private val onSelect: (Int) -> Unit
     ) : RecyclerView.Adapter<AudioScenarioOptionsAdapter.ViewHolder>() {
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            return ViewHolder(
-                CommonDebugAudioScenarioOptionItemBinding.inflate(
-                    LayoutInflater.from(parent.context),
-                    parent,
-                    false
-                )
-            )
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            holder.bind(options[position].label, position == selectedIndex)
-            holder.itemView.setOnClickListener {
-                onSelect(position)
-            }
-        }
-
-        override fun getItemCount(): Int = options.size
-
-        private class ViewHolder(
-            private val binding: CommonDebugAudioScenarioOptionItemBinding
-        ) : RecyclerView.ViewHolder(binding.root) {
-
-            fun bind(label: String, selected: Boolean) {
-                binding.tvText.text = label
-                binding.ivIcon.visibility = if (selected) View.VISIBLE else View.INVISIBLE
-            }
-        }
-    }
-
-    private class ServerAudioScenarioOptionsAdapter(
-        private val options: List<ServerAudioScenarioOption>,
-        private val selectedIndex: Int,
-        private val onSelect: (Int) -> Unit
-    ) : RecyclerView.Adapter<ServerAudioScenarioOptionsAdapter.ViewHolder>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
             return ViewHolder(

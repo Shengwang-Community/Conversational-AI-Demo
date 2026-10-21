@@ -16,7 +16,7 @@
 ### 📱 1.1 环境准备
 
 - Xcode 15.0 及以上版本
-- iOS 15.0 及以上的手机设备
+- iOS 16.0 及以上的手机设备
 
 ### ⚙️ 1.2 运行项目
 
@@ -58,30 +58,27 @@
 ``` Swift
     static var IS_OPEN_SOURCE: Bool = true
     
-    #----------- AppId --------------
-    static let APP_ID: String = <声网 App ID>
-    static let CERTIFICATE: String? = <声网 App Certificate>
+    //----------- AppId --------------
+    static let AG_APP_ID: String = <声网 App ID>
+    static let AG_APP_CERTIFICATE: String = <声网 App Certificate>
     
-    #----------- Basic Auth ---------------
+    //----------- Basic Auth ---------------
     static let BASIC_AUTH_KEY: String = <声网 RESTful API KEY>
     static let BASIC_AUTH_SECRET: String = <声网 RESTful API SECRET>
     
-    #----------- LLM -----------
+    //----------- LLM -----------
     static let LLM_URL: String = <LLM 厂商的 API BASE URL>
-    static let LLM_API_KEY: String? = <LLM 厂商的 API KEY>
-    static let LLM_SYSTEM_MESSAGES: String? = <LLM Prompt>
-    static let LLM_MODEL: String? = <LLM Model>
+    static let LLM_API_KEY: String = <LLM 厂商的 API KEY>
+    static let LLM_SYSTEM_MESSAGES: [[String: Any]] = <LLM Prompt>
+    static let LLM_PARAMS: [String: Any] = <LLM 厂商参数>
     
-    #----------- TTS -----------
+    //----------- TTS -----------
     static let TTS_VENDOR: String = <TTS 厂商>
     static let TTS_PARAMS: [String : Any] = <TTS 参数>
 
-    #----------- AVATAR -----------
-    static let AVATAR_ENABLE: Bool = <是否启用AVATAR功能>
-    static let AVATAR_VENDOR: String = <AVATAR 厂商>
-    static let AVATAR_PARAMS: [String: Any] = <AVATAR 参数>
 ```
 
+- 开源模式不支持数字人，`KeyCenter.swift` 不再提供数字人配置项，通话设置中不会显示数字人入口。非开源模式仍可通过支持数字人的预置或自定义智能体使用数字人。
 - 在 iOS 目录执行 `pod install` 后运行项目，即可开始您的体验
 
 ## 🗂️ 二、项目结构导览
@@ -110,23 +107,24 @@
 
 ### 2.3 Toolkit 正式包接入
 
-`iOS/Podfile` 已配置以下发布包依赖，并通过清华 CocoaPods Specs 镜像解析：
+The Podfile downloads the official Toolkit binary and uses a local spec to select the domestic RTC and RTM Pods:
 
 ```ruby
-pod 'agent-client-toolkit-swift', '2.10.1'
-pod 'AgoraRtm', '2.2.3', :subspecs => ['RtmKit']
+pod 'ShengwangRtcEngine_iOS', '4.6.4'
+pod 'agent-client-toolkit-swift', :podspec => 'ThirdParty/AgentClientToolkit/agent-client-toolkit-swift.podspec.json'
+pod 'ShengWang-Rtm', '2.3.0', :subspecs => ['RtmKit']
 ```
 
 首次切换或本地索引尚未更新时，在 Demo 仓库根目录执行：
 
 ```bash
 cd iOS
-pod _1.16.2_ install --repo-update
+pod update AvatarKitRTC AvatarKitAgoraBridge agent-client-toolkit-swift ConvoAI IoT --no-repo-update
 ```
 
 打开 `Agent.xcworkspace` 编译运行。本地和 Jenkins 都通过 CocoaPods 下载正式 XCFramework，无需拉取 Toolkit 源码。
 
-Swift 代码使用 `import AgoraAgentClientToolkit`。Toolkit 无需配置 `:path` 或手动添加 XCFramework；Podfile 中 `ConvoAI`、`Common` 等 Demo 自有模块的 `:path` 配置仍用于加载本仓库业务代码。升级 Toolkit 时同步更新 `iOS/Podfile` 与 `iOS/Scenes/ConvoAI/ConvoAI/ConvoAI.podspec` 中的版本。
+Swift imports remain `AgoraAgentClientToolkit`, `AgoraRtcKit` and `AgoraRtmKit`. The local spec changes only the RTC and RTM dependencies; see [the compatibility note](../../ThirdParty/AgentClientToolkit/README.md). When upgrading Toolkit, update that spec and `ConvoAI.podspec`, then validate against the selected RTM version.
 
 Demo 将 AINS 开关传给 `loadAudioSettings(scenario:enableAins:)`，默认关闭，切换音频路由后保持相同选择。
 

@@ -209,10 +209,8 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity() {
         window.navigationBarColor = Color.TRANSPARENT
 
         // Step 3: Handle notch screens
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            window.attributes.layoutInDisplayCutoutMode =
-                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-        }
+        window.attributes.layoutInDisplayCutoutMode =
+            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
 
         // Step 4: Set system UI visibility based on immersive mode
         when (immersiveMode) {

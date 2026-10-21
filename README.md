@@ -39,6 +39,10 @@
 | iOS | CocoaPods `agent-client-toolkit-swift` | `2.10.1` | [iOS](iOS/Scenes/ConvoAI/README.md) |
 | Web | npm `agora-agent-client-toolkit` | `2.10.0` | [Web](Web/Scenes/VoiceAgent/README.md) |
 
+### 开发者参考
+
+本仓库公开 Demo 源码供开发者参考，目前不接受外部 PR。项目维护方式见 [AI 工程化说明](AI_ENGINEERING.md)，AI 工具可从 [AGENTS.md](AGENTS.md) 开始。
+
 ---
 
 ## ❓ 遇到困难，该如何联系声网获取协助

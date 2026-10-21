@@ -136,6 +136,7 @@
 "error.join.error.resource.limit" = "The current preset resources are out of limit. Please try again later";
 "error.network.disconnect" = "Network error. Please check yournetwork settings.";
 "error.join.error.avatar.limit" = "All avatars are busy now. Please try again later.";
+"error.token.renew.failed" = "Failed to retrieve token.";
 "error.agent.is.not.exist" = "Failed to retrieve agent. No matching entry found in the current database";
 "error.agent.is.offline" = "This agent is no longer available. Please contact Agora staff.";
 "error.agent.list.fetch.failed" = "Page failed to load. Please try again.";
@@ -184,7 +185,6 @@
 "devmode.request.namespace.hint" = "Enter service namespace";
 "devmode.request.namespace.desc" = "Leave empty to keep the existing headers. Sets X-Service-Namespace and preserves other headers.";
 "devmode.client.audio.scenario" = "Client Audio Scenario";
-"devmode.server.audio.scenario" = "Server Audio Scenario";
 "devmode.switched.environment" = "Switched to %@";
 "devmode.field.saved" = "%@ saved";
 "devmode.field.cleared" = "%@ cleared";
@@ -379,3 +379,21 @@
 
 "devmode.field.enabled" = "%@ enabled";
 "devmode.field.disabled" = "%@ disabled";
+
+// Local avatar rendering
+"conversation.avatar.render.failed" = "The avatar failed to load. The call has ended. Please try again.";
+
+"conversation.avatar.configuration.changed" = "The avatar configuration changed and the call has ended. Restart the app to try again.";
+"conversation.avatar.device.unsupported" = "This device can't run this avatar. Turn the avatar off and start the call again.";
+
+// Walkie-Talkie Mode interaction
+"settings.manual_eos" = "Walkie-Talkie Mode";
+"settings.manual_eos.tips" = "Hold the talk button to speak and release to send each turn. Normal mode detects the end of each turn automatically and supports Intelligent Interruption Handling.";
+"settings.manual_eos.active_hint" = "Intelligent Interruption Handling and Intelligent Pause are unavailable in Walkie-Talkie Mode.";
+"conversation.ptt.idle_hint" = "Hold the button below to talk";
+"conversation.ptt.hold" = "Hold to talk";
+"conversation.ptt.release" = "Release to send";
+"conversation.ptt.unmute" = "Turn on the microphone first.";
+"conversation.ptt.sos_failed" = "Could not start speaking. Please try again.";
+"conversation.ptt.too_short" = "The speaking time is too short.";
+"conversation.ptt.limit" = "The speaking time limit was reached.";

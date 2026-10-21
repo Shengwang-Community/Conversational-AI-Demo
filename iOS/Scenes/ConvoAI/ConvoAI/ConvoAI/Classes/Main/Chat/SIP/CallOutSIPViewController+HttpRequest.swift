@@ -38,7 +38,8 @@ extension CallOutSipViewController {
         }
     }
     
-    func startRequest() async throws {
+    /// Sends /call for one call and returns the agent ID. The caller applies it only if the call was not cancelled.
+    func startRequest(channelName: String, phoneNumber: String) async throws -> String? {
         callingView.tipsLabel.text = ResourceManager.L10n.Sip.sipCallingTips
         updateCharacterInformation()
         return try await withCheckedThrowingContinuation { continuation in
@@ -66,30 +67,28 @@ extension CallOutSipViewController {
                 ]
             ]
             let param = (CommonFeature.removeNilValues(from: parameter) as? [String: Any]) ?? [:]
-            agentManager.callSIP(parameter: param, completion: { [weak self] err, res in
-                guard let self = self else {
-                    return
-                }
-                
+            agentManager.callSIP(parameter: param, completion: { err, res in
                 if let error = err {
                     continuation.resume(throwing: error)
                     return
                 }
-                if let agentId = res?.agentId {
-                    self.remoteAgentId = agentId
-                    AppContext.stateManager().updateRoomState(.connected)
-                    AppContext.stateManager().updateAgentState(.connected)
-                    AppContext.stateManager().updateAgentId(agentId)
-                    if let presetName = AppContext.settingManager().preset?.name,
-                       !presetName.isEmpty {
-                        LatencyMetricsManager.shared.updateAgentId(
-                            presetName: presetName,
-                            agentId
-                        )
-                    }
-                }
-                continuation.resume()
+                continuation.resume(returning: res?.agentId)
             })
+        }
+    }
+    
+    func applyStartedCall(agentId: String?) {
+        guard let agentId = agentId else { return }
+        remoteAgentId = agentId
+        AppContext.stateManager().updateRoomState(.connected)
+        AppContext.stateManager().updateAgentState(.connected)
+        AppContext.stateManager().updateAgentId(agentId)
+        if let presetName = AppContext.settingManager().preset?.name,
+           !presetName.isEmpty {
+            LatencyMetricsManager.shared.updateAgentId(
+                presetName: presetName,
+                agentId
+            )
         }
     }
 }

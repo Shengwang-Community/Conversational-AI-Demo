@@ -32,6 +32,8 @@ extension ChatViewController: AgoraRtcEngineDelegate {
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, connectionChangedTo state: AgoraConnectionState, reason: AgoraConnectionChangedReason) {
         addLog("[RTC Call Back] connectionChangedToState: \(state), reason: \(reason)")
+        if state == .reconnecting { pushToTalk.setReconnecting(true) }
+        else if state == .connected { pushToTalk.setReconnecting(false) }
         if reason == .reasonInterrupted {
             animateView.updateAgentState(.idle)
             AppContext.stateManager().updateAgentState(.disconnected)
@@ -51,13 +53,17 @@ extension ChatViewController: AgoraRtcEngineDelegate {
                 agentStateView.isHidden = false
             }
             dismissErrorToast()
+            updatePushToTalkButton()
         } else if reason == .reasonLeaveChannel {
             dismissErrorToast()
         }
         
         if state == .failed {
+            pushToTalk.setReconnecting(true)
+            pushToTalk.localReset("rtcFailed")
             showErrorToast(text: ResourceManager.L10n.Error.roomError)
         }
+        updatePushToTalkButton()
     }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, didJoinChannel channel: String, withUid uid: UInt, elapsed: Int) {
@@ -95,10 +101,12 @@ extension ChatViewController: AgoraRtcEngineDelegate {
             activeFuncsView.isHidden = false
             messageView.setRealtimeDataToggleVisible(true)
             AppContext.stateManager().updateAgentState(.connected)
+            applyRecordingVolume()
             if !isSelfSubRender {
                 agentStateView.isHidden = false
             }
             SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.agentJoined)
+            updatePushToTalkButton()
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 SVProgressHUD.showInfo(withStatus: ResourceManager.L10n.Conversation.userSpeakToast)
@@ -109,19 +117,17 @@ extension ChatViewController: AgoraRtcEngineDelegate {
     }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, didOfflineOfUid uid: UInt, reason: AgoraUserOfflineReason) {
-        addLog("[RTC Call Back] didOfflineOfUid uid: \(uid)")
-        if uid == agentUid {
-            agentIsJoined = false
-        }
-        
-        if uid == avatarUid {
-            avatarIsJoined = false
-        }
-        
-        animateView.updateAgentState(.idle)
-        AppContext.stateManager().updateAgentState(.disconnected)
-        showErrorToast(text: ResourceManager.L10n.Conversation.agentLeave)
-        agentStateView.isHidden = true
+        addLog("[RTC Call Back] didOfflineOfUid uid: \(uid), reason: \(reason.rawValue)")
+        if uid == agentUid { agentIsJoined = false }
+        if uid == avatarUid { avatarIsJoined = false }
+        // Only the agent, or the avatar in avatar mode, ends the call; other uids are ignored.
+        guard uid == agentUid || (isEnableAvatar() && uid == avatarUid),
+              AppContext.stateManager().agentState != .unload else { return }
+        stopLoading()
+        stopAgent(pttCause: "agentOffline")
+        SVProgressHUD.showInfo(withStatus: reason == .quit
+            ? ResourceManager.L10n.Conversation.endCallLeave
+            : ResourceManager.L10n.Conversation.agentLeave)
     }
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, tokenPrivilegeWillExpire token: String) {
@@ -133,12 +139,17 @@ extension ChatViewController: AgoraRtcEngineDelegate {
             types: [.rtc, .rtm]
         ) { [weak self] token in
             self?.addLog("regenerate token is: \(token ?? "")")
-            guard let self = self, let newToken = token else {
+            guard let self = self else { return }
+            guard let newToken = token else {
+                DispatchQueue.main.async { self.handleTokenRenewalFailure() }
                 return
             }
             self.addLog("will update token: \(newToken)")
             self.rtcManager.renewToken(token: newToken)
-            self.rtmManager.renewToken(token: newToken)
+            self.rtmManager.renewToken(token: newToken) { [weak self] succeeded in
+                guard !succeeded else { return }
+                DispatchQueue.main.async { self?.handleRtmTokenRenewError() }
+            }
             self.token = newToken
         }
     }
@@ -151,6 +162,8 @@ extension ChatViewController: AgoraRtcEngineDelegate {
     
     public func rtcEngine(_ engine: AgoraRtcEngineKit, reportAudioVolumeIndicationOfSpeakers speakers: [AgoraRtcAudioVolumeInfo], totalVolume: Int) {
         speakers.forEach { info in
+            // The local user is reported as uid 0.
+            if info.uid == 0, isManualCall { pushToTalkOverlay.setVolume(Int(info.volume)) }
             if (info.uid == agentUid) {
                 var currentVolume: CGFloat = 0
                 currentVolume = CGFloat(info.volume)
@@ -216,6 +229,7 @@ extension ChatViewController {
     }
     
     internal func startRenderRemoteVideoStream(renderView: UIView) {
+        guard isEnableAvatar(), !isSpatiusAvatar else { return }
         let rtcEngine = rtcManager.getRtcEntine()
         let videoCanvas = AgoraRtcVideoCanvas()
         videoCanvas.uid = UInt(avatarUid)
@@ -250,22 +264,21 @@ extension ChatViewController {
             return
         }
         let independent = (AppContext.settingManager().preset?.presetType?.hasPrefix("independent") == true)
-        let secnario: AgoraAudioScenario = {
-            if isEnableAvatar() {
-                return .default
-            }
-            return independent ? .chorus : .aiClient
-        }()
+        let scenario = DeveloperConfig.shared.resolvedClientAudioScenario(
+            isAvatarEnabled: isEnableAvatar(),
+            isIndependent: independent
+        )
         let ainsEnabled = OnDeviceAins.resolve(
             isDeveloperMode: DeveloperConfig.shared.isDeveloperMode,
             debugEnabled: DeveloperConfig.shared.ainsEnabled
         )
         rtcManager.loadAudioSettings(ainsEnabled: ainsEnabled) {
             convoAIAPI.loadAudioSettings(
-                scenario: DeveloperConfig.shared.resolvedClientAudioScenario(fallback: secnario),
+                scenario: scenario,
                 enableAins: ainsEnabled
             )
         }
+        applyRecordingVolume()
         rtcManager.joinChannel(rtcToken: token, channelName: channelName, uid: uid, isIndependent: independent)
         AppContext.stateManager().updateRoomState(.connected)
         AppContext.stateManager().updateRoomId(channelName)
@@ -280,6 +293,11 @@ extension ChatViewController {
     
     internal func leaveChannel() {
         addLog("[Call] leaveChannel()")
+        callPreparationId = UUID()
+        callPreparationTask?.cancel()
+        callPreparationTask = nil
+        localAvatarSession?.close()
+        localAvatarSession = nil
         channelName = ""
         agentUid = 0
         avatarUid = 0

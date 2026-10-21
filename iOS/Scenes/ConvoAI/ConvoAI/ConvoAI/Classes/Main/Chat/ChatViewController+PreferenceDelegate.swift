@@ -21,9 +21,18 @@ extension ChatViewController: AgentSettingDelegate {
     }
     
     func settingManager(_ manager: AgentSettingManager, aiVadStateDidUpdated state: Bool) {
+        refreshActiveAiVadState()
+    }
+
+    func settingManager(_ manager: AgentSettingManager, manualEosStateDidUpdated state: Bool) {
+        refreshActiveAiVadState()
+    }
+
+    /// Shows the effective AI VAD value: off in Walkie-Talkie Mode, as in the start request.
+    private func refreshActiveAiVadState() {
         activeFuncsView.setState(
             voiceprint: AppContext.stateManager().voiceprint,
-            aivad: state
+            aivad: AppContext.settingManager().effectiveAiVad
         )
     }
 

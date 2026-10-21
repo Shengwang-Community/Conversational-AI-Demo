@@ -48,10 +48,20 @@ extension ChatViewController {
         }
     }
 
-    private func getStartAgentParametersForConvoAI() -> [String: Any] {
+    internal func getStartAgentParametersForConvoAI() -> [String: Any] {
         var local_bvc = true
         if AppContext.settingManager().voiceprintMode != .off {
             local_bvc = false
+        }
+        // Walkie-Talkie Mode masks AI VAD and smart pause and adds the manual turn mode.
+        let manualEos = AppContext.settingManager().isManualEosActive
+        var appFeature: [String: Any] = [
+            "enable_local_bvc": local_bvc,
+            "enable_aivad": AppContext.settingManager().aiVad && !manualEos,
+            "pause_state_enabled": AppContext.settingManager().smartPause && !manualEos
+        ]
+        if manualEos {
+            appFeature["manual_speech_control_mode"] = "manual_sos_and_eos"
         }
         let parameters: [String: Any?] = [
             "app_id": AppContext.shared.appId,
@@ -60,11 +70,7 @@ extension ChatViewController {
             "basic_auth_username": nil,
             "basic_auth_password": nil,
             "preset_type": AppContext.settingManager().preset?.presetType,
-            "app_feature": [
-                "enable_local_bvc": local_bvc,
-                "enable_aivad": AppContext.settingManager().aiVad,
-                "pause_state_enabled": AppContext.settingManager().smartPause
-            ],
+            "app_feature": appFeature,
             "convoai_body": [
                 "graph_id": DeveloperConfig.shared.graphId,
                 "name": nil,
@@ -107,7 +113,9 @@ extension ChatViewController {
                     "sal": getSalParams(),
                     "avatar": [
                         "enable": isEnableAvatar(),
-                        "vendor": AppContext.settingManager().avatar?.vendor ?? "",
+                        "vendor": AppContext.settingManager().isCustomAvatarEnabled
+                            ? AppContext.settingManager().preset?.avatarVendor
+                            : (AppContext.settingManager().avatar?.vendor ?? ""),
                         "params": [
                             "agora_uid": "\(avatarUid)",
                             "avatar_id": AppContext.settingManager().avatar?.avatarId
@@ -120,7 +128,6 @@ extension ChatViewController {
                         "enable_error_message": true,
                         "aivad_force_threshold": nil,
                         "output_audio_codec": nil,
-                        "audio_scenario": nil,
                         "transcript": [
                             "enable": true,
                             "enable_words": enableWords(),
@@ -140,9 +147,7 @@ extension ChatViewController {
         return (CommonFeature.removeNilValues(from: parameters) as? [String: Any]) ?? [:]
     }
     
-    private func getStartAgentParametersForOpenSouce() -> [String: Any] {
-        AppContext.shared.avatarParams["agora_uid"] = "\(avatarUid)"
-        AppContext.shared.avatarParams["agora_token"] = openSourceAvatarToken
+    internal func getStartAgentParametersForOpenSouce() -> [String: Any] {
         let parameters: [String: Any?] = [
             "app_id": AppContext.shared.appId,
             "preset_name": nil,
@@ -193,9 +198,7 @@ extension ChatViewController {
                     ],
                     "sal": getSalParams(),
                     "avatar": [
-                        "enable": AppContext.shared.avatarEnable,
-                        "vendor": AppContext.shared.avatarVendor,
-                        "params": AppContext.shared.avatarParams
+                        "enable": false
                     ],
                     "parameters": [
                         "data_channel": "rtm",
@@ -204,7 +207,6 @@ extension ChatViewController {
                         "enable_error_message": true,
                         "aivad_force_threshold": nil,
                         "output_audio_codec": nil,
-                        "audio_scenario": nil,
                         "transcript": [
                             "enable": true,
                             "enable_words": enableWords(),
@@ -285,43 +287,6 @@ extension ChatViewController {
         }
     }
     
-    internal func fetchOpenSourceAvatarTokenIfNeeded() async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            if !AppContext.shared.isOpenSource {
-                continuation.resume()
-                return
-            }
-            
-            if !AppContext.shared.avatarEnable {
-                continuation.resume()
-                return
-            }
-            
-            if AppContext.shared.certificate.isEmpty {
-                self.openSourceAvatarToken = AppContext.shared.appId
-                continuation.resume()
-                return
-            }
-            
-            NetworkManager.shared.generateToken(
-                channelName: "",
-                uid: "\(avatarUid)",
-                types: [.rtc, .rtm]
-            ) { [weak self] token in
-                guard let self = self else { return }
-                
-                if let token = token {
-                    print("avatar rtc token is : \(token)")
-                    self.openSourceAvatarToken = token
-                    continuation.resume()
-                } else {
-                    continuation.resume(throwing: NSError(domain: "", code: -1,
-                        userInfo: [NSLocalizedDescriptionKey: "generate avatar token error"]))
-                }
-            }
-        }
-    }
-    
     internal func startAgentRequest() {
         addLog("[Call] startAgentRequest()")
         AppContext.stateManager().updateAgentState(.disconnected)
@@ -341,9 +306,15 @@ extension ChatViewController {
         agentIsJoined = false
         avatarIsJoined = false
         
-        convoAIAPI.subscribeMessage(channelName: channelName) { [weak self] err in
-            if let error = err {
-                self?.addLog("[subscribeMessage] <<<< error: \(error.message)")
+        let subscribedChannel = channelName
+        convoAIAPI.subscribeMessage(channelName: subscribedChannel) { [weak self] err in
+            guard let error = err else { return }
+            self?.addLog("[subscribeMessage] <<<< error: \(error.message)")
+            DispatchQueue.main.async {
+                guard let self, self.channelName == subscribedChannel else { return }
+                self.stopLoading()
+                self.stopAgent(pttCause: "rtmFailed")
+                SVProgressHUD.showError(withStatus: ResourceManager.L10n.Error.joinError)
             }
         }
         
@@ -391,7 +362,7 @@ extension ChatViewController {
             }
             
             self.stopLoading()
-            self.stopAgent()
+            self.stopAgent(pttCause: "startFailed")
             
             addLog("start agent failed : \(error.message)")
         }
@@ -423,23 +394,57 @@ extension ChatViewController {
         }
     }
     
-    internal func stopAgent() {
-        addLog("[Call] stopAgent()")
+    /// `pttCause` is logged as the push-to-talk reset cause.
+    internal func stopAgent(pttCause: String) {
+        addLog("[Call] stopAgent() cause=\(pttCause)")
+        pushToTalk.endSession(pttCause)
+        isManualCall = false
+        pushToTalkOverlay.setVolume(0)
+        agentStateView.setSilentText(nil)
+        pushToTalkButton.isHidden = true
         uploadLatestLatencyReportIfNeeded()
         rtmManager.logout(completion: nil)
         convoAIAPI.unsubscribeMessage(channelName: channelName) { error in
             
         }
         stopAgentRequest()
+        // One stop request per agent; closing the page from idle sends none.
+        remoteAgentId = ""
         leaveChannel()
+        rtcManager.muteLocalAudio(mute: false)
         stopRenderLocalVideoStream()
         resetUIDisplay()
         AppContext.stateManager().resetToDefaults()
+        AppContext.stateManager().updateAgentState(.unload)
+        updatePushToTalkButton()
     }
     
     internal func handleStartError() {
         stopLoading()
-        stopAgent()
+        stopAgent(pttCause: "startFailed")
         SVProgressHUD.showError(withStatus: ResourceManager.L10n.Error.joinError)
+    }
+
+    /// Mid-call RTM link failure ends the call like Android (`RTM_FAILED`); the next call logs in again with a new token.
+    internal func handleRtmConnectionFailure() {
+        token = ""
+        guard AppContext.stateManager().agentState != .unload else { return }
+        stopLoading()
+        stopAgent(pttCause: "rtmFailed")
+        SVProgressHUD.showError(withStatus: ResourceManager.L10n.Error.networkDisconnected)
+    }
+
+    /// Token renewal failure ends the call like Android (`TOKEN_FAILED`).
+    internal func handleTokenRenewalFailure() {
+        guard AppContext.stateManager().agentState != .unload else { return }
+        stopLoading()
+        stopAgent(pttCause: "tokenFailed")
+        SVProgressHUD.showError(withStatus: ResourceManager.localizedString("error.token.renew.failed"))
+    }
+
+    /// RTM rejected the renewed token: like Android, the call continues and only a hint is shown.
+    internal func handleRtmTokenRenewError() {
+        token = ""
+        SVProgressHUD.showError(withStatus: ResourceManager.localizedString("error.token.renew.failed"))
     }
 }

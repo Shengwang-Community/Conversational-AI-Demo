@@ -25,6 +25,33 @@ class CovDraggableView @JvmOverloads constructor(
     private var touchDownTime: Long = 0
     private val clickInterval = 150
 
+    private val parentLayoutListener = OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+        keepInsideParent()
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        (parent as? View)?.addOnLayoutChangeListener(parentLayoutListener)
+    }
+
+    override fun onDetachedFromWindow() {
+        (parent as? View)?.removeOnLayoutChangeListener(parentLayoutListener)
+        super.onDetachedFromWindow()
+    }
+
+    private fun keepInsideParent() {
+        val parentView = parent as? ViewGroup ?: return
+        val params = layoutParams as? LayoutParams ?: return
+        if (params.width == LayoutParams.MATCH_PARENT || parentView.height == 0) return
+        val top = params.topMargin.coerceIn(0, (parentView.height - height).coerceAtLeast(0))
+        val left = params.leftMargin.coerceIn(0, (parentView.width - width).coerceAtLeast(0))
+        if (top != params.topMargin || left != params.leftMargin) {
+            params.topMargin = top
+            params.leftMargin = left
+            layoutParams = params
+        }
+    }
+
     init {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         binding = CovDraggableViewBinding.inflate(inflater, this, true)
@@ -72,8 +99,8 @@ class CovDraggableView @JvmOverloads constructor(
                         val height = height
 
                         // Calculate the position after dragging, limited within the parent view
-                        val left = (left + offsetX).coerceIn(0f, (parentWidth - width).toFloat())
-                        val top = (top + offsetY).coerceIn(0f, (parentHeight - height).toFloat())
+                        val left = (left + offsetX).coerceIn(0f, (parentWidth - width).coerceAtLeast(0).toFloat())
+                        val top = (top + offsetY).coerceIn(0f, (parentHeight - height).coerceAtLeast(0).toFloat())
                         val right = left + width
                         val bottom = top + height
 
@@ -94,9 +121,9 @@ class CovDraggableView @JvmOverloads constructor(
                             val parent = parent as ViewGroup
                             val params = layoutParams as LayoutParams
                             // Keep current top position, but clamp to parent bounds
-                            params.topMargin = top.coerceIn(0, parent.height - height)
+                            params.topMargin = top.coerceIn(0, (parent.height - height).coerceAtLeast(0))
                             // Stick to the right edge
-                            params.leftMargin = parent.width - width
+                            params.leftMargin = (parent.width - width).coerceAtLeast(0)
                             layoutParams = params
                             requestLayout()
                         }
