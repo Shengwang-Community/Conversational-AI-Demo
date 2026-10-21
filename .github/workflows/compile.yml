@@ -78,6 +78,8 @@ jobs:
             fi
             sleep $((attempt * 10))
           done
+      # Compile for device: AvatarKit ships only an arm64 simulator slice and Bugly only an x86_64 one, so no
+      # simulator architecture links both. The Podfile raises Pod deployment targets to the app minimum (iOS 16.0).
       - name: Compile
         working-directory: iOS
         run: |
@@ -85,12 +87,10 @@ jobs:
             -workspace Agent.xcworkspace \
             -scheme Agent-cn \
             -configuration Debug \
-            -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -derivedDataPath "$RUNNER_TEMP/ios" \
             CODE_SIGNING_ALLOWED=NO \
-            EXCLUDED_ARCHS=arm64 \
-            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
             build
 
       - name: AINS unit tests
