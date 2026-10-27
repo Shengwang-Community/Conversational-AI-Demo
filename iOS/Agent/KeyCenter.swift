@@ -9,7 +9,7 @@
 struct KeyCenter {
     /**
      Whether to run open-source configuration, disabled by default
-     Enabling this option will use user-defined host, LLM, TTS, and avatar configurations to connect to the ConvoAI service.
+     Enabling this option will use user-defined host, LLM, and TTS configurations to connect to the ConvoAI service.
      The following configuration items will be read:
      AG_APP_ID
      AG_APP_CERTIFICATE
@@ -21,9 +21,6 @@ struct KeyCenter {
      LLM_PARAMS
      TTS_VENDOR
      TTS_PARAMS
-     AVATAR_ENABLE
-     AVATAR_VENDOR
-     AVATAR_PARAMS
      */
     static var IS_OPEN_SOURCE: Bool = true
     
@@ -90,25 +87,4 @@ struct KeyCenter {
      */
     static let TTS_VENDOR: String = ""
     static let TTS_PARAMS: [String : Any] = [:]
-    
-    /**
-     AVATAR
-     Get from AVATAR vendor
-     For example:
-     https://github.com/Shengwang-Community/Conversational-AI-Demo/issues/69
-     
-     static let AVATAR_ENABLE: Bool = true
-     static let AVATAR_VENDOR: String = "vendor name"
-     static let AVATAR_PARAMS: [String: Any] = [
-        "agora_uid":"agent rtc uid",
-        "agora_token":"agent rtc token",
-        "appId":"agora app id",
-        "app_key":"vendor app key",
-        "avatar_id":"vendor avatar id number",
-        "sceneList":[["digital_role":["face_feature_id":"vendor face feature id","position":["x":0,"y":0],"url":"https://xxx"]]]
-     ]
-     */
-    static let AVATAR_ENABLE: Bool = false
-    static let AVATAR_VENDOR: String = ""
-    static let AVATAR_PARAMS: [String: Any] = [:]
 }

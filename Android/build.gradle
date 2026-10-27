@@ -7,7 +7,7 @@ plugins {
 }
 
 ext {
-    compileSdkVersion = 35
-    minSdkVersion = 26
+    compileSdkVersion = 36
+    minSdkVersion = 28
     targetSdkVersion = 35
 }

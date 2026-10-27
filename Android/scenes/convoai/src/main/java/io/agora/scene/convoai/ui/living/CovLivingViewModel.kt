@@ -1,5 +1,8 @@
 package io.agora.scene.convoai.ui.living
 
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,6 +25,9 @@ import io.agora.scene.convoai.R
 import io.agora.scene.convoai.animation.BallAnimState
 import io.agora.scene.convoai.api.CovAgentApiManager
 import io.agora.scene.convoai.api.CovAvatar
+import io.agora.scene.convoai.avatar.SpatiusAvatarSession
+import io.agora.scene.convoai.avatar.SpatiusPrepareResult
+import io.agora.scene.convoai.avatar.SpatiusRenderFailure
 import io.agora.scene.convoai.constant.AgentConnectionState
 import io.agora.scene.convoai.constant.CovAgentManager
 import io.agora.scene.convoai.constant.VoiceprintMode
@@ -61,7 +67,16 @@ import io.agora.scene.convoai.ui.living.metrics.AgentLatencyData
 import io.agora.scene.convoai.ui.living.metrics.LatencyMetricsManager
 import io.agora.scene.convoai.ui.living.metrics.TurnTranscription
 import io.agora.scene.convoai.ui.living.metrics.TurnFinishedMetricsState
+import io.agora.scene.convoai.ui.living.ptt.PttHint
+import io.agora.scene.convoai.ui.living.ptt.PttPublisher
+import io.agora.scene.convoai.ui.living.ptt.PttPhase
+import io.agora.scene.convoai.ui.living.ptt.PttReleaseCause
+import io.agora.scene.convoai.ui.living.ptt.PttResetCause
+import io.agora.scene.convoai.ui.living.ptt.PttScheduler
+import io.agora.scene.convoai.ui.living.ptt.PushToTalkController
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,35 +89,32 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.util.UUID
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 /**
  * view model
  */
 internal fun resolveAudioScenario(
-    defaultScenario: Int,
+    isAvatarEnabled: Boolean,
+    isIndependent: Boolean,
     isDebug: Boolean,
     debugAudioScenario: Int?
 ): Int {
-    return if (isDebug) {
-        debugAudioScenario ?: defaultScenario
-    } else {
-        defaultScenario
+    if (isDebug && debugAudioScenario != null) {
+        return debugAudioScenario
     }
-}
-
-internal fun resolveDebugServerAudioScenario(
-    isDebug: Boolean,
-    serverAudioScenario: String?
-): String? {
-    if (!isDebug) {
-        return null
+    return when {
+        isAvatarEnabled -> Constants.AUDIO_SCENARIO_DEFAULT
+        isIndependent -> Constants.AUDIO_SCENARIO_CHORUS
+        else -> Constants.AUDIO_SCENARIO_AI_CLIENT
     }
-    return serverAudioScenario
 }
 
 class CovLivingViewModel : ViewModel() {
+
+    internal var avatarSession: SpatiusAvatarSession? = null
+    private var startConnectionJob: Job? = null
 
     private val TAG = "CovLivingViewModel"
 
@@ -112,6 +124,16 @@ class CovLivingViewModel : ViewModel() {
 
     private val _isLocalAudioMuted = MutableStateFlow(false)
     val isLocalAudioMuted: StateFlow<Boolean> = _isLocalAudioMuted.asStateFlow()
+
+    private val _isManualCall = MutableStateFlow(false)
+    val isManualCall: StateFlow<Boolean> = _isManualCall.asStateFlow()
+
+    private val _pttPhase = MutableStateFlow(PttPhase.IDLE)
+    internal val pttPhase: StateFlow<PttPhase> = _pttPhase.asStateFlow()
+
+    // Local microphone level (0-255) for the hold-to-talk volume bars, updated only during a manual call.
+    private val _localVolume = MutableStateFlow(0)
+    internal val localVolume: StateFlow<Int> = _localVolume.asStateFlow()
 
     private val _isPublishVideo = MutableStateFlow(false)
     val isPublishVideo: StateFlow<Boolean> = _isPublishVideo.asStateFlow()
@@ -186,6 +208,49 @@ class CovLivingViewModel : ViewModel() {
 
     // API instances
     private var conversationalAIAPI: IConversationalAIAPI? = null
+
+    private val pttController by lazy {
+        PushToTalkController(
+            scheduler = object : PttScheduler {
+                private val handler = Handler(Looper.getMainLooper())
+                override fun nowMillis(): Long = SystemClock.elapsedRealtime()
+                override fun schedule(delayMillis: Long, callback: () -> Unit): () -> Unit {
+                    val runnable = Runnable { callback() }
+                    handler.postDelayed(runnable, delayMillis)
+                    return { handler.removeCallbacks(runnable) }
+                }
+                override fun dispatch(callback: () -> Unit) { handler.post { callback() } }
+            },
+            publisher = object : PttPublisher {
+                override fun sos(turn: Int, completion: (String?, String?) -> Unit) {
+                    conversationalAIAPI?.manualSOS(CovAgentManager.agentUID.toString()) { id, error ->
+                        completion(id, error?.errorMessage)
+                    } ?: completion(null, "toolkit unavailable")
+                }
+
+                override fun eos(turn: Int, completion: (String?, String?) -> Unit) {
+                    conversationalAIAPI?.manualEOS(CovAgentManager.agentUID.toString()) { id, error ->
+                        completion(id, error?.errorMessage)
+                    } ?: completion(null, "toolkit unavailable")
+                }
+            },
+            onPhaseChanged = { phase ->
+                CovLogger.d(TAG, "[PTT] phase=$phase")
+                _pttPhase.value = phase
+                applyRecordingVolume()
+            },
+            onHint = { hint ->
+                val message = when (hint) {
+                    PttHint.UNMUTE_FIRST -> R.string.cov_manual_eos_unmute_first
+                    PttHint.SOS_FAILED -> R.string.cov_manual_eos_sos_failed
+                    PttHint.TOO_SHORT -> R.string.cov_manual_eos_too_short
+                    PttHint.LIMIT_REACHED -> R.string.cov_manual_eos_limit_reached
+                }
+                ToastUtil.show(message, Toast.LENGTH_SHORT)
+            },
+            onLog = { CovLogger.d(TAG, "[PTT] $it") }
+        )
+    }
 
     private val _turnFinishedMetricsState = MutableStateFlow<TurnFinishedMetricsState?>(null)
     val turnFinishedMetricsState: StateFlow<TurnFinishedMetricsState?> =
@@ -470,6 +535,28 @@ class CovLivingViewModel : ViewModel() {
             _voiceprintStateChangeEvent.value = event
         }
 
+        // The controller logs the whitelisted payload fields (requestId, success, turnId, reason).
+        override fun onUserManualSosEvent(agentUserId: String, event: io.agora.conversational.api.UserManualSosEvent) {
+            val payload = event.payload
+            viewModelScope.launch(Dispatchers.Main) {
+                pttController.onUserManualSosResult(payload.requestId, payload.success, payload.turnId)
+            }
+        }
+
+        override fun onUserManualEosEvent(agentUserId: String, event: io.agora.conversational.api.UserManualEosEvent) {
+            val payload = event.payload
+            viewModelScope.launch(Dispatchers.Main) {
+                pttController.onUserManualEosResult(payload.requestId, payload.success, payload.turnId)
+            }
+        }
+
+        override fun onAgentManualEosEvent(agentUserId: String, event: io.agora.conversational.api.AgentManualEosEvent) {
+            val payload = event.payload
+            viewModelScope.launch(Dispatchers.Main) {
+                pttController.onAgentManualEos(payload.turnId, payload.reason)
+            }
+        }
+
         override fun onDebugLog(log: String) {
             CovLogger.d(TAG, log)
         }
@@ -480,7 +567,9 @@ class CovLivingViewModel : ViewModel() {
         override fun onFailed() {
             CovLogger.w(TAG, "RTM connection failed, attempting re-login with new token")
             integratedToken = null
-            stopAgentAndLeaveChannel()
+            val inCall = _connectionState.value != AgentConnectionState.IDLE
+            stopAgentAndLeaveChannel(PttResetCause.RTM_FAILED)
+            if (inCall) ToastUtil.show(R.string.cov_detail_net_state_error, Toast.LENGTH_LONG)
         }
 
         override fun onTokenPrivilegeWillExpire(channelName: String) {
@@ -514,95 +603,140 @@ class CovLivingViewModel : ViewModel() {
     fun startAgentConnection() {
         if (_connectionState.value != AgentConnectionState.IDLE) return
         _connectionState.value = AgentConnectionState.CONNECTING
+        val manualCall = CovAgentManager.isManualEosActive
+        _isManualCall.value = manualCall
+        pttController.beginSession(manualCall)
+        pttController.setUserMuted(_isLocalAudioMuted.value)
+        applyRecordingVolume()
         prepareLatencyMetricsSession()
-        // Generate channel name
-        CovAgentManager.channelName =
-            CovAgentManager.channelPrefix + UUID.randomUUID().toString().replace("-", "")
-                .substring(0, 8)
+        // Bind this start to its own channel. A stop cancels the start job, clears the global name and sets IDLE,
+        // so a stopped or replaced start fails this check even inside a step that does not suspend. The agent can
+        // join RTC (CONNECTED) before /start responds, so only IDLE means the call has ended.
+        val channel = CovAgentManager.channelPrefix + UUID.randomUUID().toString().replace("-", "")
+            .substring(0, 8)
+        CovAgentManager.channelName = channel
+        val isSessionCurrent = {
+            CovAgentManager.channelName == channel && _connectionState.value != AgentConnectionState.IDLE
+        }
 
-        viewModelScope.launch {
+        // Main.immediate runs the body inline until its first suspension, so publish the job before it starts.
+        val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
             try {
-                // Fetch token if needed
-                if (integratedToken == null) {
-                    val tokenResult = updateTokenAsync()
-                    if (!tokenResult) {
-                        clearLatencyMetricsSession()
-                        _connectionState.value = AgentConnectionState.IDLE
-                        _ballAnimState.value = BallAnimState.STATIC
-                        ToastUtil.show(R.string.cov_detail_join_call_failed, Toast.LENGTH_LONG)
-                        return@launch
-                    }
-                }
-
-                // Configure audio settings
-                val isIndependent = CovAgentManager.getPreset()?.isIndependent == true
-                val defaultScenario = if (CovAgentManager.isEnableAvatar) {
-                    // If digital avatar is enabled, use AUDIO_SCENARIO_DEFAULT for better audio mixing
-                    Constants.AUDIO_SCENARIO_DEFAULT
-                } else {
-                    if (isIndependent) {
-                        Constants.AUDIO_SCENARIO_CHORUS
-                    } else {
-                        Constants.AUDIO_SCENARIO_AI_CLIENT
-                    }
-                }
-                val scenario = resolveAudioScenario(
-                    defaultScenario = defaultScenario,
-                    isDebug = DebugConfigSettings.isDebug,
-                    debugAudioScenario = DebugConfigSettings.audioScenario
-                )
-                val enableAins = OnDeviceAins.resolve(
-                    isDebugMode = DebugConfigSettings.isDebug,
-                    debugEnabled = DebugConfigSettings.isAinsEnabled
-                )
-                CovRtcManager.loadAudioSettings(
-                    enabled = enableAins,
-                    loadAudioSettings = {
-                        conversationalAIAPI?.loadAudioSettings(scenario, enableAins)
-                    }
-                )
-
-                // Join RTC channel
-                CovRtcManager.joinChannel(
-                    integratedToken ?: "",
-                    CovAgentManager.channelName,
-                    CovAgentManager.uid
-                )
-                // Login RTM
-                val loginRtm = loginRtmClientAsync()
-                if (!loginRtm) {
-                    stopAgentAndLeaveChannel()
-                    return@launch
-                }
-                // Subscribe message
-                conversationalAIAPI?.subscribeMessage(CovAgentManager.channelName) { errorInfo ->
-                    if (errorInfo != null) {
-                        stopAgentAndLeaveChannel()
-                        CovLogger.e(TAG, "subscribe ${CovAgentManager.channelName} error")
-                    }
-                }
-                // Start Agent
-                val startResult = startAgentAsync()
-                handleAgentStartResult(startResult)
+                runAgentStart(channel, isSessionCurrent, startSteps)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 CovLogger.e(TAG, "Start agent connection error: ${e.message}")
+                if (!isSessionCurrent()) return@launch
+                stopAgentAndLeaveChannel(PttResetCause.START_FAILED)
+                ToastUtil.show(R.string.cov_detail_join_call_failed, Toast.LENGTH_LONG)
             }
         }
+        startConnectionJob = job
+        job.start()
+    }
+
+    private val startSteps = object : AgentStartSteps {
+        override suspend fun ensureToken(): Boolean = integratedToken != null || updateTokenAsync()
+
+        override fun onTokenFailed() {
+            clearLatencyMetricsSession()
+            _connectionState.value = AgentConnectionState.IDLE
+            _ballAnimState.value = BallAnimState.STATIC
+            pttController.endSession(PttResetCause.START_FAILED)
+            _isManualCall.value = false
+            applyRecordingVolume()
+            ToastUtil.show(R.string.cov_detail_join_call_failed, Toast.LENGTH_LONG)
+        }
+
+        override suspend fun prepareAvatar(): SpatiusPrepareResult =
+            avatarSession?.prepare() ?: SpatiusPrepareResult.NotRequired
+
+        override fun onAvatarFailed(failure: SpatiusRenderFailure) = onSpatiusFailure(failure)
+
+        override fun joinRtc(channel: String) {
+            // Configure audio settings
+            val isIndependent = CovAgentManager.getPreset()?.isIndependent == true
+            val scenario = resolveAudioScenario(
+                isAvatarEnabled = CovAgentManager.isEnableAvatar,
+                isIndependent = isIndependent,
+                isDebug = DebugConfigSettings.isDebug,
+                debugAudioScenario = DebugConfigSettings.audioScenario
+            )
+            val enableAins = OnDeviceAins.resolve(
+                isDebugMode = DebugConfigSettings.isDebug,
+                debugEnabled = DebugConfigSettings.isAinsEnabled
+            )
+            CovRtcManager.loadAudioSettings(
+                enabled = enableAins,
+                loadAudioSettings = {
+                    conversationalAIAPI?.loadAudioSettings(scenario, enableAins)
+                }
+            )
+
+            applyRecordingVolume()
+            CovRtcManager.joinChannel(integratedToken ?: "", channel, CovAgentManager.uid)
+        }
+
+        override suspend fun loginRtm(): Boolean = loginRtmClientAsync()
+
+        override fun onRtmLoginFailed() {
+            stopAgentAndLeaveChannel(PttResetCause.RTM_FAILED)
+            ToastUtil.show(R.string.cov_detail_join_call_failed, Toast.LENGTH_LONG)
+        }
+
+        override fun subscribe(channel: String) {
+            conversationalAIAPI?.subscribeMessage(channel) { errorInfo ->
+                if (errorInfo == null) return@subscribeMessage
+                viewModelScope.launch(Dispatchers.Main) {
+                    CovLogger.e(TAG, "subscribe $channel error")
+                    if (CovAgentManager.channelName != channel) return@launch
+                    stopAgentAndLeaveChannel(PttResetCause.RTM_FAILED)
+                    ToastUtil.show(R.string.cov_detail_join_call_failed, Toast.LENGTH_LONG)
+                }
+            }
+        }
+
+        override suspend fun startAgent(channel: String): Pair<String, Int> = startAgentAsync(channel)
+
+        override fun onAgentStarted(result: Pair<String, Int>) = handleAgentStartResult(result)
     }
 
     // Stop Agent connection
-    fun stopAgentAndLeaveChannel() {
+    internal fun onSpatiusFailure(failure: SpatiusRenderFailure) {
+        if (_connectionState.value == AgentConnectionState.IDLE) return
+        stopAgentAndLeaveChannel(PttResetCause.SPATIUS_FAILED)
+        ToastUtil.show(
+            when (failure) {
+                SpatiusRenderFailure.RESTART_REQUIRED -> R.string.cov_avatar_configuration_changed
+                SpatiusRenderFailure.DEVICE_UNSUPPORTED -> R.string.cov_avatar_device_unsupported
+                SpatiusRenderFailure.LOAD_FAILED -> R.string.cov_avatar_render_failed
+            },
+            Toast.LENGTH_LONG
+        )
+    }
+
+    // Stop Agent connection. [pttCause] is logged as the push-to-talk reset cause.
+    internal fun stopAgentAndLeaveChannel(pttCause: PttResetCause) {
+        pttController.endSession(pttCause)
+        _isManualCall.value = false
         cancelJobs()
 
-        CovRtcManager.leaveChannel()
-        conversationalAIAPI?.unsubscribeMessage(CovAgentManager.channelName) {}
+        avatarSession?.close()
+
+        runCatching { CovRtcManager.leaveChannel() }
+            .onFailure { CovLogger.w(TAG, "RTC leave failed") }
+        runCatching { conversationalAIAPI?.unsubscribeMessage(CovAgentManager.channelName) {} }
+            .onFailure { CovLogger.w(TAG, "Message unsubscribe failed") }
 
         if (_connectionState.value != AgentConnectionState.IDLE) {
             _connectionState.value = AgentConnectionState.IDLE
-            CovAgentApiManager.stopAgent(
-                CovAgentManager.channelName,
-                CovAgentManager.getPreset()?.name
-            ) {}
+            runCatching {
+                CovAgentApiManager.stopAgent(
+                    CovAgentManager.channelName,
+                    CovAgentManager.getPreset()?.name
+                ) {}
+            }.onFailure { CovLogger.w(TAG, "Agent stop failed") }
         }
 
         CovAgentManager.channelName = ""
@@ -613,12 +747,28 @@ class CovLivingViewModel : ViewModel() {
     fun toggleMicrophone() {
         val newMutedState = !_isLocalAudioMuted.value
         _isLocalAudioMuted.value = newMutedState
-        CovRtcManager.muteLocalAudio(newMutedState)
+        pttController.setUserMuted(newMutedState)
+        applyRecordingVolume()
     }
 
     // Set local audio muted state
     fun setLocalAudioMuted(muted: Boolean) {
         _isLocalAudioMuted.value = muted
+        pttController.setUserMuted(muted)
+        applyRecordingVolume()
+    }
+
+    fun pressPushToTalk() {
+        if (_connectionState.value == AgentConnectionState.CONNECTED && _isAgentJoinedRtc.value) pttController.press()
+    }
+    fun releasePushToTalk() = pttController.release()
+    internal fun cancelPushToTalk(cause: PttReleaseCause = PttReleaseCause.TOUCH_CANCEL) =
+        pttController.forcedRelease(cause)
+
+    private fun applyRecordingVolume() {
+        // Recording is silent while the user is muted, or while a manual call's gate is closed.
+        val muted = _isLocalAudioMuted.value || (_isManualCall.value && !pttController.gateOpen)
+        if (_isManualCall.value) CovLogger.d(TAG, "[PTT] gateOpen=${pttController.gateOpen} userMuted=${_isLocalAudioMuted.value}")
         CovRtcManager.muteLocalAudio(muted)
     }
 
@@ -766,6 +916,7 @@ class CovLivingViewModel : ViewModel() {
                     if (_isAgentJoinedRtc.value && _isAvatarJoinedRtc.value) {
                         _connectionState.value = AgentConnectionState.CONNECTED
                         _ballAnimState.value = BallAnimState.LISTENING
+                        applyRecordingVolume()
                         CovLogger.d(TAG, "RTC checkAndSetConnected")
                         startPingTask()
                     }
@@ -773,6 +924,7 @@ class CovLivingViewModel : ViewModel() {
                     if (_isAgentJoinedRtc.value) {
                         _connectionState.value = AgentConnectionState.CONNECTED
                         _ballAnimState.value = BallAnimState.LISTENING
+                        applyRecordingVolume()
                         CovLogger.d(TAG, "RTC checkAndSetConnected")
                         startPingTask()
                     }
@@ -781,40 +933,19 @@ class CovLivingViewModel : ViewModel() {
 
             override fun onUserOffline(uid: Int, reason: Int) {
                 viewModelScope.launch(Dispatchers.Main) {
-                    if (uid == CovAgentManager.agentUID) {
-                        CovLogger.d(TAG, "RTC onUserOffline agentUid:$uid")
-                        _isAgentJoinedRtc.value = false
-                    } else if (uid == CovAgentManager.avatarUID) {
-                        CovLogger.d(TAG, "RTC onUserOffline avatarUid:$uid")
-                        _isAvatarJoinedRtc.value = false
-                    }
-                    checkAndSetDisconnected(reason)
-                }
-            }
-
-            private fun checkAndSetDisconnected(reason: Int) {
-                val enableAvatar = CovAgentManager.isEnableAvatar
-                if (enableAvatar) {
-                    // Only set to IDLE/ERROR if both agent and avatar are offline
-                    if (!_isAgentJoinedRtc.value && !_isAvatarJoinedRtc.value) {
-                        _ballAnimState.value = BallAnimState.STATIC
-                        _connectionState.value = if (reason == Constants.USER_OFFLINE_QUIT) {
-                            AgentConnectionState.IDLE
-                        } else {
-                            AgentConnectionState.ERROR
-                        }
-                        CovLogger.d(TAG, "RTC checkAndSetDisconnected")
-                    }
-                } else {
-                    if (!_isAgentJoinedRtc.value) {
-                        _ballAnimState.value = BallAnimState.STATIC
-                        _connectionState.value = if (reason == Constants.USER_OFFLINE_QUIT) {
-                            AgentConnectionState.IDLE
-                        } else {
-                            AgentConnectionState.ERROR
-                        }
-                        CovLogger.d(TAG, "RTC checkAndSetDisconnected")
-                    }
+                    CovLogger.d(TAG, "RTC onUserOffline uid:$uid reason:$reason")
+                    if (uid == CovAgentManager.agentUID) _isAgentJoinedRtc.value = false
+                    if (uid == CovAgentManager.avatarUID) _isAvatarJoinedRtc.value = false
+                    // Only the agent, or the avatar in avatar mode, ends the call.
+                    val endsCall = uid == CovAgentManager.agentUID ||
+                        (CovAgentManager.isEnableAvatar && uid == CovAgentManager.avatarUID)
+                    if (!endsCall || _connectionState.value == AgentConnectionState.IDLE) return@launch
+                    stopAgentAndLeaveChannel(PttResetCause.AGENT_OFFLINE)
+                    ToastUtil.show(
+                        if (reason == Constants.USER_OFFLINE_QUIT) R.string.cov_detail_agent_leave
+                        else R.string.cov_detail_agent_state_error,
+                        Toast.LENGTH_LONG
+                    )
                 }
             }
 
@@ -830,6 +961,8 @@ class CovLivingViewModel : ViewModel() {
                 viewModelScope.launch(Dispatchers.Main) {
                     when (state) {
                         Constants.CONNECTION_STATE_CONNECTED -> {
+                            pttController.setReconnecting(false)
+                            applyRecordingVolume()
                             if (reason == Constants.CONNECTION_CHANGED_REJOIN_SUCCESS) {
                                 CovLogger.d(TAG, "onConnectionStateChanged: rejoin success")
                                 if (_connectionState.value != AgentConnectionState.CONNECTED) {
@@ -850,6 +983,7 @@ class CovLivingViewModel : ViewModel() {
                         }
 
                         Constants.CONNECTION_STATE_RECONNECTING -> {
+                            pttController.setReconnecting(true)
                             if (reason == Constants.CONNECTION_CHANGED_INTERRUPTED) {
                                 CovLogger.d(TAG, "onConnectionStateChanged: interrupt")
                                 _connectionState.value = AgentConnectionState.CONNECTED_INTERRUPT
@@ -858,6 +992,8 @@ class CovLivingViewModel : ViewModel() {
                         }
 
                         Constants.CONNECTION_STATE_FAILED -> {
+                            pttController.setReconnecting(true)
+                            pttController.localReset(PttResetCause.RTC_FAILED)
                             if (reason == Constants.CONNECTION_CHANGED_JOIN_FAILED) {
                                 CovLogger.d(TAG, "onConnectionStateChanged: failed")
                                 _connectionState.value = AgentConnectionState.ERROR
@@ -889,6 +1025,8 @@ class CovLivingViewModel : ViewModel() {
             ) {
                 viewModelScope.launch(Dispatchers.Main) {
                     speakers?.forEach { speaker ->
+                        // The local user is reported as uid 0.
+                        if (speaker.uid == 0 && _isManualCall.value) _localVolume.value = speaker.volume
                         if (speaker.uid == CovAgentManager.agentUID && _connectionState.value != AgentConnectionState.IDLE) {
                             val newState =
                                 if (speaker.volume > 0) BallAnimState.SPEAKING else BallAnimState.LISTENING
@@ -1000,7 +1138,7 @@ class CovLivingViewModel : ViewModel() {
             CovLogger.d(TAG, "Agent started successfully")
             startWaitingTimeout()
         } else {
-            stopAgentAndLeaveChannel()
+            stopAgentAndLeaveChannel(PttResetCause.START_FAILED)
             CovLogger.e(TAG, "Agent start failed: $message, code: $errorCode")
             when (errorCode) {
                 CovAgentApiManager.ERROR_RESOURCE_LIMIT_EXCEEDED -> ToastUtil.show(
@@ -1020,7 +1158,7 @@ class CovLivingViewModel : ViewModel() {
         }
     }
 
-    private suspend fun updateTokenAsync(): Boolean = suspendCoroutine { cont ->
+    private suspend fun updateTokenAsync(): Boolean = suspendCancellableCoroutine { cont ->
         TokenGenerator.generateTokens(
             channelName = "",
             uid = CovAgentManager.uid.toString(),
@@ -1036,13 +1174,13 @@ class CovLivingViewModel : ViewModel() {
         )
     }
 
-    private suspend fun startAgentAsync(): Pair<String, Int> = suspendCoroutine { cont ->
-        val channel = CovAgentManager.channelName
+    private suspend fun startAgentAsync(channel: String): Pair<String, Int> = suspendCancellableCoroutine { cont ->
         CovAgentApiManager.startAgentWithMap(
             channelName = channel,
             convoaiBody = if (CovAgentManager.isOpenSource) {
                 getConvoaiOpenSourceBodyMap(channel)
             } else {
+                CovLogger.d(TAG, "preset: ${CovAgentManager.convoAIParameter}")
                 getConvoaiBodyMap(channel)
             },
             completion = { err, channelName ->
@@ -1051,7 +1189,7 @@ class CovLivingViewModel : ViewModel() {
         )
     }
 
-    private suspend fun loginRtmClientAsync(): Boolean = suspendCoroutine { cont ->
+    private suspend fun loginRtmClientAsync(): Boolean = suspendCancellableCoroutine { cont ->
         CovRtmManager.login(integratedToken ?: "", completion = { error ->
             if (error != null) {
                 integratedToken = null
@@ -1071,7 +1209,7 @@ class CovLivingViewModel : ViewModel() {
             delay(30000) // 30 seconds timeout
             if (_connectionState.value == AgentConnectionState.CONNECTING) {
                 ToastUtil.show(R.string.cov_detail_agent_join_timeout, Toast.LENGTH_LONG)
-                stopAgentAndLeaveChannel()
+                stopAgentAndLeaveChannel(PttResetCause.JOIN_TIMEOUT)
             }
         }
     }
@@ -1105,12 +1243,15 @@ class CovLivingViewModel : ViewModel() {
                     }
                 } else {
                     CovLogger.e(TAG, "Failed to renew token")
-                    stopAgentAndLeaveChannel()
+                    stopAgentAndLeaveChannel(PttResetCause.TOKEN_FAILED)
                     ToastUtil.show(R.string.cov_detail_update_token_error)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 CovLogger.e(TAG, "Exception during token renewal process: ${e.message}")
-                stopAgentAndLeaveChannel()
+                stopAgentAndLeaveChannel(PttResetCause.TOKEN_FAILED)
+                ToastUtil.show(R.string.cov_detail_update_token_error)
             }
         }
     }
@@ -1152,6 +1293,8 @@ class CovLivingViewModel : ViewModel() {
     }
 
     private fun cancelJobs() {
+        startConnectionJob?.cancel()
+        startConnectionJob = null
         // Cancel ping job safely
         runCatching {
             pingJob?.cancel()
@@ -1184,6 +1327,9 @@ class CovLivingViewModel : ViewModel() {
 
         _isShowMessageList.value = false
         _isLocalAudioMuted.value = false
+        _isManualCall.value = false
+        _pttPhase.value = PttPhase.IDLE
+        _localVolume.value = 0
         _isPublishVideo.value = false
         _ballAnimState.value = BallAnimState.STATIC
         _networkQuality.value = -1
@@ -1195,22 +1341,31 @@ class CovLivingViewModel : ViewModel() {
         _resourceError.value = null
         _interruptEvent.value = null
         _voiceprintStateChangeEvent.value = null
+        pttController.setUserMuted(false)
+        applyRecordingVolume()
     }
 
     override fun onCleared() {
         super.onCleared()
         cancelJobs()
+        avatarSession?.close()
+        avatarSession = null
         conversationalAIAPI?.removeHandler(covEventHandler)
         conversationalAIAPI?.destroy()
         conversationalAIAPI = null
+        pttController.endSession(PttResetCause.PAGE_CLOSED)
     }
 
-    private fun getConvoaiBodyMap(channel: String): Map<String, Any?> {
-        CovLogger.d(TAG, "preset: ${CovAgentManager.convoAIParameter}")
+    internal fun getConvoaiBodyMap(
+        channel: String,
+        graphId: String = CovAgentManager.graphId,
+        preset: String = CovAgentManager.convoAIParameter,
+        isMetricsEnabled: Boolean = CovAgentManager.isMetricsEnabled
+    ): Map<String, Any?> {
         val uidStr = CovAgentManager.uid.toString()
         return mapOf(
-            "graph_id" to CovAgentManager.graphId.takeIf { it.isNotEmpty() },
-            "preset" to CovAgentManager.convoAIParameter.takeIf { it.isNotEmpty() },
+            "graph_id" to graphId.takeIf { it.isNotEmpty() },
+            "preset" to preset.takeIf { it.isNotEmpty() },
             "name" to null,
             "properties" to mapOf(
                 "channel" to channel,
@@ -1244,12 +1399,8 @@ class CovLivingViewModel : ViewModel() {
                 ),
                 "parameters" to mapOf(
                     "data_channel" to "rtm",
-                    "enable_metrics" to CovAgentManager.isMetricsEnabled,
+                    "enable_metrics" to isMetricsEnabled,
                     "enable_error_message" to true,
-                    "audio_scenario" to resolveDebugServerAudioScenario(
-                        isDebug = DebugConfigSettings.isDebug,
-                        serverAudioScenario = DebugConfigSettings.serverAudioScenario
-                    ),
                     "transcript" to mapOf(
                         "enable" to true,
                         "enable_words" to CovAgentManager.isWordRenderMode,
@@ -1261,7 +1412,7 @@ class CovLivingViewModel : ViewModel() {
     }
 
     // open source convoai parameter
-    private fun getConvoaiOpenSourceBodyMap(channel: String): Map<String, Any?> {
+    internal fun getConvoaiOpenSourceBodyMap(channel: String): Map<String, Any?> {
         val uidStr = CovAgentManager.uid.toString()
         // Developers can edit this map template directly when customizing the
         // open-source ConvoAI /join payload. Only the dynamic runtime fields
@@ -1346,19 +1497,7 @@ class CovLivingViewModel : ViewModel() {
             ),
             // Avatar configuration.
             "avatar" to mutableMapOf(
-                "enable" to CovAgentManager.isEnableAvatar,
-                "vendor" to BuildConfig.AVATAR_VENDOR.takeIf { it.isNotEmpty() },
-                "params" to try {
-                    BuildConfig.AVATAR_PARAMS.takeIf { it.isNotEmpty() }?.let {
-                        JSONObject(it).apply {
-                            put("agora_uid", CovAgentManager.avatarUID.toString())
-//                            put("agora_token", ServerConfig.rtcAppId)
-                        }
-                    }
-                } catch (e: Exception) {
-                    CovLogger.e(TAG, "Failed to parse AVATAR params as JSON: ${e.message}")
-                    BuildConfig.AVATAR_PARAMS.takeIf { it.isNotEmpty() }
-                },
+                "enable" to false,
             ),
             // Conversation turn detection settings.
             "turn_detection" to mutableMapOf<String, Any?>(
@@ -1418,10 +1557,6 @@ class CovLivingViewModel : ViewModel() {
                 "data_channel" to "rtm",
                 "enable_metrics" to true,
                 "enable_error_message" to true,
-                "audio_scenario" to resolveDebugServerAudioScenario(
-                    isDebug = DebugConfigSettings.isDebug,
-                    serverAudioScenario = DebugConfigSettings.serverAudioScenario
-                ),
                 "transcript" to mutableMapOf<String, Any?>(
                     "enable" to true,
                     "enable_words" to CovAgentManager.isWordRenderMode,

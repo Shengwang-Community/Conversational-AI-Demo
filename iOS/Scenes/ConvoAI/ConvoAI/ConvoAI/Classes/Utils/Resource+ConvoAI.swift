@@ -234,7 +234,6 @@ extension ResourceManager {
             public static let requestNamespaceHint = ResourceManager.localizedString("devmode.request.namespace.hint")
             public static let requestNamespaceDescription = ResourceManager.localizedString("devmode.request.namespace.desc")
             public static let clientAudioScenario = ResourceManager.localizedString("devmode.client.audio.scenario")
-            public static let serverAudioScenario = ResourceManager.localizedString("devmode.server.audio.scenario")
             public static let title = ResourceManager.localizedString("devmode.title")
             public static let graph = ResourceManager.localizedString("devmode.graph")
             public static let rtc = ResourceManager.localizedString("devmode.rtc")

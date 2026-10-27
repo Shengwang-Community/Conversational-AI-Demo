@@ -13,6 +13,8 @@ class AgentStateView: UIView {
     private var isAnimating = false
     private var state: AgentState = .idle
     private var isMute = false
+    /// Replaces the default silent-state text, e.g. the hold-to-talk hint of a manual call.
+    private var silentText: String?
     
     private let stateLabel: UILabel = {
         let label = UILabel()
@@ -87,6 +89,14 @@ class AgentStateView: UIView {
         updateMute()
     }
 
+    /// Pass nil to restore the default silent-state text.
+    public func setSilentText(_ text: String?) {
+        silentText = text
+        if state == .silent {
+            stateLabel.text = text ?? ResourceManager.localizedString("conversation.agent.state.silent")
+        }
+    }
+
     public func setState(_ state: AgentState) {
         if self.state == state {
             return
@@ -111,7 +121,7 @@ class AgentStateView: UIView {
             stopButton.isHidden = true
             startVolumeAnimation()
         case .silent:
-            stateLabel.text = ResourceManager.localizedString("conversation.agent.state.silent")
+            stateLabel.text = silentText ?? ResourceManager.localizedString("conversation.agent.state.silent")
             stateLabel.textColor = UIColor.themColor(named: "ai_icontext1")
             volumeContainerView.isHidden = true
             stopButton.isHidden = true

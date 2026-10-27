@@ -73,15 +73,10 @@ class CovLocalRecordingService : Service() {
                 this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            val builder: Notification.Builder?
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val mChannel = NotificationChannel(CHANNEL_ID, name, NotificationManager.IMPORTANCE_DEFAULT)
-                val mNotificationManager = this.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                mNotificationManager.createNotificationChannel(mChannel)
-                builder = Notification.Builder(this, CHANNEL_ID)
-            } else {
-                builder = Notification.Builder(this)
-            }
+            val mChannel = NotificationChannel(CHANNEL_ID, name, NotificationManager.IMPORTANCE_DEFAULT)
+            val mNotificationManager = this.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            mNotificationManager.createNotificationChannel(mChannel)
+            val builder = Notification.Builder(this, CHANNEL_ID)
 
             builder.setContentTitle(getString(io.agora.scene.convoai.R.string.cov_detail_agent_title))
                 .setContentText(getString(io.agora.scene.convoai.R.string.cov_notification_content))

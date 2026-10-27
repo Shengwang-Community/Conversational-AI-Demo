@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Matches iOS: ai_fill4 at the top, 70% at 20% of the upper half, clear at 70% (this view spans 35% of the page). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <gradient
-        android:startColor="#1D1D56"
+        android:startColor="@color/ai_fill4"
+        android:centerColor="#B3242439"
+        android:centerY="0.2857"
         android:endColor="#00242439"
         android:angle="270" />
-</shape> 
+</shape>

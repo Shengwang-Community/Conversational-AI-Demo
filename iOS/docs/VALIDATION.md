@@ -7,11 +7,19 @@ python3 scripts/validate.py ios --list
 python3 scripts/validate.py ios --suite ains --preflight
 python3 scripts/validate.py ios --suite ains
 python3 scripts/validate.py ios --suite environment
+python3 scripts/validate.py ios --suite spatius-config
+python3 scripts/validate.py ios --suite spatius-layout
+python3 scripts/validate.py ios --suite spatius-load
 ```
 
 Standalone AINS uses `Agent.xcodeproj` / `Agent-cnLogicTests` and does not require Pods. Hosted tests use `Agent-cnIntegrationTests` in `Agent.xcworkspace`; install Pods first. Available suites include `app-integration`, `temporary-config`, `rtc-ains` and `toolkit-integration`. Keep the local `Agent-cn` app scheme intact.
 
 The `environment` suite checks host + RTC App ID matching and remembered dynamic selections without an app host.
+
+The `spatius-config` suite checks backend avatar metadata decoding (including optional `scene_bg_img_url` independently of the loading poster), selection and configuration precedence without Pods or an app host. It does not exercise the renderer or RTC. Use a device to verify the scene/poster transition, failed-image fallback and background alignment during window changes.
+The `spatius-layout` suite checks shared portrait framing across phone, iPad, split and floating window sizes without Pods. It does not validate UIKit composition, GPU rendering or live resizing during a call.
+The `spatius-load` suite checks that timeout and caller cancellation finish waiting even when model loading ignores cancellation, releases deadline state, and blocks additional SDK loads until the stalled load ends.
+See [Spatius mobile integration](../../Android/docs/SPATIUS_MOBILE.md) for SDK requirements and device checks.
 
 ## Options and results
 
@@ -24,3 +32,9 @@ The `environment` suite checks host + RTC App ID matching and remembered dynamic
 `scripts/workflow.json` maps suites to shared schemes, targets and test classes. Update it with test wiring changes. `python3 scripts/check_workflow.py` checks that mapping. The scripts cover the listed suites; select or add other checks when the task needs them.
 
 Legacy helpers under `iOS/scripts/` forward to the root runner. `ios_test_without_building.sh` now runs current-source incremental tests; `ios_feature_validation.sh --list` lists available suites. These local helpers do not change Jenkins `cicd/`.
+
+## Manual turn controller tests
+
+`python3 scripts/test_manual_eos_ios.py` runs `PushToTalkControllerTests` on the native Swift host, without Pods, an app host or a simulator. It copies the current sources into a temporary Swift package, prints the test log and removes the package afterwards (`--keep` keeps it for inspection). A zero-test result fails the runner.
+
+The tests use a controlled clock and publisher. They cover press, hold, release and the 200 ms tail, the short-hold hint, SOS failure, SOS/EOS ordering, `AGENT_MANUAL_EOS` turn ownership, local reset and forced release. The same source is wired into the standalone Xcode target as `manual_eos`. Settings, call-page wiring, microphone audio and server behavior are not covered; check them on a physical device.

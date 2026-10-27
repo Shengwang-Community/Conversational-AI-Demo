@@ -147,6 +147,10 @@ class OfficialAgentViewController: UIViewController {
                            let bgImageUrl = URL(string: bgImageUrlString) {
                             imageUrls.append(bgImageUrl)
                         }
+                        if let scene = avatar.sceneBgImageUrl, !scene.isEmpty,
+                           let sceneUrl = URL(string: scene) {
+                            imageUrls.append(sceneUrl)
+                        }
                     }
                 }
             }

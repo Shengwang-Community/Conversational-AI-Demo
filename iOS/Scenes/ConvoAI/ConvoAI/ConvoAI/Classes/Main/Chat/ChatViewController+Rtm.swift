@@ -21,9 +21,7 @@ extension ChatViewController: RTMManagerDelegate {
     
     func onFailed() {
         addLog("<<< onFailed")
-        if !rtmManager.isLogin {
-            
-        }
+        DispatchQueue.main.async { [weak self] in self?.handleRtmConnectionFailure() }
     }
     
     func remoteLeave() {
@@ -41,13 +39,18 @@ extension ChatViewController: RTMManagerDelegate {
             uid: uid,
             types: [.rtc, .rtm]
         ) { [weak self] token in
-            guard let self = self, let newToken = token else {
+            guard let self = self else { return }
+            guard let newToken = token else {
+                DispatchQueue.main.async { self.handleTokenRenewalFailure() }
                 return
             }
             
             self.addLog("[traceId: \(traceId)] token regenerated")
             self.rtcManager.renewToken(token: newToken)
-            self.rtmManager.renewToken(token: newToken)
+            self.rtmManager.renewToken(token: newToken) { [weak self] succeeded in
+                guard !succeeded else { return }
+                DispatchQueue.main.async { self?.handleRtmTokenRenewError() }
+            }
             self.token = newToken
         }
     }

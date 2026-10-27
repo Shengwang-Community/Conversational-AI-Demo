@@ -14,6 +14,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
 
     <application
@@ -31,8 +32,10 @@
         android:localeConfig="@xml/locales_config"
         tools:targetApi="31">
 
+        <!-- BaseActivity in :common extends AppCompatActivity; lint misses the generic superclass. -->
         <activity
             android:name=".WelcomeActivity"
+            tools:ignore="Instantiatable"
             android:exported="true"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateHidden|adjustPan"

@@ -15,11 +15,12 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        ndk.abiFilters 'arm64-v8a', 'armeabi-v7a'
+        // 64-bit only: AvatarKit ships arm64-v8a native libraries only.
+        ndk.abiFilters 'arm64-v8a'
         minSdk rootProject.ext.minSdkVersion
         targetSdk rootProject.ext.targetSdkVersion
-        versionCode 26091612
-        versionName "2.3.1"
+        versionCode 26102117
+        versionName "2.4.0"
         
         buildConfigField("String", "BUILD_TIMESTAMP", "\"${buildTimestamp}\"")
 
@@ -31,8 +32,8 @@ android {
     productFlavors {
         china {
             dimension "region"
-            applicationId "cn.shengwang.convoai"
-            resValue "string", "app_name", "对话式 AI 引擎"
+            applicationId "cn.shengwang.convoai.test"
+            resValue "string", "app_name", "对话式 AI 引擎体验"
             buildConfigField("String", "TOOLBOX_SERVER_HOST", "\"${project.getProperty("TOOLBOX_SERVER_HOST")}\"")
             buildConfigField("String", "AG_APP_ID", "\"${project.getProperty("AG_APP_ID")}\"")
             buildConfigField("String", "AG_APP_CERTIFICATE", "\"${project.getProperty("AG_APP_CERTIFICATE")}\"")
@@ -74,6 +75,10 @@ android {
     buildFeatures {
         viewBinding true
         buildConfig true
+    }
+    androidResources {
+        // Do not package obsolete models left in assets by an older resource download.
+        ignoreAssetsPatterns.addAll(['common_resource.zip', '._common_resource.zip', 'common_resource'])
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

@@ -13,6 +13,6 @@ extension ChatViewController: AnimateViewDelegate {
         ConvoAILogger.info(error.message)
         
         stopLoading()
-        stopAgent()
+        stopAgent(pttCause: "animationError")
     }
 }

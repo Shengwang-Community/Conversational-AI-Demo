@@ -15,13 +15,7 @@ class ChatWindowState {
     
     func reset() {
         showTranscription = false
-        let preset = AppContext.settingManager().preset
-        let isPresetSupportAvatar = preset?.isSupportAvatar == true
-        if AppContext.shared.avatarEnable || AppContext.settingManager().avatar != nil || isPresetSupportAvatar {
-            showAvatar = true
-        } else {
-            showAvatar = false
-        }
+        showAvatar = AppContext.settingManager().isAvatarEnabled
         showVideo = false
     }
 }
@@ -30,7 +24,7 @@ extension ChatViewController {
     internal func setupViews() {
         view.backgroundColor = .black
         naviBar.isHidden = true
-        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, navivationBar, sideNavigationBar, activeFuncsView, callControlBar, volumeAnimateView, annotationView, aiGeneratedLabel, sendMessageButton].forEach { view.addSubview($0) }
+        [animateContentView, fullSizeContainerView, upperBackgroundView, lowerBackgroundView, messageMaskView, messageView, smallSizeContainerView, agentStateView, navivationBar, sideNavigationBar, activeFuncsView, pushToTalkButton, callControlBar, volumeAnimateView, annotationView, aiGeneratedLabel, sendMessageButton, pushToTalkOverlay].forEach { view.addSubview($0) }
 
         [miniView].forEach { smallSizeContainerView.addSubview($0) }
         [remoteAvatarView].forEach { miniView.addSubview($0) }
@@ -78,6 +72,12 @@ extension ChatViewController {
             make.left.right.equalTo(0)
             make.height.equalTo(76)
         }
+
+        pushToTalkButton.snp.makeConstraints { make in
+            make.left.right.equalToSuperview().inset(32)
+            make.height.equalTo(56)
+            make.bottom.equalTo(callControlBar.snp.top).offset(-12)
+        }
         
         agentStateView.snp.makeConstraints { make in
             make.bottom.equalTo(callControlBar.snp.top).offset(-24)
@@ -100,7 +100,9 @@ extension ChatViewController {
         }
         
         miniView.snp.makeConstraints { make in
-            make.top.equalTo(215)
+            make.top.equalTo(215).priority(.high)
+            make.top.greaterThanOrEqualTo(view.safeAreaLayoutGuide.snp.top)
+            make.bottom.lessThanOrEqualTo(view.safeAreaLayoutGuide.snp.bottom).offset(-10)
             make.right.equalTo(-10)
             make.width.equalTo(90)
             make.height.equalTo(130)
@@ -135,8 +137,15 @@ extension ChatViewController {
             make.centerX.equalTo(view)
             make.centerY.equalTo(view)
         }
+
+        // Covers the bottom 40% of the page; it never takes touches.
+        pushToTalkOverlay.snp.makeConstraints { make in
+            make.left.right.bottom.equalToSuperview()
+            make.height.equalToSuperview().multipliedBy(0.4)
+        }
         
         updateWindowContent()
+        updatePushToTalkButton()
     }
     
     internal func didLayoutSubviews() {

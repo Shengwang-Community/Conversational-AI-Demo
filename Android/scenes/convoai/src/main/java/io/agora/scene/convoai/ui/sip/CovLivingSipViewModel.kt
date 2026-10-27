@@ -29,7 +29,6 @@ import io.agora.scene.convoai.ui.living.metrics.TurnTranscription
 import io.agora.scene.convoai.ui.living.metrics.TurnFinishedMetricsState
 import java.util.UUID
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.launch
 import kotlin.onFailure
 import kotlin.runCatching
@@ -80,6 +79,7 @@ class CovLivingSipViewModel : ViewModel() {
     private var integratedToken: String? = null
     private var pingJob: Job? = null
     private var waitingAgentJob: Job? = null
+    private var startConnectionJob: Job? = null
 
     // API instances
     private var conversationalAIAPI: IConversationalAIAPI? = null
@@ -206,11 +206,15 @@ class CovLivingSipViewModel : ViewModel() {
         if (_callState.value != CallState.IDLE) return
         _callState.value = CallState.CALLING
         prepareLatencyMetricsSession()
-        // Generate channel name
-        CovAgentManager.channelName =
+        // Bind this start to its own channel. A stop clears the global name and cancels the start job; every
+        // wait below is cancellable, so a start stopped before /call never subscribes or sends it, and a /call
+        // result that arrives after the stop is dropped. The server still places a /call that was already sent.
+        val channel =
             CovAgentManager.channelPrefix + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+        CovAgentManager.channelName = channel
 
-        viewModelScope.launch {
+        // Main.immediate runs the body inline until its first suspension, so publish the job before it starts.
+        val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
             try {
                 // Fetch token if needed
                 if (integratedToken == null) {
@@ -231,19 +235,27 @@ class CovLivingSipViewModel : ViewModel() {
                     return@launch
                 }
                 // Subscribe message
-                conversationalAIAPI?.subscribeMessage(CovAgentManager.channelName) { errorInfo ->
-                    if (errorInfo != null) {
+                conversationalAIAPI?.subscribeMessage(channel) { errorInfo ->
+                    if (errorInfo == null) return@subscribeMessage
+                    // Runs outside the start job, so match the channel to skip a call that has already ended.
+                    viewModelScope.launch(Dispatchers.Main) {
+                        CovLogger.e(TAG, "subscribe $channel error")
+                        if (CovAgentManager.channelName != channel) return@launch
                         stopAgentAndLeaveChannel()
-                        CovLogger.e(TAG, "subscribe ${CovAgentManager.channelName} error")
                     }
                 }
                 // Start Agent
-                val startResult = startAgentAsync(phoneNumber)
+                val startResult = startAgentAsync(channel, phoneNumber)
                 handleAgentStartResult(startResult)
+            } catch (e: CancellationException) {
+                // Cancellation (hang-up or ViewModel cleared) is not a start failure; the stop path ends the session.
+                throw e
             } catch (e: Exception) {
                 CovLogger.e(TAG, "Start agent connection error: ${e.message}")
             }
         }
+        startConnectionJob = job
+        job.start()
     }
 
     // Stop Agent connection
@@ -409,7 +421,7 @@ class CovLivingSipViewModel : ViewModel() {
         }
     }
 
-    private suspend fun updateTokenAsync(): Boolean = suspendCoroutine { cont ->
+    private suspend fun updateTokenAsync(): Boolean = suspendCancellableCoroutine { cont ->
         TokenGenerator.generateTokens(
             channelName = "",
             uid = CovAgentManager.uid.toString(),
@@ -425,11 +437,10 @@ class CovLivingSipViewModel : ViewModel() {
         )
     }
 
-    private suspend fun startAgentAsync(callee: String): Pair<String, Int> = suspendCoroutine { cont ->
-        val channel = CovAgentManager.channelName
+    private suspend fun startAgentAsync(channel: String, callee: String): Pair<String, Int> = suspendCancellableCoroutine { cont ->
         if (CovAgentManager.getPreset()?.isSip == true) {
             CovAgentApiManager.startSipCallWithMap(
-                channelName = CovAgentManager.channelName,
+                channelName = channel,
                 convoaiBody = getConvoaiSipBodyMap(channel, callee),
                 completion = { err, channelName ->
                     cont.resume(Pair(channelName, err?.errorCode ?: 0))
@@ -438,7 +449,7 @@ class CovLivingSipViewModel : ViewModel() {
         }
     }
 
-    private suspend fun loginRtmClientAsync(): Boolean = suspendCoroutine { cont ->
+    private suspend fun loginRtmClientAsync(): Boolean = suspendCancellableCoroutine { cont ->
         CovRtmManager.login(integratedToken ?: "", completion = { error ->
             if (error != null) {
                 integratedToken = null
@@ -480,6 +491,8 @@ class CovLivingSipViewModel : ViewModel() {
                     stopAgentAndLeaveChannel()
                     ToastUtil.show(R.string.cov_detail_update_token_error)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 CovLogger.e(TAG, "Exception during token renewal process: ${e.message}")
                 stopAgentAndLeaveChannel()
@@ -488,6 +501,9 @@ class CovLivingSipViewModel : ViewModel() {
     }
 
     private fun cancelJobs() {
+        startConnectionJob?.cancel()
+        startConnectionJob = null
+
         // Cancel ping job safely
         runCatching {
             pingJob?.cancel()

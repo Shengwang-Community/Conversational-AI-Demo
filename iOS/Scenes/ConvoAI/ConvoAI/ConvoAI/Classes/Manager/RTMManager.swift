@@ -74,6 +74,11 @@ class RTMManager: NSObject, RTMManagerProtocol {
     }
     
     func renewToken(token: String) {
+        renewToken(token: token, completion: nil)
+    }
+
+    /// `completion(false)` when RTM rejects the renewed token; not called when RTM is not logged in.
+    func renewToken(token: String, completion: ((_ succeeded: Bool) -> Void)?) {
         let traceId = getTraceId()
         addLog(msg: ">>> [traceId: \(traceId)] [renewToken]")
         if !isLogin {
@@ -87,11 +92,14 @@ class RTMManager: NSObject, RTMManagerProtocol {
             if let error = err {
                 self?.addLog(msg: "[traceId: \(traceId)] RTM token renewal failed: \(error.localizedDescription)")
                 self?.isLogin = false
+                completion?(false)
             } else if let _ = res {
                 self?.addLog(msg: "RTM token renewed successfully")
+                completion?(true)
             } else {
                 self?.isLogin = false
                 self?.addLog(msg: "[traceId: \(traceId)] RTM token renewal failed: unknow")
+                completion?(false)
             }
         })
         rtmClient?.renewToken(token)

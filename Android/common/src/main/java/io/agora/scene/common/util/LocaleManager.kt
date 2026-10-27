@@ -1,10 +1,8 @@
 package io.agora.scene.common.util
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
-import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import java.util.Locale
@@ -60,12 +58,7 @@ class LocaleManager private constructor(private val application: Application) {
         
         // If following system, use system language
         if (followSystem) {
-            val systemLocale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                context.resources.configuration.locales.get(0)
-            } else {
-                @Suppress("DEPRECATION")
-                context.resources.configuration.locale
-            }
+            val systemLocale = context.resources.configuration.locales.get(0)
             
             // Update preference with system language
             prefs.edit().putString(KEY_LANGUAGE, systemLocale.language).apply()
@@ -166,19 +159,12 @@ class LocaleManager private constructor(private val application: Application) {
     /**
      * Updates the configuration of a specific context
      */
-    @SuppressLint("ObsoleteSdkInt")
     private fun updateContextLocale(context: Context, locale: Locale): Context {
         Locale.setDefault(locale)
         
         val config = Configuration(context.resources.configuration)
         config.setLocale(locale)
         
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            context.createConfigurationContext(config)
-        } else {
-            @Suppress("DEPRECATION")
-            context.resources.updateConfiguration(config, context.resources.displayMetrics)
-            context
-        }
+        return context.createConfigurationContext(config)
     }
 } 

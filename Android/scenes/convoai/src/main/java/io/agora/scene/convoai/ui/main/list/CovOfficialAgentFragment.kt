@@ -188,6 +188,7 @@ class CovOfficialAgentFragment : BaseFragment<CovFragmentOfficialAgentBinding>()
             avatars.forEach { avatar ->
                 avatar.thumb_img_url.takeIf { it.isNotEmpty() }?.let { urls.add(it) }
                 avatar.bg_img_url.takeIf { it.isNotEmpty() }?.let { urls.add(it) }
+                avatar.scene_bg_img_url?.takeIf { it.isNotBlank() }?.let { urls.add(it) }
             }
         }
         

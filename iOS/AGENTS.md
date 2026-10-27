@@ -1,6 +1,6 @@
 # Shengwang iOS
 
-See [shared guidance](../AI_WORKFLOW.md). Paths below are relative to iOS unless stated otherwise.
+See [shared guidance](../AI_WORKFLOW.md) and the [documentation map](../AI_ENGINEERING.md). Paths below are relative to iOS unless stated otherwise.
 
 - App target: `Agent-cn`. Main business code is under `Scenes/ConvoAI/ConvoAI/ConvoAI/Classes`.
 - Common, ConvoAI, IoT and BLEManager are loaded through CocoaPods. Toolkit is the external `agent-client-toolkit-swift` Pod, imported as `AgoraAgentClientToolkit`.

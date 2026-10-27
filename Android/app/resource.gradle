@@ -1,20 +1,24 @@
 apply plugin: 'de.undercouch.download'
 
 task downloadConvoAIResources {
-    def destFile = new File(buildDir, 'Convo_AI_Demo_Resource.zip')
+    def outputDir = new File(projectDir, 'src/main/assets')
+    def videoNames = ['ball_video_start.mp4', 'ball_video_rotating.mp4']
+    if (videoNames.every { new File(outputDir, it).isFile() }) {
+        return
+    }
+    def destFile = new File(buildDir, 'Convo_AI_Demo_v2.0.0_Resource.zip')
     download {
-        src 'https://accktvpic.oss-cn-beijing.aliyuncs.com/ConvoAI/Resource/Convo_AI_Demo_v1.0.0_Resource.zip'
+        src 'https://accktvpic.oss-cn-beijing.aliyuncs.com/ConvoAI/Resource/Convo_AI_Demo_v2.0.0_Resource.zip'
         dest destFile
         overwrite false
     }
     
-    def outputDir = new File(projectDir, 'src/main/assets')
     outputDir.mkdirs()
     
     copy {
         from zipTree(destFile).matching {
-            include '**/*'
-            exclude '*/.'
+            // Extract only the UI videos, excluding macOS archive metadata.
+            include '**/ball_video_start.mp4', '**/ball_video_rotating.mp4'
         }
         into outputDir
         eachFile { fileCopyDetails ->

@@ -19,6 +19,7 @@ extension ChatViewController {
     }
 
     internal func showSettingDialog(at index: Int) {
+        pushToTalk.forcedRelease("overlay")
         let settingVC = AgentSettingViewController()
         settingVC.agentManager = agentManager
         settingVC.rtcManager = rtcManager
@@ -29,6 +30,7 @@ extension ChatViewController {
     }
     
     @objc internal func onClickSettingButton() {
+        pushToTalk.forcedRelease("overlay")
         let settingVC = AgentSettingViewController()
         settingVC.agentManager = agentManager
         settingVC.rtcManager = rtcManager

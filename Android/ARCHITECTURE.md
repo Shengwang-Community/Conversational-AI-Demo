@@ -29,7 +29,7 @@ Useful source roots:
 
 ## Configuration and compatibility
 
-Android `gradle.properties` supplies toolbox, Agora and vendor settings. `app/build.gradle` emits app configuration; `common/build.gradle` emits shared `BuildConfig` values for networking and LLM/TTS/Avatar requests. Trace runtime overrides in the consuming code when changing configuration. Keep local credentials private.
+Android `gradle.properties` supplies toolbox, Agora and open-source LLM/TTS settings. `app/build.gradle` emits app configuration; `common/build.gradle` emits shared `BuildConfig` values for networking and LLM/TTS requests. Open-source mode does not configure digital humans; outside that mode, avatar availability comes from business presets. Trace runtime overrides in the consuming code when changing configuration. Keep local credentials private.
 
 App/common/convoai use Java 17; IoT/BLEManager use Java 11. Build files, the version catalog and Manifests affect dependency compatibility, flavor selection, configuration and permissions. Runtime paths depend on the toolbox/agent service, Agora SDKs and configured providers.
 

@@ -428,7 +428,8 @@ class ChannelInfoView: UIView {
     }
     
     func updateAiVadState() {
-        let state = AppContext.settingManager().aiVad
+        // Effective value: off in Walkie-Talkie Mode, as in the start request.
+        let state = AppContext.settingManager().effectiveAiVad
         let interruptStatus = state ? ResourceManager.L10n.ChannelInfo.effective : ResourceManager.L10n.ChannelInfo.notEffective
         elegantInterruptItem.detailLabel.text = interruptStatus
         elegantInterruptItem.detailLabel.textColor = state ? UIColor.themColor(named: "ai_green6") : UIColor.themColor(named: "ai_red6")
