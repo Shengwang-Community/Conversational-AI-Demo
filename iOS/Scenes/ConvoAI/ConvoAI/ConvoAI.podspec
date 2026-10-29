@@ -47,7 +47,7 @@ TODO: Add long description of the pod here.
   s.dependency 'ShengwangRtcEngine_iOS'
   s.dependency 'AvatarKitRTC', '1.0.1'
   s.dependency 'ShengWang-Rtm/RtmKit', '2.3.0'
-  s.dependency 'agent-client-toolkit-swift', '2.10.1'
+  s.dependency 'agent-client-toolkit-swift', '2.10.2'
   s.dependency 'SwifterSwift/UIKit', '6.2.0'
   s.dependency 'Common'
   s.dependency 'BLEManager'
