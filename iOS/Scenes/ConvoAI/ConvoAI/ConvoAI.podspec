@@ -46,7 +46,7 @@ TODO: Add long description of the pod here.
   s.dependency 'SVProgressHUD'
   s.dependency 'AgoraRtcEngine_iOS'
   s.dependency 'AgoraRtm/RtmKit', '2.2.3'
-  s.dependency 'agent-client-toolkit-swift', '2.10.1'
+  s.dependency 'agent-client-toolkit-swift', '2.10.2'
   s.dependency 'SwifterSwift/UIKit', '6.2.0'
   s.dependency 'Common'
   s.dependency 'BLEManager'

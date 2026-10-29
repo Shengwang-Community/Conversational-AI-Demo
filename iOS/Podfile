@@ -14,7 +14,7 @@ target 'Agent-cn' do
   pod 'Bugly'
 #  pod 'AgoraRtcEngine_iOS', :path => 'sdk.podspec'
   pod 'AgoraRtcEngine_iOS', '4.5.1'
-  pod 'agent-client-toolkit-swift', '2.10.1'
+  pod 'agent-client-toolkit-swift', '2.10.2'
   pod 'AgoraRtm', '2.2.3', :subspecs => ['RtmKit']
   #pod 'LookinServer', :subspecs => ['Swift'], :configurations => ['Debug']
   
