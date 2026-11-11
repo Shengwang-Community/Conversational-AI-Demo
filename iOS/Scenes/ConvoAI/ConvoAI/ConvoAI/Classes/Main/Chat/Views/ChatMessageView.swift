@@ -1,5 +1,33 @@
 import Common
 
+/// Aligns a transcript by its first strong directional character, as Android's default
+/// first-strong text direction does. Statistical language detection can misread short
+/// partial transcripts, such as the first words of a TTS reply, as a right-to-left language.
+private enum TranscriptTextDirection {
+    static func alignment(for text: String) -> NSTextAlignment {
+        isRightToLeft(text) ? .right : .left
+    }
+
+    private static func isRightToLeft(_ text: String) -> Bool {
+        // Letters carry a strong direction; digits, punctuation, spaces and emoji do not.
+        for scalar in text.unicodeScalars where scalar.properties.isAlphabetic {
+            return isRightToLeftScalar(scalar)
+        }
+        return false
+    }
+
+    private static func isRightToLeftScalar(_ scalar: Unicode.Scalar) -> Bool {
+        switch scalar.value {
+        case 0x0590...0x08FF, // Hebrew, Arabic, Syriac, Thaana, NKo and Arabic extensions
+             0xFB1D...0xFDFF, // Hebrew and Arabic presentation forms A
+             0xFE70...0xFEFF: // Arabic presentation forms B
+            return true
+        default:
+            return false
+        }
+    }
+}
+
 // MARK: - ChatMessageCell
 class ChatMessageCell: UITableViewCell {
     static let identifier = "ChatMessageCell"
@@ -187,14 +215,7 @@ class ChatMessageCell: UITableViewCell {
         
         messageLabel.attributedText = messageString
         
-        let detector = NSLinguisticTagger(tagSchemes: [.language], options: 0)
-        detector.string = message.content
-        if let language = detector.dominantLanguage {
-            let rtlLanguages = ["ar", "fa", "he", "ur"]
-            messageLabel.textAlignment = rtlLanguages.contains(language) ? .right : .left
-        } else {
-            messageLabel.textAlignment = .left
-        }
+        messageLabel.textAlignment = TranscriptTextDirection.alignment(for: message.content)
         
         interruptButton.isHidden = !message.isInterrupted
         configureLatencySummary(for: message)
