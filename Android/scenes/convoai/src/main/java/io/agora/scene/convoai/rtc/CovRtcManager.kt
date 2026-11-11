@@ -112,6 +112,9 @@ object CovRtcManager {
         // Audio pre-dump is enabled by default in demo, you don't need to set this in your app
         rtcEngine?.setParameters("{\"che.audio.enable.predump\":{\"enable\":\"true\",\"duration\":\"60\"}}")
 
+        // RTC SDK 4.6.4 regressed audio PTS. Disable PTS estimate pass-through until the SDK fix ships.
+        rtcEngine?.setParameters("{\"che.audio.enable_pts_pass_through\":false}")
+
         // join rtc channel
         channelOptions.apply {
             clientRoleType = CLIENT_ROLE_BROADCASTER
