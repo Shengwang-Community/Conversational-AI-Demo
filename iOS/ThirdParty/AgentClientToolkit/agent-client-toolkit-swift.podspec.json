@@ -1,7 +1,7 @@
 {
   "name": "agent-client-toolkit-swift",
   "module_name": "AgoraAgentClientToolkit",
-  "version": "2.10.2",
+  "version": "2.11.0",
   "summary": "Client-side toolkit for Agora Conversational AI on iOS.",
   "description": "A lightweight iOS toolkit that adds Conversational AI messaging,\ntranscript, state, interrupt, and metrics handling on top of\nhost-managed Agora RTC and RTM engine instances.",
   "homepage": "https://www.agora.io",
@@ -12,7 +12,8 @@
     "Agora": "developer@agora.io"
   },
   "source": {
-    "http": "https://download.agora.io/sdk/release/agent-client-toolkit-swift-2.10.2.zip"
+    "http": "https://download.agora.io/sdk/release/agent-client-toolkit-swift-2.11.0.zip",
+    "sha256": "a2926efea073bd1e1bf6442e76c76c5f102478a6bd7558accdb4ab06abcf570c"
   },
   "platforms": {
     "ios": "15.0"

@@ -49,7 +49,7 @@ Both clients use RTM 2.3.0. Android uses `cn.shengwang.rtm:android-java:2.3.0`; 
 
 Android uses `cn.shengwang.rtc:full-sdk:4.6.4` and `cn.shengwang.rtm:android-java:2.3.0`. Both depend on `cn.shengwang.infra:aosl:1.3.5`, so Gradle resolves one shared library. No direct AOSL dependency, AOSL exclusion or `pickFirst` packaging rule is needed. Keep RTC and RTM on the same publisher coordinates, and verify the dependency graph and packaged libraries after SDK upgrades.
 
-iOS uses `ShengwangRtcEngine_iOS` 4.6.4, selects only RTM's `RtmKit` subspec and shares the AOSL supplied by `ShengwangInfra_iOS` 1.3.5. The official Toolkit 2.10.1 spec still names the Agora RTC and RTM Pods, so `iOS/ThirdParty/AgentClientToolkit` changes only those dependencies to `ShengwangRtcEngine_iOS` and `ShengWang-Rtm/RtmKit` while fetching the unchanged official Toolkit binary. Swift module names remain `AgoraRtcKit` and `AgoraRtmKit`. Keep only one of each SDK framework and one AOSL framework in the app.
+iOS uses `ShengwangRtcEngine_iOS` 4.6.4, selects only RTM's `RtmKit` subspec and shares the AOSL supplied by `ShengwangInfra_iOS` 1.3.5. The official Toolkit 2.11.0 spec still names the Agora RTC and RTM Pods, so `iOS/ThirdParty/AgentClientToolkit` changes only those dependencies to `ShengwangRtcEngine_iOS` and `ShengWang-Rtm/RtmKit` while fetching the official Toolkit 2.11.0 binary with its published SHA-256 checksum. Swift module names remain `AgoraRtcKit` and `AgoraRtmKit`. Keep only one of each SDK framework and one AOSL framework in the app.
 
 ## Audio extensions and demo assets
 

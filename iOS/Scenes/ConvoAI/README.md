@@ -95,19 +95,19 @@
 | [AgentInformationViewController.swift](ConvoAI/ConvoAI/Classes/Main/Setting/VC/AgentInformationViewController.swift)  | 智能体运行状态信息展示对话框                   |
 | [AgentSettingViewController.swift](ConvoAI/ConvoAI/Classes/Main/Setting/VC/AgentSettingViewController.swift)          | 智能体参数配置设置对话框                       |
 | [Utils/](ConvoAI/ConvoAI/Classes/Utils)                                                                               | 实用工具类和辅助函数                          |
-| `agent-client-toolkit-swift`（2.10.2 正式包）                                                                                   | 当前对话式 AI API、状态回调和实时字幕组件       |
+| `agent-client-toolkit-swift`（2.11.0 正式包）                                                                                   | 当前对话式 AI API、状态回调和实时字幕组件       |
 | [TranscriptionV1/](ConvoAI/ConvoAI/Classes/Utils/TranscriptionV1)                                                    | Demo 保留的 v1 legacy 字幕实现                 |
 | [TranscriptionV2/](ConvoAI/ConvoAI/Classes/Utils/TranscriptionV2)                                                    | Demo 保留的 v2 legacy 字幕实现                 |
 
 ### 2.2 实时字幕
 与对话式智能体进行实时互动时，你可能需要实时字幕显示你与智能体的对话内容。
 - 📖 查看我们的 [实时字幕功能指南](https://doc.shengwang.cn/doc/convoai/restful/user-guides/realtime-sub) 了解如何实现该功能
-- 当前 API 和实时字幕由 CocoaPods 组件 `agent-client-toolkit-swift`（2.10.2 正式包） 提供，Swift 模块名为 `AgoraAgentClientToolkit`
+- 当前 API 和实时字幕由 CocoaPods 组件 `agent-client-toolkit-swift`（2.11.0 正式包） 提供，Swift 模块名为 `AgoraAgentClientToolkit`
 - Demo 仍保留 v1、v2 legacy 字幕实现，当前默认流程使用 Toolkit 实现
 
 ### 2.3 Toolkit 正式包接入
 
-The Podfile downloads the official Toolkit binary and uses a local spec to select the domestic RTC and RTM Pods:
+Podfile 下载 Toolkit 2.11.0 正式二进制，校验官方 SHA-256，并通过本地 spec 选择国内 RTC 和 RTM Pod：
 
 ```ruby
 pod 'ShengwangRtcEngine_iOS', '4.6.4'
@@ -115,16 +115,16 @@ pod 'agent-client-toolkit-swift', :podspec => 'ThirdParty/AgentClientToolkit/age
 pod 'ShengWang-Rtm', '2.3.0', :subspecs => ['RtmKit']
 ```
 
-首次切换或本地索引尚未更新时，在 Demo 仓库根目录执行：
+首次安装时在 `iOS` 目录执行 `pod install`。从旧版 Toolkit 升级时，在 Demo 仓库根目录执行：
 
 ```bash
 cd iOS
-pod update AvatarKitRTC AvatarKitAgoraBridge agent-client-toolkit-swift ConvoAI IoT --no-repo-update
+pod update agent-client-toolkit-swift ConvoAI --no-repo-update
 ```
 
 打开 `Agent.xcworkspace` 编译运行。本地和 Jenkins 都通过 CocoaPods 下载正式 XCFramework，无需拉取 Toolkit 源码。
 
-Swift imports remain `AgoraAgentClientToolkit`, `AgoraRtcKit` and `AgoraRtmKit`. The local spec changes only the RTC and RTM dependencies; see [the compatibility note](../../ThirdParty/AgentClientToolkit/README.md). When upgrading Toolkit, update that spec and `ConvoAI.podspec`, then validate against the selected RTM version.
+Swift 模块名为 `AgoraAgentClientToolkit`、`AgoraRtcKit` 和 `AgoraRtmKit`。本地 spec 仅调整 RTC 和 RTM 依赖，详见[兼容说明](../../ThirdParty/AgentClientToolkit/README.md)。升级 Toolkit 时，更新该 spec 的版本、下载地址和校验值，以及 `ConvoAI.podspec` 的版本约束，重新生成 `Podfile.lock`，并验证所选 RTM 版本下的行为。
 
 Demo 将 AINS 开关传给 `loadAudioSettings(scenario:enableAins:)`，默认关闭，切换音频路由后保持相同选择。
 

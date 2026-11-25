@@ -35,8 +35,8 @@
 
 | 平台 | 发布包 | 固定版本 | 接入说明 |
 | --- | --- | --- | --- |
-| Android | Maven `io.agora.agents:agora-agent-client-toolkit` | `2.10.1` | [Android](Android/scenes/convoai/README.md) |
-| iOS | CocoaPods `agent-client-toolkit-swift` | `2.10.1` | [iOS](iOS/Scenes/ConvoAI/README.md) |
+| Android | Maven `io.agora.agents:agora-agent-client-toolkit` | `2.11.0` | [Android](Android/scenes/convoai/README.md) |
+| iOS | CocoaPods `agent-client-toolkit-swift` | `2.11.0` | [iOS](iOS/Scenes/ConvoAI/README.md) |
 | Web | npm `agora-agent-client-toolkit` | `2.10.0` | [Web](Web/Scenes/VoiceAgent/README.md) |
 
 ### 开发者参考

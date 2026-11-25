@@ -111,7 +111,7 @@ TTS_PARAMS=<TTS 参数>
 ### 2.2 实时字幕
 与对话式智能体进行实时互动时，你可能需要实时字幕显示你与智能体的对话内容。
 - 📖 查看我们的 [实时字幕功能指南](https://doc.shengwang.cn/doc/convoai/restful/user-guides/realtime-sub) 了解如何实现该功能
-- 精确依赖 `io.agora.agents:agora-agent-client-toolkit:2.10.1`，按 `Android/settings.gradle` 中的仓库顺序解析，优先使用阿里云镜像。版本配置位于 `Android/gradle/libs.versions.toml`，业务模块使用 `implementation libs.agora.agent.client.toolkit`。
+- 精确依赖 `io.agora.agents:agora-agent-client-toolkit:2.11.0`，从 `Android/settings.gradle` 配置的 `https://download.agora.io/maven/` 下载。版本配置位于 `Android/gradle/libs.versions.toml`，业务模块使用 `implementation libs.agora.agent.client.toolkit`。
 - 本地和 Jenkins 均由 Gradle 下载正式制品；无需准备 Toolkit 源码或设置本地路径。
 - Demo 将开发模式下的 AINS 选择传入 `loadAudioSettings(scenario, enableAins)`；默认关闭，Toolkit 和业务 RTC 层保持相同选择。
 - 验证命令（在 Android 目录执行）：`./gradlew lint test :app:assembleChinaDebug`。legacy v1 RTC stream renderer 保留在 `ui/living/legacy`。
@@ -123,10 +123,10 @@ TTS_PARAMS=<TTS 参数>
 
 ```groovy
 implementation libs.agora.agent.client.toolkit
-// 解析为 io.agora.agents:agora-agent-client-toolkit:2.10.1
+// 解析为 io.agora.agents:agora-agent-client-toolkit:2.11.0
 ```
 
-在 Android Studio 中同步 Gradle 即可下载 AAR。该制品发布于 Maven Central；本 Demo 按 `settings.gradle` 优先从阿里云镜像解析。若镜像已同步新版本，但 Gradle 仍缓存此前的缺包结果，可在 `Android` 目录执行 `./gradlew :scenes:convoai:assembleDebug --refresh-dependencies`。
+在 Android Studio 中同步 Gradle 即可从 Agora Maven 仓库下载 AAR。若 Gradle 仍缓存此前的缺包结果，可在 `Android` 目录执行 `./gradlew :scenes:convoai:assembleDebug --refresh-dependencies`。
 
 升级时修改 `gradle/libs.versions.toml` 中的版本并同步验证；无需配置本地 Gradle 子项目、`includeBuild` 或手动复制 AAR。
 
